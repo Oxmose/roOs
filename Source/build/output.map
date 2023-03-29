@@ -1,0 +1,181 @@
+Archive member included to satisfy reference by file (symbol)
+
+../Arch/bin/libarch.a(init.o)
+                              (__kinit)
+../Arch/bin/libarch.a(kickstart.o)
+                              ../Arch/bin/libarch.a(init.o) (kickstart)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+KERNEL_BIOS_CALL_MEM 0x0000000000001000 0x0000000000001000 xrw
+LOW_STARTUP_CODE 0x0000000000100000 0x0000000000004000 xr
+HIGH_STARTUP_CODE 0x00000000e0110000 0x0000000000004000 xr
+KERNEL_CODE      0x00000000e0120000 0x0000000000040000 xr
+KERNEL_RO_DATA   0x00000000e0200000 0x0000000000010000 r
+KERNEL_RW_DATA   0x00000000e0210000 0x0000000000080000 rw
+KERNEL_SYM_TAB   0x00000000e0310000 0x0000000000010000 rw
+KERNEL_STACKS    0x00000000e0410000 0x0000000000008000 rw
+KERNEL_HEAP      0x00000000e0418000 0x0000000000a00000 rw
+KERNEL_MULTIBOOT_MEM 0x00000000e0e18000 0x0000000000010000 rw
+KERNEL_INITRD_MEM 0x00000000e0e28000 0x0000000000010000 rw
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x00000000e0000000                KERNEL_MEM_OFFSET = 0xe0000000
+                0x0000000000100000                . = ORIGIN (LOW_STARTUP_CODE)
+
+.low_startup    0x0000000000100000       0x78
+                0x0000000000100000                _START_LOW_STARTUP_ADDR = .
+ *(.multiboot)
+ .multiboot     0x0000000000100000       0x30 ../Arch/bin/libarch.a(init.o)
+                0x0000000000100030                . = ALIGN (0x10)
+ *(.low_startup_code)
+ .low_startup_code
+                0x0000000000100030       0x48 ../Arch/bin/libarch.a(init.o)
+                0x0000000000100030                __kinit
+                0x0000000000100070                _kernel_multiboot_ptr
+                0x0000000020100030                __kinit_low
+                0x0000000000100078                _END_LOW_STARTUP_ADDR = .
+                0x00000000e0110000                . = ORIGIN (HIGH_STARTUP_CODE)
+
+.high_startup   0x00000000e0110000       0x45 load address 0x0000000000110000
+                0x00000000e0110000                . = ALIGN (0x10)
+                0x00000000e0110000                _START_HIGH_STARTUP_ADDR = .
+ *(.high_startup_code)
+ .high_startup_code
+                0x00000000e0110000       0x45 ../Arch/bin/libarch.a(init.o)
+                0x00000000e0110045                _END_HIGH_STARTUP_ADDR = .
+                0x00000000e0120000                . = ORIGIN (KERNEL_CODE)
+
+.text           0x00000000e0120000       0x28 load address 0x0000000000120000
+                0x00000000e0120000                _START_TEXT_ADDR = .
+ *(.text)
+ .text          0x00000000e0120000       0x28 ../Arch/bin/libarch.a(kickstart.o)
+                0x00000000e0120000                kickstart
+ *(.text*)
+                0x00000000e0120028                _END_TEXT_ADDR = .
+
+.iplt           0x00000000e0120028        0x0 load address 0x0000000000120028
+ .iplt          0x00000000e0120028        0x0 ../Arch/bin/libarch.a(init.o)
+                0x00000000e0200000                . = ORIGIN (KERNEL_RO_DATA)
+
+.rodata         0x00000000e0200000       0x10 load address 0x0000000000200000
+                0x00000000e0200000                _START_RO_DATA_ADDR = .
+ *(.rodata)
+ *(.rodata*)
+ .rodata.str1.1
+                0x00000000e0200000       0x10 ../Arch/bin/libarch.a(kickstart.o)
+
+.eh_frame       0x00000000e0201000       0x2c load address 0x0000000000201000
+ *(.eh_frame)
+ .eh_frame      0x00000000e0201000       0x2c ../Arch/bin/libarch.a(kickstart.o)
+                0x00000000e020102c                _END_RO_DATA_ADDR = .
+
+.rel.dyn        0x00000000e020102c        0x0 load address 0x000000000020102c
+ .rel.got       0x00000000e020102c        0x0 ../Arch/bin/libarch.a(init.o)
+ .rel.iplt      0x00000000e020102c        0x0 ../Arch/bin/libarch.a(init.o)
+ .rel.low_startup_code
+                0x00000000e020102c        0x0 ../Arch/bin/libarch.a(init.o)
+ .rel.high_startup_code
+                0x00000000e020102c        0x0 ../Arch/bin/libarch.a(init.o)
+                0x00000000e0210000                . = ORIGIN (KERNEL_RW_DATA)
+
+.data           0x00000000e0210000     0x1012 load address 0x0000000000210000
+                0x00000000e0210000                _START_DATA_ADDR = .
+ *(.data)
+ .data          0x00000000e0210000     0x1012 ../Arch/bin/libarch.a(init.o)
+ .data          0x00000000e0211012        0x0 ../Arch/bin/libarch.a(kickstart.o)
+ *(.data*)
+                0x00000000e0211012                _END_DATA_ADDR = .
+
+.got            0x00000000e0211014        0x0 load address 0x0000000000211014
+ .got           0x00000000e0211014        0x0 ../Arch/bin/libarch.a(init.o)
+
+.got.plt        0x00000000e0211014        0x0 load address 0x0000000000211014
+ .got.plt       0x00000000e0211014        0x0 ../Arch/bin/libarch.a(init.o)
+
+.igot.plt       0x00000000e0211014        0x0 load address 0x0000000000211014
+ .igot.plt      0x00000000e0211014        0x0 ../Arch/bin/libarch.a(init.o)
+
+.bss            0x00000000e0212000        0x0 load address 0x0000000000212000
+                0x00000000e0212000                _START_BSS_ADDR = .
+ *(COMMON)
+ *(.bss)
+ .bss           0x00000000e0212000        0x0 ../Arch/bin/libarch.a(kickstart.o)
+                0x00000000e0212000                _END_BSS_ADDR = .
+                0x00000000e0212000                _KERNEL_STATIC_END = .
+                0x00000000e0410000                _KERNEL_STACKS_BASE = ORIGIN (KERNEL_STACKS)
+                0x0000000000008000                _KERNEL_STACKS_SIZE = LENGTH (KERNEL_STACKS)
+                0x00000000e0418000                _KERNEL_HEAP_BASE = ORIGIN (KERNEL_HEAP)
+                0x0000000000a00000                _KERNEL_HEAP_SIZE = LENGTH (KERNEL_HEAP)
+                0x0000000000001000                _KERNEL_BIOS_MEMORY_BASE = ORIGIN (KERNEL_BIOS_CALL_MEM)
+                0x0000000000001000                _KERNEL_BIOS_MEMORY_SIZE = LENGTH (KERNEL_BIOS_CALL_MEM)
+                0x00000000e0e18000                _KERNEL_MULTIBOOT_MEM_BASE = ORIGIN (KERNEL_MULTIBOOT_MEM)
+                0x0000000000010000                _KERNEL_MULTIBOOT_MEM_SIZE = LENGTH (KERNEL_MULTIBOOT_MEM)
+                0x00000000e0e28000                _KERNEL_INITRD_MEM_BASE = ORIGIN (KERNEL_INITRD_MEM)
+                0x0000000000010000                _KERNEL_INITRD_MEM_SIZE = LENGTH (KERNEL_INITRD_MEM)
+                0x00000000e0310000                _KERNEL_SYMTAB_REG_BASE = ORIGIN (KERNEL_SYM_TAB)
+                0x0000000000010000                _KERNEL_SYMTAB_REG_SIZE = LENGTH (KERNEL_SYM_TAB)
+                0x00000000e0310000                _KERNEL_SYMTAB_ADDR = _KERNEL_SYMTAB_REG_BASE
+                0x00000000e0310004                _KERNEL_SYMTAB_SIZE = (_KERNEL_SYMTAB_ADDR + 0x4)
+                0x00000000e0310008                _KERNEL_STRTAB_ADDR = (_KERNEL_SYMTAB_SIZE + 0x4)
+                0x00000000e031000c                _KERNEL_STRTAB_SIZE = (_KERNEL_STRTAB_ADDR + 0x4)
+                0x00000000e0310010                _KERNEL_SYMTAB_FREE_START = (_KERNEL_STRTAB_SIZE + 0x4)
+                0x00000000e0e38000                _KERNEL_MEMORY_END = (_KERNEL_INITRD_MEM_BASE + _KERNEL_INITRD_MEM_SIZE)
+LOAD ../Arch/bin/libarch.a
+OUTPUT(./build/UTK.elf elf32-i386)
+
+.debug_aranges  0x0000000000000000       0x20
+ .debug_aranges
+                0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_aranges
+                0x0000000000000000       0x20 ../Arch/bin/libarch.a(kickstart.o)
+
+.debug_pubnames
+                0x0000000000000000        0x0
+ .debug_pubnames
+                0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+
+.debug_info     0x0000000000000000       0xb9
+ .debug_info    0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_info    0x0000000000000000       0xb9 ../Arch/bin/libarch.a(kickstart.o)
+
+.debug_abbrev   0x0000000000000000       0x73
+ .debug_abbrev  0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_abbrev  0x0000000000000000       0x73 ../Arch/bin/libarch.a(kickstart.o)
+
+.debug_line     0x0000000000000000       0x98
+ .debug_line    0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_line    0x0000000000000000       0x98 ../Arch/bin/libarch.a(kickstart.o)
+
+.debug_frame    0x0000000000000000        0x0
+ .debug_frame   0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+
+.debug_loc      0x0000000000000000        0x0
+ .debug_loc     0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+
+.debug_loclists
+                0x0000000000000000       0x52
+ .debug_loclists
+                0x0000000000000000       0x52 ../Arch/bin/libarch.a(kickstart.o)
+
+.debug_str      0x0000000000000000      0x144
+ .debug_str     0x0000000000000000      0x144 ../Arch/bin/libarch.a(kickstart.o)
+                                        0x162 (size before relaxing)
+
+.debug_line_str
+                0x0000000000000000       0x71
+ .debug_line_str
+                0x0000000000000000       0x71 ../Arch/bin/libarch.a(kickstart.o)
+                                         0xc1 (size before relaxing)
+
+.comment        0x0000000000000000       0x2b
+ .comment       0x0000000000000000       0x2b ../Arch/bin/libarch.a(kickstart.o)
+                                         0x2c (size before relaxing)
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 ../Arch/bin/libarch.a(kickstart.o)

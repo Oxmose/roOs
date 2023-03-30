@@ -1,26 +1,33 @@
 /*******************************************************************************
- * @file bsp_api.h
+ * @file memchr.c
+ *
+ * @see string.h
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 29/03/2023
+ * @date 03/10/2017
  *
  * @version 1.0
  *
- * @brief BSP API declarations.
+ * @brief memchr function. To be used with string.h header.
  *
- * @details BSP API declarations.. This file contains all the routines
- * aivailable for the system to manipulate the BSP.
+ * @details memchr function. To be used with string.h header.
+ *
+ * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
-
-#ifndef __BOARD_BSP_API_H_
-#define __BOARD_BSP_API_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic types */
+/* Included headers */
+#include <stddef.h> /* Standard definitions */
+
+/* Configuration files */
+#include <config.h>
+
+/* Header file */
+#include <string.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -54,21 +61,26 @@
 /* None */
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/* None */
+
+/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-/**
- * @brief Returns the number of CPU detected in the system.
- *
- * @details Returns the number of CPU detected in the system. This function is
- * based on the ACPI CPU detection.
- *
- * @warning This function must be used once the ACPI is initialized.
- *
- * @return The number of CPU detected in the system, -1 is returned on error.
- */
-int32_t get_cpu_count(void);
+void *memchr(const void *s, int c, size_t n)
+{
+    const unsigned char *sp = s;
 
-#endif /* #ifndef __BOARD_BSP_API_H_ */
+    while (n--) {
+        if (*sp == (unsigned char)c)
+            return (void *)sp;
+        sp++;
+    }
+
+    return NULL;
+}
 
 /************************************ EOF *************************************/

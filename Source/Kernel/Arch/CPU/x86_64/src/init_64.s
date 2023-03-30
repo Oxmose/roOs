@@ -101,13 +101,13 @@ __bss_init:
     call kickstart
 
 __kinit_x64_end:
-    mov rax, 0xB8000
+    mov rax, 0xB8F00
     mov rbx, _kinit_end_of_line
     mov cl, 0xF0
 
 __kinit_x64_end_print:
     mov dl, [rbx]
-    cmp rdx, 0
+    cmp dl, 0
     jbe __kinit_x64_end_print_end
     mov [rax], dl
     add rax, 1

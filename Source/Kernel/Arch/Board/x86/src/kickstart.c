@@ -23,7 +23,10 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h>
+#include <console.h>        /* Kernel console */
+#include <vga_console.h>    /* VGA console driver */
+#include <kernel_output.h>  /* Kernel logger */
+#include <cpu.h>            /* CPU manager */
 
 /* Configuration files */
 #include <config.h>
@@ -35,7 +38,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Current module name */
+#define MODULE_NAME "KICKSTART"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -83,18 +87,21 @@ void kickstart(void);
 
 void kickstart(void)
 {
-    char* welcome_string = " UTK Kickstart ";
+    OS_RETURN_E retVal;
 
-    uint16_t* vga_buffer = (uint16_t*)0xB8000;
+    /* Register the VGA console driver for kernel console */
+    retVal = console_set_selected_driver(vga_console_get_driver());
+    console_clear_screen();
 
-    while(*welcome_string)
-    {
-        *vga_buffer = 0xF000 | *welcome_string;
-        ++vga_buffer;
-        ++welcome_string;
-    }
+    /* TODO: Assert retVal */
+    (void)retVal;
 
-    while(1);
+    KERNEL_INFO("UTK Kickstart\n");
+
+    /* Initialize the CPU */
+    cpu_init();
 }
+
+#undef MODULE_NAME
 
 /************************************ EOF *************************************/

@@ -56,6 +56,7 @@ endif
 
 # Build general modules
 	@make -C $(SOURCE_DIR)/Libs
+	@make -C $(SOURCE_DIR)/IO
 
 build_kernel:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
@@ -78,6 +79,7 @@ clean:
 # Dummy settings
 	@mkdir -p Kernel/ARTIFACTS
 	@touch Kernel/ARTIFACTS/settings.mk
+
 # Clean the architecture module
 ifeq ($(target), x86_i386)
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
@@ -87,6 +89,10 @@ else
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64 clean
 endif
+
+# Clean modules
+	@make clean -C $(SOURCE_DIR)/Libs
+	@make clean -C $(SOURCE_DIR)/IO
 
 # Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)

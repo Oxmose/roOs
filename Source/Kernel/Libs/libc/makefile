@@ -19,7 +19,7 @@ SRC_DIR    = src
 BUILD_DIR  = build
 INC_DIR    = includes
 BIN_DIR    = bin
-ARTIFACTS_DIR     = ../../../ARTIFACTS
+ARTIFACTS_DIR     = ../../ARTIFACTS
 
 C_SRCS = $(call rwildcard,$(SRC_DIR),*.c)
 A_SRCS = $(call rwildcard,$(SRC_DIR),*.S)

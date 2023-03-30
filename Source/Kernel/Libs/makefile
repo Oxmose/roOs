@@ -19,12 +19,15 @@ init:
 
 build_modules:
 	@$(MAKE) -C ./libc
+	@$(MAKE) -C ./libapi
 
 # Copy the generated libs
 	@cp ./libc/$(BIN_DIR)/liblibc.a $(BIN_DIR)/
+	@cp ./libapi/$(BIN_DIR)/libapi.a $(BIN_DIR)/
 
 clean:
 	@$(MAKE) -C ./libc clean
+	@$(MAKE) -C ./libapi clean
 
 	$(RM) -rf $(BIN_DIR)
 

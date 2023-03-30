@@ -16,10 +16,10 @@ include ../../../ARTIFACTS/settings.mk
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 # Variables definitions
-SRC_DIR    = src
-BUILD_DIR  = ../build
+SRC_DIR        = src
+BUILD_DIR      = ../build
 ARCH_BUILD_DIR = ../../build
-ARTIFACTS_DIR     = ../../../ARTIFACTS
+ARTIFACTS_DIR  = ../../../ARTIFACTS
 
 INC_DIR  = includes
 

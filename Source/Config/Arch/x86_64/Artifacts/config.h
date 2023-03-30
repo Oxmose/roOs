@@ -17,8 +17,8 @@
 #define __GLOBAL_CONFIG_H_
 
 /* Architecture definitions */
-#define ARCH_I386    1
-#define ARCH_32_BITS 1
+#define ARCH_X86_64  1
+#define ARCH_64_BITS 1
 
 /* Kernel memory offset
  * WARNING This value should be updated to fit other configuration files

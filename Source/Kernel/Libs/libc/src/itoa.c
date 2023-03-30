@@ -1,35 +1,33 @@
 /*******************************************************************************
- * @file interrupt_settings.h
+ * @file iota.c
  *
- * @see interrupt_settings.c
+ * @see stdlib.h
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 29/03/2023
+ * @date 08/01/2018
  *
  * @version 1.0
  *
- * @brief Interrupt settings definitions.
+ * @brief itoa function. To be used with stdlib.h header.
  *
- * @details Interrupt settings definitions.
+ * @details itoa function. To be used with stdlib.h header.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
-
-#ifndef __BOARD_INTERRUPT_SETTINGS_H_
-#define __BOARD_INTERRUPT_SETTINGS_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-#include <config.h> /* UTK configuration file */
+/* Included headers */
+#include <stdint.h> /* Generic integer definitions */
 
-#ifdef ARCH_I386
-#include <../x86/includes/x86_interrupt_settings.h>
-#else
-#error Unknown CPU architecture
-#endif
+/* Configuration files */
+#include <config.h>
+
+/* Header file */
+#include <stdlib.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -63,11 +61,32 @@
 /* None */
 
 /*******************************************************************************
- * FUNCTIONS
+ * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
 /* None */
 
-#endif /* #ifndef __BOARD_INTERRUPT_SETTINGS_H_ */
+/*******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+
+void itoa(int64_t i, char* buf, uint32_t base)
+{
+    /* If base is unknown just return */
+    if (base > 16)
+    {
+        return;
+    }
+
+    /* Check sign */
+    if (base == 10 && i < 0)
+    {
+        *buf++ = '-';
+        i *= -1;
+    }
+
+    /* To the job */
+    uitoa(i, buf, base);
+}
 
 /************************************ EOF *************************************/

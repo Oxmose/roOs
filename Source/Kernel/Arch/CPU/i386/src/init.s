@@ -157,13 +157,13 @@ __kinit_high:
     call kickstart
 
 __kinit_end:
-    mov eax, 0xB8000
+    mov eax, 0xB8F00
     mov ebx, _kinit_end_of_line
     mov cl, 0xF0
 
 __kinit_end_print:
     mov dl, [ebx]
-    cmp edx, 0
+    cmp dl, 0
     jbe __kinit_end_print_end
     mov [eax], dl
     add eax, 1

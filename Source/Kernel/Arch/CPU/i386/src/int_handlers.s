@@ -81,8 +81,7 @@ _generic_interrupt_handler:
         push    esp
 
         ; call the C generic interrupt handler
-        ; TODO: Call kernel's handler
-        ;call    kernel_interrupt_handler
+        call    kernel_interrupt_handler
 
         ; Restore registers
 

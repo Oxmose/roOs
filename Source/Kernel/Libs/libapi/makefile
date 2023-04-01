@@ -22,7 +22,7 @@ BIN_DIR    = bin
 ARTIFACTS_DIR     = ../../../ARTIFACTS
 
 C_SRCS = $(call rwildcard,$(SRC_DIR),*.c)
-A_SRCS = $(call rwildcard,$(SRC_DIR),*.S)
+A_SRCS = $(call rwildcard,$(SRC_DIR),*.s)
 C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 A_OBJS = $(A_SRCS:$(SRC_DIR)/%.S=$(BUILD_DIR)/%.o)
 

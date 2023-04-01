@@ -27,6 +27,7 @@
 #include <vga_console.h>    /* VGA console driver */
 #include <kernel_output.h>  /* Kernel logger */
 #include <cpu.h>            /* CPU manager */
+#include <panic.h>          /* Kernel Panic */
 
 /* Configuration files */
 #include <config.h>
@@ -100,6 +101,9 @@ void kickstart(void)
 
     /* Initialize the CPU */
     cpu_init();
+
+    /* Once the scheduler is started, we should never come back here. */
+    PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Kickstart returned", TRUE);
 }
 
 #undef MODULE_NAME

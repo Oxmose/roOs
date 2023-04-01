@@ -26,18 +26,81 @@
 
 #include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Standard definition */
+#include <kerror.h>       /* Kernel error */
 
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief CPU flags interrupt enabled flag. */
+#define CPU_EFLAGS_IF 0x000000200
+/** @brief CPU flags interrupt enabled bit shift. */
+#define CPU_EFLAGS_IF_SHIFT 9
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Holds the CPU register values */
+typedef struct
+{
+    /** @brief CPU's esp register. */
+    uint32_t esp;
+    /** @brief CPU's ebp register. */
+    uint32_t ebp;
+    /** @brief CPU's edi register. */
+    uint32_t edi;
+    /** @brief CPU's esi register. */
+    uint32_t esi;
+    /** @brief CPU's edx register. */
+    uint32_t edx;
+    /** @brief CPU's ecx register. */
+    uint32_t ecx;
+    /** @brief CPU's ebx register. */
+    uint32_t ebx;
+    /** @brief CPU's eax register. */
+    uint32_t eax;
+
+    /** @brief CPU's ss register. */
+    uint32_t ss;
+    /** @brief CPU's gs register. */
+    uint32_t gs;
+    /** @brief CPU's fs register. */
+    uint32_t fs;
+    /** @brief CPU's es register. */
+    uint32_t es;
+    /** @brief CPU's ds register. */
+    uint32_t ds;
+} __attribute__((packed)) cpu_state_t;
+
+/** @brief Holds the stack state before the interrupt */
+typedef struct
+{
+    /** @brief Interrupt's error code. */
+    uint32_t error_code;
+    /** @brief EIP of the faulting instruction. */
+    uint32_t eip;
+    /** @brief CS before the interrupt. */
+    uint32_t cs;
+    /** @brief EFLAGS before the interrupt. */
+    uint32_t eflags;
+} __attribute__((packed)) stack_state_t;
+
+/**
+ * @brief Defines the virtual CPU context for the i386 CPU.
+ */
+typedef struct
+{
+    /** @brief Thread's specific ESP registers. */
+    uint32_t esp;
+    /** @brief Thread's specific EBP registers. */
+    uint32_t ebp;
+    /** @brief Thread's specific EIP registers. */
+    uint32_t eip;
+
+    /** @brief Last interrupt ESP */
+    uint32_t last_int_esp;
+} virtual_cpu_context_t;
 
 /*******************************************************************************
  * MACROS
@@ -260,11 +323,53 @@ inline static uint64_t cpu_rdtsc(void)
 }
 
 /**
+ * @brief Returns the saved interrupt state.
+ *
+ * @details Returns the saved interrupt state based on the stack state.
+ *
+ * @param[in] cpu_state The current CPU state.
+ * @param[in] stack_state The current stack state.
+ *
+ * @return The current savec interrupt state: 1 if enabled, 0 otherwise.
+ */
+inline static uint32_t cpu_get_saved_interrupt_state(const cpu_state_t* cpu_state,
+                                                     const stack_state_t* stack_state)
+{
+    (void) cpu_state;
+    return stack_state->eflags & CPU_EFLAGS_IF;
+}
+
+/**
+ * @brief Returns the CPU current interrupt state.
+ *
+ * @details Returns the current CPU eflags interrupt enable value.
+ *
+ * @return The CPU current interrupt state: 1 if enabled, 0 otherwise.
+ */
+inline static uint32_t cpu_get_interrupt_state(void)
+{
+    return ((cpu_save_flags() & CPU_EFLAGS_IF) != 0);
+}
+
+/**
  * @brief Initializes the CPU.
  *
  * @details Initializes the CPU registers and relevant structures.
  */
 void cpu_init(void);
+
+/**
+ * @brief Raises CPU interrupt.
+ *
+ * @details Raises a software CPU interrupt on the desired line.
+ *
+ * @param[in] interrupt_line The line on which the interrupt should be raised.
+ *
+ * @return OS_NO_ERR shoudl be return in case of success.
+ * - OS_ERR_UNAUTHORIZED_ACTION Is returned if the interrupt line is not
+ * correct.
+ */
+OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line);
 
 #endif /* #ifndef __I386_CPU_H_ */
 

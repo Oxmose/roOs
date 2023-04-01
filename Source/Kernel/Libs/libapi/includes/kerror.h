@@ -39,7 +39,17 @@ typedef enum
     /** @brief No error occured. */
     OS_NO_ERR                              = 0,
     /** @brief A null pointer was detected. */
-    OS_ERR_NULL_POINTER                    = 1
+    OS_ERR_NULL_POINTER                    = 1,
+    /** @brief Unauthorized action from kernel. */
+    OS_ERR_UNAUTHORIZED_ACTION             = 2,
+    /** @brief Unauthorized interrupt line used. */
+    OR_ERR_UNAUTHORIZED_INTERRUPT_LINE     = 3,
+    /** @brief Interrupt handler was already registered. */
+    OS_ERR_INTERRUPT_ALREADY_REGISTERED    = 4,
+    /** @brief Interrupt is not registered. */
+    OS_ERR_INTERRUPT_NOT_REGISTERED        = 5,
+    /** @brief Unknown IRQ. */
+    OS_ERR_NO_SUCH_IRQ                     = 6,
 } OS_RETURN_E;
 
 /*******************************************************************************

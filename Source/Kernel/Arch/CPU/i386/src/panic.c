@@ -29,6 +29,8 @@
 #include <stdint.h>               /* Generic int types */
 #include <cpu.h>                  /* CPU management */
 #include <string.h>               /* Memset */
+#include <ctrl_block.h>           /* Thread's control block */
+#include <interrupts.h>           /* Interrupts manager */
 
 /* Configuration files */
 #include <config.h>
@@ -90,13 +92,9 @@ static const char* panic_msg;
  * title, the interrupt number, the error code and the error string that caused
  * the panic.
  *
- * @param[in] int_id The interrupt number that generated the panic.
- * @param[in] stack_state The stack state at the moment of the panic.
- * @param[in] error_code The error code of the kernel panic.
+ * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_panic_header(uintptr_t int_id,
-                                stack_state_t* stack_state,
-                                uint32_t error_code);
+static void _print_panic_header(const virtual_cpu_t* vcpu);
 
 /**
  * @brief Prints the CPU state at the moment of the panic.
@@ -104,10 +102,9 @@ static void _print_panic_header(uintptr_t int_id,
  * @details Prints the CPU state at the moment of the panic. All CPU registers
  * are dumped.
  *
- * @param[in] cpu_state The CPU state at the moment of the panic.
- * @param[in] stack_state The stack state at the moment of the panic.
+ * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_state(cpu_state_t* cpu_state, stack_state_t* stack_state);
+static void _print_cpu_state(const virtual_cpu_t* vcpu);
 
 /**
  * @brief Prints the CPU flags at the moment of the panic.
@@ -115,9 +112,9 @@ static void _print_cpu_state(cpu_state_t* cpu_state, stack_state_t* stack_state)
  * @details Prints the CPU flags at the moment of the panic. The flags are
  * pretty printed for better reading.
  *
- * @param[in] stack_state The stack state at the moment of the panic.
+ * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_flags(stack_state_t* stack_state);
+static void _print_cpu_flags(const virtual_cpu_t* vcpu);
 
 /**
  * @brief Prints the stack frame rewind at the moment of the panic.
@@ -132,13 +129,15 @@ static void _print_stack_trace(void);
  * FUNCTIONS
  ******************************************************************************/
 
-static void _print_panic_header(uintptr_t int_id,
-                               stack_state_t* stack_state,
-                               uint32_t error_code)
+static void _print_panic_header(const virtual_cpu_t* vcpu)
 {
+    const int_context_t* int_state;
+
+    int_state = &vcpu->int_context;
+
     kernel_printf("##############################    KERNEL PANIC    ##########"
                     "####################\n");
-    switch(int_id)
+    switch(int_state->int_id)
     {
         case 0:
             kernel_printf("Division by zero                        ");
@@ -210,15 +209,22 @@ static void _print_panic_header(uintptr_t int_id,
             kernel_printf("Unknown reason                          ");
     }
 
-    kernel_printf("          INT ID: 0x%02X                 \n", int_id);
+    kernel_printf("          INT ID: 0x%02X                 \n",
+                  int_state->int_id);
     kernel_printf("Instruction [EIP]: 0x%p                     Error code: "
-                    "0x%p       \n", stack_state->eip, error_code);
+                    "0x%X       \n", int_state->eip, int_state->error_code);
     kernel_printf("                                                            "
                     "                   \n");
 }
 
-static void _print_cpu_state(cpu_state_t* cpu_state, stack_state_t* stack_state)
+static void _print_cpu_state(const virtual_cpu_t* vcpu)
 {
+    const cpu_state_t*   cpu_state;
+    const int_context_t* int_state;
+
+    int_state = &vcpu->int_context;
+    cpu_state = &vcpu->vcpu;
+
     uint32_t CR0;
     uint32_t CR2;
     uint32_t CR3;
@@ -248,7 +254,7 @@ static void _print_cpu_state(cpu_state_t* cpu_state, stack_state_t* stack_state)
                     "0x%p  \n", CR0, CR2, CR3, CR4);
     kernel_printf("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
                   "FS: 0x%04X | GS: 0x%04X\n",
-                    stack_state->cs & 0xFFFF,
+                    int_state->cs & 0xFFFF,
                     cpu_state->ds & 0xFFFF,
                     cpu_state->ss & 0xFFFF,
                     cpu_state->es & 0xFFFF ,
@@ -256,28 +262,32 @@ static void _print_cpu_state(cpu_state_t* cpu_state, stack_state_t* stack_state)
                     cpu_state->gs & 0xFFFF);
 }
 
-static void _print_cpu_flags(stack_state_t* stack_state)
+static void _print_cpu_flags(const virtual_cpu_t* vcpu)
 {
-    int8_t cf_f = (stack_state->eflags & 0x1);
-    int8_t pf_f = (stack_state->eflags & 0x4) >> 2;
-    int8_t af_f = (stack_state->eflags & 0x10) >> 4;
-    int8_t zf_f = (stack_state->eflags & 0x40) >> 6;
-    int8_t sf_f = (stack_state->eflags & 0x80) >> 7;
-    int8_t tf_f = (stack_state->eflags & 0x100) >> 8;
-    int8_t if_f = (stack_state->eflags & 0x200) >> 9;
-    int8_t df_f = (stack_state->eflags & 0x400) >> 10;
-    int8_t of_f = (stack_state->eflags & 0x800) >> 11;
-    int8_t nf_f = (stack_state->eflags & 0x4000) >> 14;
-    int8_t rf_f = (stack_state->eflags & 0x10000) >> 16;
-    int8_t vm_f = (stack_state->eflags & 0x20000) >> 17;
-    int8_t ac_f = (stack_state->eflags & 0x40000) >> 18;
-    int8_t id_f = (stack_state->eflags & 0x200000) >> 21;
-    int8_t iopl0_f = (stack_state->eflags & 0x1000) >> 12;
-    int8_t iopl1_f = (stack_state->eflags & 0x2000) >> 13;
-    int8_t vif_f = (stack_state->eflags & 0x8000) >> 19;
-    int8_t vip_f = (stack_state->eflags & 0x100000) >> 20;
+    const int_context_t* int_state;
 
-    kernel_printf("EFLAGS: 0x%p | ", stack_state->eflags);
+    int_state = &vcpu->int_context;
+
+    int8_t cf_f = (int_state->eflags & 0x1);
+    int8_t pf_f = (int_state->eflags & 0x4) >> 2;
+    int8_t af_f = (int_state->eflags & 0x10) >> 4;
+    int8_t zf_f = (int_state->eflags & 0x40) >> 6;
+    int8_t sf_f = (int_state->eflags & 0x80) >> 7;
+    int8_t tf_f = (int_state->eflags & 0x100) >> 8;
+    int8_t if_f = (int_state->eflags & 0x200) >> 9;
+    int8_t df_f = (int_state->eflags & 0x400) >> 10;
+    int8_t of_f = (int_state->eflags & 0x800) >> 11;
+    int8_t nf_f = (int_state->eflags & 0x4000) >> 14;
+    int8_t rf_f = (int_state->eflags & 0x10000) >> 16;
+    int8_t vm_f = (int_state->eflags & 0x20000) >> 17;
+    int8_t ac_f = (int_state->eflags & 0x40000) >> 18;
+    int8_t id_f = (int_state->eflags & 0x200000) >> 21;
+    int8_t iopl0_f = (int_state->eflags & 0x1000) >> 12;
+    int8_t iopl1_f = (int_state->eflags & 0x2000) >> 13;
+    int8_t vif_f = (int_state->eflags & 0x8000) >> 19;
+    int8_t vip_f = (int_state->eflags & 0x100000) >> 20;
+
+    kernel_printf("EFLAGS: 0x%p | ", int_state->eflags);
 
     if(cf_f != 0)
     {
@@ -374,9 +384,7 @@ static void _print_stack_trace(void)
     }
 }
 
-void panic_handler(cpu_state_t* cpu_state,
-                   uintptr_t int_id,
-                   stack_state_t* stack_state)
+void panic_handler(kernel_thread_t* curr_thread)
 {
     colorscheme_t panic_scheme;
     cursor_t      panic_cursor;
@@ -387,6 +395,8 @@ void panic_handler(cpu_state_t* cpu_state,
     uint32_t hours;
     uint32_t minutes;
     uint32_t seconds;
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_START, 1, panic_code);
 
     time    = 0;
     hours   = time / 3600;
@@ -407,17 +417,17 @@ void panic_handler(cpu_state_t* cpu_state,
     panic_cursor.y = 0;
     console_restore_cursor(panic_cursor);
 
-    _print_panic_header(int_id, stack_state, panic_code);
-    _print_cpu_state(cpu_state, stack_state);
-    _print_cpu_flags(stack_state);
+    _print_panic_header(&curr_thread->v_cpu);
+    _print_cpu_state(&curr_thread->v_cpu);
+    _print_cpu_flags(&curr_thread->v_cpu);
 
     kernel_printf("\n--------------------------------- INFORMATION ------------"
                     "----------------------\n");
     kernel_printf("Core ID: %u | Time: %02u:%02u:%02u\n"
                   "Thread: %s (%u) | Process: %s (%u)\n", cpu_id,
                   hours, minutes, seconds,
-                  "NO_THREAD",
-                  0,
+                  curr_thread->name,
+                  curr_thread->tid,
                   "NO_PROCESS",
                   0);
 
@@ -438,11 +448,13 @@ void panic_handler(cpu_state_t* cpu_state,
 
     console_set_color_scheme(panic_scheme);
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, panic_code);
+
     /* We will never return from interrupt */
     while(1)
     {
-        cpu_clear_interrupt();
-        cpu_hlt();
+        kernel_interrupt_disable();
+        _cpu_hlt();
     }
 }
 
@@ -452,8 +464,10 @@ void kernel_panic(const uint32_t error_code,
                   const char* file,
                   const size_t line)
 {
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, error_code);
+
     /* We don't need interrupt anymore */
-    cpu_clear_interrupt();
+    kernel_interrupt_disable();
 
     /* Set the parameters */
     panic_code   = error_code;
@@ -468,8 +482,8 @@ void kernel_panic(const uint32_t error_code,
     /* We should never get here, but just in case */
     while(1)
     {
-        cpu_clear_interrupt();
-        cpu_hlt();
+        kernel_interrupt_disable();
+        _cpu_hlt();
     }
 }
 

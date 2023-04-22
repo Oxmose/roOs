@@ -3,27 +3,30 @@
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 29/03/2023
+ * @date 29/03/3023
  *
  * @version 1.0
  *
- * @brief X86 i386 global configuration file.
+ * @brief X86_64 global configuration file.
  *
- * @details X86 i386 global configuration file. This file contains all the
+ * @details X86_64 global configuration file. This file contains all the
  * settings that the user can set before generating the kernel's binary.
  ******************************************************************************/
 
 #ifndef __GLOBAL_CONFIG_H_
 #define __GLOBAL_CONFIG_H_
 
+/* Tracing feature */
+#include <tracing.h>
+
 /* Architecture definitions */
-#define ARCH_I386    1
-#define ARCH_32_BITS 1
+#define ARCH_X86_64  1
+#define ARCH_64_BITS 1
 
 /* Kernel memory offset
  * WARNING This value should be updated to fit other configuration files
  */
-#define KERNEL_MEM_OFFSET 0xE0000000
+#define KERNEL_MEM_OFFSET 0xFFFFFFF800000000
 #define KERNEL_MEM_START  0x00100000
 
 /* Kernel stack default size
@@ -46,8 +49,8 @@
 #define DEBUG_LOG_UART 1
 
 /* Defines the limit address allocable by the kernel */
-#define KERNEL_VIRTUAL_ADDR_MAX      0x100000000
-#define KERNEL_VIRTUAL_ADDR_MAX_MASK 0xFFFFFFFF
+#define KERNEL_VIRTUAL_ADDR_MAX      0xFFFFFFFFFFFFFFFF
+#define KERNEL_VIRTUAL_ADDR_MAX_MASK 0xFFFFFFFFFFFFFFFF
 
 /**
  * @brief Defines the minimal amount of memory blocks reserved for kernel paging
@@ -69,7 +72,7 @@
 /** @brief Current year */
 #define CURRENT_YEAR 2023
 
-/* Stack default alignement */
+/** @brief Stack default alignement */
 #define STACK_ALIGN 4
 
 /*******************************************************************************

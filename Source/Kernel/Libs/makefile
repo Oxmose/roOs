@@ -20,14 +20,17 @@ init:
 build_modules:
 	@$(MAKE) -C ./libc
 	@$(MAKE) -C ./libapi
+	@$(MAKE) -C ./libtrace
 
 # Copy the generated libs
 	@cp ./libc/$(BIN_DIR)/liblibc.a $(BIN_DIR)/
 	@cp ./libapi/$(BIN_DIR)/libapi.a $(BIN_DIR)/
+	@cp ./libtrace/$(BIN_DIR)/libtrace.a $(BIN_DIR)/
 
 clean:
 	@$(MAKE) -C ./libc clean
 	@$(MAKE) -C ./libapi clean
+	@$(MAKE) -C ./libtrace clean
 
 	$(RM) -rf $(BIN_DIR)
 

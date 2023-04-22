@@ -1961,6 +1961,7 @@ static void _cpu_setup_gdt(void)
 {
     uint32_t i;
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_START, 0);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting GDT");
 
     /************************************
@@ -2095,12 +2096,15 @@ static void _cpu_setup_gdt(void)
                          "i" (KERNEL_CS_32));
 
     KERNEL_SUCCESS("GDT Initialized at 0x%P\n", cpu_gdt_ptr.base);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_END, 2, cpu_gdt_ptr.base, 0);
 }
 
 static void _cpu_setup_idt(void)
 {
     uint32_t i;
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_START, 0);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting IDT");
 
     /* Blank the IDT */
@@ -2125,12 +2129,15 @@ static void _cpu_setup_idt(void)
                                       "m" (cpu_idt_ptr.base));
 
     KERNEL_SUCCESS("IDT Initialized at 0x%P\n", cpu_idt_ptr.base);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_END, 2, cpu_idt_ptr.base, 0);
 }
 
 static void _cpu_setup_tss(void)
 {
     uint32_t i;
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_START, 0);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting TSS");
 
     /* Blank the TSS */
@@ -2156,24 +2163,33 @@ static void _cpu_setup_tss(void)
     __asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
 
     KERNEL_SUCCESS("TSS Initialized at 0x%P\n", cpu_tss);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_END, 2, cpu_tss, 0);
 }
 
 void cpu_init(void)
 {
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_START, 0);
+
     /* Init the GDT, IDT and TSS */
     _cpu_setup_gdt();
     _cpu_setup_idt();
     _cpu_setup_tss();
-}
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_END, 0);
+}
 
 OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line)
 {
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, interrupt_line);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU",
                  "Requesting interrupt raise %d", interrupt_line);
 
     if(interrupt_line > MAX_INTERRUPT_LINE)
     {
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 2,
+                           interrupt_line,
+                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -2949,6 +2965,8 @@ OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line)
             break;
     }
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 2,
+                       interrupt_line, OS_NO_ERR);
     return OS_NO_ERR;
 }
 

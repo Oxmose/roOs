@@ -46,6 +46,8 @@ interrupt_handler_%1:
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
+extern current_thread
+
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
@@ -63,45 +65,72 @@ extern kernel_interrupt_handler
 
 section .text
 _generic_interrupt_handler:
+        ; Save a bit of context
+        push eax
+        push ebx
 
-        ; Save registers before calling interrupt
-        push    ds
-        push    es
-        push    fs
-        push    gs
-        push    ss
+        ; Get the current thread handle
+        mov eax, [current_thread]
 
-        push    eax
-        push    ebx
-        push    ecx
-        push    edx
-        push    esi
-        push    edi
-        push    ebp
-        push    esp
+        ; Save the interrupt context
+        mov ebx, [esp+8]  ; Int id
+        mov [eax], ebx
+        mov ebx, [esp+12]  ; Int code
+        mov [eax+4], ebx
+        mov ebx, [esp+16]  ; EIP
+        mov [eax+8], ebx
+        mov ebx, [esp+20]  ; CS
+        mov [eax+12], ebx
+        mov ebx, [esp+24]  ; EFLAGS
+        mov [eax+16], ebx
+
+        ; Save CPU state before calling interrupt
+        mov ebx, esp       ; ESP before int save
+        add ebx, 16
+        mov [eax+20], ebx
+
+        mov [eax+24], ebp
+        mov [eax+28], edi
+        mov [eax+32], esi
+        mov [eax+36], edx
+        mov [eax+40], ecx
+
+        pop ebx             ; restore prelude ebx
+        mov [eax+44], ebx
+        push ebx            ; save ebx
+
+        mov ebx, [esp+4]    ; pre int eax
+        mov [eax+48], ebx
+        pop ebx             ; restore prelude ebx
+
+        mov [eax+52], ss
+        mov [eax+56], gs
+        mov [eax+60], fs
+        mov [eax+64], es
+        mov [eax+68], ds
+
+        pop eax ; Restore
 
         ; call the C generic interrupt handler
-        call    kernel_interrupt_handler
+        call kernel_interrupt_handler
+
+        ; Get the current thread handle
+        mov eax, [current_thread]
 
         ; Restore registers
-
-        pop     esp
-        pop     ebp
-        pop     edi
-        pop     esi
-        pop     edx
-        pop     ecx
-        pop     ebx
-        pop     eax
-
-        pop     ss
-        pop     gs
-        pop     fs
-        pop     es
-        pop     ds
-
-        ; Restore the esp (interrupt and error code)
-        add     esp, 8
+        mov ds,  [eax+68]
+        mov es,  [eax+64]
+        mov fs,  [eax+60]
+        mov gs,  [eax+56]
+        mov ss,  [eax+52]
+        mov ebx, [eax+44]
+        mov ecx, [eax+40]
+        mov edx, [eax+36]
+        mov esi, [eax+32]
+        mov edi, [eax+28]
+        mov ebp, [eax+24]
+        mov esp, [eax+20]
+        mov eax, [eax+48]
 
         ; Return from interrupt
         iret

@@ -46,6 +46,8 @@ interrupt_handler_%1:
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
+extern current_thread
+
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
@@ -63,76 +65,93 @@ extern kernel_interrupt_handler
 
 section .text
 __generic_interrupt_handler:
+        ; Save a bit of context
+        push rax
+        push rbx
 
-        ; Save registers before calling interrupt
-        sub     rsp, 8
-        mov     [rsp], ds
-        sub     rsp, 8
-        mov     [rsp], es
-        sub     rsp, 8
-        mov     [rsp], fs
-        sub     rsp, 8
-        mov     [rsp], gs
-        sub     rsp, 8
-        mov     [rsp], ss
+        ; Get the current thread handle
+        mov rbx, current_thread
+        mov rax, [rbx]
 
-        push    r8
-        push    r9
-        push    r10
-        push    r11
-        push    r12
-        push    r13
-        push    r14
-        push    r15
+        ; Save the interrupt context
+        mov rbx, [rsp+16]  ; Int id
+        mov [rax], rbx
+        mov rbx, [rsp+24]  ; Int code
+        mov [rax+8], rbx
+        mov rbx, [rsp+32]  ; RIP
+        mov [rax+16], rbx
+        mov rbx, [rsp+40]  ; CS
+        mov [rax+24], rbx
+        mov rbx, [rsp+48]  ; RFLAGS
+        mov [rax+32], rbx
 
-        push    rax
-        push    rbx
-        push    rcx
-        push    rdx
-        push    rsi
-        push    rdi
-        push    rbp
-        push    rsp
+        ; Save CPU state before calling interrupt
+        mov rbx, rsp       ; RSP before int save
+        add rbx, 32
+        mov [rax+40], rbx
 
-        ; Mov int id in RDI to follow ABI
-        mov rdi, [rsp + 168]
+        mov [rax+48], rbp
+        mov [rax+56], rdi
+        mov [rax+64], rsi
+        mov [rax+72], rdx
+        mov [rax+80], rcx
+
+        pop rbx             ; restore prelude rbx
+        mov [rax+88], rbx
+        push rbx            ; save rbx
+
+        mov rbx, [rsp+8]    ; pre int rax
+        mov [rax+96], rbx
+        pop rbx             ; restore prelude rbx
+
+        mov [rax+104], r8
+        mov [rax+112], r9
+        mov [rax+120], r10
+        mov [rax+128], r11
+        mov [rax+136], r12
+        mov [rax+144], r13
+        mov [rax+152], r14
+        mov [rax+160], r15
+
+        mov [rax+168], ss
+        mov [rax+176], gs
+        mov [rax+184], fs
+        mov [rax+192], es
+        mov [rax+200], ds
+
+        pop rax ; Restore
 
         ; call the C generic interrupt handler
-        ; TODO: Call kernel handler
-        ;call    kernel_interrupt_handler
+        call kernel_interrupt_handler
+
+        ; Get the current thread handle
+        mov rbx, current_thread
+        mov rax, [rbx]
 
         ; Restore registers
-        pop     rsp
-        pop     rbp
-        pop     rdi
-        pop     rsi
-        pop     rdx
-        pop     rcx
-        pop     rbx
-        pop     rax
+        mov ss, [rax+168]
+        mov gs, [rax+176]
+        mov fs, [rax+184]
+        mov es, [rax+192]
+        mov ds, [rax+200]
 
-        pop     r15
-        pop     r14
-        pop     r13
-        pop     r12
-        pop     r11
-        pop     r10
-        pop     r9
-        pop     r8
+        mov r8,  [rax+104]
+        mov r9,  [rax+112]
+        mov r10, [rax+120]
+        mov r11, [rax+128]
+        mov r12, [rax+136]
+        mov r13, [rax+144]
+        mov r14, [rax+152]
+        mov r15, [rax+160]
 
-        mov     ss, [rsp]
-        add     rsp, 8
-        mov     gs, [rsp]
-        add     rsp, 8
-        mov     fs, [rsp]
-        add     rsp, 8
-        mov     es, [rsp]
-        add     rsp, 8
-        mov     ds, [rsp]
-        add     rsp, 8
-
-        ; Restore the esp (interrupt and error code)
-        add     rsp, 16
+        mov rsp, [rax+40]
+        mov rbp, [rax+48]
+        mov rdi, [rax+56]
+        mov rsi, [rax+64]
+        mov rdx, [rax+72]
+        mov rcx, [rax+80]
+        mov rbx, [rax+88]
+        mov rax, [rax+96]
 
         ; Return from interrupt
         iretq

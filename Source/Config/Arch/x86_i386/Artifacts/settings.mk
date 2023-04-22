@@ -36,5 +36,9 @@ else
 CFLAGS += $(EXTRA_FLAGS)
 endif
 
+ifeq ($(TRACE), TRUE)
+CFLAGS += -D_TRACING_ENABLED
+endif
+
 ASFLAGS = -g -f elf -w+gnu-elf-extensions -F dwarf
 LDFLAGS = -T $(LINKER_FILE) -melf_i386 -no-pie

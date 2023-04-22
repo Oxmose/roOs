@@ -71,8 +71,8 @@
  * @param[in] addr The address of the IO to write.
  * @param[in] value The value to write to the IO.
  */
-inline static void mapped_io_write_8(void* volatile addr,
-                                     const uint8_t value)
+inline static void _mapped_io_write_8(void* volatile addr,
+                                      const uint8_t value)
 {
     *(volatile uint8_t*)(addr) = value;
 }
@@ -87,8 +87,8 @@ inline static void mapped_io_write_8(void* volatile addr,
  * @param[in] addr The address of the IO to write.
  * @param[in] value The value to write to the IO.
  */
-inline static void mapped_io_write_16(void* volatile addr,
-                                      const uint16_t value)
+inline static void _mapped_io_write_16(void* volatile addr,
+                                       const uint16_t value)
 {
     *(volatile uint16_t*)(addr) = value;
 }
@@ -103,8 +103,8 @@ inline static void mapped_io_write_16(void* volatile addr,
  * @param[in] addr The address of the IO to write.
  * @param[in] value The value to write to the IO.
  */
-inline static void mapped_io_write_32(void* volatile addr,
-                                      const uint32_t value)
+inline static void _mapped_io_write_32(void* volatile addr,
+                                       const uint32_t value)
 {
     *(volatile uint32_t*)(addr) = value;
 }
@@ -119,8 +119,8 @@ inline static void mapped_io_write_32(void* volatile addr,
  * @param[in] addr The address of the IO to write.
  * @param[in] value The value to write to the IO.
  */
-inline static void mapped_io_write_64(void* volatile addr,
-                                      const uint64_t value)
+inline static void _mapped_io_write_64(void* volatile addr,
+                                       const uint64_t value)
 {
     *(volatile uint64_t*)(addr) = value;
 }
@@ -134,7 +134,7 @@ inline static void mapped_io_write_64(void* volatile addr,
  *
  * @param[in] addr The address of the IO to read.
  */
-inline static uint8_t mapped_io_read_8(const volatile void* addr)
+inline static uint8_t _mapped_io_read_8(const volatile void* addr)
 {
     return *(volatile uint8_t*)(addr);
 }
@@ -148,7 +148,7 @@ inline static uint8_t mapped_io_read_8(const volatile void* addr)
  *
  * @param[in] addr The address of the IO to read.
  */
-inline static uint16_t mapped_io_read_16(const volatile void* addr)
+inline static uint16_t _mapped_io_read_16(const volatile void* addr)
 {
     return *(volatile uint16_t*)(addr);
 }
@@ -162,7 +162,7 @@ inline static uint16_t mapped_io_read_16(const volatile void* addr)
  *
  * @param[in] addr The address of the IO to read.
  */
-inline static uint32_t mapped_io_read_32(const volatile void* addr)
+inline static uint32_t _mapped_io_read_32(const volatile void* addr)
 {
     return *(volatile uint32_t*)(addr);
 }
@@ -176,7 +176,7 @@ inline static uint32_t mapped_io_read_32(const volatile void* addr)
  *
  * @param[in] addr The address of the IO to read.
  */
-inline static uint64_t mapped_io_read_64(const volatile void* addr)
+inline static uint64_t _mapped_io_read_64(const volatile void* addr)
 {
     return *(volatile uint64_t*)(addr);
 }

@@ -86,11 +86,20 @@ void kickstart(void);
  * FUNCTIONS
  ******************************************************************************/
 
+/* TODO: remove */
+extern void scheduler_dummy_init(void);
+
 void kickstart(void)
 {
     OS_RETURN_E retVal;
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_START, 0);
+
+    /* TODO: remove */
+    scheduler_dummy_init();
+
     /* Register the VGA console driver for kernel console */
+    vga_console_init();
     retVal = console_set_selected_driver(vga_console_get_driver());
     console_clear_screen();
 
@@ -101,6 +110,8 @@ void kickstart(void)
 
     /* Initialize the CPU */
     cpu_init();
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 
     /* Once the scheduler is started, we should never come back here. */
     PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Kickstart returned", TRUE);

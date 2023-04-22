@@ -1,18 +1,20 @@
 Archive member included to satisfy reference by file (symbol)
 
-../Arch/bin/libarch.a(init.o)
-                              (__kinit)
+../Arch/bin/libarch.a(init_64.o)
+                              ../Arch/CPU/build/init_32.o (__kinit_x86_64)
 ../Arch/bin/libarch.a(kickstart.o)
-                              ../Arch/bin/libarch.a(init.o) (kickstart)
+                              ../Arch/bin/libarch.a(init_64.o) (kickstart)
 ../Arch/bin/libarch.a(panic.o)
                               ../Arch/bin/libarch.a(kickstart.o) (kernel_panic)
 ../Arch/bin/libarch.a(vga_console.o)
-                              ../Arch/bin/libarch.a(kickstart.o) (vga_console_get_driver)
+                              ../Arch/bin/libarch.a(kickstart.o) (vga_console_init)
 ../Arch/bin/libarch.a(cpu.o)  ../Arch/bin/libarch.a(kickstart.o) (cpu_init)
 ../Arch/bin/libarch.a(int_handlers.o)
                               ../Arch/bin/libarch.a(cpu.o) (interrupt_handler_8)
 ../Core/bin/libcore.a(interrupts.o)
                               ../Arch/bin/libarch.a(int_handlers.o) (kernel_interrupt_handler)
+../Core/bin/libcore.a(scheduler.o)
+                              ../Arch/bin/libarch.a(kickstart.o) (scheduler_dummy_init)
 ../IO/bin/libio.a(console.o)  ../Arch/bin/libarch.a(kickstart.o) (console_set_selected_driver)
 ../IO/bin/libio.a(kernel_output.o)
                               ../Arch/bin/libarch.a(panic.o) (kernel_printf)
@@ -26,699 +28,773 @@ Archive member included to satisfy reference by file (symbol)
                               ../Arch/bin/libarch.a(panic.o) (strlen)
 ../Libs/bin/liblibc.a(uitoa.o)
                               ../IO/bin/libio.a(kernel_output.o) (uitoa)
-../Libs/bin/liblibc.a(udivmoddi4.o)
-                              ../Libs/bin/liblibc.a(uitoa.o) (__udivmoddi4)
+../Libs/bin/libtrace.a(tracing.o)
+                              ../Arch/bin/libarch.a(kickstart.o) (kernel_trace_event)
+
+Merging program properties
+
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (0x3) and ../Arch/CPU/build/init_32.o (not found)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Arch/bin/libarch.a(panic.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Arch/bin/libarch.a(vga_console.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Arch/bin/libarch.a(cpu.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Core/bin/libcore.a(interrupts.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Core/bin/libcore.a(scheduler.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../IO/bin/libio.a(console.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../IO/bin/libio.a(kernel_output.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/liblibc.a(itoa.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/liblibc.a(memmove.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/liblibc.a(memset.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/liblibc.a(strlen.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/liblibc.a(uitoa.o) (0x3)
+Removed property 0xc0000002 to merge ../Arch/bin/libarch.a(kickstart.o) (not found) and ../Libs/bin/libtrace.a(tracing.o) (0x3)
+
+Discarded input sections
+
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Arch/bin/libarch.a(kickstart.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Arch/bin/libarch.a(panic.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Arch/bin/libarch.a(vga_console.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Arch/bin/libarch.a(cpu.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Core/bin/libcore.a(interrupts.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Core/bin/libcore.a(scheduler.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../IO/bin/libio.a(console.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../IO/bin/libio.a(kernel_output.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/liblibc.a(itoa.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/liblibc.a(memmove.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/liblibc.a(memset.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/liblibc.a(strlen.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/liblibc.a(uitoa.o)
+ .note.gnu.property
+                0x0000000000000000       0x20 ../Libs/bin/libtrace.a(tracing.o)
 
 Memory Configuration
 
 Name             Origin             Length             Attributes
 KERNEL_BIOS_CALL_MEM 0x0000000000001000 0x0000000000001000 xrw
-LOW_STARTUP_CODE 0x0000000000100000 0x0000000000004000 xr
-HIGH_STARTUP_CODE 0x00000000e0110000 0x0000000000004000 xr
-KERNEL_CODE      0x00000000e0120000 0x0000000000040000 xr
-KERNEL_RO_DATA   0x00000000e0200000 0x0000000000010000 r
-KERNEL_RW_DATA   0x00000000e0210000 0x0000000000080000 rw
-KERNEL_SYM_TAB   0x00000000e0310000 0x0000000000010000 rw
-KERNEL_STACKS    0x00000000e0410000 0x0000000000008000 rw
-KERNEL_HEAP      0x00000000e0418000 0x0000000000a00000 rw
-KERNEL_MULTIBOOT_MEM 0x00000000e0e18000 0x0000000000010000 rw
-KERNEL_INITRD_MEM 0x00000000e0e28000 0x0000000000010000 rw
+LOW_STARTUP_CODE 0x0000000000100000 0x0000000000008000 xr
+KERNEL_CODE      0xfffffff800110000 0x0000000000040000 xr
+KERNEL_RO_DATA   0xfffffff800150000 0x0000000000010000 r
+KERNEL_RW_DATA   0xfffffff800160000 0x0000000000010000 rw
+KERNEL_SYM_TAB   0xfffffff800170000 0x0000000000010000 rw
+KERNEL_TRACE_BUFFER 0xfffffff800180000 0x0000000000010000 rw
+KERNEL_MULTIBOOT_MEM 0xfffffff800190000 0x0000000000010000 rw
+KERNEL_STACKS    0xfffffff800200000 0x0000000000010000 rw
+KERNEL_HEAP      0xfffffff800210000 0x0000000000a00000 rw
 *default*        0x0000000000000000 0xffffffffffffffff
 
 Linker script and memory map
 
-                0x00000000e0000000                KERNEL_MEM_OFFSET = 0xe0000000
+                0xfffffff800000000                KERNEL_MEM_OFFSET = 0xfffffff800000000
                 0x0000000000100000                . = ORIGIN (LOW_STARTUP_CODE)
 
-.low_startup    0x0000000000100000       0x78
+.low_startup    0x0000000000100000     0x7370
                 0x0000000000100000                _START_LOW_STARTUP_ADDR = .
  *(.multiboot)
- .multiboot     0x0000000000100000       0x30 ../Arch/bin/libarch.a(init.o)
+ .multiboot     0x0000000000100000       0x30 ../Arch/CPU/build/init_32.o
                 0x0000000000100030                . = ALIGN (0x10)
- *(.low_startup_code)
- .low_startup_code
-                0x0000000000100030       0x48 ../Arch/bin/libarch.a(init.o)
+ ../Arch/CPU/build/init_32.o()
+ .text          0x0000000000100030      0x1c6 ../Arch/CPU/build/init_32.o
                 0x0000000000100030                __kinit
-                0x0000000000100070                _kernel_multiboot_ptr
-                0x0000000020100030                __kinit_low
-                0x0000000000100078                _END_LOW_STARTUP_ADDR = .
-                0x00000000e0110000                . = ORIGIN (HIGH_STARTUP_CODE)
+                0x0000000800100030                __kinit_low
+ *fill*         0x00000000001001f6      0xe0a 
+ .data          0x0000000000101000     0x6000 ../Arch/CPU/build/init_32.o
+ .bss           0x0000000000107000      0x200 ../Arch/CPU/build/init_32.o
+ .debug_aranges
+                0x0000000000107200       0x30 ../Arch/CPU/build/init_32.o
+ .debug_pubnames
+                0x0000000000107230        0x0 ../Arch/CPU/build/init_32.o
+ .debug_info    0x0000000000107230       0x4f ../Arch/CPU/build/init_32.o
+ .debug_abbrev  0x000000000010727f       0x1b ../Arch/CPU/build/init_32.o
+ .debug_line    0x000000000010729a       0xd5 ../Arch/CPU/build/init_32.o
+ *fill*         0x000000000010736f        0x1 
+ .debug_frame   0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .debug_loc     0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .rela.got      0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .got           0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .got.plt       0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .iplt          0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .rela.iplt     0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .igot.plt      0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .rela.text     0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+ .rela.rodata   0x0000000000107370        0x0 ../Arch/CPU/build/init_32.o
+                0x0000000000107370                _END_LOW_STARTUP_ADDR = .
+                0xfffffff800110000                . = ORIGIN (KERNEL_CODE)
 
-.high_startup   0x00000000e0110000       0x45 load address 0x0000000000110000
-                0x00000000e0110000                . = ALIGN (0x10)
-                0x00000000e0110000                _START_HIGH_STARTUP_ADDR = .
- *(.high_startup_code)
- .high_startup_code
-                0x00000000e0110000       0x45 ../Arch/bin/libarch.a(init.o)
-                0x00000000e0110045                _END_HIGH_STARTUP_ADDR = .
-                0x00000000e0120000                . = ORIGIN (KERNEL_CODE)
-
-.text           0x00000000e0120000     0x3f90 load address 0x0000000000120000
-                0x00000000e0120000                _START_TEXT_ADDR = .
+.text           0xfffffff800110000     0x58d3 load address 0x0000000000110000
+                0xfffffff800110000                _START_TEXT_ADDR = .
  *(.text)
- .text          0x00000000e0120000       0x4c ../Arch/bin/libarch.a(kickstart.o)
-                0x00000000e0120000                kickstart
- *fill*         0x00000000e012004c        0x4 
- .text          0x00000000e0120050      0x704 ../Arch/bin/libarch.a(panic.o)
-                0x00000000e0120050                panic_handler
-                0x00000000e0120710                kernel_panic
- *fill*         0x00000000e0120754        0xc 
- .text          0x00000000e0120760      0xc06 ../Arch/bin/libarch.a(vga_console.o)
-                0x00000000e0120760                vga_console_save_cursor
-                0x00000000e0120780                vga_console_set_color_scheme
-                0x00000000e01207a0                vga_console_save_color_scheme
-                0x00000000e01207c0                vga_console_clear_screen
-                0x00000000e01208c0                vga_console_put_cursor_at
-                0x00000000e0120920                vga_console_restore_cursor
-                0x00000000e0120980                vga_console_scroll
-                0x00000000e01212a0                vga_console_put_char
-                0x00000000e01212d0                vga_console_write_keyboard
-                0x00000000e0121300                vga_console_put_string
-                0x00000000e0121350                vga_console_init
-                0x00000000e0121360                vga_console_get_driver
- *fill*         0x00000000e0121366        0xa 
- .text          0x00000000e0121370      0x9b9 ../Arch/bin/libarch.a(cpu.o)
-                0x00000000e0121370                cpu_init
-                0x00000000e0121710                cpu_raise_interrupt
- *fill*         0x00000000e0121d29        0x7 
- .text          0x00000000e0121d30      0xa64 ../Arch/bin/libarch.a(int_handlers.o)
-                0x00000000e0121d57                interrupt_handler_8
-                0x00000000e0121d5b                interrupt_handler_10
-                0x00000000e0121d5f                interrupt_handler_11
-                0x00000000e0121d63                interrupt_handler_12
-                0x00000000e0121d67                interrupt_handler_13
-                0x00000000e0121d6b                interrupt_handler_14
-                0x00000000e0121d6f                interrupt_handler_17
-                0x00000000e0121d73                interrupt_handler_30
-                0x00000000e0121d77                interrupt_handler_0
-                0x00000000e0121d7d                interrupt_handler_1
-                0x00000000e0121d83                interrupt_handler_2
-                0x00000000e0121d89                interrupt_handler_3
-                0x00000000e0121d8f                interrupt_handler_4
-                0x00000000e0121d95                interrupt_handler_5
-                0x00000000e0121d9b                interrupt_handler_6
-                0x00000000e0121da1                interrupt_handler_7
-                0x00000000e0121da7                interrupt_handler_9
-                0x00000000e0121dad                interrupt_handler_15
-                0x00000000e0121db6                interrupt_handler_16
-                0x00000000e0121dbf                interrupt_handler_18
-                0x00000000e0121dc8                interrupt_handler_19
-                0x00000000e0121dd1                interrupt_handler_20
-                0x00000000e0121dda                interrupt_handler_21
-                0x00000000e0121de3                interrupt_handler_22
-                0x00000000e0121dec                interrupt_handler_23
-                0x00000000e0121df5                interrupt_handler_24
-                0x00000000e0121dfe                interrupt_handler_25
-                0x00000000e0121e07                interrupt_handler_26
-                0x00000000e0121e10                interrupt_handler_27
-                0x00000000e0121e19                interrupt_handler_28
-                0x00000000e0121e22                interrupt_handler_29
-                0x00000000e0121e2b                interrupt_handler_31
-                0x00000000e0121e34                interrupt_handler_32
-                0x00000000e0121e3d                interrupt_handler_33
-                0x00000000e0121e46                interrupt_handler_34
-                0x00000000e0121e4f                interrupt_handler_35
-                0x00000000e0121e58                interrupt_handler_36
-                0x00000000e0121e61                interrupt_handler_37
-                0x00000000e0121e6a                interrupt_handler_38
-                0x00000000e0121e73                interrupt_handler_39
-                0x00000000e0121e7c                interrupt_handler_40
-                0x00000000e0121e85                interrupt_handler_41
-                0x00000000e0121e8e                interrupt_handler_42
-                0x00000000e0121e97                interrupt_handler_43
-                0x00000000e0121ea0                interrupt_handler_44
-                0x00000000e0121ea9                interrupt_handler_45
-                0x00000000e0121eb2                interrupt_handler_46
-                0x00000000e0121ebb                interrupt_handler_47
-                0x00000000e0121ec4                interrupt_handler_48
-                0x00000000e0121ecd                interrupt_handler_49
-                0x00000000e0121ed6                interrupt_handler_50
-                0x00000000e0121edf                interrupt_handler_51
-                0x00000000e0121ee8                interrupt_handler_52
-                0x00000000e0121ef1                interrupt_handler_53
-                0x00000000e0121efa                interrupt_handler_54
-                0x00000000e0121f03                interrupt_handler_55
-                0x00000000e0121f0c                interrupt_handler_56
-                0x00000000e0121f15                interrupt_handler_57
-                0x00000000e0121f1e                interrupt_handler_58
-                0x00000000e0121f27                interrupt_handler_59
-                0x00000000e0121f30                interrupt_handler_60
-                0x00000000e0121f39                interrupt_handler_61
-                0x00000000e0121f42                interrupt_handler_62
-                0x00000000e0121f4b                interrupt_handler_63
-                0x00000000e0121f54                interrupt_handler_64
-                0x00000000e0121f5d                interrupt_handler_65
-                0x00000000e0121f66                interrupt_handler_66
-                0x00000000e0121f6f                interrupt_handler_67
-                0x00000000e0121f78                interrupt_handler_68
-                0x00000000e0121f81                interrupt_handler_69
-                0x00000000e0121f8a                interrupt_handler_70
-                0x00000000e0121f93                interrupt_handler_71
-                0x00000000e0121f9c                interrupt_handler_72
-                0x00000000e0121fa5                interrupt_handler_73
-                0x00000000e0121fae                interrupt_handler_74
-                0x00000000e0121fb7                interrupt_handler_75
-                0x00000000e0121fc0                interrupt_handler_76
-                0x00000000e0121fc9                interrupt_handler_77
-                0x00000000e0121fd2                interrupt_handler_78
-                0x00000000e0121fdb                interrupt_handler_79
-                0x00000000e0121fe4                interrupt_handler_80
-                0x00000000e0121fed                interrupt_handler_81
-                0x00000000e0121ff6                interrupt_handler_82
-                0x00000000e0121fff                interrupt_handler_83
-                0x00000000e0122008                interrupt_handler_84
-                0x00000000e0122011                interrupt_handler_85
-                0x00000000e012201a                interrupt_handler_86
-                0x00000000e0122023                interrupt_handler_87
-                0x00000000e012202c                interrupt_handler_88
-                0x00000000e0122035                interrupt_handler_89
-                0x00000000e012203e                interrupt_handler_90
-                0x00000000e0122047                interrupt_handler_91
-                0x00000000e0122050                interrupt_handler_92
-                0x00000000e0122059                interrupt_handler_93
-                0x00000000e0122062                interrupt_handler_94
-                0x00000000e012206b                interrupt_handler_95
-                0x00000000e0122074                interrupt_handler_96
-                0x00000000e012207d                interrupt_handler_97
-                0x00000000e0122086                interrupt_handler_98
-                0x00000000e012208f                interrupt_handler_99
-                0x00000000e0122098                interrupt_handler_100
-                0x00000000e01220a1                interrupt_handler_101
-                0x00000000e01220aa                interrupt_handler_102
-                0x00000000e01220b3                interrupt_handler_103
-                0x00000000e01220bc                interrupt_handler_104
-                0x00000000e01220c5                interrupt_handler_105
-                0x00000000e01220ce                interrupt_handler_106
-                0x00000000e01220d7                interrupt_handler_107
-                0x00000000e01220e0                interrupt_handler_108
-                0x00000000e01220e9                interrupt_handler_109
-                0x00000000e01220f2                interrupt_handler_110
-                0x00000000e01220fb                interrupt_handler_111
-                0x00000000e0122104                interrupt_handler_112
-                0x00000000e012210d                interrupt_handler_113
-                0x00000000e0122116                interrupt_handler_114
-                0x00000000e012211f                interrupt_handler_115
-                0x00000000e0122128                interrupt_handler_116
-                0x00000000e0122131                interrupt_handler_117
-                0x00000000e012213a                interrupt_handler_118
-                0x00000000e0122143                interrupt_handler_119
-                0x00000000e012214c                interrupt_handler_120
-                0x00000000e0122155                interrupt_handler_121
-                0x00000000e012215e                interrupt_handler_122
-                0x00000000e0122167                interrupt_handler_123
-                0x00000000e0122170                interrupt_handler_124
-                0x00000000e0122179                interrupt_handler_125
-                0x00000000e0122182                interrupt_handler_126
-                0x00000000e012218b                interrupt_handler_127
-                0x00000000e0122194                interrupt_handler_128
-                0x00000000e01221a0                interrupt_handler_129
-                0x00000000e01221ac                interrupt_handler_130
-                0x00000000e01221b8                interrupt_handler_131
-                0x00000000e01221c4                interrupt_handler_132
-                0x00000000e01221d0                interrupt_handler_133
-                0x00000000e01221dc                interrupt_handler_134
-                0x00000000e01221e8                interrupt_handler_135
-                0x00000000e01221f4                interrupt_handler_136
-                0x00000000e0122200                interrupt_handler_137
-                0x00000000e012220c                interrupt_handler_138
-                0x00000000e0122218                interrupt_handler_139
-                0x00000000e0122224                interrupt_handler_140
-                0x00000000e0122230                interrupt_handler_141
-                0x00000000e012223c                interrupt_handler_142
-                0x00000000e0122248                interrupt_handler_143
-                0x00000000e0122254                interrupt_handler_144
-                0x00000000e0122260                interrupt_handler_145
-                0x00000000e012226c                interrupt_handler_146
-                0x00000000e0122278                interrupt_handler_147
-                0x00000000e0122284                interrupt_handler_148
-                0x00000000e0122290                interrupt_handler_149
-                0x00000000e012229c                interrupt_handler_150
-                0x00000000e01222a8                interrupt_handler_151
-                0x00000000e01222b4                interrupt_handler_152
-                0x00000000e01222c0                interrupt_handler_153
-                0x00000000e01222cc                interrupt_handler_154
-                0x00000000e01222d8                interrupt_handler_155
-                0x00000000e01222e4                interrupt_handler_156
-                0x00000000e01222f0                interrupt_handler_157
-                0x00000000e01222fc                interrupt_handler_158
-                0x00000000e0122308                interrupt_handler_159
-                0x00000000e0122314                interrupt_handler_160
-                0x00000000e0122320                interrupt_handler_161
-                0x00000000e012232c                interrupt_handler_162
-                0x00000000e0122338                interrupt_handler_163
-                0x00000000e0122344                interrupt_handler_164
-                0x00000000e0122350                interrupt_handler_165
-                0x00000000e012235c                interrupt_handler_166
-                0x00000000e0122368                interrupt_handler_167
-                0x00000000e0122374                interrupt_handler_168
-                0x00000000e0122380                interrupt_handler_169
-                0x00000000e012238c                interrupt_handler_170
-                0x00000000e0122398                interrupt_handler_171
-                0x00000000e01223a4                interrupt_handler_172
-                0x00000000e01223b0                interrupt_handler_173
-                0x00000000e01223bc                interrupt_handler_174
-                0x00000000e01223c8                interrupt_handler_175
-                0x00000000e01223d4                interrupt_handler_176
-                0x00000000e01223e0                interrupt_handler_177
-                0x00000000e01223ec                interrupt_handler_178
-                0x00000000e01223f8                interrupt_handler_179
-                0x00000000e0122404                interrupt_handler_180
-                0x00000000e0122410                interrupt_handler_181
-                0x00000000e012241c                interrupt_handler_182
-                0x00000000e0122428                interrupt_handler_183
-                0x00000000e0122434                interrupt_handler_184
-                0x00000000e0122440                interrupt_handler_185
-                0x00000000e012244c                interrupt_handler_186
-                0x00000000e0122458                interrupt_handler_187
-                0x00000000e0122464                interrupt_handler_188
-                0x00000000e0122470                interrupt_handler_189
-                0x00000000e012247c                interrupt_handler_190
-                0x00000000e0122488                interrupt_handler_191
-                0x00000000e0122494                interrupt_handler_192
-                0x00000000e01224a0                interrupt_handler_193
-                0x00000000e01224ac                interrupt_handler_194
-                0x00000000e01224b8                interrupt_handler_195
-                0x00000000e01224c4                interrupt_handler_196
-                0x00000000e01224d0                interrupt_handler_197
-                0x00000000e01224dc                interrupt_handler_198
-                0x00000000e01224e8                interrupt_handler_199
-                0x00000000e01224f4                interrupt_handler_200
-                0x00000000e0122500                interrupt_handler_201
-                0x00000000e012250c                interrupt_handler_202
-                0x00000000e0122518                interrupt_handler_203
-                0x00000000e0122524                interrupt_handler_204
-                0x00000000e0122530                interrupt_handler_205
-                0x00000000e012253c                interrupt_handler_206
-                0x00000000e0122548                interrupt_handler_207
-                0x00000000e0122554                interrupt_handler_208
-                0x00000000e0122560                interrupt_handler_209
-                0x00000000e012256c                interrupt_handler_210
-                0x00000000e0122578                interrupt_handler_211
-                0x00000000e0122584                interrupt_handler_212
-                0x00000000e0122590                interrupt_handler_213
-                0x00000000e012259c                interrupt_handler_214
-                0x00000000e01225a8                interrupt_handler_215
-                0x00000000e01225b4                interrupt_handler_216
-                0x00000000e01225c0                interrupt_handler_217
-                0x00000000e01225cc                interrupt_handler_218
-                0x00000000e01225d8                interrupt_handler_219
-                0x00000000e01225e4                interrupt_handler_220
-                0x00000000e01225f0                interrupt_handler_221
-                0x00000000e01225fc                interrupt_handler_222
-                0x00000000e0122608                interrupt_handler_223
-                0x00000000e0122614                interrupt_handler_224
-                0x00000000e0122620                interrupt_handler_225
-                0x00000000e012262c                interrupt_handler_226
-                0x00000000e0122638                interrupt_handler_227
-                0x00000000e0122644                interrupt_handler_228
-                0x00000000e0122650                interrupt_handler_229
-                0x00000000e012265c                interrupt_handler_230
-                0x00000000e0122668                interrupt_handler_231
-                0x00000000e0122674                interrupt_handler_232
-                0x00000000e0122680                interrupt_handler_233
-                0x00000000e012268c                interrupt_handler_234
-                0x00000000e0122698                interrupt_handler_235
-                0x00000000e01226a4                interrupt_handler_236
-                0x00000000e01226b0                interrupt_handler_237
-                0x00000000e01226bc                interrupt_handler_238
-                0x00000000e01226c8                interrupt_handler_239
-                0x00000000e01226d4                interrupt_handler_240
-                0x00000000e01226e0                interrupt_handler_241
-                0x00000000e01226ec                interrupt_handler_242
-                0x00000000e01226f8                interrupt_handler_243
-                0x00000000e0122704                interrupt_handler_244
-                0x00000000e0122710                interrupt_handler_245
-                0x00000000e012271c                interrupt_handler_246
-                0x00000000e0122728                interrupt_handler_247
-                0x00000000e0122734                interrupt_handler_248
-                0x00000000e0122740                interrupt_handler_249
-                0x00000000e012274c                interrupt_handler_250
-                0x00000000e0122758                interrupt_handler_251
-                0x00000000e0122764                interrupt_handler_252
-                0x00000000e0122770                interrupt_handler_253
-                0x00000000e012277c                interrupt_handler_254
-                0x00000000e0122788                interrupt_handler_255
- *fill*         0x00000000e0122794        0xc 
- .text          0x00000000e01227a0      0x486 ../Core/bin/libcore.a(interrupts.o)
-                0x00000000e01227e0                kernel_interrupt_handler
-                0x00000000e0122890                kernel_interrupt_init
-                0x00000000e0122900                kernel_interrupt_set_driver
-                0x00000000e0122990                kernel_interrupt_register_int_handler
-                0x00000000e0122a20                kernel_interrupt_remove_int_handler
-                0x00000000e0122aa0                kernel_interrupt_register_irq_handler
-                0x00000000e0122b50                kernel_interrupt_remove_irq_handler
-                0x00000000e0122be0                kernel_interrupt_restore
-                0x00000000e0122bf0                kernel_interrupt_disable
-                0x00000000e0122c00                kernel_interrupt_set_irq_mask
-                0x00000000e0122c20                kernel_interrupt_set_irq_eoi
- *fill*         0x00000000e0122c26        0xa 
- .text          0x00000000e0122c30      0x1d2 ../IO/bin/libio.a(console.o)
-                0x00000000e0122c30                console_set_selected_driver
-                0x00000000e0122cc0                console_clear_screen
-                0x00000000e0122ce0                console_put_cursor_at
-                0x00000000e0122d00                console_save_cursor
-                0x00000000e0122d20                console_restore_cursor
-                0x00000000e0122d40                console_scroll
-                0x00000000e0122d60                console_set_color_scheme
-                0x00000000e0122d80                console_save_color_scheme
-                0x00000000e0122da0                console_put_string
-                0x00000000e0122dc0                console_put_char
-                0x00000000e0122df0                console_console_write_keyboard
- *fill*         0x00000000e0122e02        0xe 
- .text          0x00000000e0122e10      0xec5 ../IO/bin/libio.a(kernel_output.o)
-                0x00000000e0123980                kernel_printf
-                0x00000000e01239c0                kernel_error
-                0x00000000e0123a50                kernel_success
-                0x00000000e0123ae0                kernel_info
-                0x00000000e0123b70                kernel_warning
-                0x00000000e0123c00                kernel_debug
-                0x00000000e0123c90                kernel_doprint
- *fill*         0x00000000e0123cd5        0xb 
- .text          0x00000000e0123ce0       0x45 ../Libs/bin/liblibc.a(itoa.o)
-                0x00000000e0123ce0                itoa
- *fill*         0x00000000e0123d25        0xb 
- .text          0x00000000e0123d30       0x2e ../Libs/bin/liblibc.a(memmove.o)
-                0x00000000e0123d30                memmove
- *fill*         0x00000000e0123d5e        0x2 
- .text          0x00000000e0123d60       0x2c ../Libs/bin/liblibc.a(memset.o)
-                0x00000000e0123d60                memset
- *fill*         0x00000000e0123d8c        0x4 
- .text          0x00000000e0123d90       0x24 ../Libs/bin/liblibc.a(strlen.o)
-                0x00000000e0123d90                strlen
- *fill*         0x00000000e0123db4        0xc 
- .text          0x00000000e0123dc0       0xf3 ../Libs/bin/liblibc.a(uitoa.o)
-                0x00000000e0123dc0                uitoa
- *fill*         0x00000000e0123eb3        0xd 
- .text          0x00000000e0123ec0       0xd0 ../Libs/bin/liblibc.a(udivmoddi4.o)
-                0x00000000e0123ec0                __udivmoddi4
+ .text          0xfffffff800110000       0xa8 ../Arch/bin/libarch.a(init_64.o)
+                0xfffffff800110000                __kinit_x86_64
+ *fill*         0xfffffff8001100a8        0x8 
+ .text          0xfffffff8001100b0       0xca ../Arch/bin/libarch.a(kickstart.o)
+                0xfffffff8001100b0                kickstart
+ *fill*         0xfffffff80011017a        0x6 
+ .text          0xfffffff800110180      0x8f1 ../Arch/bin/libarch.a(panic.o)
+                0xfffffff800110180                panic_handler
+                0xfffffff8001109c0                kernel_panic
+ *fill*         0xfffffff800110a71        0xf 
+ .text          0xfffffff800110a80      0xd4f ../Arch/bin/libarch.a(vga_console.o)
+                0xfffffff800110a80                vga_console_save_cursor
+                0xfffffff800110aa0                vga_console_set_color_scheme
+                0xfffffff800110ac0                vga_console_save_color_scheme
+                0xfffffff800110ae0                vga_console_clear_screen
+                0xfffffff800110b80                vga_console_put_cursor_at
+                0xfffffff800110be0                vga_console_restore_cursor
+                0xfffffff800110c50                vga_console_scroll
+                0xfffffff800111650                vga_console_put_char
+                0xfffffff800111680                vga_console_write_keyboard
+                0xfffffff8001116e0                vga_console_put_string
+                0xfffffff800111760                vga_console_init
+                0xfffffff8001117c0                vga_console_get_driver
+ *fill*         0xfffffff8001117cf        0x1 
+ .text          0xfffffff8001117d0     0x1041 ../Arch/bin/libarch.a(cpu.o)
+                0xfffffff8001117d0                cpu_init
+                0xfffffff8001120e0                cpu_raise_interrupt
+ *fill*         0xfffffff800112811        0xf 
+ .text          0xfffffff800112820      0xba9 ../Arch/bin/libarch.a(int_handlers.o)
+                0xfffffff800112959                interrupt_handler_8
+                0xfffffff800112960                interrupt_handler_10
+                0xfffffff800112967                interrupt_handler_11
+                0xfffffff80011296e                interrupt_handler_12
+                0xfffffff800112975                interrupt_handler_13
+                0xfffffff80011297c                interrupt_handler_14
+                0xfffffff800112983                interrupt_handler_17
+                0xfffffff80011298a                interrupt_handler_30
+                0xfffffff800112991                interrupt_handler_0
+                0xfffffff80011299a                interrupt_handler_1
+                0xfffffff8001129a3                interrupt_handler_2
+                0xfffffff8001129ac                interrupt_handler_3
+                0xfffffff8001129b5                interrupt_handler_4
+                0xfffffff8001129be                interrupt_handler_5
+                0xfffffff8001129c7                interrupt_handler_6
+                0xfffffff8001129d0                interrupt_handler_7
+                0xfffffff8001129d9                interrupt_handler_9
+                0xfffffff8001129e2                interrupt_handler_15
+                0xfffffff8001129eb                interrupt_handler_16
+                0xfffffff8001129f4                interrupt_handler_18
+                0xfffffff8001129fd                interrupt_handler_19
+                0xfffffff800112a06                interrupt_handler_20
+                0xfffffff800112a0f                interrupt_handler_21
+                0xfffffff800112a18                interrupt_handler_22
+                0xfffffff800112a21                interrupt_handler_23
+                0xfffffff800112a2a                interrupt_handler_24
+                0xfffffff800112a33                interrupt_handler_25
+                0xfffffff800112a3c                interrupt_handler_26
+                0xfffffff800112a45                interrupt_handler_27
+                0xfffffff800112a4e                interrupt_handler_28
+                0xfffffff800112a57                interrupt_handler_29
+                0xfffffff800112a60                interrupt_handler_31
+                0xfffffff800112a69                interrupt_handler_32
+                0xfffffff800112a72                interrupt_handler_33
+                0xfffffff800112a7b                interrupt_handler_34
+                0xfffffff800112a84                interrupt_handler_35
+                0xfffffff800112a8d                interrupt_handler_36
+                0xfffffff800112a96                interrupt_handler_37
+                0xfffffff800112a9f                interrupt_handler_38
+                0xfffffff800112aa8                interrupt_handler_39
+                0xfffffff800112ab1                interrupt_handler_40
+                0xfffffff800112aba                interrupt_handler_41
+                0xfffffff800112ac3                interrupt_handler_42
+                0xfffffff800112acc                interrupt_handler_43
+                0xfffffff800112ad5                interrupt_handler_44
+                0xfffffff800112ade                interrupt_handler_45
+                0xfffffff800112ae7                interrupt_handler_46
+                0xfffffff800112af0                interrupt_handler_47
+                0xfffffff800112af9                interrupt_handler_48
+                0xfffffff800112b02                interrupt_handler_49
+                0xfffffff800112b0b                interrupt_handler_50
+                0xfffffff800112b14                interrupt_handler_51
+                0xfffffff800112b1d                interrupt_handler_52
+                0xfffffff800112b26                interrupt_handler_53
+                0xfffffff800112b2f                interrupt_handler_54
+                0xfffffff800112b38                interrupt_handler_55
+                0xfffffff800112b41                interrupt_handler_56
+                0xfffffff800112b4a                interrupt_handler_57
+                0xfffffff800112b53                interrupt_handler_58
+                0xfffffff800112b5c                interrupt_handler_59
+                0xfffffff800112b65                interrupt_handler_60
+                0xfffffff800112b6e                interrupt_handler_61
+                0xfffffff800112b77                interrupt_handler_62
+                0xfffffff800112b80                interrupt_handler_63
+                0xfffffff800112b89                interrupt_handler_64
+                0xfffffff800112b92                interrupt_handler_65
+                0xfffffff800112b9b                interrupt_handler_66
+                0xfffffff800112ba4                interrupt_handler_67
+                0xfffffff800112bad                interrupt_handler_68
+                0xfffffff800112bb6                interrupt_handler_69
+                0xfffffff800112bbf                interrupt_handler_70
+                0xfffffff800112bc8                interrupt_handler_71
+                0xfffffff800112bd1                interrupt_handler_72
+                0xfffffff800112bda                interrupt_handler_73
+                0xfffffff800112be3                interrupt_handler_74
+                0xfffffff800112bec                interrupt_handler_75
+                0xfffffff800112bf5                interrupt_handler_76
+                0xfffffff800112bfe                interrupt_handler_77
+                0xfffffff800112c07                interrupt_handler_78
+                0xfffffff800112c10                interrupt_handler_79
+                0xfffffff800112c19                interrupt_handler_80
+                0xfffffff800112c22                interrupt_handler_81
+                0xfffffff800112c2b                interrupt_handler_82
+                0xfffffff800112c34                interrupt_handler_83
+                0xfffffff800112c3d                interrupt_handler_84
+                0xfffffff800112c46                interrupt_handler_85
+                0xfffffff800112c4f                interrupt_handler_86
+                0xfffffff800112c58                interrupt_handler_87
+                0xfffffff800112c61                interrupt_handler_88
+                0xfffffff800112c6a                interrupt_handler_89
+                0xfffffff800112c73                interrupt_handler_90
+                0xfffffff800112c7c                interrupt_handler_91
+                0xfffffff800112c85                interrupt_handler_92
+                0xfffffff800112c8e                interrupt_handler_93
+                0xfffffff800112c97                interrupt_handler_94
+                0xfffffff800112ca0                interrupt_handler_95
+                0xfffffff800112ca9                interrupt_handler_96
+                0xfffffff800112cb2                interrupt_handler_97
+                0xfffffff800112cbb                interrupt_handler_98
+                0xfffffff800112cc4                interrupt_handler_99
+                0xfffffff800112ccd                interrupt_handler_100
+                0xfffffff800112cd6                interrupt_handler_101
+                0xfffffff800112cdf                interrupt_handler_102
+                0xfffffff800112ce8                interrupt_handler_103
+                0xfffffff800112cf1                interrupt_handler_104
+                0xfffffff800112cfa                interrupt_handler_105
+                0xfffffff800112d03                interrupt_handler_106
+                0xfffffff800112d0c                interrupt_handler_107
+                0xfffffff800112d15                interrupt_handler_108
+                0xfffffff800112d1e                interrupt_handler_109
+                0xfffffff800112d27                interrupt_handler_110
+                0xfffffff800112d30                interrupt_handler_111
+                0xfffffff800112d39                interrupt_handler_112
+                0xfffffff800112d42                interrupt_handler_113
+                0xfffffff800112d4b                interrupt_handler_114
+                0xfffffff800112d54                interrupt_handler_115
+                0xfffffff800112d5d                interrupt_handler_116
+                0xfffffff800112d66                interrupt_handler_117
+                0xfffffff800112d6f                interrupt_handler_118
+                0xfffffff800112d78                interrupt_handler_119
+                0xfffffff800112d81                interrupt_handler_120
+                0xfffffff800112d8a                interrupt_handler_121
+                0xfffffff800112d93                interrupt_handler_122
+                0xfffffff800112d9c                interrupt_handler_123
+                0xfffffff800112da5                interrupt_handler_124
+                0xfffffff800112dae                interrupt_handler_125
+                0xfffffff800112db7                interrupt_handler_126
+                0xfffffff800112dc0                interrupt_handler_127
+                0xfffffff800112dc9                interrupt_handler_128
+                0xfffffff800112dd5                interrupt_handler_129
+                0xfffffff800112de1                interrupt_handler_130
+                0xfffffff800112ded                interrupt_handler_131
+                0xfffffff800112df9                interrupt_handler_132
+                0xfffffff800112e05                interrupt_handler_133
+                0xfffffff800112e11                interrupt_handler_134
+                0xfffffff800112e1d                interrupt_handler_135
+                0xfffffff800112e29                interrupt_handler_136
+                0xfffffff800112e35                interrupt_handler_137
+                0xfffffff800112e41                interrupt_handler_138
+                0xfffffff800112e4d                interrupt_handler_139
+                0xfffffff800112e59                interrupt_handler_140
+                0xfffffff800112e65                interrupt_handler_141
+                0xfffffff800112e71                interrupt_handler_142
+                0xfffffff800112e7d                interrupt_handler_143
+                0xfffffff800112e89                interrupt_handler_144
+                0xfffffff800112e95                interrupt_handler_145
+                0xfffffff800112ea1                interrupt_handler_146
+                0xfffffff800112ead                interrupt_handler_147
+                0xfffffff800112eb9                interrupt_handler_148
+                0xfffffff800112ec5                interrupt_handler_149
+                0xfffffff800112ed1                interrupt_handler_150
+                0xfffffff800112edd                interrupt_handler_151
+                0xfffffff800112ee9                interrupt_handler_152
+                0xfffffff800112ef5                interrupt_handler_153
+                0xfffffff800112f01                interrupt_handler_154
+                0xfffffff800112f0d                interrupt_handler_155
+                0xfffffff800112f19                interrupt_handler_156
+                0xfffffff800112f25                interrupt_handler_157
+                0xfffffff800112f31                interrupt_handler_158
+                0xfffffff800112f3d                interrupt_handler_159
+                0xfffffff800112f49                interrupt_handler_160
+                0xfffffff800112f55                interrupt_handler_161
+                0xfffffff800112f61                interrupt_handler_162
+                0xfffffff800112f6d                interrupt_handler_163
+                0xfffffff800112f79                interrupt_handler_164
+                0xfffffff800112f85                interrupt_handler_165
+                0xfffffff800112f91                interrupt_handler_166
+                0xfffffff800112f9d                interrupt_handler_167
+                0xfffffff800112fa9                interrupt_handler_168
+                0xfffffff800112fb5                interrupt_handler_169
+                0xfffffff800112fc1                interrupt_handler_170
+                0xfffffff800112fcd                interrupt_handler_171
+                0xfffffff800112fd9                interrupt_handler_172
+                0xfffffff800112fe5                interrupt_handler_173
+                0xfffffff800112ff1                interrupt_handler_174
+                0xfffffff800112ffd                interrupt_handler_175
+                0xfffffff800113009                interrupt_handler_176
+                0xfffffff800113015                interrupt_handler_177
+                0xfffffff800113021                interrupt_handler_178
+                0xfffffff80011302d                interrupt_handler_179
+                0xfffffff800113039                interrupt_handler_180
+                0xfffffff800113045                interrupt_handler_181
+                0xfffffff800113051                interrupt_handler_182
+                0xfffffff80011305d                interrupt_handler_183
+                0xfffffff800113069                interrupt_handler_184
+                0xfffffff800113075                interrupt_handler_185
+                0xfffffff800113081                interrupt_handler_186
+                0xfffffff80011308d                interrupt_handler_187
+                0xfffffff800113099                interrupt_handler_188
+                0xfffffff8001130a5                interrupt_handler_189
+                0xfffffff8001130b1                interrupt_handler_190
+                0xfffffff8001130bd                interrupt_handler_191
+                0xfffffff8001130c9                interrupt_handler_192
+                0xfffffff8001130d5                interrupt_handler_193
+                0xfffffff8001130e1                interrupt_handler_194
+                0xfffffff8001130ed                interrupt_handler_195
+                0xfffffff8001130f9                interrupt_handler_196
+                0xfffffff800113105                interrupt_handler_197
+                0xfffffff800113111                interrupt_handler_198
+                0xfffffff80011311d                interrupt_handler_199
+                0xfffffff800113129                interrupt_handler_200
+                0xfffffff800113135                interrupt_handler_201
+                0xfffffff800113141                interrupt_handler_202
+                0xfffffff80011314d                interrupt_handler_203
+                0xfffffff800113159                interrupt_handler_204
+                0xfffffff800113165                interrupt_handler_205
+                0xfffffff800113171                interrupt_handler_206
+                0xfffffff80011317d                interrupt_handler_207
+                0xfffffff800113189                interrupt_handler_208
+                0xfffffff800113195                interrupt_handler_209
+                0xfffffff8001131a1                interrupt_handler_210
+                0xfffffff8001131ad                interrupt_handler_211
+                0xfffffff8001131b9                interrupt_handler_212
+                0xfffffff8001131c5                interrupt_handler_213
+                0xfffffff8001131d1                interrupt_handler_214
+                0xfffffff8001131dd                interrupt_handler_215
+                0xfffffff8001131e9                interrupt_handler_216
+                0xfffffff8001131f5                interrupt_handler_217
+                0xfffffff800113201                interrupt_handler_218
+                0xfffffff80011320d                interrupt_handler_219
+                0xfffffff800113219                interrupt_handler_220
+                0xfffffff800113225                interrupt_handler_221
+                0xfffffff800113231                interrupt_handler_222
+                0xfffffff80011323d                interrupt_handler_223
+                0xfffffff800113249                interrupt_handler_224
+                0xfffffff800113255                interrupt_handler_225
+                0xfffffff800113261                interrupt_handler_226
+                0xfffffff80011326d                interrupt_handler_227
+                0xfffffff800113279                interrupt_handler_228
+                0xfffffff800113285                interrupt_handler_229
+                0xfffffff800113291                interrupt_handler_230
+                0xfffffff80011329d                interrupt_handler_231
+                0xfffffff8001132a9                interrupt_handler_232
+                0xfffffff8001132b5                interrupt_handler_233
+                0xfffffff8001132c1                interrupt_handler_234
+                0xfffffff8001132cd                interrupt_handler_235
+                0xfffffff8001132d9                interrupt_handler_236
+                0xfffffff8001132e5                interrupt_handler_237
+                0xfffffff8001132f1                interrupt_handler_238
+                0xfffffff8001132fd                interrupt_handler_239
+                0xfffffff800113309                interrupt_handler_240
+                0xfffffff800113315                interrupt_handler_241
+                0xfffffff800113321                interrupt_handler_242
+                0xfffffff80011332d                interrupt_handler_243
+                0xfffffff800113339                interrupt_handler_244
+                0xfffffff800113345                interrupt_handler_245
+                0xfffffff800113351                interrupt_handler_246
+                0xfffffff80011335d                interrupt_handler_247
+                0xfffffff800113369                interrupt_handler_248
+                0xfffffff800113375                interrupt_handler_249
+                0xfffffff800113381                interrupt_handler_250
+                0xfffffff80011338d                interrupt_handler_251
+                0xfffffff800113399                interrupt_handler_252
+                0xfffffff8001133a5                interrupt_handler_253
+                0xfffffff8001133b1                interrupt_handler_254
+                0xfffffff8001133bd                interrupt_handler_255
+ *fill*         0xfffffff8001133c9        0x7 
+ .text          0xfffffff8001133d0      0xa3f ../Core/bin/libcore.a(interrupts.o)
+                0xfffffff800113410                kernel_interrupt_handler
+                0xfffffff800113530                kernel_interrupt_init
+                0xfffffff800113630                kernel_interrupt_set_driver
+                0xfffffff800113780                kernel_interrupt_register_int_handler
+                0xfffffff800113990                kernel_interrupt_remove_int_handler
+                0xfffffff800113b50                kernel_interrupt_register_irq_handler
+                0xfffffff800113c00                kernel_interrupt_remove_irq_handler
+                0xfffffff800113cb0                kernel_interrupt_restore
+                0xfffffff800113d00                kernel_interrupt_disable
+                0xfffffff800113d80                kernel_interrupt_set_irq_mask
+                0xfffffff800113dd0                kernel_interrupt_set_irq_eoi
+ *fill*         0xfffffff800113e0f        0x1 
+ .text          0xfffffff800113e10       0x2f ../Core/bin/libcore.a(scheduler.o)
+                0xfffffff800113e10                scheduler_dummy_init
+                0xfffffff800113e30                scheduler_get_current_thread
+ *fill*         0xfffffff800113e3f        0x1 
+ .text          0xfffffff800113e40      0x209 ../IO/bin/libio.a(console.o)
+                0xfffffff800113e40                console_set_selected_driver
+                0xfffffff800113f00                console_clear_screen
+                0xfffffff800113f20                console_put_cursor_at
+                0xfffffff800113f40                console_save_cursor
+                0xfffffff800113f60                console_restore_cursor
+                0xfffffff800113f80                console_scroll
+                0xfffffff800113fa0                console_set_color_scheme
+                0xfffffff800113fc0                console_save_color_scheme
+                0xfffffff800113fe0                console_put_string
+                0xfffffff800114000                console_put_char
+                0xfffffff800114030                console_console_write_keyboard
+ *fill*         0xfffffff800114049        0x7 
+ .text          0xfffffff800114050     0x1531 ../IO/bin/libio.a(kernel_output.o)
+                0xfffffff800114d00                kernel_printf
+                0xfffffff800114df0                kernel_error
+                0xfffffff800114f60                kernel_success
+                0xfffffff8001150d0                kernel_info
+                0xfffffff800115240                kernel_warning
+                0xfffffff8001153b0                kernel_debug
+                0xfffffff800115520                kernel_doprint
+ *fill*         0xfffffff800115581        0xf 
+ .text          0xfffffff800115590       0x31 ../Libs/bin/liblibc.a(itoa.o)
+                0xfffffff800115590                itoa
+ *fill*         0xfffffff8001155c1        0xf 
+ .text          0xfffffff8001155d0       0x26 ../Libs/bin/liblibc.a(memmove.o)
+                0xfffffff8001155d0                memmove
+ *fill*         0xfffffff8001155f6        0xa 
+ .text          0xfffffff800115600       0x2f ../Libs/bin/liblibc.a(memset.o)
+                0xfffffff800115600                memset
+ *fill*         0xfffffff80011562f        0x1 
+ .text          0xfffffff800115630       0x23 ../Libs/bin/liblibc.a(strlen.o)
+                0xfffffff800115630                strlen
+ *fill*         0xfffffff800115653        0xd 
+ .text          0xfffffff800115660       0xa1 ../Libs/bin/liblibc.a(uitoa.o)
+                0xfffffff800115660                uitoa
+ *fill*         0xfffffff800115701        0xf 
+ .text          0xfffffff800115710      0x19e ../Libs/bin/libtrace.a(tracing.o)
+                0xfffffff800115710                kernel_trace_event
  *(.text*)
-                0x00000000e0123f90                _END_TEXT_ADDR = .
+ .text.unlikely
+                0xfffffff8001158ae       0x25 ../Libs/bin/libtrace.a(tracing.o)
+                0xfffffff8001158d3                _END_TEXT_ADDR = .
+                0xfffffff800150000                . = ORIGIN (KERNEL_RO_DATA)
 
-.iplt           0x00000000e0123f90        0x0 load address 0x0000000000123f90
- .iplt          0x00000000e0123f90        0x0 ../Arch/bin/libarch.a(init.o)
-                0x00000000e0200000                . = ORIGIN (KERNEL_RO_DATA)
-
-.rodata         0x00000000e0200000     0x132e load address 0x0000000000200000
-                0x00000000e0200000                _START_RO_DATA_ADDR = .
+.rodata         0xfffffff800150000     0x2018 load address 0x0000000000150000
+                0xfffffff800150000                _START_RO_DATA_ADDR = .
  *(.rodata)
- .rodata        0x00000000e0200000       0xac ../Arch/bin/libarch.a(panic.o)
- .rodata        0x00000000e02000ac       0x18 ../Arch/bin/libarch.a(vga_console.o)
- *fill*         0x00000000e02000c4       0x1c 
- .rodata        0x00000000e02000e0      0x800 ../Arch/bin/libarch.a(cpu.o)
- .rodata        0x00000000e02008e0      0x248 ../IO/bin/libio.a(kernel_output.o)
- .rodata        0x00000000e0200b28       0x10 ../Libs/bin/liblibc.a(uitoa.o)
+ .rodata        0xfffffff800150000      0x158 ../Arch/bin/libarch.a(panic.o)
+ .rodata        0xfffffff800150158       0x30 ../Arch/bin/libarch.a(vga_console.o)
+ *fill*         0xfffffff800150188       0x18 
+ .rodata        0xfffffff8001501a0     0x1000 ../Arch/bin/libarch.a(cpu.o)
+ .rodata        0xfffffff8001511a0      0x490 ../IO/bin/libio.a(kernel_output.o)
+ .rodata        0xfffffff800151630       0x10 ../Libs/bin/liblibc.a(uitoa.o)
+ .rodata        0xfffffff800151640        0x8 ../Libs/bin/libtrace.a(tracing.o)
  *(.rodata*)
  .rodata.str1.1
-                0x00000000e0200b38       0x3c ../Arch/bin/libarch.a(kickstart.o)
- .rodata.str1.4
-                0x00000000e0200b74      0x697 ../Arch/bin/libarch.a(panic.o)
+                0xfffffff800151648       0x3c ../Arch/bin/libarch.a(kickstart.o)
+ *fill*         0xfffffff800151684        0x4 
+ .rodata.str1.8
+                0xfffffff800151688      0x757 ../Arch/bin/libarch.a(panic.o)
  .rodata.str1.1
-                0x00000000e020120b       0xad ../Arch/bin/libarch.a(panic.o)
-                                         0xaf (size before relaxing)
+                0xfffffff800151ddf       0xae ../Arch/bin/libarch.a(panic.o)
+                                         0xb0 (size before relaxing)
+ *fill*         0xfffffff800151e8d        0x3 
+ .rodata.cst8   0xfffffff800151e90        0x8 ../Arch/bin/libarch.a(panic.o)
+ .rodata.cst8   0xfffffff800151e98        0x8 ../Arch/bin/libarch.a(vga_console.o)
  .rodata.str1.1
-                0x00000000e02012b8       0x4b ../Arch/bin/libarch.a(cpu.o)
+                0xfffffff800151ea0       0x4b ../Arch/bin/libarch.a(cpu.o)
+ *fill*         0xfffffff800151eeb        0x5 
+ .rodata.cst16  0xfffffff800151ef0       0xd0 ../Arch/bin/libarch.a(cpu.o)
  .rodata.str1.1
-                0x00000000e0201303       0x2b ../IO/bin/libio.a(kernel_output.o)
+                0xfffffff800151fc0       0x2b ../IO/bin/libio.a(kernel_output.o)
+ *fill*         0xfffffff800151feb        0x5 
+ .rodata.cst8   0xfffffff800151ff0       0x20 ../IO/bin/libio.a(kernel_output.o)
+                                         0x28 (size before relaxing)
+ .rodata.cst8   0xfffffff800152010        0x8 ../Libs/bin/libtrace.a(tracing.o)
 
-.eh_frame       0x00000000e0202000     0x10d0 load address 0x0000000000202000
+.eh_frame       0xfffffff800153000      0x83c load address 0x0000000000153000
  *(.eh_frame)
- .eh_frame      0x00000000e0202000       0x38 ../Arch/bin/libarch.a(kickstart.o)
- .eh_frame      0x00000000e0202038       0x3c ../Arch/bin/libarch.a(panic.o)
-                                         0x54 (size before relaxing)
- .eh_frame      0x00000000e0202074      0x1fc ../Arch/bin/libarch.a(vga_console.o)
-                                        0x214 (size before relaxing)
- .eh_frame      0x00000000e0202270      0x838 ../Arch/bin/libarch.a(cpu.o)
-                                        0x850 (size before relaxing)
- .eh_frame      0x00000000e0202aa8      0x228 ../Core/bin/libcore.a(interrupts.o)
-                                        0x240 (size before relaxing)
- .eh_frame      0x00000000e0202cd0      0x194 ../IO/bin/libio.a(console.o)
-                                        0x1ac (size before relaxing)
- .eh_frame      0x00000000e0202e64      0x150 ../IO/bin/libio.a(kernel_output.o)
-                                        0x168 (size before relaxing)
- .eh_frame      0x00000000e0202fb4       0x2c ../Libs/bin/liblibc.a(itoa.o)
-                                         0x44 (size before relaxing)
- .eh_frame      0x00000000e0202fe0       0x34 ../Libs/bin/liblibc.a(memmove.o)
-                                         0x4c (size before relaxing)
- .eh_frame      0x00000000e0203014       0x28 ../Libs/bin/liblibc.a(memset.o)
+ .eh_frame      0xfffffff800153000       0x40 ../Arch/bin/libarch.a(kickstart.o)
+ .eh_frame      0xfffffff800153040       0x50 ../Arch/bin/libarch.a(panic.o)
+                                         0x68 (size before relaxing)
+ .eh_frame      0xfffffff800153090      0x1a0 ../Arch/bin/libarch.a(vga_console.o)
+                                        0x1b8 (size before relaxing)
+ .eh_frame      0xfffffff800153230       0x60 ../Arch/bin/libarch.a(cpu.o)
+                                         0x78 (size before relaxing)
+ .eh_frame      0xfffffff800153290      0x260 ../Core/bin/libcore.a(interrupts.o)
+                                        0x278 (size before relaxing)
+ .eh_frame      0xfffffff8001534f0       0x28 ../Core/bin/libcore.a(scheduler.o)
                                          0x40 (size before relaxing)
- .eh_frame      0x00000000e020303c       0x28 ../Libs/bin/liblibc.a(strlen.o)
+ .eh_frame      0xfffffff800153518       0xf8 ../IO/bin/libio.a(console.o)
+                                        0x110 (size before relaxing)
+ .eh_frame      0xfffffff800153610      0x158 ../IO/bin/libio.a(kernel_output.o)
+                                        0x170 (size before relaxing)
+ .eh_frame      0xfffffff800153768       0x18 ../Libs/bin/liblibc.a(itoa.o)
+                                         0x30 (size before relaxing)
+ .eh_frame      0xfffffff800153780       0x18 ../Libs/bin/liblibc.a(memmove.o)
+                                         0x30 (size before relaxing)
+ .eh_frame      0xfffffff800153798       0x18 ../Libs/bin/liblibc.a(memset.o)
+                                         0x30 (size before relaxing)
+ .eh_frame      0xfffffff8001537b0       0x18 ../Libs/bin/liblibc.a(strlen.o)
+                                         0x30 (size before relaxing)
+ .eh_frame      0xfffffff8001537c8       0x28 ../Libs/bin/liblibc.a(uitoa.o)
                                          0x40 (size before relaxing)
- .eh_frame      0x00000000e0203064       0x3c ../Libs/bin/liblibc.a(uitoa.o)
-                                         0x54 (size before relaxing)
- .eh_frame      0x00000000e02030a0       0x30 ../Libs/bin/liblibc.a(udivmoddi4.o)
-                                         0x48 (size before relaxing)
-                0x00000000e02030d0                _END_RO_DATA_ADDR = .
+ .eh_frame      0xfffffff8001537f0       0x4c ../Libs/bin/libtrace.a(tracing.o)
+                                         0x68 (size before relaxing)
+                0xfffffff80015383c                _END_RO_DATA_ADDR = .
+                0xfffffff800160000                . = ORIGIN (KERNEL_RW_DATA)
 
-.rel.dyn        0x00000000e02030d0        0x0 load address 0x00000000002030d0
- .rel.got       0x00000000e02030d0        0x0 ../Arch/bin/libarch.a(init.o)
- .rel.iplt      0x00000000e02030d0        0x0 ../Arch/bin/libarch.a(init.o)
- .rel.low_startup_code
-                0x00000000e02030d0        0x0 ../Arch/bin/libarch.a(init.o)
- .rel.high_startup_code
-                0x00000000e02030d0        0x0 ../Arch/bin/libarch.a(init.o)
- .rel.text      0x00000000e02030d0        0x0 ../Arch/bin/libarch.a(init.o)
-                0x00000000e0210000                . = ORIGIN (KERNEL_RW_DATA)
-
-.data           0x00000000e0210000     0x1058 load address 0x0000000000210000
-                0x00000000e0210000                _START_DATA_ADDR = .
+.data           0xfffffff800160000       0x84 load address 0x0000000000160000
+                0xfffffff800160000                _START_DATA_ADDR = .
  *(.data)
- .data          0x00000000e0210000     0x1012 ../Arch/bin/libarch.a(init.o)
- .data          0x00000000e0211012        0x0 ../Arch/bin/libarch.a(kickstart.o)
- .data          0x00000000e0211012        0x0 ../Arch/bin/libarch.a(panic.o)
- *fill*         0x00000000e0211012        0xe 
- .data          0x00000000e0211020       0x38 ../Arch/bin/libarch.a(vga_console.o)
- .data          0x00000000e0211058        0x0 ../Arch/bin/libarch.a(cpu.o)
- .data          0x00000000e0211058        0x0 ../Core/bin/libcore.a(interrupts.o)
- .data          0x00000000e0211058        0x0 ../IO/bin/libio.a(console.o)
- .data          0x00000000e0211058        0x0 ../IO/bin/libio.a(kernel_output.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(itoa.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(memmove.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(memset.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(strlen.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(uitoa.o)
- .data          0x00000000e0211058        0x0 ../Libs/bin/liblibc.a(udivmoddi4.o)
+ .data          0xfffffff800160000       0x1a ../Arch/bin/libarch.a(init_64.o)
+                0xfffffff800160000                _kernel_multiboot_ptr
+                0xfffffff800160008                _kernel_cpu_count
+ .data          0xfffffff80016001a        0x0 ../Arch/bin/libarch.a(kickstart.o)
+ .data          0xfffffff80016001a        0x0 ../Arch/bin/libarch.a(panic.o)
+ *fill*         0xfffffff80016001a        0x6 
+ .data          0xfffffff800160020       0x64 ../Arch/bin/libarch.a(vga_console.o)
+ .data          0xfffffff800160084        0x0 ../Arch/bin/libarch.a(cpu.o)
+ .data          0xfffffff800160084        0x0 ../Core/bin/libcore.a(interrupts.o)
+ .data          0xfffffff800160084        0x0 ../Core/bin/libcore.a(scheduler.o)
+ .data          0xfffffff800160084        0x0 ../IO/bin/libio.a(console.o)
+ .data          0xfffffff800160084        0x0 ../IO/bin/libio.a(kernel_output.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/liblibc.a(itoa.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/liblibc.a(memmove.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/liblibc.a(memset.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/liblibc.a(strlen.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/liblibc.a(uitoa.o)
+ .data          0xfffffff800160084        0x0 ../Libs/bin/libtrace.a(tracing.o)
  *(.data*)
-                0x00000000e0211058                _END_DATA_ADDR = .
+                0xfffffff800160084                _END_DATA_ADDR = .
 
-.got            0x00000000e0211058        0x0 load address 0x0000000000211058
- .got           0x00000000e0211058        0x0 ../Arch/bin/libarch.a(init.o)
-
-.got.plt        0x00000000e0211058        0x0 load address 0x0000000000211058
- .got.plt       0x00000000e0211058        0x0 ../Arch/bin/libarch.a(init.o)
-
-.igot.plt       0x00000000e0211058        0x0 load address 0x0000000000211058
- .igot.plt      0x00000000e0211058        0x0 ../Arch/bin/libarch.a(init.o)
-
-.bss            0x00000000e0212000      0xeb0 load address 0x0000000000212000
-                0x00000000e0212000                _START_BSS_ADDR = .
+.bss            0xfffffff800161000     0x1cd0 load address 0x0000000000161000
+                0xfffffff800161000                _START_BSS_ADDR = .
  *(COMMON)
  *(.bss)
- .bss           0x00000000e0212000        0x0 ../Arch/bin/libarch.a(kickstart.o)
- .bss           0x00000000e0212000       0x14 ../Arch/bin/libarch.a(panic.o)
- .bss           0x00000000e0212014       0x2c ../Arch/bin/libarch.a(vga_console.o)
- .bss           0x00000000e0212040      0xa08 ../Arch/bin/libarch.a(cpu.o)
- *fill*         0x00000000e0212a48       0x18 
- .bss           0x00000000e0212a60      0x418 ../Core/bin/libcore.a(interrupts.o)
-                0x00000000e0212a60                kernel_interrupt_handlers
- *fill*         0x00000000e0212e78        0x8 
- .bss           0x00000000e0212e80       0x28 ../IO/bin/libio.a(console.o)
- .bss           0x00000000e0212ea8        0x8 ../IO/bin/libio.a(kernel_output.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(itoa.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(memmove.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(memset.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(strlen.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(uitoa.o)
- .bss           0x00000000e0212eb0        0x0 ../Libs/bin/liblibc.a(udivmoddi4.o)
-                0x00000000e0212eb0                _END_BSS_ADDR = .
-                0x00000000e0212eb0                _KERNEL_STATIC_END = .
-                0x00000000e0410000                _KERNEL_STACKS_BASE = ORIGIN (KERNEL_STACKS)
-                0x0000000000008000                _KERNEL_STACKS_SIZE = LENGTH (KERNEL_STACKS)
-                0x00000000e0418000                _KERNEL_HEAP_BASE = ORIGIN (KERNEL_HEAP)
+ .bss           0xfffffff800161000        0x0 ../Arch/bin/libarch.a(kickstart.o)
+ .bss           0xfffffff800161000       0x20 ../Arch/bin/libarch.a(panic.o)
+ .bss           0xfffffff800161020       0x30 ../Arch/bin/libarch.a(vga_console.o)
+ .bss           0xfffffff800161050     0x1248 ../Arch/bin/libarch.a(cpu.o)
+ *fill*         0xfffffff800162298        0x8 
+ .bss           0xfffffff8001622a0      0x840 ../Core/bin/libcore.a(interrupts.o)
+                0xfffffff8001622a0                kernel_interrupt_handlers
+ .bss           0xfffffff800162ae0      0x168 ../Core/bin/libcore.a(scheduler.o)
+                0xfffffff800162ae0                dummy_thread
+                0xfffffff800162c40                current_thread
+ *fill*         0xfffffff800162c48       0x18 
+ .bss           0xfffffff800162c60       0x50 ../IO/bin/libio.a(console.o)
+ .bss           0xfffffff800162cb0       0x10 ../IO/bin/libio.a(kernel_output.o)
+ .bss           0xfffffff800162cc0        0x0 ../Libs/bin/liblibc.a(itoa.o)
+ .bss           0xfffffff800162cc0        0x0 ../Libs/bin/liblibc.a(memmove.o)
+ .bss           0xfffffff800162cc0        0x0 ../Libs/bin/liblibc.a(memset.o)
+ .bss           0xfffffff800162cc0        0x0 ../Libs/bin/liblibc.a(strlen.o)
+ .bss           0xfffffff800162cc0        0x0 ../Libs/bin/liblibc.a(uitoa.o)
+ .bss           0xfffffff800162cc0       0x10 ../Libs/bin/libtrace.a(tracing.o)
+                0xfffffff800162cd0                _END_BSS_ADDR = .
+                0xfffffff800200000                _KERNEL_STACKS_BASE = ORIGIN (KERNEL_STACKS)
+                0x0000000000010000                _KERNEL_STACKS_SIZE = LENGTH (KERNEL_STACKS)
+                0xfffffff800210000                _KERNEL_HEAP_BASE = ORIGIN (KERNEL_HEAP)
                 0x0000000000a00000                _KERNEL_HEAP_SIZE = LENGTH (KERNEL_HEAP)
                 0x0000000000001000                _KERNEL_BIOS_MEMORY_BASE = ORIGIN (KERNEL_BIOS_CALL_MEM)
                 0x0000000000001000                _KERNEL_BIOS_MEMORY_SIZE = LENGTH (KERNEL_BIOS_CALL_MEM)
-                0x00000000e0e18000                _KERNEL_MULTIBOOT_MEM_BASE = ORIGIN (KERNEL_MULTIBOOT_MEM)
+                0xfffffff800190000                _KERNEL_MULTIBOOT_MEM_BASE = ORIGIN (KERNEL_MULTIBOOT_MEM)
                 0x0000000000010000                _KERNEL_MULTIBOOT_MEM_SIZE = LENGTH (KERNEL_MULTIBOOT_MEM)
-                0x00000000e0e28000                _KERNEL_INITRD_MEM_BASE = ORIGIN (KERNEL_INITRD_MEM)
-                0x0000000000010000                _KERNEL_INITRD_MEM_SIZE = LENGTH (KERNEL_INITRD_MEM)
-                0x00000000e0310000                _KERNEL_SYMTAB_REG_BASE = ORIGIN (KERNEL_SYM_TAB)
+                0xfffffff800170000                _KERNEL_SYMTAB_REG_BASE = ORIGIN (KERNEL_SYM_TAB)
                 0x0000000000010000                _KERNEL_SYMTAB_REG_SIZE = LENGTH (KERNEL_SYM_TAB)
-                0x00000000e0310000                _KERNEL_SYMTAB_ADDR = _KERNEL_SYMTAB_REG_BASE
-                0x00000000e0310004                _KERNEL_SYMTAB_SIZE = (_KERNEL_SYMTAB_ADDR + 0x4)
-                0x00000000e0310008                _KERNEL_STRTAB_ADDR = (_KERNEL_SYMTAB_SIZE + 0x4)
-                0x00000000e031000c                _KERNEL_STRTAB_SIZE = (_KERNEL_STRTAB_ADDR + 0x4)
-                0x00000000e0310010                _KERNEL_SYMTAB_FREE_START = (_KERNEL_STRTAB_SIZE + 0x4)
-                0x00000000e0e38000                _KERNEL_MEMORY_END = (_KERNEL_INITRD_MEM_BASE + _KERNEL_INITRD_MEM_SIZE)
+                0xfffffff800170000                _KERNEL_SYMTAB_ADDR = _KERNEL_SYMTAB_REG_BASE
+                0xfffffff800170004                _KERNEL_SYMTAB_SIZE = (_KERNEL_SYMTAB_ADDR + 0x4)
+                0xfffffff800170008                _KERNEL_STRTAB_ADDR = (_KERNEL_SYMTAB_SIZE + 0x4)
+                0xfffffff80017000c                _KERNEL_STRTAB_SIZE = (_KERNEL_STRTAB_ADDR + 0x4)
+                0xfffffff800170010                _KERNEL_SYMTAB_FREE_START = (_KERNEL_STRTAB_SIZE + 0x4)
+                0xfffffff800180000                _KERNEL_TRACE_BUFFER_BASE = ORIGIN (KERNEL_TRACE_BUFFER)
+                0x0000000000010000                _KERNEL_TRACE_BUFFER_SIZE = LENGTH (KERNEL_TRACE_BUFFER)
 LOAD ../Arch/bin/libarch.a
 LOAD ../Core/bin/libcore.a
 LOAD ../IO/bin/libio.a
 LOAD ../Libs/bin/liblibc.a
 LOAD ../Libs/bin/libapi.a
-OUTPUT(./build/UTK.elf elf32-i386)
+LOAD ../Libs/bin/libtrace.a
+LOAD ../Arch/CPU/build/init_32.o
+OUTPUT(./build/UTK.elf elf64-x86-64)
 
-.debug_aranges  0x0000000000000000      0x1c0
+.debug_aranges  0x0000000000000000      0x310
  .debug_aranges
-                0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+                0x0000000000000000       0x30 ../Arch/bin/libarch.a(init_64.o)
  .debug_aranges
-                0x0000000000000000       0x20 ../Arch/bin/libarch.a(kickstart.o)
+                0x0000000000000030       0x30 ../Arch/bin/libarch.a(kickstart.o)
  .debug_aranges
-                0x0000000000000020       0x20 ../Arch/bin/libarch.a(panic.o)
+                0x0000000000000060       0x30 ../Arch/bin/libarch.a(panic.o)
  .debug_aranges
-                0x0000000000000040       0x20 ../Arch/bin/libarch.a(vga_console.o)
+                0x0000000000000090       0x30 ../Arch/bin/libarch.a(vga_console.o)
  .debug_aranges
-                0x0000000000000060       0x20 ../Arch/bin/libarch.a(cpu.o)
+                0x00000000000000c0       0x30 ../Arch/bin/libarch.a(cpu.o)
  .debug_aranges
-                0x0000000000000080       0x20 ../Arch/bin/libarch.a(int_handlers.o)
+                0x00000000000000f0       0x30 ../Arch/bin/libarch.a(int_handlers.o)
  .debug_aranges
-                0x00000000000000a0       0x20 ../Core/bin/libcore.a(interrupts.o)
+                0x0000000000000120       0x30 ../Core/bin/libcore.a(interrupts.o)
  .debug_aranges
-                0x00000000000000c0       0x20 ../IO/bin/libio.a(console.o)
+                0x0000000000000150       0x30 ../Core/bin/libcore.a(scheduler.o)
  .debug_aranges
-                0x00000000000000e0       0x20 ../IO/bin/libio.a(kernel_output.o)
+                0x0000000000000180       0x30 ../IO/bin/libio.a(console.o)
  .debug_aranges
-                0x0000000000000100       0x20 ../Libs/bin/liblibc.a(itoa.o)
+                0x00000000000001b0       0x30 ../IO/bin/libio.a(kernel_output.o)
  .debug_aranges
-                0x0000000000000120       0x20 ../Libs/bin/liblibc.a(memmove.o)
+                0x00000000000001e0       0x30 ../Libs/bin/liblibc.a(itoa.o)
  .debug_aranges
-                0x0000000000000140       0x20 ../Libs/bin/liblibc.a(memset.o)
+                0x0000000000000210       0x30 ../Libs/bin/liblibc.a(memmove.o)
  .debug_aranges
-                0x0000000000000160       0x20 ../Libs/bin/liblibc.a(strlen.o)
+                0x0000000000000240       0x30 ../Libs/bin/liblibc.a(memset.o)
  .debug_aranges
-                0x0000000000000180       0x20 ../Libs/bin/liblibc.a(uitoa.o)
+                0x0000000000000270       0x30 ../Libs/bin/liblibc.a(strlen.o)
  .debug_aranges
-                0x00000000000001a0       0x20 ../Libs/bin/liblibc.a(udivmoddi4.o)
+                0x00000000000002a0       0x30 ../Libs/bin/liblibc.a(uitoa.o)
+ .debug_aranges
+                0x00000000000002d0       0x40 ../Libs/bin/libtrace.a(tracing.o)
 
 .debug_pubnames
                 0x0000000000000000        0x0
  .debug_pubnames
-                0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+                0x0000000000000000        0x0 ../Arch/bin/libarch.a(init_64.o)
  .debug_pubnames
                 0x0000000000000000        0x0 ../Arch/bin/libarch.a(int_handlers.o)
 
-.debug_info     0x0000000000000000     0x61a5
- .debug_info    0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
- .debug_info    0x0000000000000000      0x381 ../Arch/bin/libarch.a(kickstart.o)
- .debug_info    0x0000000000000381      0xa59 ../Arch/bin/libarch.a(panic.o)
- .debug_info    0x0000000000000dda     0x1fa1 ../Arch/bin/libarch.a(vga_console.o)
- .debug_info    0x0000000000002d7b     0x1127 ../Arch/bin/libarch.a(cpu.o)
- .debug_info    0x0000000000003ea2       0x44 ../Arch/bin/libarch.a(int_handlers.o)
- .debug_info    0x0000000000003ee6      0xdb7 ../Core/bin/libcore.a(interrupts.o)
- .debug_info    0x0000000000004c9d      0x4ea ../IO/bin/libio.a(console.o)
- .debug_info    0x0000000000005187      0xa4b ../IO/bin/libio.a(kernel_output.o)
- .debug_info    0x0000000000005bd2       0xfa ../Libs/bin/liblibc.a(itoa.o)
- .debug_info    0x0000000000005ccc       0xf9 ../Libs/bin/liblibc.a(memmove.o)
- .debug_info    0x0000000000005dc5       0xdb ../Libs/bin/liblibc.a(memset.o)
- .debug_info    0x0000000000005ea0       0xbd ../Libs/bin/liblibc.a(strlen.o)
- .debug_info    0x0000000000005f5d      0x15b ../Libs/bin/liblibc.a(uitoa.o)
- .debug_info    0x00000000000060b8       0xed ../Libs/bin/liblibc.a(udivmoddi4.o)
+.debug_info     0x0000000000000000     0x8e9c
+ .debug_info    0x0000000000000000       0x4f ../Arch/bin/libarch.a(init_64.o)
+ .debug_info    0x000000000000004f      0x582 ../Arch/bin/libarch.a(kickstart.o)
+ .debug_info    0x00000000000005d1     0x150c ../Arch/bin/libarch.a(panic.o)
+ .debug_info    0x0000000000001add     0x24cd ../Arch/bin/libarch.a(vga_console.o)
+ .debug_info    0x0000000000003faa     0x129b ../Arch/bin/libarch.a(cpu.o)
+ .debug_info    0x0000000000005245       0x54 ../Arch/bin/libarch.a(int_handlers.o)
+ .debug_info    0x0000000000005299     0x19b7 ../Core/bin/libcore.a(interrupts.o)
+ .debug_info    0x0000000000006c50      0x4c0 ../Core/bin/libcore.a(scheduler.o)
+ .debug_info    0x0000000000007110      0x764 ../IO/bin/libio.a(console.o)
+ .debug_info    0x0000000000007874      0xd6a ../IO/bin/libio.a(kernel_output.o)
+ .debug_info    0x00000000000085de      0x11c ../Libs/bin/liblibc.a(itoa.o)
+ .debug_info    0x00000000000086fa      0x118 ../Libs/bin/liblibc.a(memmove.o)
+ .debug_info    0x0000000000008812      0x108 ../Libs/bin/liblibc.a(memset.o)
+ .debug_info    0x000000000000891a       0xd5 ../Libs/bin/liblibc.a(strlen.o)
+ .debug_info    0x00000000000089ef      0x167 ../Libs/bin/liblibc.a(uitoa.o)
+ .debug_info    0x0000000000008b56      0x346 ../Libs/bin/libtrace.a(tracing.o)
 
-.debug_abbrev   0x0000000000000000     0x16b3
- .debug_abbrev  0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
- .debug_abbrev  0x0000000000000000      0x154 ../Arch/bin/libarch.a(kickstart.o)
- .debug_abbrev  0x0000000000000154      0x2a7 ../Arch/bin/libarch.a(panic.o)
- .debug_abbrev  0x00000000000003fb      0x3a1 ../Arch/bin/libarch.a(vga_console.o)
- .debug_abbrev  0x000000000000079c      0x27e ../Arch/bin/libarch.a(cpu.o)
- .debug_abbrev  0x0000000000000a1a       0x1b ../Arch/bin/libarch.a(int_handlers.o)
- .debug_abbrev  0x0000000000000a35      0x433 ../Core/bin/libcore.a(interrupts.o)
- .debug_abbrev  0x0000000000000e68      0x17f ../IO/bin/libio.a(console.o)
- .debug_abbrev  0x0000000000000fe7      0x2ba ../IO/bin/libio.a(kernel_output.o)
- .debug_abbrev  0x00000000000012a1       0xae ../Libs/bin/liblibc.a(itoa.o)
- .debug_abbrev  0x000000000000134f       0xae ../Libs/bin/liblibc.a(memmove.o)
- .debug_abbrev  0x00000000000013fd       0x8f ../Libs/bin/liblibc.a(memset.o)
- .debug_abbrev  0x000000000000148c       0x8e ../Libs/bin/liblibc.a(strlen.o)
- .debug_abbrev  0x000000000000151a       0xfc ../Libs/bin/liblibc.a(uitoa.o)
- .debug_abbrev  0x0000000000001616       0x9d ../Libs/bin/liblibc.a(udivmoddi4.o)
+.debug_abbrev   0x0000000000000000     0x1a18
+ .debug_abbrev  0x0000000000000000       0x1b ../Arch/bin/libarch.a(init_64.o)
+ .debug_abbrev  0x000000000000001b      0x174 ../Arch/bin/libarch.a(kickstart.o)
+ .debug_abbrev  0x000000000000018f      0x308 ../Arch/bin/libarch.a(panic.o)
+ .debug_abbrev  0x0000000000000497      0x3d7 ../Arch/bin/libarch.a(vga_console.o)
+ .debug_abbrev  0x000000000000086e      0x2a7 ../Arch/bin/libarch.a(cpu.o)
+ .debug_abbrev  0x0000000000000b15       0x1b ../Arch/bin/libarch.a(int_handlers.o)
+ .debug_abbrev  0x0000000000000b30      0x44c ../Core/bin/libcore.a(interrupts.o)
+ .debug_abbrev  0x0000000000000f7c      0x12a ../Core/bin/libcore.a(scheduler.o)
+ .debug_abbrev  0x00000000000010a6      0x1af ../IO/bin/libio.a(console.o)
+ .debug_abbrev  0x0000000000001255      0x2e0 ../IO/bin/libio.a(kernel_output.o)
+ .debug_abbrev  0x0000000000001535       0xae ../Libs/bin/liblibc.a(itoa.o)
+ .debug_abbrev  0x00000000000015e3       0x9f ../Libs/bin/liblibc.a(memmove.o)
+ .debug_abbrev  0x0000000000001682       0x92 ../Libs/bin/liblibc.a(memset.o)
+ .debug_abbrev  0x0000000000001714       0x8b ../Libs/bin/liblibc.a(strlen.o)
+ .debug_abbrev  0x000000000000179f       0xed ../Libs/bin/liblibc.a(uitoa.o)
+ .debug_abbrev  0x000000000000188c      0x18c ../Libs/bin/libtrace.a(tracing.o)
 
-.debug_line     0x0000000000000000     0x4aac
- .debug_line    0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
- .debug_line    0x0000000000000000       0xa5 ../Arch/bin/libarch.a(kickstart.o)
- .debug_line    0x00000000000000a5      0x47b ../Arch/bin/libarch.a(panic.o)
- .debug_line    0x0000000000000520     0x13a6 ../Arch/bin/libarch.a(vga_console.o)
- .debug_line    0x00000000000018c6     0x1681 ../Arch/bin/libarch.a(cpu.o)
- .debug_line    0x0000000000002f47      0x360 ../Arch/bin/libarch.a(int_handlers.o)
- .debug_line    0x00000000000032a7      0x8a0 ../Core/bin/libcore.a(interrupts.o)
- .debug_line    0x0000000000003b47      0x1d3 ../IO/bin/libio.a(console.o)
- .debug_line    0x0000000000003d1a      0x970 ../IO/bin/libio.a(kernel_output.o)
- .debug_line    0x000000000000468a       0x9b ../Libs/bin/liblibc.a(itoa.o)
- .debug_line    0x0000000000004725       0x92 ../Libs/bin/liblibc.a(memmove.o)
- .debug_line    0x00000000000047b7       0x84 ../Libs/bin/liblibc.a(memset.o)
- .debug_line    0x000000000000483b       0x81 ../Libs/bin/liblibc.a(strlen.o)
- .debug_line    0x00000000000048bc       0xf3 ../Libs/bin/liblibc.a(uitoa.o)
- .debug_line    0x00000000000049af       0xfd ../Libs/bin/liblibc.a(udivmoddi4.o)
+.debug_line     0x0000000000000000     0x462d
+ .debug_line    0x0000000000000000       0x6a ../Arch/bin/libarch.a(init_64.o)
+ .debug_line    0x000000000000006a       0xdc ../Arch/bin/libarch.a(kickstart.o)
+ .debug_line    0x0000000000000146      0x496 ../Arch/bin/libarch.a(panic.o)
+ .debug_line    0x00000000000005dc     0x1a6e ../Arch/bin/libarch.a(vga_console.o)
+ .debug_line    0x000000000000204a      0x652 ../Arch/bin/libarch.a(cpu.o)
+ .debug_line    0x000000000000269c      0x38a ../Arch/bin/libarch.a(int_handlers.o)
+ .debug_line    0x0000000000002a26      0xb3c ../Core/bin/libcore.a(interrupts.o)
+ .debug_line    0x0000000000003562       0x84 ../Core/bin/libcore.a(scheduler.o)
+ .debug_line    0x00000000000035e6      0x1e2 ../IO/bin/libio.a(console.o)
+ .debug_line    0x00000000000037c8      0x9bb ../IO/bin/libio.a(kernel_output.o)
+ .debug_line    0x0000000000004183       0x8c ../Libs/bin/liblibc.a(itoa.o)
+ .debug_line    0x000000000000420f       0x89 ../Libs/bin/liblibc.a(memmove.o)
+ .debug_line    0x0000000000004298       0x8a ../Libs/bin/liblibc.a(memset.o)
+ .debug_line    0x0000000000004322       0x7e ../Libs/bin/liblibc.a(strlen.o)
+ .debug_line    0x00000000000043a0      0x10d ../Libs/bin/liblibc.a(uitoa.o)
+ .debug_line    0x00000000000044ad      0x180 ../Libs/bin/libtrace.a(tracing.o)
 
 .debug_frame    0x0000000000000000        0x0
- .debug_frame   0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_frame   0x0000000000000000        0x0 ../Arch/bin/libarch.a(init_64.o)
  .debug_frame   0x0000000000000000        0x0 ../Arch/bin/libarch.a(int_handlers.o)
 
 .debug_loc      0x0000000000000000        0x0
- .debug_loc     0x0000000000000000        0x0 ../Arch/bin/libarch.a(init.o)
+ .debug_loc     0x0000000000000000        0x0 ../Arch/bin/libarch.a(init_64.o)
  .debug_loc     0x0000000000000000        0x0 ../Arch/bin/libarch.a(int_handlers.o)
 
-.debug_str      0x0000000000000000     0x2346
- .debug_str     0x0000000000000000      0x2d3 ../Arch/bin/libarch.a(kickstart.o)
-                                        0x391 (size before relaxing)
- .debug_str     0x00000000000002d3      0x1d0 ../Arch/bin/libarch.a(panic.o)
-                                        0x493 (size before relaxing)
- .debug_str     0x00000000000004a3      0x234 ../Arch/bin/libarch.a(vga_console.o)
-                                        0x4e3 (size before relaxing)
- .debug_str     0x00000000000006d7     0x17f9 ../Arch/bin/libarch.a(cpu.o)
-                                       0x1a5e (size before relaxing)
- .debug_str     0x0000000000001ed0      0x308 ../Core/bin/libcore.a(interrupts.o)
-                                        0x626 (size before relaxing)
- .debug_str     0x00000000000021d8       0x1f ../IO/bin/libio.a(console.o)
-                                        0x463 (size before relaxing)
- .debug_str     0x00000000000021f7      0x123 ../IO/bin/libio.a(kernel_output.o)
-                                        0x357 (size before relaxing)
- .debug_str     0x000000000000231a      0x15f ../Libs/bin/liblibc.a(itoa.o)
- .debug_str     0x000000000000231a      0x144 ../Libs/bin/liblibc.a(memmove.o)
- .debug_str     0x000000000000231a      0x143 ../Libs/bin/liblibc.a(memset.o)
- .debug_str     0x000000000000231a      0x143 ../Libs/bin/liblibc.a(strlen.o)
- .debug_str     0x000000000000231a       0x1c ../Libs/bin/liblibc.a(uitoa.o)
-                                        0x16e (size before relaxing)
- .debug_str     0x0000000000002336       0x10 ../Libs/bin/liblibc.a(udivmoddi4.o)
-                                        0x15e (size before relaxing)
+.debug_str      0x0000000000000000     0x2d0b
+ .debug_str     0x0000000000000000      0x815 ../Arch/bin/libarch.a(kickstart.o)
+                                        0x8ee (size before relaxing)
+ .debug_str     0x0000000000000815      0x461 ../Arch/bin/libarch.a(panic.o)
+                                        0xc84 (size before relaxing)
+ .debug_str     0x0000000000000c76      0x224 ../Arch/bin/libarch.a(vga_console.o)
+                                        0xa2e (size before relaxing)
+ .debug_str     0x0000000000000e9a     0x193b ../Arch/bin/libarch.a(cpu.o)
+                                       0x20e1 (size before relaxing)
+ .debug_str     0x00000000000027d5      0x31a ../Core/bin/libcore.a(interrupts.o)
+                                        0xe15 (size before relaxing)
+ .debug_str     0x0000000000002aef        0xd ../Core/bin/libcore.a(scheduler.o)
+                                        0x4b2 (size before relaxing)
+ .debug_str     0x0000000000002afc       0x1f ../IO/bin/libio.a(console.o)
+                                        0x9ad (size before relaxing)
+ .debug_str     0x0000000000002b1b      0x165 ../IO/bin/libio.a(kernel_output.o)
+                                        0x3d5 (size before relaxing)
+ .debug_str     0x0000000000002c80      0x196 ../Libs/bin/liblibc.a(itoa.o)
+ .debug_str     0x0000000000002c80      0x17b ../Libs/bin/liblibc.a(memmove.o)
+ .debug_str     0x0000000000002c80      0x17a ../Libs/bin/liblibc.a(memset.o)
+ .debug_str     0x0000000000002c80      0x17a ../Libs/bin/liblibc.a(strlen.o)
+ .debug_str     0x0000000000002c80        0xf ../Libs/bin/liblibc.a(uitoa.o)
+                                        0x198 (size before relaxing)
+ .debug_str     0x0000000000002c8f       0x7c ../Libs/bin/libtrace.a(tracing.o)
+                                        0x780 (size before relaxing)
 
 .debug_line_str
-                0x0000000000000000      0x2a2
+                0x0000000000000000      0x371
  .debug_line_str
-                0x0000000000000000       0xfa ../Arch/bin/libarch.a(kickstart.o)
-                                        0x15d (size before relaxing)
+                0x0000000000000000      0x135 ../Arch/bin/libarch.a(kickstart.o)
+                                        0x198 (size before relaxing)
  .debug_line_str
-                0x00000000000000fa       0x4c ../Arch/bin/libarch.a(panic.o)
-                                        0x12a (size before relaxing)
+                0x0000000000000135       0x7f ../Arch/bin/libarch.a(panic.o)
+                                        0x198 (size before relaxing)
  .debug_line_str
-                0x0000000000000146       0x12 ../Arch/bin/libarch.a(vga_console.o)
-                                        0x116 (size before relaxing)
+                0x00000000000001b4       0x12 ../Arch/bin/libarch.a(vga_console.o)
+                                        0x151 (size before relaxing)
  .debug_line_str
-                0x0000000000000158        0xa ../Arch/bin/libarch.a(cpu.o)
-                                        0x10b (size before relaxing)
+                0x00000000000001c6        0xa ../Arch/bin/libarch.a(cpu.o)
+                                        0x148 (size before relaxing)
  .debug_line_str
-                0x0000000000000162       0x66 ../Core/bin/libcore.a(interrupts.o)
-                                        0x11b (size before relaxing)
+                0x00000000000001d0       0x67 ../Core/bin/libcore.a(interrupts.o)
+                                        0x169 (size before relaxing)
  .debug_line_str
-                0x00000000000001c8       0x3a ../IO/bin/libio.a(console.o)
-                                         0xda (size before relaxing)
+                0x0000000000000237       0x10 ../Core/bin/libcore.a(scheduler.o)
+                                         0xe8 (size before relaxing)
  .debug_line_str
-                0x0000000000000202       0x1d ../IO/bin/libio.a(kernel_output.o)
-                                         0xdd (size before relaxing)
+                0x0000000000000247       0x3a ../IO/bin/libio.a(console.o)
+                                        0x10d (size before relaxing)
  .debug_line_str
-                0x000000000000021f       0x3e ../Libs/bin/liblibc.a(itoa.o)
+                0x0000000000000281       0x28 ../IO/bin/libio.a(kernel_output.o)
+                                         0xe8 (size before relaxing)
+ .debug_line_str
+                0x00000000000002a9       0x3e ../Libs/bin/liblibc.a(itoa.o)
                                          0x9e (size before relaxing)
  .debug_line_str
-                0x000000000000025d        0xe ../Libs/bin/liblibc.a(memmove.o)
+                0x00000000000002e7        0xe ../Libs/bin/liblibc.a(memmove.o)
                                          0x9e (size before relaxing)
  .debug_line_str
-                0x000000000000026b        0xd ../Libs/bin/liblibc.a(memset.o)
+                0x00000000000002f5        0xd ../Libs/bin/liblibc.a(memset.o)
                                          0x9b (size before relaxing)
  .debug_line_str
-                0x0000000000000278        0xd ../Libs/bin/liblibc.a(strlen.o)
+                0x0000000000000302        0xd ../Libs/bin/liblibc.a(strlen.o)
                                          0x9b (size before relaxing)
  .debug_line_str
-                0x0000000000000285        0xc ../Libs/bin/liblibc.a(uitoa.o)
+                0x000000000000030f        0xc ../Libs/bin/liblibc.a(uitoa.o)
                                          0x98 (size before relaxing)
  .debug_line_str
-                0x0000000000000291       0x11 ../Libs/bin/liblibc.a(udivmoddi4.o)
-                                         0xa7 (size before relaxing)
+                0x000000000000031b       0x56 ../Libs/bin/libtrace.a(tracing.o)
+                                         0xe3 (size before relaxing)
 
 .comment        0x0000000000000000       0x2b
  .comment       0x0000000000000000       0x2b ../Arch/bin/libarch.a(kickstart.o)
@@ -727,6 +803,7 @@ OUTPUT(./build/UTK.elf elf32-i386)
  .comment       0x000000000000002b       0x2c ../Arch/bin/libarch.a(vga_console.o)
  .comment       0x000000000000002b       0x2c ../Arch/bin/libarch.a(cpu.o)
  .comment       0x000000000000002b       0x2c ../Core/bin/libcore.a(interrupts.o)
+ .comment       0x000000000000002b       0x2c ../Core/bin/libcore.a(scheduler.o)
  .comment       0x000000000000002b       0x2c ../IO/bin/libio.a(console.o)
  .comment       0x000000000000002b       0x2c ../IO/bin/libio.a(kernel_output.o)
  .comment       0x000000000000002b       0x2c ../Libs/bin/liblibc.a(itoa.o)
@@ -734,7 +811,7 @@ OUTPUT(./build/UTK.elf elf32-i386)
  .comment       0x000000000000002b       0x2c ../Libs/bin/liblibc.a(memset.o)
  .comment       0x000000000000002b       0x2c ../Libs/bin/liblibc.a(strlen.o)
  .comment       0x000000000000002b       0x2c ../Libs/bin/liblibc.a(uitoa.o)
- .comment       0x000000000000002b       0x2c ../Libs/bin/liblibc.a(udivmoddi4.o)
+ .comment       0x000000000000002b       0x2c ../Libs/bin/libtrace.a(tracing.o)
 
 .note.GNU-stack
                 0x0000000000000000        0x0
@@ -748,6 +825,8 @@ OUTPUT(./build/UTK.elf elf32-i386)
                 0x0000000000000000        0x0 ../Arch/bin/libarch.a(cpu.o)
  .note.GNU-stack
                 0x0000000000000000        0x0 ../Core/bin/libcore.a(interrupts.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 ../Core/bin/libcore.a(scheduler.o)
  .note.GNU-stack
                 0x0000000000000000        0x0 ../IO/bin/libio.a(console.o)
  .note.GNU-stack
@@ -763,44 +842,46 @@ OUTPUT(./build/UTK.elf elf32-i386)
  .note.GNU-stack
                 0x0000000000000000        0x0 ../Libs/bin/liblibc.a(uitoa.o)
  .note.GNU-stack
-                0x0000000000000000        0x0 ../Libs/bin/liblibc.a(udivmoddi4.o)
+                0x0000000000000000        0x0 ../Libs/bin/libtrace.a(tracing.o)
 
 .debug_loclists
-                0x0000000000000000     0x332d
+                0x0000000000000000     0x3190
  .debug_loclists
-                0x0000000000000000      0x32b ../Arch/bin/libarch.a(panic.o)
+                0x0000000000000000      0x3b7 ../Arch/bin/libarch.a(panic.o)
  .debug_loclists
-                0x000000000000032b     0x1161 ../Arch/bin/libarch.a(vga_console.o)
+                0x00000000000003b7     0x166c ../Arch/bin/libarch.a(vga_console.o)
  .debug_loclists
-                0x000000000000148c      0x739 ../Arch/bin/libarch.a(cpu.o)
+                0x0000000000001a23      0x1da ../Arch/bin/libarch.a(cpu.o)
  .debug_loclists
-                0x0000000000001bc5      0x455 ../Core/bin/libcore.a(interrupts.o)
+                0x0000000000001bfd      0x5b2 ../Core/bin/libcore.a(interrupts.o)
  .debug_loclists
-                0x000000000000201a       0x3e ../IO/bin/libio.a(console.o)
+                0x00000000000021af      0x186 ../IO/bin/libio.a(console.o)
  .debug_loclists
-                0x0000000000002058      0xf97 ../IO/bin/libio.a(kernel_output.o)
+                0x0000000000002335      0xafc ../IO/bin/libio.a(kernel_output.o)
  .debug_loclists
-                0x0000000000002fef       0x63 ../Libs/bin/liblibc.a(itoa.o)
+                0x0000000000002e31       0x5a ../Libs/bin/liblibc.a(itoa.o)
  .debug_loclists
-                0x0000000000003052       0x5c ../Libs/bin/liblibc.a(memmove.o)
+                0x0000000000002e8b       0x72 ../Libs/bin/liblibc.a(memmove.o)
  .debug_loclists
-                0x00000000000030ae       0x1d ../Libs/bin/liblibc.a(memset.o)
+                0x0000000000002efd       0x56 ../Libs/bin/liblibc.a(memset.o)
  .debug_loclists
-                0x00000000000030cb       0x33 ../Libs/bin/liblibc.a(strlen.o)
+                0x0000000000002f53       0x22 ../Libs/bin/liblibc.a(strlen.o)
  .debug_loclists
-                0x00000000000030fe      0x11d ../Libs/bin/liblibc.a(uitoa.o)
+                0x0000000000002f75       0xe8 ../Libs/bin/liblibc.a(uitoa.o)
  .debug_loclists
-                0x000000000000321b      0x112 ../Libs/bin/liblibc.a(udivmoddi4.o)
+                0x000000000000305d      0x133 ../Libs/bin/libtrace.a(tracing.o)
 
 .debug_rnglists
-                0x0000000000000000      0x518
+                0x0000000000000000      0x753
  .debug_rnglists
-                0x0000000000000000       0x2f ../Arch/bin/libarch.a(panic.o)
+                0x0000000000000000       0x2a ../Arch/bin/libarch.a(panic.o)
  .debug_rnglists
-                0x000000000000002f      0x31d ../Arch/bin/libarch.a(vga_console.o)
+                0x000000000000002a      0x48c ../Arch/bin/libarch.a(vga_console.o)
  .debug_rnglists
-                0x000000000000034c       0xc9 ../Arch/bin/libarch.a(cpu.o)
+                0x00000000000004b6       0x94 ../Arch/bin/libarch.a(cpu.o)
  .debug_rnglists
-                0x0000000000000415       0xac ../Core/bin/libcore.a(interrupts.o)
+                0x000000000000054a       0xed ../Core/bin/libcore.a(interrupts.o)
  .debug_rnglists
-                0x00000000000004c1       0x57 ../IO/bin/libio.a(kernel_output.o)
+                0x0000000000000637       0xc5 ../IO/bin/libio.a(kernel_output.o)
+ .debug_rnglists
+                0x00000000000006fc       0x57 ../Libs/bin/libtrace.a(tracing.o)

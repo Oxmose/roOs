@@ -326,10 +326,20 @@ static inline uint16_t* _vga_console_get_framebuffer(const uint32_t line,
 
 void vga_console_init(void)
 {
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_START, 0);
     KERNEL_DEBUG(VGA_DEBUG_ENABLED, "VGA", "Initializing VGA text driver");
 
     /* Init framebuffer */
     vga_console_framebuffer = (uint16_t*)VGA_CONSOLE_FRAMEBUFFER;
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_END, 3,
+                       (uintptr_t)vga_console_framebuffer & 0xFFFFFFFF,
+#ifdef ARCH_64_BITS
+                       (uintptr_t)vga_console_framebuffer >> 32,
+#else
+                        0,
+#endif
+                       VGA_CONSOLE_FRAMEBUFFER_SIZE);
 }
 
 void vga_console_clear_screen(void)
@@ -370,12 +380,12 @@ void vga_console_put_cursor_at(const uint32_t line, const uint32_t column)
     cursor_position = column + line * VGA_CONSOLE_SCREEN_COL_SIZE;
 
     /* Send low part to the screen */
-    cpu_outb(VGA_CONSOLE_CURSOR_COMM_LOW, VGA_CONSOLE_SCREEN_COMM_PORT);
-    cpu_outb((int8_t)(cursor_position & 0x00FF), VGA_CONSOLE_SCREEN_DATA_PORT);
+    _cpu_outb(VGA_CONSOLE_CURSOR_COMM_LOW, VGA_CONSOLE_SCREEN_COMM_PORT);
+    _cpu_outb((int8_t)(cursor_position & 0x00FF), VGA_CONSOLE_SCREEN_DATA_PORT);
 
     /* Send high part to the screen */
-    cpu_outb(VGA_CONSOLE_CURSOR_COMM_HIGH, VGA_CONSOLE_SCREEN_COMM_PORT);
-    cpu_outb((int8_t)((cursor_position & 0xFF00) >> 8),
+    _cpu_outb(VGA_CONSOLE_CURSOR_COMM_HIGH, VGA_CONSOLE_SCREEN_COMM_PORT);
+    _cpu_outb((int8_t)((cursor_position & 0xFF00) >> 8),
              VGA_CONSOLE_SCREEN_DATA_PORT);
 }
 

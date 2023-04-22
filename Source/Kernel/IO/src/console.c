@@ -76,17 +76,32 @@ static kernel_console_driver_t console_driver = {NULL};
 
 OS_RETURN_E console_set_selected_driver(const kernel_console_driver_t* driver)
 {
+#ifdef ARCH_64_BITS
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
+                       (uintptr_t)driver & 0xFFFFFFFF,
+                       (uintptr_t)driver >> 32);
+#else
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
+                       irq_number,
+                       driver,
+                       0);
+#endif
+
     if(driver == NULL ||
        driver->clear_screen == NULL ||
        driver->put_string == NULL ||
        driver->put_char == NULL ||
        driver->console_write_keyboard == NULL)
     {
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END, 1,
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     console_driver = *driver;
 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END, 1,
+                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 

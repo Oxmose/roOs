@@ -16,6 +16,9 @@
 #ifndef __GLOBAL_CONFIG_H_
 #define __GLOBAL_CONFIG_H_
 
+/* Tracing feature */
+#include <tracing.h>
+
 /* Architecture definitions */
 #define ARCH_X86_64  1
 #define ARCH_64_BITS 1
@@ -69,7 +72,7 @@
 /** @brief Current year */
 #define CURRENT_YEAR 2023
 
-/* Stack default alignement */
+/** @brief Stack default alignement */
 #define STACK_ALIGN 4
 
 /*******************************************************************************

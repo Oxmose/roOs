@@ -194,7 +194,7 @@ static output_t current_output;
  *
  * @param[in,out] string The string to tranform.
  */
-static void toupper(char* string);
+static void _toupper(char* string);
 
 /**
  * @brief Converts a string to upper case characters.
@@ -204,7 +204,7 @@ static void toupper(char* string);
  *
  * @param[in,out] string The string to tranform.
  */
-static void tolower(char* string);
+static void _tolower(char* string);
 
 /**
  * @brief Prints a formated string.
@@ -216,9 +216,9 @@ static void tolower(char* string);
  * @param[in] args The arguments to use with the formated string.
  * @param[in] used_output The output to use.
  */
-static void formater(const char* str,
-                     __builtin_va_list args,
-                     output_t used_output);
+static void _formater(const char* str,
+                      __builtin_va_list args,
+                      output_t used_output);
 
 /**
  * @brief Prints a formated string.
@@ -229,7 +229,7 @@ static void formater(const char* str,
  * @param[in] str The formated string to output.
  * @param[in] args The arguments to use with the formated string.
  */
-static void kprint_fmt(const char* str, __builtin_va_list args);
+static void _kprint_fmt(const char* str, __builtin_va_list args);
 
 /**
  * @brief Prints the tag for kernel output functions.
@@ -239,13 +239,13 @@ static void kprint_fmt(const char* str, __builtin_va_list args);
  * @param[in] fmt The formated string to print.
  * @param[in] ... The associated arguments to the formated string.
  */
-static void tag_printf(const char* fmt, ...);
+static void _tag_printf(const char* fmt, ...);
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void toupper(char* string)
+static void _toupper(char* string)
 {
     /* For each character of the string */
     while(*string != 0)
@@ -259,7 +259,7 @@ static void toupper(char* string)
     }
 }
 
-static void tolower(char* string)
+static void _tolower(char* string)
 {
     /* For each character of the string */
     while(*string != 0)
@@ -273,9 +273,9 @@ static void tolower(char* string)
     }
 }
 
-static void formater(const char* str,
-                     __builtin_va_list args,
-                     output_t used_output)
+static void _formater(const char* str,
+                      __builtin_va_list args,
+                      output_t used_output)
 {
     size_t   pos;
     size_t   str_length;
@@ -360,11 +360,11 @@ static void formater(const char* str,
                     PAD_SEQ
                     if(upper_mod == TRUE)
                     {
-                        toupper(tmp_seq);
+                        _toupper(tmp_seq);
                     }
                     else
                     {
-                        tolower(tmp_seq);
+                        _tolower(tmp_seq);
                     }
                     used_output.puts(tmp_seq);
                     break;
@@ -381,11 +381,11 @@ static void formater(const char* str,
                     PAD_SEQ
                     if(upper_mod == TRUE)
                     {
-                        toupper(tmp_seq);
+                        _toupper(tmp_seq);
                     }
                     else
                     {
-                        tolower(tmp_seq);
+                        _tolower(tmp_seq);
                     }
                     used_output.puts(tmp_seq);
                     break;
@@ -452,12 +452,12 @@ static void formater(const char* str,
     }
 }
 
-static void kprint_fmt(const char* str, __builtin_va_list args)
+static void _kprint_fmt(const char* str, __builtin_va_list args)
 {
-    formater(str, args, current_output);
+    _formater(str, args, current_output);
 }
 
-static void tag_printf(const char* fmt, ...)
+static void _tag_printf(const char* fmt, ...)
 {
     __builtin_va_list args;
 
@@ -467,7 +467,7 @@ static void tag_printf(const char* fmt, ...)
     }
     /* Prtinf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -484,7 +484,7 @@ void kernel_printf(const char* fmt, ...)
     __builtin_va_start(args, fmt);
     current_output.putc = console_put_char;
     current_output.puts = console_put_string;
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -513,14 +513,14 @@ void kernel_error(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    tag_printf("[ERROR] ");
+    _tag_printf("[ERROR] ");
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);
 
     /* Printf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -549,14 +549,14 @@ void kernel_success(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    tag_printf("[OK] ");
+    _tag_printf("[OK] ");
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);
 
     /* Printf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -585,14 +585,14 @@ void kernel_info(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    tag_printf("[INFO] ");
+    _tag_printf("[INFO] ");
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);
 
     /* Printf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -621,14 +621,14 @@ void kernel_warning(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    tag_printf("[WARNING] ");
+    _tag_printf("[WARNING] ");
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);
 
     /* Printf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -657,14 +657,14 @@ void kernel_debug(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    tag_printf("[DEBUG] ");
+    _tag_printf("[DEBUG] ");
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);
 
     /* Printf format string */
     __builtin_va_start(args, fmt);
-    kprint_fmt(fmt, args);
+    _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
 
@@ -677,7 +677,7 @@ void kernel_doprint(const char* str, __builtin_va_list args)
 
     current_output.putc = console_put_char;
     current_output.puts = console_put_string;
-    kprint_fmt(str, args);
+    _kprint_fmt(str, args);
 }
 
 /************************************ EOF *************************************/

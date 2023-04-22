@@ -1,14 +1,14 @@
 ################################################################################
 # UTK Makefile
-#
-# Created: 29/03/2023
+# 
+# Created: 23/05/2020
 #
 # Author: Alexy Torres Aurora Dugo
 #
 # Global module makefile. This makefile is used to link all modules together
 ################################################################################
 
-# Dependencies
+# Dependencies 
 include ./dependencies.mk
 include settings.mk
 
@@ -18,12 +18,12 @@ BUILD_DIR  = ./build
 .PHONY: all
 all: init module
 
-init:
+init: 
 	@mkdir -p $(BUILD_DIR)
 
-module:
-	$(LD) $(LDFLAGS) -o $(BUILD_DIR)/$(KERNEL_NAME).elf $(DEP_MODULES) $(DEP_LIBS) -Map=$(BUILD_DIR)/output.map
+module: 
+	$(LD) $(LDFLAGS) -o $(BUILD_DIR)/$(KERNEL_NAME).elf $(DEP_MODULES) $(DEP_LIBS) -Map=$(BUILD_DIR)/output.map 
 
-# Clean
+# Clean 
 clean:
 	$(RM) -rf $(BUILD_DIR)

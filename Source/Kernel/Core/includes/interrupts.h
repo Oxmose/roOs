@@ -54,7 +54,7 @@ typedef enum
 } INTERRUPT_TYPE_E;
 
 /** @brief Custom interrupt handler structure. */
-typedef void(*custom_handler_t)(cpu_state_t*, uintptr_t, stack_state_t*);
+typedef void(*custom_handler_t)(kernel_thread_t* curr_thread);
 
 /** @brief Defines the basic interface for an interrupt management driver (let
  * it be PIC or IO APIC for instance).
@@ -147,14 +147,8 @@ void kernel_interrupt_init(void);
  * @details Generic and global interrupt handler. This function should only be
  * called by an assembly interrupt handler. The function will dispatch the
  * interrupt to the desired function to handle the interrupt.
- *
- * @param[in, out] cpu_state The cpu registers structure.
- * @param[in] int_id The interrupt number.
- * @param[in, out] stack_state The stack state before the interrupt.
  */
-void kernel_interrupt_handler(cpu_state_t cpu_state,
-                              uintptr_t int_id,
-                              stack_state_t stack_state);
+void kernel_interrupt_handler(void);
 
 /**
  * @brief Set the driver to be used by the kernel to manage interrupts.
@@ -182,22 +176,9 @@ OS_RETURN_E kernel_interrupt_set_driver(const interrupt_driver_t* driver);
  * @param[in] handler The handler for the desired interrupt.
  *
  * @return The success state or the error code.
- * - OS_NO_ERR is returned if no error is encountered.
- * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the IRQ attached to the
- * interrupt line is not allowed.
- * - OS_ERR_NO_SUCH_IRQ_LINE is returned if the IRQ number is not supported.
- * - OS_ERR_NULL_POINTER is returned if the pointer
- * to the handler is NULL.
- * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a
- * handler is already registered for this RIQ number.
  */
 OS_RETURN_E kernel_interrupt_register_irq_handler(const uint32_t irq_number,
-                                       void(*handler)(
-                                             cpu_state_t*,
-                                             uintptr_t,
-                                             stack_state_t*
-                                             )
-                                       );
+                                                  custom_handler_t handler);
 
 /**
  * @brief Unregisters an interrupt handler for the desired IRQ number.
@@ -229,21 +210,9 @@ OS_RETURN_E kernel_interrupt_remove_irq_handler(const uint32_t irq_number);
  * @param[in] handler The handler for the desired interrupt.
  *
  * @return The success state or the error code.
- * - OS_NO_ERR is returned if no error is encountered.
- * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the desired
- * interrupt line is not allowed.
- * - OS_ERR_NULL_POINTER is returned if the pointer
- * to the handler is NULL.
- * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a
- * handler is already registered for this interrupt line.
  */
 OS_RETURN_E kernel_interrupt_register_int_handler(const uint32_t interrupt_line,
-                                       void(*handler)(
-                                             cpu_state_t*,
-                                             uintptr_t,
-                                             stack_state_t*
-                                             )
-                                       );
+                                                  custom_handler_t handler);
 
 /**
  * @brief Unregisters a new interrupt handler for the desired interrupt line.

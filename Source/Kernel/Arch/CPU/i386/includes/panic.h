@@ -28,6 +28,7 @@
 #include <cpu.h>          /* CPU structures */
 #include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Pointer types */
+#include <ctrl_block.h>   /* Thread's control block */
 
 /*******************************************************************************
  * CONSTANTS
@@ -86,19 +87,15 @@
 /**
  * @brief Displays the kernel panic screen.
  *
- * @details Displays the kernel panic screen. This sreen dumps the CPU registers
+ * @details Displays the kernel panic screen. This screen dumps the CPU registers
  * and the stack state before the panic occured.
  *
- * @param[in, out] cpu_state The cpu registers structure.
- * @param[in] int_id The interrupt number.
- * @param[in,out] stack_state The stack state before the interrupt.
+ * @param[in, out] curr_thread The thread that generated the panic
  *
  * @warning Panic should never be called, it must only be used as an interrupt
  * handler.
  */
-void panic_handler(cpu_state_t* cpu_state,
-                   uintptr_t int_id,
-                   stack_state_t* stack_state);
+void panic_handler(kernel_thread_t* curr_thread);
 
 /**
  * @brief Causes a kernel panic.

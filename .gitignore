@@ -22,7 +22,6 @@
 *.log
 
 # Folders
-build
-bin
-
-ARTIFACTS
+build/
+bin/
+ARTIFACTS/

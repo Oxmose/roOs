@@ -21,4 +21,8 @@
 *.map
 *.log
 
+# Folders
+build
+bin
+
 ARTIFACTS

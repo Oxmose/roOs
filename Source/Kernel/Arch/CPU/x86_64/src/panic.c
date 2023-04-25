@@ -43,7 +43,7 @@
  ******************************************************************************/
 
 /** @brief Defines the stack trace size */
-#define STACK_TRACE_SIZE 4
+#define STACK_TRACE_SIZE 6
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -382,8 +382,16 @@ static void _print_stack_trace(void)
         /* Get the associated symbol */
         symbol = NULL;
 
-        kernel_printf("[%u] 0x%p in %s\n", i, call_addr,
+        kernel_printf("[%u] 0x%p in %s", i, call_addr,
                       symbol == NULL ? "[NO_SYMBOL]" : symbol);
+        if(i % 2 == 0)
+        {
+            kernel_printf(" | ");
+        }
+        else
+        {
+            kernel_printf("\n");
+        }
         last_rbp  = (uintptr_t*)*last_rbp;
         call_addr = *(uintptr_t**)(last_rbp + 1);
     }

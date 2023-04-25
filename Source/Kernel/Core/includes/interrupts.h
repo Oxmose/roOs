@@ -21,10 +21,11 @@
 #ifndef __CORE_INTERRUPTS_H_
 #define __CORE_INTERRUPTS_H_
 
-#include <stdint.h> /* Generic int types */
-#include <stddef.h> /* Standard definitions */
-#include <cpu.h>    /* CPU structures and settings */
-#include <kerror.h> /* Kernel error codes */
+#include <stdint.h>     /* Generic int types */
+#include <stddef.h>     /* Standard definitions */
+#include <cpu.h>        /* CPU structures and settings */
+#include <kerror.h>     /* Kernel error codes */
+#include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
  * INCLUDES

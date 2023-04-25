@@ -2182,7 +2182,7 @@ void cpu_init(void)
 OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, interrupt_line);
-    KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU",
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME,
                  "Requesting interrupt raise %d", interrupt_line);
 
     if(interrupt_line > MAX_INTERRUPT_LINE)

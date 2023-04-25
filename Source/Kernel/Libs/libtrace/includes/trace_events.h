@@ -123,7 +123,10 @@ typedef enum
     EVENT_KERNEL_CONSOLE_SET_DRIVER_START   = 39,
     /** @brief Kernel Set Console Driver End */
     EVENT_KERNEL_CONSOLE_SET_DRIVER_END     = 40,
-
+    /** @brief Kernel UART Driver Init Start */
+    EVENT_KERNEL_UART_INIT_START            = 41,
+    /** @brief Kernel UART Driver Init End */
+    EVENT_KERNEL_UART_INIT_END              = 42,
 } TRACE_EVENT_E;
 
 /*******************************************************************************

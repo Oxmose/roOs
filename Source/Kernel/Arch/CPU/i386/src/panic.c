@@ -377,11 +377,22 @@ static void _print_stack_trace(void)
         /* Get the associated symbol */
         symbol = NULL;
 
-        kernel_printf("[%u] 0x%p in %s\n", i, call_addr,
+        kernel_printf("[%u] 0x%p in %s", i, call_addr,
                       symbol == NULL ? "[NO_SYMBOL]" : symbol);
+        if(i % 2 == 0)
+        {
+            kernel_printf(" | ");
+        }
+        else
+        {
+            kernel_printf("\n");
+        }
+
         last_ebp  = (uintptr_t*)*last_ebp;
         call_addr = *(uintptr_t**)(last_ebp + 1);
     }
+
+
 }
 
 void panic_handler(kernel_thread_t* curr_thread)

@@ -153,7 +153,7 @@ static int32_t _init_driver_get_irq_int_line(const uint32_t irq_number)
 
 static void _spurious_handler(void)
 {
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Spurious interrupt %d", spurious_interrupt_count);
 
     ++spurious_interrupt_count;
@@ -181,7 +181,7 @@ void kernel_interrupt_handler(void)
        int_id != SCHEDULER_SW_INT_LINE &&
        int_id >= MIN_INTERRUPT_LINE)
     {
-        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                      "Blocked interrupt %u", int_id);
         return;
     }
@@ -191,7 +191,7 @@ void kernel_interrupt_handler(void)
         panic_handler(current_thread);
     }
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS", "Int %d", int_id);
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Int %d", int_id);
 
     /* Check for spurious interrupt */
     if(interrupt_driver.driver_handle_spurious(int_id) ==
@@ -201,7 +201,7 @@ void kernel_interrupt_handler(void)
         return;
     }
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS", "Non spurious %d",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Non spurious %d",
                  int_id);
 
     /* Select custom handlers */
@@ -225,7 +225,7 @@ void kernel_interrupt_handler(void)
 void kernel_interrupt_init(void)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_INIT_START, 0);
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Initializing interrupt manager.");
 
     /* Blank custom interrupt handlers */
@@ -282,7 +282,7 @@ OS_RETURN_E kernel_interrupt_set_driver(const interrupt_driver_t* driver)
 
     EXIT_CRITICAL(int_state);
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Set new interrupt driver at 0x%p.", driver);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_END, 1, OS_NO_ERR);
@@ -340,7 +340,7 @@ OS_RETURN_E kernel_interrupt_register_int_handler(const uint32_t interrupt_line,
 
     kernel_interrupt_handlers[interrupt_line] = handler;
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Added INT %u handler at 0x%p", interrupt_line, handler);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_END, 2,
@@ -384,7 +384,7 @@ OS_RETURN_E kernel_interrupt_remove_int_handler(const uint32_t interrupt_line)
 
     kernel_interrupt_handlers[interrupt_line] = NULL;
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Removed interrupt %u handle", interrupt_line);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REMOVE_END, 2,
@@ -462,7 +462,7 @@ void kernel_interrupt_restore(const uint32_t prev_state)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RESTORE_INTERRUPT, 1, prev_state);
     if(prev_state != 0)
     {
-        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS", "Enabled HW INT");
+        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Enabled HW INT");
         _cpu_set_interrupt();
     }
 }
@@ -482,7 +482,7 @@ uint32_t kernel_interrupt_disable(void)
 
     _cpu_clear_interrupt();
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS", "Disabled HW INT");
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Disabled HW INT");
 
     return prev_state;
 }
@@ -492,7 +492,7 @@ void kernel_interrupt_set_irq_mask(const uint32_t irq_number,
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_SET_IRQ_MASK, 2, irq_number, enabled);
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, "INTERRUPTS",
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "IRQ Mask change: %u %u", irq_number, enabled);
 
     interrupt_driver.driver_set_irq_mask(irq_number, enabled);

@@ -29,7 +29,7 @@
 #include <kerror.h>         /* Kernel error */
 #include <kernel_output.h>  /* Kernel output manager */
 #include <console.h>        /* Console driver manager */
-
+#include <uart.h>           /* UART driver */
 /* Configuration files */
 #include <config.h>
 
@@ -39,6 +39,8 @@
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
+
+#define MODULE_NAME "X86 VGA TEXT"
 
 /** @brief VGA frame buffer base physical address. */
 #define VGA_CONSOLE_FRAMEBUFFER 0xB8000
@@ -103,7 +105,7 @@ static cursor_t last_printed_cursor;
  * @brief Stores the column index of the last printed character for each lines
  * of the screen.
  */
-static uint8_t last_columns[VGA_CONSOLE_SCREEN_LINE_SIZE] = {0};
+static uint32_t last_columns[VGA_CONSOLE_SCREEN_LINE_SIZE] = {0};
 
 /** @brief VGA frame buffer address. */
 static uint16_t* vga_console_framebuffer = (uint16_t*)VGA_CONSOLE_FRAMEBUFFER;
@@ -195,6 +197,10 @@ inline static void _vga_console_print_char(const uint32_t line,
 
 static void _vga_console_process_char(const char character)
 {
+#if DEBUG_LOG_UART
+    uart_put_char(character);
+#endif
+
     /* If character is a normal ASCII character */
     if(character > 31 && character < 127)
     {
@@ -327,7 +333,6 @@ static inline uint16_t* _vga_console_get_framebuffer(const uint32_t line,
 void vga_console_init(void)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_START, 0);
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED, "VGA", "Initializing VGA text driver");
 
     /* Init framebuffer */
     vga_console_framebuffer = (uint16_t*)VGA_CONSOLE_FRAMEBUFFER;
@@ -340,25 +345,14 @@ void vga_console_init(void)
                         0,
 #endif
                        VGA_CONSOLE_FRAMEBUFFER_SIZE);
+
+    KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA text driver initialized");
 }
 
 void vga_console_clear_screen(void)
 {
-    uint32_t i;
-    uint32_t j;
-    uint16_t blank = ' ' |
-                     ((screen_scheme.background << 8) & 0xF000) |
-                     ((screen_scheme.foreground << 8) & 0x0F00);
-
-    /* Clear all screen cases */
-    for(i = 0; i < VGA_CONSOLE_SCREEN_LINE_SIZE; ++i)
-    {
-        for(j = 0; j < VGA_CONSOLE_SCREEN_COL_SIZE; ++j)
-        {
-            *(_vga_console_get_framebuffer(i, j)) = blank;
-        }
-        last_columns[i] = 0;
-    }
+    /* Clear all screen */
+    memset(_vga_console_get_framebuffer(0, 0), 0, VGA_CONSOLE_FRAMEBUFFER_SIZE);
 }
 
 void vga_console_put_cursor_at(const uint32_t line, const uint32_t column)

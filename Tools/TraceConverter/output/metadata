@@ -359,3 +359,15 @@ event {
         uint32_t ret_code;
     };
 };
+
+event {
+    id = 41;
+    name = "Kernel UART Driver Init Start";
+};
+
+event {
+    id = 42;
+    name = "Kernel UART Driver Init End";
+};
+
+

@@ -28,6 +28,7 @@
 #include <kernel_output.h>  /* Kernel logger */
 #include <cpu.h>            /* CPU manager */
 #include <panic.h>          /* Kernel Panic */
+#include <uart.h>           /* UART driver */
 
 /* Configuration files */
 #include <config.h>
@@ -52,7 +53,22 @@
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Asserts a condition and generates a kernel panic in case of failure.
+ *
+ * @details Asserts a condition and generates a kernel panic in case of failure.
+ *
+ * @param[in] COND The condition to verify.
+ * @param[in] MSG The message to print in case of error.
+ * @param[in] ERROR The error code.
+ *
+*/
+#define KICKSTART_ASSERT(COND, MSG, ERROR) {                \
+    if((COND) == FALSE)                                     \
+    {                                                       \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+    }                                                       \
+}
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -98,11 +114,17 @@ void kickstart(void)
     /* TODO: remove */
     scheduler_dummy_init();
 
+    /* Init serial driver */
+#if DEBUG_LOG_UART
+    uart_init();
+    retVal = console_set_selected_driver(uart_get_driver());
+    /* TODO: Assert retVal */
+    (void)retVal;
+#endif
     /* Register the VGA console driver for kernel console */
     vga_console_init();
     retVal = console_set_selected_driver(vga_console_get_driver());
     console_clear_screen();
-
     /* TODO: Assert retVal */
     (void)retVal;
 
@@ -114,9 +136,8 @@ void kickstart(void)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 
     /* Once the scheduler is started, we should never come back here. */
-    PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Kickstart returned", TRUE);
+    KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);
 }
-
 #undef MODULE_NAME
 
 /************************************ EOF *************************************/

@@ -10,7 +10,8 @@
 ################################################################################
 
 QEMUOPTS = -cpu coreduo,-syscall,-lm -d guest_errors -rtc base=localtime -m 256M \
-           -gdb tcp::1234 -smp 4 -monitor stdio
+           -gdb tcp::1234 -smp 4 -monitor telnet:127.0.0.1:55555,server,nowait \
+           -serial stdio
 
 QEMU = qemu-system-i386
 

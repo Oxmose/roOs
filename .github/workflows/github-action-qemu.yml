@@ -12,9 +12,29 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - run: chmod +x ci-qemu.sh
-      - run: bash -e ci-qemu.sh
+      - uses: actions/checkout@v3
+      - name: Cache Qemu
+        id: cache-qemu
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-qemu-modules
+        with:
+          # qemu cache files are stored in `~/qemu` on Linux/macOS
+          path: ~/qemu
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: chmod +x ci-qemu.sh
+        run: bash -e ci-qemu.sh
+
       - run: export PATH=$PATH:$HOME/qemu/bin
+      - run: echo $PATH
       - run: qemu-system-i386 --version
       - run: qemu-system-x64 --version
 

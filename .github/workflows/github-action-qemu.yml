@@ -30,8 +30,7 @@ jobs:
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: List the state of node modules
         continue-on-error: true
-        run: chmod +x ci-qemu.sh
-        run: bash -e ci-qemu.sh
+        run: chmod +x ci-qemu.sh && bash -e ci-qemu.sh
 
       - run: export PATH=$PATH:$HOME/qemu/bin
       - run: echo $PATH

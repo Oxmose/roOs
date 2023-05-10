@@ -28,12 +28,14 @@ jobs:
             ${{ runner.os }}-
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
+        name: List the state of qemu module
         continue-on-error: true
         run: chmod +x ci-qemu.sh && bash -e ci-qemu.sh
 
       - run: export PATH=$PATH:$HOME/qemu/bin
+      - run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
       - run: echo $PATH
+      - run: exho $GITHUB_PATH
       - run: qemu-system-i386 --version
       - run: qemu-system-x64 --version
 

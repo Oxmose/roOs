@@ -26,7 +26,7 @@
 ## Architecture supported
 | i386 | x86_64 | ARM |
 | --- | --- | --- |
-|  YES |   TBD | TBD |
+|  YES |   YES | TBD |
 
 ### Memory Management
 

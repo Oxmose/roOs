@@ -11,8 +11,10 @@ jobs:
 
       - name: Check out repository code
         uses: actions/checkout@v3
-
       - uses: actions/checkout@v3
+
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+
       - name: Cache Qemu
         id: cache-qemu
         uses: actions/cache@v3
@@ -32,12 +34,10 @@ jobs:
         continue-on-error: true
         run: chmod +x ci-qemu.sh && bash -e ci-qemu.sh
 
-      - run: export PATH=$PATH:$HOME/qemu/bin
       - run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
       - run: echo $PATH
-      - run: exho $GITHUB_PATH
-      - run: qemu-system-i386 --version
-      - run: qemu-system-x64 --version
+      - run: echo $GITHUB_PATH
 
-      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+
+
       - run: echo "This job's status is ${{ job.status }}."

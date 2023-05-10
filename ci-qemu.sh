@@ -2,6 +2,7 @@
 set -e
 
 # Install dependencies
+sudo apt update
 sudo apt install g++ \
             nasm \
             xorriso \

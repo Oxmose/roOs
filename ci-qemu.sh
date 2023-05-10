@@ -2,7 +2,7 @@
 set -e
 
 # Install dependencies
-apt install g++ \
+sudo apt install g++ \
             nasm \
             xorriso \
             grub-common \

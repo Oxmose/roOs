@@ -101,7 +101,7 @@ typedef signed long long   int64_t;
 typedef unsigned long long uint64_t;
 
 /** @brief Defines the boot_t type. */
-typedef uint8_t bool_t;
+typedef uint8_t            bool_t;
 
 /*******************************************************************************
  * MACROS

@@ -50,6 +50,8 @@ typedef enum
     OS_ERR_INTERRUPT_NOT_REGISTERED        = 5,
     /** @brief Unknown IRQ. */
     OS_ERR_NO_SUCH_IRQ                     = 6,
+    /** @brief Missing required memory */
+    OS_ERR_NO_MORE_MEMORY                  = 7,
 } OS_RETURN_E;
 
 /*******************************************************************************

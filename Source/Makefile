@@ -53,7 +53,7 @@ endif
 
 ifeq ($(TESTS), TRUE)
 	# Build the tests module
-	@make -C $(SOURCE_DIR)/tests target=$(target)
+	@make -C $(SOURCE_DIR)/TestFramework target=$(target)
 endif
 
 # Build general modules
@@ -98,6 +98,7 @@ endif
 # Clean modules
 	@make clean -C $(SOURCE_DIR)/Libs
 	@make clean -C $(SOURCE_DIR)/IO
+	@make clean -C $(SOURCE_DIR)/TestFramework
 
 # Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)

@@ -24,7 +24,7 @@ CFLAGS = -m32 -std=c11 -nostdinc -fno-builtin -nostdlib -fno-stack-protector \
 		 -no-pie -MD -ffreestanding -Wno-address-of-packed-member \
 		 -fno-omit-frame-pointer -Wmissing-prototypes
 
-TESTS_FLAGS = -DTEST_MODE_ENABLED
+TESTS_FLAGS = -D_TESTING_FRAMEWORK_ENABLED
 
 ifeq ($(TESTS), TRUE)
 CFLAGS += $(TESTS_FLAGS)

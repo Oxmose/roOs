@@ -5,8 +5,8 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - run: chmod +x ci-qemu/ci-qemu.sh
-      - run: bash -e ci-qemu/ci-qemu.sh
+      - run: chmod +x ci-qemu.sh
+      - run: bash -e ci-qemu.sh
       - run: export PATH=$PATH:$HOME/qemu/bin
       - run: qemu-system-i386 --version
       - run: qemu-system-x64 --version

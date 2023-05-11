@@ -1,7 +1,7 @@
 #!/bin/bash
 
 pwd
-cd ../../Source
+cd Source
 
 make clean
 make target=x86_i386 DEBUG=TRUE TESTS=TRUE

@@ -37,7 +37,8 @@ jobs:
       - run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
       - run: echo $PATH
       - run: echo $GITHUB_PATH
-
+      - run: qemu-system-i386 --version
+      - run: qemu-system-x64 --version
 
 
       - run: echo "This job's status is ${{ job.status }}."

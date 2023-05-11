@@ -15,7 +15,7 @@ jobs:
 
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
 
-      - run: chmod +x install_ci_env.sh && bash -e install_ci_env.sh
+      - run: chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
 
       - name: Cache Qemu
         id: cache-qemu
@@ -34,13 +34,17 @@ jobs:
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: List the state of qemu module
         continue-on-error: true
-        run: chmod +x ci-qemu.sh && bash -e ci-qemu.sh
+        run: chmod +x Tools/CIWorkflow/ci-qemu.sh && bash -e Tools/CIWorkflow/ci-qemu.sh
 
       - run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
       - run: echo $PATH
       - run: echo $GITHUB_PATH
       - run: qemu-system-i386 --version
       - run: qemu-system-x86_64 --version
+
+      - run: echo "Running Tests"
+      - run: chmod +x Tools/CIWorkflow/run_tests.sh
+      - run: Tools/CIWorkflow/run_tests.sh
 
 
       - run: echo "This job's status is ${{ job.status }}."

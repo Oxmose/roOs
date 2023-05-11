@@ -15,6 +15,8 @@ jobs:
 
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
 
+      - run: chmod +x install_ci_env.sh && bash -e install_ci_env.sh
+
       - name: Cache Qemu
         id: cache-qemu
         uses: actions/cache@v3

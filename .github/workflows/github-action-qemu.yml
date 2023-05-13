@@ -52,4 +52,4 @@ jobs:
       - name: Unit Testing
         run: |
           cd Source
-          Tools/CIWorkflow/run_tests.sh
+          ../Tools/CIWorkflow/run_tests.sh

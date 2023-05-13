@@ -19,6 +19,7 @@ jobs:
           chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
           echo "$HOME/qemu/bin" >> $GITHUB_PATH
           chmod +x Tools/CIWorkflow/run_tests.sh
+          chmod +x Tools/CIWorkflow/ci-qemu.sh
 
 
       - name: Cache Qemu
@@ -39,7 +40,7 @@ jobs:
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: List the state of qemu module
         continue-on-error: true
-        run: chmod +x Tools/CIWorkflow/ci-qemu.sh && bash -e Tools/CIWorkflow/ci-qemu.sh
+        run: Tools/CIWorkflow/ci-qemu.sh
 
       - name: QEMU Validation
         run: |
@@ -48,5 +49,7 @@ jobs:
 
       - name: Unit Testing
         run: |
-          chmod +x Tools/CIWorkflow/run_tests.sh
+          cd Source
+          python ../Tools/CIWorkflow/TestValidator.py x86_64 Kernel/TestFramework/includes/test_groups.json Kernel/TestFramework/includes/test_list.h ../test_file_output.txt
+          python ../Tools/CIWorkflow/TestValidator.py x86_i386 Kernel/TestFramework/includes/test_groups.json Kernel/TestFramework/includes/test_list.h ../test_file_output.txt
           Tools/CIWorkflow/run_tests.sh

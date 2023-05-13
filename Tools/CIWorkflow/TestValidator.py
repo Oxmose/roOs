@@ -147,70 +147,70 @@ def UpdateTestFile(filename, testGroup, testName):
             fileDesc.write(line)
 
 
-if __name__ == "__main__":
-    print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#" + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| UTK UNIT TEST FRAMEWORK                                                      |" + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
-    if len(sys.argv) != 5:
-        print("Usage: {} target test_group_file test_list test_file_output".format(sys.argv[0]))
-        exit(1)
+#if __name__ == "__main__":
+print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#" + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "| UTK UNIT TEST FRAMEWORK                                                      |" + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
+if len(sys.argv) != 5:
+    print("Usage: {} target test_group_file test_list test_file_output".format(sys.argv[0]))
+    exit(1)
 
-    target             = sys.argv[1]
-    testGroupsFileName = sys.argv[2]
-    testListFileName   = sys.argv[3]
-    testOutputFileName = sys.argv[4]
+target             = sys.argv[1]
+testGroupsFileName = sys.argv[2]
+testListFileName   = sys.argv[3]
+testOutputFileName = sys.argv[4]
 
-    error   = 0
-    success = 0
-    total   = 0
+error   = 0
+success = 0
+total   = 0
 
-    if target not in TARGET_LIST:
-        print("Error: Unknown target {}, only {} are supported".format(target, TARGET_LIST))
+if target not in TARGET_LIST:
+    print("Error: Unknown target {}, only {} are supported".format(target, TARGET_LIST))
 
-    with open(testGroupsFileName) as groupFile:
-        jsonObject = json.loads(groupFile.read())
+with open(testGroupsFileName) as groupFile:
+    jsonObject = json.loads(groupFile.read())
 
-        for group in jsonObject:
-            print(COLORS.OKBLUE + "\n#==============================================================================#" + COLORS.ENDC)
-            print(COLORS.OKBLUE + " > Executing Group {}".format(group["name"])  + COLORS.ENDC)
-            print(COLORS.OKBLUE + " > " + str(group["group"])  + COLORS.ENDC)
-            print(COLORS.OKBLUE + " > Target {}".format(target) + COLORS.ENDC)
-            print(COLORS.OKBLUE + "#==============================================================================#\n"  + COLORS.ENDC)
+    for group in jsonObject:
+        print(COLORS.OKBLUE + "\n#==============================================================================#" + COLORS.ENDC)
+        print(COLORS.OKBLUE + " > Executing Group {}".format(group["name"])  + COLORS.ENDC)
+        print(COLORS.OKBLUE + " > " + str(group["group"])  + COLORS.ENDC)
+        print(COLORS.OKBLUE + " > Target {}".format(target) + COLORS.ENDC)
+        print(COLORS.OKBLUE + "#==============================================================================#\n"  + COLORS.ENDC)
 
-            total += 1
+        total += 1
 
-            # Update test file
-            UpdateTestFile(testListFileName, group["group"], group["name"])
+        # Update test file
+        UpdateTestFile(testListFileName, group["group"], group["name"])
 
-            retValue = os.system("make clean > /dev/null")
-            if retValue != 0:
-                error += 1
-                continue
+        retValue = os.system("make clean > /dev/null")
+        if retValue != 0:
+            error += 1
+            continue
 
-            retValue = os.system("make target={} TESTS=TRUE > /dev/null 2>&1".format(target))
-            if retValue != 0:
-                error += 1
-                continue
+        retValue = os.system("make target={} TESTS=TRUE > /dev/null 2>&1".format(target))
+        if retValue != 0:
+            error += 1
+            continue
 
-            retValue = os.system("make target={} qemu-test-mode > {}".format(target, testOutputFileName))
-            if retValue != 0:
-                error += 1
-                continue
+        retValue = os.system("make target={} qemu-test-mode > {}".format(target, testOutputFileName))
+        if retValue != 0:
+            error += 1
+            continue
 
-            jsonTestsuite = ParseInputFile(testOutputFileName)
-            retValue = Validate(jsonTestsuite)
-            if retValue == 0:
-                success += 1
-            else:
-                error += 1
+        jsonTestsuite = ParseInputFile(testOutputFileName)
+        retValue = Validate(jsonTestsuite)
+        if retValue == 0:
+            success += 1
+        else:
+            error += 1
 
-    print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| Total:  {:<68} |".format(total)  + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| Sucess: {:<68} |".format(success)  + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| Errors: {:<68} |".format(error)  + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "| Total:  {:<68} |".format(total)  + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "| Sucess: {:<68} |".format(success)  + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "| Errors: {:<68} |".format(error)  + COLORS.ENDC)
+print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
 
-    exit(error)
+exit(error)
 

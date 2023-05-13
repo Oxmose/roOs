@@ -50,6 +50,5 @@ jobs:
           qemu-system-x86_64 --version
 
       - name: Unit Testing
-        run: |
-          cd Source
-          ../Tools/CIWorkflow/run_tests.sh
+        run: Tools/CIWorkflow/run_tests.sh
+        shell: bash

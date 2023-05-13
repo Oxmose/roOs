@@ -5,13 +5,13 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "==> The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "==> This job is now running on a ${{ runner.os }}"
-      - run: echo "==> The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Initialization
+        run: echo "==> The job was automatically triggered by a ${{ github.event_name }} event."
+        run: echo "==> This job is now running on a ${{ runner.os }}"
+        run: echo "==> The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
 
       - name: Check out repository code
         uses: actions/checkout@v3
-      - uses: actions/checkout@v3
 
       - run: chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
 
@@ -34,11 +34,13 @@ jobs:
         continue-on-error: true
         run: chmod +x Tools/CIWorkflow/ci-qemu.sh && bash -e Tools/CIWorkflow/ci-qemu.sh
 
-      - run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
-      - run: qemu-system-i386 --version
-      - run: qemu-system-x86_64 --version
+      - name: QEMU Validation
+        run: echo "$HOME/qemu/bin" >> $GITHUB_PATH
+        run: qemu-system-i386 --version
+        run: qemu-system-x86_64 --version
 
-      - run: chmod +x Tools/CIWorkflow/run_tests.sh
-      - run: Tools/CIWorkflow/run_tests.sh
+      - name: Unit Testing
+        run: chmod +x Tools/CIWorkflow/run_tests.sh
+        run: Tools/CIWorkflow/run_tests.sh
 
       - run: echo "This job's status is ${{ job.status }}."

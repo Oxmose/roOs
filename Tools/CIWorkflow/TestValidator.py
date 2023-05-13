@@ -201,14 +201,16 @@ if __name__ == "__main__":
                 except subprocess.TimeoutExpired:
                     p.kill()
 
-                os.sync()
+                outputFile.close()
 
-                jsonTestsuite = ParseInputFile(testOutputFileName)
-                retValue = Validate(jsonTestsuite)
-                if retValue == 0:
-                    success += 1
-                else:
-                    error += 1
+            os.sync()
+
+            jsonTestsuite = ParseInputFile(testOutputFileName)
+            retValue = Validate(jsonTestsuite)
+            if retValue == 0:
+                success += 1
+            else:
+                error += 1
 
 
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)

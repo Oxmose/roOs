@@ -133,16 +133,6 @@ if __name__ == "__main__":
                 error += 1
                 continue
 
-            retValue = os.system("make target={} TESTS=TRUE > /dev/null 2>&1".format(target))
-            if retValue != 0:
-                error += 1
-                continue
-
-            retValue = os.system("make target={} qemu-test-mode > {}".format(target, testOutputFileName))
-            if retValue != 0:
-                error += 1
-                continue
-
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)

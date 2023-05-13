@@ -1,6 +1,5 @@
 #!/bin/bash
 
-pwd
 cd Source
 
 python ../Tools/CIWorkflow/TestValidator.py x86_64 Kernel/TestFramework/includes/test_groups.json Kernel/TestFramework/includes/test_list.h ../test_file_output.txt

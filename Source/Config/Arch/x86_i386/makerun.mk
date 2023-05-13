@@ -10,7 +10,7 @@
 ################################################################################
 
 QEMUOPTS = -cpu coreduo,-syscall,-lm -d guest_errors -rtc base=localtime -m 256M \
-           -gdb tcp::1234 -smp 4 -serial stdio
+           -smp 4 -serial stdio
 
 QEMU = qemu-system-i386
 
@@ -36,4 +36,4 @@ qemu-test-mode: pre-run
 
 debug: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu DEBUG MODE\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S -monitor telnet:127.0.0.1:55555,server,nowait
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S -monitor telnet:127.0.0.1:55555,server,nowait -gdb tcp::1234

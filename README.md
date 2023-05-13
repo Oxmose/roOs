@@ -17,6 +17,7 @@
 
 | Status | Main | Dev |
 | --- | --- | --- |
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6357290f76854bb68995d59ca8a9a14c)](https://app.codacy.com/gh/Oxmose/nUTK?utm_source=github.com&utm_medium=referral&utm_content=Oxmose/nUTK&utm_campaign=Badge_Grade)
 | Travis CI | [![Build Status](https://app.travis-ci.com/Oxmose/UTK-Reboot.svg?branch=main)](https://app.travis-ci.com/Oxmose/UTK-Reboot) | [![Build Status](https://app.travis-ci.com/Oxmose/UTK-Reboot.svg?branch=dev)](https://app.travis-ci.com/Oxmose/UTK-Reboot) |
 | Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae0df892bb124da8b16d015e4f4f2aeb)](https://www.codacy.com/gh/Oxmose/UTK-Reboot/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Oxmose/UTK-Reboot&amp;utm_campaign=Badge_Grade)| N/A |
 

@@ -1,12 +1,12 @@
 make[1]: Entering directory '/home/alexy/Documents/nUTK/Source'
 [1m[34m
 #-------------------------------------------------------------------------------[22m[39m
-[1m[34m| Preparing run for target x86_i386[22m[39m
+[1m[34m| Preparing run for target x86_64[22m[39m
 [1m[34m#-------------------------------------------------------------------------------
 [22m[39m
 rm -rf ./build/GRUB
 rm -f -f ./build/utk_boot.iso
-cp -R Config/Arch/x86_i386/GRUB ./build/
+cp -R Config/Arch/x86_64/GRUB ./build/
 cp ./build/UTK.elf ./build/GRUB/boot/
 grub-mkrescue -o ./build/utk_boot.iso ./build/GRUB 2>&1 /dev/null
 xorriso 1.5.4 : RockRidge filesystem manipulator, libburnia project.
@@ -15,14 +15,14 @@ Drive current: -outdev 'stdio:./build/utk_boot.iso'
 Media current: stdio file, overwriteable
 Media status : is blank
 Media summary: 0 sessions, 0 data blocks, 0 data,  232g free
-Added to ISO image: directory '/'='/tmp/grub.lNH0x6'
+Added to ISO image: directory '/'='/tmp/grub.Ybv5fu'
 xorriso : UPDATE :     294 files added in 1 seconds
 Added to ISO image: directory '/'='/home/alexy/Documents/nUTK/Source/build/GRUB'
 Added to ISO image: file '/null'='/dev/null'
 xorriso : UPDATE :     299 files added in 1 seconds
 xorriso : NOTE : Copying to System Area: 512 bytes from file '/usr/lib/grub/i386-pc/boot_hybrid.img'
-ISO image produced: 2557 sectors
-Written to medium : 2557 sectors at LBA 0
+ISO image produced: 2577 sectors
+Written to medium : 2577 sectors at LBA 0
 Writing to 'stdio:./build/utk_boot.iso' completed successfully.
 
 [1m[94m=== Running on Qemu TEST MODE[22m[39m
@@ -35,9 +35,9 @@ Press Ctrl-B to configure iPXE (PCI 00:03.0)...
 
 Booting from DVD/CD...
 [INFO] UTK Kickstart
-[OK] GDT Initialized at 0xE015AA48
-[OK] IDT Initialized at 0xE015A240
-[OK] TSS Initialized at 0xE015A098
+[OK] GDT Initialized at 0xFFFFFFF800162280
+[OK] IDT Initialized at 0xFFFFFFF800161270
+[OK] TSS Initialized at 0xFFFFFFF8001610C0
 #-------- TESTING SECTION START --------#
 {
 	"version": "0.5",

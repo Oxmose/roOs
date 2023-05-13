@@ -2,6 +2,7 @@ import json
 import sys
 import os
 import re
+import subprocess
 
 class COLORS:
     HEADER = '\033[95m'
@@ -32,6 +33,61 @@ TARGET_LIST = [
     "x86_64",
     "x86_i386"
 ]
+
+def Validate(jsonTestsuite):
+    print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
+    print(COLORS.OKCYAN + COLORS.BOLD + "| UTK Test Suite                                   |" + COLORS.ENDC)
+    print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
+    print(COLORS.OKCYAN +"| Version: {:40s}|".format(jsonTestsuite["version"]) + COLORS.ENDC)
+    print(COLORS.OKCYAN +"| Testname: {:39s}|".format(jsonTestsuite["name"]) + COLORS.ENDC)
+    print(COLORS.OKCYAN +"#--------------------------------------------------#" + COLORS.ENDC)
+    print(COLORS.OKCYAN +"| N# of tests    | N# of success  | N# of failures |" + COLORS.ENDC)
+    print(COLORS.OKCYAN +"|--------------------------------------------------#" + COLORS.ENDC)
+    print(COLORS.OKCYAN +"| {:14d} | {:14d} | {:14d} |".format(jsonTestsuite["number_of_tests"], jsonTestsuite["success"], jsonTestsuite["failures"]) + COLORS.ENDC)
+    print(COLORS.OKCYAN +"#--------------------------------------------------#" + COLORS.ENDC)
+
+    outComeStr = ""
+
+    for testId, testContent in jsonTestsuite["test_suite"].items():
+        print("===> Test {}".format(testId))
+        if testContent["status"] == 0:
+            outComeStr = COLORS.FAIL + COLORS.BOLD + "FAIL" + COLORS.ENDC
+        else:
+            outComeStr = COLORS.OKGREEN + COLORS.BOLD + "PASS" + COLORS.ENDC
+        print("    > Outcome: {} | Expected: 0x{:X} -- Result: 0x{:X} | Type: {}".format(outComeStr, testContent["expected"], testContent["result"], TYPE_STR[testContent["type"]]))
+
+
+    print()
+    if jsonTestsuite["failures"] == 0:
+        print(COLORS.OKGREEN + COLORS.BOLD + "==== " + jsonTestsuite["name"] + " RESULT: PASS ====" + COLORS.ENDC)
+    else:
+        print(COLORS.FAIL + COLORS.BOLD + "==== " + jsonTestsuite["name"] + " RESULT: FAIL ====" + COLORS.ENDC)
+
+    print("\n#--------------------------------------------------------------------------------#\n")
+
+    # Validate the test
+    return jsonTestsuite["failures"]
+
+
+def ParseInputFile(filename):
+    isTestsuiteContent = False
+    with open(filename) as fileDesc:
+        fileContent = fileDesc.readlines()
+
+        jsonBody = ""
+        for line in fileContent:
+            line = line.strip("\n")
+            if line == "#-------- TESTING SECTION START --------#":
+                isTestsuiteContent = True
+            elif line == "#-------- TESTING SECTION END --------#":
+                isTestsuiteContent = False
+            else:
+                if isTestsuiteContent:
+                    jsonBody += line + "\n"
+
+        jsonObject = json.loads(jsonBody)
+
+        return jsonObject
 
 def UpdateTestFile(filename, testGroup, testName):
     with open(filename, "r+") as fileDesc:
@@ -137,6 +193,20 @@ if __name__ == "__main__":
             if retValue != 0:
                 error += 1
                 continue
+
+            with open(testOutputFileName, "w") as outputFile:
+                p = subprocess.Popen(["make", "target={}".format(target), "qemu-test-mode"], stdout = outputFile)
+                try:
+                    p.wait(20)
+                except subprocess.TimeoutExpired:
+                    p.kill()
+
+                jsonTestsuite = ParseInputFile(testOutputFileName)
+                retValue = Validate(jsonTestsuite)
+                if retValue == 0:
+                    success += 1
+                else:
+                    error += 1
 
 
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)

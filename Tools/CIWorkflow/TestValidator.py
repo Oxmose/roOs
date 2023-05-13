@@ -71,7 +71,7 @@ def Validate(jsonTestsuite):
 
 def ParseInputFile(filename):
     isTestsuiteContent = False
-    with open(filename) as fileDesc:
+    with open(filename, 'r') as fileDesc:
         fileContent = fileDesc.readlines()
 
         jsonBody = ""

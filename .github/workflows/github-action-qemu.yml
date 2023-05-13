@@ -2,7 +2,7 @@ name: UTK CI Plan
 run-name: ${{ github.actor }} | UTK Build and Testing
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  UTK Unit Testing:
     runs-on: ubuntu-latest
     steps:
       - name: Initialization

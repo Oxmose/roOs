@@ -53,6 +53,8 @@ if __name__ == "__main__":
     if target not in TARGET_LIST:
         print("Error: Unknown target {}, only {} are supported".format(target, TARGET_LIST))
 
+    with open(testGroupsFileName) as groupFile:
+        jsonObject = json.loads(groupFile.read())
 
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)

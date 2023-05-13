@@ -5,28 +5,25 @@
 ## UTK - Utility Kernel
 
 * UTK is a kernel created for training and educational purposes. It is designed to execute in kernel mode only.
-
 * UTK has a configuration file allowing the kernel to be customized depending on the system it will run on.
-
-* UTK can be build with its own bootloader or use GRUB as bootloader.
 
 ----------
 
-*UTK Build status*
+## UTK Build status
 
 
 | Status | Main | Dev |
 | --- | --- | --- |
-| Travis CI | [![Build Status](https://app.travis-ci.com/Oxmose/UTK-Reboot.svg?branch=main)](https://app.travis-ci.com/Oxmose/UTK-Reboot) | [![Build Status](https://app.travis-ci.com/Oxmose/UTK-Reboot.svg?branch=dev)](https://app.travis-ci.com/Oxmose/UTK-Reboot) |
-| Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae0df892bb124da8b16d015e4f4f2aeb)](https://www.codacy.com/gh/Oxmose/UTK-Reboot/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Oxmose/UTK-Reboot&amp;utm_campaign=Badge_Grade)| N/A |
+| CI | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=main)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=dev)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) |
+| Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
 
 
 ----------
 
-## Architecture supported
+## Supported Architectures
 | i386 | x86_64 | ARM |
 | --- | --- | --- |
-|  YES |   YES | TBD |
+|  WIP |   WIP | NO |
 
 ### Memory Management
 

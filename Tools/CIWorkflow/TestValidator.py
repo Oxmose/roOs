@@ -33,6 +33,66 @@ TARGET_LIST = [
     "x86_i386"
 ]
 
+def UpdateTestFile(filename, testGroup, testName):
+    with open(filename, "r+") as fileDesc:
+        fileContent   = fileDesc.readlines()
+        startPosition = -1
+        linesToRemove = []
+        newFile       = []
+        nameFound     = False
+
+        # Find the lines to remove and the line where to start adding flags
+        pattern = re.compile("TEST_.*?_ENABLED")
+        namePattern = re.compile("TEST_FRAMEWORK_TEST_NAME")
+        for i in range(0, len(fileContent)):
+            if not nameFound:
+                result = namePattern.search(fileContent[i])
+                if result != None:
+                    nameFound = True
+                    fileContent[i] = "#define TEST_FRAMEWORK_TEST_NAME \"{}\"\n".format(testName)
+                    continue
+
+            result = pattern.search(fileContent[i])
+
+            if result != None:
+                if startPosition == -1:
+                    startPosition = i
+                linesToRemove.append(i)
+
+            if startPosition == -1:
+                newFile.append(fileContent[i])
+
+        # If no start position was found, search for the constants section
+        pattern = re.compile(" \* TESTING ENABLE FLAGS")
+        for i in range(0, len(fileContent)):
+            result = pattern.search(fileContent[i])
+
+            if result != None:
+                startPosition = i + 2
+
+        # If still no start position found, return error
+        if startPosition == -1:
+            print("Error: cannot find the position to edit the tests list")
+            exit(-1)
+
+        # Add flags based on groups
+        for testFlag in testGroup:
+            newFile.append("#define TEST_{}_ENABLED 1\n".format(testFlag))
+
+        # Add the rest of the file
+        for i in range(startPosition, len(fileContent)):
+            if i not in linesToRemove:
+                newFile.append(fileContent[i])
+
+        # Save file
+        fileDesc.seek(0)
+        fileDesc.truncate(0)
+        for line in newFile:
+            fileDesc.write(line)
+
+        print("> Updated Test List file")
+
+
 if __name__ == "__main__":
     print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "| UTK UNIT TEST FRAMEWORK                                                      |" + COLORS.ENDC)
@@ -55,6 +115,18 @@ if __name__ == "__main__":
 
     with open(testGroupsFileName) as groupFile:
         jsonObject = json.loads(groupFile.read())
+
+        for group in jsonObject:
+            print(COLORS.OKBLUE + "\n#==============================================================================#" + COLORS.ENDC)
+            print(COLORS.OKBLUE + " > Executing Group {}".format(group["name"])  + COLORS.ENDC)
+            print(COLORS.OKBLUE + " > " + str(group["group"])  + COLORS.ENDC)
+            print(COLORS.OKBLUE + " > Target {}".format(target) + COLORS.ENDC)
+            print(COLORS.OKBLUE + "#==============================================================================#\n"  + COLORS.ENDC)
+
+            total += 1
+
+            # Update test file
+            UpdateTestFile(testListFileName, group["group"], group["name"])
 
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)

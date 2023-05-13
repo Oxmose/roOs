@@ -20,7 +20,9 @@ jobs:
           echo "$HOME/qemu/bin" >> $GITHUB_PATH
           chmod +x Tools/CIWorkflow/run_tests.sh
           chmod +x Tools/CIWorkflow/ci-qemu.sh
-
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
       - name: Cache Qemu
         id: cache-qemu
@@ -49,8 +51,5 @@ jobs:
 
       - name: Unit Testing
         run: |
-          ls
           cd Source
-          ls
-          python ../Tools/CIWorkflow/TestValidator.py x86_64 Kernel/TestFramework/includes/test_groups.json Kernel/TestFramework/includes/test_list.h ../test_file_output.txt
-          python ../Tools/CIWorkflow/TestValidator.py x86_i386 Kernel/TestFramework/includes/test_groups.json Kernel/TestFramework/includes/test_list.h ../test_file_output.txt
+          Tools/CIWorkflow/run_tests.sh

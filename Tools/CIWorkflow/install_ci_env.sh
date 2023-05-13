@@ -45,5 +45,4 @@ sudo apt install g++ \
                 libpulse-dev \
                 libpulse0 \
                 grub-pc-bin \
-                ninja-build \
-                python3
+                ninja-build

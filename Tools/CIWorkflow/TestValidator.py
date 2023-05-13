@@ -197,9 +197,11 @@ if __name__ == "__main__":
             with open(testOutputFileName, "w") as outputFile:
                 p = subprocess.Popen(["make", "target={}".format(target), "qemu-test-mode"], stdout = outputFile)
                 try:
-                    p.wait(20)
+                    p.wait(10)
                 except subprocess.TimeoutExpired:
                     p.kill()
+
+                os.sync()
 
                 jsonTestsuite = ParseInputFile(testOutputFileName)
                 retValue = Validate(jsonTestsuite)

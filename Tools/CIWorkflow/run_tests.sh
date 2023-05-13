@@ -13,5 +13,5 @@ python3 ../Tools/CIWorkflow/TestValidator.py x86_i386 Kernel/TestFramework/inclu
 
 if (( $? != 0 ))
 then
-    exit $?
+    exit -1
 fi

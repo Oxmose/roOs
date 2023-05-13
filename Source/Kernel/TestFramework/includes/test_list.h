@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
  * @file test_list.h
  *
  * @author Alexy Torres Aurora Dugo
@@ -38,7 +38,10 @@
 /*************************************************
  * TEST IDENTIFIERS
  ************************************************/
-#define TEST_ID_KICKSTART_END 0
+#define TEST_KICKSTART_END_ID 0
+
+/** @brief Current test name */
+#define TEST_FRAMEWORK_TEST_NAME "Kickstart Suite"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

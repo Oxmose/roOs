@@ -157,6 +157,7 @@ static void _init_test_item(const uint32_t test_id,
                             const uint64_t value,
                             test_item_t** item);
 
+void _kill_qemu(void);
 
 /*******************************************************************************
  * FUNCTIONS
@@ -213,6 +214,16 @@ static void _init_test_item(const uint32_t test_id,
     test_list = *item;
 }
 
+void _kill_qemu(void)
+{
+    while(1)
+    {
+        __asm__ __volatile__("outw %w0, %w1" : : "ax" (0x2000), "Nd" (0x604));
+        __asm__ ("hlt");
+    }
+}
+
+
 void test_framework_init(void)
 {
     memoryPoolHead = memoryPool;
@@ -228,6 +239,7 @@ void test_framework_end(void)
     kernel_printf("#-------- TESTING SECTION START --------#\n");
     kernel_printf("{\n");
     kernel_printf("\t\"version\": \"" TEST_FRAMEWORK_VERSION "\",\n");
+    kernel_printf("\t\"name\": \"" TEST_FRAMEWORK_TEST_NAME "\",\n");
     kernel_printf("\t\"number_of_tests\": %d,\n", test_count);
     kernel_printf("\t\"failures\": %d,\n", failures);
     kernel_printf("\t\"success\": %d,\n", success);
@@ -261,6 +273,7 @@ void test_framework_end(void)
     kernel_printf("}\n");
     kernel_printf("#-------- TESTING SECTION END --------#\n");
 
+    _kill_qemu();
 }
 
 void test_framework_assert_uint(const uint32_t test_id,

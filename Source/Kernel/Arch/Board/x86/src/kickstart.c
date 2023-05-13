@@ -146,7 +146,7 @@ void kickstart(void)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 
-    TEST_POINT_ASSERT_RCODE(TEST_ID_KICKSTART_END,
+    TEST_POINT_ASSERT_RCODE(TEST_KICKSTART_END_ID,
                             TRUE,
                             TRUE,
                             TRUE,

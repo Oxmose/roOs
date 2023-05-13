@@ -24,7 +24,7 @@ pre-run:
 	cp -R Config/Arch/x86_64/GRUB ./$(BUILD_DIR)/
 	cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
 #cp ./$(BUILD_DIR)/utk.initrd ./$(BUILD_DIR)/GRUB/boot/
-	grub-mkrescue -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB
+	grub-mkrescue -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
 
 run: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu\e[22m\e[39m"

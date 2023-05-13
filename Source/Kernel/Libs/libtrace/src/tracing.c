@@ -104,7 +104,7 @@ static void kernel_trace_init(void);
 static void kernel_trace_init(void)
 {
     /** Init the buffer */
-    memset(trace_buffer, trace_buffer_size, 0);
+    memset(trace_buffer, 0, trace_buffer_size);
 
     /* Init the trace buffer header */
     trace_buffer[0] = TRACE_LIB_MAGIC;

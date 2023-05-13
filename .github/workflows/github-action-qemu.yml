@@ -14,7 +14,12 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - run: chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
+      - name: Install CI Requirement
+        run: |
+          chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
+          echo "$HOME/qemu/bin" >> $GITHUB_PATH
+          chmod +x Tools/CIWorkflow/run_tests.sh
+
 
       - name: Cache Qemu
         id: cache-qemu
@@ -30,6 +35,7 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: List the state of qemu module
         continue-on-error: true
@@ -37,7 +43,6 @@ jobs:
 
       - name: QEMU Validation
         run: |
-          echo "$HOME/qemu/bin" >> $GITHUB_PATH
           qemu-system-i386 --version
           qemu-system-x86_64 --version
 
@@ -45,5 +50,3 @@ jobs:
         run: |
           chmod +x Tools/CIWorkflow/run_tests.sh
           Tools/CIWorkflow/run_tests.sh
-
-      - run: echo "This job's status is ${{ job.status }}."

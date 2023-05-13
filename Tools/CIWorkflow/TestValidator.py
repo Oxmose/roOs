@@ -36,7 +36,7 @@ TARGET_LIST = [
 
 def Validate(jsonTestsuite):
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
-    print(COLORS.OKCYAN + COLORS.BOLD + "| nUTK Test Suite                                  |" + COLORS.ENDC)
+    print(COLORS.OKCYAN + COLORS.BOLD + "| UTK Test Suite                                   |" + COLORS.ENDC)
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
     print(COLORS.OKCYAN +"| Version: {:40s}|".format(jsonTestsuite["version"]) + COLORS.ENDC)
     print(COLORS.OKCYAN +"| Testname: {:39s}|".format(jsonTestsuite["name"]) + COLORS.ENDC)

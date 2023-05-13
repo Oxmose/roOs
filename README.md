@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://github.com/Oxmose/UTK-Reboot/raw/main/Doc/logo/utk_logo.png" width="200">
+	<img src="https://github.com/Oxmose/UTK-Reboot/raw/main/Doc/logo/utk_logo.png" width="300">
 </p>
 
 ## UTK - Utility Kernel
@@ -73,12 +73,15 @@ To build UTK, choose the architecture you want and execute.
 
 Architecture list to use in the TARGET flag:
 * x86_i386
+* x86_64
+
 ### Compilation
-make target=[TARGET] TESTS=[TRUE/FALSE] DEBUG=[TRUE/FALSE]
+make target=[TARGET] TESTS=[TRUE/FALSE] DEBUG=[TRUE/FALSE] TRACE=[TRUE/FALSE]
 
 ### Execution
 make target=[TARGET] run
 
 ### Tests and Debug
-* The user can compile with the TESTS flag set to TRUE to enable internal testing
-* The user can compile with the DEBUG flag set to TRUE to enable debuging support (-O0 -g3)
+* TESTS flag set to TRUE to enable internal testing
+* DEBUG flag set to TRUE to enable debuging support (-O0 -g3)
+* TRACE flag set to TRUE to enable kernel tracing

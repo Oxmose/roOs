@@ -13,8 +13,6 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/checkout@v3
 
-      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
-
       - run: chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
 
       - name: Cache Qemu
@@ -40,9 +38,7 @@ jobs:
       - run: qemu-system-i386 --version
       - run: qemu-system-x86_64 --version
 
-      - run: echo "Running Tests"
       - run: chmod +x Tools/CIWorkflow/run_tests.sh
       - run: Tools/CIWorkflow/run_tests.sh
-
 
       - run: echo "This job's status is ${{ job.status }}."

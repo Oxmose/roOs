@@ -3,6 +3,7 @@
 # Install dependencies
 sudo apt update
 sudo apt install g++ \
+                gcc-12 \
                 nasm \
                 xorriso \
                 grub-common \

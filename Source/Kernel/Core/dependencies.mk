@@ -13,4 +13,8 @@ else
 	@exit 1
 endif
 
+ifeq ($(TESTS), TRUE)
+	DEP_INCLUDES += -I ../TestFramework/includes
+endif
+
 DEP_LIBS =

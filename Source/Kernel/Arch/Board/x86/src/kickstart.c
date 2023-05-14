@@ -152,12 +152,9 @@ void kickstart(void)
 
     TEST_POINT_ASSERT_RCODE(TEST_KICKSTART_END_ID,
                             TRUE,
-                            TRUE,
-                            TRUE,
+                            OS_NO_ERR,
+                            OS_NO_ERR,
                             TEST_KICKSTART_ENABLED);
-
-    /* TODO: Once we have the main process init, move it there */
-    TEST_FRAMEWORK_END();
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

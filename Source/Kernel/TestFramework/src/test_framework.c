@@ -17,6 +17,8 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
+#ifdef _TESTING_FRAMEWORK_ENABLED
+
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
@@ -34,8 +36,6 @@
 /* Header file */
 #include <test_framework.h>
 
-#ifdef _TESTING_FRAMEWORK_ENABLED
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -44,7 +44,7 @@
 #define TEST_FRAMEWORK_VERSION "0.5"
 
 /** @brief Testing framework memory pool size. */
-#define TEST_FRAMEWORK_MEM_POOL_SIZE 0x1000
+#define TEST_FRAMEWORK_MEM_POOL_SIZE 0x9000
 
 /** @brief Defines the current module's name. */
 #define MODULE_NAME "TEST FRAMEWORK"
@@ -145,6 +145,15 @@ static uint8_t* memoryPoolHead = NULL;
 /** @brief Test items list head */
 test_item_t* test_list = NULL;
 
+/** @brief Final test when allocation failed */
+test_item_t null_test_item = {
+    .expected = -1,
+    .id       = -1,
+    .type     = TEST_TYPE_BYTE,
+    .value    = -1,
+    .status   = FALSE
+};
+
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -188,30 +197,45 @@ static void _init_test_item(const uint32_t test_id,
 {
     /* Create test item and allocate memory */
     *item = _get_test_memory(sizeof(test_item_t));
-    TEST_ASSERT(*item != NULL,
-                "Could not allocate test memory",
-                OS_ERR_NO_MORE_MEMORY);
-
-    /* Setup information */
-    (*item)->id       = test_id;
-    (*item)->status   = condition;
-    (*item)->expected = expected;
-    (*item)->value    = value;
-
-    /* If the condition is expected then increment */
-    if(condition == TRUE)
+    if(*item != NULL)
     {
-        ++success;
+        /* Setup information */
+        (*item)->id       = test_id;
+        (*item)->status   = condition;
+        (*item)->expected = expected;
+        (*item)->value    = value;
+
+        /* If the condition is expected then increment */
+        if(condition == TRUE)
+        {
+            ++success;
+        }
+        else
+        {
+            ++failures;
+        }
+        ++test_count;
+
+        /* Link test */
+        (*item)->next = test_list;
+        test_list = *item;
     }
     else
     {
+        /* Link NULL test item */
         ++failures;
-    }
-    ++test_count;
+        ++test_count;
 
-    /* Link test */
-    (*item)->next = test_list;
-    test_list = *item;
+        /* Link test */
+        if(test_list != &null_test_item)
+        {
+
+            null_test_item.next = test_list;
+            test_list = &null_test_item;
+        }
+
+        *item = &null_test_item;
+    }
 }
 
 void _kill_qemu(void)
@@ -236,7 +260,7 @@ void test_framework_end(void)
     test_item_t* test_cursor;
 
     /* Print output header */
-    kernel_printf("#-------- TESTING SECTION START --------#\n");
+    kernel_printf("\n#-------- TESTING SECTION START --------#\n");
     kernel_printf("{\n");
     kernel_printf("\t\"version\": \"" TEST_FRAMEWORK_VERSION "\",\n");
     kernel_printf("\t\"name\": \"" TEST_FRAMEWORK_TEST_NAME "\",\n");
@@ -247,7 +271,7 @@ void test_framework_end(void)
 
     test_cursor = test_list;
 
-    for(i = 0; i < test_count; ++i)
+    for(i = 0; i < test_count && test_cursor != NULL; ++i)
     {
         kernel_printf("\t\t\"%d\": {\n", test_cursor->id);
 

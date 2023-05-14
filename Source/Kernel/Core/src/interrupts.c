@@ -27,7 +27,7 @@
 #include <stddef.h>             /* Standard definitions */
 #include <string.h>             /* String manipulation */
 #include <cpu.h>                /* CPU management */
-#include <interrupt.h>          /* CPU interrupts settings */
+#include <cpu_interrupt.h>      /* CPU interrupts settings */
 #include <panic.h>              /* Kernel panic */
 #include <kernel_output.h>      /* Kernel output methods */
 #include <critical.h>           /* Critical sections */
@@ -38,6 +38,9 @@
 
 /* Header file */
 #include <interrupts.h>
+
+/* Unit test header */
+#include <test_framework.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -245,6 +248,8 @@ void kernel_interrupt_init(void)
     interrupt_driver.driver_handle_spurious  = _init_driver_handle_spurious;
     interrupt_driver.driver_set_irq_eoi      = _init_driver_set_irq_eoi;
     interrupt_driver.driver_set_irq_mask     = _init_driver_set_irq_mask;
+
+    TEST_POINT_FUNCTION_CALL(interrupt_test, TEST_INTERRUPT_ENABLED);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_INIT_END, 0);
 }

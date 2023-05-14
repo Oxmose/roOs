@@ -49,12 +49,12 @@ def Validate(jsonTestsuite):
     outComeStr = ""
 
     for testId, testContent in jsonTestsuite["test_suite"].items():
-        print("===> Test {}".format(testId))
         if testContent["status"] == 0:
             outComeStr = COLORS.FAIL + COLORS.BOLD + "FAIL" + COLORS.ENDC
-        else:
-            outComeStr = COLORS.OKGREEN + COLORS.BOLD + "PASS" + COLORS.ENDC
-        print("    > Outcome: {} | Expected: 0x{:X} -- Result: 0x{:X} | Type: {}".format(outComeStr, testContent["expected"], testContent["result"], TYPE_STR[testContent["type"]]))
+            print("===> Test {}".format(testId))
+            print("    > Outcome: {} | Expected: 0x{:X} -- Result: 0x{:X} | Type: {}".format(outComeStr, testContent["expected"], testContent["result"], TYPE_STR[testContent["type"]]))
+        #else:
+        #    outComeStr = COLORS.OKGREEN + COLORS.BOLD + "PASS" + COLORS.ENDC
 
 
     print()
@@ -71,9 +71,8 @@ def Validate(jsonTestsuite):
 
 def ParseInputFile(filename):
     isTestsuiteContent = False
-    with open(filename, 'r') as fileDesc:
+    with open(filename, 'r', errors='ignore') as fileDesc:
         fileContent = fileDesc.readlines()
-
         jsonBody = ""
         for line in fileContent:
             line = line.strip("\n")
@@ -96,12 +95,10 @@ def UpdateTestFile(filename, testGroup, testName):
     with open(filename, "r+") as fileDesc:
         fileContent   = fileDesc.readlines()
         startPosition = -1
-        linesToRemove = []
-        newFile       = []
         nameFound     = False
 
         # Find the lines to remove and the line where to start adding flags
-        pattern = re.compile("TEST_.*?_ENABLED")
+        pattern = re.compile("TEST_(.*?)_ENABLED")
         namePattern = re.compile("TEST_FRAMEWORK_TEST_NAME")
         for i in range(0, len(fileContent)):
             if not nameFound:
@@ -114,39 +111,45 @@ def UpdateTestFile(filename, testGroup, testName):
             result = pattern.search(fileContent[i])
 
             if result != None:
+                # Disable the flag
+                newLine = "#define {}".format(result.group(0))
+                fileContent[i] = newLine + " " * (50 - len(newLine)) + "0\n"
                 if startPosition == -1:
                     startPosition = i
-                linesToRemove.append(i)
-
-            if startPosition == -1:
-                newFile.append(fileContent[i])
 
         # If no start position was found, search for the constants section
-        pattern = re.compile(" \* TESTING ENABLE FLAGS")
-        for i in range(0, len(fileContent)):
-            result = pattern.search(fileContent[i])
+        if startPosition == -1:
+            pattern = re.compile(" \* TESTING ENABLE FLAGS")
+            for i in range(0, len(fileContent)):
+                result = pattern.search(fileContent[i])
 
-            if result != None:
-                startPosition = i + 2
+                if result != None:
+                    startPosition = i + 2
 
         # If still no start position found, return error
         if startPosition == -1:
             print("Error: cannot find the position to edit the tests list")
             exit(-1)
 
-        # Add flags based on groups
+        # Add or enable flags based on groups
         for testFlag in testGroup:
-            newFile.append("#define TEST_{}_ENABLED 1\n".format(testFlag))
-
-        # Add the rest of the file
-        for i in range(startPosition, len(fileContent)):
-            if i not in linesToRemove:
-                newFile.append(fileContent[i])
+            found = False
+            pattern = re.compile("TEST_{}_ENABLED".format(testFlag))
+            newLine = "#define TEST_{}_ENABLED".format(testFlag)
+            newLine = newLine + " " * (50 - len(newLine)) + "1\n"
+            for i in range(startPosition, len(fileContent)):
+                result = pattern.search(fileContent[i])
+                if result != None:
+                    fileContent[i] = newLine
+                    found = True
+                    break
+            if not found:
+                fileContent.insert(startPosition + 1, newLine)
 
         # Save file
         fileDesc.seek(0)
         fileDesc.truncate(0)
-        for line in newFile:
+        for line in fileContent:
             fileDesc.write(line)
 
         print("> Updated Test List file")
@@ -192,7 +195,7 @@ if __name__ == "__main__":
                 error += 1
                 continue
 
-            retValue = os.system("make target={} TESTS=TRUE > /dev/null 2>&1".format(target))
+            retValue = os.system("make target={} TESTS=TRUE > \"../GeneratedFiles/CompileOutput_{}_{}.txt\" 2>&1".format(target, group["name"], target))
             if retValue != 0:
                 error += 1
                 continue
@@ -200,7 +203,7 @@ if __name__ == "__main__":
             with open(testOutputFileName, "w") as outputFile:
                 p = subprocess.Popen(["make", "target={}".format(target), "qemu-test-mode"], stdout = outputFile)
                 try:
-                    p.wait(10)
+                    p.wait(20)
                 except subprocess.TimeoutExpired:
                     p.kill()
 

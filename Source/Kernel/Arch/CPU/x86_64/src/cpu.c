@@ -25,7 +25,7 @@
 #include <stddef.h>         /* Standard definition */
 #include <string.h>         /* Memory manipulation */
 #include <kernel_output.h>  /* Kernel output */
-#include <interrupt.h>      /* Interrupt manager */
+#include <cpu_interrupt.h>  /* Interrupt manager */
 
 /* Header file */
 #include <cpu.h>
@@ -2201,7 +2201,7 @@ static void _cpu_setup_idt(void)
     }
 
     /* Set the GDT descriptor */
-    cpu_idt_ptr.size = ((sizeof(uint64_t) * IDT_ENTRY_COUNT) - 1);
+    cpu_idt_ptr.size = ((sizeof(cpu_idt_entry_t) * IDT_ENTRY_COUNT) - 1);
     cpu_idt_ptr.base = (uintptr_t)&cpu_idt;
 
     /* Load the GDT */

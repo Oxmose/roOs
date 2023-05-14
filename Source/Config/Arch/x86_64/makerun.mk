@@ -11,6 +11,7 @@
 
 QEMUOPTS = -cpu Nehalem -d guest_errors -rtc base=localtime -m 256M \
            -smp 4 -serial stdio
+
 QEMU = qemu-system-x86_64
 
 ######################### Qemu options

@@ -74,6 +74,8 @@ def ParseInputFile(filename):
     with open(filename, 'r') as fileDesc:
         fileContent = fileDesc.readlines()
 
+        print(fileContent)
+
         jsonBody = ""
         for line in fileContent:
             line = line.strip("\n")

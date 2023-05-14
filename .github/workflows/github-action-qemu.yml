@@ -21,7 +21,7 @@ jobs:
           chmod +x Tools/CIWorkflow/run_tests.sh
           chmod +x Tools/CIWorkflow/ci-qemu.sh
 
-      -name: GCC Update
+      - name: GCC Update
         uses: egor-tensin/setup-gcc@v1
         with:
           version: latest

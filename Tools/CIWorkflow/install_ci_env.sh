@@ -47,3 +47,5 @@ sudo apt install g++ \
                 libpulse0 \
                 grub-pc-bin \
                 ninja-build
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12.1 60 --slave /usr/bin/g++ g++ /usr/bin/g++-12.1

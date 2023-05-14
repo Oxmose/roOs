@@ -27,7 +27,7 @@ cd "qemu-$VERSION"
   --prefix="$HOME/qemu" \
   --target-list="$TARGETS"
 
-make -j8
+make -j16
 make install
 
 echo "$VERSION $TARGETS" > $HOME/qemu/.build

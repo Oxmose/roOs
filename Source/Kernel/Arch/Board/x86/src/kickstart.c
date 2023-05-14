@@ -29,6 +29,7 @@
 #include <cpu.h>            /* CPU manager */
 #include <panic.h>          /* Kernel Panic */
 #include <uart.h>           /* UART driver */
+#include <interrupts.h>     /* Interrupt manager */
 
 /* Configuration files */
 #include <config.h>
@@ -143,6 +144,9 @@ void kickstart(void)
 
     /* Initialize the CPU */
     cpu_init();
+
+    /* Initialize interrupt manager */
+    kernel_interrupt_init();
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 

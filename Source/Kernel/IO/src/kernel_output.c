@@ -180,7 +180,10 @@ typedef struct
 
 /************************** Static global variables ***************************/
 /** @brief Stores the current output type. */
-static output_t current_output;
+static output_t current_output = {
+    .putc = console_put_char,
+    .puts = console_put_string
+};
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -482,8 +485,6 @@ void kernel_printf(const char* fmt, ...)
 
     /* Prtinf format string */
     __builtin_va_start(args, fmt);
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
     _kprint_fmt(fmt, args);
     __builtin_va_end(args);
 }
@@ -502,9 +503,6 @@ void kernel_error(const char* fmt, ...)
     new_scheme.foreground = FG_RED;
     new_scheme.background = BG_BLACK;
     new_scheme.vga_color  = TRUE;
-
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
 
     /* No need to test return value */
     console_save_color_scheme(&buffer);
@@ -539,9 +537,6 @@ void kernel_success(const char* fmt, ...)
     new_scheme.background = BG_BLACK;
     new_scheme.vga_color  = TRUE;
 
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
-
     /* No need to test return value */
     console_save_color_scheme(&buffer);
 
@@ -574,9 +569,6 @@ void kernel_info(const char* fmt, ...)
     new_scheme.foreground = FG_CYAN;
     new_scheme.background = BG_BLACK;
     new_scheme.vga_color  = TRUE;
-
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
 
     /* No need to test return value */
     console_save_color_scheme(&buffer);
@@ -611,9 +603,6 @@ void kernel_warning(const char* fmt, ...)
     new_scheme.background = BG_BLACK;
     new_scheme.vga_color  = TRUE;
 
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
-
     /* No need to test return value */
     console_save_color_scheme(&buffer);
 
@@ -647,9 +636,6 @@ void kernel_debug(const char* fmt, ...)
     new_scheme.background = BG_BLACK;
     new_scheme.vga_color  = TRUE;
 
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
-
     /* No need to test return value */
     console_save_color_scheme(&buffer);
 
@@ -675,8 +661,6 @@ void kernel_doprint(const char* str, __builtin_va_list args)
         return;
     }
 
-    current_output.putc = console_put_char;
-    current_output.puts = console_put_string;
     _kprint_fmt(str, args);
 }
 

@@ -3,6 +3,9 @@
         "string.h": "c",
         "console.h": "c",
         "stddef.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "cpu_interrupt.h": "c",
+        "panic.h": "c",
+        "kernel_output.h": "c"
     }
 }

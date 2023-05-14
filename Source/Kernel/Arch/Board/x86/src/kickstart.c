@@ -29,6 +29,7 @@
 #include <cpu.h>            /* CPU manager */
 #include <panic.h>          /* Kernel Panic */
 #include <uart.h>           /* UART driver */
+#include <interrupts.h>     /* Interrupt manager */
 
 /* Configuration files */
 #include <config.h>
@@ -144,16 +145,16 @@ void kickstart(void)
     /* Initialize the CPU */
     cpu_init();
 
+    /* Initialize interrupt manager */
+    kernel_interrupt_init();
+
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 
-    TEST_POINT_ASSERT_RCODE(TEST_ID_KICKSTART_END,
+    TEST_POINT_ASSERT_RCODE(TEST_KICKSTART_END_ID,
                             TRUE,
-                            TRUE,
-                            TRUE,
+                            OS_NO_ERR,
+                            OS_NO_ERR,
                             TEST_KICKSTART_ENABLED);
-
-    /* TODO: Once we have the main process init, move it there */
-    TEST_FRAMEWORK_END();
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

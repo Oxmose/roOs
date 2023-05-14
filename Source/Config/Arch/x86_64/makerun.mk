@@ -10,8 +10,8 @@
 ################################################################################
 
 QEMUOPTS = -cpu Nehalem -d guest_errors -rtc base=localtime -m 256M \
-           -gdb tcp::1234 -smp 4 -monitor telnet:127.0.0.1:55555,server,nowait \
-           -serial stdio
+           -smp 4 -serial stdio
+
 QEMU = qemu-system-x86_64
 
 ######################### Qemu options
@@ -24,7 +24,7 @@ pre-run:
 	cp -R Config/Arch/x86_64/GRUB ./$(BUILD_DIR)/
 	cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
 #cp ./$(BUILD_DIR)/utk.initrd ./$(BUILD_DIR)/GRUB/boot/
-	grub-mkrescue -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB
+	grub-mkrescue -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
 
 run: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu\e[22m\e[39m"
@@ -36,4 +36,4 @@ qemu-test-mode: pre-run
 
 debug: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu DEBUG MODE\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S -monitor telnet:127.0.0.1:55555,server,nowait -gdb tcp::1234

@@ -1,0 +1,53 @@
+name: UTK CI Plan
+run-name: ${{ github.actor }} | UTK Build and Testing
+on: [push]
+jobs:
+  UTK_Unit_Testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Initialization
+        run: |
+          echo "==> The job was automatically triggered by a ${{ github.event_name }} event."
+          echo "==> This job is now running on a ${{ runner.os }}"
+          echo "==> The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Install CI Requirement
+        run: |
+          chmod +x Tools/CIWorkflow/install_ci_env.sh && bash -e Tools/CIWorkflow/install_ci_env.sh
+          echo "$HOME/qemu/bin" >> $GITHUB_PATH
+          chmod +x Tools/CIWorkflow/run_tests.sh
+          chmod +x Tools/CIWorkflow/ci-qemu.sh
+
+      - name: Cache Qemu
+        id: cache-qemu
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-qemu-modules
+        with:
+          # qemu cache files are stored in `~/qemu` on Linux/macOS
+          path: ~/qemu
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: List the state of qemu module
+        continue-on-error: true
+        run: Tools/CIWorkflow/ci-qemu.sh
+
+      - name: Environment Info
+        run: |
+          qemu-system-i386 --version
+          qemu-system-x86_64 --version
+          gcc --version
+          ld --version
+          nasm --version
+
+      - name: Unit Testing
+        run: Tools/CIWorkflow/run_tests.sh

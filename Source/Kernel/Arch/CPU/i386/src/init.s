@@ -122,6 +122,19 @@ __kinit:
     or  eax, 0x80010000
     mov cr0, eax
 
+    ; Init FPU
+    fninit
+    fldcw [_fcw]
+
+    ; Enable SSE
+    mov eax, cr0
+    and al, ~0x04
+    or  al, 0x22
+    mov cr0, eax
+    mov eax, cr4
+    or  ax, 0x600
+    mov cr4, eax
+
     ; Init BSS
     mov  edi, _START_BSS_ADDR
     xor  esi, esi
@@ -211,3 +224,6 @@ _kernel_cpu_count:
 _kinit_end_of_line:
     db " END OF LINE "
     db 0
+
+_fcw:
+    dw 0x037F

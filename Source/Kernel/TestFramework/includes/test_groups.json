@@ -1,0 +1,10 @@
+[
+    {
+        "name": "Basic Init Suite",
+        "group": ["KICKSTART", "PANIC"]
+    },
+    {
+        "name": "Interrupt Suite",
+        "group": ["INTERRUPT"]
+    }
+]

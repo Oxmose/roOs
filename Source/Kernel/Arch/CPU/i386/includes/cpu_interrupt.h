@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file interrupt.h
+ * @file cpu_interrupt.h
  *
  * @author Alexy Torres Aurora Dugo
  *

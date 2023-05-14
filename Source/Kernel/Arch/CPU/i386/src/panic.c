@@ -23,7 +23,7 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <interrupt.h>            /* Interrupt management */
+#include <cpu_interrupt.h>       /* Interrupt management */
 #include <vga_console.h>          /* VGA console driver*/
 #include <kernel_output.h>        /* Kernel output methods */
 #include <stdint.h>               /* Generic int types */
@@ -37,6 +37,9 @@
 
 /* Header file */
 #include <panic.h>
+
+/* Unit test header */
+#include <test_framework.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -460,6 +463,16 @@ void panic_handler(kernel_thread_t* curr_thread)
     console_set_color_scheme(panic_scheme);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, panic_code);
+
+    TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
+                            TRUE,
+                            OS_NO_ERR,
+                            OS_NO_ERR,
+                            TEST_PANIC_ENABLED);
+
+#if TEST_PANIC_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
 
     /* We will never return from interrupt */
     while(1)

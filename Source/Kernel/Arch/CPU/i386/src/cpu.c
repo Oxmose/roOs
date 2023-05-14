@@ -25,7 +25,7 @@
 #include <stddef.h>         /* Standard definition */
 #include <string.h>         /* Memory manipulation */
 #include <kernel_output.h>  /* Kernel output */
-#include <interrupt.h>      /* Interrupt manager */
+#include <cpu_interrupt.h>  /* Interrupt manager */
 
 /* Header file */
 #include <cpu.h>

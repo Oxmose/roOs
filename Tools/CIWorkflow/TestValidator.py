@@ -87,6 +87,9 @@ def ParseInputFile(filename):
                 if isTestsuiteContent:
                     jsonBody += line + "\n"
 
+        if len(jsonBody) == 0:
+            return ""
+
         jsonObject = json.loads(jsonBody)
 
         return jsonObject
@@ -208,12 +211,15 @@ if __name__ == "__main__":
             os.sync()
 
             jsonTestsuite = ParseInputFile(testOutputFileName)
-            retValue = Validate(jsonTestsuite)
-            if retValue == 0:
-                success += 1
+            if len(jsonTestsuite) != 0:
+                retValue = Validate(jsonTestsuite)
+                if retValue == 0:
+                    success += 1
+                else:
+                    error += 1
             else:
+                print("Error: testing result were not printed.")
                 error += 1
-
 
     print(COLORS.OKBLUE + COLORS.BOLD + "\n\n#==============================================================================#" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "| FINAL REPORT                                                                 |" + COLORS.ENDC)

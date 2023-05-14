@@ -41,10 +41,13 @@ jobs:
         continue-on-error: true
         run: Tools/CIWorkflow/ci-qemu.sh
 
-      - name: QEMU Validation
+      - name: Environment Info
         run: |
           qemu-system-i386 --version
           qemu-system-x86_64 --version
+          gcc --version
+          ld --version
+          nasm --version
 
       - name: Unit Testing
         run: Tools/CIWorkflow/run_tests.sh

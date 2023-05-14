@@ -49,4 +49,4 @@ sudo apt install g++ \
                 ninja-build
 
 which gcc-12
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12.1 60
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 60

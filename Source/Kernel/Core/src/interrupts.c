@@ -265,7 +265,7 @@ OS_RETURN_E kernel_interrupt_set_driver(const interrupt_driver_t* driver)
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_START, 2,
                        (uintptr_t)driver & 0xFFFFFFFF,
-                       0);
+                       (uintptr_t)0);
 #endif
 
 
@@ -308,8 +308,8 @@ OS_RETURN_E kernel_interrupt_register_int_handler(const uint32_t interrupt_line,
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_START, 3,
                        interrupt_line,
-                       handler,
-                       0);
+                       (uintptr_t)handler & 0xFFFFFFFF,
+                       (uintptr_t)0);
 #endif
 
     if(interrupt_line < MIN_INTERRUPT_LINE ||
@@ -415,8 +415,8 @@ OS_RETURN_E kernel_interrupt_register_irq_handler(const uint32_t irq_number,
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REGISTER_START, 3,
                        irq_number,
-                       handler,
-                       0);
+                       (uintptr_t)handler & 0xFFFFFFFF,
+                       (uintptr_t)0);
 #endif
 
     /* Get the interrupt line attached to the IRQ number. */

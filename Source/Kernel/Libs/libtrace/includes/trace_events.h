@@ -127,6 +127,94 @@ typedef enum
     EVENT_KERNEL_UART_INIT_START            = 41,
     /** @brief Kernel UART Driver Init End */
     EVENT_KERNEL_UART_INIT_END              = 42,
+    /** @brief Kernel Main Timer Handler */
+    EVENT_KERNEL_MAIN_TIMER_HANDLER         = 43,
+    /** @brief Kernel RTC Timer Handler */
+    EVENT_KERNEL_RTC_TIMER_HANDLER          = 44,
+    /** @brief Kernel Init Timer Manager Start */
+    EVENT_KERNEL_INIT_TIME_MGT_START        = 45,
+    /** @brief Kernel Init Timer Manager End */
+    EVENT_KERNEL_INIT_TIME_MGT_END          = 46,
+    /** @brief Kernel Get Current Uptime */
+    EVENT_KERNEL_GET_CURR_UPTIME            = 47,
+    /** @brief Kernel Get Tick Count */
+    EVENT_KERNEL_GET_TICK_COUNT             = 48,
+    /** @brief Kernel Timed Wait Nosched Start */
+    EVENT_KERNEL_TIME_WAIT_NOSCHED_START    = 49,
+    /** @brief Kernel Timed Wait Nosched End */
+    EVENT_KERNEL_TIME_WAIT_NOSCHED_END      = 50,
+    /** @brief Kernel Time Register Scheduler */
+    EVENT_KERNEL_TIME_REG_SCHED             = 51,
+    /** @brief Kernel Time Register RTC Manager */
+    EVENT_KERNEL_TIME_REG_RTC_MGT           = 52,
+    /** @brief Kernel Init PIC Start */
+    EVENT_KERNEL_PIC_INIT_START             = 53,
+    /** @brief Kernel Init PIC End */
+    EVENT_KERNEL_PIC_INIT_END               = 54,
+    /** @brief Kernel PIC Set IRQ Mask Start */
+    EVENT_KERNEL_PIC_SET_IRQ_MASK_START     = 55,
+    /** @brief Kernel PIC Set IRQ Mask End */
+    EVENT_KERNEL_PIC_SET_IRQ_MASK_END       = 56,
+    /** @brief Kernel PIC EOI Start */
+    EVENT_KERNEL_PIC_EOI_START              = 57,
+    /** @brief Kernel PIC EOI End */
+    EVENT_KERNEL_PIC_EOI_END                = 58,
+    /** @brief Kernel PIC Spurious Handler Start */
+    EVENT_KERNEL_PIC_SPURIOUS_START         = 59,
+    /** @brief Kernel PIC Spurious Handler End */
+    EVENT_KERNEL_PIC_SPURIOUS_END           = 60,
+    /** @brief Kernel PIC Disable */
+    EVENT_KERNEL_PIC_DISABLE                = 61,
+    /** @brief Kernel PIC Get Interrupt Line */
+    EVENT_KERNEL_PIC_GET_INT_LINE           = 62,
+    /** @brief Kernel PIT Dummy Handler */
+    EVENT_KERNEL_PIT_DUMMY_HANDLER          = 63,
+    /** @brief Kernel PIT Init Start */
+    EVENT_KERNEL_PIT_INIT_START             = 64,
+    /** @brief Kernel PIT Init End */
+    EVENT_KERNEL_PIT_INIT_END               = 65,
+    /** @brief Kernel PIT Enable Start */
+    EVENT_KERNEL_PIT_ENABLE_START           = 66,
+    /** @brief Kernel PIT Enable End*/
+    EVENT_KERNEL_PIT_ENABLE_END             = 67,
+    /** @brief Kernel PIT Disable Start */
+    EVENT_KERNEL_PIT_DISABLE_START          = 68,
+    /** @brief Kernel PIT Disable End */
+    EVENT_KERNEL_PIT_DISABLE_END            = 69,
+    /** @brief Kernel PIT Set Frequency Start */
+    EVENT_KERNEL_PIT_SET_FREQ_START         = 70,
+    /** @brief Kernel PIT Set Frequency End */
+    EVENT_KERNEL_PIT_SET_FREQ_END           = 71,
+    /** @brief Kernel PIT Set Handler */
+    EVENT_KERNEL_PIT_SET_HANDLER            = 72,
+    /** @brief Kernel PIT Remove Handler */
+    EVENT_KERNEL_PIT_REMOVE_HANDLER         = 73,
+    /** @brief Kernel RTC Dummy Handler */
+    EVENT_KERNEL_RTC_DUMMY_HANDLER          = 74,
+    /** @brief Kernel RTC Init Start */
+    EVENT_KERNEL_RTC_INIT_START             = 75,
+    /** @brief Kernel RTC Init End */
+    EVENT_KERNEL_RTC_INIT_END               = 76,
+    /** @brief Kernel RTC Enable Start */
+    EVENT_KERNEL_RTC_ENABLE_START           = 77,
+    /** @brief Kernel RTC Enable End */
+    EVENT_KERNEL_RTC_ENABLE_END             = 78,
+    /** @brief Kernel RTC Disable Start */
+    EVENT_KERNEL_RTC_DISABLE_START          = 79,
+    /** @brief Kernel RTC Disable End */
+    EVENT_KERNEL_RTC_DISABLE_END            = 80,
+    /** @brief Kernel RTC Set Frequency Start */
+    EVENT_KERNEL_RTC_SET_FREQ_START         = 81,
+    /** @brief Kernel RTC Set Frequency End */
+    EVENT_KERNEL_RTC_SET_FREQ_END           = 82,
+    /** @brief Kernel RTC Set Handler */
+    EVENT_KERNEL_RTC_SET_HANDLER            = 83,
+    /** @brief Kernel RTC Remove Handler */
+    EVENT_KERNEL_RTC_REMOVE_HANDLER         = 84,
+    /** @brief Kernel RTC Update Time Start */
+    EVENT_KERNEL_RTC_UPDATE_TIME_START      = 85,
+    /** @brief Kernel RTC Update Time End */
+    EVENT_KERNEL_RTC_UPDATE_TIME_END        = 86,
 } TRACE_EVENT_E;
 
 /*******************************************************************************

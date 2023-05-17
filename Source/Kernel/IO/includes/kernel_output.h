@@ -59,15 +59,13 @@
 #define KERNEL_ERROR(...)
 #endif
 
-#define KERNEL_GET_TIME 0
-
 #if KERNEL_LOG_LEVEL >= DEBUG_LOG_LEVEL
 #define KERNEL_DEBUG(ENABLED, MODULE, STR, ...)                         \
 do {                                                                    \
     if(ENABLED)                                                         \
     {                                                                   \
-        kernel_debug("[%d]" MODULE " | " STR " | " __FILE__ ":%d\n",    \
-                        KERNEL_GET_TIME, ##__VA_ARGS__, __LINE__);      \
+        kernel_debug(" " MODULE " | " STR " | " __FILE__ ":%d\n",       \
+                     ##__VA_ARGS__, __LINE__);                          \
     }                                                                   \
 } while(0);
 #else

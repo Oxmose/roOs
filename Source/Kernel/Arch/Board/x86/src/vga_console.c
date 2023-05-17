@@ -337,14 +337,17 @@ void vga_console_init(void)
     /* Init framebuffer */
     vga_console_framebuffer = (uint16_t*)VGA_CONSOLE_FRAMEBUFFER;
 
+#ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_END, 3,
                        (uintptr_t)vga_console_framebuffer & 0xFFFFFFFF,
-#ifdef ARCH_64_BITS
                        (uintptr_t)vga_console_framebuffer >> 32,
-#else
-                        0,
-#endif
                        VGA_CONSOLE_FRAMEBUFFER_SIZE);
+#else
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_END, 3,
+                       (uintptr_t)vga_console_framebuffer & 0xFFFFFFFF,
+                       0,
+                       VGA_CONSOLE_FRAMEBUFFER_SIZE);
+#endif
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA text driver initialized");
 }

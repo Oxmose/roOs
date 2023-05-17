@@ -82,8 +82,7 @@ OS_RETURN_E console_set_selected_driver(const kernel_console_driver_t* driver)
                        (uintptr_t)driver >> 32);
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
-                       irq_number,
-                       driver,
+                       (uintptr_t)driver,
                        0);
 #endif
 

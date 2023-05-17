@@ -18,8 +18,8 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __CPU_PANIC_H_
-#define __CPU_PANIC_H_
+#ifndef __I386_PANIC_H_
+#define __I386_PANIC_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -116,6 +116,6 @@ void kernel_panic(const uint32_t error_code,
                   const char* file,
                   const size_t line);
 
-#endif /* #ifndef __CPU_PANIC_H_ */
+#endif /* #ifndef __I386_PANIC_H_ */
 
 /************************************ EOF *************************************/

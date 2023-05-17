@@ -30,6 +30,10 @@
 #include <panic.h>          /* Kernel Panic */
 #include <uart.h>           /* UART driver */
 #include <interrupts.h>     /* Interrupt manager */
+#include <time_mgt.h>       /* Time management */
+#include <pic.h>            /* PIC driver */
+#include <pit.h>            /* PIT driver */
+#include <rtc.h>            /* RTC driver */
 
 /* Configuration files */
 #include <config.h>
@@ -118,6 +122,8 @@ void kickstart(void)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_START, 0);
 
+    kernel_interrupt_disable();
+
     /* TODO: remove */
     scheduler_dummy_init();
 
@@ -139,7 +145,6 @@ void kickstart(void)
 
     console_clear_screen();
 
-
     KERNEL_INFO("UTK Kickstart\n");
 
     /* Initialize the CPU */
@@ -147,6 +152,25 @@ void kickstart(void)
 
     /* Initialize interrupt manager */
     kernel_interrupt_init();
+
+    /* Initialize the PIC */
+    pic_init();
+    ret_value = kernel_interrupt_set_driver(pic_get_driver());
+    KICKSTART_ASSERT(ret_value == OS_NO_ERR,
+                     "Could register PIC in interrupt manager",
+                     ret_value);
+
+    /* Initialize the PIT */
+    pit_init();
+
+    /* Initialize the RTC */
+    rtc_init();
+
+    /* Initialize the time manager */
+    ret_value = time_init(pit_get_driver(), rtc_get_driver());
+    KICKSTART_ASSERT(ret_value == OS_NO_ERR,
+                     "Could not initialize time manager",
+                     ret_value);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 

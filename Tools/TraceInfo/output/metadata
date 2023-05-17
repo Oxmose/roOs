@@ -370,4 +370,331 @@ event {
     name = "Kernel UART Driver Init End";
 };
 
+event {
+    id = 43;
+    name = "Kernel Main Timer Handler";
+};
+
+event {
+    id = 44;
+    name = "Kernel RTC Timer Handler";
+};
+
+event {
+    id = 45;
+    name = "Kernel Init Timer Manager Start";
+    fields := struct {
+        xuint32_t main_timer_addr_low;
+        xuint32_t main_timer_addr_high;
+        xuint32_t rtc_timer_addr_low;
+        xuint32_t rtc_timer_addr_high;
+    };
+};
+
+event {
+    id = 46;
+    name = "Kernel Init Timer Manager End";
+};
+
+event {
+    id = 47;
+    name = "Kernel Get Current Uptime";
+};
+
+event {
+    id = 48;
+    name = "Kernel Get Tick Count";
+    fields := struct {
+        xuint32_t tick_low;
+        xuint32_t tick_high;
+    };
+};
+
+event {
+    id = 49;
+    name = "Kernel Timed Wait Nosched Start";
+    fields := struct {
+        xuint32_t time_low;
+        xuint32_t time_high;
+    };
+};
+
+event {
+    id = 50;
+    name = "Kernel Timed Wait Nosched End";
+    fields := struct {
+        xuint32_t time_low;
+        xuint32_t time_high;
+    };
+};
+
+event {
+    id = 51;
+    name = "Kernel Time Register Scheduler";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 52;
+    name = "Kernel Time Register RTC Manager";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 53;
+    name = "Kernel Init PIC Start";
+};
+
+event {
+    id = 54;
+    name = "Kernel Init PIC End";
+};
+
+event {
+    id = 55;
+    name = "Kernel PIC Set IRQ Mask Start";
+    fields := struct {
+        uint32_t irq_number;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 56;
+    name = "Kernel PIC Set IRQ Mask End";
+    fields := struct {
+        uint32_t irq_number;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 57;
+    name = "Kernel PIC EOI Start";
+    fields := struct {
+        uint32_t irq_number;
+    };
+};
+
+event {
+    id = 58;
+    name = "Kernel PIC EOI End";
+    fields := struct {
+        uint32_t irq_number;
+    };
+};
+
+event {
+    id = 59;
+    name = "Kernel PIC Spurious Handler Start";
+    fields := struct {
+        uint32_t int_number;
+    };
+};
+
+event {
+    id = 59;
+    name = "Kernel PIC Spurious Handler Start";
+    fields := struct {
+        uint32_t int_number;
+    };
+};
+
+event {
+    id = 60;
+    name = "Kernel PIC Spurious Handler End";
+    fields := struct {
+        uint32_t int_number;
+        uint32_t type_info;
+    };
+};
+
+event {
+    id = 61;
+    name = "Kernel PIC Disable";
+};
+
+event {
+    id = 62;
+    name = "Kernel PIC Get Interrupt Line";
+    fields := struct {
+        uint32_t irq_number;
+        uint32_t int_line;
+    };
+};
+
+event {
+    id = 63;
+    name = "Kernel PIT Dummy Handler";
+};
+
+event {
+    id = 64;
+    name = "Kernel PIT Init Start";
+};
+
+event {
+    id = 65;
+    name = "Kernel PIT Init End";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 66;
+    name = "Kernel PIT Enable Start";
+};
+
+event {
+    id = 67;
+    name = "Kernel PIT Enable End";
+};
+
+event {
+    id = 68;
+    name = "Kernel PIT Disable Start";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 69;
+    name = "Kernel PIT Disable End";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 70;
+    name = "Kernel PIT Set Frequency Start";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 71;
+    name = "Kernel PIT Set Frequency End";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 72;
+    name = "Kernel PIT Set Handler";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 73;
+    name = "Kernel PIT Remove Handler";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 74;
+    name = "Kernel RTC Dummy Handler";
+};
+
+event {
+    id = 75;
+    name = "Kernel RTC Init Start";
+};
+
+event {
+    id = 76;
+    name = "Kernel RTC Init End";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 77;
+    name = "Kernel RTC Enable Start";
+};
+
+event {
+    id = 78;
+    name = "Kernel RTC Enable End";
+};
+
+event {
+    id = 79;
+    name = "Kernel RTC Disable Start";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 80;
+    name = "Kernel RTC Disable End";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 81;
+    name = "Kernel RTC Set Frequency Start";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 82;
+    name = "Kernel RTC Set Frequency End";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 83;
+    name = "Kernel RTC Set Handler";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 84;
+    name = "Kernel RTC Remove Handler";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 85;
+    name = "Kernel RTC Update Time Start";
+};
+
+event {
+    id = 86;
+    name = "Kernel RTC Update Time End";
+};
+
+
+
 

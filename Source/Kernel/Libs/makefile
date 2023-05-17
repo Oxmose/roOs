@@ -18,9 +18,9 @@ init:
 	@mkdir -p $(BIN_DIR)
 
 build_modules:
-	@$(MAKE) -C ./libc
-	@$(MAKE) -C ./libapi
-	@$(MAKE) -C ./libtrace
+	@$(MAKE) -C ./libc target_cpu=$(target_cpu)
+	@$(MAKE) -C ./libapi target_cpu=$(target_cpu)
+	@$(MAKE) -C ./libtrace target_cpu=$(target_cpu)
 
 # Copy the generated libs
 	@cp ./libc/$(BIN_DIR)/liblibc.a $(BIN_DIR)/
@@ -28,9 +28,10 @@ build_modules:
 	@cp ./libtrace/$(BIN_DIR)/libtrace.a $(BIN_DIR)/
 
 clean:
-	@$(MAKE) -C ./libc clean
-	@$(MAKE) -C ./libapi clean
-	@$(MAKE) -C ./libtrace clean
+
+	@$(MAKE) -C ./libc target_cpu=$(target_cpu) clean
+	@$(MAKE) -C ./libapi target_cpu=$(target_cpu) clean
+	@$(MAKE) -C ./libtrace target_cpu=$(target_cpu) clean
 
 	$(RM) -rf $(BIN_DIR)
 

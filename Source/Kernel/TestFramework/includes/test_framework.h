@@ -20,13 +20,13 @@
 #ifndef __TEST_FRAMEWORK_TEST_FRAMEWORK_H_
 #define __TEST_FRAMEWORK_TEST_FRAMEWORK_H_
 
-#ifdef _TESTING_FRAMEWORK_ENABLED
-
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
 #include <test_list.h> /* Test list */
+
+#ifdef _TESTING_FRAMEWORK_ENABLED
 
 /*******************************************************************************
  * CONSTANTS
@@ -251,7 +251,7 @@ void test_framework_assert_errcode(const uint32_t test_id,
 
 #define TEST_POINT_ASSERT_DOUBLE(ID, COND, EXPECTED, VALUE, TEST_ENABLED)
 
-#define TEST_POINT_ASSERT_ERRCODE(ID, COND, EXPECTED, VALUE, TEST_ENABLED)
+#define TEST_POINT_ASSERT_RCODE(ID, COND, EXPECTED, VALUE, TEST_ENABLED)
 
 #define TEST_POINT_FUNCTION_CALL(FUNCTION_NAME, TEST_ENABLED)
 

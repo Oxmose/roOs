@@ -24,8 +24,9 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h> /* Generic integer definitions */
-#include <string.h> /* Memory manipulation */
+#include <stdint.h>   /* Generic integer definitions */
+#include <string.h>   /* Memory manipulation */
+#include <time_mgt.h> /* System time management */
 
 /* Configuration files */
 #include <config.h>
@@ -142,8 +143,7 @@ void kernel_trace_event(const TRACE_EVENT_E event, const uint32_t field_count,
     trace_buffer[cursor++] = (uint32_t)event;
 
     /* Write the timestamp */
-    /* TODO: Add timestamp */
-    timestpamp = 420;
+    timestpamp = time_get_current_uptime();
     trace_buffer[cursor++] = (uint32_t)timestpamp;
     trace_buffer[cursor++] = (uint32_t)(timestpamp >> 32);
 

@@ -27,6 +27,7 @@
 #include <string.h>   /* memset, strlen */
 #include <stdlib.h>   /* uitoa, itoa */
 #include <console.h>  /* Console driver */
+#include <time_mgt.h> /* System time management */
 
 /* Configuration files */
 #include <config.h>
@@ -643,7 +644,7 @@ void kernel_debug(const char* fmt, ...)
     console_set_color_scheme(new_scheme);
 
     /* Print tag */
-    _tag_printf("[DEBUG] ");
+    _tag_printf("[DEBUG | %lu]", time_get_current_uptime());
 
     /* Restore original screen color scheme */
     console_set_color_scheme(buffer);

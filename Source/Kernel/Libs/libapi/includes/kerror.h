@@ -52,6 +52,10 @@ typedef enum
     OS_ERR_NO_SUCH_IRQ                     = 6,
     /** @brief Missing required memory */
     OS_ERR_NO_MORE_MEMORY                  = 7,
+    /** @brief Invalid value used */
+    OS_ERR_INCORRECT_VALUE                 = 8,
+    /** @brief Value out of bound */
+    OS_ERR_OUT_OF_BOUND                    = 9,
 } OS_RETURN_E;
 
 /*******************************************************************************

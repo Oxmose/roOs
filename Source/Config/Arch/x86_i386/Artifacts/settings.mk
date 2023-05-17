@@ -16,7 +16,7 @@ OBJCOPY = objcopy
 
 LINKER_FILE = ../../Config/Arch/x86_i386/linker.ld
 
-DEBUG_FLAGS = -O0 -g3
+DEBUG_FLAGS = -O0 -g
 EXTRA_FLAGS = -O3 -g
 
 CFLAGS = -m32 -std=c11 -nostdinc -fno-builtin -nostdlib -fno-stack-protector \

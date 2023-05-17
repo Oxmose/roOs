@@ -18,8 +18,6 @@
 #ifndef __TEST_FRAMEWORK_TEST_LIST_H_
 #define __TEST_FRAMEWORK_TEST_LIST_H_
 
-#ifdef _TESTING_FRAMEWORK_ENABLED
-
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
@@ -109,8 +107,6 @@
  ******************************************************************************/
 
 void interrupt_test(void);
-
-#endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */
 
 #endif /* #ifndef __TEST_FRAMEWORK_TEST_LIST_H_ */
 

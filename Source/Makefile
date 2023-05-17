@@ -41,10 +41,16 @@ ifeq ($(target), x86_i386)
 # Build the architecture module
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386
 	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=i386
 else ifeq ($(target), x86_64)
 # Build the architecture module
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64
 	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=x86_64
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
 	@echo "Available targets: $(TARGET_LIST)\n"
@@ -57,8 +63,8 @@ ifeq ($(TESTS), TRUE)
 endif
 
 # Build general modules
-	@make -C $(SOURCE_DIR)/Libs
-	@make -C $(SOURCE_DIR)/IO
+
+
 
 build_kernel:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
@@ -86,18 +92,29 @@ clean:
 ifeq ($(target), x86_i386)
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=i386 clean
 else ifeq ($(target), x86_64)
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=x86_64 clean
 else
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/IO target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Time target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/Libs target_board=x86 target_cpu=x86_64 clean
 endif
 
 # Clean modules
-	@make clean -C $(SOURCE_DIR)/Libs
-	@make clean -C $(SOURCE_DIR)/IO
 	@make clean -C $(SOURCE_DIR)/TestFramework
 
 # Clean kernel build directory

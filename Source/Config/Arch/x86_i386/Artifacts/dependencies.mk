@@ -3,10 +3,10 @@ DEP_INCLUDES =
 DEP_LIBS =  -larch
 DEP_LIBS += -lcore
 DEP_LIBS += -lio
-DEP_LIBS += -llibc
 DEP_LIBS += -lapi
 DEP_LIBS += -ltrace
 DEP_LIBS += -ltime
+DEP_LIBS += -llibc
 
 DEP_MODULES =  -L../Arch/bin
 DEP_MODULES += -L../IO/bin

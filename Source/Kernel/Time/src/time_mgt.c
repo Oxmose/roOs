@@ -264,6 +264,10 @@ OS_RETURN_E time_init(const kernel_timer_t* main_timer,
     sys_main_timer.set_frequency(KERNEL_MAIN_TIMER_FREQ);
 
     err = sys_main_timer.set_handler(_time_main_timer_handler);
+    if(err != OS_NO_ERR)
+    {
+        return err;
+    }
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
                  MODULE_NAME,

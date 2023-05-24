@@ -129,7 +129,6 @@ void kheap_test(void)
         kfree(address[i]);
     }
 
-    next_addr = (uint64_t)(uintptr_t)start_addr + 8;
     mem_free = kheap_get_free();
     for(i = 0; i < 200; ++i)
     {
@@ -150,7 +149,6 @@ void kheap_test(void)
                                  TEST_KHEAP_ENABLED);
 
         mem_free = new_mem_free;
-        next_addr = addr_expected[i] + sizes[i];
     }
 
     TEST_FRAMEWORK_END();

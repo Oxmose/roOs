@@ -474,7 +474,6 @@ date_t rtc_get_current_date(void)
 
 void rtc_update_time(void)
 {
-    int8_t nmi_info;
     uint8_t seconds;
     uint8_t minutes;
     uint32_t hours;
@@ -483,38 +482,35 @@ void rtc_update_time(void)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_UPDATE_TIME_START, 0);
 
-    /* Set NMI info bit */
-    nmi_info = 0;
-
     /* Set time */
     /* Select CMOS seconds register and read */
-    _cpu_outb(nmi_info | CMOS_SECONDS_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_SECONDS_REGISTER, CMOS_COMM_PORT);
     seconds = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS minutes register and read */
-    _cpu_outb(nmi_info | CMOS_MINUTES_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_MINUTES_REGISTER, CMOS_COMM_PORT);
     minutes = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS hours register and read */
-    _cpu_outb(nmi_info | CMOS_HOURS_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_HOURS_REGISTER, CMOS_COMM_PORT);
     hours = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS day register and read */
-    _cpu_outb(nmi_info | CMOS_DAY_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_DAY_REGISTER, CMOS_COMM_PORT);
     date.day = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS month register and read */
-    _cpu_outb(nmi_info | CMOS_MONTH_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_MONTH_REGISTER, CMOS_COMM_PORT);
     date.month = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS years register and read */
-    _cpu_outb(nmi_info | CMOS_YEAR_REGISTER, CMOS_COMM_PORT);
+    _cpu_outb(CMOS_YEAR_REGISTER, CMOS_COMM_PORT);
     date.year = _cpu_inb(CMOS_DATA_PORT);
 
     /* Select CMOS century register and read */
     if(CMOS_CENTURY_REGISTER != 0)
     {
-        _cpu_outb(nmi_info | CMOS_CENTURY_REGISTER, CMOS_COMM_PORT);
+        _cpu_outb(CMOS_CENTURY_REGISTER, CMOS_COMM_PORT);
         century = _cpu_inb(CMOS_DATA_PORT);
     }
     else

@@ -215,8 +215,15 @@ typedef enum
     EVENT_KERNEL_RTC_UPDATE_TIME_START      = 85,
     /** @brief Kernel RTC Update Time End */
     EVENT_KERNEL_RTC_UPDATE_TIME_END        = 86,
+    /** @brief Kernel Heap Init Start */
+    EVENT_KERNEL_HEAP_INIT_START            = 87,
+    /** @brief Kernel Heap Init End */
+    EVENT_KERNEL_HEAP_INIT_END              = 88,
+    /** @brief Kernel Heap Allocate */
+    EVENT_KERNEL_HEAP_ALLOC                 = 89,
+    /** @brief Kernel Heap Free */
+    EVENT_KERNEL_HEAP_FREE                  = 90,
 } TRACE_EVENT_E;
-
 /*******************************************************************************
  * MACROS
  ******************************************************************************/

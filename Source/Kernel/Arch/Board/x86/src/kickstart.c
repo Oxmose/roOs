@@ -34,6 +34,7 @@
 #include <pic.h>            /* PIC driver */
 #include <pit.h>            /* PIT driver */
 #include <rtc.h>            /* RTC driver */
+#include <kheap.h>          /* Kernel heap */
 
 /* Configuration files */
 #include <config.h>
@@ -149,9 +150,14 @@ void kickstart(void)
 
     /* Initialize the CPU */
     cpu_init();
+    KERNEL_SUCCESS("CPU initialized\n");
+
+    kheap_init();
+    KERNEL_SUCCESS("Kernel heap initialized\n");
 
     /* Initialize interrupt manager */
     kernel_interrupt_init();
+    KERNEL_SUCCESS("Interrupt manager initialized\n");
 
     /* Initialize the PIC */
     pic_init();
@@ -159,18 +165,23 @@ void kickstart(void)
     KICKSTART_ASSERT(ret_value == OS_NO_ERR,
                      "Could register PIC in interrupt manager",
                      ret_value);
+    KERNEL_SUCCESS("PIC initialized\n");
 
     /* Initialize the PIT */
     pit_init();
+    KERNEL_SUCCESS("PIT initialized\n");
 
     /* Initialize the RTC */
     rtc_init();
+    KERNEL_SUCCESS("RTC initialized\n");
 
     /* Initialize the time manager */
     ret_value = time_init(pit_get_driver(), rtc_get_driver());
     KICKSTART_ASSERT(ret_value == OS_NO_ERR,
                      "Could not initialize time manager",
                      ret_value);
+    KERNEL_SUCCESS("Timer factory initialized\n");
+
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
 

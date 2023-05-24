@@ -6,5 +6,9 @@
     {
         "name": "Interrupt Suite",
         "group": ["INTERRUPT"]
+    },
+    {
+        "name": "Kernel Heap Suite",
+        "group": ["KHEAP"]
     }
 ]

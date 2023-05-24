@@ -275,8 +275,8 @@ void test_framework_end(void)
     {
         kernel_printf("\t\t\"%d\": {\n", test_cursor->id);
 
-        kernel_printf("\t\t\t\"result\": %d,\n", test_cursor->value);
-        kernel_printf("\t\t\t\"expected\": %d,\n", test_cursor->expected);
+        kernel_printf("\t\t\t\"result\": %lu,\n", test_cursor->value);
+        kernel_printf("\t\t\t\"expected\": %lu,\n", test_cursor->expected);
         kernel_printf("\t\t\t\"status\": %d,\n", test_cursor->status);
         kernel_printf("\t\t\t\"type\": %d\n", test_cursor->type);
 

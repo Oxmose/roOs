@@ -65,7 +65,7 @@
 
 /************************* Imported global variables **************************/
 /** @brief Trace buffer address set by linker */
-extern uint32_t* _KERNEL_TRACE_BUFFER_BASE;
+extern uint32_t _KERNEL_TRACE_BUFFER_BASE[];
 /** @brief Trace buffer size set by linker */
 extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 

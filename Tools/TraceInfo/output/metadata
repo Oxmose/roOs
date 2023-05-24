@@ -695,6 +695,46 @@ event {
     name = "Kernel RTC Update Time End";
 };
 
+event {
+    id = 87;
+    name = "Kernel Heap Init Start";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+event {
+    id = 88;
+    name = "Kernel Heap Init End";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+        uint32_t  free_mem;
+    };
+};
+
+event {
+    id = 89;
+    name = "Kernel Heap Allocate";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+        uint32_t  size;
+        uint32_t  free_mem;
+    };
+};
+
+event {
+    id = 90;
+    name = "Kernel Heap Free";
+    fields := struct {
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+        uint32_t  free_mem;
+    };
+};
+
 
 
 

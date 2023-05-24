@@ -22,7 +22,7 @@
  * INCLUDES
  ******************************************************************************/
 
-/* None */
+#include <cpu_interrupt.h> /* CPU Interrupt test ids */
 
 /*******************************************************************************
  * CONSTANTS
@@ -31,9 +31,10 @@
 /*************************************************
  * TESTING ENABLE FLAGS
  ************************************************/
-#define TEST_INTERRUPT_ENABLED                    1
-#define TEST_PANIC_ENABLED                        0
+#define TEST_KHEAP_ENABLED                        1
 #define TEST_KICKSTART_ENABLED                    0
+#define TEST_INTERRUPT_ENABLED                    0
+#define TEST_PANIC_ENABLED                        0
 
 /*************************************************
  * TEST IDENTIFIERS
@@ -74,8 +75,14 @@
 #define TEST_INTERRUPT_SW_REM1_SWINT_HANDLER(IDVAL)     \
     (TEST_INTERRUPT_SW_REG1_SWINT_HANDLER(MAX_INTERRUPT_LINE) + IDVAL)
 
+#define TEST_KHEAP_START_ID \
+    (TEST_INTERRUPT_SW_REM1_SWINT_HANDLER(MAX_INTERRUPT_LINE))
+#define TEST_KHEAP_ALLOC0_ID(IDVAL) (TEST_KHEAP_START_ID + IDVAL + 1)
+#define TEST_KHEAP_ALLOC1_ID(IDVAL) (TEST_KHEAP_ALLOC0_ID(201) + IDVAL)
+#define TEST_KHEAP_MEM_FREE0_ID(IDVAL) (TEST_KHEAP_ALLOC1_ID(201) + IDVAL)
+#define TEST_KHEAP_MEM_FREE1_ID(IDVAL) (TEST_KHEAP_MEM_FREE0_ID(201) + IDVAL)
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Interrupt Suite"
+#define TEST_FRAMEWORK_TEST_NAME "Kernel Heap Suite"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -107,6 +114,7 @@
  ******************************************************************************/
 
 void interrupt_test(void);
+void kheap_test(void);
 
 #endif /* #ifndef __TEST_FRAMEWORK_TEST_LIST_H_ */
 

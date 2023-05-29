@@ -123,13 +123,22 @@ _generic_interrupt_handler:
         mov fs,  [eax+60]
         mov gs,  [eax+56]
         mov ss,  [eax+52]
-        mov ebx, [eax+44]
         mov ecx, [eax+40]
         mov edx, [eax+36]
         mov esi, [eax+32]
         mov edi, [eax+28]
         mov ebp, [eax+24]
         mov esp, [eax+20]
+
+        ; Restore the interrupt context
+        mov ebx, [eax+8]  ; EIP
+        mov [esp], ebx
+        mov ebx, [esp+12]  ; CS
+        mov [eax+4], ebx
+        mov ebx, [esp+16]  ; EFLAGS
+        mov [eax+8], ebx
+
+        mov ebx, [eax+44]
         mov eax, [eax+48]
 
         ; Return from interrupt

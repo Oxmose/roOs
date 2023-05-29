@@ -5,7 +5,7 @@
     },
     {
         "name": "Interrupt Suite",
-        "group": ["INTERRUPT"]
+        "group": ["INTERRUPT", "EXCEPTION"]
     },
     {
         "name": "Kernel Lib Suite",

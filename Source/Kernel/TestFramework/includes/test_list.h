@@ -32,6 +32,7 @@
  * TESTING ENABLE FLAGS
  ************************************************/
 #define TEST_KHEAP_ENABLED                        1
+#define TEST_EXCEPTION_ENABLED                    0
 #define TEST_KICKSTART_ENABLED                    0
 #define TEST_INTERRUPT_ENABLED                    0
 #define TEST_PANIC_ENABLED                        0
@@ -269,6 +270,18 @@
 #define TEST_VECTOR_INSERTBURST0_ID(IDVAL) TEST_VECTOR_SETBURST0_ID(58) + IDVAL
 #define TEST_VECTOR_POPBURST0_ID(IDVAL) TEST_VECTOR_INSERTBURST0_ID(60) + IDVAL
 
+#define TEST_EXCEPTION_DIV_HANDLER0_ID          8000
+#define TEST_EXCEPTION_DIV_HANDLER1_ID          8001
+#define TEST_EXCEPTION_REGISTER_MIN_ID          8002
+#define TEST_EXCEPTION_REGISTER_MAX_ID          8003
+#define TEST_EXCEPTION_REMOVE_MIN_ID            8004
+#define TEST_EXCEPTION_REMOVE_MAX_ID            8005
+#define TEST_EXCEPTION_REGISTER_NULL_ID         8006
+#define TEST_EXCEPTION_REMOVE_REGISTERED_ID     8007
+#define TEST_EXCEPTION_REMOVE_NONREGISTERED_ID  8008
+#define TEST_EXCEPTION_REGISTER_ID              8009
+#define TEST_EXCEPTION_ALREADY_REGISTERED_ID    8010
+#define TEST_EXCEPTION_NOT_CAUGHT_ID            8011
 
 /** @brief Current test name */
 #define TEST_FRAMEWORK_TEST_NAME "Kernel Lib Suite"
@@ -303,6 +316,7 @@
  ******************************************************************************/
 
 void interrupt_test(void);
+void exception_test(void);
 void kheap_test(void);
 void queue_test(void);
 void kqueue_test(void);

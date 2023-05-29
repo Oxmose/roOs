@@ -257,6 +257,8 @@ void test_framework_assert_errcode(const uint32_t test_id,
 
 #define TEST_FRAMEWORK_START()
 
+#define TEST_FRAMEWORK_END()
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/

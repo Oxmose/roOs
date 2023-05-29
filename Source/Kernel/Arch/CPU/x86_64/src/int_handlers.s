@@ -150,6 +150,15 @@ __generic_interrupt_handler:
         mov rsi, [rax+64]
         mov rdx, [rax+72]
         mov rcx, [rax+80]
+
+        ; Restore the interrupt context
+        mov rbx, [rax+16]  ; RIP
+        mov [rsp], rbx
+        mov rbx, [rax+24]  ; CS
+        mov [rsp+8], rbx
+        mov rbx, [rax+32]  ; RFLAGS
+        mov [rsp+16], rbx
+
         mov rbx, [rax+88]
         mov rax, [rax+96]
 

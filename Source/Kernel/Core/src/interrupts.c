@@ -36,11 +36,11 @@
 /* Configuration files */
 #include <config.h>
 
-/* Header file */
-#include <interrupts.h>
-
 /* Unit test header */
 #include <test_framework.h>
+
+/* Header file */
+#include <interrupts.h>
 
 /*******************************************************************************
  * CONSTANTS

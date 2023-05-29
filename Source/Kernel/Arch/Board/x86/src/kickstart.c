@@ -30,6 +30,7 @@
 #include <panic.h>          /* Kernel Panic */
 #include <uart.h>           /* UART driver */
 #include <interrupts.h>     /* Interrupt manager */
+#include <exceptions.h>     /* Exception manager */
 #include <time_mgt.h>       /* Time management */
 #include <pic.h>            /* PIC driver */
 #include <pit.h>            /* PIT driver */
@@ -152,9 +153,13 @@ void kickstart(void)
     cpu_init();
     KERNEL_SUCCESS("CPU initialized\n");
 
-    /* Initialize interrupt manager */
+    /* Initialize interrupts manager */
     kernel_interrupt_init();
     KERNEL_SUCCESS("Interrupt manager initialized\n");
+
+    /* Initialize exceptions manager */
+    kernel_exception_init();
+    KERNEL_SUCCESS("Exception manager initialized\n");
 
 #if TEST_INTERRUPT_ENABLED
     TEST_FRAMEWORK_END();

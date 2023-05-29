@@ -385,6 +385,15 @@ void cpu_init(void);
  */
 OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line);
 
+/**
+ * @brief Checks the architecture's feature and requirements for UTK.
+ *
+ * @details Checks the architecture's feature and requirements for UTK. If a
+ * requirement is not met, a kernel panic is raised.
+ */
+void validate_architecture(void);
+
+
 #endif /* #ifndef __X86_64_CPU_H_ */
 
 /************************************ EOF *************************************/

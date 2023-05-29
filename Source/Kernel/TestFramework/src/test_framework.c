@@ -43,9 +43,6 @@
 /** @brief Testing framework version. */
 #define TEST_FRAMEWORK_VERSION "0.5"
 
-/** @brief Testing framework memory pool size. */
-#define TEST_FRAMEWORK_MEM_POOL_SIZE 0x9000
-
 /** @brief Defines the current module's name. */
 #define MODULE_NAME "TEST FRAMEWORK"
 
@@ -121,7 +118,10 @@ typedef union
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/* None */
+/** @brief Test buffer pool base address defined by linker. */
+extern uint8_t _KERNEL_TEST_BUFFER_BASE;
+/** @brief Test buffer pool size defined by linker. */
+extern uint8_t _KERNEL_TEST_BUFFER_SIZE;
 
 /************************* Exported global variables **************************/
 /* None */
@@ -135,9 +135,6 @@ static uint32_t failures = 0;
 
 /** @brief Number of tests executed during the suite that succeeded. */
 static uint32_t success = 0;
-
-/** @brief Test memory pool. */
-static uint8_t memoryPool[TEST_FRAMEWORK_MEM_POOL_SIZE];
 
 /** @brief Memory pool head pointer. */
 static uint8_t* memoryPoolHead = NULL;
@@ -176,7 +173,9 @@ static void * _get_test_memory(const size_t size)
 {
     uint8_t * address;
 
-    if(TEST_FRAMEWORK_MEM_POOL_SIZE + memoryPool >= memoryPoolHead + size)
+    if((uint32_t)(uintptr_t)_KERNEL_TEST_BUFFER_SIZE +
+       &_KERNEL_TEST_BUFFER_BASE <
+       memoryPoolHead + size)
     {
         address = memoryPoolHead;
         memoryPoolHead += size;
@@ -247,10 +246,9 @@ void _kill_qemu(void)
     }
 }
 
-
 void test_framework_init(void)
 {
-    memoryPoolHead = memoryPool;
+    memoryPoolHead = &_KERNEL_TEST_BUFFER_BASE;
 }
 
 void test_framework_end(void)

@@ -150,8 +150,6 @@ void kheap_test(void)
 
         mem_free = new_mem_free;
     }
-
-    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

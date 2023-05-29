@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Basic Init Suite",
+        "group": ["KICKSTART", "PANIC"]
+    },
+    {
+        "name": "Interrupt Suite",
+        "group": ["INTERRUPT"]
+    },
+    {
+        "name": "Kernel Lib Suite",
+        "group": ["KHEAP", "OS_KQUEUE", "OS_QUEUE", "OS_VECTOR", "OS_UHASHTABLE"]
+    }
+]

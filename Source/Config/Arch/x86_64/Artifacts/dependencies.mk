@@ -17,5 +17,8 @@ DEP_MODULES += -L../Time/bin
 
 ifeq ($(TESTS), TRUE)
 DEP_LIBS    += -ltestframework
+DEP_LIBS    += -lapi
+DEP_LIBS    += -llibc
+DEP_LIBS    += -lcore
 DEP_MODULES += -L../TestFramework/bin
 endif

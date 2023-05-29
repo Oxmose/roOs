@@ -56,6 +56,8 @@ typedef enum
     OS_ERR_INCORRECT_VALUE                 = 8,
     /** @brief Value out of bound */
     OS_ERR_OUT_OF_BOUND                    = 9,
+    /** @brief Feature not supported */
+    OS_ERR_NOT_SUPPORTED                   = 10,
 } OS_RETURN_E;
 
 /*******************************************************************************

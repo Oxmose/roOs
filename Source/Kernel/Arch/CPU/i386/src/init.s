@@ -158,7 +158,7 @@ align 4
 __kinit_high:
     ; Init stack
     mov eax, _KERNEL_STACKS_BASE
-    mov ebx, KERNEL_STACK_SIZE - 4
+    mov ebx, KERNEL_STACK_SIZE - 16
     add eax, ebx
     mov esp, eax
     mov ebp, esp

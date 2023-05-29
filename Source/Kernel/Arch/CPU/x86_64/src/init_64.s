@@ -78,7 +78,7 @@ __bss_init:
 
     ; Init stack
     mov rax, _KERNEL_STACKS_BASE
-    mov rbx, KERNEL_STACK_SIZE - 4
+    mov rbx, KERNEL_STACK_SIZE - 16
     add rax, rbx
     mov rsp, rax
     mov rbp, rsp

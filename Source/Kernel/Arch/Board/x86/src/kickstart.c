@@ -152,12 +152,32 @@ void kickstart(void)
     cpu_init();
     KERNEL_SUCCESS("CPU initialized\n");
 
-    kheap_init();
-    KERNEL_SUCCESS("Kernel heap initialized\n");
-
     /* Initialize interrupt manager */
     kernel_interrupt_init();
     KERNEL_SUCCESS("Interrupt manager initialized\n");
+
+#if TEST_INTERRUPT_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
+
+    /* Validate architecture (must be done after interrupt init because of
+     * potential kernel panic)
+     */
+    validate_architecture();
+    KERNEL_SUCCESS("Architecture validated\n");
+
+    /* Initialize kernel heap */
+    kheap_init();
+    KERNEL_SUCCESS("Kernel heap initialized\n");
+
+    TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(vector_test, TEST_OS_VECTOR_ENABLED);
+    TEST_POINT_FUNCTION_CALL(uhashtable_test, TEST_OS_UHASHTABLE_ENABLED);
+
+#if TEST_KHEAP_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
 
     /* Initialize the PIC */
     pic_init();
@@ -190,6 +210,10 @@ void kickstart(void)
                             OS_NO_ERR,
                             OS_NO_ERR,
                             TEST_KICKSTART_ENABLED);
+
+#if !TEST_PANIC_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

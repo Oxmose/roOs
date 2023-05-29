@@ -852,8 +852,6 @@ void interrupt_test(void)
 {
     test_sw_interupts();
     test_sw_interupts_lock();
-
-    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import subprocess
+import time
 
 class COLORS:
     HEADER = '\033[95m'
@@ -48,7 +49,10 @@ def Validate(jsonTestsuite):
 
     outComeStr = ""
 
+    testIdDict = {}
+
     for testId, testContent in jsonTestsuite["test_suite"].items():
+        testIdDict[testId] = 1
         if testContent["status"] == 0:
             outComeStr = COLORS.FAIL + COLORS.BOLD + "FAIL" + COLORS.ENDC
             print("===> Test {}".format(testId))
@@ -69,6 +73,16 @@ def Validate(jsonTestsuite):
     return jsonTestsuite["failures"]
 
 
+def DictRaiseDuplicate(ordPairs):
+    """Reject duplicate keys."""
+    d = {}
+    for k, v in ordPairs:
+        if k in d:
+           raise ValueError("Duplicate test ID: %r" % (k,))
+        else:
+           d[k] = v
+    return d
+
 def ParseInputFile(filename):
     isTestsuiteContent = False
     with open(filename, 'r', errors='ignore') as fileDesc:
@@ -87,7 +101,7 @@ def ParseInputFile(filename):
         if len(jsonBody) == 0:
             return ""
 
-        jsonObject = json.loads(jsonBody)
+        jsonObject = json.loads(jsonBody, object_pairs_hook=DictRaiseDuplicate)
 
         return jsonObject
 
@@ -200,15 +214,16 @@ if __name__ == "__main__":
                 error += 1
                 continue
 
+            start = time.time()
             with open(testOutputFileName, "w") as outputFile:
                 p = subprocess.Popen(["make", "target={}".format(target), "qemu-test-mode"], stdout = outputFile)
                 try:
-                    p.wait(20)
+                    p.wait(30)
                 except subprocess.TimeoutExpired:
                     p.kill()
 
                 outputFile.close()
-
+            print("Tests took {:.2f}ms".format(1000 * (time.time() - start)))
             os.sync()
 
             jsonTestsuite = ParseInputFile(testOutputFileName)

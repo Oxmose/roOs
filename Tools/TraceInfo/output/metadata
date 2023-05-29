@@ -735,6 +735,16 @@ event {
     };
 };
 
+event {
+    id = 91;
+    name = "Kernel Validate Architecture Start";
+};
+
+event {
+    id = 92;
+    name = "Kernel Validate Architecture End";
+};
+
 
 
 

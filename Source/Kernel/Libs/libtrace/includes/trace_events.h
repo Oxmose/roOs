@@ -223,6 +223,10 @@ typedef enum
     EVENT_KERNEL_HEAP_ALLOC                 = 89,
     /** @brief Kernel Heap Free */
     EVENT_KERNEL_HEAP_FREE                  = 90,
+    /** @brief Kernel Validate Architecture Start */
+    EVENT_KERNEL_VALIDATE_ARCH_START        = 91,
+    /** @brief Kernel Validate Architecture End */
+    EVENT_KERNEL_VALIDATE_ARCH_END          = 92,
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

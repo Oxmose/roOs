@@ -1,0 +1,6 @@
+[
+    {
+        "name": "Kernel Lib Suite",
+        "group": ["KHEAP", "OS_QUEUE", "OS_KQUEUE", "OS_UHASHTABLE", "OS_VECTOR"]
+    }
+]

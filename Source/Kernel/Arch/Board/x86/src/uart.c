@@ -28,7 +28,7 @@
 #include <string.h>         /* String manipulation */
 #include <console.h>        /* Console driver manager */
 #include <cpu.h>            /* CPU Ports */
-#include <kernel_output.h>  /* Kernel outputs */
+#include <kerneloutput.h>  /* Kernel outputs */
 #include <critical.h>       /* Critical sections */
 
 /* Configuration files */
@@ -221,18 +221,17 @@ typedef enum
 /**
  * @brief Serial text driver instance.
  */
-static kernel_console_driver_t uart_text_driver =
+static console_driver_t uart_text_driver =
 {
-    .clear_screen           = uart_clear_screen,
-    .put_cursor_at          = NULL,
-    .save_cursor            = NULL,
-    .restore_cursor         = NULL,
-    .scroll                 = uart_scroll,
-    .set_color_scheme       = NULL,
-    .save_color_scheme      = NULL,
-    .put_string             = uart_put_string,
-    .put_char               = uart_put_char,
-    .console_write_keyboard = uart_console_write_keyboard
+    .pClear           = uart_clear_screen,
+    .pPutCursor       = NULL,
+    .pSaveCursor      = NULL,
+    .pRestoreCursor   = NULL,
+    .pScroll          = uart_scroll,
+    .pSetColorScheme  = NULL,
+    .pSaveColorScheme = NULL,
+    .pPutString       = uart_put_string,
+    .pPutChar         = uart_put_char,
 };
 
 /** @brief Concurrency lock for the uart driver*/
@@ -422,15 +421,6 @@ void uart_scroll(const SCROLL_DIRECTION_E direction,
     }
 }
 
-void uart_console_write_keyboard(const char* string, const size_t len)
-{
-    size_t i;
-    for(i = 0; i < len; ++i)
-    {
-        _uart_write(SERIAL_OUTPUT_PORT, string[i]);
-    }
-}
-
 uint8_t uart_read(const uint32_t port)
 {
     uint8_t  val;
@@ -472,7 +462,7 @@ bool_t uart_received(const uint32_t port)
     return ret;
 }
 
-const kernel_console_driver_t* uart_get_driver(void)
+const console_driver_t* uart_get_driver(void)
 {
     return &uart_text_driver;
 }

@@ -29,7 +29,7 @@
 #include <cpu.h>                /* CPU management */
 #include <cpu_interrupt.h>      /* CPU interrupts settings */
 #include <panic.h>              /* Kernel panic */
-#include <kernel_output.h>      /* Kernel output methods */
+#include <kerneloutput.h>      /* Kernel output methods */
 #include <critical.h>           /* Critical sections */
 #include <scheduler.h>          /* Kernel scheduler */
 

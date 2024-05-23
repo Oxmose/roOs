@@ -1,0 +1,119 @@
+\hypertarget{structuhashtable__t}{}\doxysection{uhashtable\+\_\+t Struct Reference}
+\label{structuhashtable__t}\index{uhashtable\_t@{uhashtable\_t}}
+
+
+Unsigned hash table structure.  
+
+
+
+
+{\ttfamily \#include $<$uhashtable.\+h$>$}
+
+
+
+Collaboration diagram for uhashtable\+\_\+t\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=316pt]{structuhashtable__t__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structuhashtable__alloc__t}{uhashtable\+\_\+alloc\+\_\+t}} \mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}
+\begin{DoxyCompactList}\small\item\em Hash table allocator. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\+\_\+entry\+\_\+t}} $\ast$$\ast$ \mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}
+\begin{DoxyCompactList}\small\item\em Hash table entries. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}
+\begin{DoxyCompactList}\small\item\em Current hash table capacity. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}}
+\begin{DoxyCompactList}\small\item\em Current hash table size. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\+\_\+size}}
+\begin{DoxyCompactList}\small\item\em Contains the number of deleted item still in the table. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Unsigned hash table structure. 
+
+Definition at line 81 of file uhashtable.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}\label{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}} 
+\index{uhashtable\_t@{uhashtable\_t}!allocator@{allocator}}
+\index{allocator@{allocator}!uhashtable\_t@{uhashtable\_t}}
+\doxysubsubsection{\texorpdfstring{allocator}{allocator}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structuhashtable__alloc__t}{uhashtable\+\_\+alloc\+\_\+t}} allocator}
+
+
+
+Hash table allocator. 
+
+
+
+Definition at line 84 of file uhashtable.\+h.
+
+\mbox{\Hypertarget{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}\label{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}} 
+\index{uhashtable\_t@{uhashtable\_t}!capacity@{capacity}}
+\index{capacity@{capacity}!uhashtable\_t@{uhashtable\_t}}
+\doxysubsubsection{\texorpdfstring{capacity}{capacity}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} capacity}
+
+
+
+Current hash table capacity. 
+
+
+
+Definition at line 90 of file uhashtable.\+h.
+
+\mbox{\Hypertarget{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}\label{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}} 
+\index{uhashtable\_t@{uhashtable\_t}!entries@{entries}}
+\index{entries@{entries}!uhashtable\_t@{uhashtable\_t}}
+\doxysubsubsection{\texorpdfstring{entries}{entries}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\+\_\+entry\+\_\+t}}$\ast$$\ast$ entries}
+
+
+
+Hash table entries. 
+
+
+
+Definition at line 87 of file uhashtable.\+h.
+
+\mbox{\Hypertarget{structuhashtable__t_aff3f618d728a254c5f36856775626497}\label{structuhashtable__t_aff3f618d728a254c5f36856775626497}} 
+\index{uhashtable\_t@{uhashtable\_t}!graveyard\_size@{graveyard\_size}}
+\index{graveyard\_size@{graveyard\_size}!uhashtable\_t@{uhashtable\_t}}
+\doxysubsubsection{\texorpdfstring{graveyard\_size}{graveyard\_size}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} graveyard\+\_\+size}
+
+
+
+Contains the number of deleted item still in the table. 
+
+
+
+Definition at line 96 of file uhashtable.\+h.
+
+\mbox{\Hypertarget{structuhashtable__t_a854352f53b148adc24983a58a1866d66}\label{structuhashtable__t_a854352f53b148adc24983a58a1866d66}} 
+\index{uhashtable\_t@{uhashtable\_t}!size@{size}}
+\index{size@{size}!uhashtable\_t@{uhashtable\_t}}
+\doxysubsubsection{\texorpdfstring{size}{size}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} size}
+
+
+
+Current hash table size. 
+
+
+
+Definition at line 93 of file uhashtable.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Libs/libapi/includes/\mbox{\hyperlink{uhashtable_8h}{uhashtable.\+h}}\end{DoxyCompactItemize}

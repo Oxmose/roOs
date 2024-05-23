@@ -1,0 +1,134 @@
+\hypertarget{stddef_8h}{}\doxysection{Source/\+Kernel/\+Libs/libc/includes/stddef.h File Reference}
+\label{stddef_8h}\index{Source/Kernel/Libs/libc/includes/stddef.h@{Source/Kernel/Libs/libc/includes/stddef.h}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+Include dependency graph for stddef.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=246pt]{stddef_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stddef_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}~((void $\ast$)0)
+\begin{DoxyCompactList}\small\item\em UTK\textquotesingle{}s NULL definition. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stddef_8h_a74e75242132eaabbc1c512488a135926}{MIN}}(x,  y)~((x) $<$ (y) ? (x) \+: (y))
+\begin{DoxyCompactList}\small\item\em Defines uintptr\+\_\+t type as address type. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stddef_8h_aacc3ee1a7f283f8ef65cea31f4436a95}{MAX}}(x,  y)~((x) $<$ (y) ? (y) \+: (x))
+\begin{DoxyCompactList}\small\item\em Defines the MAX function, return the maximal value between two variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef \+\_\+\+\_\+\+SIZE\+\_\+\+TYPE\+\_\+\+\_\+ \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines size\+\_\+t type as a renaming for {\bfseries{SIZE\+\_\+\+TYPE}}. \end{DoxyCompactList}\item 
+typedef \+\_\+\+\_\+\+PTRDIFF\+\_\+\+TYPE\+\_\+\+\_\+ \mbox{\hyperlink{stddef_8h_a6d26a0475a6d6c897e655cdc5d8019d2}{ptrdiff\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines ptrdiff\+\_\+t type as a renaming for {\bfseries{PTRDIFF\+\_\+\+TYPE}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{stddef_8h_aacc3ee1a7f283f8ef65cea31f4436a95}\label{stddef_8h_aacc3ee1a7f283f8ef65cea31f4436a95}} 
+\index{stddef.h@{stddef.h}!MAX@{MAX}}
+\index{MAX@{MAX}!stddef.h@{stddef.h}}
+\doxysubsubsection{\texorpdfstring{MAX}{MAX}}
+{\footnotesize\ttfamily \#define MAX(\begin{DoxyParamCaption}\item[{}]{x,  }\item[{}]{y }\end{DoxyParamCaption})~((x) $<$ (y) ? (y) \+: (x))}
+
+
+
+Defines the MAX function, return the maximal value between two variables. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em x} & The first value to compare. \\
+\hline
+\mbox{\texttt{ in}}  & {\em y} & The second value to compare.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The biggest value. 
+\end{DoxyReturn}
+
+
+Definition at line 96 of file stddef.\+h.
+
+\mbox{\Hypertarget{stddef_8h_a74e75242132eaabbc1c512488a135926}\label{stddef_8h_a74e75242132eaabbc1c512488a135926}} 
+\index{stddef.h@{stddef.h}!MIN@{MIN}}
+\index{MIN@{MIN}!stddef.h@{stddef.h}}
+\doxysubsubsection{\texorpdfstring{MIN}{MIN}}
+{\footnotesize\ttfamily \#define MIN(\begin{DoxyParamCaption}\item[{}]{x,  }\item[{}]{y }\end{DoxyParamCaption})~((x) $<$ (y) ? (x) \+: (y))}
+
+
+
+Defines uintptr\+\_\+t type as address type. 
+
+Defines the MIN function, return the minimal value between two variables.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em x} & The first value to compare. \\
+\hline
+\mbox{\texttt{ in}}  & {\em y} & The second value to compare.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The smallest value. 
+\end{DoxyReturn}
+
+
+Definition at line 86 of file stddef.\+h.
+
+\mbox{\Hypertarget{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}\label{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}} 
+\index{stddef.h@{stddef.h}!NULL@{NULL}}
+\index{NULL@{NULL}!stddef.h@{stddef.h}}
+\doxysubsubsection{\texorpdfstring{NULL}{NULL}}
+{\footnotesize\ttfamily \#define NULL~((void $\ast$)0)}
+
+
+
+UTK\textquotesingle{}s NULL definition. 
+
+
+
+Definition at line 32 of file stddef.\+h.
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{stddef_8h_a6d26a0475a6d6c897e655cdc5d8019d2}\label{stddef_8h_a6d26a0475a6d6c897e655cdc5d8019d2}} 
+\index{stddef.h@{stddef.h}!ptrdiff\_t@{ptrdiff\_t}}
+\index{ptrdiff\_t@{ptrdiff\_t}!stddef.h@{stddef.h}}
+\doxysubsubsection{\texorpdfstring{ptrdiff\_t}{ptrdiff\_t}}
+{\footnotesize\ttfamily typedef \+\_\+\+\_\+\+PTRDIFF\+\_\+\+TYPE\+\_\+\+\_\+ \mbox{\hyperlink{stddef_8h_a6d26a0475a6d6c897e655cdc5d8019d2}{ptrdiff\+\_\+t}}}
+
+
+
+Defines ptrdiff\+\_\+t type as a renaming for {\bfseries{PTRDIFF\+\_\+\+TYPE}}. 
+
+
+
+Definition at line 51 of file stddef.\+h.
+
+\mbox{\Hypertarget{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}\label{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}} 
+\index{stddef.h@{stddef.h}!size\_t@{size\_t}}
+\index{size\_t@{size\_t}!stddef.h@{stddef.h}}
+\doxysubsubsection{\texorpdfstring{size\_t}{size\_t}}
+{\footnotesize\ttfamily typedef \+\_\+\+\_\+\+SIZE\+\_\+\+TYPE\+\_\+\+\_\+ \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}
+
+
+
+Defines size\+\_\+t type as a renaming for {\bfseries{SIZE\+\_\+\+TYPE}}. 
+
+
+
+Definition at line 42 of file stddef.\+h.
+

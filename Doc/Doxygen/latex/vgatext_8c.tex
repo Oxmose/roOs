@@ -1,0 +1,1090 @@
+\hypertarget{vgatext_8c}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/src/vgatext.c File Reference}
+\label{vgatext_8c}\index{Source/Kernel/Arch/Board/x86/src/vgatext.c@{Source/Kernel/Arch/Board/x86/src/vgatext.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+{\ttfamily \#include $<$uart.\+h$>$}\newline
+{\ttfamily \#include $<$panic.\+h$>$}\newline
+{\ttfamily \#include $<$devtree.\+h$>$}\newline
+{\ttfamily \#include $<$drivermgr.\+h$>$}\newline
+{\ttfamily \#include $<$kheap.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$vgatext.\+h$>$}\newline
+Include dependency graph for vgatext.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structvga__controler__t}{vga\+\_\+controler\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em x86 VGA Text driver controler. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}X86\+\_\+\+VGA\+\_\+\+TEXT\char`\"{}
+\begin{DoxyCompactList}\small\item\em Module\textquotesingle{}s name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_a5f733be061a3002d5423b231490dae21}{VGA\+\_\+\+CONSOLE\+\_\+\+CURSOR\+\_\+\+COMM\+\_\+\+LOW}}~0x0F
+\begin{DoxyCompactList}\small\item\em VGA cursor position command low. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_a76aaa79ab5c83ec2c30b3654bf5b64ef}{VGA\+\_\+\+CONSOLE\+\_\+\+CURSOR\+\_\+\+COMM\+\_\+\+HIGH}}~0x0E
+\begin{DoxyCompactList}\small\item\em VGA cursor position command high. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_a929d3d170ead798de8df95d395250a11}{VGA\+\_\+\+FDT\+\_\+\+REG\+\_\+\+PROP}}~\char`\"{}reg\char`\"{}
+\begin{DoxyCompactList}\small\item\em FDT property for registers. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_a52aa438a15a69f00a123268151753c35}{VGA\+\_\+\+FDT\+\_\+\+COMM\+\_\+\+PROP}}~\char`\"{}comm\char`\"{}
+\begin{DoxyCompactList}\small\item\em FDT property for comm ports. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_ac9a3e9a61d63aa7ed16b0bbab6849d43}{VGA\+\_\+\+FDT\+\_\+\+RES\+\_\+\+PROP}}~\char`\"{}resolution\char`\"{}
+\begin{DoxyCompactList}\small\item\em FDT property for resolution. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_aac456c50c1c5ccf7416c87cd540952dd}{VGA\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Assert macro used by the VGA to ensure correctness of execution. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}{GET\+\_\+\+FRAME\+\_\+\+BUFFER\+\_\+\+AT}}(LINE,  COL)~        ((s\+Drv\+Ctrl.\+p\+Framebuffer) + ((COL) + (LINE) $\ast$ s\+Drv\+Ctrl.\+column\+Count))
+\begin{DoxyCompactList}\small\item\em Get the VGA frame buffer virtual address. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vgatext_8c_a7a0502d3486629e2897dd4cba3aef45e}{\+\_\+vga\+Console\+Attach}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Fdt\+Node)
+\item 
+static void \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\+\_\+vga\+Print\+Char}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Line, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Column, const char k\+Character)
+\begin{DoxyCompactList}\small\item\em Prints a character to the selected coordinates. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_ada367f3b1989c814aac907a2b649bf84}{\+\_\+vga\+Process\+Char}} (const char k\+Character)
+\begin{DoxyCompactList}\small\item\em Processes the character in parameters. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}{\+\_\+vga\+Clear\+Framebuffer}} (void)
+\begin{DoxyCompactList}\small\item\em Clears the screen by printing null character character on black background. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\+\_\+vga\+Put\+Cursor}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Line, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Column)
+\begin{DoxyCompactList}\small\item\em Places the cursor to the selected coordinates given as parameters. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_acb745184e30cfadf23b212fad8778bff}{\+\_\+vga\+Save\+Cursor}} (\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$p\+Buffer)
+\begin{DoxyCompactList}\small\item\em Saves the cursor attributes in the buffer given as parameter. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_aa69fb9b4924be655a655a142016a0ec8}{\+\_\+vga\+Resotre\+Cursor}} (const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$kp\+Buffer)
+\begin{DoxyCompactList}\small\item\em Restores the cursor attributes from the buffer given as parameter. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}{\+\_\+vga\+Scroll}} (const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} k\+Direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Lines)
+\begin{DoxyCompactList}\small\item\em Scrolls in the desired direction of lines\+\_\+count lines. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_a684572a9d504525806eb240f4b8d367b}{\+\_\+vga\+Set\+Scheme}} (const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$kp\+Color\+Scheme)
+\begin{DoxyCompactList}\small\item\em Sets the color scheme of the screen. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_a2a417a52e978d50d2b14db789e7682c2}{\+\_\+vga\+Save\+Scheme}} (\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$p\+Buffer)
+\begin{DoxyCompactList}\small\item\em Saves the color scheme in the buffer given as parameter. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_a4a001487f312398070c2a6c12cd573a0}{\+\_\+vga\+Put\+String}} (const char $\ast$kp\+String)
+\begin{DoxyCompactList}\small\item\em Put a string to screen. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{vgatext_8c_ac4cb795741f87c283f94169b91a51902}{\+\_\+vga\+Put\+Char}} (const char k\+Character)
+\begin{DoxyCompactList}\small\item\em Put a character to screen. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{vgatext_8c_ae4c73955880bde3c996da7f3c3715a90}{DRIVERMGR\+\_\+\+REG}} (\mbox{\hyperlink{vgatext_8c_a54f99aa1f65c8b41d4ebf740c2eda5a3}{x86\+VGADriver}})
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structdriver__t}{driver\+\_\+t}} \mbox{\hyperlink{vgatext_8c_a54f99aa1f65c8b41d4ebf740c2eda5a3}{x86\+VGADriver}}
+\begin{DoxyCompactList}\small\item\em VGA text driver instance. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structvga__controler__t}{vga\+\_\+controler\+\_\+t}} \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{s\+Drv\+Ctrl}}
+\begin{DoxyCompactList}\small\item\em VGA driver controler instance. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} \mbox{\hyperlink{vgatext_8c_afc7c68ea14e26c632430a2c4fc6f562c}{s\+VGAConsole\+Driver}}
+\begin{DoxyCompactList}\small\item\em VGA console driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}\label{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}} 
+\index{vgatext.c@{vgatext.c}!GET\_FRAME\_BUFFER\_AT@{GET\_FRAME\_BUFFER\_AT}}
+\index{GET\_FRAME\_BUFFER\_AT@{GET\_FRAME\_BUFFER\_AT}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{GET\_FRAME\_BUFFER\_AT}{GET\_FRAME\_BUFFER\_AT}}
+{\footnotesize\ttfamily \#define GET\+\_\+\+FRAME\+\_\+\+BUFFER\+\_\+\+AT(\begin{DoxyParamCaption}\item[{}]{LINE,  }\item[{}]{COL }\end{DoxyParamCaption})~        ((s\+Drv\+Ctrl.\+p\+Framebuffer) + ((COL) + (LINE) $\ast$ s\+Drv\+Ctrl.\+column\+Count))}
+
+
+
+Get the VGA frame buffer virtual address. 
+
+Get the VGA frame buffer virtual address correponding to a certain region of the buffer given the parameters.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em LINE} & The frame buffer line. \\
+\hline
+\mbox{\texttt{ in}}  & {\em COLUMN} & The frame buffer column.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The frame buffer virtual address is get correponding to a certain region of the buffer given the parameters. 
+\end{DoxyReturn}
+
+
+Definition at line 135 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{vgatext.c@{vgatext.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}X86\+\_\+\+VGA\+\_\+\+TEXT\char`\"{}}
+
+
+
+Module\textquotesingle{}s name. 
+
+
+
+Definition at line 49 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_aac456c50c1c5ccf7416c87cd540952dd}\label{vgatext_8c_aac456c50c1c5ccf7416c87cd540952dd}} 
+\index{vgatext.c@{vgatext.c}!VGA\_ASSERT@{VGA\_ASSERT}}
+\index{VGA\_ASSERT@{VGA\_ASSERT}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_ASSERT}{VGA\_ASSERT}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                      \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});               \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Assert macro used by the VGA to ensure correctness of execution. 
+
+Assert macro used by the VGA to ensure correctness of execution. Due to the critical nature of the VGA, any error generates a kernel panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition that should be true. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to display in case of kernel panic. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code to use in case of kernel panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 116 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a76aaa79ab5c83ec2c30b3654bf5b64ef}\label{vgatext_8c_a76aaa79ab5c83ec2c30b3654bf5b64ef}} 
+\index{vgatext.c@{vgatext.c}!VGA\_CONSOLE\_CURSOR\_COMM\_HIGH@{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH}}
+\index{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH@{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH}{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+CONSOLE\+\_\+\+CURSOR\+\_\+\+COMM\+\_\+\+HIGH~0x0E}
+
+
+
+VGA cursor position command high. 
+
+
+
+Definition at line 54 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a5f733be061a3002d5423b231490dae21}\label{vgatext_8c_a5f733be061a3002d5423b231490dae21}} 
+\index{vgatext.c@{vgatext.c}!VGA\_CONSOLE\_CURSOR\_COMM\_LOW@{VGA\_CONSOLE\_CURSOR\_COMM\_LOW}}
+\index{VGA\_CONSOLE\_CURSOR\_COMM\_LOW@{VGA\_CONSOLE\_CURSOR\_COMM\_LOW}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_CONSOLE\_CURSOR\_COMM\_LOW}{VGA\_CONSOLE\_CURSOR\_COMM\_LOW}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+CONSOLE\+\_\+\+CURSOR\+\_\+\+COMM\+\_\+\+LOW~0x0F}
+
+
+
+VGA cursor position command low. 
+
+
+
+Definition at line 52 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a52aa438a15a69f00a123268151753c35}\label{vgatext_8c_a52aa438a15a69f00a123268151753c35}} 
+\index{vgatext.c@{vgatext.c}!VGA\_FDT\_COMM\_PROP@{VGA\_FDT\_COMM\_PROP}}
+\index{VGA\_FDT\_COMM\_PROP@{VGA\_FDT\_COMM\_PROP}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_FDT\_COMM\_PROP}{VGA\_FDT\_COMM\_PROP}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+FDT\+\_\+\+COMM\+\_\+\+PROP~\char`\"{}comm\char`\"{}}
+
+
+
+FDT property for comm ports. 
+
+
+
+Definition at line 59 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a929d3d170ead798de8df95d395250a11}\label{vgatext_8c_a929d3d170ead798de8df95d395250a11}} 
+\index{vgatext.c@{vgatext.c}!VGA\_FDT\_REG\_PROP@{VGA\_FDT\_REG\_PROP}}
+\index{VGA\_FDT\_REG\_PROP@{VGA\_FDT\_REG\_PROP}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_FDT\_REG\_PROP}{VGA\_FDT\_REG\_PROP}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+FDT\+\_\+\+REG\+\_\+\+PROP~\char`\"{}reg\char`\"{}}
+
+
+
+FDT property for registers. 
+
+
+
+Definition at line 57 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_ac9a3e9a61d63aa7ed16b0bbab6849d43}\label{vgatext_8c_ac9a3e9a61d63aa7ed16b0bbab6849d43}} 
+\index{vgatext.c@{vgatext.c}!VGA\_FDT\_RES\_PROP@{VGA\_FDT\_RES\_PROP}}
+\index{VGA\_FDT\_RES\_PROP@{VGA\_FDT\_RES\_PROP}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{VGA\_FDT\_RES\_PROP}{VGA\_FDT\_RES\_PROP}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+FDT\+\_\+\+RES\+\_\+\+PROP~\char`\"{}resolution\char`\"{}}
+
+
+
+FDT property for resolution. 
+
+
+
+Definition at line 61 of file vgatext.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}\label{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}} 
+\index{vgatext.c@{vgatext.c}!\_vgaClearFramebuffer@{\_vgaClearFramebuffer}}
+\index{\_vgaClearFramebuffer@{\_vgaClearFramebuffer}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaClearFramebuffer()}{\_vgaClearFramebuffer()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Clear\+Framebuffer (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Clears the screen by printing null character character on black background. 
+
+
+
+Definition at line 559 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{560 \{}
+\DoxyCodeLine{561     \textcolor{comment}{/* Clear all screen */}}
+\DoxyCodeLine{562     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}}, 0, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebufferSize}});}
+\DoxyCodeLine{563 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_a7a0502d3486629e2897dd4cba3aef45e}\label{vgatext_8c_a7a0502d3486629e2897dd4cba3aef45e}} 
+\index{vgatext.c@{vgatext.c}!\_vgaConsoleAttach@{\_vgaConsoleAttach}}
+\index{\_vgaConsoleAttach@{\_vgaConsoleAttach}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaConsoleAttach()}{\_vgaConsoleAttach()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \+\_\+vga\+Console\+Attach (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Fdt\+Node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line 318 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{319 \{}
+\DoxyCodeLine{320     \textcolor{keyword}{const} uintptr\_t* ptrProp;}
+\DoxyCodeLine{321     \textcolor{keywordtype}{size\_t}           propLen;}
+\DoxyCodeLine{322     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}}      retCode;}
+\DoxyCodeLine{323 }
+\DoxyCodeLine{324     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_VGA\_INIT\_START, 0);}
+\DoxyCodeLine{325 }
+\DoxyCodeLine{326     \textcolor{comment}{/* Get the VGA framebuffer address */}}
+\DoxyCodeLine{327     ptrProp = \mbox{\hyperlink{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdtGetProp}}(pkFdtNode, \mbox{\hyperlink{vgatext_8c_a929d3d170ead798de8df95d395250a11}{VGA\_FDT\_REG\_PROP}}, \&propLen);}
+\DoxyCodeLine{328     \textcolor{keywordflow}{if}(ptrProp == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || propLen != \textcolor{keyword}{sizeof}(uintptr\_t) * 2)}
+\DoxyCodeLine{329     \{}
+\DoxyCodeLine{330         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to retreive the framebuffer from FDT.\(\backslash\)n"{}});}
+\DoxyCodeLine{331         retCode = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}};}
+\DoxyCodeLine{332         \textcolor{keywordflow}{goto} ATTACH\_FAIL;}
+\DoxyCodeLine{333     \}}
+\DoxyCodeLine{334     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}}    = (\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}*)\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*ptrProp);}
+\DoxyCodeLine{335     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebufferSize}} = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*(ptrProp + 1));}
+\DoxyCodeLine{336     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a7fc87a68f8ba471200a4d3b745190c48}{VGA\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{337                  \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{338                  \textcolor{stringliteral}{"{}Framebuffer: 0x\%p | Size: 0x\%p"{}},}
+\DoxyCodeLine{339                  \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}},}
+\DoxyCodeLine{340                  \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebufferSize}});}
+\DoxyCodeLine{341 }
+\DoxyCodeLine{342     \textcolor{comment}{/* Get the VGA CPU communication ports */}}
+\DoxyCodeLine{343     ptrProp = \mbox{\hyperlink{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdtGetProp}}(pkFdtNode, \mbox{\hyperlink{vgatext_8c_a52aa438a15a69f00a123268151753c35}{VGA\_FDT\_COMM\_PROP}}, \&propLen);}
+\DoxyCodeLine{344     \textcolor{keywordflow}{if}(ptrProp == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || propLen != \textcolor{keyword}{sizeof}(uintptr\_t) * 2)}
+\DoxyCodeLine{345     \{}
+\DoxyCodeLine{346         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to retreive the CPU comm from FDT.\(\backslash\)n"{}});}
+\DoxyCodeLine{347         retCode = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}};}
+\DoxyCodeLine{348         \textcolor{keywordflow}{goto} ATTACH\_FAIL;}
+\DoxyCodeLine{349     \}}
+\DoxyCodeLine{350     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}{cpuCommPort}} = (\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}})\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*ptrProp);}
+\DoxyCodeLine{351     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}{cpuDataPort}} = (\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}})\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*(ptrProp + 1));}
+\DoxyCodeLine{352 }
+\DoxyCodeLine{353     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a7fc87a68f8ba471200a4d3b745190c48}{VGA\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{354                  \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{355                  \textcolor{stringliteral}{"{}COMM: 0x\%x | DATA: 0x\%x"{}},}
+\DoxyCodeLine{356                  \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}{cpuCommPort}},}
+\DoxyCodeLine{357                  \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}{cpuDataPort}});}
+\DoxyCodeLine{358 }
+\DoxyCodeLine{359     \textcolor{comment}{/* Get the resolution */}}
+\DoxyCodeLine{360     ptrProp = \mbox{\hyperlink{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdtGetProp}}(pkFdtNode, \mbox{\hyperlink{vgatext_8c_ac9a3e9a61d63aa7ed16b0bbab6849d43}{VGA\_FDT\_RES\_PROP}}, \&propLen);}
+\DoxyCodeLine{361     \textcolor{keywordflow}{if}(ptrProp == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || propLen != \textcolor{keyword}{sizeof}(uintptr\_t) * 2)}
+\DoxyCodeLine{362     \{}
+\DoxyCodeLine{363         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to retreive the resolution from FDT.\(\backslash\)n"{}});}
+\DoxyCodeLine{364         retCode = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}};}
+\DoxyCodeLine{365         \textcolor{keywordflow}{goto} ATTACH\_FAIL;}
+\DoxyCodeLine{366     \}}
+\DoxyCodeLine{367     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} = (\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*ptrProp);}
+\DoxyCodeLine{368     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}}   = (\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(*(ptrProp + 1));}
+\DoxyCodeLine{369 }
+\DoxyCodeLine{370     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a7fc87a68f8ba471200a4d3b745190c48}{VGA\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{371                  \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{372                  \textcolor{stringliteral}{"{}Resolution: \%dx\%d"{}},}
+\DoxyCodeLine{373                  \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}}, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}});}
+\DoxyCodeLine{374 }
+\DoxyCodeLine{375     \textcolor{comment}{/* Init last columns manager */}}
+\DoxyCodeLine{376     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}} =}
+\DoxyCodeLine{377         (\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)\mbox{\hyperlink{kheap_8h_a8279359d679aa29118d8f0b09e581947}{kmalloc}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} * \textcolor{keyword}{sizeof}(\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}));}
+\DoxyCodeLine{378     \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{379     \{}
+\DoxyCodeLine{380         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed allocate last colums manager.\(\backslash\)n"{}});}
+\DoxyCodeLine{381         retCode = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{382         \textcolor{keywordflow}{goto} ATTACH\_FAIL;}
+\DoxyCodeLine{383     \}}
+\DoxyCodeLine{384     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}, 0, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} * \textcolor{keyword}{sizeof}(\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}));}
+\DoxyCodeLine{385 }
+\DoxyCodeLine{386     \textcolor{comment}{/* Clear screen and set as output */}}
+\DoxyCodeLine{387     \mbox{\hyperlink{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}{\_vgaClearFramebuffer}}();}
+\DoxyCodeLine{388     \mbox{\hyperlink{console_8h_ac567f2c47c0a1d20e164c7056311cdc4}{console\_set\_selected\_driver}}(\&\mbox{\hyperlink{vgatext_8c_afc7c68ea14e26c632430a2c4fc6f562c}{sVGAConsoleDriver}});}
+\DoxyCodeLine{389 }
+\DoxyCodeLine{390     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a7fc87a68f8ba471200a4d3b745190c48}{VGA\_DEBUG\_ENABLED}}, \mbox{\hyperlink{vgatext_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}VGA text driver initialized"{}});}
+\DoxyCodeLine{391     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{392 }
+\DoxyCodeLine{393 ATTACH\_FAIL:}
+\DoxyCodeLine{394 \textcolor{preprocessor}{    \#ifdef ARCH\_64\_BITS }}
+\DoxyCodeLine{395     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_VGA\_INIT\_END, 3,}
+\DoxyCodeLine{396                        (uintptr\_t)\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{397                        (uintptr\_t)\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}} >> 32,}
+\DoxyCodeLine{398                        \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebufferSize}});}
+\DoxyCodeLine{399 \textcolor{preprocessor}{\#else }}
+\DoxyCodeLine{400     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_VGA\_INIT\_END, 3,}
+\DoxyCodeLine{401                        (uintptr\_t)\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{pFramebuffer}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{402                        0,}
+\DoxyCodeLine{403                        \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebufferSize}});}
+\DoxyCodeLine{404 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{405     \textcolor{keywordflow}{return} retCode;}
+\DoxyCodeLine{406 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_a7a0502d3486629e2897dd4cba3aef45e_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}\label{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}} 
+\index{vgatext.c@{vgatext.c}!\_vgaPrintChar@{\_vgaPrintChar}}
+\index{\_vgaPrintChar@{\_vgaPrintChar}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaPrintChar()}{\_vgaPrintChar()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Print\+Char (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Line,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Column,  }\item[{const char}]{k\+Character }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Prints a character to the selected coordinates. 
+
+Prints a character to the selected coordinates by setting the memory accordingly.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em uint32\+\_\+t} & k\+Line The -\/ line index where to write the character. \\
+\hline
+\mbox{\texttt{ in}}  & {\em uint32\+\_\+t} & k\+Column -\/ The colums index where to write the character. \\
+\hline
+\mbox{\texttt{ in}}  & {\em char} & k\+Character -\/ The character to display on the screem. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 409 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{412 \{}
+\DoxyCodeLine{413     \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}* screen\_mem;}
+\DoxyCodeLine{414 }
+\DoxyCodeLine{415     \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})kLine  > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ 1 ||}
+\DoxyCodeLine{416        (\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})kColumn > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} -\/ 1)}
+\DoxyCodeLine{417     \{}
+\DoxyCodeLine{418         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{419     \}}
+\DoxyCodeLine{420 }
+\DoxyCodeLine{421     \textcolor{comment}{/* Get address to inject */}}
+\DoxyCodeLine{422     screen\_mem = \mbox{\hyperlink{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}{GET\_FRAME\_BUFFER\_AT}}(kLine, kColumn);}
+\DoxyCodeLine{423 }
+\DoxyCodeLine{424     \textcolor{comment}{/* Inject the character with the current colorscheme */}}
+\DoxyCodeLine{425     *screen\_mem = kCharacter |}
+\DoxyCodeLine{426                   ((\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} << 8) \& 0xF000) |}
+\DoxyCodeLine{427                   ((\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} << 8) \& 0x0F00);}
+\DoxyCodeLine{428 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_ada367f3b1989c814aac907a2b649bf84}\label{vgatext_8c_ada367f3b1989c814aac907a2b649bf84}} 
+\index{vgatext.c@{vgatext.c}!\_vgaProcessChar@{\_vgaProcessChar}}
+\index{\_vgaProcessChar@{\_vgaProcessChar}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaProcessChar()}{\_vgaProcessChar()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Process\+Char (\begin{DoxyParamCaption}\item[{const char}]{k\+Character }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Processes the character in parameters. 
+
+Check the character nature and code. Corresponding to the character\textquotesingle{}s code, an action is taken. A regular character will be printed whereas \textbackslash{}n will create a line feed.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em char} & k\+Character -\/ The character to process. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 430 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{431 \{}
+\DoxyCodeLine{432 \textcolor{preprocessor}{\#if DEBUG\_LOG\_UART }\textcolor{comment}{/* TODO: Move that in the console driver */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{433     \mbox{\hyperlink{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d}{uart\_put\_char}}(kCharacter);}
+\DoxyCodeLine{434 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436     \textcolor{comment}{/* If character is a normal ASCII character */}}
+\DoxyCodeLine{437     \textcolor{keywordflow}{if}(kCharacter > 31 \&\& kCharacter < 127)}
+\DoxyCodeLine{438     \{}
+\DoxyCodeLine{439          \textcolor{comment}{/* Manage end of line cursor position */}}
+\DoxyCodeLine{440         \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} -\/ 1)}
+\DoxyCodeLine{441         \{}
+\DoxyCodeLine{442             \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} + 1, 0);}
+\DoxyCodeLine{443             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{444                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{445         \}}
+\DoxyCodeLine{446 }
+\DoxyCodeLine{447         \textcolor{comment}{/* Manage end of screen cursor position */}}
+\DoxyCodeLine{448         \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} >= \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}})}
+\DoxyCodeLine{449         \{}
+\DoxyCodeLine{450             \mbox{\hyperlink{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}{\_vgaScroll}}(\mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0a9d522bb191bf21bcaace5569ec49475d}{SCROLL\_DOWN}}, 1);}
+\DoxyCodeLine{451 }
+\DoxyCodeLine{452         \}}
+\DoxyCodeLine{453         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{454         \{}
+\DoxyCodeLine{455             \textcolor{comment}{/* Move cursor */}}
+\DoxyCodeLine{456             \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}});}
+\DoxyCodeLine{457             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{458                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{459         \}}
+\DoxyCodeLine{460 }
+\DoxyCodeLine{461         \textcolor{comment}{/* Display character and move cursor */}}
+\DoxyCodeLine{462         \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\_vgaPrintChar}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{463                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}}++,}
+\DoxyCodeLine{464                       kCharacter);}
+\DoxyCodeLine{465     \}}
+\DoxyCodeLine{466     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{467     \{}
+\DoxyCodeLine{468         \textcolor{comment}{/* Manage special ACSII characters*/}}
+\DoxyCodeLine{469         \textcolor{keywordflow}{switch}(kCharacter)}
+\DoxyCodeLine{470         \{}
+\DoxyCodeLine{471             \textcolor{comment}{/* Backspace */}}
+\DoxyCodeLine{472             \textcolor{keywordflow}{case} \textcolor{charliteral}{'\(\backslash\)b'}:}
+\DoxyCodeLine{473                 \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} == \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}})}
+\DoxyCodeLine{474                 \{}
+\DoxyCodeLine{475                     \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}})}
+\DoxyCodeLine{476                     \{}
+\DoxyCodeLine{477                         \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{478                                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} -\/ 1);}
+\DoxyCodeLine{479                         \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{480                             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{481                         \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\_vgaPrintChar}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{482                                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}}, \textcolor{charliteral}{' '});}
+\DoxyCodeLine{483                     \}}
+\DoxyCodeLine{484                 \}}
+\DoxyCodeLine{485                 \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} < \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}})}
+\DoxyCodeLine{486                 \{}
+\DoxyCodeLine{487                     \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} > 0)}
+\DoxyCodeLine{488                     \{}
+\DoxyCodeLine{489                         \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{490                                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} -\/ 1);}
+\DoxyCodeLine{491                             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{492                                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{493                         \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\_vgaPrintChar}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{494                                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}}, \textcolor{charliteral}{' '});}
+\DoxyCodeLine{495                     \}}
+\DoxyCodeLine{496                     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{497                     \{}
+\DoxyCodeLine{498                         \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} -\/ 1] >=}
+\DoxyCodeLine{499                            \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}})}
+\DoxyCodeLine{500                         \{}
+\DoxyCodeLine{501                             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} -\/ 1] =}
+\DoxyCodeLine{502                                \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} -\/ 1;}
+\DoxyCodeLine{503                         \}}
+\DoxyCodeLine{504 }
+\DoxyCodeLine{505                         \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} -\/ 1,}
+\DoxyCodeLine{506                             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} -\/ 1]);}
+\DoxyCodeLine{507                         \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\_vgaPrintChar}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{508                                       \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}}, \textcolor{charliteral}{' '});}
+\DoxyCodeLine{509                     \}}
+\DoxyCodeLine{510                 \}}
+\DoxyCodeLine{511                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{512             \textcolor{comment}{/* Tab */}}
+\DoxyCodeLine{513             \textcolor{keywordflow}{case} \textcolor{charliteral}{'\(\backslash\)t'}:}
+\DoxyCodeLine{514                 \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} + 8 <}
+\DoxyCodeLine{515                    \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} -\/ 1)}
+\DoxyCodeLine{516                 \{}
+\DoxyCodeLine{517                     \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{518                                   \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}}  +}
+\DoxyCodeLine{519                                   (8 -\/ \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} \% 8));}
+\DoxyCodeLine{520                 \}}
+\DoxyCodeLine{521                 \textcolor{keywordflow}{else}}
+\DoxyCodeLine{522                 \{}
+\DoxyCodeLine{523                     \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}},}
+\DoxyCodeLine{524                                   \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} -\/ 1);}
+\DoxyCodeLine{525                 \}}
+\DoxyCodeLine{526                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{527                     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{528                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{529             \textcolor{comment}{/* Line feed */}}
+\DoxyCodeLine{530             \textcolor{keywordflow}{case} \textcolor{charliteral}{'\(\backslash\)n'}:}
+\DoxyCodeLine{531                 \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} < \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ 1)}
+\DoxyCodeLine{532                 \{}
+\DoxyCodeLine{533                     \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} + 1, 0);}
+\DoxyCodeLine{534                     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{535                         \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{536                 \}}
+\DoxyCodeLine{537                 \textcolor{keywordflow}{else}}
+\DoxyCodeLine{538                 \{}
+\DoxyCodeLine{539                     \mbox{\hyperlink{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}{\_vgaScroll}}(\mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0a9d522bb191bf21bcaace5569ec49475d}{SCROLL\_DOWN}}, 1);}
+\DoxyCodeLine{540                 \}}
+\DoxyCodeLine{541                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{542             \textcolor{comment}{/* Clear screen */}}
+\DoxyCodeLine{543             \textcolor{keywordflow}{case} \textcolor{charliteral}{'\(\backslash\)f'}:}
+\DoxyCodeLine{544                 \mbox{\hyperlink{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}{\_vgaClearFramebuffer}}();}
+\DoxyCodeLine{545                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{546             \textcolor{comment}{/* Line return */}}
+\DoxyCodeLine{547             \textcolor{keywordflow}{case} \textcolor{charliteral}{'\(\backslash\)r'}:}
+\DoxyCodeLine{548                 \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}, 0);}
+\DoxyCodeLine{549                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}] =}
+\DoxyCodeLine{550                     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{551                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{552             \textcolor{comment}{/* Undefined */}}
+\DoxyCodeLine{553             \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{554                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{555         \}}
+\DoxyCodeLine{556     \}}
+\DoxyCodeLine{557 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_ada367f3b1989c814aac907a2b649bf84_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_ada367f3b1989c814aac907a2b649bf84_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_ac4cb795741f87c283f94169b91a51902}\label{vgatext_8c_ac4cb795741f87c283f94169b91a51902}} 
+\index{vgatext.c@{vgatext.c}!\_vgaPutChar@{\_vgaPutChar}}
+\index{\_vgaPutChar@{\_vgaPutChar}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaPutChar()}{\_vgaPutChar()}}
+{\footnotesize\ttfamily void \+\_\+vga\+Put\+Char (\begin{DoxyParamCaption}\item[{const char}]{k\+Character }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Put a character to screen. 
+
+­
+
+The function will display the character given as parameter to the screen.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em char} & k\+Character -\/ The char to display on the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 692 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{693 \{}
+\DoxyCodeLine{694     \mbox{\hyperlink{vgatext_8c_ada367f3b1989c814aac907a2b649bf84}{\_vgaProcessChar}}(kCharacter);}
+\DoxyCodeLine{695     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}} = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}};}
+\DoxyCodeLine{696 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_ac4cb795741f87c283f94169b91a51902_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=278pt]{vgatext_8c_ac4cb795741f87c283f94169b91a51902_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}\label{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}} 
+\index{vgatext.c@{vgatext.c}!\_vgaPutCursor@{\_vgaPutCursor}}
+\index{\_vgaPutCursor@{\_vgaPutCursor}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaPutCursor()}{\_vgaPutCursor()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Put\+Cursor (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Line,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Column }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Places the cursor to the selected coordinates given as parameters. 
+
+Places the screen cursor to the coordinated described with the parameters. The function will check the boundaries or the position parameters before setting the cursor position.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em uint32\+\_\+t} & k\+Line -\/ The line index where to place the cursor. \\
+\hline
+\mbox{\texttt{ in}}  & {\em uint32\+\_\+t} & column -\/ The column index where to place the cursor. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 565 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{566 \{}
+\DoxyCodeLine{567     \mbox{\hyperlink{stdint_8h_aa343fa3b3d06292b959ffdd4c4703b06}{int16\_t}}  cursor\_position;}
+\DoxyCodeLine{568 }
+\DoxyCodeLine{569     \textcolor{comment}{/* Checks the values of line and column */}}
+\DoxyCodeLine{570     \textcolor{keywordflow}{if}(kLine > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} ||}
+\DoxyCodeLine{571        kColumn > \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}})}
+\DoxyCodeLine{572     \{}
+\DoxyCodeLine{573         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{574     \}}
+\DoxyCodeLine{575 }
+\DoxyCodeLine{576     \textcolor{comment}{/* Set new cursor position */}}
+\DoxyCodeLine{577     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} = kColumn;}
+\DoxyCodeLine{578     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} = kLine;}
+\DoxyCodeLine{579 }
+\DoxyCodeLine{580     \textcolor{comment}{/* Display new position on screen */}}
+\DoxyCodeLine{581     cursor\_position = kColumn + kLine * \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}};}
+\DoxyCodeLine{582 }
+\DoxyCodeLine{583     \textcolor{comment}{/* Send low part to the screen */}}
+\DoxyCodeLine{584     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{vgatext_8c_a5f733be061a3002d5423b231490dae21}{VGA\_CONSOLE\_CURSOR\_COMM\_LOW}}, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}{cpuCommPort}});}
+\DoxyCodeLine{585     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}})(cursor\_position \& 0x00FF), \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}{cpuDataPort}});}
+\DoxyCodeLine{586 }
+\DoxyCodeLine{587     \textcolor{comment}{/* Send high part to the screen */}}
+\DoxyCodeLine{588     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{vgatext_8c_a76aaa79ab5c83ec2c30b3654bf5b64ef}{VGA\_CONSOLE\_CURSOR\_COMM\_HIGH}}, \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}{cpuCommPort}});}
+\DoxyCodeLine{589     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}})((cursor\_position \& 0xFF00) >> 8), \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}{cpuDataPort}});}
+\DoxyCodeLine{590 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=269pt]{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_a4a001487f312398070c2a6c12cd573a0}\label{vgatext_8c_a4a001487f312398070c2a6c12cd573a0}} 
+\index{vgatext.c@{vgatext.c}!\_vgaPutString@{\_vgaPutString}}
+\index{\_vgaPutString@{\_vgaPutString}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaPutString()}{\_vgaPutString()}}
+{\footnotesize\ttfamily void \+\_\+vga\+Put\+String (\begin{DoxyParamCaption}\item[{const char $\ast$}]{kp\+String }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Put a string to screen. 
+
+­
+
+The function will display the string given as parameter to the screen.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em char$\ast$} & kp\+String -\/ The string to display on the screen.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+kp\+String must be NULL terminated. 
+\end{DoxyWarning}
+
+
+Definition at line 681 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{682 \{}
+\DoxyCodeLine{683     \textcolor{keywordtype}{size\_t} i;}
+\DoxyCodeLine{684 }
+\DoxyCodeLine{685     \textcolor{comment}{/* Output each character of the string */}}
+\DoxyCodeLine{686     \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(kpString); ++i)}
+\DoxyCodeLine{687     \{}
+\DoxyCodeLine{688         \mbox{\hyperlink{vgatext_8c_ac4cb795741f87c283f94169b91a51902}{\_vgaPutChar}}(kpString[i]);}
+\DoxyCodeLine{689     \}}
+\DoxyCodeLine{690 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_a4a001487f312398070c2a6c12cd573a0_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_aa69fb9b4924be655a655a142016a0ec8}\label{vgatext_8c_aa69fb9b4924be655a655a142016a0ec8}} 
+\index{vgatext.c@{vgatext.c}!\_vgaResotreCursor@{\_vgaResotreCursor}}
+\index{\_vgaResotreCursor@{\_vgaResotreCursor}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaResotreCursor()}{\_vgaResotreCursor()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Resotre\+Cursor (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$}]{kp\+Buffer }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Restores the cursor attributes from the buffer given as parameter. 
+
+The function will restores the cursor attributes from the buffer given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cursor\+\_\+t$\ast$} & kp\+Buffer -\/ The cursor buffer containing the new coordinates of the cursor. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 602 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{603 \{}
+\DoxyCodeLine{604     \textcolor{keywordflow}{if}(kpBuffer-\/>\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} >= \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}} || kpBuffer-\/>\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} >= \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}})}
+\DoxyCodeLine{605     \{}
+\DoxyCodeLine{606         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{607     \}}
+\DoxyCodeLine{608     \textcolor{comment}{/* Restore cursor attributes */}}
+\DoxyCodeLine{609     \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(kpBuffer-\/>\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}}, kpBuffer-\/>\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}});}
+\DoxyCodeLine{610 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_aa69fb9b4924be655a655a142016a0ec8_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_acb745184e30cfadf23b212fad8778bff}\label{vgatext_8c_acb745184e30cfadf23b212fad8778bff}} 
+\index{vgatext.c@{vgatext.c}!\_vgaSaveCursor@{\_vgaSaveCursor}}
+\index{\_vgaSaveCursor@{\_vgaSaveCursor}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaSaveCursor()}{\_vgaSaveCursor()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Save\+Cursor (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$}]{p\+Buffer }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Saves the cursor attributes in the buffer given as parameter. 
+
+Fills the buffer given as parrameter with the current cursor settings.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em cursor\+\_\+t$\ast$} & p\+Buffer -\/ The cursor buffer in which the current cursor position is going to be saved. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 592 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{593 \{}
+\DoxyCodeLine{594     \textcolor{keywordflow}{if}(pBuffer != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{595     \{}
+\DoxyCodeLine{596         \textcolor{comment}{/* Save cursor attributes */}}
+\DoxyCodeLine{597         pBuffer-\/>\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}};}
+\DoxyCodeLine{598         pBuffer-\/>\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screenCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}};}
+\DoxyCodeLine{599     \}}
+\DoxyCodeLine{600 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vgatext_8c_a2a417a52e978d50d2b14db789e7682c2}\label{vgatext_8c_a2a417a52e978d50d2b14db789e7682c2}} 
+\index{vgatext.c@{vgatext.c}!\_vgaSaveScheme@{\_vgaSaveScheme}}
+\index{\_vgaSaveScheme@{\_vgaSaveScheme}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaSaveScheme()}{\_vgaSaveScheme()}}
+{\footnotesize\ttfamily void \+\_\+vga\+Save\+Scheme (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$}]{p\+Buffer }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Saves the color scheme in the buffer given as parameter. 
+
+Fills the buffer given as parameter with the current screen\textquotesingle{}s color scheme value.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em colorscheme\+\_\+t$\ast$} & p\+Buffer -\/ The buffer that will receive the current color scheme used by the screen console. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 671 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{672 \{}
+\DoxyCodeLine{673     \textcolor{keywordflow}{if}(pBuffer != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{674     \{}
+\DoxyCodeLine{675         \textcolor{comment}{/* Save color scheme into buffer */}}
+\DoxyCodeLine{676         pBuffer-\/>\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}};}
+\DoxyCodeLine{677         pBuffer-\/>\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}};}
+\DoxyCodeLine{678     \}}
+\DoxyCodeLine{679 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}\label{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}} 
+\index{vgatext.c@{vgatext.c}!\_vgaScroll@{\_vgaScroll}}
+\index{\_vgaScroll@{\_vgaScroll}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaScroll()}{\_vgaScroll()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Scroll (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}}}]{k\+Direction,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Lines }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Scrolls in the desired direction of lines\+\_\+count lines. 
+
+The function will scroll of lines\+\_\+count line in the desired direction.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em SCROLL\+\_\+\+DIRECTION\+\_\+E} & k\+Direction -\/ The direction to whoch the console should be scrolled. \\
+\hline
+\mbox{\texttt{ in}}  & {\em uint32\+\_\+t} & k\+Lines -\/ The number of lines to scroll. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 612 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{614 \{}
+\DoxyCodeLine{615     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} to\_scroll;}
+\DoxyCodeLine{616     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} i;}
+\DoxyCodeLine{617     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} j;}
+\DoxyCodeLine{618 }
+\DoxyCodeLine{619     \textcolor{keywordflow}{if}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} < kLines)}
+\DoxyCodeLine{620     \{}
+\DoxyCodeLine{621         to\_scroll = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}};}
+\DoxyCodeLine{622     \}}
+\DoxyCodeLine{623     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{624     \{}
+\DoxyCodeLine{625         to\_scroll = kLines;}
+\DoxyCodeLine{626     \}}
+\DoxyCodeLine{627 }
+\DoxyCodeLine{628     \textcolor{comment}{/* Select scroll direction */}}
+\DoxyCodeLine{629     \textcolor{keywordflow}{if}(kDirection == \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0a9d522bb191bf21bcaace5569ec49475d}{SCROLL\_DOWN}})}
+\DoxyCodeLine{630     \{}
+\DoxyCodeLine{631         \textcolor{comment}{/* For each line scroll we want */}}
+\DoxyCodeLine{632         \textcolor{keywordflow}{for}(j = 0; j < to\_scroll; ++j)}
+\DoxyCodeLine{633         \{}
+\DoxyCodeLine{634             \textcolor{comment}{/* Copy all the lines to the above one */}}
+\DoxyCodeLine{635             \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ 1; ++i)}
+\DoxyCodeLine{636             \{}
+\DoxyCodeLine{637                 \mbox{\hyperlink{string_8h_a04322b22ff8bcfdcdcbfe87690683545}{memmove}}(\mbox{\hyperlink{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}{GET\_FRAME\_BUFFER\_AT}}(i, 0),}
+\DoxyCodeLine{638                         \mbox{\hyperlink{vgatext_8c_aba970fed1331a47a40bd57c27d756ec7}{GET\_FRAME\_BUFFER\_AT}}(i + 1, 0),}
+\DoxyCodeLine{639                         \textcolor{keyword}{sizeof}(\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}) * \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}});}
+\DoxyCodeLine{640                 \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[i] = \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[i+1];}
+\DoxyCodeLine{641             \}}
+\DoxyCodeLine{642             \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{pLastColumns}}[\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ 1] = 0;}
+\DoxyCodeLine{643         \}}
+\DoxyCodeLine{644         \textcolor{comment}{/* Clear last line */}}
+\DoxyCodeLine{645         \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{columnCount}}; ++i)}
+\DoxyCodeLine{646         \{}
+\DoxyCodeLine{647             \mbox{\hyperlink{vgatext_8c_abb3c47340f54e22b9f6565af1d6f247b}{\_vgaPrintChar}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ 1, i, \textcolor{charliteral}{' '});}
+\DoxyCodeLine{648         \}}
+\DoxyCodeLine{649     \}}
+\DoxyCodeLine{650 }
+\DoxyCodeLine{651     \textcolor{comment}{/* Replace cursor */}}
+\DoxyCodeLine{652     \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}}(\mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{lineCount}} -\/ to\_scroll, 0);}
+\DoxyCodeLine{653 }
+\DoxyCodeLine{654     \textcolor{keywordflow}{if}(to\_scroll <= \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}})}
+\DoxyCodeLine{655     \{}
+\DoxyCodeLine{656         \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} -\/= to\_scroll;}
+\DoxyCodeLine{657     \}}
+\DoxyCodeLine{658     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{659     \{}
+\DoxyCodeLine{660         \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} = 0;}
+\DoxyCodeLine{661         \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{lastPrintedCursor}}.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} = 0;}
+\DoxyCodeLine{662     \}}
+\DoxyCodeLine{663 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vgatext_8c_a684572a9d504525806eb240f4b8d367b}\label{vgatext_8c_a684572a9d504525806eb240f4b8d367b}} 
+\index{vgatext.c@{vgatext.c}!\_vgaSetScheme@{\_vgaSetScheme}}
+\index{\_vgaSetScheme@{\_vgaSetScheme}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{\_vgaSetScheme()}{\_vgaSetScheme()}}
+{\footnotesize\ttfamily static void \+\_\+vga\+Set\+Scheme (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$}]{kp\+Color\+Scheme }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Sets the color scheme of the screen. 
+
+Replaces the curent color scheme used t output data with the new one given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em colorscheme\+\_\+t$\ast$} & kp\+Color\+Scheme -\/ The new color scheme to apply to the screen console. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 665 of file vgatext.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{666 \{}
+\DoxyCodeLine{667     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = kpColorScheme-\/>\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}};}
+\DoxyCodeLine{668     \mbox{\hyperlink{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}{sDrvCtrl}}.\mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screenScheme}}.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = kpColorScheme-\/>\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}};}
+\DoxyCodeLine{669 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vgatext_8c_ae4c73955880bde3c996da7f3c3715a90}\label{vgatext_8c_ae4c73955880bde3c996da7f3c3715a90}} 
+\index{vgatext.c@{vgatext.c}!DRIVERMGR\_REG@{DRIVERMGR\_REG}}
+\index{DRIVERMGR\_REG@{DRIVERMGR\_REG}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{DRIVERMGR\_REG()}{DRIVERMGR\_REG()}}
+{\footnotesize\ttfamily DRIVERMGR\+\_\+\+REG (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{vgatext_8c_a54f99aa1f65c8b41d4ebf740c2eda5a3}{x86\+VGADriver}}}]{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}\label{vgatext_8c_a827bcfecdf3da13e3f85015f16de1a31}} 
+\index{vgatext.c@{vgatext.c}!sDrvCtrl@{sDrvCtrl}}
+\index{sDrvCtrl@{sDrvCtrl}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{sDrvCtrl}{sDrvCtrl}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structvga__controler__t}{vga\+\_\+controler\+\_\+t}} s\+Drv\+Ctrl\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .lineCount   = 0,}
+\DoxyCodeLine{    .columnCount = 0,}
+\DoxyCodeLine{    .cpuCommPort = 0,}
+\DoxyCodeLine{    .cpuDataPort = 0,}
+\DoxyCodeLine{    .screenScheme = \{.background = \mbox{\hyperlink{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}}, .foreground = \mbox{\hyperlink{vgatext_8h_a7fbb956b9e769a1020c2eff1f6743857}{FG\_WHITE}}\},}
+\DoxyCodeLine{    .screenCursor = \{.x = 0, .y = 0\},}
+\DoxyCodeLine{    .lastPrintedCursor = \{.x = 0, .y = 0\},}
+\DoxyCodeLine{    .pLastColumns = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .pFramebuffer = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .framebufferSize = 0}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+VGA driver controler instance. 
+
+
+
+Definition at line 288 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_afc7c68ea14e26c632430a2c4fc6f562c}\label{vgatext_8c_afc7c68ea14e26c632430a2c4fc6f562c}} 
+\index{vgatext.c@{vgatext.c}!sVGAConsoleDriver@{sVGAConsoleDriver}}
+\index{sVGAConsoleDriver@{sVGAConsoleDriver}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{sVGAConsoleDriver}{sVGAConsoleDriver}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} s\+VGAConsole\+Driver\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .clear\_screen      = \mbox{\hyperlink{vgatext_8c_ae0f891c103e2aa76d675cc9999893dea}{\_vgaClearFramebuffer}},}
+\DoxyCodeLine{    .put\_cursor\_at     = \mbox{\hyperlink{vgatext_8c_ab59896c1b20d8a5c9b7f64c1f6ed5a71}{\_vgaPutCursor}},}
+\DoxyCodeLine{    .save\_cursor       = \mbox{\hyperlink{vgatext_8c_acb745184e30cfadf23b212fad8778bff}{\_vgaSaveCursor}},}
+\DoxyCodeLine{    .restore\_cursor    = \mbox{\hyperlink{vgatext_8c_aa69fb9b4924be655a655a142016a0ec8}{\_vgaResotreCursor}},}
+\DoxyCodeLine{    .scroll            = \mbox{\hyperlink{vgatext_8c_a8f4e7b3cb0c57485b900dc6a7c1123d7}{\_vgaScroll}},}
+\DoxyCodeLine{    .set\_color\_scheme  = \mbox{\hyperlink{vgatext_8c_a684572a9d504525806eb240f4b8d367b}{\_vgaSetScheme}},}
+\DoxyCodeLine{    .save\_color\_scheme = \mbox{\hyperlink{vgatext_8c_a2a417a52e978d50d2b14db789e7682c2}{\_vgaSaveScheme}},}
+\DoxyCodeLine{    .put\_string        = \mbox{\hyperlink{vgatext_8c_a4a001487f312398070c2a6c12cd573a0}{\_vgaPutString}},}
+\DoxyCodeLine{    .put\_char          = \mbox{\hyperlink{vgatext_8c_ac4cb795741f87c283f94169b91a51902}{\_vgaPutChar}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+VGA console driver. 
+
+
+
+Definition at line 302 of file vgatext.\+c.
+
+\mbox{\Hypertarget{vgatext_8c_a54f99aa1f65c8b41d4ebf740c2eda5a3}\label{vgatext_8c_a54f99aa1f65c8b41d4ebf740c2eda5a3}} 
+\index{vgatext.c@{vgatext.c}!x86VGADriver@{x86VGADriver}}
+\index{x86VGADriver@{x86VGADriver}!vgatext.c@{vgatext.c}}
+\doxysubsubsection{\texorpdfstring{x86VGADriver}{x86VGADriver}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structdriver__t}{driver\+\_\+t}} x86\+VGADriver}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .pName = \textcolor{stringliteral}{"{}X86 VGA Text Driver"{}},}
+\DoxyCodeLine{    .pDescription = \textcolor{stringliteral}{"{}X86 VGA Text Driver for UTK"{}},}
+\DoxyCodeLine{    .pCompatible = \textcolor{stringliteral}{"{}x86,x86-\/vga-\/text"{}},}
+\DoxyCodeLine{    .pVersion = \textcolor{stringliteral}{"{}2.0"{}},}
+\DoxyCodeLine{    .pDriverAttach = \mbox{\hyperlink{vgatext_8c_a7a0502d3486629e2897dd4cba3aef45e}{\_vgaConsoleAttach}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+VGA text driver instance. 
+
+
+
+Definition at line 277 of file vgatext.\+c.
+

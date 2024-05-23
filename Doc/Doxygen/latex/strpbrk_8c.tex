@@ -1,0 +1,56 @@
+\hypertarget{strpbrk_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strpbrk.c File Reference}
+\label{strpbrk_8c}\index{Source/Kernel/Libs/libc/src/strpbrk.c@{Source/Kernel/Libs/libc/src/strpbrk.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strpbrk.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strpbrk_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strpbrk_8c_a119f23a5dcb4eb5f1c1eed3cbf5cb0ed}{strpbrk}} (const char $\ast$s, const char $\ast$accept)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strpbrk_8c_a119f23a5dcb4eb5f1c1eed3cbf5cb0ed}\label{strpbrk_8c_a119f23a5dcb4eb5f1c1eed3cbf5cb0ed}} 
+\index{strpbrk.c@{strpbrk.c}!strpbrk@{strpbrk}}
+\index{strpbrk@{strpbrk}!strpbrk.c@{strpbrk.c}}
+\doxysubsubsection{\texorpdfstring{strpbrk()}{strpbrk()}}
+{\footnotesize\ttfamily char$\ast$ strpbrk (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s,  }\item[{const char $\ast$}]{accept }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strpbrk.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *ss = s + \mbox{\hyperlink{string_8h_a789d53bfffab50940a53ff54b81ad46b}{\_\_strxspn}}(s, accept, 1);}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{keywordflow}{return} *ss ? (\textcolor{keywordtype}{char} *)ss : \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{78 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=323pt]{strpbrk_8c_a119f23a5dcb4eb5f1c1eed3cbf5cb0ed_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=295pt]{strpbrk_8c_a119f23a5dcb4eb5f1c1eed3cbf5cb0ed_icgraph}
+\end{center}
+\end{figure}

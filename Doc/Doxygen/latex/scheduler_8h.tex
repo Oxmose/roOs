@@ -1,0 +1,52 @@
+\hypertarget{scheduler_8h}{}\doxysection{Source/\+Kernel/\+Core/includes/scheduler.h File Reference}
+\label{scheduler_8h}\index{Source/Kernel/Core/includes/scheduler.h@{Source/Kernel/Core/includes/scheduler.h}}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scheduler_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$ \mbox{\hyperlink{scheduler_8h_a4e3f24ab31faec52f61d9070ae34b75c}{scheduler\+\_\+get\+\_\+current\+\_\+thread}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the handle to the current running thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{scheduler_8h_a4e3f24ab31faec52f61d9070ae34b75c}\label{scheduler_8h_a4e3f24ab31faec52f61d9070ae34b75c}} 
+\index{scheduler.h@{scheduler.h}!scheduler\_get\_current\_thread@{scheduler\_get\_current\_thread}}
+\index{scheduler\_get\_current\_thread@{scheduler\_get\_current\_thread}!scheduler.h@{scheduler.h}}
+\doxysubsubsection{\texorpdfstring{scheduler\_get\_current\_thread()}{scheduler\_get\_current\_thread()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}}$\ast$ scheduler\+\_\+get\+\_\+current\+\_\+thread (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the handle to the current running thread. 
+
+Returns the handle to the current running thread. This value should never be NULL as a thread should always be elected for running.
+
+\begin{DoxyReturn}{Returns}
+A handle to the current running thread is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 98 of file scheduler.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{99 \{}
+\DoxyCodeLine{100     \textcolor{keywordflow}{return} \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}};}
+\DoxyCodeLine{101 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scheduler_8h_a4e3f24ab31faec52f61d9070ae34b75c_icgraph}
+\end{center}
+\end{figure}

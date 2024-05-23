@@ -1,0 +1,460 @@
+\hypertarget{devtree_8h}{}\doxysection{Source/\+Kernel/\+Libs/libapi/includes/devtree.h File Reference}
+\label{devtree_8h}\index{Source/Kernel/Libs/libapi/includes/devtree.h@{Source/Kernel/Libs/libapi/includes/devtree.h}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+Include dependency graph for devtree.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=278pt]{devtree_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em FDT property descriptor. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em FDT node descriptor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(X)
+\item 
+\#define \mbox{\hyperlink{devtree_8h_ac47c63a02c94230f6848177d83ef08f2}{FDTTOCPU64}}(X)
+\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} \mbox{\hyperlink{devtree_8h_a7b7922c388ec5b66dd4e09a1f8a4c5c4}{fdt\+\_\+property\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em FDT property descriptor. \end{DoxyCompactList}\item 
+typedef struct \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} \mbox{\hyperlink{devtree_8h_a882c7dec10adf1a5ed0919b69566a3f4}{fdt\+\_\+node\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em FDT node descriptor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef}{fdt\+Init}} (const uintptr\+\_\+t k\+Start\+Addr)
+\item 
+const void $\ast$ \mbox{\hyperlink{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdt\+Get\+Prop}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Fdt\+Node, const char $\ast$pk\+Name, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} $\ast$p\+Read\+Size)
+\item 
+const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946}{fdt\+Get\+Root}} (void)
+\item 
+const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_a1587a2bdc9f5079d725da65ca6b8d1ea}{fdt\+Get\+Next\+Node}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Node)
+\item 
+const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_abfda38375b7b0105f23ce8e6b2a21cf5}{fdt\+Get\+Child}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Node)
+\item 
+const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_a8d7ad6e06c62be3ba9b573517ddfe3c7}{fdt\+Get\+First\+Prop}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Node)
+\item 
+const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_a6d4be414a4113c3a097a4ddb1339f126}{fdt\+Get\+Next\+Prop}} (const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} $\ast$pk\+Prop)
+\item 
+const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{devtree_8h_afdea871c83d94428cb48fdafc92e58b3}{fdt\+Get\+Node\+By\+Handle}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} k\+Handle\+Id)
+\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{devtree_8h_aa602a103d207a28d7457885a2f7c086d}{fdt\+Match\+Compatible}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Node, const char $\ast$pk\+Compatible)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}\label{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}} 
+\index{devtree.h@{devtree.h}!FDTTOCPU32@{FDTTOCPU32}}
+\index{FDTTOCPU32@{FDTTOCPU32}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{FDTTOCPU32}{FDTTOCPU32}}
+{\footnotesize\ttfamily \#define FDTTOCPU32(\begin{DoxyParamCaption}\item[{}]{X }\end{DoxyParamCaption})}
+
+
+
+Definition at line 68 of file devtree.\+h.
+
+\mbox{\Hypertarget{devtree_8h_ac47c63a02c94230f6848177d83ef08f2}\label{devtree_8h_ac47c63a02c94230f6848177d83ef08f2}} 
+\index{devtree.h@{devtree.h}!FDTTOCPU64@{FDTTOCPU64}}
+\index{FDTTOCPU64@{FDTTOCPU64}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{FDTTOCPU64}{FDTTOCPU64}}
+{\footnotesize\ttfamily \#define FDTTOCPU64(\begin{DoxyParamCaption}\item[{}]{X }\end{DoxyParamCaption})}
+
+
+
+Definition at line 69 of file devtree.\+h.
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{devtree_8h_a882c7dec10adf1a5ed0919b69566a3f4}\label{devtree_8h_a882c7dec10adf1a5ed0919b69566a3f4}} 
+\index{devtree.h@{devtree.h}!fdt\_node\_t@{fdt\_node\_t}}
+\index{fdt\_node\_t@{fdt\_node\_t}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdt\_node\_t}{fdt\_node\_t}}
+{\footnotesize\ttfamily typedef struct \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}}
+
+
+
+FDT node descriptor. 
+
+\mbox{\Hypertarget{devtree_8h_a7b7922c388ec5b66dd4e09a1f8a4c5c4}\label{devtree_8h_a7b7922c388ec5b66dd4e09a1f8a4c5c4}} 
+\index{devtree.h@{devtree.h}!fdt\_property\_t@{fdt\_property\_t}}
+\index{fdt\_property\_t@{fdt\_property\_t}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdt\_property\_t}{fdt\_property\_t}}
+{\footnotesize\ttfamily typedef struct \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}}}
+
+
+
+FDT property descriptor. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{devtree_8h_abfda38375b7b0105f23ce8e6b2a21cf5}\label{devtree_8h_abfda38375b7b0105f23ce8e6b2a21cf5}} 
+\index{devtree.h@{devtree.h}!fdtGetChild@{fdtGetChild}}
+\index{fdtGetChild@{fdtGetChild}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetChild()}{fdtGetChild()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}$\ast$ fdt\+Get\+Child (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Node }\end{DoxyParamCaption})}
+
+
+
+Definition at line 601 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{602 \{}
+\DoxyCodeLine{603     \textcolor{keywordflow}{if}(pkNode != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{604     \{}
+\DoxyCodeLine{605         \textcolor{keywordflow}{return} pkNode-\/>\mbox{\hyperlink{structfdt__node__t_aa9a5181d05179a42498fd4842ae76004}{pFirstChildNode}};}
+\DoxyCodeLine{606     \}}
+\DoxyCodeLine{607 }
+\DoxyCodeLine{608     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{609 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_abfda38375b7b0105f23ce8e6b2a21cf5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{devtree_8h_a8d7ad6e06c62be3ba9b573517ddfe3c7}\label{devtree_8h_a8d7ad6e06c62be3ba9b573517ddfe3c7}} 
+\index{devtree.h@{devtree.h}!fdtGetFirstProp@{fdtGetFirstProp}}
+\index{fdtGetFirstProp@{fdtGetFirstProp}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetFirstProp()}{fdtGetFirstProp()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}}$\ast$ fdt\+Get\+First\+Prop (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Node }\end{DoxyParamCaption})}
+
+
+
+Definition at line 611 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{612 \{}
+\DoxyCodeLine{613     \textcolor{keywordflow}{if}(pkNode != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{614     \{}
+\DoxyCodeLine{615         \textcolor{keywordflow}{return} pkNode-\/>\mbox{\hyperlink{structfdt__node__t_afc3fa28d916400435278dab4f812501b}{pProps}};}
+\DoxyCodeLine{616     \}}
+\DoxyCodeLine{617 }
+\DoxyCodeLine{618     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{619 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{devtree_8h_a1587a2bdc9f5079d725da65ca6b8d1ea}\label{devtree_8h_a1587a2bdc9f5079d725da65ca6b8d1ea}} 
+\index{devtree.h@{devtree.h}!fdtGetNextNode@{fdtGetNextNode}}
+\index{fdtGetNextNode@{fdtGetNextNode}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetNextNode()}{fdtGetNextNode()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}$\ast$ fdt\+Get\+Next\+Node (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Node }\end{DoxyParamCaption})}
+
+
+
+Definition at line 591 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{592 \{}
+\DoxyCodeLine{593     \textcolor{keywordflow}{if}(pkNode != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{594     \{}
+\DoxyCodeLine{595         \textcolor{keywordflow}{return} pkNode-\/>\mbox{\hyperlink{structfdt__node__t_a2ccd7c1293ef270fb9ebe2ff64db591a}{pNextNode}};}
+\DoxyCodeLine{596     \}}
+\DoxyCodeLine{597 }
+\DoxyCodeLine{598     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{599 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_a1587a2bdc9f5079d725da65ca6b8d1ea_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{devtree_8h_a6d4be414a4113c3a097a4ddb1339f126}\label{devtree_8h_a6d4be414a4113c3a097a4ddb1339f126}} 
+\index{devtree.h@{devtree.h}!fdtGetNextProp@{fdtGetNextProp}}
+\index{fdtGetNextProp@{fdtGetNextProp}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetNextProp()}{fdtGetNextProp()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}}$\ast$ fdt\+Get\+Next\+Prop (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__property__t}{fdt\+\_\+property\+\_\+t}} $\ast$}]{pk\+Prop }\end{DoxyParamCaption})}
+
+
+
+Definition at line 620 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{621 \{}
+\DoxyCodeLine{622     \textcolor{keywordflow}{if}(pkProp != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{623     \{}
+\DoxyCodeLine{624         \textcolor{keywordflow}{return} pkProp-\/>\mbox{\hyperlink{structfdt__property__t_aa208915cd3e5d1f66587f37dfbf59b87}{pNextProp}};}
+\DoxyCodeLine{625     \}}
+\DoxyCodeLine{626 }
+\DoxyCodeLine{627     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{628 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{devtree_8h_afdea871c83d94428cb48fdafc92e58b3}\label{devtree_8h_afdea871c83d94428cb48fdafc92e58b3}} 
+\index{devtree.h@{devtree.h}!fdtGetNodeByHandle@{fdtGetNodeByHandle}}
+\index{fdtGetNodeByHandle@{fdtGetNodeByHandle}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetNodeByHandle()}{fdtGetNodeByHandle()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}$\ast$ fdt\+Get\+Node\+By\+Handle (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{k\+Handle\+Id }\end{DoxyParamCaption})}
+
+
+
+Definition at line 630 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{631 \{}
+\DoxyCodeLine{632     \textcolor{keyword}{const} \mbox{\hyperlink{structphandle__t}{phandle\_t}}* pHandle;}
+\DoxyCodeLine{633 }
+\DoxyCodeLine{634     pHandle = \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a499aea00060887b10bf0b34586c7be81}{pHandleList}};}
+\DoxyCodeLine{635     \textcolor{keywordflow}{while}(pHandle != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{636     \{}
+\DoxyCodeLine{637         \textcolor{keywordflow}{if}(pHandle-\/>\mbox{\hyperlink{structphandle__t_abaabdc509cdaba7df9f56c6c76f3ae19}{id}} == kHandleId)}
+\DoxyCodeLine{638         \{}
+\DoxyCodeLine{639             \textcolor{keywordflow}{return} (\mbox{\hyperlink{structfdt__node__t}{fdt\_node\_t}}*)pHandle-\/>\mbox{\hyperlink{structphandle__t_a31190539c0e29f969dfff729ffe6966c}{pLink}};}
+\DoxyCodeLine{640         \}}
+\DoxyCodeLine{641         pHandle = pHandle-\/>\mbox{\hyperlink{structphandle__t_a9d6526ab7425127ecccfee25e46b9391}{pNext}};}
+\DoxyCodeLine{642     \}}
+\DoxyCodeLine{643 }
+\DoxyCodeLine{644     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{645 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}\label{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}} 
+\index{devtree.h@{devtree.h}!fdtGetProp@{fdtGetProp}}
+\index{fdtGetProp@{fdtGetProp}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetProp()}{fdtGetProp()}}
+{\footnotesize\ttfamily const void$\ast$ fdt\+Get\+Prop (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Fdt\+Node,  }\item[{const char $\ast$}]{pk\+Name,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} $\ast$}]{p\+Read\+Size }\end{DoxyParamCaption})}
+
+
+
+Definition at line 548 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{551 \{}
+\DoxyCodeLine{552     \textcolor{keyword}{const} \mbox{\hyperlink{structfdt__property__t}{fdt\_property\_t}}* pProp;}
+\DoxyCodeLine{553     \textcolor{keywordtype}{void}*                 retVal;}
+\DoxyCodeLine{554 }
+\DoxyCodeLine{555     \textcolor{keywordflow}{if}(pkFdtNode == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || pkName == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{556     \{}
+\DoxyCodeLine{557         \textcolor{keywordflow}{if}(pReadSize != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{558         \{}
+\DoxyCodeLine{559             *pReadSize = 0;}
+\DoxyCodeLine{560         \}}
+\DoxyCodeLine{561         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{562     \}}
+\DoxyCodeLine{563 }
+\DoxyCodeLine{564     pProp  = pkFdtNode-\/>\mbox{\hyperlink{structfdt__node__t_afc3fa28d916400435278dab4f812501b}{pProps}};}
+\DoxyCodeLine{565     retVal = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{566     \textcolor{keywordflow}{while}(pProp != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{567     \{}
+\DoxyCodeLine{568         \textcolor{comment}{/* Check name */}}
+\DoxyCodeLine{569         \textcolor{keywordflow}{if}(\mbox{\hyperlink{string_8h_a21e4788b4a0ae39b11aa32e9a1079f98}{strcmp}}(pProp-\/>\mbox{\hyperlink{structfdt__property__t_a01e963d20177999b62d50558b0ac5631}{pName}}, pkName) == 0)}
+\DoxyCodeLine{570         \{}
+\DoxyCodeLine{571             \textcolor{comment}{/* Setup return */}}
+\DoxyCodeLine{572             retVal = (\textcolor{keywordtype}{void}*)pProp-\/>\mbox{\hyperlink{structfdt__property__t_ae62e63dedcbc2d8528adbd0f66d1f680}{pCells}};}
+\DoxyCodeLine{573             \textcolor{keywordflow}{if}(pReadSize != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{574             \{}
+\DoxyCodeLine{575                 *pReadSize = pProp-\/>\mbox{\hyperlink{structfdt__property__t_ae809d5359ac030c60a30a8f0b2294b82}{length}};}
+\DoxyCodeLine{576             \}}
+\DoxyCodeLine{577             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{578         \}}
+\DoxyCodeLine{579 }
+\DoxyCodeLine{580         pProp = pProp-\/>\mbox{\hyperlink{structfdt__property__t_aa208915cd3e5d1f66587f37dfbf59b87}{pNextProp}};}
+\DoxyCodeLine{581     \}}
+\DoxyCodeLine{582 }
+\DoxyCodeLine{583     \textcolor{keywordflow}{return} retVal;}
+\DoxyCodeLine{584 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=235pt]{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946}\label{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946}} 
+\index{devtree.h@{devtree.h}!fdtGetRoot@{fdtGetRoot}}
+\index{fdtGetRoot@{fdtGetRoot}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtGetRoot()}{fdtGetRoot()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}}$\ast$ fdt\+Get\+Root (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line 586 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{587 \{}
+\DoxyCodeLine{588     \textcolor{keywordflow}{return} \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a33499123e152bdee577ee7677ca6f277}{pFirstNode}};}
+\DoxyCodeLine{589 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef}\label{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef}} 
+\index{devtree.h@{devtree.h}!fdtInit@{fdtInit}}
+\index{fdtInit@{fdtInit}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtInit()}{fdtInit()}}
+{\footnotesize\ttfamily void fdt\+Init (\begin{DoxyParamCaption}\item[{const uintptr\+\_\+t}]{k\+Start\+Addr }\end{DoxyParamCaption})}
+
+
+
+Definition at line 494 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{495 \{}
+\DoxyCodeLine{496     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} i;}
+\DoxyCodeLine{497 }
+\DoxyCodeLine{498     \textcolor{keyword}{const} \mbox{\hyperlink{structfdt__header__t}{fdt\_header\_t}}* pHeader;}
+\DoxyCodeLine{499     \mbox{\hyperlink{structfdt__node__t}{fdt\_node\_t}}*         pNode;}
+\DoxyCodeLine{500 }
+\DoxyCodeLine{501     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a0c6cebdf55adc4f4f49957e7d3824920}{DTB\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{502                  \mbox{\hyperlink{devtree_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{503                  \textcolor{stringliteral}{"{}Initializing device tree from 0x\%p"{}},}
+\DoxyCodeLine{504                  kStartAddr);}
+\DoxyCodeLine{505 }
+\DoxyCodeLine{506     pHeader = (\mbox{\hyperlink{structfdt__header__t}{fdt\_header\_t}}*)kStartAddr;}
+\DoxyCodeLine{507 }
+\DoxyCodeLine{508     \textcolor{comment}{/* Check magic */}}
+\DoxyCodeLine{509     \textcolor{keywordflow}{if}(\mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(pHeader-\/>\mbox{\hyperlink{structfdt__header__t_a57f54349f4fd1cbbb52058812e146af2}{magic}}) != \mbox{\hyperlink{devtree_8c_afdc9df7fdc8b7295aff277bc7e0fc37d}{FDT\_MAGIC\_NUMBER}})}
+\DoxyCodeLine{510     \{}
+\DoxyCodeLine{511         \mbox{\hyperlink{i386_2includes_2panic_8h_a408d04d869410941ef4a33c54b355c4b}{PANIC}}(\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}},}
+\DoxyCodeLine{512               \mbox{\hyperlink{devtree_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{513               \textcolor{stringliteral}{"{}Invalid FDT magic"{}},}
+\DoxyCodeLine{514               \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});}
+\DoxyCodeLine{515     \}}
+\DoxyCodeLine{516 }
+\DoxyCodeLine{517     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(\&\mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}, 0, \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structfdt__descriptor__t}{fdt\_descriptor\_t}}));}
+\DoxyCodeLine{518 }
+\DoxyCodeLine{519     \textcolor{comment}{/* Get the structs and strings addresses */}}
+\DoxyCodeLine{520     \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_ae97439f017014f5688067271cf410867}{pStructs}} = (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)(kStartAddr + \mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(pHeader-\/>\mbox{\hyperlink{structfdt__header__t_a777764d7c22ac1abd369f3a7007940a0}{offStructs}}));}
+\DoxyCodeLine{521     \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a4ee146bf94dba14e0263ad0c5c0920b2}{pStrings}} = (\textcolor{keywordtype}{char}*)(kStartAddr + \mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(pHeader-\/>\mbox{\hyperlink{structfdt__header__t_ada47ebde7a84ffb6305cf9507c339475}{offStrings}}));}
+\DoxyCodeLine{522 }
+\DoxyCodeLine{523     \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a8d0d08bd308b7b32a9a93f170eb94974}{nbStructs}} = \mbox{\hyperlink{devtree_8h_a3a69c6f6c0ee3d9e1fc6d11e47e68014}{FDTTOCPU32}}(pHeader-\/>\mbox{\hyperlink{structfdt__header__t_a6f1933c9987d9e7c0892c08ddc2de246}{sizeStructs}}) / \textcolor{keyword}{sizeof}(\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}});}
+\DoxyCodeLine{524 }
+\DoxyCodeLine{525     \textcolor{comment}{/* Now start parsing the first level */}}
+\DoxyCodeLine{526     \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a8d0d08bd308b7b32a9a93f170eb94974}{nbStructs}}; ++i)}
+\DoxyCodeLine{527     \{}
+\DoxyCodeLine{528         \textcolor{comment}{/* Get the node and add to root */}}
+\DoxyCodeLine{529         pNode = \mbox{\hyperlink{devtree_8c_ae34e7f109c118fd878e5a1ba6eae400e}{parseNode}}(\&i, \mbox{\hyperlink{devtree_8c_acbc003847562288c569498f5cfda540e}{INIT\_ADDR\_CELLS}}, \mbox{\hyperlink{devtree_8c_a768e5151cd8f666612e2c266050edca4}{INIT\_SIZE\_CELLS}});}
+\DoxyCodeLine{530         \textcolor{keywordflow}{if}(pNode != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{531         \{}
+\DoxyCodeLine{532             \textcolor{comment}{/* Link node */}}
+\DoxyCodeLine{533             \textcolor{keywordflow}{if}(\mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a33499123e152bdee577ee7677ca6f277}{pFirstNode}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{534             \{}
+\DoxyCodeLine{535                 pNode-\/>\mbox{\hyperlink{structfdt__node__t_a2ccd7c1293ef270fb9ebe2ff64db591a}{pNextNode}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{536                 \mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a33499123e152bdee577ee7677ca6f277}{pFirstNode}} = pNode;}
+\DoxyCodeLine{537             \}}
+\DoxyCodeLine{538             \textcolor{keywordflow}{else}}
+\DoxyCodeLine{539             \{}
+\DoxyCodeLine{540                 \mbox{\hyperlink{devtree_8c_a4a77f55907e51d1f1885ff260521d9c6}{linkNode}}(\mbox{\hyperlink{devtree_8c_a9dd779a4ac9a1ce0ef50ace94de89d89}{fdtDesc}}.\mbox{\hyperlink{structfdt__descriptor__t_a33499123e152bdee577ee7677ca6f277}{pFirstNode}}, pNode);}
+\DoxyCodeLine{541             \}}
+\DoxyCodeLine{542         \}}
+\DoxyCodeLine{543     \}}
+\DoxyCodeLine{544 }
+\DoxyCodeLine{545     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_ae66f47fadf1ceb91b55021b091a68455}{devtreeTest}}, \mbox{\hyperlink{test__list_8h_afb11e1298686f955d236129fee10b8ec}{TEST\_DEVTREE\_ENABLED}});}
+\DoxyCodeLine{546 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=221pt]{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{devtree_8h_aa602a103d207a28d7457885a2f7c086d}\label{devtree_8h_aa602a103d207a28d7457885a2f7c086d}} 
+\index{devtree.h@{devtree.h}!fdtMatchCompatible@{fdtMatchCompatible}}
+\index{fdtMatchCompatible@{fdtMatchCompatible}!devtree.h@{devtree.h}}
+\doxysubsubsection{\texorpdfstring{fdtMatchCompatible()}{fdtMatchCompatible()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} fdt\+Match\+Compatible (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Node,  }\item[{const char $\ast$}]{pk\+Compatible }\end{DoxyParamCaption})}
+
+
+
+Definition at line 647 of file devtree.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{648 \{}
+\DoxyCodeLine{649     \textcolor{keyword}{const} \textcolor{keywordtype}{char}* pkCompatibleProp;}
+\DoxyCodeLine{650     \textcolor{keywordtype}{size\_t}      propLen;}
+\DoxyCodeLine{651 }
+\DoxyCodeLine{652     \textcolor{keywordflow}{if}(pkNode == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || pkCompatible == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{653     \{}
+\DoxyCodeLine{654         \textcolor{keywordflow}{return} \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{655     \}}
+\DoxyCodeLine{656 }
+\DoxyCodeLine{657     \textcolor{comment}{/* Get comaptible and check */}}
+\DoxyCodeLine{658     propLen = \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char}*);}
+\DoxyCodeLine{659     pkCompatibleProp = \mbox{\hyperlink{devtree_8c_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdtGetProp}}(pkNode, \textcolor{stringliteral}{"{}compatible"{}}, \&propLen);}
+\DoxyCodeLine{660 }
+\DoxyCodeLine{661     \textcolor{keywordflow}{if}(pkCompatibleProp != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& propLen > 0)}
+\DoxyCodeLine{662     \{}
+\DoxyCodeLine{663         \textcolor{keywordflow}{if}(\mbox{\hyperlink{string_8h_a7329b6bdb6e5510268fec1d24657574e}{strncmp}}(pkCompatibleProp, pkCompatible, propLen) == 0)}
+\DoxyCodeLine{664         \{}
+\DoxyCodeLine{665             \textcolor{keywordflow}{return} \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{666         \}}
+\DoxyCodeLine{667     \}}
+\DoxyCodeLine{668 }
+\DoxyCodeLine{669     \textcolor{keywordflow}{return} \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{670 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{devtree_8h_aa602a103d207a28d7457885a2f7c086d_cgraph}
+\end{center}
+\end{figure}

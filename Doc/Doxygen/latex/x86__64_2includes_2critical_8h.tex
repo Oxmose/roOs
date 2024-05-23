@@ -1,0 +1,223 @@
+\hypertarget{x86__64_2includes_2critical_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+CPU/x86\+\_\+64/includes/critical.h File Reference}
+\label{x86__64_2includes_2critical_8h}\index{Source/Kernel/Arch/CPU/x86\_64/includes/critical.h@{Source/Kernel/Arch/CPU/x86\_64/includes/critical.h}}
+{\ttfamily \#include $<$interrupts.\+h$>$}\newline
+Include dependency graph for critical.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{x86__64_2includes_2critical_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\+\_\+\+CRITICAL}}(INT\+\_\+\+STATE)
+\begin{DoxyCompactList}\small\item\em Enters a critical section in the kernel. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\+\_\+\+CRITICAL}}(INT\+\_\+\+STATE)
+\begin{DoxyCompactList}\small\item\em Exits a critical section in the kernel. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+LOCK}}(LOCK)
+\begin{DoxyCompactList}\small\item\em Locks a spinlock. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+UNLOCK}}(LOCK)
+\begin{DoxyCompactList}\small\item\em Unlocks a spinlock. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_a0ada6d0dbf12a13f383010c54e4ecba5}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT}}(LOCK)
+\begin{DoxyCompactList}\small\item\em Initializes a spinlock. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT\+\_\+\+VALUE}}~0
+\begin{DoxyCompactList}\small\item\em Kernel spinlock initializer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{x86__64_2includes_2critical_8h_a9cb0f2647fe88c08cd6f09fa4c51e3b5}{cpu\+\_\+lock\+\_\+spinlock}} (volatile \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} $\ast$lock)
+\begin{DoxyCompactList}\small\item\em Locks a spinlock. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{x86__64_2includes_2critical_8h_aa80fe457d586499e45c731d4a64d7090}{cpu\+\_\+unlock\+\_\+spinlock}} (volatile \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} $\ast$lock)
+\begin{DoxyCompactList}\small\item\em Unlocks a spinlock. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}\label{x86__64_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}} 
+\index{critical.h@{critical.h}!ENTER\_CRITICAL@{ENTER\_CRITICAL}}
+\index{ENTER\_CRITICAL@{ENTER\_CRITICAL}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{ENTER\_CRITICAL}{ENTER\_CRITICAL}}
+{\footnotesize\ttfamily \#define ENTER\+\_\+\+CRITICAL(\begin{DoxyParamCaption}\item[{}]{INT\+\_\+\+STATE }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{         \(\backslash\)}
+\DoxyCodeLine{    INT\_STATE = \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}(); \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Enters a critical section in the kernel. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em INT\+\_\+\+STATE} & The critical state at section\textquotesingle{}s entrance.\\
+\hline
+\end{DoxyParams}
+Enters a critical section in the kernel. Save interrupt state and disables interrupts. 
+
+Definition at line 53 of file critical.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}\label{x86__64_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}} 
+\index{critical.h@{critical.h}!EXIT\_CRITICAL@{EXIT\_CRITICAL}}
+\index{EXIT\_CRITICAL@{EXIT\_CRITICAL}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{EXIT\_CRITICAL}{EXIT\_CRITICAL}}
+{\footnotesize\ttfamily \#define EXIT\+\_\+\+CRITICAL(\begin{DoxyParamCaption}\item[{}]{INT\+\_\+\+STATE }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{           \(\backslash\)}
+\DoxyCodeLine{    kernel\_interrupt\_restore(INT\_STATE);     \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Exits a critical section in the kernel. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em INT\+\_\+\+STATE} & The critical state at section\textquotesingle{}s entrance.\\
+\hline
+\end{DoxyParams}
+Exits a critical section in the kernel. Restore the previous interrupt state. 
+
+Definition at line 65 of file critical.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_a0ada6d0dbf12a13f383010c54e4ecba5}\label{x86__64_2includes_2critical_8h_a0ada6d0dbf12a13f383010c54e4ecba5}} 
+\index{critical.h@{critical.h}!KERNEL\_SPINLOCK\_INIT@{KERNEL\_SPINLOCK\_INIT}}
+\index{KERNEL\_SPINLOCK\_INIT@{KERNEL\_SPINLOCK\_INIT}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_SPINLOCK\_INIT}{KERNEL\_SPINLOCK\_INIT}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT(\begin{DoxyParamCaption}\item[{}]{LOCK }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                        \(\backslash\)}
+\DoxyCodeLine{    (\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})LOCK = \mbox{\hyperlink{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}{KERNEL\_SPINLOCK\_INIT\_VALUE}};   \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Initializes a spinlock. 
+
+Initializes a spinlock. This function is safe in kernel mode.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em lock} & The lock to initialize. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 98 of file critical.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}\label{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}} 
+\index{critical.h@{critical.h}!KERNEL\_SPINLOCK\_INIT\_VALUE@{KERNEL\_SPINLOCK\_INIT\_VALUE}}
+\index{KERNEL\_SPINLOCK\_INIT\_VALUE@{KERNEL\_SPINLOCK\_INIT\_VALUE}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_SPINLOCK\_INIT\_VALUE}{KERNEL\_SPINLOCK\_INIT\_VALUE}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT\+\_\+\+VALUE~0}
+
+
+
+Kernel spinlock initializer. 
+
+
+
+Definition at line 103 of file critical.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}\label{x86__64_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}} 
+\index{critical.h@{critical.h}!KERNEL\_SPINLOCK\_LOCK@{KERNEL\_SPINLOCK\_LOCK}}
+\index{KERNEL\_SPINLOCK\_LOCK@{KERNEL\_SPINLOCK\_LOCK}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_SPINLOCK\_LOCK}{KERNEL\_SPINLOCK\_LOCK}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+SPINLOCK\+\_\+\+LOCK(\begin{DoxyParamCaption}\item[{}]{LOCK }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{    \(\backslash\)}
+\DoxyCodeLine{    cpu\_lock\_spinlock(\&LOCK);           \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Locks a spinlock. 
+
+Locks a spinlock. This function is safe in kernel mode.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \mbox{[}in-\/out\mbox{]}} & lock The lock to lock. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 76 of file critical.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}\label{x86__64_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}} 
+\index{critical.h@{critical.h}!KERNEL\_SPINLOCK\_UNLOCK@{KERNEL\_SPINLOCK\_UNLOCK}}
+\index{KERNEL\_SPINLOCK\_UNLOCK@{KERNEL\_SPINLOCK\_UNLOCK}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_SPINLOCK\_UNLOCK}{KERNEL\_SPINLOCK\_UNLOCK}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+SPINLOCK\+\_\+\+UNLOCK(\begin{DoxyParamCaption}\item[{}]{LOCK }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{  \(\backslash\)}
+\DoxyCodeLine{    cpu\_unlock\_spinlock(\&LOCK);         \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Unlocks a spinlock. 
+
+Unlocks a spinlock. This function is safe in kernel mode.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em lock} & The lock to unlock. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 87 of file critical.\+h.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_a9cb0f2647fe88c08cd6f09fa4c51e3b5}\label{x86__64_2includes_2critical_8h_a9cb0f2647fe88c08cd6f09fa4c51e3b5}} 
+\index{critical.h@{critical.h}!cpu\_lock\_spinlock@{cpu\_lock\_spinlock}}
+\index{cpu\_lock\_spinlock@{cpu\_lock\_spinlock}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{cpu\_lock\_spinlock()}{cpu\_lock\_spinlock()}}
+{\footnotesize\ttfamily void cpu\+\_\+lock\+\_\+spinlock (\begin{DoxyParamCaption}\item[{volatile \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} $\ast$}]{lock }\end{DoxyParamCaption})}
+
+
+
+Locks a spinlock. 
+
+Locks a spinlock. This function is safe in kernel mode.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \mbox{[}in-\/out\mbox{]}} & lock The pointer to the lock to lock. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{x86__64_2includes_2critical_8h_aa80fe457d586499e45c731d4a64d7090}\label{x86__64_2includes_2critical_8h_aa80fe457d586499e45c731d4a64d7090}} 
+\index{critical.h@{critical.h}!cpu\_unlock\_spinlock@{cpu\_unlock\_spinlock}}
+\index{cpu\_unlock\_spinlock@{cpu\_unlock\_spinlock}!critical.h@{critical.h}}
+\doxysubsubsection{\texorpdfstring{cpu\_unlock\_spinlock()}{cpu\_unlock\_spinlock()}}
+{\footnotesize\ttfamily void cpu\+\_\+unlock\+\_\+spinlock (\begin{DoxyParamCaption}\item[{volatile \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} $\ast$}]{lock }\end{DoxyParamCaption})}
+
+
+
+Unlocks a spinlock. 
+
+Unlocks a spinlock. This function is safe in kernel mode.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em lock} & The pointer to the lock to unlock. \\
+\hline
+\end{DoxyParams}

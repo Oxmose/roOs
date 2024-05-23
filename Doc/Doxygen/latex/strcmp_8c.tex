@@ -1,0 +1,56 @@
+\hypertarget{strcmp_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strcmp.c File Reference}
+\label{strcmp_8c}\index{Source/Kernel/Libs/libc/src/strcmp.c@{Source/Kernel/Libs/libc/src/strcmp.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strcmp.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strcmp_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{strcmp_8c_a11bd144d7d44914099a3aeddf1c8567d}{strcmp}} (const char $\ast$s1, const char $\ast$s2)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strcmp_8c_a11bd144d7d44914099a3aeddf1c8567d}\label{strcmp_8c_a11bd144d7d44914099a3aeddf1c8567d}} 
+\index{strcmp.c@{strcmp.c}!strcmp@{strcmp}}
+\index{strcmp@{strcmp}!strcmp.c@{strcmp.c}}
+\doxysubsubsection{\texorpdfstring{strcmp()}{strcmp()}}
+{\footnotesize\ttfamily int strcmp (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s1,  }\item[{const char $\ast$}]{s2 }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strcmp.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *c1 = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)s1;}
+\DoxyCodeLine{76     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *c2 = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)s2;}
+\DoxyCodeLine{77     \textcolor{keywordtype}{int} d = 0;}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79     \textcolor{keywordflow}{while} (1) \{}
+\DoxyCodeLine{80         \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} ch;}
+\DoxyCodeLine{81         d = (int)(ch = *c1++) -\/ (int)*c2++;}
+\DoxyCodeLine{82         \textcolor{keywordflow}{if} (d || !ch)}
+\DoxyCodeLine{83             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{84     \}}
+\DoxyCodeLine{85 }
+\DoxyCodeLine{86     \textcolor{keywordflow}{return} d;}
+\DoxyCodeLine{87 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{strcmp_8c_a11bd144d7d44914099a3aeddf1c8567d_icgraph}
+\end{center}
+\end{figure}

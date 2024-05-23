@@ -145,17 +145,6 @@ void uart_clear_screen(void);
 void uart_scroll(const SCROLL_DIRECTION_E direction,
                  const uint32_t lines_count);
 
-/**
- * @brief Write the string given as patameter on the debug port.
- *
- * @details The function will output the data given as parameter on the debug
- * port. This call is blocking until the data has been sent to the uart port
- * controler.
- *
- * @param[in] string The string to write to the uart port.
- * @param[in] len The length of the string to print.
- */
-void uart_console_write_keyboard(const char* string, const size_t len);
 
 /**
  * @brief Returns the UART graphic driver.
@@ -164,7 +153,7 @@ void uart_console_write_keyboard(const char* string, const size_t len);
  *
  * @return A constant handle to the UART graphic driver is returned.
  */
-const kernel_console_driver_t* uart_get_driver(void);
+const console_driver_t* uart_get_driver(void);
 
 #endif /* #ifndef __X86_UART_H_ */
 

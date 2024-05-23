@@ -1,0 +1,528 @@
+\hypertarget{vgatext_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/includes/vgatext.h File Reference}
+\label{vgatext_8h}\index{Source/Kernel/Arch/Board/x86/includes/vgatext.h@{Source/Kernel/Arch/Board/x86/includes/vgatext.h}}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vgatext_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\+\_\+\+BLACK}}~0x00
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: black. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a9afd14c731aa8c62d9471913c1b23b9f}{BG\+\_\+\+BLUE}}~0x10
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_ac351fb4567ed6655a5b39769cc5dfd04}{BG\+\_\+\+GREEN}}~0x20
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a21ef237e1c4d69656729da4b34c31d8b}{BG\+\_\+\+CYAN}}~0x30
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_ac317d04c219b630f9c36b0241d9d4be7}{BG\+\_\+\+RED}}~0x40
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_ac08aa3f07e012f1b0edafa632d5300ba}{BG\+\_\+\+MAGENTA}}~0x50
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_af0157c2ce04475a02bdcf45fe3e44a92}{BG\+\_\+\+BROWN}}~0x60
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: brown. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a00213e74d04ed4d76a1339db5c26c70c}{BG\+\_\+\+GREY}}~0x70
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a01f446ce59cd9e70fb6bc16b20bc5350}{BG\+\_\+\+DARKGREY}}~0x80
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: dark grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a33397d5747fe9c2226f99478f17e9460}{BG\+\_\+\+BRIGHTBLUE}}~0x90
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a5a6b2c6a82a458acd6bc3f3d0a03e715}{BG\+\_\+\+BRIGHTGREEN}}~0x\+A0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a8f2c8dd03ac9198f30e40d14f8815069}{BG\+\_\+\+BRIGHTCYAN}}~0x\+B0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a7b78f0791621cae1bfe50d99075ddafa}{BG\+\_\+\+BRIGHTRED}}~0x\+C0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a1203ef2a5889b64e43d62efa8e52f890}{BG\+\_\+\+BRIGHTMAGENTA}}~0x\+D0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_ab31fe3e74b1137650d30ede5c9b86218}{BG\+\_\+\+YELLOW}}~0x\+E0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: yellow. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a6beded3f171517df3902c52f79f6fea2}{BG\+\_\+\+WHITE}}~0x\+F0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: white. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a9b32d0a26f9909c5b63ccd474f56420e}{FG\+\_\+\+BLACK}}~0x00
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: black. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a4e411f6bd6ac8d6c2bd23d866c097e91}{FG\+\_\+\+BLUE}}~0x01
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a0af1e03653ace4d21aebf3b2e03a6535}{FG\+\_\+\+GREEN}}~0x02
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_afb40e6e076755308612ed6e18a34dbeb}{FG\+\_\+\+CYAN}}~0x03
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a1dc5215d084174df6f00a9267cec2f17}{FG\+\_\+\+RED}}~0x04
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}{FG\+\_\+\+MAGENTA}}~0x05
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a7f5f0a051433665586340a4c5db46a0e}{FG\+\_\+\+BROWN}}~0x06
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: brown. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a5142f80dfa88eb9adc9d8acda8c492dd}{FG\+\_\+\+GREY}}~0x07
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a8e6ce3f2ce3e349ab09059a1de79f80f}{FG\+\_\+\+DARKGREY}}~0x08
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: dark grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a90e6477ae36af5a2b7a0d2035a69a96d}{FG\+\_\+\+BRIGHTBLUE}}~0x09
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a2a3ef747fd07aa65ccbbe7b93e170d85}{FG\+\_\+\+BRIGHTGREEN}}~0x0A
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a2e66d2e78e23a9dfe8b00f00a9e34d93}{FG\+\_\+\+BRIGHTCYAN}}~0x0B
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a757d422eda569f40648fdb43eec745e8}{FG\+\_\+\+BRIGHTRED}}~0x0C
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}{FG\+\_\+\+BRIGHTMAGENTA}}~0x0D
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a266aa539aa271da1b1f711d2413b1bfa}{FG\+\_\+\+YELLOW}}~0x0E
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: yellow. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vgatext_8h_a7fbb956b9e769a1020c2eff1f6743857}{FG\+\_\+\+WHITE}}~0x0F
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: white. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}\label{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}} 
+\index{vgatext.h@{vgatext.h}!BG\_BLACK@{BG\_BLACK}}
+\index{BG\_BLACK@{BG\_BLACK}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BLACK}{BG\_BLACK}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BLACK~0x00}
+
+
+
+VGA background color definition\+: black. 
+
+
+
+Definition at line 35 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a9afd14c731aa8c62d9471913c1b23b9f}\label{vgatext_8h_a9afd14c731aa8c62d9471913c1b23b9f}} 
+\index{vgatext.h@{vgatext.h}!BG\_BLUE@{BG\_BLUE}}
+\index{BG\_BLUE@{BG\_BLUE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BLUE}{BG\_BLUE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BLUE~0x10}
+
+
+
+VGA background color definition\+: blue. 
+
+
+
+Definition at line 37 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a33397d5747fe9c2226f99478f17e9460}\label{vgatext_8h_a33397d5747fe9c2226f99478f17e9460}} 
+\index{vgatext.h@{vgatext.h}!BG\_BRIGHTBLUE@{BG\_BRIGHTBLUE}}
+\index{BG\_BRIGHTBLUE@{BG\_BRIGHTBLUE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTBLUE}{BG\_BRIGHTBLUE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTBLUE~0x90}
+
+
+
+VGA background color definition\+: bright blue. 
+
+
+
+Definition at line 53 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a8f2c8dd03ac9198f30e40d14f8815069}\label{vgatext_8h_a8f2c8dd03ac9198f30e40d14f8815069}} 
+\index{vgatext.h@{vgatext.h}!BG\_BRIGHTCYAN@{BG\_BRIGHTCYAN}}
+\index{BG\_BRIGHTCYAN@{BG\_BRIGHTCYAN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTCYAN}{BG\_BRIGHTCYAN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTCYAN~0x\+B0}
+
+
+
+VGA background color definition\+: bright cyan. 
+
+
+
+Definition at line 57 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a5a6b2c6a82a458acd6bc3f3d0a03e715}\label{vgatext_8h_a5a6b2c6a82a458acd6bc3f3d0a03e715}} 
+\index{vgatext.h@{vgatext.h}!BG\_BRIGHTGREEN@{BG\_BRIGHTGREEN}}
+\index{BG\_BRIGHTGREEN@{BG\_BRIGHTGREEN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTGREEN}{BG\_BRIGHTGREEN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTGREEN~0x\+A0}
+
+
+
+VGA background color definition\+: bright green. 
+
+
+
+Definition at line 55 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a1203ef2a5889b64e43d62efa8e52f890}\label{vgatext_8h_a1203ef2a5889b64e43d62efa8e52f890}} 
+\index{vgatext.h@{vgatext.h}!BG\_BRIGHTMAGENTA@{BG\_BRIGHTMAGENTA}}
+\index{BG\_BRIGHTMAGENTA@{BG\_BRIGHTMAGENTA}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTMAGENTA}{BG\_BRIGHTMAGENTA}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTMAGENTA~0x\+D0}
+
+
+
+VGA background color definition\+: bright magenta. 
+
+
+
+Definition at line 61 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a7b78f0791621cae1bfe50d99075ddafa}\label{vgatext_8h_a7b78f0791621cae1bfe50d99075ddafa}} 
+\index{vgatext.h@{vgatext.h}!BG\_BRIGHTRED@{BG\_BRIGHTRED}}
+\index{BG\_BRIGHTRED@{BG\_BRIGHTRED}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTRED}{BG\_BRIGHTRED}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTRED~0x\+C0}
+
+
+
+VGA background color definition\+: bright red. 
+
+
+
+Definition at line 59 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_af0157c2ce04475a02bdcf45fe3e44a92}\label{vgatext_8h_af0157c2ce04475a02bdcf45fe3e44a92}} 
+\index{vgatext.h@{vgatext.h}!BG\_BROWN@{BG\_BROWN}}
+\index{BG\_BROWN@{BG\_BROWN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_BROWN}{BG\_BROWN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BROWN~0x60}
+
+
+
+VGA background color definition\+: brown. 
+
+
+
+Definition at line 47 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a21ef237e1c4d69656729da4b34c31d8b}\label{vgatext_8h_a21ef237e1c4d69656729da4b34c31d8b}} 
+\index{vgatext.h@{vgatext.h}!BG\_CYAN@{BG\_CYAN}}
+\index{BG\_CYAN@{BG\_CYAN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_CYAN}{BG\_CYAN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+CYAN~0x30}
+
+
+
+VGA background color definition\+: cyan. 
+
+
+
+Definition at line 41 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a01f446ce59cd9e70fb6bc16b20bc5350}\label{vgatext_8h_a01f446ce59cd9e70fb6bc16b20bc5350}} 
+\index{vgatext.h@{vgatext.h}!BG\_DARKGREY@{BG\_DARKGREY}}
+\index{BG\_DARKGREY@{BG\_DARKGREY}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_DARKGREY}{BG\_DARKGREY}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+DARKGREY~0x80}
+
+
+
+VGA background color definition\+: dark grey. 
+
+
+
+Definition at line 51 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_ac351fb4567ed6655a5b39769cc5dfd04}\label{vgatext_8h_ac351fb4567ed6655a5b39769cc5dfd04}} 
+\index{vgatext.h@{vgatext.h}!BG\_GREEN@{BG\_GREEN}}
+\index{BG\_GREEN@{BG\_GREEN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_GREEN}{BG\_GREEN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+GREEN~0x20}
+
+
+
+VGA background color definition\+: green. 
+
+
+
+Definition at line 39 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a00213e74d04ed4d76a1339db5c26c70c}\label{vgatext_8h_a00213e74d04ed4d76a1339db5c26c70c}} 
+\index{vgatext.h@{vgatext.h}!BG\_GREY@{BG\_GREY}}
+\index{BG\_GREY@{BG\_GREY}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_GREY}{BG\_GREY}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+GREY~0x70}
+
+
+
+VGA background color definition\+: grey. 
+
+
+
+Definition at line 49 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_ac08aa3f07e012f1b0edafa632d5300ba}\label{vgatext_8h_ac08aa3f07e012f1b0edafa632d5300ba}} 
+\index{vgatext.h@{vgatext.h}!BG\_MAGENTA@{BG\_MAGENTA}}
+\index{BG\_MAGENTA@{BG\_MAGENTA}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_MAGENTA}{BG\_MAGENTA}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+MAGENTA~0x50}
+
+
+
+VGA background color definition\+: magenta. 
+
+
+
+Definition at line 45 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_ac317d04c219b630f9c36b0241d9d4be7}\label{vgatext_8h_ac317d04c219b630f9c36b0241d9d4be7}} 
+\index{vgatext.h@{vgatext.h}!BG\_RED@{BG\_RED}}
+\index{BG\_RED@{BG\_RED}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_RED}{BG\_RED}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+RED~0x40}
+
+
+
+VGA background color definition\+: red. 
+
+
+
+Definition at line 43 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a6beded3f171517df3902c52f79f6fea2}\label{vgatext_8h_a6beded3f171517df3902c52f79f6fea2}} 
+\index{vgatext.h@{vgatext.h}!BG\_WHITE@{BG\_WHITE}}
+\index{BG\_WHITE@{BG\_WHITE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_WHITE}{BG\_WHITE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+WHITE~0x\+F0}
+
+
+
+VGA background color definition\+: white. 
+
+
+
+Definition at line 65 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_ab31fe3e74b1137650d30ede5c9b86218}\label{vgatext_8h_ab31fe3e74b1137650d30ede5c9b86218}} 
+\index{vgatext.h@{vgatext.h}!BG\_YELLOW@{BG\_YELLOW}}
+\index{BG\_YELLOW@{BG\_YELLOW}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{BG\_YELLOW}{BG\_YELLOW}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+YELLOW~0x\+E0}
+
+
+
+VGA background color definition\+: yellow. 
+
+
+
+Definition at line 63 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a9b32d0a26f9909c5b63ccd474f56420e}\label{vgatext_8h_a9b32d0a26f9909c5b63ccd474f56420e}} 
+\index{vgatext.h@{vgatext.h}!FG\_BLACK@{FG\_BLACK}}
+\index{FG\_BLACK@{FG\_BLACK}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BLACK}{FG\_BLACK}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BLACK~0x00}
+
+
+
+VGA foreground color definition\+: black. 
+
+
+
+Definition at line 68 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a4e411f6bd6ac8d6c2bd23d866c097e91}\label{vgatext_8h_a4e411f6bd6ac8d6c2bd23d866c097e91}} 
+\index{vgatext.h@{vgatext.h}!FG\_BLUE@{FG\_BLUE}}
+\index{FG\_BLUE@{FG\_BLUE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BLUE}{FG\_BLUE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BLUE~0x01}
+
+
+
+VGA foreground color definition\+: blue. 
+
+
+
+Definition at line 70 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a90e6477ae36af5a2b7a0d2035a69a96d}\label{vgatext_8h_a90e6477ae36af5a2b7a0d2035a69a96d}} 
+\index{vgatext.h@{vgatext.h}!FG\_BRIGHTBLUE@{FG\_BRIGHTBLUE}}
+\index{FG\_BRIGHTBLUE@{FG\_BRIGHTBLUE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTBLUE}{FG\_BRIGHTBLUE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTBLUE~0x09}
+
+
+
+VGA foreground color definition\+: bright blue. 
+
+
+
+Definition at line 86 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a2e66d2e78e23a9dfe8b00f00a9e34d93}\label{vgatext_8h_a2e66d2e78e23a9dfe8b00f00a9e34d93}} 
+\index{vgatext.h@{vgatext.h}!FG\_BRIGHTCYAN@{FG\_BRIGHTCYAN}}
+\index{FG\_BRIGHTCYAN@{FG\_BRIGHTCYAN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTCYAN}{FG\_BRIGHTCYAN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTCYAN~0x0B}
+
+
+
+VGA foreground color definition\+: bright cyan. 
+
+
+
+Definition at line 90 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a2a3ef747fd07aa65ccbbe7b93e170d85}\label{vgatext_8h_a2a3ef747fd07aa65ccbbe7b93e170d85}} 
+\index{vgatext.h@{vgatext.h}!FG\_BRIGHTGREEN@{FG\_BRIGHTGREEN}}
+\index{FG\_BRIGHTGREEN@{FG\_BRIGHTGREEN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTGREEN}{FG\_BRIGHTGREEN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTGREEN~0x0A}
+
+
+
+VGA foreground color definition\+: bright green. 
+
+
+
+Definition at line 88 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}\label{vgatext_8h_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}} 
+\index{vgatext.h@{vgatext.h}!FG\_BRIGHTMAGENTA@{FG\_BRIGHTMAGENTA}}
+\index{FG\_BRIGHTMAGENTA@{FG\_BRIGHTMAGENTA}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTMAGENTA}{FG\_BRIGHTMAGENTA}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTMAGENTA~0x0D}
+
+
+
+VGA foreground color definition\+: bright magenta. 
+
+
+
+Definition at line 94 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a757d422eda569f40648fdb43eec745e8}\label{vgatext_8h_a757d422eda569f40648fdb43eec745e8}} 
+\index{vgatext.h@{vgatext.h}!FG\_BRIGHTRED@{FG\_BRIGHTRED}}
+\index{FG\_BRIGHTRED@{FG\_BRIGHTRED}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTRED}{FG\_BRIGHTRED}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTRED~0x0C}
+
+
+
+VGA foreground color definition\+: bright red. 
+
+
+
+Definition at line 92 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a7f5f0a051433665586340a4c5db46a0e}\label{vgatext_8h_a7f5f0a051433665586340a4c5db46a0e}} 
+\index{vgatext.h@{vgatext.h}!FG\_BROWN@{FG\_BROWN}}
+\index{FG\_BROWN@{FG\_BROWN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_BROWN}{FG\_BROWN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BROWN~0x06}
+
+
+
+VGA foreground color definition\+: brown. 
+
+
+
+Definition at line 80 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_afb40e6e076755308612ed6e18a34dbeb}\label{vgatext_8h_afb40e6e076755308612ed6e18a34dbeb}} 
+\index{vgatext.h@{vgatext.h}!FG\_CYAN@{FG\_CYAN}}
+\index{FG\_CYAN@{FG\_CYAN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_CYAN}{FG\_CYAN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+CYAN~0x03}
+
+
+
+VGA foreground color definition\+: cyan. 
+
+
+
+Definition at line 74 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a8e6ce3f2ce3e349ab09059a1de79f80f}\label{vgatext_8h_a8e6ce3f2ce3e349ab09059a1de79f80f}} 
+\index{vgatext.h@{vgatext.h}!FG\_DARKGREY@{FG\_DARKGREY}}
+\index{FG\_DARKGREY@{FG\_DARKGREY}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_DARKGREY}{FG\_DARKGREY}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+DARKGREY~0x08}
+
+
+
+VGA foreground color definition\+: dark grey. 
+
+
+
+Definition at line 84 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a0af1e03653ace4d21aebf3b2e03a6535}\label{vgatext_8h_a0af1e03653ace4d21aebf3b2e03a6535}} 
+\index{vgatext.h@{vgatext.h}!FG\_GREEN@{FG\_GREEN}}
+\index{FG\_GREEN@{FG\_GREEN}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_GREEN}{FG\_GREEN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+GREEN~0x02}
+
+
+
+VGA foreground color definition\+: green. 
+
+
+
+Definition at line 72 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a5142f80dfa88eb9adc9d8acda8c492dd}\label{vgatext_8h_a5142f80dfa88eb9adc9d8acda8c492dd}} 
+\index{vgatext.h@{vgatext.h}!FG\_GREY@{FG\_GREY}}
+\index{FG\_GREY@{FG\_GREY}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_GREY}{FG\_GREY}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+GREY~0x07}
+
+
+
+VGA foreground color definition\+: grey. 
+
+
+
+Definition at line 82 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}\label{vgatext_8h_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}} 
+\index{vgatext.h@{vgatext.h}!FG\_MAGENTA@{FG\_MAGENTA}}
+\index{FG\_MAGENTA@{FG\_MAGENTA}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_MAGENTA}{FG\_MAGENTA}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+MAGENTA~0x05}
+
+
+
+VGA foreground color definition\+: magenta. 
+
+
+
+Definition at line 78 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a1dc5215d084174df6f00a9267cec2f17}\label{vgatext_8h_a1dc5215d084174df6f00a9267cec2f17}} 
+\index{vgatext.h@{vgatext.h}!FG\_RED@{FG\_RED}}
+\index{FG\_RED@{FG\_RED}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_RED}{FG\_RED}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+RED~0x04}
+
+
+
+VGA foreground color definition\+: red. 
+
+
+
+Definition at line 76 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a7fbb956b9e769a1020c2eff1f6743857}\label{vgatext_8h_a7fbb956b9e769a1020c2eff1f6743857}} 
+\index{vgatext.h@{vgatext.h}!FG\_WHITE@{FG\_WHITE}}
+\index{FG\_WHITE@{FG\_WHITE}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_WHITE}{FG\_WHITE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+WHITE~0x0F}
+
+
+
+VGA foreground color definition\+: white. 
+
+
+
+Definition at line 98 of file vgatext.\+h.
+
+\mbox{\Hypertarget{vgatext_8h_a266aa539aa271da1b1f711d2413b1bfa}\label{vgatext_8h_a266aa539aa271da1b1f711d2413b1bfa}} 
+\index{vgatext.h@{vgatext.h}!FG\_YELLOW@{FG\_YELLOW}}
+\index{FG\_YELLOW@{FG\_YELLOW}!vgatext.h@{vgatext.h}}
+\doxysubsubsection{\texorpdfstring{FG\_YELLOW}{FG\_YELLOW}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+YELLOW~0x0E}
+
+
+
+VGA foreground color definition\+: yellow. 
+
+
+
+Definition at line 96 of file vgatext.\+h.
+

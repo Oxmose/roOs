@@ -1,0 +1,119 @@
+\hypertarget{structkqueue__node}{}\doxysection{kqueue\+\_\+node Struct Reference}
+\label{structkqueue__node}\index{kqueue\_node@{kqueue\_node}}
+
+
+Queue node structure.  
+
+
+
+
+{\ttfamily \#include $<$kqueue.\+h$>$}
+
+
+
+Collaboration diagram for kqueue\+\_\+node\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=205pt]{structkqueue__node__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}} $\ast$ \mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}}
+\begin{DoxyCompactList}\small\item\em Next node in the queue. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}} $\ast$ \mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}}
+\begin{DoxyCompactList}\small\item\em Previous node in the queue. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}}
+\begin{DoxyCompactList}\small\item\em Tell if the node is present in a queue or stands alone. \end{DoxyCompactList}\item 
+uintptr\+\_\+t \mbox{\hyperlink{structkqueue__node_ae1526716a9b24e75d656506b16f03297}{priority}}
+\begin{DoxyCompactList}\small\item\em Node\textquotesingle{}s priority, used when the queue is a priority queue. \end{DoxyCompactList}\item 
+void $\ast$ \mbox{\hyperlink{structkqueue__node_a735984d41155bc1032e09bece8f8d66d}{data}}
+\begin{DoxyCompactList}\small\item\em Node\textquotesingle{}s data pointer. Store the address of the contained data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Queue node structure. 
+
+Definition at line 44 of file kqueue.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structkqueue__node_a735984d41155bc1032e09bece8f8d66d}\label{structkqueue__node_a735984d41155bc1032e09bece8f8d66d}} 
+\index{kqueue\_node@{kqueue\_node}!data@{data}}
+\index{data@{data}!kqueue\_node@{kqueue\_node}}
+\doxysubsubsection{\texorpdfstring{data}{data}}
+{\footnotesize\ttfamily void$\ast$ data}
+
+
+
+Node\textquotesingle{}s data pointer. Store the address of the contained data. 
+
+
+
+Definition at line 58 of file kqueue.\+h.
+
+\mbox{\Hypertarget{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}\label{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}} 
+\index{kqueue\_node@{kqueue\_node}!enlisted@{enlisted}}
+\index{enlisted@{enlisted}!kqueue\_node@{kqueue\_node}}
+\doxysubsubsection{\texorpdfstring{enlisted}{enlisted}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} enlisted}
+
+
+
+Tell if the node is present in a queue or stands alone. 
+
+
+
+Definition at line 52 of file kqueue.\+h.
+
+\mbox{\Hypertarget{structkqueue__node_abd647bcc566c19947e09966f6e73a757}\label{structkqueue__node_abd647bcc566c19947e09966f6e73a757}} 
+\index{kqueue\_node@{kqueue\_node}!next@{next}}
+\index{next@{next}!kqueue\_node@{kqueue\_node}}
+\doxysubsubsection{\texorpdfstring{next}{next}}
+{\footnotesize\ttfamily struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}}$\ast$ next}
+
+
+
+Next node in the queue. 
+
+
+
+Definition at line 47 of file kqueue.\+h.
+
+\mbox{\Hypertarget{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}\label{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}} 
+\index{kqueue\_node@{kqueue\_node}!prev@{prev}}
+\index{prev@{prev}!kqueue\_node@{kqueue\_node}}
+\doxysubsubsection{\texorpdfstring{prev}{prev}}
+{\footnotesize\ttfamily struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}}$\ast$ prev}
+
+
+
+Previous node in the queue. 
+
+
+
+Definition at line 49 of file kqueue.\+h.
+
+\mbox{\Hypertarget{structkqueue__node_ae1526716a9b24e75d656506b16f03297}\label{structkqueue__node_ae1526716a9b24e75d656506b16f03297}} 
+\index{kqueue\_node@{kqueue\_node}!priority@{priority}}
+\index{priority@{priority}!kqueue\_node@{kqueue\_node}}
+\doxysubsubsection{\texorpdfstring{priority}{priority}}
+{\footnotesize\ttfamily uintptr\+\_\+t priority}
+
+
+
+Node\textquotesingle{}s priority, used when the queue is a priority queue. 
+
+
+
+Definition at line 55 of file kqueue.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Core/includes/\mbox{\hyperlink{kqueue_8h}{kqueue.\+h}}\end{DoxyCompactItemize}

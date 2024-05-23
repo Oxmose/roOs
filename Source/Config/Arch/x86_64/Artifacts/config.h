@@ -46,7 +46,7 @@
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
-#define DEBUG_LOG_UART 1
+#define DEBUG_LOG_UART 0
 
 /* Defines the limit address allocable by the kernel */
 #define KERNEL_VIRTUAL_ADDR_MAX      0xFFFFFFFFFFFFFFFF
@@ -91,7 +91,7 @@
 #define LAPIC_DEBUG_ENABLED 0
 #define MEMMGT_DEBUG_ENABLED 0
 #define PIC_DEBUG_ENABLED 0
-#define PIT_DEBUG_ENABLED 0
+#define PIT_DEBUG_ENABLED 1
 #define QUEUE_DEBUG_ENABLED 0
 #define KQUEUE_DEBUG_ENABLED 0
 #define RTC_DEBUG_ENABLED 0

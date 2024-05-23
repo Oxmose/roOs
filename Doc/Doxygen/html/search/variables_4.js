@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['data_2743',['data',['../structmem__chunk__t.html#abe222f6d3581e7920dcad5306cc906a8',1,'mem_chunk_t::data()'],['../structqueue__node.html#a735984d41155bc1032e09bece8f8d66d',1,'queue_node::data()'],['../structuhashtable__entry__t.html#a735984d41155bc1032e09bece8f8d66d',1,'uhashtable_entry_t::data()'],['../structkqueue__node.html#a735984d41155bc1032e09bece8f8d66d',1,'kqueue_node::data()']]],
+  ['date_2744',['date',['../rtc_8c.html#afde06411957b2605d7680270bfbaf259',1,'rtc.c']]],
+  ['day_2745',['day',['../structdate__t.html#aaac4cc80ac84d626e36efc43f2260660',1,'date_t']]],
+  ['day_5ftime_2746',['day_time',['../rtc_8c.html#a30bb1d6544a5ed866a4eb812dba089bb',1,'rtc.c']]],
+  ['depth_2747',['depth',['../structmultiboot__header__tag__framebuffer.html#ad6af53159505aaabfc46a65b6f87447c',1,'multiboot_header_tag_framebuffer']]],
+  ['descr_5fsize_2748',['descr_size',['../structmultiboot__tag__efi__mmap.html#a50da8aae83e250c68d1e381c1293f91a',1,'multiboot_tag_efi_mmap']]],
+  ['descr_5fvers_2749',['descr_vers',['../structmultiboot__tag__efi__mmap.html#ab4232fbf0b7749b3025cc644e79b9096',1,'multiboot_tag_efi_mmap']]],
+  ['dhcpack_2750',['dhcpack',['../structmultiboot__tag__network.html#a107706308f50310c18f8bcce93e565e0',1,'multiboot_tag_network']]],
+  ['disable_2751',['disable',['../structkernel__timer__t.html#ace1449d367bdcce8d6ca549dceac7a7f',1,'kernel_timer_t']]],
+  ['disabled_5fnesting_2752',['disabled_nesting',['../rtc_8c.html#add904a4dc1ad867700289998b2758fea',1,'disabled_nesting():&#160;rtc.c'],['../pit_8c.html#add904a4dc1ad867700289998b2758fea',1,'disabled_nesting():&#160;pit.c']]],
+  ['driver_5fget_5firq_5fint_5fline_2753',['driver_get_irq_int_line',['../structinterrupt__driver__t.html#a25edd3e67722b2f2c454f03587588e69',1,'interrupt_driver_t']]],
+  ['driver_5fhandle_5fspurious_2754',['driver_handle_spurious',['../structinterrupt__driver__t.html#aadf8a678de409691b8409a5fff93bb55',1,'interrupt_driver_t']]],
+  ['driver_5fset_5firq_5feoi_2755',['driver_set_irq_eoi',['../structinterrupt__driver__t.html#a6104aa38bdacd06ef8fcd1645aeaf5ac',1,'interrupt_driver_t']]],
+  ['driver_5fset_5firq_5fmask_2756',['driver_set_irq_mask',['../structinterrupt__driver__t.html#a1adacbd2d8f3624e70571503d73b4250',1,'interrupt_driver_t']]],
+  ['ds_2757',['ds',['../structcpu__state__t.html#af0d88fb4332953b67135cedbf417fcb7',1,'cpu_state_t::ds()'],['../structcpu__tss__entry__t.html#a6fe20edd854a1a653ae71ccf541a6b8b',1,'cpu_tss_entry_t::ds()'],['../structcpu__state__t.html#a6fe20edd854a1a653ae71ccf541a6b8b',1,'cpu_state_t::ds()']]],
+  ['dseg_2758',['dseg',['../structmultiboot__tag__apm.html#a49602f9c67496afcf5be565ab2aa4576',1,'multiboot_tag_apm']]],
+  ['dseg_5flen_2759',['dseg_len',['../structmultiboot__tag__apm.html#ab847d5cdfc1dc8c9afb70dbb5b10a63f',1,'multiboot_tag_apm']]],
+  ['dummy_5fthread_2760',['dummy_thread',['../scheduler_8c.html#aeb95f6480d3d8ba47550ac11dfddacf1',1,'scheduler.c']]]
+];

@@ -1,0 +1,117 @@
+\hypertarget{uitoa_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/uitoa.c File Reference}
+\label{uitoa_8c}\index{Source/Kernel/Libs/libc/src/uitoa.c@{Source/Kernel/Libs/libc/src/uitoa.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+Include dependency graph for uitoa.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=259pt]{uitoa_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{uitoa_8c_adf646d343dbae8cb1546215e0a85ed6f}{uitoa}} (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} i, char $\ast$buf, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} base)
+\begin{DoxyCompactList}\small\item\em Convert a unsigned integer value to a string. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static char \mbox{\hyperlink{uitoa_8c_abc4856e0eaf498736587d3a2cee3b2e3}{hex\+\_\+table}} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em Hexadecimal characters table. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{uitoa_8c_adf646d343dbae8cb1546215e0a85ed6f}\label{uitoa_8c_adf646d343dbae8cb1546215e0a85ed6f}} 
+\index{uitoa.c@{uitoa.c}!uitoa@{uitoa}}
+\index{uitoa@{uitoa}!uitoa.c@{uitoa.c}}
+\doxysubsubsection{\texorpdfstring{uitoa()}{uitoa()}}
+{\footnotesize\ttfamily void uitoa (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{value,  }\item[{char $\ast$}]{buf,  }\item[{\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{base }\end{DoxyParamCaption})}
+
+
+
+Convert a unsigned integer value to a string. 
+
+Convert a unsigned integer value to a string and inject the conversion result in the buffer given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The value to convert. \\
+\hline
+\mbox{\texttt{ out}}  & {\em buf} & The buffer to receive the convertion\textquotesingle{}s result. \\
+\hline
+\mbox{\texttt{ in}}  & {\em base} & The base of the unsigned integer to convert. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 79 of file uitoa.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{80 \{}
+\DoxyCodeLine{81     \textcolor{keywordtype}{char} tmp[128];}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} pos  = 0;}
+\DoxyCodeLine{84     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} opos = 0;}
+\DoxyCodeLine{85     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} top  = 0;}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     \textcolor{keywordflow}{if} (i == 0 || base > 16)}
+\DoxyCodeLine{88     \{}
+\DoxyCodeLine{89         *buf++ = \textcolor{charliteral}{'0'};}
+\DoxyCodeLine{90         *buf = \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{91         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{92     \}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94     \textcolor{comment}{/* Fill temp buffer */}}
+\DoxyCodeLine{95     \textcolor{keywordflow}{while} (i != 0)}
+\DoxyCodeLine{96     \{}
+\DoxyCodeLine{97         tmp[pos++] = \mbox{\hyperlink{uitoa_8c_abc4856e0eaf498736587d3a2cee3b2e3}{hex\_table}}[i \% base];}
+\DoxyCodeLine{98         i /= base;}
+\DoxyCodeLine{99     \}}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{101     top = pos-\/-\/;}
+\DoxyCodeLine{102     \textcolor{comment}{/* Fill buffer */}}
+\DoxyCodeLine{103     \textcolor{keywordflow}{for} (opos = 0; opos < top; -\/-\/pos, ++opos)}
+\DoxyCodeLine{104     \{}
+\DoxyCodeLine{105         buf[opos] = tmp[pos];}
+\DoxyCodeLine{106     \}}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{108     \textcolor{comment}{/* Null termitate */}}
+\DoxyCodeLine{109     buf[opos] = 0;}
+\DoxyCodeLine{110 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uitoa_8c_adf646d343dbae8cb1546215e0a85ed6f_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{uitoa_8c_abc4856e0eaf498736587d3a2cee3b2e3}\label{uitoa_8c_abc4856e0eaf498736587d3a2cee3b2e3}} 
+\index{uitoa.c@{uitoa.c}!hex\_table@{hex\_table}}
+\index{hex\_table@{hex\_table}!uitoa.c@{uitoa.c}}
+\doxysubsubsection{\texorpdfstring{hex\_table}{hex\_table}}
+{\footnotesize\ttfamily char hex\+\_\+table\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{     \{\textcolor{charliteral}{'0'},\textcolor{charliteral}{'1'},\textcolor{charliteral}{'2'},\textcolor{charliteral}{'3'},\textcolor{charliteral}{'4'},\textcolor{charliteral}{'5'},\textcolor{charliteral}{'6'},\textcolor{charliteral}{'7'},\textcolor{charliteral}{'8'},\textcolor{charliteral}{'9'},\textcolor{charliteral}{'A'},\textcolor{charliteral}{'B'},\textcolor{charliteral}{'C'},\textcolor{charliteral}{'D'},\textcolor{charliteral}{'E'},\textcolor{charliteral}{'F'}\}}
+
+\end{DoxyCode}
+
+
+Hexadecimal characters table. 
+
+
+
+Definition at line 66 of file uitoa.\+c.
+

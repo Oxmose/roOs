@@ -1,0 +1,45 @@
+\hypertarget{strspn_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strspn.c File Reference}
+\label{strspn_8c}\index{Source/Kernel/Libs/libc/src/strspn.c@{Source/Kernel/Libs/libc/src/strspn.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strspn.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strspn_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{strspn_8c_a900a0edfa51f601d479244f7451cedd1}{strspn}} (const char $\ast$s, const char $\ast$accept)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strspn_8c_a900a0edfa51f601d479244f7451cedd1}\label{strspn_8c_a900a0edfa51f601d479244f7451cedd1}} 
+\index{strspn.c@{strspn.c}!strspn@{strspn}}
+\index{strspn@{strspn}!strspn.c@{strspn.c}}
+\doxysubsubsection{\texorpdfstring{strspn()}{strspn()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} strspn (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s,  }\item[{const char $\ast$}]{accept }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strspn.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordflow}{return} \mbox{\hyperlink{string_8h_a789d53bfffab50940a53ff54b81ad46b}{\_\_strxspn}}(s, accept, 0);}
+\DoxyCodeLine{76 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{strspn_8c_a900a0edfa51f601d479244f7451cedd1_cgraph}
+\end{center}
+\end{figure}

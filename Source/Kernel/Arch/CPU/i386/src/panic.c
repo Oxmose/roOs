@@ -24,13 +24,15 @@
 
 /* Included headers */
 #include <cpu_interrupt.h>       /* Interrupt management */
-#include <vga_console.h>          /* VGA console driver*/
-#include <kernel_output.h>        /* Kernel output methods */
+#include <vgatext.h>          /* VGA console driver*/
+#include <kerneloutput.h>        /* Kernel output methods */
+#include <console.h>              /* Console service */
 #include <stdint.h>               /* Generic int types */
 #include <cpu.h>                  /* CPU management */
 #include <string.h>               /* Memset */
 #include <ctrl_block.h>           /* Thread's control block */
 #include <interrupts.h>           /* Interrupts manager */
+#include <time_mgt.h>             /* Time management */
 
 /* Configuration files */
 #include <config.h>
@@ -412,6 +414,8 @@ void panic_handler(kernel_thread_t* curr_thread)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_START, 1, panic_code);
 
+    kernel_interrupt_disable();
+
     time    = 0;
     hours   = time / 3600;
     minutes = (time / 60) % 60;
@@ -423,13 +427,13 @@ void panic_handler(kernel_thread_t* curr_thread)
     panic_scheme.foreground = FG_CYAN;
     panic_scheme.vga_color  = TRUE;
 
-    console_set_color_scheme(panic_scheme);
+    consoleSetColorScheme(&panic_scheme);
 
     /* Clear screen */
-    console_clear_screen();
+    consoleClear();
     panic_cursor.x = 0;
     panic_cursor.y = 0;
-    console_restore_cursor(panic_cursor);
+    consoleRestoreCursor(&panic_cursor);
 
     _print_panic_header(&curr_thread->v_cpu);
     _print_cpu_state(&curr_thread->v_cpu);
@@ -437,9 +441,9 @@ void panic_handler(kernel_thread_t* curr_thread)
 
     kernel_printf("\n--------------------------------- INFORMATION ------------"
                     "----------------------\n");
-    kernel_printf("Core ID: %u | Time: %02u:%02u:%02u\n"
+    kernel_printf("Core ID: %u | Time: %02u:%02u:%02u [%llu]\n"
                   "Thread: %s (%u) | Process: %s (%u)\n", cpu_id,
-                  hours, minutes, seconds,
+                  hours, minutes, seconds, time_get_current_uptime(),
                   curr_thread->name,
                   curr_thread->tid,
                   "NO_PROCESS",
@@ -460,7 +464,7 @@ void panic_handler(kernel_thread_t* curr_thread)
     panic_scheme.foreground = FG_BLACK;
     panic_scheme.vga_color  = TRUE;
 
-    console_set_color_scheme(panic_scheme);
+    consoleSetColorScheme(&panic_scheme);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, panic_code);
 

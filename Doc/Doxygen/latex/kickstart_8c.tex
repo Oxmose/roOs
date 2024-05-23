@@ -1,0 +1,278 @@
+\hypertarget{kickstart_8c}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/src/kickstart.c File Reference}
+\label{kickstart_8c}\index{Source/Kernel/Arch/Board/x86/src/kickstart.c@{Source/Kernel/Arch/Board/x86/src/kickstart.c}}
+{\ttfamily \#include $<$console.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$panic.\+h$>$}\newline
+{\ttfamily \#include $<$uart.\+h$>$}\newline
+{\ttfamily \#include $<$interrupts.\+h$>$}\newline
+{\ttfamily \#include $<$exceptions.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+{\ttfamily \#include $<$pic.\+h$>$}\newline
+{\ttfamily \#include $<$pit.\+h$>$}\newline
+{\ttfamily \#include $<$rtc.\+h$>$}\newline
+{\ttfamily \#include $<$kheap.\+h$>$}\newline
+{\ttfamily \#include $<$devtree.\+h$>$}\newline
+{\ttfamily \#include $<$drivermgr.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+Include dependency graph for kickstart.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kickstart_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{kickstart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}KICKSTART\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}{KICKSTART\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Asserts a condition and generates a kernel panic in case of failure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{kickstart_8c_aa7661ce522787aa8be0fa9c027f8f557}{kickstart}} (void)
+\begin{DoxyCompactList}\small\item\em Main boot sequence, C kernel entry point. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kickstart_8c_a12fff90d5088fa9980403c3117727444}{scheduler\+\_\+dummy\+\_\+init}} (void)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+uintptr\+\_\+t \mbox{\hyperlink{kickstart_8c_ae5788c078c2507c48757da04a7e369af}{\+\_\+\+KERNEL\+\_\+\+DEV\+\_\+\+TREE\+\_\+\+BASE}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}\label{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}} 
+\index{kickstart.c@{kickstart.c}!KICKSTART\_ASSERT@{KICKSTART\_ASSERT}}
+\index{KICKSTART\_ASSERT@{KICKSTART\_ASSERT}!kickstart.c@{kickstart.c}}
+\doxysubsubsection{\texorpdfstring{KICKSTART\_ASSERT}{KICKSTART\_ASSERT}}
+{\footnotesize\ttfamily \#define KICKSTART\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \mbox{\hyperlink{kickstart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});               \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Asserts a condition and generates a kernel panic in case of failure. 
+
+Asserts a condition and generates a kernel panic in case of failure.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition to verify. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to print in case of error. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 77 of file kickstart.\+c.
+
+\mbox{\Hypertarget{kickstart_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{kickstart_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{kickstart.c@{kickstart.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!kickstart.c@{kickstart.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}KICKSTART\char`\"{}}
+
+
+
+Current module name. 
+
+
+
+Definition at line 55 of file kickstart.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{kickstart_8c_aa7661ce522787aa8be0fa9c027f8f557}\label{kickstart_8c_aa7661ce522787aa8be0fa9c027f8f557}} 
+\index{kickstart.c@{kickstart.c}!kickstart@{kickstart}}
+\index{kickstart@{kickstart}!kickstart.c@{kickstart.c}}
+\doxysubsubsection{\texorpdfstring{kickstart()}{kickstart()}}
+{\footnotesize\ttfamily void kickstart (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Main boot sequence, C kernel entry point. 
+
+Main boot sequence, C kernel entry point. Initializes each basic drivers for the kernel, then init the scheduler and start the system.
+
+\begin{DoxyWarning}{Warning}
+This function should never return. In case of return, the kernel should be able to catch the return as an error. 
+\end{DoxyWarning}
+
+
+Definition at line 119 of file kickstart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{120 \{}
+\DoxyCodeLine{121     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} ret\_value;}
+\DoxyCodeLine{122 }
+\DoxyCodeLine{123     \textcolor{comment}{/* Start testing framework */}}
+\DoxyCodeLine{124     \mbox{\hyperlink{test__framework_8h_adbf436e00c6d0ebcacf8f4e64dce6217}{TEST\_FRAMEWORK\_START}}();}
+\DoxyCodeLine{125 }
+\DoxyCodeLine{126     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_KICKSTART\_START, 0);}
+\DoxyCodeLine{127 }
+\DoxyCodeLine{128     \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{129 }
+\DoxyCodeLine{130 \textcolor{preprocessor}{\#if DEBUG\_LOG\_UART }}
+\DoxyCodeLine{131     \textcolor{comment}{/* Init serial driver */}}
+\DoxyCodeLine{132     \mbox{\hyperlink{uart_8h_a0c0ca72359ddf28dcd15900dfba19343}{uart\_init}}();}
+\DoxyCodeLine{133     ret\_value = \mbox{\hyperlink{console_8h_ac567f2c47c0a1d20e164c7056311cdc4}{console\_set\_selected\_driver}}(\mbox{\hyperlink{uart_8h_ab15d3cac777266e01b336b56ea841442}{uart\_get\_driver}}());}
+\DoxyCodeLine{134     \mbox{\hyperlink{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}{KICKSTART\_ASSERT}}(ret\_value == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{135                      \textcolor{stringliteral}{"{}Could not register UART driver"{}},}
+\DoxyCodeLine{136                      ret\_value);}
+\DoxyCodeLine{137 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{138 }
+\DoxyCodeLine{139     \textcolor{comment}{/* TODO: remove */}}
+\DoxyCodeLine{140     \mbox{\hyperlink{kickstart_8c_a12fff90d5088fa9980403c3117727444}{scheduler\_dummy\_init}}();}
+\DoxyCodeLine{141 }
+\DoxyCodeLine{142     \mbox{\hyperlink{kernel__output_8h_a08a2838165fe9beb1f1ec1e41648ccab}{KERNEL\_INFO}}(\textcolor{stringliteral}{"{}UTK Kickstart\(\backslash\)n"{}});}
+\DoxyCodeLine{143 }
+\DoxyCodeLine{144     \textcolor{comment}{/* Initialize the CPU */}}
+\DoxyCodeLine{145     \mbox{\hyperlink{i386_2includes_2cpu_8h_a560ad8614ae03841a10b489f4370bc51}{cpu\_init}}();}
+\DoxyCodeLine{146     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}CPU initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{147 }
+\DoxyCodeLine{148     \textcolor{comment}{/* Initialize interrupts manager */}}
+\DoxyCodeLine{149     \mbox{\hyperlink{interrupts_8h_acbc11e0977ede8062ce000240adad2f5}{kernel\_interrupt\_init}}();}
+\DoxyCodeLine{150     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Interrupt manager initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{151 }
+\DoxyCodeLine{152     \textcolor{comment}{/* Initialize exceptions manager */}}
+\DoxyCodeLine{153     \mbox{\hyperlink{exceptions_8h_a7d532784036e4df9ccf9569e5b5f2cdb}{kernel\_exception\_init}}();}
+\DoxyCodeLine{154     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Exception manager initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{155 }
+\DoxyCodeLine{156     \textcolor{comment}{/* Validate architecture (must be done after interrupt init because of }}
+\DoxyCodeLine{157 \textcolor{comment}{     * potential kernel panic) }}
+\DoxyCodeLine{158 \textcolor{comment}{     */}}
+\DoxyCodeLine{159     \mbox{\hyperlink{i386_2includes_2cpu_8h_a226d3ffd0bd73a0b2f318f3408fdd652}{validate\_architecture}}();}
+\DoxyCodeLine{160     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Architecture validated\(\backslash\)n"{}});}
+\DoxyCodeLine{161 }
+\DoxyCodeLine{162     \textcolor{comment}{/* Initialize kernel heap */}}
+\DoxyCodeLine{163     \mbox{\hyperlink{kheap_8h_a34ef347a6500d98fc1c2034929c8244d}{kheap\_init}}();}
+\DoxyCodeLine{164     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Kernel heap initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{165 }
+\DoxyCodeLine{166     \textcolor{comment}{/* Init FDT */}}
+\DoxyCodeLine{167     \mbox{\hyperlink{devtree_8h_ad2da6ad031cf54afca7ef3e6c0ddc8ef}{fdtInit}}((uintptr\_t)\&\mbox{\hyperlink{kickstart_8c_ae5788c078c2507c48757da04a7e369af}{\_KERNEL\_DEV\_TREE\_BASE}});}
+\DoxyCodeLine{168     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}FDT initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{169 }
+\DoxyCodeLine{170     \textcolor{comment}{/* Init device manager */}}
+\DoxyCodeLine{171     \mbox{\hyperlink{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23}{driverManagerInit}}();}
+\DoxyCodeLine{172     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Drivers initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174 \textcolor{preprocessor}{\#if TEST\_INTERRUPT\_ENABLED }}
+\DoxyCodeLine{175     \mbox{\hyperlink{test__framework_8h_a71eb896539093d3903fc43f4ebb989bc}{TEST\_FRAMEWORK\_END}}();}
+\DoxyCodeLine{176 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{177 }
+\DoxyCodeLine{178     \textcolor{comment}{/* Initialize the memory manager */}}
+\DoxyCodeLine{179     \textcolor{comment}{//memory\_manager\_init();}}
+\DoxyCodeLine{180     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Memory manager initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{181 }
+\DoxyCodeLine{182 }
+\DoxyCodeLine{183     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_accc99c7c6c2402d2f0a9fe5f12e9d394}{queue\_test}}, \mbox{\hyperlink{test__list_8h_a248ac223780c71ad05b4b833440c1679}{TEST\_OS\_QUEUE\_ENABLED}});}
+\DoxyCodeLine{184     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_ac802fc6acbed23b54a336da135aea206}{kqueue\_test}}, \mbox{\hyperlink{test__list_8h_ae7d5d110ecca4456478107ed5a90c5d6}{TEST\_OS\_KQUEUE\_ENABLED}});}
+\DoxyCodeLine{185     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_ab0aed13072bc11b97766634c625d6f21}{vector\_test}}, \mbox{\hyperlink{test__list_8h_a6eb962bd1131cdd5db4eff890eb09bc7}{TEST\_OS\_VECTOR\_ENABLED}});}
+\DoxyCodeLine{186     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_aa4852034aae8c97623e4ad203fb8a599}{uhashtable\_test}}, \mbox{\hyperlink{test__list_8h_a0226e0c7f289f641651620979a62c894}{TEST\_OS\_UHASHTABLE\_ENABLED}});}
+\DoxyCodeLine{187 }
+\DoxyCodeLine{188 \textcolor{preprocessor}{\#if TEST\_KHEAP\_ENABLED }}
+\DoxyCodeLine{189     \mbox{\hyperlink{test__framework_8h_a71eb896539093d3903fc43f4ebb989bc}{TEST\_FRAMEWORK\_END}}();}
+\DoxyCodeLine{190 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{191 }
+\DoxyCodeLine{192     \textcolor{comment}{/* Initialize the PIC */}}
+\DoxyCodeLine{193     \mbox{\hyperlink{pic_8h_afc70164c232cee70941b16e3f2ca029a}{pic\_init}}();}
+\DoxyCodeLine{194     ret\_value = \mbox{\hyperlink{interrupts_8h_aef3d21d6ea4f263055cda063c8ab5d7e}{kernel\_interrupt\_set\_driver}}(\mbox{\hyperlink{pic_8h_a3449e4be2378914b7c14b1b185681006}{pic\_get\_driver}}());}
+\DoxyCodeLine{195     \mbox{\hyperlink{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}{KICKSTART\_ASSERT}}(ret\_value == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{196                      \textcolor{stringliteral}{"{}Could register PIC in interrupt manager"{}},}
+\DoxyCodeLine{197                      ret\_value);}
+\DoxyCodeLine{198     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}PIC initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{199 }
+\DoxyCodeLine{200     \textcolor{comment}{/* Initialize the PIT */}}
+\DoxyCodeLine{201     \mbox{\hyperlink{pit_8h_ab156f98c4b1a20da35946eacfb4a6851}{pit\_init}}();}
+\DoxyCodeLine{202     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}PIT initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{203 }
+\DoxyCodeLine{204     \textcolor{comment}{/* Initialize the RTC */}}
+\DoxyCodeLine{205     \mbox{\hyperlink{rtc_8h_acf9024748b942a7ae375cf75951afa9c}{rtc\_init}}();}
+\DoxyCodeLine{206     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}RTC initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{207 }
+\DoxyCodeLine{208     \textcolor{comment}{/* Initialize the time manager */}}
+\DoxyCodeLine{209     ret\_value = \mbox{\hyperlink{time__mgt_8h_aaf9529f5524bee8b592d398036613af8}{time\_init}}(\mbox{\hyperlink{pit_8h_ad7b3a99d50be1750573eeca8f03d12f8}{pit\_get\_driver}}(), \mbox{\hyperlink{rtc_8h_a735e26cce1cfbd90fe227a55cb9cc941}{rtc\_get\_driver}}());}
+\DoxyCodeLine{210     \mbox{\hyperlink{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}{KICKSTART\_ASSERT}}(ret\_value == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{211                      \textcolor{stringliteral}{"{}Could not initialize time manager"{}},}
+\DoxyCodeLine{212                      ret\_value);}
+\DoxyCodeLine{213     \mbox{\hyperlink{kernel__output_8h_a7e7cb1b95d056da3cb6d8ccf31c8fff9}{KERNEL\_SUCCESS}}(\textcolor{stringliteral}{"{}Timer factory initialized\(\backslash\)n"{}});}
+\DoxyCodeLine{214 }
+\DoxyCodeLine{215     \textcolor{comment}{/* Restore interrupts */}}
+\DoxyCodeLine{216     \mbox{\hyperlink{interrupts_8h_a1da2e043445852bd2c46d242a4730504}{kernel\_interrupt\_restore}}(1);}
+\DoxyCodeLine{217 }
+\DoxyCodeLine{218     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_KICKSTART\_END, 0);}
+\DoxyCodeLine{219 }
+\DoxyCodeLine{220     \mbox{\hyperlink{test__framework_8h_afefc92896df9b7e4eb68249ec65266ba}{TEST\_POINT\_ASSERT\_RCODE}}(\mbox{\hyperlink{test__list_8h_a7de0df7f75a872fa227246a2dcafe902}{TEST\_KICKSTART\_END\_ID}},}
+\DoxyCodeLine{221                             \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}},}
+\DoxyCodeLine{222                             \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{223                             \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{224                             \mbox{\hyperlink{test__list_8h_ad64d972b3ca3b87ad756d62e30f6f740}{TEST\_KICKSTART\_ENABLED}});}
+\DoxyCodeLine{225 }
+\DoxyCodeLine{226 \textcolor{preprocessor}{\#if !TEST\_PANIC\_ENABLED }}
+\DoxyCodeLine{227     \mbox{\hyperlink{test__framework_8h_a71eb896539093d3903fc43f4ebb989bc}{TEST\_FRAMEWORK\_END}}();}
+\DoxyCodeLine{228 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{229 }
+\DoxyCodeLine{230     \textcolor{comment}{/* Once the scheduler is started, we should never come back here. */}}
+\DoxyCodeLine{231     \mbox{\hyperlink{kickstart_8c_ab828eef9d8b18ff5d61a8a75d5c4029b}{KICKSTART\_ASSERT}}(\mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}}, \textcolor{stringliteral}{"{}Kickstart Returned"{}}, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a}{OS\_ERR\_UNAUTHORIZED\_ACTION}});}
+\DoxyCodeLine{232 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kickstart_8c_aa7661ce522787aa8be0fa9c027f8f557_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kickstart_8c_a12fff90d5088fa9980403c3117727444}\label{kickstart_8c_a12fff90d5088fa9980403c3117727444}} 
+\index{kickstart.c@{kickstart.c}!scheduler\_dummy\_init@{scheduler\_dummy\_init}}
+\index{scheduler\_dummy\_init@{scheduler\_dummy\_init}!kickstart.c@{kickstart.c}}
+\doxysubsubsection{\texorpdfstring{scheduler\_dummy\_init()}{scheduler\_dummy\_init()}}
+{\footnotesize\ttfamily void scheduler\+\_\+dummy\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line 93 of file scheduler.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{94 \{}
+\DoxyCodeLine{95     \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}} = \&\mbox{\hyperlink{scheduler_8c_aeb95f6480d3d8ba47550ac11dfddacf1}{dummy\_thread}};}
+\DoxyCodeLine{96 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{kickstart_8c_a12fff90d5088fa9980403c3117727444_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{kickstart_8c_ae5788c078c2507c48757da04a7e369af}\label{kickstart_8c_ae5788c078c2507c48757da04a7e369af}} 
+\index{kickstart.c@{kickstart.c}!\_KERNEL\_DEV\_TREE\_BASE@{\_KERNEL\_DEV\_TREE\_BASE}}
+\index{\_KERNEL\_DEV\_TREE\_BASE@{\_KERNEL\_DEV\_TREE\_BASE}!kickstart.c@{kickstart.c}}
+\doxysubsubsection{\texorpdfstring{\_KERNEL\_DEV\_TREE\_BASE}{\_KERNEL\_DEV\_TREE\_BASE}}
+{\footnotesize\ttfamily uintptr\+\_\+t \+\_\+\+KERNEL\+\_\+\+DEV\+\_\+\+TREE\+\_\+\+BASE\hspace{0.3cm}{\ttfamily [extern]}}
+

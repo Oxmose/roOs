@@ -1,0 +1,128 @@
+\hypertarget{structinterrupt__driver__t}{}\doxysection{interrupt\+\_\+driver\+\_\+t Struct Reference}
+\label{structinterrupt__driver__t}\index{interrupt\_driver\_t@{interrupt\_driver\_t}}
+
+
+Defines the basic interface for an interrupt management driver (let it be PIC or IO APIC for instance).  
+
+
+
+
+{\ttfamily \#include $<$interrupts.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+void($\ast$ \mbox{\hyperlink{structinterrupt__driver__t_a1adacbd2d8f3624e70571503d73b4250}{driver\+\_\+set\+\_\+irq\+\_\+mask}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number, const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} enabled)
+\begin{DoxyCompactList}\small\item\em The function should enable or diable an IRQ given the IRQ number used as parameter. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structinterrupt__driver__t_a6104aa38bdacd06ef8fcd1645aeaf5ac}{driver\+\_\+set\+\_\+irq\+\_\+eoi}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em The function should acknowleges an IRQ. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}}($\ast$ \mbox{\hyperlink{structinterrupt__driver__t_aadf8a678de409691b8409a5fff93bb55}{driver\+\_\+handle\+\_\+spurious}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} int\+\_\+number)
+\begin{DoxyCompactList}\small\item\em The function should check if the serviced interrupt is a spurious interrupt. It also should handle the spurious interrupt. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}}($\ast$ \mbox{\hyperlink{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}{driver\+\_\+get\+\_\+irq\+\_\+int\+\_\+line}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Returns the interrupt line attached to an IRQ. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Defines the basic interface for an interrupt management driver (let it be PIC or IO APIC for instance). 
+
+Definition at line 63 of file interrupts.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}\label{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}} 
+\index{interrupt\_driver\_t@{interrupt\_driver\_t}!driver\_get\_irq\_int\_line@{driver\_get\_irq\_int\_line}}
+\index{driver\_get\_irq\_int\_line@{driver\_get\_irq\_int\_line}!interrupt\_driver\_t@{interrupt\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{driver\_get\_irq\_int\_line}{driver\_get\_irq\_int\_line}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}}($\ast$ driver\+\_\+get\+\_\+irq\+\_\+int\+\_\+line) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)}
+
+
+
+Returns the interrupt line attached to an IRQ. 
+
+Returns the interrupt line attached to an IRQ. -\/1 is returned if the IRQ number is not supported by the driver.
+
+\begin{DoxyReturn}{Returns}
+The interrupt line attached to an IRQ. -\/1 is returned if the IRQ number is not supported by the driver. 
+\end{DoxyReturn}
+
+
+Definition at line 111 of file interrupts.\+h.
+
+\mbox{\Hypertarget{structinterrupt__driver__t_aadf8a678de409691b8409a5fff93bb55}\label{structinterrupt__driver__t_aadf8a678de409691b8409a5fff93bb55}} 
+\index{interrupt\_driver\_t@{interrupt\_driver\_t}!driver\_handle\_spurious@{driver\_handle\_spurious}}
+\index{driver\_handle\_spurious@{driver\_handle\_spurious}!interrupt\_driver\_t@{interrupt\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{driver\_handle\_spurious}{driver\_handle\_spurious}}
+{\footnotesize\ttfamily \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}}($\ast$ driver\+\_\+handle\+\_\+spurious) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} int\+\_\+number)}
+
+
+
+The function should check if the serviced interrupt is a spurious interrupt. It also should handle the spurious interrupt. 
+
+The function should check if the serviced interrupt is a spurious interrupt. It also should handle the spurious interrupt.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em int\+\_\+number} & The interrupt number of the interrupt to test.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The function will return the interrupt type.
+\begin{DoxyItemize}
+\item INTERRUPT\+\_\+\+TYPE\+\_\+\+SPURIOUS if the current interrupt is a spurious one.
+\item INTERRUPT\+\_\+\+TYPE\+\_\+\+REGULAR if the current interrupt is a regular one. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 100 of file interrupts.\+h.
+
+\mbox{\Hypertarget{structinterrupt__driver__t_a6104aa38bdacd06ef8fcd1645aeaf5ac}\label{structinterrupt__driver__t_a6104aa38bdacd06ef8fcd1645aeaf5ac}} 
+\index{interrupt\_driver\_t@{interrupt\_driver\_t}!driver\_set\_irq\_eoi@{driver\_set\_irq\_eoi}}
+\index{driver\_set\_irq\_eoi@{driver\_set\_irq\_eoi}!interrupt\_driver\_t@{interrupt\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{driver\_set\_irq\_eoi}{driver\_set\_irq\_eoi}}
+{\footnotesize\ttfamily void($\ast$ driver\+\_\+set\+\_\+irq\+\_\+eoi) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)}
+
+
+
+The function should acknowleges an IRQ. 
+
+The function should acknowleges an IRQ.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The irq number to acknowledge. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 85 of file interrupts.\+h.
+
+\mbox{\Hypertarget{structinterrupt__driver__t_a1adacbd2d8f3624e70571503d73b4250}\label{structinterrupt__driver__t_a1adacbd2d8f3624e70571503d73b4250}} 
+\index{interrupt\_driver\_t@{interrupt\_driver\_t}!driver\_set\_irq\_mask@{driver\_set\_irq\_mask}}
+\index{driver\_set\_irq\_mask@{driver\_set\_irq\_mask}!interrupt\_driver\_t@{interrupt\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{driver\_set\_irq\_mask}{driver\_set\_irq\_mask}}
+{\footnotesize\ttfamily void($\ast$ driver\+\_\+set\+\_\+irq\+\_\+mask) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number, const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} enabled)}
+
+
+
+The function should enable or diable an IRQ given the IRQ number used as parameter. 
+
+The function should enable or diable an IRQ given the IRQ number used as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The number of the IRQ to enable/disable. \\
+\hline
+\mbox{\texttt{ in}}  & {\em enabled} & Must be set to TRUE to enable the IRQ and FALSE to disable the IRQ. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 75 of file interrupts.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Core/includes/\mbox{\hyperlink{interrupts_8h}{interrupts.\+h}}\end{DoxyCompactItemize}

@@ -1,0 +1,45 @@
+\hypertarget{strrchr_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strrchr.c File Reference}
+\label{strrchr_8c}\index{Source/Kernel/Libs/libc/src/strrchr.c@{Source/Kernel/Libs/libc/src/strrchr.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strrchr.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strrchr_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strrchr_8c_a0c05a458deff028ef4d4e64059098db4}{strrchr}} (const char $\ast$s, int c)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strrchr_8c_a0c05a458deff028ef4d4e64059098db4}\label{strrchr_8c_a0c05a458deff028ef4d4e64059098db4}} 
+\index{strrchr.c@{strrchr.c}!strrchr@{strrchr}}
+\index{strrchr@{strrchr}!strrchr.c@{strrchr.c}}
+\doxysubsubsection{\texorpdfstring{strrchr()}{strrchr()}}
+{\footnotesize\ttfamily char$\ast$ strrchr (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s,  }\item[{int}]{c }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strrchr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *found = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{keywordflow}{while} (*s) \{}
+\DoxyCodeLine{78         \textcolor{keywordflow}{if} (*s == (\textcolor{keywordtype}{char})c)}
+\DoxyCodeLine{79             found = s;}
+\DoxyCodeLine{80         s++;}
+\DoxyCodeLine{81     \}}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83     \textcolor{keywordflow}{return} (\textcolor{keywordtype}{char} *)found;}
+\DoxyCodeLine{84 \}}
+
+\end{DoxyCode}

@@ -1,0 +1,55 @@
+\hypertarget{memcmp_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memcmp.c File Reference}
+\label{memcmp_8c}\index{Source/Kernel/Libs/libc/src/memcmp.c@{Source/Kernel/Libs/libc/src/memcmp.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memcmp.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=267pt]{memcmp_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{memcmp_8c_a9e6df54ee04e18a3772335580e2ed872}{memcmp}} (const void $\ast$s1, const void $\ast$s2, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memcmp_8c_a9e6df54ee04e18a3772335580e2ed872}\label{memcmp_8c_a9e6df54ee04e18a3772335580e2ed872}} 
+\index{memcmp.c@{memcmp.c}!memcmp@{memcmp}}
+\index{memcmp@{memcmp}!memcmp.c@{memcmp.c}}
+\doxysubsubsection{\texorpdfstring{memcmp()}{memcmp()}}
+{\footnotesize\ttfamily int memcmp (\begin{DoxyParamCaption}\item[{const void $\ast$}]{s1,  }\item[{const void $\ast$}]{s2,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memcmp.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *c1 = s1, *c2 = s2;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{int} d = 0;}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{79         d = (int)*c1++ -\/ (\textcolor{keywordtype}{int})*c2++;}
+\DoxyCodeLine{80         \textcolor{keywordflow}{if} (d)}
+\DoxyCodeLine{81             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{82     \}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84     \textcolor{keywordflow}{return} d;}
+\DoxyCodeLine{85 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=325pt]{memcmp_8c_a9e6df54ee04e18a3772335580e2ed872_icgraph}
+\end{center}
+\end{figure}

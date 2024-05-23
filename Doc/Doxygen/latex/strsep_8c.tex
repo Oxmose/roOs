@@ -1,0 +1,64 @@
+\hypertarget{strsep_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strsep.c File Reference}
+\label{strsep_8c}\index{Source/Kernel/Libs/libc/src/strsep.c@{Source/Kernel/Libs/libc/src/strsep.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strsep.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strsep_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strsep_8c_a93c766c6e86f4f79e7507c21f1794e15}{strsep}} (char $\ast$$\ast$stringp, const char $\ast$delim)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strsep_8c_a93c766c6e86f4f79e7507c21f1794e15}\label{strsep_8c_a93c766c6e86f4f79e7507c21f1794e15}} 
+\index{strsep.c@{strsep.c}!strsep@{strsep}}
+\index{strsep@{strsep}!strsep.c@{strsep.c}}
+\doxysubsubsection{\texorpdfstring{strsep()}{strsep()}}
+{\footnotesize\ttfamily char$\ast$ strsep (\begin{DoxyParamCaption}\item[{char $\ast$$\ast$}]{stringp,  }\item[{const char $\ast$}]{delim }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strsep.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{char} *s = *stringp;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{char} *e;}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78     \textcolor{keywordflow}{if} (!s)}
+\DoxyCodeLine{79         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81     e = \mbox{\hyperlink{string_8h_a20d6321febae7448d32252b300b7300a}{strpbrk}}(s, delim);}
+\DoxyCodeLine{82     \textcolor{keywordflow}{if} (e)}
+\DoxyCodeLine{83         *e++ = \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{84 }
+\DoxyCodeLine{85     *stringp = e;}
+\DoxyCodeLine{86     \textcolor{keywordflow}{return} s;}
+\DoxyCodeLine{87 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{strsep_8c_a93c766c6e86f4f79e7507c21f1794e15_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=208pt]{strsep_8c_a93c766c6e86f4f79e7507c21f1794e15_icgraph}
+\end{center}
+\end{figure}

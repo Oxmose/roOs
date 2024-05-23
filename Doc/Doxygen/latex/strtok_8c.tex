@@ -1,0 +1,50 @@
+\hypertarget{strtok_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strtok.c File Reference}
+\label{strtok_8c}\index{Source/Kernel/Libs/libc/src/strtok.c@{Source/Kernel/Libs/libc/src/strtok.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strtok.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strtok_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strtok_8c_a80f8fb5a529dbd4b3efb2575764d850e}{strtok}} (char $\ast$s, const char $\ast$delim)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strtok_8c_a80f8fb5a529dbd4b3efb2575764d850e}\label{strtok_8c_a80f8fb5a529dbd4b3efb2575764d850e}} 
+\index{strtok.c@{strtok.c}!strtok@{strtok}}
+\index{strtok@{strtok}!strtok.c@{strtok.c}}
+\doxysubsubsection{\texorpdfstring{strtok()}{strtok()}}
+{\footnotesize\ttfamily char$\ast$ strtok (\begin{DoxyParamCaption}\item[{char $\ast$}]{s,  }\item[{const char $\ast$}]{delim }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strtok.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{static} \textcolor{keywordtype}{char} *holder;}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{keywordflow}{if} (s)}
+\DoxyCodeLine{78         holder = s;}
+\DoxyCodeLine{79 }
+\DoxyCodeLine{80     \textcolor{keywordflow}{return} \mbox{\hyperlink{string_8h_a43b18d90e8f5a0521cc7b922a4b79eef}{strsep}}(\&holder, delim);}
+\DoxyCodeLine{81 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{strtok_8c_a80f8fb5a529dbd4b3efb2575764d850e_cgraph}
+\end{center}
+\end{figure}

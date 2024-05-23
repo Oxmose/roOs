@@ -5,9 +5,9 @@
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 17/05/2023
+ * @date 23/05/2024
  *
- * @version 1.0
+ * @version 2.0
  *
  * @brief PIC (programmable interrupt controler) driver.
  *
@@ -22,13 +22,16 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <cpu_interrupt.h> /* Interrupt management */
-#include <kernel_output.h> /* Kernel output methods */
-#include <stdint.h>        /* Generic int types */
-#include <cpu.h>           /* CPU management */
-#include <interrupts.h>    /* Interrupts manager */
-#include <panic.h>         /* Kernel Panic */
-#include <critical.h>      /* Critical Sections */
+#include <cpu.h>          /* CPU port manipulation */
+#include <panic.h>        /* Kernel panic */
+#include <stdint.h>       /* Generic int types */
+#include <string.h>       /* String manipualtion */
+#include <kerror.h>       /* Kernel error */
+#include <devtree.h>      /* FDT driver */
+#include <critical.h>     /* Kernel critical locks */
+#include <drivermgr.h>    /* Driver manager */
+#include <interrupts.h>   /* Interrupt manager */
+#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -43,14 +46,12 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Master PIC CPU command port. */
-#define PIC_MASTER_COMM_PORT 0x20
-/** @brief Master PIC CPU data port. */
-#define PIC_MASTER_DATA_PORT 0x21
-/** @brief Slave PIC CPU command port. */
-#define PIC_SLAVE_COMM_PORT  0xA0
-/** @brief Slave PIC CPU data port. */
-#define PIC_SLAVE_DATA_PORT  0xA1
+/** @brief FDT property for chaining  */
+#define PIC_FDT_HASSLAVE_PROP "is-chained"
+/** @brief FDT property for interrupt offset */
+#define PIC_FDT_INTOFF_PROP   "int-offset"
+/** @brief FDT property for comm ports */
+#define PIC_FDT_COMM_PROP     "comm"
 
 /** @brief PIC End of Interrupt command. */
 #define PIC_EOI 0x20
@@ -81,9 +82,9 @@
 #define PIC_READ_ISR 0x0B
 
 /** @brief Master PIC Base interrupt line for the lowest IRQ. */
-#define PIC0_BASE_INTERRUPT_LINE INT_PIC_IRQ_OFFSET
+#define PIC0_BASE_INTERRUPT_LINE (sDrvCtrl.intOffset)
 /** @brief Slave PIC Base interrupt line for the lowest IRQ. */
-#define PIC1_BASE_INTERRUPT_LINE (INT_PIC_IRQ_OFFSET + 8)
+#define PIC1_BASE_INTERRUPT_LINE (PIC0_BASE_INTERRUPT_LINE + 8)
 
 /** @brief PIC's cascading IRQ number. */
 #define PIC_CASCADING_IRQ 2
@@ -96,6 +97,11 @@
 /** @brief Slave PIC spurious IRQ number. */
 #define PIC_SPURIOUS_IRQ_SLAVE  0x0F
 
+/** @brief PIC's minimal IRQ number. */
+#define PIC_MIN_IRQ_LINE 0
+/** @brief PIC's maximal IRQ number. */
+#define PIC_MAX_IRQ_LINE 15
+
 /** @brief Current module name */
 #define MODULE_NAME "X86 PIC"
 
@@ -103,7 +109,27 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief x86 PIC driver controler. */
+typedef struct
+{
+    /** @brief CPU command port. */
+    uint16_t cpuMasterCommPort;
+
+    /** @brief CPU data port. */
+    uint16_t cpuMasterDataPort;
+
+    /** @brief CPU command port. */
+    uint16_t cpuSlaveCommPort;
+
+    /** @brief CPU data port. */
+    uint16_t cpuSlaveDataPort;
+
+    /** @brief Tells if the PIC has a slave */
+    bool_t hasSlave;
+
+    /** @brief PIC IRQ interrupt offset */
+    uint8_t intOffset;
+} pic_controler_t;
 
 /*******************************************************************************
  * MACROS
@@ -127,6 +153,62 @@
 }
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
+
+/**
+ * @brief Sets the IRQ mask for the desired IRQ number.
+ *
+ * @details Sets the IRQ mask for the IRQ number given as parameter.
+ *
+ * @param[in] uint32_t kIrqNumber - The IRQ number to enable/disable.
+ * @param[in] bool_t kEnabled - Must be set to TRUE to enable the IRQ or FALSE
+ * to disable the IRQ.
+ */
+static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+
+/**
+ * @brief Acknowleges an IRQ.
+ *
+ * @details Acknowlege an IRQ by setting the End Of Interrupt bit for this IRQ.
+ *
+ * @param[in] uint32_t kIrqNumber - The irq number to Acknowlege.
+ */
+static void _picSetIRQEOI(const uint32_t kIrqNumber);
+
+/**
+ * @brief Checks if the serviced interrupt is a spurious
+ * interrupt. The function also handles the spurious interrupt.
+ *
+ * @details Checks if the serviced interrupt is a spurious
+ * interrupt. The function also handles the spurious interrupt.
+ *
+ * @param[in] uint32_t kIntNumber - The interrupt number of the interrupt to
+ * test.
+ *
+ * @return The function will return the interrupt type.
+ * - INTERRUPT_TYPE_SPURIOUS if the current interrupt is a spurious one.
+ * - INTERRUPT_TYPE_REGULAR if the current interrupt is a regular one.
+ */
+static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber);
+
+/**
+ * @brief Returns the interrupt line attached to an IRQ.
+ *
+ * @details Returns the interrupt line attached to an IRQ. -1 is returned
+ * if the IRQ number is not supported by the driver.
+ *
+ * @param[in] uint32_t kIrqNumber - The IRQ number of which to get the interrupt
+ * line.
+ *
+ * @return The interrupt line attached to an IRQ. -1 is returned if the IRQ
+ * number is not supported by the driver.
+ */
+static int32_t _picGetInterruptLine(const uint32_t kIrqNumber);
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
@@ -134,227 +216,319 @@
 /* None */
 
 /************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
 /** @brief PIC driver instance. */
-static interrupt_driver_t pic_driver = {
-    .driver_set_irq_mask     = pic_set_irq_mask,
-    .driver_set_irq_eoi      = pic_set_irq_eoi,
-    .driver_handle_spurious  = pic_handle_spurious_irq,
-    .driver_get_irq_int_line = pic_get_irq_int_line
+driver_t x86PICDriver = {
+    .pName         = "X86 PIC Driver",
+    .pDescription  = "X86 Programable Interrupt Controler Driver for UTK",
+    .pCompatible   = "x86,x86-pic",
+    .pVersion      = "2.0",
+    .pDriverAttach = _picAttach
 };
 
-/*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
 
-/* None */
+/************************** Static global variables ***************************/
+/** @brief PIC interrupt driver instance. */
+static interrupt_driver_t sPicDriver = {
+    .driver_set_irq_mask     = _picSetIRQMask,
+    .driver_set_irq_eoi      = _picSetIRQEOI,
+    .driver_handle_spurious  = _picHandleSpurious,
+    .driver_get_irq_int_line = _picGetInterruptLine
+};
+
+/** @brief PIC driver controler instance */
+static pic_controler_t sDrvCtrl = {
+    .cpuMasterCommPort = 0,
+    .cpuMasterDataPort = 0,
+    .cpuSlaveCommPort  = 0,
+    .cpuSlaveDataPort  = 0,
+    .hasSlave          = FALSE,
+    .intOffset         = 0
+};
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-void pic_init(void)
+static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
 {
+    const uintptr_t* ptrProp;
+    size_t           propLen;
+    OS_RETURN_E      retCode;
+
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_START, 0);
 
+    /* Check for slave */
+    if(fdtGetProp(pkFdtNode, PIC_FDT_HASSLAVE_PROP, &propLen) != NULL)
+    {
+        sDrvCtrl.hasSlave = TRUE;
+    }
+
+    /* Get IRQ offset */
+    ptrProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    {
+        KERNEL_ERROR("Failed to retreive the PIC IRQ offset from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.intOffset = (uint8_t)FDTTOCPU32(*ptrProp);
+
+
+    /* Get the com ports */
+    ptrProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
+    if(sDrvCtrl.hasSlave == TRUE)
+    {
+        if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 4)
+        {
+            KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
+            retCode = OS_ERR_INCORRECT_VALUE;
+            goto ATTACH_END;
+        }
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*ptrProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+        sDrvCtrl.cpuSlaveCommPort  = (uint8_t)FDTTOCPU32(*(ptrProp + 2));
+        sDrvCtrl.cpuSlaveDataPort  = (uint8_t)FDTTOCPU32(*(ptrProp + 3));
+    }
+    else
+    {
+        if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+        {
+            KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
+            retCode = OS_ERR_INCORRECT_VALUE;
+            goto ATTACH_END;
+        }
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*ptrProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+    }
+
     /* Initialize the master, remap IRQs */
-    _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, PIC_MASTER_COMM_PORT);
-    _cpu_outb(PIC0_BASE_INTERRUPT_LINE, PIC_MASTER_DATA_PORT);
-    _cpu_outb(0x4,  PIC_MASTER_DATA_PORT);
-    _cpu_outb(PIC_ICW4_8086,  PIC_MASTER_DATA_PORT);
-
-    /* Initialize the slave, remap IRQs */
-    _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, PIC_SLAVE_COMM_PORT);
-    _cpu_outb(PIC1_BASE_INTERRUPT_LINE, PIC_SLAVE_DATA_PORT);
-    _cpu_outb(0x2,  PIC_SLAVE_DATA_PORT);
-    _cpu_outb(PIC_ICW4_8086,  PIC_SLAVE_DATA_PORT);
-
-    /* Set EOI for both PICs. */
-    _cpu_outb(PIC_EOI, PIC_MASTER_COMM_PORT);
-    _cpu_outb(PIC_EOI, PIC_SLAVE_COMM_PORT);
-
+    _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuMasterCommPort);
+    _cpu_outb(PIC0_BASE_INTERRUPT_LINE, sDrvCtrl.cpuMasterDataPort);
+    _cpu_outb(0x4, sDrvCtrl.cpuMasterDataPort);
+    _cpu_outb(PIC_ICW4_8086, sDrvCtrl.cpuMasterDataPort);
+    /* Set EOI */
+    _cpu_outb(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
     /* Disable all IRQs */
-    _cpu_outb(0xFF, PIC_MASTER_DATA_PORT);
-    _cpu_outb(0xFF, PIC_SLAVE_DATA_PORT);
+    _cpu_outb(0xFF, sDrvCtrl.cpuMasterDataPort);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_END, 0);
+    if(sDrvCtrl.hasSlave == TRUE)
+    {
+        /* Initialize the slave, remap IRQs */
+        _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuSlaveCommPort);
+        _cpu_outb(PIC1_BASE_INTERRUPT_LINE, sDrvCtrl.cpuSlaveDataPort);
+        _cpu_outb(0x2,  sDrvCtrl.cpuSlaveDataPort);
+        _cpu_outb(PIC_ICW4_8086,  sDrvCtrl.cpuSlaveDataPort);
+        /* Set EOI for */
+        _cpu_outb(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
+        /* Disable all IRQs */
+        _cpu_outb(0xFF, sDrvCtrl.cpuSlaveDataPort);
+    }
+
+    /* Register as interrupt controler */
+    retCode = kernel_interrupt_set_driver(&sPicDriver);
+    PIC_ASSERT(retCode == OS_NO_ERR,
+               "Could register PIC in interrupt manager",
+               retCode);
+
+ATTACH_END:
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_END, 1, (uintptr_t)retCode);
 
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC Initialization end");
+
+    return retCode;
 }
 
-void pic_set_irq_mask(const uint32_t irq_number, const bool_t enabled)
+static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 {
-    uint8_t  init_mask;
-    uint32_t int_state;
-    uint32_t cascading_number;
+    uint8_t  initMask;
+    uint32_t intState;
+    uint32_t cascadingNumber;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SET_IRQ_MASK_START,
                        2,
-                       irq_number,
-                       enabled);
+                       kIrqNumber,
+                       kEnabled);
 
-    PIC_ASSERT(irq_number <= PIC_MAX_IRQ_LINE,
+    PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
                OS_ERR_NO_SUCH_IRQ);
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
     /* Manage master PIC */
-    if(irq_number < 8)
+    if(kIrqNumber < 8)
     {
         /* Retrieve initial mask */
-        init_mask = _cpu_inb(PIC_MASTER_DATA_PORT);
+        initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
 
         /* Set new mask value */
-        if(enabled == FALSE)
+        if(kEnabled == FALSE)
         {
-            init_mask |= 1 << irq_number;
+            initMask |= 1 << kIrqNumber;
         }
         else
         {
-            init_mask &= ~(1 << irq_number);
+            initMask &= ~(1 << kIrqNumber);
         }
 
         /* Set new mask */
-        _cpu_outb(init_mask, PIC_MASTER_DATA_PORT);
+        _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
+
+        KERNEL_DEBUG(PIC_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "New PIC Mask M: 0x%02x",
+                     _cpu_inb(sDrvCtrl.cpuMasterDataPort));
     }
 
     /* Manage slave PIC. WARNING, cascading will be enabled */
-    if(irq_number > 7)
+    if(kIrqNumber > 7)
     {
+        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+                   "Could not find PIC IRQ (chained)",
+                   OS_ERR_NO_SUCH_IRQ);
+
         /* Set new IRQ number */
-        cascading_number = irq_number - 8;
+        cascadingNumber = kIrqNumber - 8;
 
         /* Retrieve initial mask */
-        init_mask = _cpu_inb(PIC_MASTER_DATA_PORT);
+        initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
 
         /* Set new mask value */
-        init_mask &= ~(1 << PIC_CASCADING_IRQ);
+        initMask &= ~(1 << PIC_CASCADING_IRQ);
 
         /* Set new mask */
-        _cpu_outb(init_mask, PIC_MASTER_DATA_PORT);
+        _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
 
         /* Retrieve initial mask */
-        init_mask = _cpu_inb(PIC_SLAVE_DATA_PORT);
+        initMask = _cpu_inb(sDrvCtrl.cpuSlaveDataPort);
 
         /* Set new mask value */
-        if(enabled == FALSE)
+        if(kEnabled == FALSE)
         {
-            init_mask |= 1 << cascading_number;
+            initMask |= 1 << cascadingNumber;
         }
         else
         {
-            init_mask &= ~(1 << cascading_number);
+            initMask &= ~(1 << cascadingNumber);
         }
 
         /* Set new mask */
-        _cpu_outb(init_mask, PIC_SLAVE_DATA_PORT);
+        _cpu_outb(initMask, sDrvCtrl.cpuSlaveDataPort);
 
         /* If all is masked then disable cascading */
-        if(init_mask == 0xFF)
+        if(initMask == 0xFF)
         {
             /* Retrieve initial mask */
-            init_mask = _cpu_inb(PIC_MASTER_DATA_PORT);
+            initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
 
             /* Set new mask value */
-            init_mask  |= 1 << PIC_CASCADING_IRQ;
+            initMask  |= 1 << PIC_CASCADING_IRQ;
 
             /* Set new mask */
-            _cpu_outb(init_mask, PIC_MASTER_DATA_PORT);
+            _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
         }
-    }
 
-    KERNEL_DEBUG(PIC_DEBUG_ENABLED,
+        KERNEL_DEBUG(PIC_DEBUG_ENABLED,
                  MODULE_NAME,
                  "New PIC Mask M: 0x%02x S: 0x%02x",
-                 _cpu_inb(PIC_MASTER_DATA_PORT),
-                 _cpu_inb(PIC_SLAVE_DATA_PORT));
+                 _cpu_inb(sDrvCtrl.cpuMasterDataPort),
+                 _cpu_inb(sDrvCtrl.cpuSlaveDataPort));
+    }
+
+
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SET_IRQ_MASK_END,
                        2,
-                       irq_number,
-                       enabled);
+                       kIrqNumber,
+                       kEnabled);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 }
 
-void pic_set_irq_eoi(const uint32_t irq_number)
+static void _picSetIRQEOI(const uint32_t kIrqNumber)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_START, 1, irq_number);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_START, 1, kIrqNumber);
 
-    PIC_ASSERT(irq_number <= PIC_MAX_IRQ_LINE,
+    PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
                OS_ERR_NO_SUCH_IRQ);
 
-    /* End of interrupt signal */
-    if(irq_number > 7)
-    {
-        _cpu_outb(PIC_EOI, PIC_SLAVE_COMM_PORT);
-    }
-    _cpu_outb(PIC_EOI, PIC_MASTER_COMM_PORT);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_END, 1, irq_number);
+    /* End of interrupt signal */
+    if(kIrqNumber > 7)
+    {
+        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+                   "Could not find PIC IRQ (chained)",
+                   OS_ERR_NO_SUCH_IRQ);
+
+        _cpu_outb(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
+    }
+    _cpu_outb(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_END, 1, kIrqNumber);
 
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC IRQ EOI");
 }
 
-INTERRUPT_TYPE_E pic_handle_spurious_irq(const uint32_t int_number)
+static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
 {
-    uint8_t  isr_val;
-    uint32_t irq_number;
+    uint8_t  isrVal;
+    uint32_t irqNumber;
 
-    irq_number = int_number - INT_PIC_IRQ_OFFSET;
+    irqNumber = kIntNumber - PIC0_BASE_INTERRUPT_LINE;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_START, 1, int_number);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_START, 1, kIntNumber);
 
     KERNEL_DEBUG(PIC_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Spurious handling %d",
-                 irq_number);
+                 irqNumber);
 
     /* Check if regular soft interrupt */
-    if(irq_number > PIC_MAX_IRQ_LINE)
+    if(irqNumber > PIC_MAX_IRQ_LINE)
     {
         KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                            2,
-                           int_number,
+                           kIntNumber,
                            INTERRUPT_TYPE_REGULAR);
         return INTERRUPT_TYPE_REGULAR;
     }
 
     /* Check the PIC type */
-    if(irq_number > 7)
+    if(irqNumber > 7)
     {
+        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+                   "Could not find spurious PIC IRQ (chained)",
+                   OS_ERR_NO_SUCH_IRQ);
+
         /* This is not a potential spurious irq */
-        if(irq_number != PIC_SPURIOUS_IRQ_SLAVE)
+        if(irqNumber != PIC_SPURIOUS_IRQ_SLAVE)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
 
         /* Read the ISR mask */
-        _cpu_outb(PIC_READ_ISR, PIC_SLAVE_COMM_PORT);
-        isr_val = _cpu_inb(PIC_SLAVE_COMM_PORT);
-        if((isr_val & PIC_SPURIOUS_IRQ_MASK) != 0)
+        _cpu_outb(PIC_READ_ISR, sDrvCtrl.cpuSlaveCommPort);
+        isrVal = _cpu_inb(sDrvCtrl.cpuSlaveCommPort);
+        if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
         else
         {
             /* Send EOI on master */
-            pic_set_irq_eoi(PIC_CASCADING_IRQ);
+            _picSetIRQEOI(PIC_CASCADING_IRQ);
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_SPURIOUS);
 
             return INTERRUPT_TYPE_SPURIOUS;
@@ -363,23 +537,23 @@ INTERRUPT_TYPE_E pic_handle_spurious_irq(const uint32_t int_number)
     else
     {
         /* This is not a potential spurious irq */
-        if(irq_number != PIC_SPURIOUS_IRQ_MASTER)
+        if(irqNumber != PIC_SPURIOUS_IRQ_MASTER)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
 
         /* Read the ISR mask */
-        _cpu_outb(PIC_READ_ISR, PIC_MASTER_COMM_PORT);
-        isr_val = _cpu_inb(PIC_MASTER_COMM_PORT);
-        if((isr_val & PIC_SPURIOUS_IRQ_MASK) != 0)
+        _cpu_outb(PIC_READ_ISR, sDrvCtrl.cpuMasterCommPort);
+        isrVal = _cpu_inb(sDrvCtrl.cpuMasterCommPort);
+        if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
@@ -387,49 +561,29 @@ INTERRUPT_TYPE_E pic_handle_spurious_irq(const uint32_t int_number)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
-                               int_number,
+                               kIntNumber,
                                INTERRUPT_TYPE_SPURIOUS);
             return INTERRUPT_TYPE_SPURIOUS;
         }
     }
 }
 
-void pic_disable(void)
+static int32_t _picGetInterruptLine(const uint32_t kIrqNumber)
 {
-    uint32_t int_state;
-
-    ENTER_CRITICAL(int_state);
-
-    /* Disable all IRQs */
-    _cpu_outb(0xFF, PIC_MASTER_DATA_PORT);
-    _cpu_outb(0xFF, PIC_SLAVE_DATA_PORT);
-
-    KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC Disabled");
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_DISABLE, 0);
-
-    EXIT_CRITICAL(int_state);
-}
-
-int32_t pic_get_irq_int_line(const uint32_t irq_number)
-{
-
-    if(irq_number > PIC_MAX_IRQ_LINE)
+    if(kIrqNumber > PIC_MAX_IRQ_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_GET_INT_LINE, 2, irq_number, -1);
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_GET_INT_LINE, 2, kIrqNumber, -1);
         return -1;
     }
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_GET_INT_LINE,
                        2,
-                       irq_number,
-                       irq_number + INT_PIC_IRQ_OFFSET);
-    return irq_number + INT_PIC_IRQ_OFFSET;
+                       kIrqNumber,
+                       kIrqNumber + PIC0_BASE_INTERRUPT_LINE);
+    return kIrqNumber + PIC0_BASE_INTERRUPT_LINE;
 }
 
-const interrupt_driver_t* pic_get_driver(void)
-{
-    return &pic_driver;
-}
+/***************************** DRIVER REGISTRATION ****************************/
+DRIVERMGR_REG(x86PICDriver);
 
 /************************************ EOF *************************************/

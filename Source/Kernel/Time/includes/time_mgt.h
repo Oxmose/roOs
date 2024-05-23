@@ -41,6 +41,14 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
+typedef enum
+{
+    MAIN_TIMER,
+    RTC_TIMER,
+    AUX_TIMER,
+    LIFETIME_TIMER
+} TIMER_TYPE_E;
+
 /**
  * @brief The kernel's timer driver abstraction.
  */
@@ -79,7 +87,7 @@ typedef struct
     /**
      * @brief Sets the time elasped in ns.
      *
-     * @details Returns the time elasped in ns. The timer can be get with the
+     * @details Sets the time elasped in ns. The timer can be get with the
      * get_time_ns function.
      *
      * @param[in] time_ns The time in nanoseconds to set.
@@ -170,30 +178,21 @@ typedef struct
  ******************************************************************************/
 
 /**
- * @brief Initializes the time manager.
+ * @brief Adds a timer to the manager.
  *
- * @details Initializes the kernel's time manager. Set the basic time structures
- * and interrupts. The rtc and aux timer drivers can be set to NULL but the main
- * driver has to be fully set.
+ * @details Adds a timer to the managerr. Set the basic time structures
+ * and interrupts.
  *
- * @param[in] sys_timer The system's main timer driver.
- * @param[in] rtc_timer The RTC timer driver.
+ * @param[in] kernel_timer_t* kpTimer - The timer to add.
+ * @param[in] TIMER_TYPE_E kType - The timer type..
  *
  * @warning All the interrupt managers and timer sources drivers must be
  * initialized before using this function.
  *
  * @return The success state or the error code.
- * - OS_NO_ERR is returned if no error is encountered.
- * - OS_ERR_NULL_POINTER if the main timer driver is NULL or has NULL function
- *   pointers. This value is also returned is the RTC or AUX driver is not NULL
- *   but contains NULL function pointers.
- * - OS_ERR_NO_SUCH_IRQ_LINE is returned if the IRQ number of the kernel timers
- *   sources are not supported.
- * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the interrupt lines of
- *   the kernel timers sources are not supported.
  */
-OS_RETURN_E time_init(const kernel_timer_t* sys_timer,
-                      const kernel_timer_t* rtc_timer);
+OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
+                            const TIMER_TYPE_E kType);
 
 /**
  * @brief Returns the current uptime.

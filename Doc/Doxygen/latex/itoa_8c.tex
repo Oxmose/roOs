@@ -1,0 +1,83 @@
+\hypertarget{itoa_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/itoa.c File Reference}
+\label{itoa_8c}\index{Source/Kernel/Libs/libc/src/itoa.c@{Source/Kernel/Libs/libc/src/itoa.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+Include dependency graph for itoa.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=259pt]{itoa_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{itoa_8c_ad0f52a0bb4e18315ef7435b10829438f}{itoa}} (\mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}} i, char $\ast$buf, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} base)
+\begin{DoxyCompactList}\small\item\em Convert a signed integer value to a string. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{itoa_8c_ad0f52a0bb4e18315ef7435b10829438f}\label{itoa_8c_ad0f52a0bb4e18315ef7435b10829438f}} 
+\index{itoa.c@{itoa.c}!itoa@{itoa}}
+\index{itoa@{itoa}!itoa.c@{itoa.c}}
+\doxysubsubsection{\texorpdfstring{itoa()}{itoa()}}
+{\footnotesize\ttfamily void itoa (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}}}]{value,  }\item[{char $\ast$}]{buf,  }\item[{\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{base }\end{DoxyParamCaption})}
+
+
+
+Convert a signed integer value to a string. 
+
+Convert a signed integer value to a string and inject the conversion result in the buffer given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The value to convert. \\
+\hline
+\mbox{\texttt{ out}}  & {\em buf} & The buffer to receive the convertion\textquotesingle{}s result. \\
+\hline
+\mbox{\texttt{ in}}  & {\em base} & The base of the signed integer to convert. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 73 of file itoa.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{comment}{/* If base is unknown just return */}}
+\DoxyCodeLine{76     \textcolor{keywordflow}{if} (base > 16)}
+\DoxyCodeLine{77     \{}
+\DoxyCodeLine{78         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{79     \}}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81     \textcolor{comment}{/* Check sign */}}
+\DoxyCodeLine{82     \textcolor{keywordflow}{if} (base == 10 \&\& i < 0)}
+\DoxyCodeLine{83     \{}
+\DoxyCodeLine{84         *buf++ = \textcolor{charliteral}{'-\/'};}
+\DoxyCodeLine{85         i *= -\/1;}
+\DoxyCodeLine{86     \}}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88     \textcolor{comment}{/* To the job */}}
+\DoxyCodeLine{89     \mbox{\hyperlink{stdlib_8h_a3761e5ef3ca3546a842194be4dd70a31}{uitoa}}(i, buf, base);}
+\DoxyCodeLine{90 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=192pt]{itoa_8c_ad0f52a0bb4e18315ef7435b10829438f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{itoa_8c_ad0f52a0bb4e18315ef7435b10829438f_icgraph}
+\end{center}
+\end{figure}

@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <kernel_output.h> /* Kernel output */
+#include <kerneloutput.h> /* Kernel output */
 #include <stdint.h>        /* Standard C ints */
 #include <stddef.h>        /* Standard definitions */
 #include <panic.h>         /* Kernel panic */
@@ -52,17 +52,18 @@
 
 typedef enum
 {
-    TEST_TYPE_BYTE   = 0,
-    TEST_TYPE_UBYTE  = 1,
-    TEST_TYPE_HALF   = 2,
-    TEST_TYPE_UHALF  = 3,
-    TEST_TYPE_WORD   = 4,
-    TEST_TYPE_UWORD  = 5,
-    TEST_TYPE_DWORD  = 6,
-    TEST_TYPE_UDWORD = 7,
-    TEST_TYPE_FLOAT  = 8,
-    TEST_TYPE_DOUBLE = 9,
-    TEST_TYPE_RCODE  = 10,
+    TEST_TYPE_BYTE    = 0,
+    TEST_TYPE_UBYTE   = 1,
+    TEST_TYPE_HALF    = 2,
+    TEST_TYPE_UHALF   = 3,
+    TEST_TYPE_WORD    = 4,
+    TEST_TYPE_UWORD   = 5,
+    TEST_TYPE_DWORD   = 6,
+    TEST_TYPE_UDWORD  = 7,
+    TEST_TYPE_FLOAT   = 8,
+    TEST_TYPE_DOUBLE  = 9,
+    TEST_TYPE_RCODE   = 10,
+    TEST_TYPE_POINTER = 11
 } TEST_ITEM_TYPE_E;
 
 typedef struct test_item
@@ -502,6 +503,24 @@ void test_framework_assert_errcode(const uint32_t test_id,
 
     /* Set additional data */
     item->type = TEST_TYPE_RCODE;
+}
+
+void test_framework_assert_pointer(const uint32_t test_id,
+                                   const bool_t condition,
+                                   const uintptr_t expected,
+                                   const uintptr_t value)
+{
+    test_item_t* item;
+
+    /* Init */
+    _init_test_item(test_id,
+                    condition,
+                    (uint64_t)expected,
+                    (uint64_t)value,
+                    &item);
+
+    /* Set additional data */
+    item->type = TEST_TYPE_POINTER;
 }
 
 

@@ -1,0 +1,229 @@
+\hypertarget{structkernel__timer__t}{}\doxysection{kernel\+\_\+timer\+\_\+t Struct Reference}
+\label{structkernel__timer__t}\index{kernel\_timer\_t@{kernel\_timer\_t}}
+
+
+The kernel\textquotesingle{}s timer driver abstraction.  
+
+
+
+
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}($\ast$ \mbox{\hyperlink{structkernel__timer__t_afa55b60b206da841562e9639fd5a72ba}{get\+\_\+frequency}} )(void)
+\begin{DoxyCompactList}\small\item\em The function should return the frequency of the timer source. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}{set\+\_\+frequency}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} frequency)
+\begin{DoxyCompactList}\small\item\em The function should allow the kernel to set the frequency of a timer source. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}($\ast$ \mbox{\hyperlink{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}{get\+\_\+time\+\_\+ns}} )(void)
+\begin{DoxyCompactList}\small\item\em Returns the time elasped since the last timer\textquotesingle{}s reset in ns. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__timer__t_a4401019fba9f88fafc38b715b93cd0bf}{set\+\_\+time\+\_\+ns}} )(const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} time\+\_\+ns)
+\begin{DoxyCompactList}\small\item\em Sets the time elasped in ns. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__timer__t_a1642c82ad61ded45b6a55d568274bc10}{enable}} )(void)
+\begin{DoxyCompactList}\small\item\em The function should enable the timer\textquotesingle{}s interrupt. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__timer__t_ace1449d367bdcce8d6ca549dceac7a7f}{disable}} )(void)
+\begin{DoxyCompactList}\small\item\em The function should disable the timer\textquotesingle{}s interrupt. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}}($\ast$ \mbox{\hyperlink{structkernel__timer__t_a3bd7494c8b959d5a3f0bc72af8b1c19b}{set\+\_\+handler}} )(void($\ast$handler)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$))
+\begin{DoxyCompactList}\small\item\em The function should set the timer\textquotesingle{}s tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}}($\ast$ \mbox{\hyperlink{structkernel__timer__t_ae9a2b083547510a16bc6f0b95db87867}{remove\+\_\+handler}} )(void)
+\begin{DoxyCompactList}\small\item\em The function should remove the timer tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}($\ast$ \mbox{\hyperlink{structkernel__timer__t_a311706f61cd50a499437e70c62d83bee}{get\+\_\+irq}} )(void)
+\begin{DoxyCompactList}\small\item\em The function should return the IRQ line associated to the timer source. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+The kernel\textquotesingle{}s timer driver abstraction. 
+
+Definition at line 47 of file time\+\_\+mgt.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structkernel__timer__t_ace1449d367bdcce8d6ca549dceac7a7f}\label{structkernel__timer__t_ace1449d367bdcce8d6ca549dceac7a7f}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!disable@{disable}}
+\index{disable@{disable}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{disable}{disable}}
+{\footnotesize\ttfamily void($\ast$ disable) (void)}
+
+
+
+The function should disable the timer\textquotesingle{}s interrupt. 
+
+The function should disable the timer\textquotesingle{}s interrupt. 
+
+Definition at line 101 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a1642c82ad61ded45b6a55d568274bc10}\label{structkernel__timer__t_a1642c82ad61ded45b6a55d568274bc10}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!enable@{enable}}
+\index{enable@{enable}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{enable}{enable}}
+{\footnotesize\ttfamily void($\ast$ enable) (void)}
+
+
+
+The function should enable the timer\textquotesingle{}s interrupt. 
+
+The function should enable the timer\textquotesingle{}s interrupt. 
+
+Definition at line 94 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_afa55b60b206da841562e9639fd5a72ba}\label{structkernel__timer__t_afa55b60b206da841562e9639fd5a72ba}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!get\_frequency@{get\_frequency}}
+\index{get\_frequency@{get\_frequency}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{get\_frequency}{get\_frequency}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}($\ast$ get\+\_\+frequency) (void)}
+
+
+
+The function should return the frequency of the timer source. 
+
+The function should return the frequency of the timer source.
+
+\begin{DoxyReturn}{Returns}
+The function should return the frequency of the timer source. 
+\end{DoxyReturn}
+
+
+Definition at line 56 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a311706f61cd50a499437e70c62d83bee}\label{structkernel__timer__t_a311706f61cd50a499437e70c62d83bee}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!get\_irq@{get\_irq}}
+\index{get\_irq@{get\_irq}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{get\_irq}{get\_irq}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}($\ast$ get\+\_\+irq) (void)}
+
+
+
+The function should return the IRQ line associated to the timer source. 
+
+The function should return the IRQ line associated to the timer source.
+
+\begin{DoxyReturn}{Returns}
+The function should return the IRQ line associated to the timer source. 
+\end{DoxyReturn}
+
+
+Definition at line 146 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}\label{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!get\_time\_ns@{get\_time\_ns}}
+\index{get\_time\_ns@{get\_time\_ns}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{get\_time\_ns}{get\_time\_ns}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}($\ast$ get\+\_\+time\+\_\+ns) (void)}
+
+
+
+Returns the time elasped since the last timer\textquotesingle{}s reset in ns. 
+
+Returns the time elasped since the last timer\textquotesingle{}s reset in ns. The timer can be set with the set\+\_\+time\+\_\+ns function.
+
+\begin{DoxyReturn}{Returns}
+The time in nanosecond since the last timer reset is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 77 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_ae9a2b083547510a16bc6f0b95db87867}\label{structkernel__timer__t_ae9a2b083547510a16bc6f0b95db87867}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!remove\_handler@{remove\_handler}}
+\index{remove\_handler@{remove\_handler}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{remove\_handler}{remove\_handler}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}}($\ast$ remove\+\_\+handler) (void)}
+
+
+
+The function should remove the timer tick handler. 
+
+The function should remove the timer tick handler.
+
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the timer interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the timer line has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 134 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}\label{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!set\_frequency@{set\_frequency}}
+\index{set\_frequency@{set\_frequency}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{set\_frequency}{set\_frequency}}
+{\footnotesize\ttfamily void($\ast$ set\+\_\+frequency) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} frequency)}
+
+
+
+The function should allow the kernel to set the frequency of a timer source. 
+
+The function should allow the kernel to set the frequency of a timer source. The frequency is defined in Hz.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em frequency} & The frequency to apply to the timer source. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 67 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a3bd7494c8b959d5a3f0bc72af8b1c19b}\label{structkernel__timer__t_a3bd7494c8b959d5a3f0bc72af8b1c19b}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!set\_handler@{set\_handler}}
+\index{set\_handler@{set\_handler}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{set\_handler}{set\_handler}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}}($\ast$ set\+\_\+handler) (void($\ast$handler)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$))}
+
+
+
+The function should set the timer\textquotesingle{}s tick handler. 
+
+The function should set the timer\textquotesingle{}s tick handler. The handler will be called at each tick received.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handler} & The handler of the timer\textquotesingle{}s interrupt.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the handler is NULL.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the timer interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the pointer to the handler is NULL.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+ALREADY\+\_\+\+REGISTERED is returned if a handler is already registered for the timer. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 120 of file time\+\_\+mgt.\+h.
+
+\mbox{\Hypertarget{structkernel__timer__t_a4401019fba9f88fafc38b715b93cd0bf}\label{structkernel__timer__t_a4401019fba9f88fafc38b715b93cd0bf}} 
+\index{kernel\_timer\_t@{kernel\_timer\_t}!set\_time\_ns@{set\_time\_ns}}
+\index{set\_time\_ns@{set\_time\_ns}!kernel\_timer\_t@{kernel\_timer\_t}}
+\doxysubsubsection{\texorpdfstring{set\_time\_ns}{set\_time\_ns}}
+{\footnotesize\ttfamily void($\ast$ set\+\_\+time\+\_\+ns) (const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} time\+\_\+ns)}
+
+
+
+Sets the time elasped in ns. 
+
+Returns the time elasped in ns. The timer can be get with the get\+\_\+time\+\_\+ns function.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em time\+\_\+ns} & The time in nanoseconds to set. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 87 of file time\+\_\+mgt.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Time/includes/\mbox{\hyperlink{time__mgt_8h}{time\+\_\+mgt.\+h}}\end{DoxyCompactItemize}

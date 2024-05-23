@@ -121,6 +121,13 @@
     }                                                                       \
 }
 
+#define TEST_POINT_ASSERT_POINTER(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
+    if(TEST_ENABLED)                                                          \
+    {                                                                         \
+        test_framework_assert_pointer(ID, COND, EXPECTED, VALUE);             \
+    }                                                                         \
+}
+
 #define TEST_POINT_FUNCTION_CALL(FUNCTION_NAME, TEST_ENABLED){              \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
@@ -206,6 +213,11 @@ void test_framework_assert_errcode(const uint32_t test_id,
                                    const bool_t condition,
                                    const OS_RETURN_E expected,
                                    const OS_RETURN_E value);
+
+void test_framework_assert_pointer(const uint32_t test_id,
+                                   const bool_t condition,
+                                   const uintptr_t expected,
+                                   const uintptr_t value);
 
 #else /* #ifdef _TESTING_FRAMEWORK_ENABLED */
 

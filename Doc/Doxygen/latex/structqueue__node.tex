@@ -1,0 +1,135 @@
+\hypertarget{structqueue__node}{}\doxysection{queue\+\_\+node Struct Reference}
+\label{structqueue__node}\index{queue\_node@{queue\_node}}
+
+
+Queue node structure.  
+
+
+
+
+{\ttfamily \#include $<$queue.\+h$>$}
+
+
+
+Collaboration diagram for queue\+\_\+node\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=203pt]{structqueue__node__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structqueue__alloc__t}{queue\+\_\+alloc\+\_\+t}} \mbox{\hyperlink{structqueue__node_ab526db85a6c3934bc16add7c3051c09e}{allocator}}
+\begin{DoxyCompactList}\small\item\em The allocator used by this node. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structqueue__node}{queue\+\_\+node}} $\ast$ \mbox{\hyperlink{structqueue__node_a477dd7aceecab61f2c0a69a730cc41ba}{next}}
+\begin{DoxyCompactList}\small\item\em Next node in the queue. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structqueue__node}{queue\+\_\+node}} $\ast$ \mbox{\hyperlink{structqueue__node_a84438cac3633deb028c838a08be517be}{prev}}
+\begin{DoxyCompactList}\small\item\em Previous node in the queue. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{structqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}}
+\begin{DoxyCompactList}\small\item\em Tell if the node is present in a queue or stands alone. \end{DoxyCompactList}\item 
+uintptr\+\_\+t \mbox{\hyperlink{structqueue__node_ae1526716a9b24e75d656506b16f03297}{priority}}
+\begin{DoxyCompactList}\small\item\em Node\textquotesingle{}s priority, used when the queue is a priority queue. \end{DoxyCompactList}\item 
+void $\ast$ \mbox{\hyperlink{structqueue__node_a735984d41155bc1032e09bece8f8d66d}{data}}
+\begin{DoxyCompactList}\small\item\em Node\textquotesingle{}s data pointer. Store the address of the contained data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Queue node structure. 
+
+Definition at line 64 of file queue.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structqueue__node_ab526db85a6c3934bc16add7c3051c09e}\label{structqueue__node_ab526db85a6c3934bc16add7c3051c09e}} 
+\index{queue\_node@{queue\_node}!allocator@{allocator}}
+\index{allocator@{allocator}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{allocator}{allocator}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structqueue__alloc__t}{queue\+\_\+alloc\+\_\+t}} allocator}
+
+
+
+The allocator used by this node. 
+
+
+
+Definition at line 67 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__node_a735984d41155bc1032e09bece8f8d66d}\label{structqueue__node_a735984d41155bc1032e09bece8f8d66d}} 
+\index{queue\_node@{queue\_node}!data@{data}}
+\index{data@{data}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{data}{data}}
+{\footnotesize\ttfamily void$\ast$ data}
+
+
+
+Node\textquotesingle{}s data pointer. Store the address of the contained data. 
+
+
+
+Definition at line 81 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}\label{structqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}} 
+\index{queue\_node@{queue\_node}!enlisted@{enlisted}}
+\index{enlisted@{enlisted}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{enlisted}{enlisted}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} enlisted}
+
+
+
+Tell if the node is present in a queue or stands alone. 
+
+
+
+Definition at line 75 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__node_a477dd7aceecab61f2c0a69a730cc41ba}\label{structqueue__node_a477dd7aceecab61f2c0a69a730cc41ba}} 
+\index{queue\_node@{queue\_node}!next@{next}}
+\index{next@{next}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{next}{next}}
+{\footnotesize\ttfamily struct \mbox{\hyperlink{structqueue__node}{queue\+\_\+node}}$\ast$ next}
+
+
+
+Next node in the queue. 
+
+
+
+Definition at line 70 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__node_a84438cac3633deb028c838a08be517be}\label{structqueue__node_a84438cac3633deb028c838a08be517be}} 
+\index{queue\_node@{queue\_node}!prev@{prev}}
+\index{prev@{prev}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{prev}{prev}}
+{\footnotesize\ttfamily struct \mbox{\hyperlink{structqueue__node}{queue\+\_\+node}}$\ast$ prev}
+
+
+
+Previous node in the queue. 
+
+
+
+Definition at line 72 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__node_ae1526716a9b24e75d656506b16f03297}\label{structqueue__node_ae1526716a9b24e75d656506b16f03297}} 
+\index{queue\_node@{queue\_node}!priority@{priority}}
+\index{priority@{priority}!queue\_node@{queue\_node}}
+\doxysubsubsection{\texorpdfstring{priority}{priority}}
+{\footnotesize\ttfamily uintptr\+\_\+t priority}
+
+
+
+Node\textquotesingle{}s priority, used when the queue is a priority queue. 
+
+
+
+Definition at line 78 of file queue.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Libs/libapi/includes/\mbox{\hyperlink{queue_8h}{queue.\+h}}\end{DoxyCompactItemize}

@@ -1,0 +1,440 @@
+\hypertarget{console_8c}{}\doxysection{Source/\+Kernel/\+IO/src/console.c File Reference}
+\label{console_8c}\index{Source/Kernel/IO/src/console.c@{Source/Kernel/IO/src/console.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+Include dependency graph for console.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=331pt]{console_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{console_8c_ac567f2c47c0a1d20e164c7056311cdc4}{console\+\_\+set\+\_\+selected\+\_\+driver}} (const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} $\ast$driver)
+\begin{DoxyCompactList}\small\item\em Sets the current selected driver. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a8f3bc8da8a4eae21bd40e7a5a75a370c}{console\+\_\+clear\+\_\+screen}} (void)
+\begin{DoxyCompactList}\small\item\em Clears the screen, the background color is set to black. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_ab6041143ad7fea230413af143426fadd}{console\+\_\+put\+\_\+cursor\+\_\+at}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} line, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} column)
+\begin{DoxyCompactList}\small\item\em Places the cursor to the coordinates given as parameters. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a82b4a6a16981c83a0ac0a627a71ac004}{console\+\_\+save\+\_\+cursor}} (\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Saves the cursor attributes in the buffer given as paramter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a9ed9711d5768bb19d44f89b29eea689b}{console\+\_\+restore\+\_\+cursor}} (const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Restores the cursor attributes from the buffer given as parameter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a52b1917e24a2ea8495bafce76485e540}{console\+\_\+scroll}} (const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} lines\+\_\+count)
+\begin{DoxyCompactList}\small\item\em Scrolls in the desired direction of lines\+\_\+count lines. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_ae81cd129d634049e6a9a02f1ecd043b9}{console\+\_\+set\+\_\+color\+\_\+scheme}} (const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$color\+\_\+scheme)
+\begin{DoxyCompactList}\small\item\em Sets the color scheme of the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a771e623508d58ebc6a78a8adfc7bfce1}{console\+\_\+save\+\_\+color\+\_\+scheme}} (\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Saves the color scheme in the buffer given as parameter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_a37b803e95784aaf50af3426977aabaaf}{console\+\_\+put\+\_\+string}} (const char $\ast$str)
+\begin{DoxyCompactList}\small\item\em Put a string to screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{console_8c_ac1c5e03c31342081196283f1243619b3}{console\+\_\+put\+\_\+char}} (const char character)
+\begin{DoxyCompactList}\small\item\em Put a character to screen. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\+\_\+driver}} = \{\mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\}
+\begin{DoxyCompactList}\small\item\em Stores the currently selected driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{console_8c_a8f3bc8da8a4eae21bd40e7a5a75a370c}\label{console_8c_a8f3bc8da8a4eae21bd40e7a5a75a370c}} 
+\index{console.c@{console.c}!console\_clear\_screen@{console\_clear\_screen}}
+\index{console\_clear\_screen@{console\_clear\_screen}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_clear\_screen()}{console\_clear\_screen()}}
+{\footnotesize\ttfamily void console\+\_\+clear\+\_\+screen (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Clears the screen, the background color is set to black. 
+
+
+
+Definition at line 106 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{107 \{}
+\DoxyCodeLine{108     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a2792aa87bb7b0d208a580bbb43b17436}{clear\_screen}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{109     \{}
+\DoxyCodeLine{110         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a2792aa87bb7b0d208a580bbb43b17436}{clear\_screen}}();}
+\DoxyCodeLine{111     \}}
+\DoxyCodeLine{112 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{console_8c_a8f3bc8da8a4eae21bd40e7a5a75a370c_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{console_8c_ac1c5e03c31342081196283f1243619b3}\label{console_8c_ac1c5e03c31342081196283f1243619b3}} 
+\index{console.c@{console.c}!console\_put\_char@{console\_put\_char}}
+\index{console\_put\_char@{console\_put\_char}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_put\_char()}{console\_put\_char()}}
+{\footnotesize\ttfamily void console\+\_\+put\+\_\+char (\begin{DoxyParamCaption}\item[{const char}]{character }\end{DoxyParamCaption})}
+
+
+
+Put a character to screen. 
+
+­
+
+The function will display the character given as parameter to the screen using the selected driver.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em character} & The char to display on the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 171 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{172 \{}
+\DoxyCodeLine{173     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_acf31db4f43ebc7672a74cb8dcb8efdc6}{put\_char}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{174     \{}
+\DoxyCodeLine{175         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_acf31db4f43ebc7672a74cb8dcb8efdc6}{put\_char}}(character);}
+\DoxyCodeLine{176     \}}
+\DoxyCodeLine{177 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{console_8c_ab6041143ad7fea230413af143426fadd}\label{console_8c_ab6041143ad7fea230413af143426fadd}} 
+\index{console.c@{console.c}!console\_put\_cursor\_at@{console\_put\_cursor\_at}}
+\index{console\_put\_cursor\_at@{console\_put\_cursor\_at}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_put\_cursor\_at()}{console\_put\_cursor\_at()}}
+{\footnotesize\ttfamily void console\+\_\+put\+\_\+cursor\+\_\+at (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{line,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{column }\end{DoxyParamCaption})}
+
+
+
+Places the cursor to the coordinates given as parameters. 
+
+The function places the screen cursor at the desired coordinates based on the line and column parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em line} & The line index where to place the cursor. \\
+\hline
+\mbox{\texttt{ in}}  & {\em column} & The column index where to place the cursor. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 114 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{115 \{}
+\DoxyCodeLine{116     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a4befbb4084e5dcd38054c6b5622dea31}{put\_cursor\_at}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{117     \{}
+\DoxyCodeLine{118         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a4befbb4084e5dcd38054c6b5622dea31}{put\_cursor\_at}}(line, column);}
+\DoxyCodeLine{119     \}}
+\DoxyCodeLine{120 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{console_8c_a37b803e95784aaf50af3426977aabaaf}\label{console_8c_a37b803e95784aaf50af3426977aabaaf}} 
+\index{console.c@{console.c}!console\_put\_string@{console\_put\_string}}
+\index{console\_put\_string@{console\_put\_string}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_put\_string()}{console\_put\_string()}}
+{\footnotesize\ttfamily void console\+\_\+put\+\_\+string (\begin{DoxyParamCaption}\item[{const char $\ast$}]{str }\end{DoxyParamCaption})}
+
+
+
+Put a string to screen. 
+
+­
+
+The function will display the string given as parameter to the screen using the selected driver.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em str} & The string to display on the screen.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+string must be NULL terminated. 
+\end{DoxyWarning}
+
+
+Definition at line 163 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{164 \{}
+\DoxyCodeLine{165     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a8cba84173146c2d00e2d07c77afa9776}{put\_string}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{166     \{}
+\DoxyCodeLine{167         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a8cba84173146c2d00e2d07c77afa9776}{put\_string}}(str);}
+\DoxyCodeLine{168     \}}
+\DoxyCodeLine{169 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{console_8c_a9ed9711d5768bb19d44f89b29eea689b}\label{console_8c_a9ed9711d5768bb19d44f89b29eea689b}} 
+\index{console.c@{console.c}!console\_restore\_cursor@{console\_restore\_cursor}}
+\index{console\_restore\_cursor@{console\_restore\_cursor}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_restore\_cursor()}{console\_restore\_cursor()}}
+{\footnotesize\ttfamily void console\+\_\+restore\+\_\+cursor (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$}]{buffer }\end{DoxyParamCaption})}
+
+
+
+Restores the cursor attributes from the buffer given as parameter. 
+
+The function will restores the cursor attributes from the buffer given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em buffer} & The buffer containing the cursor\textquotesingle{}s attributes. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 130 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{131 \{}
+\DoxyCodeLine{132     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a9acc247487b0c04ea3a5e2e26ff162a0}{restore\_cursor}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{133     \{}
+\DoxyCodeLine{134         \textcolor{keywordflow}{return} \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a9acc247487b0c04ea3a5e2e26ff162a0}{restore\_cursor}}(buffer);}
+\DoxyCodeLine{135     \}}
+\DoxyCodeLine{136 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{console_8c_a9ed9711d5768bb19d44f89b29eea689b_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{console_8c_a771e623508d58ebc6a78a8adfc7bfce1}\label{console_8c_a771e623508d58ebc6a78a8adfc7bfce1}} 
+\index{console.c@{console.c}!console\_save\_color\_scheme@{console\_save\_color\_scheme}}
+\index{console\_save\_color\_scheme@{console\_save\_color\_scheme}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_save\_color\_scheme()}{console\_save\_color\_scheme()}}
+{\footnotesize\ttfamily void console\+\_\+save\+\_\+color\+\_\+scheme (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$}]{buffer }\end{DoxyParamCaption})}
+
+
+
+Saves the color scheme in the buffer given as parameter. 
+
+Fills the buffer given as parameter with the current screen\textquotesingle{}s color scheme value.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em buffer} & The buffer that will receive the current color scheme used by the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 155 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{156 \{}
+\DoxyCodeLine{157     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a503870d87957c33246f800d897e64068}{save\_color\_scheme}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{158     \{}
+\DoxyCodeLine{159         \textcolor{keywordflow}{return} \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_a503870d87957c33246f800d897e64068}{save\_color\_scheme}}(buffer);}
+\DoxyCodeLine{160     \}}
+\DoxyCodeLine{161 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{console_8c_a771e623508d58ebc6a78a8adfc7bfce1_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{console_8c_a82b4a6a16981c83a0ac0a627a71ac004}\label{console_8c_a82b4a6a16981c83a0ac0a627a71ac004}} 
+\index{console.c@{console.c}!console\_save\_cursor@{console\_save\_cursor}}
+\index{console\_save\_cursor@{console\_save\_cursor}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_save\_cursor()}{console\_save\_cursor()}}
+{\footnotesize\ttfamily void console\+\_\+save\+\_\+cursor (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$}]{buffer }\end{DoxyParamCaption})}
+
+
+
+Saves the cursor attributes in the buffer given as paramter. 
+
+Fills the buffer given s parameter with the current value of the cursor.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em buffer} & The cursor buffer in which the current cursor position is going to be saved. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 122 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{123 \{}
+\DoxyCodeLine{124     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_ada120ac912b57f192258ffe5518c04da}{save\_cursor}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{125     \{}
+\DoxyCodeLine{126         \textcolor{keywordflow}{return} \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_ada120ac912b57f192258ffe5518c04da}{save\_cursor}}(buffer);}
+\DoxyCodeLine{127     \}}
+\DoxyCodeLine{128 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{console_8c_a52b1917e24a2ea8495bafce76485e540}\label{console_8c_a52b1917e24a2ea8495bafce76485e540}} 
+\index{console.c@{console.c}!console\_scroll@{console\_scroll}}
+\index{console\_scroll@{console\_scroll}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_scroll()}{console\_scroll()}}
+{\footnotesize\ttfamily void console\+\_\+scroll (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}}}]{direction,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{lines\+\_\+count }\end{DoxyParamCaption})}
+
+
+
+Scrolls in the desired direction of lines\+\_\+count lines. 
+
+The function will use the driver to scroll of lines\+\_\+count line in the desired direction.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em direction} & The direction to which the screen should be scrolled. \\
+\hline
+\mbox{\texttt{ in}}  & {\em lines\+\_\+count} & The number of lines to scroll. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 138 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{140 \{}
+\DoxyCodeLine{141     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_ac596d94b0d4fd4f9e50f476bf5a0c86d}{scroll}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{142     \{}
+\DoxyCodeLine{143         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_ac596d94b0d4fd4f9e50f476bf5a0c86d}{scroll}}(direction, lines\_count);}
+\DoxyCodeLine{144     \}}
+\DoxyCodeLine{145 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{console_8c_ae81cd129d634049e6a9a02f1ecd043b9}\label{console_8c_ae81cd129d634049e6a9a02f1ecd043b9}} 
+\index{console.c@{console.c}!console\_set\_color\_scheme@{console\_set\_color\_scheme}}
+\index{console\_set\_color\_scheme@{console\_set\_color\_scheme}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_set\_color\_scheme()}{console\_set\_color\_scheme()}}
+{\footnotesize\ttfamily void console\+\_\+set\+\_\+color\+\_\+scheme (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$}]{color\+\_\+scheme }\end{DoxyParamCaption})}
+
+
+
+Sets the color scheme of the screen. 
+
+Replaces the curent color scheme used t output data with the new one given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em color\+\_\+scheme} & The new color scheme to apply to the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 147 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{148 \{}
+\DoxyCodeLine{149     \textcolor{keywordflow}{if}(\mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_aa7776c7d5f3d2b7becfaadae321a5ac2}{set\_color\_scheme}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{150     \{}
+\DoxyCodeLine{151         \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}}.\mbox{\hyperlink{structkernel__console__driver__t_aa7776c7d5f3d2b7becfaadae321a5ac2}{set\_color\_scheme}}(color\_scheme);}
+\DoxyCodeLine{152     \}}
+\DoxyCodeLine{153 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{console_8c_ae81cd129d634049e6a9a02f1ecd043b9_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{console_8c_ac567f2c47c0a1d20e164c7056311cdc4}\label{console_8c_ac567f2c47c0a1d20e164c7056311cdc4}} 
+\index{console.c@{console.c}!console\_set\_selected\_driver@{console\_set\_selected\_driver}}
+\index{console\_set\_selected\_driver@{console\_set\_selected\_driver}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_set\_selected\_driver()}{console\_set\_selected\_driver()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} console\+\_\+set\+\_\+selected\+\_\+driver (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} $\ast$}]{driver }\end{DoxyParamCaption})}
+
+
+
+Sets the current selected driver. 
+
+Changes the current selected driver to ouput data with the new one as defined by the parameter driver.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em driver} & The driver to select.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code. 
+\end{DoxyReturn}
+
+
+Definition at line 77 of file console.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{78 \{}
+\DoxyCodeLine{79 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{80     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CONSOLE\_SET\_DRIVER\_START, 2,}
+\DoxyCodeLine{81                        (uintptr\_t)driver \& 0xFFFFFFFF,}
+\DoxyCodeLine{82                        (uintptr\_t)driver >> 32);}
+\DoxyCodeLine{83 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{84     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CONSOLE\_SET\_DRIVER\_START, 2,}
+\DoxyCodeLine{85                        (uintptr\_t)driver,}
+\DoxyCodeLine{86                        0);}
+\DoxyCodeLine{87 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89     \textcolor{keywordflow}{if}(driver == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{90        driver-\/>clear\_screen == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{91        driver-\/>put\_string == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{92        driver-\/>put\_char == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{93     \{}
+\DoxyCodeLine{94         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CONSOLE\_SET\_DRIVER\_END, 1,}
+\DoxyCodeLine{95                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{96         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{97     \}}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99     \mbox{\hyperlink{console_8c_a83667a7b3cd56d332132cad7238be499}{console\_driver}} = *driver;}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{101     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CONSOLE\_SET\_DRIVER\_END, 1,}
+\DoxyCodeLine{102                        \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{103     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{104 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=347pt]{console_8c_ac567f2c47c0a1d20e164c7056311cdc4_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{console_8c_a83667a7b3cd56d332132cad7238be499}\label{console_8c_a83667a7b3cd56d332132cad7238be499}} 
+\index{console.c@{console.c}!console\_driver@{console\_driver}}
+\index{console\_driver@{console\_driver}!console.c@{console.c}}
+\doxysubsubsection{\texorpdfstring{console\_driver}{console\_driver}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} console\+\_\+driver = \{\mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\}\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the currently selected driver. 
+
+
+
+Definition at line 65 of file console.\+c.
+

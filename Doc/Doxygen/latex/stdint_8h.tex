@@ -1,0 +1,390 @@
+\hypertarget{stdint_8h}{}\doxysection{Source/\+Kernel/\+Libs/libc/includes/stdint.h File Reference}
+\label{stdint_8h}\index{Source/Kernel/Libs/libc/includes/stdint.h@{Source/Kernel/Libs/libc/includes/stdint.h}}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stdint_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}}~1
+\begin{DoxyCompactList}\small\item\em Defines the TRUE value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}}~0
+\begin{DoxyCompactList}\small\item\em Defines the FALSE value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_aadcf2a81af243df333b31efa6461ab8e}{INT8\+\_\+\+MIN}}~(-\/128)
+\begin{DoxyCompactList}\small\item\em int8\+\_\+t minimal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_ad4e9955955b27624963643eac448118a}{INT16\+\_\+\+MIN}}~(-\/32768)
+\begin{DoxyCompactList}\small\item\em int16\+\_\+t minimal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_a688eb21a22db27c2b2bd5836943cdcbe}{INT32\+\_\+\+MIN}}~(-\/2147483647 -\/ 1)
+\begin{DoxyCompactList}\small\item\em int32\+\_\+t minimal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_ab21f12f372f67b8ff0aa3432336ede67}{INT64\+\_\+\+MIN}}~(-\/9223372036854775807LL -\/ 1)
+\begin{DoxyCompactList}\small\item\em int64\+\_\+t minimal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_aaf7f29f45f1a513b4748a4e5014ddf6a}{INT8\+\_\+\+MAX}}~127
+\begin{DoxyCompactList}\small\item\em int8\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_ac58f2c111cc9989c86db2a7dc4fd84ca}{INT16\+\_\+\+MAX}}~32767
+\begin{DoxyCompactList}\small\item\em int16\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_a181807730d4a375f848ba139813ce04f}{INT32\+\_\+\+MAX}}~2147483647
+\begin{DoxyCompactList}\small\item\em int32\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_ad0d744f05898e32d01f73f8af3cd2071}{INT64\+\_\+\+MAX}}~9223372036854775807LL
+\begin{DoxyCompactList}\small\item\em int64\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_aeb4e270a084ee26fe73e799861bd0252}{UINT8\+\_\+\+MAX}}~0xff
+\begin{DoxyCompactList}\small\item\em uint8\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_a3ea490c9b3617d4479bd80ef93cd5602}{UINT16\+\_\+\+MAX}}~0xffff
+\begin{DoxyCompactList}\small\item\em uint16\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\+\_\+\+MAX}}~0xffffffff
+\begin{DoxyCompactList}\small\item\em uint32\+\_\+t maximal value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{stdint_8h_a30654b4b67d97c42ca3f9b6052dda916}{UINT64\+\_\+\+MAX}}~0xffffffffffffffff\+ULL
+\begin{DoxyCompactList}\small\item\em uint64\+\_\+t maximal value. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef signed char \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines int8\+\_\+t type as an exact width 8 bits integer. \end{DoxyCompactList}\item 
+typedef unsigned char \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines uint8\+\_\+t type as an exact width 8 bits integer. \end{DoxyCompactList}\item 
+typedef short \mbox{\hyperlink{stdint_8h_aa343fa3b3d06292b959ffdd4c4703b06}{int16\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines int16\+\_\+t type as an exact width 16 bits integer. \end{DoxyCompactList}\item 
+typedef unsigned short \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines uint16\+\_\+t type as an exact width 16 bits integer. \end{DoxyCompactList}\item 
+typedef int \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines int32\+\_\+t type as an exact width 32 bits integer. \end{DoxyCompactList}\item 
+typedef unsigned \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines uint32\+\_\+t type as an exact width 32 bits integer. \end{DoxyCompactList}\item 
+typedef signed long long \mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines int64\+\_\+t type as an exact width 64 bits integer. \end{DoxyCompactList}\item 
+typedef unsigned long long \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines uint64\+\_\+t type as an exact width 64 bits integer. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines the boot\+\_\+t type. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}\label{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}} 
+\index{stdint.h@{stdint.h}!FALSE@{FALSE}}
+\index{FALSE@{FALSE}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{FALSE}{FALSE}}
+{\footnotesize\ttfamily \#define FALSE~0}
+
+
+
+Defines the FALSE value. 
+
+
+
+Definition at line 36 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_ac58f2c111cc9989c86db2a7dc4fd84ca}\label{stdint_8h_ac58f2c111cc9989c86db2a7dc4fd84ca}} 
+\index{stdint.h@{stdint.h}!INT16\_MAX@{INT16\_MAX}}
+\index{INT16\_MAX@{INT16\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT16\_MAX}{INT16\_MAX}}
+{\footnotesize\ttfamily \#define INT16\+\_\+\+MAX~32767}
+
+
+
+int16\+\_\+t maximal value. 
+
+
+
+Definition at line 51 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_ad4e9955955b27624963643eac448118a}\label{stdint_8h_ad4e9955955b27624963643eac448118a}} 
+\index{stdint.h@{stdint.h}!INT16\_MIN@{INT16\_MIN}}
+\index{INT16\_MIN@{INT16\_MIN}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT16\_MIN}{INT16\_MIN}}
+{\footnotesize\ttfamily \#define INT16\+\_\+\+MIN~(-\/32768)}
+
+
+
+int16\+\_\+t minimal value. 
+
+
+
+Definition at line 42 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a181807730d4a375f848ba139813ce04f}\label{stdint_8h_a181807730d4a375f848ba139813ce04f}} 
+\index{stdint.h@{stdint.h}!INT32\_MAX@{INT32\_MAX}}
+\index{INT32\_MAX@{INT32\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT32\_MAX}{INT32\_MAX}}
+{\footnotesize\ttfamily \#define INT32\+\_\+\+MAX~2147483647}
+
+
+
+int32\+\_\+t maximal value. 
+
+
+
+Definition at line 53 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a688eb21a22db27c2b2bd5836943cdcbe}\label{stdint_8h_a688eb21a22db27c2b2bd5836943cdcbe}} 
+\index{stdint.h@{stdint.h}!INT32\_MIN@{INT32\_MIN}}
+\index{INT32\_MIN@{INT32\_MIN}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT32\_MIN}{INT32\_MIN}}
+{\footnotesize\ttfamily \#define INT32\+\_\+\+MIN~(-\/2147483647 -\/ 1)}
+
+
+
+int32\+\_\+t minimal value. 
+
+
+
+Definition at line 44 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_ad0d744f05898e32d01f73f8af3cd2071}\label{stdint_8h_ad0d744f05898e32d01f73f8af3cd2071}} 
+\index{stdint.h@{stdint.h}!INT64\_MAX@{INT64\_MAX}}
+\index{INT64\_MAX@{INT64\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT64\_MAX}{INT64\_MAX}}
+{\footnotesize\ttfamily \#define INT64\+\_\+\+MAX~9223372036854775807LL}
+
+
+
+int64\+\_\+t maximal value. 
+
+
+
+Definition at line 55 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_ab21f12f372f67b8ff0aa3432336ede67}\label{stdint_8h_ab21f12f372f67b8ff0aa3432336ede67}} 
+\index{stdint.h@{stdint.h}!INT64\_MIN@{INT64\_MIN}}
+\index{INT64\_MIN@{INT64\_MIN}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT64\_MIN}{INT64\_MIN}}
+{\footnotesize\ttfamily \#define INT64\+\_\+\+MIN~(-\/9223372036854775807LL -\/ 1)}
+
+
+
+int64\+\_\+t minimal value. 
+
+
+
+Definition at line 46 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aaf7f29f45f1a513b4748a4e5014ddf6a}\label{stdint_8h_aaf7f29f45f1a513b4748a4e5014ddf6a}} 
+\index{stdint.h@{stdint.h}!INT8\_MAX@{INT8\_MAX}}
+\index{INT8\_MAX@{INT8\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT8\_MAX}{INT8\_MAX}}
+{\footnotesize\ttfamily \#define INT8\+\_\+\+MAX~127}
+
+
+
+int8\+\_\+t maximal value. 
+
+
+
+Definition at line 49 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aadcf2a81af243df333b31efa6461ab8e}\label{stdint_8h_aadcf2a81af243df333b31efa6461ab8e}} 
+\index{stdint.h@{stdint.h}!INT8\_MIN@{INT8\_MIN}}
+\index{INT8\_MIN@{INT8\_MIN}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{INT8\_MIN}{INT8\_MIN}}
+{\footnotesize\ttfamily \#define INT8\+\_\+\+MIN~(-\/128)}
+
+
+
+int8\+\_\+t minimal value. 
+
+
+
+Definition at line 40 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}\label{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}} 
+\index{stdint.h@{stdint.h}!TRUE@{TRUE}}
+\index{TRUE@{TRUE}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{TRUE}{TRUE}}
+{\footnotesize\ttfamily \#define TRUE~1}
+
+
+
+Defines the TRUE value. 
+
+
+
+Definition at line 33 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a3ea490c9b3617d4479bd80ef93cd5602}\label{stdint_8h_a3ea490c9b3617d4479bd80ef93cd5602}} 
+\index{stdint.h@{stdint.h}!UINT16\_MAX@{UINT16\_MAX}}
+\index{UINT16\_MAX@{UINT16\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{UINT16\_MAX}{UINT16\_MAX}}
+{\footnotesize\ttfamily \#define UINT16\+\_\+\+MAX~0xffff}
+
+
+
+uint16\+\_\+t maximal value. 
+
+
+
+Definition at line 60 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}\label{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}} 
+\index{stdint.h@{stdint.h}!UINT32\_MAX@{UINT32\_MAX}}
+\index{UINT32\_MAX@{UINT32\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{UINT32\_MAX}{UINT32\_MAX}}
+{\footnotesize\ttfamily \#define UINT32\+\_\+\+MAX~0xffffffff}
+
+
+
+uint32\+\_\+t maximal value. 
+
+
+
+Definition at line 62 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a30654b4b67d97c42ca3f9b6052dda916}\label{stdint_8h_a30654b4b67d97c42ca3f9b6052dda916}} 
+\index{stdint.h@{stdint.h}!UINT64\_MAX@{UINT64\_MAX}}
+\index{UINT64\_MAX@{UINT64\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{UINT64\_MAX}{UINT64\_MAX}}
+{\footnotesize\ttfamily \#define UINT64\+\_\+\+MAX~0xffffffffffffffff\+ULL}
+
+
+
+uint64\+\_\+t maximal value. 
+
+
+
+Definition at line 64 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aeb4e270a084ee26fe73e799861bd0252}\label{stdint_8h_aeb4e270a084ee26fe73e799861bd0252}} 
+\index{stdint.h@{stdint.h}!UINT8\_MAX@{UINT8\_MAX}}
+\index{UINT8\_MAX@{UINT8\_MAX}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{UINT8\_MAX}{UINT8\_MAX}}
+{\footnotesize\ttfamily \#define UINT8\+\_\+\+MAX~0xff}
+
+
+
+uint8\+\_\+t maximal value. 
+
+
+
+Definition at line 58 of file stdint.\+h.
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}\label{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}} 
+\index{stdint.h@{stdint.h}!bool\_t@{bool\_t}}
+\index{bool\_t@{bool\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{bool\_t}{bool\_t}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}}}
+
+
+
+Defines the boot\+\_\+t type. 
+
+
+
+Definition at line 104 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aa343fa3b3d06292b959ffdd4c4703b06}\label{stdint_8h_aa343fa3b3d06292b959ffdd4c4703b06}} 
+\index{stdint.h@{stdint.h}!int16\_t@{int16\_t}}
+\index{int16\_t@{int16\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{int16\_t}{int16\_t}}
+{\footnotesize\ttfamily typedef short \mbox{\hyperlink{stdint_8h_aa343fa3b3d06292b959ffdd4c4703b06}{int16\+\_\+t}}}
+
+
+
+Defines int16\+\_\+t type as an exact width 16 bits integer. 
+
+
+
+Definition at line 81 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}\label{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}} 
+\index{stdint.h@{stdint.h}!int32\_t@{int32\_t}}
+\index{int32\_t@{int32\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{int32\_t}{int32\_t}}
+{\footnotesize\ttfamily typedef int \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}}}
+
+
+
+Defines int32\+\_\+t type as an exact width 32 bits integer. 
+
+
+
+Definition at line 89 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}\label{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}} 
+\index{stdint.h@{stdint.h}!int64\_t@{int64\_t}}
+\index{int64\_t@{int64\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{int64\_t}{int64\_t}}
+{\footnotesize\ttfamily typedef signed long long \mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}}}
+
+
+
+Defines int64\+\_\+t type as an exact width 64 bits integer. 
+
+
+
+Definition at line 97 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aef44329758059c91c76d334e8fc09700}\label{stdint_8h_aef44329758059c91c76d334e8fc09700}} 
+\index{stdint.h@{stdint.h}!int8\_t@{int8\_t}}
+\index{int8\_t@{int8\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{int8\_t}{int8\_t}}
+{\footnotesize\ttfamily typedef signed char \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\+\_\+t}}}
+
+
+
+Defines int8\+\_\+t type as an exact width 8 bits integer. 
+
+
+
+Definition at line 73 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a273cf69d639a59973b6019625df33e30}\label{stdint_8h_a273cf69d639a59973b6019625df33e30}} 
+\index{stdint.h@{stdint.h}!uint16\_t@{uint16\_t}}
+\index{uint16\_t@{uint16\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{uint16\_t}{uint16\_t}}
+{\footnotesize\ttfamily typedef unsigned short \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}
+
+
+
+Defines uint16\+\_\+t type as an exact width 16 bits integer. 
+
+
+
+Definition at line 85 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}\label{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}} 
+\index{stdint.h@{stdint.h}!uint32\_t@{uint32\_t}}
+\index{uint32\_t@{uint32\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{uint32\_t}{uint32\_t}}
+{\footnotesize\ttfamily typedef unsigned \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}
+
+
+
+Defines uint32\+\_\+t type as an exact width 32 bits integer. 
+
+
+
+Definition at line 93 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}\label{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}} 
+\index{stdint.h@{stdint.h}!uint64\_t@{uint64\_t}}
+\index{uint64\_t@{uint64\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{uint64\_t}{uint64\_t}}
+{\footnotesize\ttfamily typedef unsigned long long \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}
+
+
+
+Defines uint64\+\_\+t type as an exact width 64 bits integer. 
+
+
+
+Definition at line 101 of file stdint.\+h.
+
+\mbox{\Hypertarget{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}\label{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}} 
+\index{stdint.h@{stdint.h}!uint8\_t@{uint8\_t}}
+\index{uint8\_t@{uint8\_t}!stdint.h@{stdint.h}}
+\doxysubsubsection{\texorpdfstring{uint8\_t}{uint8\_t}}
+{\footnotesize\ttfamily typedef unsigned char \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}
+
+
+
+Defines uint8\+\_\+t type as an exact width 8 bits integer. 
+
+
+
+Definition at line 77 of file stdint.\+h.
+

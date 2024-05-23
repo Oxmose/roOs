@@ -31,15 +31,16 @@
 /*************************************************
  * TESTING ENABLE FLAGS
  ************************************************/
-#define TEST_KHEAP_ENABLED                        1
+#define TEST_KHEAP_ENABLED                        0
 #define TEST_EXCEPTION_ENABLED                    0
 #define TEST_KICKSTART_ENABLED                    0
 #define TEST_INTERRUPT_ENABLED                    0
 #define TEST_PANIC_ENABLED                        0
-#define TEST_OS_KQUEUE_ENABLED                    1
-#define TEST_OS_QUEUE_ENABLED                     1
-#define TEST_OS_VECTOR_ENABLED                    1
-#define TEST_OS_UHASHTABLE_ENABLED                1
+#define TEST_OS_KQUEUE_ENABLED                    0
+#define TEST_OS_QUEUE_ENABLED                     0
+#define TEST_OS_VECTOR_ENABLED                    0
+#define TEST_OS_UHASHTABLE_ENABLED                0
+#define TEST_DEVTREE_ENABLED                      1
 
 /*************************************************
  * TEST IDENTIFIERS
@@ -283,8 +284,35 @@
 #define TEST_EXCEPTION_ALREADY_REGISTERED_ID    8010
 #define TEST_EXCEPTION_NOT_CAUGHT_ID            8011
 
+#define TEST_DEVTREE_PARSE          9000
+#define TEST_DEVTREE_GETPROP0       9001
+#define TEST_DEVTREE_GETPROP1       9002
+#define TEST_DEVTREE_GETFIRSTPROP0  9003
+#define TEST_DEVTREE_GETFIRSTPROP1  9004
+#define TEST_DEVTREE_GETNEXTPROP0   9005
+#define TEST_DEVTREE_GETNEXTPROP1   9006
+#define TEST_DEVTREE_GETNEXTPROP2   9007
+#define TEST_DEVTREE_GETNEXTPROP3   9008
+#define TEST_DEVTREE_GETNEXTPROP4   9009
+#define TEST_DEVTREE_GETCHILD0      9010
+#define TEST_DEVTREE_GETCHILD1      9011
+#define TEST_DEVTREE_GETCHILD2      9012
+#define TEST_DEVTREE_GETCHILD3      9013
+#define TEST_DEVTREE_GETCHILD4      9014
+#define TEST_DEVTREE_GETNEXTNODE0   9015
+#define TEST_DEVTREE_GETNEXTNODE1   9016
+#define TEST_DEVTREE_GETNEXTNODE2   9017
+#define TEST_DEVTREE_GETNEXTNODE3   9018
+#define TEST_DEVTREE_GETNEXTNODE4   9019
+#define TEST_DEVTREE_GETNEXTNODE5   9020
+#define TEST_DEVTREE_GETNEXTNODE6   9021
+#define TEST_DEVTREE_GETNODEBYNAME0 9022
+#define TEST_DEVTREE_GETNODEBYNAME1 9023
+#define TEST_DEVTREE_GETHANDLE0     9024
+#define TEST_DEVTREE_GETHANDLE1     9025
+#define TEST_DEVTREE_GETHANDLE2     9026
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Kernel Lib Suite"
+#define TEST_FRAMEWORK_TEST_NAME "Device Tree Lib Suite"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -322,6 +350,7 @@ void queue_test(void);
 void kqueue_test(void);
 void vector_test(void);
 void uhashtable_test(void);
+void devtreeTest(void);
 
 #endif /* #ifndef __TEST_FRAMEWORK_TEST_LIST_H_ */
 

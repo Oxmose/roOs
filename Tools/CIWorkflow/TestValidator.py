@@ -27,7 +27,8 @@ TYPE_STR = [
     "UDWORD",
     "FLOAT",
     "DOUBLE",
-    "RCODE"
+    "RCODE",
+    "POINTER"
 ]
 
 TARGET_LIST = [

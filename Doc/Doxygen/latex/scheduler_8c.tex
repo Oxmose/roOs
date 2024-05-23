@@ -1,0 +1,159 @@
+\hypertarget{scheduler_8c}{}\doxysection{Source/\+Kernel/\+Core/src/scheduler.c File Reference}
+\label{scheduler_8c}\index{Source/Kernel/Core/src/scheduler.c@{Source/Kernel/Core/src/scheduler.c}}
+{\ttfamily \#include $<$ctrl\+\_\+block.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$scheduler.\+h$>$}\newline
+Include dependency graph for scheduler.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=329pt]{scheduler_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{scheduler_8c_a3554398483f68e3b604484680a7d10c6}{SCHED\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Assert macro used by the scheduler to ensure correctness of execution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{scheduler_8c_a12fff90d5088fa9980403c3117727444}{scheduler\+\_\+dummy\+\_\+init}} (void)
+\item 
+\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$ \mbox{\hyperlink{scheduler_8c_a4e3f24ab31faec52f61d9070ae34b75c}{scheduler\+\_\+get\+\_\+current\+\_\+thread}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the handle to the current running thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$ \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\+\_\+thread}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}
+\begin{DoxyCompactList}\small\item\em Pointer to the currently kernel thread. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} \mbox{\hyperlink{scheduler_8c_aeb95f6480d3d8ba47550ac11dfddacf1}{dummy\+\_\+thread}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{scheduler_8c_a3554398483f68e3b604484680a7d10c6}\label{scheduler_8c_a3554398483f68e3b604484680a7d10c6}} 
+\index{scheduler.c@{scheduler.c}!SCHED\_ASSERT@{SCHED\_ASSERT}}
+\index{SCHED\_ASSERT@{SCHED\_ASSERT}!scheduler.c@{scheduler.c}}
+\doxysubsubsection{\texorpdfstring{SCHED\_ASSERT}{SCHED\_ASSERT}}
+{\footnotesize\ttfamily \#define SCHED\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                    \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \textcolor{stringliteral}{"{}SCHED"{}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});                   \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Assert macro used by the scheduler to ensure correctness of execution. 
+
+Assert macro used by the scheduler to ensure correctness of execution. Due to the critical nature of the scheduler, any error generates a kernel panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition that should be true. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to display in case of kernel panic. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code to use in case of kernel panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 61 of file scheduler.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{scheduler_8c_a12fff90d5088fa9980403c3117727444}\label{scheduler_8c_a12fff90d5088fa9980403c3117727444}} 
+\index{scheduler.c@{scheduler.c}!scheduler\_dummy\_init@{scheduler\_dummy\_init}}
+\index{scheduler\_dummy\_init@{scheduler\_dummy\_init}!scheduler.c@{scheduler.c}}
+\doxysubsubsection{\texorpdfstring{scheduler\_dummy\_init()}{scheduler\_dummy\_init()}}
+{\footnotesize\ttfamily void scheduler\+\_\+dummy\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line 93 of file scheduler.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{94 \{}
+\DoxyCodeLine{95     \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}} = \&\mbox{\hyperlink{scheduler_8c_aeb95f6480d3d8ba47550ac11dfddacf1}{dummy\_thread}};}
+\DoxyCodeLine{96 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{scheduler_8c_a12fff90d5088fa9980403c3117727444_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{scheduler_8c_a4e3f24ab31faec52f61d9070ae34b75c}\label{scheduler_8c_a4e3f24ab31faec52f61d9070ae34b75c}} 
+\index{scheduler.c@{scheduler.c}!scheduler\_get\_current\_thread@{scheduler\_get\_current\_thread}}
+\index{scheduler\_get\_current\_thread@{scheduler\_get\_current\_thread}!scheduler.c@{scheduler.c}}
+\doxysubsubsection{\texorpdfstring{scheduler\_get\_current\_thread()}{scheduler\_get\_current\_thread()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}}$\ast$ scheduler\+\_\+get\+\_\+current\+\_\+thread (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the handle to the current running thread. 
+
+Returns the handle to the current running thread. This value should never be NULL as a thread should always be elected for running.
+
+\begin{DoxyReturn}{Returns}
+A handle to the current running thread is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 98 of file scheduler.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{99 \{}
+\DoxyCodeLine{100     \textcolor{keywordflow}{return} \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}};}
+\DoxyCodeLine{101 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{scheduler_8c_a4e3f24ab31faec52f61d9070ae34b75c_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}\label{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}} 
+\index{scheduler.c@{scheduler.c}!current\_thread@{current\_thread}}
+\index{current\_thread@{current\_thread}!scheduler.c@{scheduler.c}}
+\doxysubsubsection{\texorpdfstring{current\_thread}{current\_thread}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}}$\ast$ current\+\_\+thread = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}}
+
+
+
+Pointer to the currently kernel thread. 
+
+
+
+Definition at line 78 of file scheduler.\+c.
+
+\mbox{\Hypertarget{scheduler_8c_aeb95f6480d3d8ba47550ac11dfddacf1}\label{scheduler_8c_aeb95f6480d3d8ba47550ac11dfddacf1}} 
+\index{scheduler.c@{scheduler.c}!dummy\_thread@{dummy\_thread}}
+\index{dummy\_thread@{dummy\_thread}!scheduler.c@{scheduler.c}}
+\doxysubsubsection{\texorpdfstring{dummy\_thread}{dummy\_thread}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} dummy\+\_\+thread}
+
+
+
+Definition at line 80 of file scheduler.\+c.
+

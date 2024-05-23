@@ -52,25 +52,19 @@
 #define KERNEL_VIRTUAL_ADDR_MAX      0x100000000
 #define KERNEL_VIRTUAL_ADDR_MAX_MASK 0xFFFFFFFF
 
-/**
- * @brief Defines the minimal amount of memory blocks reserved for kernel paging
- * One block is 4Kb and can map 4MB. Set this number to map the entierety of the
- * kernel.
- */
-#define KERNEL_RESERVED_PAGING 4
 
 /** @brief Defines the maximum number of process in the system. This number is
  * limited by the PCID feature.*/
 #define KERNEL_MAX_PROCESS 4096
 
 /** @brief System's main timer interrupt frequency */
-#define KERNEL_MAIN_TIMER_FREQ 200
+#define KERNEL_MAIN_TIMER_FREQ 1000
 
 /** @brief System's RTC interrupt frequency */
-#define KERNEL_RTC_TIMER_FREQ 5
+#define KERNEL_RTC_TIMER_FREQ 0
 
 /** @brief Current year */
-#define CURRENT_YEAR 2023
+#define CURRENT_YEAR 2024
 
 /** @brief Stack default alignement */
 #define STACK_ALIGN 4
@@ -89,24 +83,16 @@
 #define KHEAP_DEBUG_ENABLED 0
 #define KICKSTART_DEBUG_ENABLED 0
 #define LAPIC_DEBUG_ENABLED 0
-#define MEMMGT_DEBUG_ENABLED 0
 #define PIC_DEBUG_ENABLED 0
 #define PIT_DEBUG_ENABLED 0
 #define QUEUE_DEBUG_ENABLED 0
 #define KQUEUE_DEBUG_ENABLED 0
 #define RTC_DEBUG_ENABLED 0
 #define SCHED_DEBUG_ENABLED 0
-#define SCHED_ELECT_DEBUG_ENABLED 0
-#define SCHED_SWITCH_DEBUG_ENABLED 0
 #define SERIAL_DEBUG_ENABLED 0
 #define TIME_MGT_DEBUG_ENABLED 0
 #define VGA_DEBUG_ENABLED 0
-#define SYSCALL_DEBUG_ENABLED 0
-#define INITRD_DEBUG_ENABLED 0
-#define USTAR_DEBUG_ENABLED 0
-#define MUTEX_DEBUG_ENABLED 0
-#define TEMP_DEBUG_ENABLED 0
-#define USER_HEAP_DEBUG_ENABLED 0
-#define SEMAPHORE_DEBUG_ENABLED 0
+#define DTB_DEBUG_ENABLED 0
+#define DEVMGR_DEBUG_ENABLED 0
 
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

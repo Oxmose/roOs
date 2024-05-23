@@ -1,0 +1,501 @@
+\hypertarget{config_8h}{}\doxysection{Source/\+Kernel/\+ARTIFACTS/config.h File Reference}
+\label{config_8h}\index{Source/Kernel/ARTIFACTS/config.h@{Source/Kernel/ARTIFACTS/config.h}}
+{\ttfamily \#include $<$tracing.\+h$>$}\newline
+Include dependency graph for config.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{config_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{config_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{config_8h_a307f3b40b1efed2f698abd33b0201373}{ARCH\+\_\+\+I386}}~1
+\item 
+\#define \mbox{\hyperlink{config_8h_ac8a0e308b3fbe423988249e0280e3295}{ARCH\+\_\+32\+\_\+\+BITS}}~1
+\item 
+\#define \mbox{\hyperlink{config_8h_a2f4253e36ba4f0957a22b8222d830b38}{KERNEL\+\_\+\+MEM\+\_\+\+OFFSET}}~0x\+E0000000
+\item 
+\#define \mbox{\hyperlink{config_8h_ab72ed9e1587831aad8c981e4bfc53b9e}{KERNEL\+\_\+\+MEM\+\_\+\+START}}~0x00100000
+\item 
+\#define \mbox{\hyperlink{config_8h_a77383d4c5311d4c7fe49364766887650}{KERNEL\+\_\+\+STACK\+\_\+\+SIZE}}~0x1000
+\item 
+\#define \mbox{\hyperlink{config_8h_add08506024a2c5399f9f9f6a797392ef}{MAX\+\_\+\+CPU\+\_\+\+COUNT}}~4
+\item 
+\#define \mbox{\hyperlink{config_8h_a874795f9a502bd10b855fd67a2e34083}{DEBUG\+\_\+\+LOG\+\_\+\+LEVEL}}~3
+\item 
+\#define \mbox{\hyperlink{config_8h_a8fa6c5ec8254575a940cf0a632310a95}{INFO\+\_\+\+LOG\+\_\+\+LEVEL}}~2
+\item 
+\#define \mbox{\hyperlink{config_8h_a023f94f341f2300adee0891b15b364b2}{ERROR\+\_\+\+LOG\+\_\+\+LEVEL}}~1
+\item 
+\#define \mbox{\hyperlink{config_8h_a76e4c926f6662c7217b7e28510d2fc99}{NONE\+\_\+\+LOG\+\_\+\+LEVEL}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a6c272d2b12ffba9bdd5a4d5dd608a0f8}{KERNEL\+\_\+\+LOG\+\_\+\+LEVEL}}~\mbox{\hyperlink{config_8h_a874795f9a502bd10b855fd67a2e34083}{DEBUG\+\_\+\+LOG\+\_\+\+LEVEL}}
+\item 
+\#define \mbox{\hyperlink{config_8h_a2171893ff6b0177c082549bee4bc8103}{DEBUG\+\_\+\+LOG\+\_\+\+UART}}~1
+\item 
+\#define \mbox{\hyperlink{config_8h_a79754adbc80f2ff50b2ec25f69030dc1}{KERNEL\+\_\+\+VIRTUAL\+\_\+\+ADDR\+\_\+\+MAX}}~0x100000000
+\item 
+\#define \mbox{\hyperlink{config_8h_a18a2c2d5b1af665ae9209227b1cbb879}{KERNEL\+\_\+\+VIRTUAL\+\_\+\+ADDR\+\_\+\+MAX\+\_\+\+MASK}}~0x\+FFFFFFFF
+\item 
+\#define \mbox{\hyperlink{config_8h_af111b7fb22f9d575b3f23ca313fb1883}{KERNEL\+\_\+\+MAX\+\_\+\+PROCESS}}~4096
+\begin{DoxyCompactList}\small\item\em Defines the maximum number of process in the system. This number is limited by the PCID feature. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{config_8h_a46f3125cc05ea27d4880116f4a0a8744}{KERNEL\+\_\+\+MAIN\+\_\+\+TIMER\+\_\+\+FREQ}}~1000
+\begin{DoxyCompactList}\small\item\em System\textquotesingle{}s main timer interrupt frequency. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{config_8h_aba1cad844ee443b46e15899ba48fe271}{KERNEL\+\_\+\+RTC\+\_\+\+TIMER\+\_\+\+FREQ}}~0
+\begin{DoxyCompactList}\small\item\em System\textquotesingle{}s RTC interrupt frequency. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{config_8h_a916b9f5d8c141fdb31021b395a238536}{CURRENT\+\_\+\+YEAR}}~2024
+\begin{DoxyCompactList}\small\item\em Current year. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{config_8h_a88839b8a36578f9480c960dbc381448b}{STACK\+\_\+\+ALIGN}}~4
+\begin{DoxyCompactList}\small\item\em Stack default alignement. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{config_8h_a6a2a47d667ae130c28851488e603af78}{ACPI\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a839a4259ecdfe945c85c3f26e966f892}{CPU\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_af2730336ef2d92f9f1089542f0e1de11}{EXCEPTIONS\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a162786e2251a1591fb92e206db1abf58}{IOAPIC\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_abd082c0804abc6f2d1d3129fa3cef155}{KHEAP\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_ae0c683de3b2bd1078b0e06fb8fb41101}{KICKSTART\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_af7e8c6c201daf1d5abd3ccc5af1aa285}{LAPIC\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a3ca3408da1947b7990a232e431148836}{QUEUE\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a8fa353ff24e278af85f1c489b307d6e1}{SCHED\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\+\_\+\+MGT\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a7fc87a68f8ba471200a4d3b745190c48}{VGA\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_a0c6cebdf55adc4f4f49957e7d3824920}{DTB\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\item 
+\#define \mbox{\hyperlink{config_8h_ab0b3fa53d800e79374666a75b0151e6d}{DEVMGR\+\_\+\+DEBUG\+\_\+\+ENABLED}}~0
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{config_8h_a6a2a47d667ae130c28851488e603af78}\label{config_8h_a6a2a47d667ae130c28851488e603af78}} 
+\index{config.h@{config.h}!ACPI\_DEBUG\_ENABLED@{ACPI\_DEBUG\_ENABLED}}
+\index{ACPI\_DEBUG\_ENABLED@{ACPI\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{ACPI\_DEBUG\_ENABLED}{ACPI\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define ACPI\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 78 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_ac8a0e308b3fbe423988249e0280e3295}\label{config_8h_ac8a0e308b3fbe423988249e0280e3295}} 
+\index{config.h@{config.h}!ARCH\_32\_BITS@{ARCH\_32\_BITS}}
+\index{ARCH\_32\_BITS@{ARCH\_32\_BITS}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{ARCH\_32\_BITS}{ARCH\_32\_BITS}}
+{\footnotesize\ttfamily \#define ARCH\+\_\+32\+\_\+\+BITS~1}
+
+
+
+Definition at line 24 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a307f3b40b1efed2f698abd33b0201373}\label{config_8h_a307f3b40b1efed2f698abd33b0201373}} 
+\index{config.h@{config.h}!ARCH\_I386@{ARCH\_I386}}
+\index{ARCH\_I386@{ARCH\_I386}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{ARCH\_I386}{ARCH\_I386}}
+{\footnotesize\ttfamily \#define ARCH\+\_\+\+I386~1}
+
+
+
+Definition at line 23 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a839a4259ecdfe945c85c3f26e966f892}\label{config_8h_a839a4259ecdfe945c85c3f26e966f892}} 
+\index{config.h@{config.h}!CPU\_DEBUG\_ENABLED@{CPU\_DEBUG\_ENABLED}}
+\index{CPU\_DEBUG\_ENABLED@{CPU\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{CPU\_DEBUG\_ENABLED}{CPU\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define CPU\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 79 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a916b9f5d8c141fdb31021b395a238536}\label{config_8h_a916b9f5d8c141fdb31021b395a238536}} 
+\index{config.h@{config.h}!CURRENT\_YEAR@{CURRENT\_YEAR}}
+\index{CURRENT\_YEAR@{CURRENT\_YEAR}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{CURRENT\_YEAR}{CURRENT\_YEAR}}
+{\footnotesize\ttfamily \#define CURRENT\+\_\+\+YEAR~2024}
+
+
+
+Current year. 
+
+
+
+Definition at line 67 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a874795f9a502bd10b855fd67a2e34083}\label{config_8h_a874795f9a502bd10b855fd67a2e34083}} 
+\index{config.h@{config.h}!DEBUG\_LOG\_LEVEL@{DEBUG\_LOG\_LEVEL}}
+\index{DEBUG\_LOG\_LEVEL@{DEBUG\_LOG\_LEVEL}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{DEBUG\_LOG\_LEVEL}{DEBUG\_LOG\_LEVEL}}
+{\footnotesize\ttfamily \#define DEBUG\+\_\+\+LOG\+\_\+\+LEVEL~3}
+
+
+
+Definition at line 41 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a2171893ff6b0177c082549bee4bc8103}\label{config_8h_a2171893ff6b0177c082549bee4bc8103}} 
+\index{config.h@{config.h}!DEBUG\_LOG\_UART@{DEBUG\_LOG\_UART}}
+\index{DEBUG\_LOG\_UART@{DEBUG\_LOG\_UART}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{DEBUG\_LOG\_UART}{DEBUG\_LOG\_UART}}
+{\footnotesize\ttfamily \#define DEBUG\+\_\+\+LOG\+\_\+\+UART~1}
+
+
+
+Definition at line 49 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_ab0b3fa53d800e79374666a75b0151e6d}\label{config_8h_ab0b3fa53d800e79374666a75b0151e6d}} 
+\index{config.h@{config.h}!DEVMGR\_DEBUG\_ENABLED@{DEVMGR\_DEBUG\_ENABLED}}
+\index{DEVMGR\_DEBUG\_ENABLED@{DEVMGR\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{DEVMGR\_DEBUG\_ENABLED}{DEVMGR\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define DEVMGR\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 96 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a0c6cebdf55adc4f4f49957e7d3824920}\label{config_8h_a0c6cebdf55adc4f4f49957e7d3824920}} 
+\index{config.h@{config.h}!DTB\_DEBUG\_ENABLED@{DTB\_DEBUG\_ENABLED}}
+\index{DTB\_DEBUG\_ENABLED@{DTB\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{DTB\_DEBUG\_ENABLED}{DTB\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define DTB\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 95 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a023f94f341f2300adee0891b15b364b2}\label{config_8h_a023f94f341f2300adee0891b15b364b2}} 
+\index{config.h@{config.h}!ERROR\_LOG\_LEVEL@{ERROR\_LOG\_LEVEL}}
+\index{ERROR\_LOG\_LEVEL@{ERROR\_LOG\_LEVEL}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{ERROR\_LOG\_LEVEL}{ERROR\_LOG\_LEVEL}}
+{\footnotesize\ttfamily \#define ERROR\+\_\+\+LOG\+\_\+\+LEVEL~1}
+
+
+
+Definition at line 43 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_af2730336ef2d92f9f1089542f0e1de11}\label{config_8h_af2730336ef2d92f9f1089542f0e1de11}} 
+\index{config.h@{config.h}!EXCEPTIONS\_DEBUG\_ENABLED@{EXCEPTIONS\_DEBUG\_ENABLED}}
+\index{EXCEPTIONS\_DEBUG\_ENABLED@{EXCEPTIONS\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{EXCEPTIONS\_DEBUG\_ENABLED}{EXCEPTIONS\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define EXCEPTIONS\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 80 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a8fa6c5ec8254575a940cf0a632310a95}\label{config_8h_a8fa6c5ec8254575a940cf0a632310a95}} 
+\index{config.h@{config.h}!INFO\_LOG\_LEVEL@{INFO\_LOG\_LEVEL}}
+\index{INFO\_LOG\_LEVEL@{INFO\_LOG\_LEVEL}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{INFO\_LOG\_LEVEL}{INFO\_LOG\_LEVEL}}
+{\footnotesize\ttfamily \#define INFO\+\_\+\+LOG\+\_\+\+LEVEL~2}
+
+
+
+Definition at line 42 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_af3d608a10209f30f9765b2e075643816}\label{config_8h_af3d608a10209f30f9765b2e075643816}} 
+\index{config.h@{config.h}!INTERRUPTS\_DEBUG\_ENABLED@{INTERRUPTS\_DEBUG\_ENABLED}}
+\index{INTERRUPTS\_DEBUG\_ENABLED@{INTERRUPTS\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{INTERRUPTS\_DEBUG\_ENABLED}{INTERRUPTS\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define INTERRUPTS\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 81 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a162786e2251a1591fb92e206db1abf58}\label{config_8h_a162786e2251a1591fb92e206db1abf58}} 
+\index{config.h@{config.h}!IOAPIC\_DEBUG\_ENABLED@{IOAPIC\_DEBUG\_ENABLED}}
+\index{IOAPIC\_DEBUG\_ENABLED@{IOAPIC\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{IOAPIC\_DEBUG\_ENABLED}{IOAPIC\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define IOAPIC\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 82 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a6c272d2b12ffba9bdd5a4d5dd608a0f8}\label{config_8h_a6c272d2b12ffba9bdd5a4d5dd608a0f8}} 
+\index{config.h@{config.h}!KERNEL\_LOG\_LEVEL@{KERNEL\_LOG\_LEVEL}}
+\index{KERNEL\_LOG\_LEVEL@{KERNEL\_LOG\_LEVEL}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_LOG\_LEVEL}{KERNEL\_LOG\_LEVEL}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+LOG\+\_\+\+LEVEL~\mbox{\hyperlink{config_8h_a874795f9a502bd10b855fd67a2e34083}{DEBUG\+\_\+\+LOG\+\_\+\+LEVEL}}}
+
+
+
+Definition at line 46 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a46f3125cc05ea27d4880116f4a0a8744}\label{config_8h_a46f3125cc05ea27d4880116f4a0a8744}} 
+\index{config.h@{config.h}!KERNEL\_MAIN\_TIMER\_FREQ@{KERNEL\_MAIN\_TIMER\_FREQ}}
+\index{KERNEL\_MAIN\_TIMER\_FREQ@{KERNEL\_MAIN\_TIMER\_FREQ}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_MAIN\_TIMER\_FREQ}{KERNEL\_MAIN\_TIMER\_FREQ}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+MAIN\+\_\+\+TIMER\+\_\+\+FREQ~1000}
+
+
+
+System\textquotesingle{}s main timer interrupt frequency. 
+
+
+
+Definition at line 61 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_af111b7fb22f9d575b3f23ca313fb1883}\label{config_8h_af111b7fb22f9d575b3f23ca313fb1883}} 
+\index{config.h@{config.h}!KERNEL\_MAX\_PROCESS@{KERNEL\_MAX\_PROCESS}}
+\index{KERNEL\_MAX\_PROCESS@{KERNEL\_MAX\_PROCESS}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_MAX\_PROCESS}{KERNEL\_MAX\_PROCESS}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+MAX\+\_\+\+PROCESS~4096}
+
+
+
+Defines the maximum number of process in the system. This number is limited by the PCID feature. 
+
+
+
+Definition at line 58 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a2f4253e36ba4f0957a22b8222d830b38}\label{config_8h_a2f4253e36ba4f0957a22b8222d830b38}} 
+\index{config.h@{config.h}!KERNEL\_MEM\_OFFSET@{KERNEL\_MEM\_OFFSET}}
+\index{KERNEL\_MEM\_OFFSET@{KERNEL\_MEM\_OFFSET}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_MEM\_OFFSET}{KERNEL\_MEM\_OFFSET}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+MEM\+\_\+\+OFFSET~0x\+E0000000}
+
+
+
+Definition at line 29 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_ab72ed9e1587831aad8c981e4bfc53b9e}\label{config_8h_ab72ed9e1587831aad8c981e4bfc53b9e}} 
+\index{config.h@{config.h}!KERNEL\_MEM\_START@{KERNEL\_MEM\_START}}
+\index{KERNEL\_MEM\_START@{KERNEL\_MEM\_START}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_MEM\_START}{KERNEL\_MEM\_START}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+MEM\+\_\+\+START~0x00100000}
+
+
+
+Definition at line 30 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_aba1cad844ee443b46e15899ba48fe271}\label{config_8h_aba1cad844ee443b46e15899ba48fe271}} 
+\index{config.h@{config.h}!KERNEL\_RTC\_TIMER\_FREQ@{KERNEL\_RTC\_TIMER\_FREQ}}
+\index{KERNEL\_RTC\_TIMER\_FREQ@{KERNEL\_RTC\_TIMER\_FREQ}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_RTC\_TIMER\_FREQ}{KERNEL\_RTC\_TIMER\_FREQ}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+RTC\+\_\+\+TIMER\+\_\+\+FREQ~0}
+
+
+
+System\textquotesingle{}s RTC interrupt frequency. 
+
+
+
+Definition at line 64 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a77383d4c5311d4c7fe49364766887650}\label{config_8h_a77383d4c5311d4c7fe49364766887650}} 
+\index{config.h@{config.h}!KERNEL\_STACK\_SIZE@{KERNEL\_STACK\_SIZE}}
+\index{KERNEL\_STACK\_SIZE@{KERNEL\_STACK\_SIZE}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_STACK\_SIZE}{KERNEL\_STACK\_SIZE}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+STACK\+\_\+\+SIZE~0x1000}
+
+
+
+Definition at line 35 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a79754adbc80f2ff50b2ec25f69030dc1}\label{config_8h_a79754adbc80f2ff50b2ec25f69030dc1}} 
+\index{config.h@{config.h}!KERNEL\_VIRTUAL\_ADDR\_MAX@{KERNEL\_VIRTUAL\_ADDR\_MAX}}
+\index{KERNEL\_VIRTUAL\_ADDR\_MAX@{KERNEL\_VIRTUAL\_ADDR\_MAX}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_VIRTUAL\_ADDR\_MAX}{KERNEL\_VIRTUAL\_ADDR\_MAX}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+VIRTUAL\+\_\+\+ADDR\+\_\+\+MAX~0x100000000}
+
+
+
+Definition at line 52 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a18a2c2d5b1af665ae9209227b1cbb879}\label{config_8h_a18a2c2d5b1af665ae9209227b1cbb879}} 
+\index{config.h@{config.h}!KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK@{KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK}}
+\index{KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK@{KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK}{KERNEL\_VIRTUAL\_ADDR\_MAX\_MASK}}
+{\footnotesize\ttfamily \#define KERNEL\+\_\+\+VIRTUAL\+\_\+\+ADDR\+\_\+\+MAX\+\_\+\+MASK~0x\+FFFFFFFF}
+
+
+
+Definition at line 53 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_abd082c0804abc6f2d1d3129fa3cef155}\label{config_8h_abd082c0804abc6f2d1d3129fa3cef155}} 
+\index{config.h@{config.h}!KHEAP\_DEBUG\_ENABLED@{KHEAP\_DEBUG\_ENABLED}}
+\index{KHEAP\_DEBUG\_ENABLED@{KHEAP\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KHEAP\_DEBUG\_ENABLED}{KHEAP\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define KHEAP\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 83 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_ae0c683de3b2bd1078b0e06fb8fb41101}\label{config_8h_ae0c683de3b2bd1078b0e06fb8fb41101}} 
+\index{config.h@{config.h}!KICKSTART\_DEBUG\_ENABLED@{KICKSTART\_DEBUG\_ENABLED}}
+\index{KICKSTART\_DEBUG\_ENABLED@{KICKSTART\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KICKSTART\_DEBUG\_ENABLED}{KICKSTART\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define KICKSTART\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 84 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a3c3566bba659fcf54a9824dc7af0b380}\label{config_8h_a3c3566bba659fcf54a9824dc7af0b380}} 
+\index{config.h@{config.h}!KQUEUE\_DEBUG\_ENABLED@{KQUEUE\_DEBUG\_ENABLED}}
+\index{KQUEUE\_DEBUG\_ENABLED@{KQUEUE\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{KQUEUE\_DEBUG\_ENABLED}{KQUEUE\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define KQUEUE\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 89 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_af7e8c6c201daf1d5abd3ccc5af1aa285}\label{config_8h_af7e8c6c201daf1d5abd3ccc5af1aa285}} 
+\index{config.h@{config.h}!LAPIC\_DEBUG\_ENABLED@{LAPIC\_DEBUG\_ENABLED}}
+\index{LAPIC\_DEBUG\_ENABLED@{LAPIC\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{LAPIC\_DEBUG\_ENABLED}{LAPIC\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define LAPIC\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 85 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_add08506024a2c5399f9f9f6a797392ef}\label{config_8h_add08506024a2c5399f9f9f6a797392ef}} 
+\index{config.h@{config.h}!MAX\_CPU\_COUNT@{MAX\_CPU\_COUNT}}
+\index{MAX\_CPU\_COUNT@{MAX\_CPU\_COUNT}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{MAX\_CPU\_COUNT}{MAX\_CPU\_COUNT}}
+{\footnotesize\ttfamily \#define MAX\+\_\+\+CPU\+\_\+\+COUNT~4}
+
+
+
+Definition at line 38 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a76e4c926f6662c7217b7e28510d2fc99}\label{config_8h_a76e4c926f6662c7217b7e28510d2fc99}} 
+\index{config.h@{config.h}!NONE\_LOG\_LEVEL@{NONE\_LOG\_LEVEL}}
+\index{NONE\_LOG\_LEVEL@{NONE\_LOG\_LEVEL}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{NONE\_LOG\_LEVEL}{NONE\_LOG\_LEVEL}}
+{\footnotesize\ttfamily \#define NONE\+\_\+\+LOG\+\_\+\+LEVEL~0}
+
+
+
+Definition at line 44 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_af0933de1a0e451463dc2b11551b6493d}\label{config_8h_af0933de1a0e451463dc2b11551b6493d}} 
+\index{config.h@{config.h}!PIC\_DEBUG\_ENABLED@{PIC\_DEBUG\_ENABLED}}
+\index{PIC\_DEBUG\_ENABLED@{PIC\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{PIC\_DEBUG\_ENABLED}{PIC\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 86 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a5785c50f36462aae594bbbc547016985}\label{config_8h_a5785c50f36462aae594bbbc547016985}} 
+\index{config.h@{config.h}!PIT\_DEBUG\_ENABLED@{PIT\_DEBUG\_ENABLED}}
+\index{PIT\_DEBUG\_ENABLED@{PIT\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{PIT\_DEBUG\_ENABLED}{PIT\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define PIT\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 87 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a3ca3408da1947b7990a232e431148836}\label{config_8h_a3ca3408da1947b7990a232e431148836}} 
+\index{config.h@{config.h}!QUEUE\_DEBUG\_ENABLED@{QUEUE\_DEBUG\_ENABLED}}
+\index{QUEUE\_DEBUG\_ENABLED@{QUEUE\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{QUEUE\_DEBUG\_ENABLED}{QUEUE\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define QUEUE\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 88 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}\label{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}} 
+\index{config.h@{config.h}!RTC\_DEBUG\_ENABLED@{RTC\_DEBUG\_ENABLED}}
+\index{RTC\_DEBUG\_ENABLED@{RTC\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{RTC\_DEBUG\_ENABLED}{RTC\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define RTC\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 90 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a8fa353ff24e278af85f1c489b307d6e1}\label{config_8h_a8fa353ff24e278af85f1c489b307d6e1}} 
+\index{config.h@{config.h}!SCHED\_DEBUG\_ENABLED@{SCHED\_DEBUG\_ENABLED}}
+\index{SCHED\_DEBUG\_ENABLED@{SCHED\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{SCHED\_DEBUG\_ENABLED}{SCHED\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define SCHED\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 91 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}\label{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}} 
+\index{config.h@{config.h}!SERIAL\_DEBUG\_ENABLED@{SERIAL\_DEBUG\_ENABLED}}
+\index{SERIAL\_DEBUG\_ENABLED@{SERIAL\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DEBUG\_ENABLED}{SERIAL\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 92 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a88839b8a36578f9480c960dbc381448b}\label{config_8h_a88839b8a36578f9480c960dbc381448b}} 
+\index{config.h@{config.h}!STACK\_ALIGN@{STACK\_ALIGN}}
+\index{STACK\_ALIGN@{STACK\_ALIGN}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{STACK\_ALIGN}{STACK\_ALIGN}}
+{\footnotesize\ttfamily \#define STACK\+\_\+\+ALIGN~4}
+
+
+
+Stack default alignement. 
+
+
+
+Definition at line 70 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}\label{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}} 
+\index{config.h@{config.h}!TIME\_MGT\_DEBUG\_ENABLED@{TIME\_MGT\_DEBUG\_ENABLED}}
+\index{TIME\_MGT\_DEBUG\_ENABLED@{TIME\_MGT\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{TIME\_MGT\_DEBUG\_ENABLED}{TIME\_MGT\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define TIME\+\_\+\+MGT\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 93 of file config.\+h.
+
+\mbox{\Hypertarget{config_8h_a7fc87a68f8ba471200a4d3b745190c48}\label{config_8h_a7fc87a68f8ba471200a4d3b745190c48}} 
+\index{config.h@{config.h}!VGA\_DEBUG\_ENABLED@{VGA\_DEBUG\_ENABLED}}
+\index{VGA\_DEBUG\_ENABLED@{VGA\_DEBUG\_ENABLED}!config.h@{config.h}}
+\doxysubsubsection{\texorpdfstring{VGA\_DEBUG\_ENABLED}{VGA\_DEBUG\_ENABLED}}
+{\footnotesize\ttfamily \#define VGA\+\_\+\+DEBUG\+\_\+\+ENABLED~0}
+
+
+
+Definition at line 94 of file config.\+h.
+

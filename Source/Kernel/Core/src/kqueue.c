@@ -29,7 +29,7 @@
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipulation */
 #include <panic.h>         /* Kernel panic */
-#include <kernel_output.h> /* Kernel output methods */
+#include <kerneloutput.h> /* Kernel output methods */
 #include <kheap.h>         /* Kernel heap */
 #include <kerror.h>        /* Kernel errors definitions */
 

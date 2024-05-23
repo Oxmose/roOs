@@ -1,0 +1,65 @@
+\hypertarget{memcpy_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memcpy.c File Reference}
+\label{memcpy_8c}\index{Source/Kernel/Libs/libc/src/memcpy.c@{Source/Kernel/Libs/libc/src/memcpy.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memcpy.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{memcpy_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memcpy_8c_a18d9a75dd16f2db6609538cb4ddedaf1}{memcpy}} (void $\ast$dst, const void $\ast$src, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memcpy_8c_a18d9a75dd16f2db6609538cb4ddedaf1}\label{memcpy_8c_a18d9a75dd16f2db6609538cb4ddedaf1}} 
+\index{memcpy.c@{memcpy.c}!memcpy@{memcpy}}
+\index{memcpy@{memcpy}!memcpy.c@{memcpy.c}}
+\doxysubsubsection{\texorpdfstring{memcpy()}{memcpy()}}
+{\footnotesize\ttfamily void$\ast$ memcpy (\begin{DoxyParamCaption}\item[{void $\ast$}]{dst,  }\item[{const void $\ast$}]{src,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memcpy.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *p = src;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{77 \textcolor{preprocessor}{\#if defined(\_\_i386\_\_)}}
+\DoxyCodeLine{78     \textcolor{keywordtype}{size\_t} nl = n >> 2;}
+\DoxyCodeLine{79     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}cld ; rep ; movsl ; movl \%3,\%0 ; rep ; movsb"{}}:\textcolor{stringliteral}{"{}+c"{}}}
+\DoxyCodeLine{80               (nl),}
+\DoxyCodeLine{81               \textcolor{stringliteral}{"{}+S"{}}(p), \textcolor{stringliteral}{"{}+D"{}}(q)}
+\DoxyCodeLine{82               :\textcolor{stringliteral}{"{}r"{}}(n \& 3));}
+\DoxyCodeLine{83 \textcolor{preprocessor}{\#elif defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{84     \textcolor{keywordtype}{size\_t} nq = n >> 3;}
+\DoxyCodeLine{85     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}cld ; rep ; movsq ; movl \%3,\%\%ecx ; rep ; movsb"{}}:\textcolor{stringliteral}{"{}+c"{}}}
+\DoxyCodeLine{86               (nq), \textcolor{stringliteral}{"{}+S"{}}(p), \textcolor{stringliteral}{"{}+D"{}}(q)}
+\DoxyCodeLine{87               :\textcolor{stringliteral}{"{}r"{}}((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}) (n \& 7)));}
+\DoxyCodeLine{88 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{89     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{90         *q++ = *p++;}
+\DoxyCodeLine{91     \}}
+\DoxyCodeLine{92 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{95 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{memcpy_8c_a18d9a75dd16f2db6609538cb4ddedaf1_icgraph}
+\end{center}
+\end{figure}

@@ -1,0 +1,439 @@
+\hypertarget{uart_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/includes/uart.h File Reference}
+\label{uart_8h}\index{Source/Kernel/Arch/Board/x86/includes/uart.h@{Source/Kernel/Arch/Board/x86/includes/uart.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+Include dependency graph for uart.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{uart_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{uart_8h_a0c0ca72359ddf28dcd15900dfba19343}{uart\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the uart driver structures and hardware. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8h_a99bf7343080342666bd756f9bf43e57b}{uart\+\_\+put\+\_\+string}} (const char $\ast$string)
+\begin{DoxyCompactList}\small\item\em Write the string given as patameter on the debug port. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d}{uart\+\_\+put\+\_\+char}} (const char character)
+\begin{DoxyCompactList}\small\item\em Write the character given as patameter on the debug port. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{uart_8h_a9c7bbcd9f20468c6ce7cfb05f954f0b5}{uart\+\_\+received}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Tells if the data on the uart port are ready to be read. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{uart_8h_a58f7b6ef9b4e43d05d53758b91d9ae58}{uart\+\_\+read}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Reads a byte from the uart port given as parameter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8h_a78501d1b2ed8ddf3b64df0394809fa95}{uart\+\_\+clear\+\_\+screen}} (void)
+\begin{DoxyCompactList}\small\item\em Clears the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8h_a06f97feee6f014ed63518f7d90ef22ad}{uart\+\_\+scroll}} (const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} lines\+\_\+count)
+\begin{DoxyCompactList}\small\item\em Scrolls the screen downn. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} $\ast$ \mbox{\hyperlink{uart_8h_ab15d3cac777266e01b336b56ea841442}{uart\+\_\+get\+\_\+driver}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the UART graphic driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{uart_8h_a78501d1b2ed8ddf3b64df0394809fa95}\label{uart_8h_a78501d1b2ed8ddf3b64df0394809fa95}} 
+\index{uart.h@{uart.h}!uart\_clear\_screen@{uart\_clear\_screen}}
+\index{uart\_clear\_screen@{uart\_clear\_screen}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_clear\_screen()}{uart\_clear\_screen()}}
+{\footnotesize\ttfamily void uart\+\_\+clear\+\_\+screen (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Clears the screen. 
+
+On 80x25 uart screen, this function will print 80 line feeds and thus, clear the screen. 
+
+Definition at line 398 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{399 \{}
+\DoxyCodeLine{400     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} i;}
+\DoxyCodeLine{401 }
+\DoxyCodeLine{402     \textcolor{comment}{/* On 80x25 screen, just print 25 line feed. */}}
+\DoxyCodeLine{403     \textcolor{keywordflow}{for}(i = 0; i < 25; ++i)}
+\DoxyCodeLine{404     \{}
+\DoxyCodeLine{405         \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{charliteral}{'\(\backslash\)n'});}
+\DoxyCodeLine{406     \}}
+\DoxyCodeLine{407 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a78501d1b2ed8ddf3b64df0394809fa95_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_ab15d3cac777266e01b336b56ea841442}\label{uart_8h_ab15d3cac777266e01b336b56ea841442}} 
+\index{uart.h@{uart.h}!uart\_get\_driver@{uart\_get\_driver}}
+\index{uart\_get\_driver@{uart\_get\_driver}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_get\_driver()}{uart\_get\_driver()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}}$\ast$ uart\+\_\+get\+\_\+driver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the UART graphic driver. 
+
+Returns a constant handle to the UART graphic driver.
+
+\begin{DoxyReturn}{Returns}
+A constant handle to the UART graphic driver is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 465 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{466 \{}
+\DoxyCodeLine{467     \textcolor{keywordflow}{return} \&\mbox{\hyperlink{uart_8c_a6e287c3ecf1c1048b39754aa904a7ade}{uart\_text\_driver}};}
+\DoxyCodeLine{468 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=266pt]{uart_8h_ab15d3cac777266e01b336b56ea841442_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a0c0ca72359ddf28dcd15900dfba19343}\label{uart_8h_a0c0ca72359ddf28dcd15900dfba19343}} 
+\index{uart.h@{uart.h}!uart\_init@{uart\_init}}
+\index{uart\_init@{uart\_init}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_init()}{uart\_init()}}
+{\footnotesize\ttfamily void uart\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the uart driver structures and hardware. 
+
+Initializes all the uart communication ports supported by the driver and ennables the interrupt related to the uart hardware. 
+
+Definition at line 339 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{340 \{}
+\DoxyCodeLine{341     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} i;}
+\DoxyCodeLine{342 }
+\DoxyCodeLine{343     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_UART\_INIT\_START, 0);}
+\DoxyCodeLine{344 }
+\DoxyCodeLine{345     \textcolor{comment}{/* Init all comm ports */}}
+\DoxyCodeLine{346     \textcolor{keywordflow}{for}(i = 0; i < 4; ++i)}
+\DoxyCodeLine{347     \{}
+\DoxyCodeLine{348         \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  attr;}
+\DoxyCodeLine{349         \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} com;}
+\DoxyCodeLine{350 }
+\DoxyCodeLine{351         \textcolor{keywordflow}{if}(i == 0)}
+\DoxyCodeLine{352         \{}
+\DoxyCodeLine{353             com = \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}};}
+\DoxyCodeLine{354         \}}
+\DoxyCodeLine{355         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 1)}
+\DoxyCodeLine{356         \{}
+\DoxyCodeLine{357             com = \mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\_COM2\_BASE}};}
+\DoxyCodeLine{358         \}}
+\DoxyCodeLine{359         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 2)}
+\DoxyCodeLine{360         \{}
+\DoxyCodeLine{361             com = \mbox{\hyperlink{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}{SERIAL\_COM3\_BASE}};}
+\DoxyCodeLine{362         \}}
+\DoxyCodeLine{363         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 3)}
+\DoxyCodeLine{364         \{}
+\DoxyCodeLine{365             com = \mbox{\hyperlink{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}{SERIAL\_COM4\_BASE}};}
+\DoxyCodeLine{366         \}}
+\DoxyCodeLine{367         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{368         \{}
+\DoxyCodeLine{369             com = \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}};}
+\DoxyCodeLine{370         \}}
+\DoxyCodeLine{371 }
+\DoxyCodeLine{372         attr = \mbox{\hyperlink{uart_8c_ab7d8c6b3660b431109c909755e457c26}{SERIAL\_DATA\_LENGTH\_8}} | \mbox{\hyperlink{uart_8c_a1e1822ba21f5e720c09e1712576413f4}{SERIAL\_STOP\_BIT\_1}};}
+\DoxyCodeLine{373 }
+\DoxyCodeLine{374         \textcolor{comment}{/* Enable interrupt on recv for COM1 and COM2 */}}
+\DoxyCodeLine{375         \textcolor{keywordflow}{if}(com == \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}} || com == \mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\_COM2\_BASE}})}
+\DoxyCodeLine{376         \{}
+\DoxyCodeLine{377             \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x01, \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\_DATA\_PORT\_2}}(com));}
+\DoxyCodeLine{378         \}}
+\DoxyCodeLine{379         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{380         \{}
+\DoxyCodeLine{381             \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x00, \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\_DATA\_PORT\_2}}(com));}
+\DoxyCodeLine{382         \}}
+\DoxyCodeLine{383 }
+\DoxyCodeLine{384         \textcolor{comment}{/* Init line */}}
+\DoxyCodeLine{385         \mbox{\hyperlink{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1}{\_set\_baudrate}}(\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}{BAUDRATE\_115200}}, com);}
+\DoxyCodeLine{386         \mbox{\hyperlink{uart_8c_ad93f2889448039719ac493691f4af6e3}{\_set\_line}}(attr, com);}
+\DoxyCodeLine{387         \mbox{\hyperlink{uart_8c_a27adedb5a1378a7d12e083f805b22543}{\_set\_buffer}}(0xC0 | \mbox{\hyperlink{uart_8c_ac9e29bed47741802d3a895b7d43e3962}{SERIAL\_ENABLE\_FIFO}} | \mbox{\hyperlink{uart_8c_a2a60628f88ee6bc4c4259f29a0bd770d}{SERIAL\_CLEAR\_RECV\_FIFO}} |}
+\DoxyCodeLine{388                     \mbox{\hyperlink{uart_8c_af80ebedb3b15dbd522485b6b69530721}{SERIAL\_CLEAR\_SEND\_FIFO}} | \mbox{\hyperlink{uart_8c_a7018e1e74723032a45448e320dd89936}{SERIAL\_FIFO\_DEPTH\_14}}, com);}
+\DoxyCodeLine{389 }
+\DoxyCodeLine{390         \textcolor{comment}{/* Enable interrupt */}}
+\DoxyCodeLine{391         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x0B, \mbox{\hyperlink{uart_8c_a0945f52a518604a02f87e33a10a59df7}{SERIAL\_MODEM\_COMMAND\_PORT}}(com));}
+\DoxyCodeLine{392     \}}
+\DoxyCodeLine{393 }
+\DoxyCodeLine{394     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_UART\_INIT\_END, 0);}
+\DoxyCodeLine{395     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\_DEBUG\_ENABLED}}, \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}UART Initialized"{}});}
+\DoxyCodeLine{396 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a0c0ca72359ddf28dcd15900dfba19343_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=232pt]{uart_8h_a0c0ca72359ddf28dcd15900dfba19343_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d}\label{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d}} 
+\index{uart.h@{uart.h}!uart\_put\_char@{uart\_put\_char}}
+\index{uart\_put\_char@{uart\_put\_char}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_put\_char()}{uart\_put\_char()}}
+{\footnotesize\ttfamily void uart\+\_\+put\+\_\+char (\begin{DoxyParamCaption}\item[{const char}]{character }\end{DoxyParamCaption})}
+
+
+
+Write the character given as patameter on the debug port. 
+
+The function will output the character given as parameter on the debug port. This call is blocking until the data has been sent to the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em character} & The character to write to the uart port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 450 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{451 \{}
+\DoxyCodeLine{452     \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, character);}
+\DoxyCodeLine{453 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a8cabbb5557ab59792c7d3b94bab8f44d_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a99bf7343080342666bd756f9bf43e57b}\label{uart_8h_a99bf7343080342666bd756f9bf43e57b}} 
+\index{uart.h@{uart.h}!uart\_put\_string@{uart\_put\_string}}
+\index{uart\_put\_string@{uart\_put\_string}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_put\_string()}{uart\_put\_string()}}
+{\footnotesize\ttfamily void uart\+\_\+put\+\_\+string (\begin{DoxyParamCaption}\item[{const char $\ast$}]{string }\end{DoxyParamCaption})}
+
+
+
+Write the string given as patameter on the debug port. 
+
+The function will output the data given as parameter on the debug port. This call is blocking until the data has been sent to the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em string} & The string to write to the uart port.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+string must be NULL terminated. 
+\end{DoxyWarning}
+
+
+Definition at line 441 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{442 \{}
+\DoxyCodeLine{443     \textcolor{keywordtype}{size\_t} i;}
+\DoxyCodeLine{444     \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(\textcolor{keywordtype}{string}); ++i)}
+\DoxyCodeLine{445     \{}
+\DoxyCodeLine{446         \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{keywordtype}{string}[i]);}
+\DoxyCodeLine{447     \}}
+\DoxyCodeLine{448 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a99bf7343080342666bd756f9bf43e57b_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a58f7b6ef9b4e43d05d53758b91d9ae58}\label{uart_8h_a58f7b6ef9b4e43d05d53758b91d9ae58}} 
+\index{uart.h@{uart.h}!uart\_read@{uart\_read}}
+\index{uart\_read@{uart\_read}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_read()}{uart\_read()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} uart\+\_\+read (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{port }\end{DoxyParamCaption})}
+
+
+
+Reads a byte from the uart port given as parameter. 
+
+The function will read the input data on the selected port. This call is blocking until the data has been received by the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The port on which the data should be read.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The byte that has been read on the uart port. 
+\end{DoxyReturn}
+
+
+Definition at line 424 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{425 \{}
+\DoxyCodeLine{426     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  val;}
+\DoxyCodeLine{427 }
+\DoxyCodeLine{428     \textcolor{comment}{/* Wait for data to be received */}}
+\DoxyCodeLine{429     \mbox{\hyperlink{i386_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}{KERNEL\_SPINLOCK\_LOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{430 }
+\DoxyCodeLine{431     \textcolor{keywordflow}{while}(\mbox{\hyperlink{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5}{uart\_received}}(port) == 0)\{\}}
+\DoxyCodeLine{432 }
+\DoxyCodeLine{433     \textcolor{comment}{/* Read available data on port */}}
+\DoxyCodeLine{434     val = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{uart_8c_a8351903aa481452402cad5df0a8aa26b}{SERIAL\_DATA\_PORT}}(port));}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436     \mbox{\hyperlink{i386_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}{KERNEL\_SPINLOCK\_UNLOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{437 }
+\DoxyCodeLine{438     \textcolor{keywordflow}{return} val;}
+\DoxyCodeLine{439 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a58f7b6ef9b4e43d05d53758b91d9ae58_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a9c7bbcd9f20468c6ce7cfb05f954f0b5}\label{uart_8h_a9c7bbcd9f20468c6ce7cfb05f954f0b5}} 
+\index{uart.h@{uart.h}!uart\_received@{uart\_received}}
+\index{uart\_received@{uart\_received}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_received()}{uart\_received()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} uart\+\_\+received (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{port }\end{DoxyParamCaption})}
+
+
+
+Tells if the data on the uart port are ready to be read. 
+
+The function will returns 1 if a data was received by the uart port referenced by the port given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The uart port on which the test should be executed.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE is returned if data can be read from the port. FALSE is returned otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 455 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{456 \{}
+\DoxyCodeLine{457     \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\_t}}   ret;}
+\DoxyCodeLine{458 }
+\DoxyCodeLine{459     \textcolor{comment}{/* Read on LINE status port */}}
+\DoxyCodeLine{460     ret = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}{SERIAL\_LINE\_STATUS\_PORT}}(port)) \& 0x01;}
+\DoxyCodeLine{461 }
+\DoxyCodeLine{462     \textcolor{keywordflow}{return} ret;}
+\DoxyCodeLine{463 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=258pt]{uart_8h_a9c7bbcd9f20468c6ce7cfb05f954f0b5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=262pt]{uart_8h_a9c7bbcd9f20468c6ce7cfb05f954f0b5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8h_a06f97feee6f014ed63518f7d90ef22ad}\label{uart_8h_a06f97feee6f014ed63518f7d90ef22ad}} 
+\index{uart.h@{uart.h}!uart\_scroll@{uart\_scroll}}
+\index{uart\_scroll@{uart\_scroll}!uart.h@{uart.h}}
+\doxysubsubsection{\texorpdfstring{uart\_scroll()}{uart\_scroll()}}
+{\footnotesize\ttfamily void uart\+\_\+scroll (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}}}]{direction,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{lines\+\_\+count }\end{DoxyParamCaption})}
+
+
+
+Scrolls the screen downn. 
+
+Scrolls the screen by printing lines feed to the uart. This function can only be called with parameter direction to SCROLL\+\_\+\+DOWN. Otherwise, this function has no effect.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em direction} & Should always be SCROLL\+\_\+\+DOWN.\\
+\hline
+\mbox{\texttt{ in}}  & {\em lines\+\_\+count} & The amount of lines to scroll down. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 409 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{411 \{}
+\DoxyCodeLine{412     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} i;}
+\DoxyCodeLine{413 }
+\DoxyCodeLine{414     \textcolor{keywordflow}{if}(direction == \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0a9d522bb191bf21bcaace5569ec49475d}{SCROLL\_DOWN}})}
+\DoxyCodeLine{415     \{}
+\DoxyCodeLine{416         \textcolor{comment}{/* Just print lines\_count line feed. */}}
+\DoxyCodeLine{417         \textcolor{keywordflow}{for}(i = 0; i < lines\_count; ++i)}
+\DoxyCodeLine{418         \{}
+\DoxyCodeLine{419             \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{charliteral}{'\(\backslash\)n'});}
+\DoxyCodeLine{420         \}}
+\DoxyCodeLine{421     \}}
+\DoxyCodeLine{422 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8h_a06f97feee6f014ed63518f7d90ef22ad_cgraph}
+\end{center}
+\end{figure}

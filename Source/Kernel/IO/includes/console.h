@@ -25,7 +25,7 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic int types */
+#include <stdint.h> /* Generic int types and bool */
 #include <stddef.h> /* Standard definition */
 #include <kerror.h> /* Kernel error codes */
 
@@ -52,7 +52,7 @@ typedef enum
 } SCROLL_DIRECTION_E;
 
 /**
- * @brief Screen cursor representation for the driver. The structures contains
+ * @brief Console cursor representation for the driver. The structures contains
  * the required data to keep track of the current cursor's position.
  */
 typedef struct
@@ -64,8 +64,8 @@ typedef struct
 } cursor_t;
 
 /**
- * @brief Screen color scheme representation. Keeps the different display format
- * such as background color in memory.
+ * @brief Console color scheme representation. Keeps the different display
+ * format such as background color in memory.
  */
 typedef struct
 {
@@ -87,20 +87,20 @@ typedef struct
 typedef struct
 {
     /**
-     * @brief Clears the screen, the background color is set to black.
+     * @brief Clears the console, the background color is set to black.
      */
-    void (*clear_screen)(void);
+    void (*pClear)(void);
 
     /**
      * @brief Places the cursor to the coordinates given as parameters.
      *
-     * @details The function places the screen cursor at the desired coordinates
+     * @details The function places the console cursor at the desired coordinates
      * based on the line and column parameter.
      *
-     * @param[in] line The line index where to place the cursor.
-     * @param[in] column The column index where to place the cursor.
+     * @param[in] uint32_t kLine - The line index where to place the cursor.
+     * @param[in] uint32_t kColumn - The column index where to place the cursor.
      */
-    void (*put_cursor_at)(const uint32_t line, const uint32_t column);
+    void (*pPutCursor)(const uint32_t kLine, const uint32_t kColumn);
 
     /**
      * @brief Saves the cursor attributes in the buffer given as paramter.
@@ -108,10 +108,10 @@ typedef struct
      * @details Fills the buffer given s parameter with the current value of the
      * cursor.
      *
-     * @param[out] buffer The cursor buffer in which the current cursor position
-     * is going to be saved.
+     * @param[out] cursor_t* pBuffer - The cursor buffer in which the current
+     * cursor position is going to be saved.
      */
-    void (*save_cursor)(cursor_t* buffer);
+    void (*pSaveCursor)(cursor_t* pBuffer);
 
     /**
      * @brief Restores the cursor attributes from the buffer given as parameter.
@@ -119,9 +119,10 @@ typedef struct
      * @details The function will restores the cursor attributes from the buffer
      * given as parameter.
      *
-     * @param[in] buffer The buffer containing the cursor's attributes.
+     * @param[in] cursor_t* pBuffer - The buffer containing the cursor's
+     * attributes.
      */
-    void (*restore_cursor)(const cursor_t buffer);
+    void (*pRestoreCursor)(const cursor_t* pBuffer);
 
     /**
      * @brief Scrolls in the desired direction of lines_count lines.
@@ -129,68 +130,56 @@ typedef struct
      * @details The function will use the driver to scroll of lines_count line
      * in the desired direction.
      *
-     * @param[in] direction The direction to which the screen should be
-     * scrolled.
-     * @param[in] lines_count The number of lines to scroll.
+     * @param[in] SCROLL_DIRECTION_E kDirection - The direction to which the
+     * console should be scrolled.
+     * @param[in] uint32_t kLines - The number of lines to scroll.
      */
-    void (*scroll)(const SCROLL_DIRECTION_E direction,
-                   const uint32_t lines_count);
+    void (*pScroll)(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines);
 
     /**
-     * @brief Sets the color scheme of the screen.
+     * @brief Sets the color scheme of the console.
      *
      * @details Replaces the curent color scheme used t output data with the new
      * one given as parameter.
      *
-     * @param[in] color_scheme The new color scheme to apply to the screen.
+     * @param[in] colorscheme_t* kpColorScheme - The new color scheme to apply
+     * to the console.
      */
-    void (*set_color_scheme)(const colorscheme_t color_scheme);
+    void (*pSetColorScheme)(const colorscheme_t* kpColorScheme);
 
     /**
      * @brief Saves the color scheme in the buffer given as parameter.
      *
-     * @details Fills the buffer given as parameter with the current screen's
+     * @details Fills the buffer given as parameter with the current console's
      * color scheme value.
      *
-     * @param[out] buffer The buffer that will receive the current color scheme
-     * used by the screen.
+     * @param[out] colorscheme_t* pBuffer - The buffer that will receive the
+     * current color scheme used by the console.
      */
-    void (*save_color_scheme)(colorscheme_t* buffer);
+    void (*pSaveColorScheme)(colorscheme_t* pBuffer);
 
     /**
-     * ­@brief Put a string to screen.
+     * ­@brief Put a string to console.
      *
      * @details The function will display the string given as parameter to the
-     * screen using the selected driver.
+     * console using the selected driver.
      *
-     * @param[in] str The string to display on the screen.
+     * @param[in] char* kpString - The string to display on the console.
      *
-     * @warning string must be NULL terminated.
+     * @warning kpString must be NULL terminated.
      */
-    void (*put_string)(const char* str);
+    void (*pPutString)(const char* kpString);
 
     /**
-     * ­@brief Put a character to screen.
+     * ­@brief Put a character to console.
      *
      * @details The function will display the character given as parameter to
-     * the screen using the selected driver.
+     * the console using the selected driver.
      *
-     * @param[in] character The char to display on the screen.
+     * @param[in] char kCharacter - The char to display on the console.
      */
-    void (*put_char)(const char character);
-
-    /**
-     * @brief Used by the kernel to display strings on the screen from a
-     * keyboard input.
-     *
-     * @details Display a character from the keyboard input. This allows
-     * the kernel to know these character can be backspaced later.
-     *
-     * @param[in] str The string to display on the screen from a keybaord input.
-     * @param[in] len The length of the string to display.
-     */
-    void (*console_write_keyboard)(const char* str, const size_t len);
-} kernel_console_driver_t;
+    void (*pPutChar)(const char kCharacter);
+} console_driver_t;
 
 /*******************************************************************************
  * MACROS
@@ -221,27 +210,27 @@ typedef struct
  * @details Changes the current selected driver to ouput data with the new one
  * as defined by the parameter driver.
  *
- * @param[in] driver The driver to select.
+ * @param[in] console_driver_t* pDriver The driver to select.
  *
  * @return The success state or the error code.
  */
-OS_RETURN_E console_set_selected_driver(const kernel_console_driver_t* driver);
+OS_RETURN_E consoleSetDriver(const console_driver_t* pDriver);
 
 /**
- * @brief Clears the screen, the background color is set to black.
+ * @brief Clears the console, the background color is set to black.
  */
-void console_clear_screen(void);
+void consoleClear(void);
 
 /**
  * @brief Places the cursor to the coordinates given as parameters.
  *
- * @details The function places the screen cursor at the desired coordinates
+ * @details The function places the console cursor at the desired coordinates
  * based on the line and column parameter.
  *
- * @param[in] line The line index where to place the cursor.
- * @param[in] column The column index where to place the cursor.
+ * @param[in] uint32_t kLine - The line index where to place the cursor.
+ * @param[in] uint32_t kColumn - The column index where to place the cursor.
  */
-void console_put_cursor_at(const uint32_t line, const uint32_t column);
+void consolePutCursor(const uint32_t kLine, const uint32_t kColumn);
 
 /**
  * @brief Saves the cursor attributes in the buffer given as paramter.
@@ -249,10 +238,10 @@ void console_put_cursor_at(const uint32_t line, const uint32_t column);
  * @details Fills the buffer given s parameter with the current value of the
  * cursor.
  *
- * @param[out] buffer The cursor buffer in which the current cursor position is
- * going to be saved.
+ * @param[out] cursor_t* pBuffer - The cursor buffer in which the current cursor
+ * position is going to be saved.
  */
-void console_save_cursor(cursor_t* buffer);
+void consoleSaveCursor(cursor_t* pBuffer);
 
 /**
  * @brief Restores the cursor attributes from the buffer given as parameter.
@@ -260,9 +249,9 @@ void console_save_cursor(cursor_t* buffer);
  * @details The function will restores the cursor attributes from the buffer
  * given as parameter.
  *
- * @param[in] buffer The buffer containing the cursor's attributes.
+ * @param[in] cursor_t* kpBuffer The buffer containing the cursor's attributes.
  */
-void console_restore_cursor(const cursor_t buffer);
+void consoleRestoreCursor(const cursor_t* kpBuffer);
 
 /**
  * @brief Scrolls in the desired direction of lines_count lines.
@@ -270,66 +259,55 @@ void console_restore_cursor(const cursor_t buffer);
  * @details The function will use the driver to scroll of lines_count line in
  * the desired direction.
  *
- * @param[in] direction The direction to which the screen should be scrolled.
- * @param[in] lines_count The number of lines to scroll.
+ * @param[in] SCROLL_DIRECTION_E kDirection - The direction to which the console
+ * should be scrolled.
+ * @param[in] uint32_t kLines - The number of lines to scroll.
  */
-void console_scroll(const SCROLL_DIRECTION_E direction,
-                    const uint32_t lines_count);
+void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines);
 
 /**
- * @brief Sets the color scheme of the screen.
+ * @brief Sets the color scheme of the console.
  *
  * @details Replaces the curent color scheme used t output data with the new
  * one given as parameter.
  *
- * @param[in] color_scheme The new color scheme to apply to the screen.
+ * @param[in] colorscheme_t* pkColorScheme - The new color scheme to apply to
+ * the console.
  */
-void console_set_color_scheme(const colorscheme_t color_scheme);
+void consoleSetColorScheme(const colorscheme_t* pkColorScheme);
 
 /**
  * @brief Saves the color scheme in the buffer given as parameter.
  *
- * @details Fills the buffer given as parameter with the current screen's
+ * @details Fills the buffer given as parameter with the current console's
  * color scheme value.
  *
- * @param[out] buffer The buffer that will receive the current color scheme used
- * by the screen.
+ * @param[out] colorscheme_t* pBuffer - The buffer that will receive the current
+ * color scheme used by the console.
  */
-void console_save_color_scheme(colorscheme_t* buffer);
+void consoleSaveColorScheme(colorscheme_t* pBuffer);
 
 /**
- * ­@brief Put a string to screen.
+ * ­@brief Put a string to console.
  *
  * @details The function will display the string given as parameter to the
- * screen using the selected driver.
+ * console using the selected driver.
  *
- * @param[in] str The string to display on the screen.
+ * @param[in] char* kpString - The string to display on the console.
  *
- * @warning string must be NULL terminated.
+ * @warning kpString must be NULL terminated.
  */
-void console_put_string(const char* str);
+void consolePutString(const char* kpString);
 
 /**
- * ­@brief Put a character to screen.
+ * ­@brief Put a character to console.
  *
  * @details The function will display the character given as parameter to the
- * screen using the selected driver.
+ * console using the selected driver.
  *
- * @param[in] character The char to display on the screen.
+ * @param[in] char kCharacter - The char to display on the console.
  */
-void console_put_char(const char character);
-
-/**
- * @brief Used by the kernel to display strings on the screen from a keyboard
- * input.
- *
- * @details Display a character from the keyboard input. This allows
- * the kernel to know these character can be backspaced later.
- *
- * @param[in] str The string to display on the screen from a keybaord input.
- * @param[in] len The length of the string to display.
- */
-void console_console_write_keyboard(const char* str, const size_t len);
+void consolePutChar(const char kCharacter);
 
 #endif /* #ifndef __IO_CONSOLE_H_ */
 

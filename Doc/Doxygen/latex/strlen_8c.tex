@@ -1,0 +1,49 @@
+\hypertarget{strlen_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strlen.c File Reference}
+\label{strlen_8c}\index{Source/Kernel/Libs/libc/src/strlen.c@{Source/Kernel/Libs/libc/src/strlen.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strlen.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strlen_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{strlen_8c_aa383452fe445bfae989358c9d7d96f4f}{strlen}} (const char $\ast$s)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strlen_8c_aa383452fe445bfae989358c9d7d96f4f}\label{strlen_8c_aa383452fe445bfae989358c9d7d96f4f}} 
+\index{strlen.c@{strlen.c}!strlen@{strlen}}
+\index{strlen@{strlen}!strlen.c@{strlen.c}}
+\doxysubsubsection{\texorpdfstring{strlen()}{strlen()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} strlen (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strlen.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *ss = s;}
+\DoxyCodeLine{76     \textcolor{keywordflow}{while} (*ss)}
+\DoxyCodeLine{77         ss++;}
+\DoxyCodeLine{78     \textcolor{keywordflow}{return} ss -\/ s;}
+\DoxyCodeLine{79 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{strlen_8c_aa383452fe445bfae989358c9d7d96f4f_icgraph}
+\end{center}
+\end{figure}

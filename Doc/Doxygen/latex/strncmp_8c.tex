@@ -1,0 +1,58 @@
+\hypertarget{strncmp_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strncmp.c File Reference}
+\label{strncmp_8c}\index{Source/Kernel/Libs/libc/src/strncmp.c@{Source/Kernel/Libs/libc/src/strncmp.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strncmp.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strncmp_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{strncmp_8c_a07f4a84c11c106e95c32b6ab509346ef}{strncmp}} (const char $\ast$s1, const char $\ast$s2, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strncmp_8c_a07f4a84c11c106e95c32b6ab509346ef}\label{strncmp_8c_a07f4a84c11c106e95c32b6ab509346ef}} 
+\index{strncmp.c@{strncmp.c}!strncmp@{strncmp}}
+\index{strncmp@{strncmp}!strncmp.c@{strncmp.c}}
+\doxysubsubsection{\texorpdfstring{strncmp()}{strncmp()}}
+{\footnotesize\ttfamily int strncmp (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s1,  }\item[{const char $\ast$}]{s2,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strncmp.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *c1 = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)s1;}
+\DoxyCodeLine{76     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *c2 = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)s2;}
+\DoxyCodeLine{77     \textcolor{keywordtype}{int} d = 0;}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{80         \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} ch;}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{82         d = (int)(ch = *c1++) -\/ (int)*c2++;}
+\DoxyCodeLine{83         \textcolor{keywordflow}{if} (d || !ch)}
+\DoxyCodeLine{84             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{85     \}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     \textcolor{keywordflow}{return} d;}
+\DoxyCodeLine{88 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=288pt]{strncmp_8c_a07f4a84c11c106e95c32b6ab509346ef_icgraph}
+\end{center}
+\end{figure}

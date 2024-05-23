@@ -1,0 +1,827 @@
+\hypertarget{uhashtable_8c}{}\doxysection{Source/\+Kernel/\+Libs/libapi/src/uhashtable.c File Reference}
+\label{uhashtable_8c}\index{Source/Kernel/Libs/libapi/src/uhashtable.c@{Source/Kernel/Libs/libapi/src/uhashtable.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+{\ttfamily \#include $<$uhashtable.\+h$>$}\newline
+Include dependency graph for uhashtable.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}{HT\+\_\+\+INITIAL\+\_\+\+SIZE}}~16
+\begin{DoxyCompactList}\small\item\em Initial capacity and size of the hashtable. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uhashtable_8c_ac692d079184deeecc8475bc75b5a21ba}{HT\+\_\+\+MAX\+\_\+\+GRAVEYARD\+\_\+\+FACTOR}}~0.\+3f
+\begin{DoxyCompactList}\small\item\em Maximal factor size of the graveyard. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uhashtable_8c_ae0eb456851578fd546fcc7f95b6e1e45}{HT\+\_\+\+MAX\+\_\+\+LOAD\+\_\+\+FACTOR}}~0.\+7f
+\begin{DoxyCompactList}\small\item\em Maximal load factor (including graveyard). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uhashtable_8c_ad2026578664bf796de1faaa6d562ff17}{FNV\+\_\+\+OFFSET\+\_\+\+BASIS}}~14695981039346656037UL
+\begin{DoxyCompactList}\small\item\em FNV offset used for the hash function. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uhashtable_8c_ad24caffb4ec2b57caeb823da822d3120}{FNV\+\_\+\+PRIME}}~1099511628211UL
+\begin{DoxyCompactList}\small\item\em Prime used in the FNV hash. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}{\+\_\+uhash\+\_\+64}} (const uintptr\+\_\+t key)
+\begin{DoxyCompactList}\small\item\em 64 bits hash function for uintptr\+\_\+t keys. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb}{\+\_\+uhashtable\+\_\+set\+\_\+entry}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, const uintptr\+\_\+t key, void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Sets the data for a given entry in the unsigned hash table. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7}{\+\_\+uhashtable\+\_\+rehash\+\_\+entry}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, \mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\+\_\+entry\+\_\+t}} $\ast$entry)
+\begin{DoxyCompactList}\small\item\em Replaces an entry in the table, without allocating the entry. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_a467f7118260ef6f993a93c55faa36431}{\+\_\+uhashtable\+\_\+rehash}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, const float growth)
+\begin{DoxyCompactList}\small\item\em Rehashes the table and grows the table by a certain factor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$ \mbox{\hyperlink{uhashtable_8c_a0ea18abb36f21b05e3386ad0b451ec3e}{uhashtable\+\_\+create}} (\mbox{\hyperlink{structuhashtable__alloc__t}{uhashtable\+\_\+alloc\+\_\+t}} allocator, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$error)
+\begin{DoxyCompactList}\small\item\em Creates a new unsigned hash table. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_a358d03edbaf4eb7030e4679d63e16399}{uhashtable\+\_\+destroy}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table)
+\begin{DoxyCompactList}\small\item\em Destroys an unsigned hash table. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_aa445ae01c5ddbea61ab4a4ccda963aeb}{uhashtable\+\_\+get}} (const \mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, const uintptr\+\_\+t key, void $\ast$$\ast$data)
+\begin{DoxyCompactList}\small\item\em Returns the value attached to the key provided in parameters. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_adba2caa76e6636d49ba7538597d10952}{uhashtable\+\_\+set}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, const uintptr\+\_\+t key, void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Sets a value in the hash table. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{uhashtable_8c_afc513a0be47b9028258f750346bbc414}{uhashtable\+\_\+remove}} (\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$table, const uintptr\+\_\+t key, void $\ast$$\ast$data)
+\begin{DoxyCompactList}\small\item\em Removes an entry from the table. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{uhashtable_8c_ad2026578664bf796de1faaa6d562ff17}\label{uhashtable_8c_ad2026578664bf796de1faaa6d562ff17}} 
+\index{uhashtable.c@{uhashtable.c}!FNV\_OFFSET\_BASIS@{FNV\_OFFSET\_BASIS}}
+\index{FNV\_OFFSET\_BASIS@{FNV\_OFFSET\_BASIS}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{FNV\_OFFSET\_BASIS}{FNV\_OFFSET\_BASIS}}
+{\footnotesize\ttfamily \#define FNV\+\_\+\+OFFSET\+\_\+\+BASIS~14695981039346656037UL}
+
+
+
+FNV offset used for the hash function. 
+
+
+
+Definition at line 61 of file uhashtable.\+c.
+
+\mbox{\Hypertarget{uhashtable_8c_ad24caffb4ec2b57caeb823da822d3120}\label{uhashtable_8c_ad24caffb4ec2b57caeb823da822d3120}} 
+\index{uhashtable.c@{uhashtable.c}!FNV\_PRIME@{FNV\_PRIME}}
+\index{FNV\_PRIME@{FNV\_PRIME}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{FNV\_PRIME}{FNV\_PRIME}}
+{\footnotesize\ttfamily \#define FNV\+\_\+\+PRIME~1099511628211UL}
+
+
+
+Prime used in the FNV hash. 
+
+
+
+Definition at line 64 of file uhashtable.\+c.
+
+\mbox{\Hypertarget{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}\label{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}} 
+\index{uhashtable.c@{uhashtable.c}!HT\_INITIAL\_SIZE@{HT\_INITIAL\_SIZE}}
+\index{HT\_INITIAL\_SIZE@{HT\_INITIAL\_SIZE}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{HT\_INITIAL\_SIZE}{HT\_INITIAL\_SIZE}}
+{\footnotesize\ttfamily \#define HT\+\_\+\+INITIAL\+\_\+\+SIZE~16}
+
+
+
+Initial capacity and size of the hashtable. 
+
+\begin{DoxyWarning}{Warning}
+Must be a power of 2. 
+\end{DoxyWarning}
+
+
+Definition at line 49 of file uhashtable.\+c.
+
+\mbox{\Hypertarget{uhashtable_8c_ac692d079184deeecc8475bc75b5a21ba}\label{uhashtable_8c_ac692d079184deeecc8475bc75b5a21ba}} 
+\index{uhashtable.c@{uhashtable.c}!HT\_MAX\_GRAVEYARD\_FACTOR@{HT\_MAX\_GRAVEYARD\_FACTOR}}
+\index{HT\_MAX\_GRAVEYARD\_FACTOR@{HT\_MAX\_GRAVEYARD\_FACTOR}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{HT\_MAX\_GRAVEYARD\_FACTOR}{HT\_MAX\_GRAVEYARD\_FACTOR}}
+{\footnotesize\ttfamily \#define HT\+\_\+\+MAX\+\_\+\+GRAVEYARD\+\_\+\+FACTOR~0.\+3f}
+
+
+
+Maximal factor size of the graveyard. 
+
+
+
+Definition at line 52 of file uhashtable.\+c.
+
+\mbox{\Hypertarget{uhashtable_8c_ae0eb456851578fd546fcc7f95b6e1e45}\label{uhashtable_8c_ae0eb456851578fd546fcc7f95b6e1e45}} 
+\index{uhashtable.c@{uhashtable.c}!HT\_MAX\_LOAD\_FACTOR@{HT\_MAX\_LOAD\_FACTOR}}
+\index{HT\_MAX\_LOAD\_FACTOR@{HT\_MAX\_LOAD\_FACTOR}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{HT\_MAX\_LOAD\_FACTOR}{HT\_MAX\_LOAD\_FACTOR}}
+{\footnotesize\ttfamily \#define HT\+\_\+\+MAX\+\_\+\+LOAD\+\_\+\+FACTOR~0.\+7f}
+
+
+
+Maximal load factor (including graveyard). 
+
+\begin{DoxyWarning}{Warning}
+\+: Must always be strictly less than 1.\+0 
+\end{DoxyWarning}
+
+
+Definition at line 58 of file uhashtable.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}\label{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}} 
+\index{uhashtable.c@{uhashtable.c}!\_uhash\_64@{\_uhash\_64}}
+\index{\_uhash\_64@{\_uhash\_64}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{\_uhash\_64()}{\_uhash\_64()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+uhash\+\_\+64 (\begin{DoxyParamCaption}\item[{const uintptr\+\_\+t}]{key }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+64 bits hash function for uintptr\+\_\+t keys. 
+
+This function computes the 64 bits hash function for uintptr\+\_\+t keys. The algorithm used is the FNV-\/1a hash algorithm.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em key} & The key to hash. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The computed hash is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 155 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{156 \{}
+\DoxyCodeLine{157     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} hash;}
+\DoxyCodeLine{158     \textcolor{keywordtype}{size\_t}   i;}
+\DoxyCodeLine{159 }
+\DoxyCodeLine{160     \textcolor{comment}{/* We use the FNV-\/1a method to hash our integer */}}
+\DoxyCodeLine{161     hash = \mbox{\hyperlink{uhashtable_8c_ad2026578664bf796de1faaa6d562ff17}{FNV\_OFFSET\_BASIS}};}
+\DoxyCodeLine{162 }
+\DoxyCodeLine{163     \textcolor{keywordflow}{for}(i = 0; i < \textcolor{keyword}{sizeof}(uintptr\_t); ++i)}
+\DoxyCodeLine{164     \{}
+\DoxyCodeLine{165         hash \string^= (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})((\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})(key >> (i * 8)));}
+\DoxyCodeLine{166         hash *= \mbox{\hyperlink{uhashtable_8c_ad24caffb4ec2b57caeb823da822d3120}{FNV\_PRIME}};}
+\DoxyCodeLine{167     \}}
+\DoxyCodeLine{168 }
+\DoxyCodeLine{169     \textcolor{keywordflow}{return} hash;}
+\DoxyCodeLine{170 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c_aee31db0f156eaae75d46c275450f392e_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_a467f7118260ef6f993a93c55faa36431}\label{uhashtable_8c_a467f7118260ef6f993a93c55faa36431}} 
+\index{uhashtable.c@{uhashtable.c}!\_uhashtable\_rehash@{\_uhashtable\_rehash}}
+\index{\_uhashtable\_rehash@{\_uhashtable\_rehash}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{\_uhashtable\_rehash()}{\_uhashtable\_rehash()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \+\_\+uhashtable\+\_\+rehash (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{const float}]{growth }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Rehashes the table and grows the table by a certain factor. 
+
+Rehash the table and grows the table by a certain factor. The growth factor must be greater or equal to 1. In the latter case, only the rehashing is done.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em table} & The table to grow. \\
+\hline
+\mbox{\texttt{ in}}  & {\em growth} & The growth factor to use.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 257 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{258 \{}
+\DoxyCodeLine{259     \textcolor{keywordtype}{size\_t}               i;}
+\DoxyCodeLine{260     \textcolor{keywordtype}{size\_t}               new\_capacity;}
+\DoxyCodeLine{261     \textcolor{keywordtype}{size\_t}               old\_capacity;}
+\DoxyCodeLine{262     \mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}** new\_entries;}
+\DoxyCodeLine{263     \mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}** old\_entries;}
+\DoxyCodeLine{264 }
+\DoxyCodeLine{265     new\_capacity = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})((\textcolor{keywordtype}{float})table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} * growth);}
+\DoxyCodeLine{266 }
+\DoxyCodeLine{267     \textcolor{comment}{/* Check if did not overflow on the size */}}
+\DoxyCodeLine{268     \textcolor{keywordflow}{if}(new\_capacity <= table-\/>capacity)}
+\DoxyCodeLine{269     \{}
+\DoxyCodeLine{270         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87}{OS\_ERR\_OUT\_OF\_BOUND}};}
+\DoxyCodeLine{271     \}}
+\DoxyCodeLine{272 }
+\DoxyCodeLine{273     \textcolor{comment}{/* Save old entries */}}
+\DoxyCodeLine{274     old\_entries  = table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}};}
+\DoxyCodeLine{275     old\_capacity = table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}};}
+\DoxyCodeLine{276 }
+\DoxyCodeLine{277     \textcolor{comment}{/* Create a new entry table */}}
+\DoxyCodeLine{278     new\_entries = table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}*) *}
+\DoxyCodeLine{279                                           new\_capacity);}
+\DoxyCodeLine{280     \textcolor{keywordflow}{if}(new\_entries == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{281     \{}
+\DoxyCodeLine{282         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{283     \}}
+\DoxyCodeLine{284 }
+\DoxyCodeLine{285     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(new\_entries, 0, \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}*) * new\_capacity);}
+\DoxyCodeLine{286     table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} = new\_capacity;}
+\DoxyCodeLine{287     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}  = new\_entries;}
+\DoxyCodeLine{288 }
+\DoxyCodeLine{289     \textcolor{comment}{/* Rehash the table, removes fragmentation and graveyard. */}}
+\DoxyCodeLine{290     \textcolor{keywordflow}{for}(i = 0; i < old\_capacity; ++i)}
+\DoxyCodeLine{291     \{}
+\DoxyCodeLine{292         \textcolor{keywordflow}{if}(old\_entries[i] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{293         \{}
+\DoxyCodeLine{294             \textcolor{comment}{/* Check if it was an entry that was used */}}
+\DoxyCodeLine{295             \textcolor{keywordflow}{if}(old\_entries[i]-\/>is\_used == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{296             \{}
+\DoxyCodeLine{297                 \mbox{\hyperlink{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7}{\_uhashtable\_rehash\_entry}}(table, old\_entries[i]);}
+\DoxyCodeLine{298             \}}
+\DoxyCodeLine{299             \textcolor{keywordflow}{else}}
+\DoxyCodeLine{300             \{}
+\DoxyCodeLine{301                 \textcolor{comment}{/* The entry was not used, we can free it */}}
+\DoxyCodeLine{302                 table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(old\_entries[i]);}
+\DoxyCodeLine{303             \}}
+\DoxyCodeLine{304         \}}
+\DoxyCodeLine{305     \}}
+\DoxyCodeLine{306 }
+\DoxyCodeLine{307     \textcolor{comment}{/* Clean data */}}
+\DoxyCodeLine{308     table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}} = 0;}
+\DoxyCodeLine{309     table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(old\_entries);}
+\DoxyCodeLine{310 }
+\DoxyCodeLine{311     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{312 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c_a467f7118260ef6f993a93c55faa36431_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=343pt]{uhashtable_8c_a467f7118260ef6f993a93c55faa36431_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7}\label{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7}} 
+\index{uhashtable.c@{uhashtable.c}!\_uhashtable\_rehash\_entry@{\_uhashtable\_rehash\_entry}}
+\index{\_uhashtable\_rehash\_entry@{\_uhashtable\_rehash\_entry}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{\_uhashtable\_rehash\_entry()}{\_uhashtable\_rehash\_entry()}}
+{\footnotesize\ttfamily static void \+\_\+uhashtable\+\_\+rehash\+\_\+entry (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\+\_\+entry\+\_\+t}} $\ast$}]{entry }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Replaces an entry in the table, without allocating the entry. 
+
+Replaces an entry in the table, without allocating the entry. The entry beging used it the one given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em table} & The table to use. \\
+\hline
+\mbox{\texttt{ in}}  & {\em entry} & The entry to place. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 226 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{228 \{}
+\DoxyCodeLine{229     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} hash;}
+\DoxyCodeLine{230     \textcolor{keywordtype}{size\_t}   entry\_index;}
+\DoxyCodeLine{231 }
+\DoxyCodeLine{232     \textcolor{comment}{/* Get the hash and ensure it does not overflow the current capacity */}}
+\DoxyCodeLine{233     hash        = \mbox{\hyperlink{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}{\_uhash\_64}}(entry-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}});}
+\DoxyCodeLine{234     entry\_index = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})(hash \& (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})(table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} -\/ 1));}
+\DoxyCodeLine{235 }
+\DoxyCodeLine{236     \textcolor{comment}{/* Search for the entry in the table. Note that due to the fact that our}}
+\DoxyCodeLine{237 \textcolor{comment}{     * load factor should always be under 1.0, there is at least one entry that}}
+\DoxyCodeLine{238 \textcolor{comment}{     * is NULL. Hence we cannot have an infinite loop here. */}}
+\DoxyCodeLine{239     \textcolor{keywordflow}{while}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{240           table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{241     \{}
+\DoxyCodeLine{242         \textcolor{comment}{/* Found the entry */}}
+\DoxyCodeLine{243         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}} == entry-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}})}
+\DoxyCodeLine{244         \{}
+\DoxyCodeLine{245             table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}} = entry-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}};}
+\DoxyCodeLine{246             \textcolor{keywordflow}{return};}
+\DoxyCodeLine{247         \}}
+\DoxyCodeLine{248 }
+\DoxyCodeLine{249         \textcolor{comment}{/* Increment the index */}}
+\DoxyCodeLine{250         entry\_index = (entry\_index + 1) \% table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}};}
+\DoxyCodeLine{251     \}}
+\DoxyCodeLine{252 }
+\DoxyCodeLine{253     \textcolor{comment}{/* Set the data */}}
+\DoxyCodeLine{254     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] = entry;}
+\DoxyCodeLine{255 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c_ae07e6655b0b5433f8ec61af510d49fd7_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb}\label{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb}} 
+\index{uhashtable.c@{uhashtable.c}!\_uhashtable\_set\_entry@{\_uhashtable\_set\_entry}}
+\index{\_uhashtable\_set\_entry@{\_uhashtable\_set\_entry}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{\_uhashtable\_set\_entry()}{\_uhashtable\_set\_entry()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \+\_\+uhashtable\+\_\+set\+\_\+entry (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{const uintptr\+\_\+t}]{key,  }\item[{void $\ast$}]{data }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Sets the data for a given entry in the unsigned hash table. 
+
+Sets the data for a given entry in the unsigned hash table. If the entry does not exist it is created.
+
+\begin{DoxyWarning}{Warning}
+This function does not perform any check on the data, the key or the table itself.
+\end{DoxyWarning}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em table} & The table to set the value. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & The key to associate the data with. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data to set.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 172 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{175 \{}
+\DoxyCodeLine{176     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} hash;}
+\DoxyCodeLine{177     \textcolor{keywordtype}{size\_t}   entry\_index;}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179     \textcolor{comment}{/* Get the hash and ensure it does not overflow the current capacity */}}
+\DoxyCodeLine{180     hash        = \mbox{\hyperlink{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}{\_uhash\_64}}(key);}
+\DoxyCodeLine{181     entry\_index = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})(hash \& (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})(table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} -\/ 1));}
+\DoxyCodeLine{182 }
+\DoxyCodeLine{183     \textcolor{comment}{/* Search for the entry in the table. Note that due to the fact that our}}
+\DoxyCodeLine{184 \textcolor{comment}{     * load factor should always be under 1.0, there is at least one entry that}}
+\DoxyCodeLine{185 \textcolor{comment}{     * is NULL. Hence we cannot have an infinite loop here. */}}
+\DoxyCodeLine{186     \textcolor{keywordflow}{while}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{187           table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{188     \{}
+\DoxyCodeLine{189         \textcolor{comment}{/* Found the entry */}}
+\DoxyCodeLine{190         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}} == key)}
+\DoxyCodeLine{191         \{}
+\DoxyCodeLine{192             table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}} = data;}
+\DoxyCodeLine{193             \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{194         \}}
+\DoxyCodeLine{195 }
+\DoxyCodeLine{196         \textcolor{comment}{/* Increment the index */}}
+\DoxyCodeLine{197         entry\_index = (entry\_index + 1) \% table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}};}
+\DoxyCodeLine{198     \}}
+\DoxyCodeLine{199 }
+\DoxyCodeLine{200     \textcolor{comment}{/* If we are here, we did not find the data, allocate if needed */}}
+\DoxyCodeLine{201     \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{202     \{}
+\DoxyCodeLine{203         table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] =}
+\DoxyCodeLine{204             table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}));}
+\DoxyCodeLine{205         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{206         \{}
+\DoxyCodeLine{207             \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{208         \}}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210         ++table-\/>\mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{211     \}}
+\DoxyCodeLine{212     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{213     \{}
+\DoxyCodeLine{214         \textcolor{comment}{/* We found an entry from the graveyard, remove it */}}
+\DoxyCodeLine{215         -\/-\/table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}};}
+\DoxyCodeLine{216     \}}
+\DoxyCodeLine{217 }
+\DoxyCodeLine{218     \textcolor{comment}{/* Set the data */}}
+\DoxyCodeLine{219     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}}     = key;}
+\DoxyCodeLine{220     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}}    = data;}
+\DoxyCodeLine{221     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{222 }
+\DoxyCodeLine{223     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{224 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=311pt]{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=334pt]{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_a0ea18abb36f21b05e3386ad0b451ec3e}\label{uhashtable_8c_a0ea18abb36f21b05e3386ad0b451ec3e}} 
+\index{uhashtable.c@{uhashtable.c}!uhashtable\_create@{uhashtable\_create}}
+\index{uhashtable\_create@{uhashtable\_create}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{uhashtable\_create()}{uhashtable\_create()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}}$\ast$ uhashtable\+\_\+create (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__alloc__t}{uhashtable\+\_\+alloc\+\_\+t}}}]{allocator,  }\item[{\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$}]{error }\end{DoxyParamCaption})}
+
+
+
+Creates a new unsigned hash table. 
+
+Creates a new unsigned hash table. The hash table will be initialized and its memory allocated. It should be destroyed once the hash table is no longer in use.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em allocator} & The allocator to be used when allocating and freeing the hash table. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The buffer to return the error status.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the newly created table is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 314 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{316 \{}
+\DoxyCodeLine{317     \mbox{\hyperlink{structuhashtable__t}{uhashtable\_t}}* table;}
+\DoxyCodeLine{318 }
+\DoxyCodeLine{319     \textcolor{keywordflow}{if}(allocator.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || allocator.\mbox{\hyperlink{structuhashtable__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{320     \{}
+\DoxyCodeLine{321         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{322         \{}
+\DoxyCodeLine{323             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{324         \}}
+\DoxyCodeLine{325         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{326     \}}
+\DoxyCodeLine{327 }
+\DoxyCodeLine{328     \textcolor{comment}{/* Initialize the table */}}
+\DoxyCodeLine{329     table = allocator.\mbox{\hyperlink{structuhashtable__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__t}{uhashtable\_t}}));}
+\DoxyCodeLine{330     \textcolor{keywordflow}{if}(table == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{331     \{}
+\DoxyCodeLine{332         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{333         \{}
+\DoxyCodeLine{334             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{335         \}}
+\DoxyCodeLine{336         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{337     \}}
+\DoxyCodeLine{338 }
+\DoxyCodeLine{339     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} = allocator.\mbox{\hyperlink{structuhashtable__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}*) *}
+\DoxyCodeLine{340                                       \mbox{\hyperlink{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}{HT\_INITIAL\_SIZE}});}
+\DoxyCodeLine{341 }
+\DoxyCodeLine{342     \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{343     \{}
+\DoxyCodeLine{344         allocator.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(table);}
+\DoxyCodeLine{345         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{346         \{}
+\DoxyCodeLine{347             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{348         \}}
+\DoxyCodeLine{349         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{350     \}}
+\DoxyCodeLine{351 }
+\DoxyCodeLine{352     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}, 0, \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structuhashtable__entry__t}{uhashtable\_entry\_t}}*) * \mbox{\hyperlink{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}{HT\_INITIAL\_SIZE}});}
+\DoxyCodeLine{353     table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}      = allocator;}
+\DoxyCodeLine{354     table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}       = \mbox{\hyperlink{uhashtable_8c_adc7215a18cab6d02632342fb796d5dbf}{HT\_INITIAL\_SIZE}};}
+\DoxyCodeLine{355     table-\/>\mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}}           = 0;}
+\DoxyCodeLine{356     table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}} = 0;}
+\DoxyCodeLine{357 }
+\DoxyCodeLine{358     \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{359     \{}
+\DoxyCodeLine{360         *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{361     \}}
+\DoxyCodeLine{362 }
+\DoxyCodeLine{363     \textcolor{keywordflow}{return} table;}
+\DoxyCodeLine{364 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=280pt]{uhashtable_8c_a0ea18abb36f21b05e3386ad0b451ec3e_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_a358d03edbaf4eb7030e4679d63e16399}\label{uhashtable_8c_a358d03edbaf4eb7030e4679d63e16399}} 
+\index{uhashtable.c@{uhashtable.c}!uhashtable\_destroy@{uhashtable\_destroy}}
+\index{uhashtable\_destroy@{uhashtable\_destroy}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{uhashtable\_destroy()}{uhashtable\_destroy()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} uhashtable\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table }\end{DoxyParamCaption})}
+
+
+
+Destroys an unsigned hash table. 
+
+Destroys an unsigned hash table. The memory used by the table is released. It is the responsability of the user to free the memory used by the data contained in the hash table.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em table} & The unsigned hash table to destroy.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 366 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{367 \{}
+\DoxyCodeLine{368     \textcolor{keywordtype}{size\_t} i;}
+\DoxyCodeLine{369 }
+\DoxyCodeLine{370     \textcolor{keywordflow}{if}(table == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{371     \{}
+\DoxyCodeLine{372         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{373     \}}
+\DoxyCodeLine{374 }
+\DoxyCodeLine{375     \textcolor{comment}{/* Free the memory used by the table */}}
+\DoxyCodeLine{376     \textcolor{keywordflow}{for}(i = 0; i < table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}; ++i)}
+\DoxyCodeLine{377     \{}
+\DoxyCodeLine{378         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[i] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{379         \{}
+\DoxyCodeLine{380             table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[i]);}
+\DoxyCodeLine{381         \}}
+\DoxyCodeLine{382     \}}
+\DoxyCodeLine{383     table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}});}
+\DoxyCodeLine{384 }
+\DoxyCodeLine{385     \textcolor{comment}{/* Reset attributes */}}
+\DoxyCodeLine{386     table-\/>\mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}}           = 0;}
+\DoxyCodeLine{387     table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}       = 0;}
+\DoxyCodeLine{388     table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}} = 0;}
+\DoxyCodeLine{389     table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}        = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{390 }
+\DoxyCodeLine{391     \textcolor{comment}{/* Free memory */}}
+\DoxyCodeLine{392     table-\/>\mbox{\hyperlink{structuhashtable__t_a377a5b9a2cb12ad9a40e91c5b3dd70fd}{allocator}}.\mbox{\hyperlink{structuhashtable__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(table);}
+\DoxyCodeLine{393 }
+\DoxyCodeLine{394     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{395 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{uhashtable_8c_aa445ae01c5ddbea61ab4a4ccda963aeb}\label{uhashtable_8c_aa445ae01c5ddbea61ab4a4ccda963aeb}} 
+\index{uhashtable.c@{uhashtable.c}!uhashtable\_get@{uhashtable\_get}}
+\index{uhashtable\_get@{uhashtable\_get}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{uhashtable\_get()}{uhashtable\_get()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} uhashtable\+\_\+get (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{const uintptr\+\_\+t}]{key,  }\item[{void $\ast$$\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Returns the value attached to the key provided in parameters. 
+
+Returns the value attached to the key provided in parameters. If the key is not in the table, OS\+\_\+\+ERR\+\_\+\+INCORRECT\+\_\+\+VALUE is returned.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em table} & The table to search. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & The key to search. \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & The data buffer to receive the data associated to the key.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 397 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{400 \{}
+\DoxyCodeLine{401     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} hash;}
+\DoxyCodeLine{402     \textcolor{keywordtype}{size\_t}   entry\_index;}
+\DoxyCodeLine{403 }
+\DoxyCodeLine{404     \textcolor{keywordflow}{if}(table == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || data == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{405     \{}
+\DoxyCodeLine{406         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{407     \}}
+\DoxyCodeLine{408 }
+\DoxyCodeLine{409     \textcolor{comment}{/* Get the hash and ensure it does not overflow the current capacity */}}
+\DoxyCodeLine{410     hash        = \mbox{\hyperlink{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}{\_uhash\_64}}(key);}
+\DoxyCodeLine{411     entry\_index = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})(hash \& (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})(table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} -\/ 1));}
+\DoxyCodeLine{412 }
+\DoxyCodeLine{413     \textcolor{comment}{/* Search for the entry in the table. Note that due to the fact that our}}
+\DoxyCodeLine{414 \textcolor{comment}{     * load factor should always be under 1.0, there is at least one entry that}}
+\DoxyCodeLine{415 \textcolor{comment}{     * is NULL. Hence we cannot have an infinite loop here. */}}
+\DoxyCodeLine{416     \textcolor{keywordflow}{while}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{417     \{}
+\DoxyCodeLine{418         \textcolor{comment}{/* Found the entry */}}
+\DoxyCodeLine{419         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}} == key \&\&}
+\DoxyCodeLine{420            table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{421         \{}
+\DoxyCodeLine{422             *data = table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}};}
+\DoxyCodeLine{423             \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{424         \}}
+\DoxyCodeLine{425 }
+\DoxyCodeLine{426         \textcolor{comment}{/* Increment the index */}}
+\DoxyCodeLine{427         entry\_index = (entry\_index + 1) \% table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}};}
+\DoxyCodeLine{428     \}}
+\DoxyCodeLine{429 }
+\DoxyCodeLine{430     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}};}
+\DoxyCodeLine{431 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=276pt]{uhashtable_8c_aa445ae01c5ddbea61ab4a4ccda963aeb_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_afc513a0be47b9028258f750346bbc414}\label{uhashtable_8c_afc513a0be47b9028258f750346bbc414}} 
+\index{uhashtable.c@{uhashtable.c}!uhashtable\_remove@{uhashtable\_remove}}
+\index{uhashtable\_remove@{uhashtable\_remove}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{uhashtable\_remove()}{uhashtable\_remove()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} uhashtable\+\_\+remove (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{const uintptr\+\_\+t}]{key,  }\item[{void $\ast$$\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Removes an entry from the table. 
+
+Removes an entry from the table. This function returns the value attached to the key provided in parameters. If the key is not in the table, OS\+\_\+\+ERR\+\_\+\+INCORRECT\+\_\+\+VALUE is returned.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em table} & The table to remove the entry in. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & The key to remove. \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & The data buffer to receive the data associated to the key. This parameter can be set to NULL is the user does not want to retreive the removed data.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 459 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{462 \{}
+\DoxyCodeLine{463     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}    hash;}
+\DoxyCodeLine{464     \textcolor{keywordtype}{size\_t}      entry\_index;}
+\DoxyCodeLine{465     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{466 }
+\DoxyCodeLine{467     \textcolor{keywordflow}{if}(table == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{468     \{}
+\DoxyCodeLine{469         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{470     \}}
+\DoxyCodeLine{471 }
+\DoxyCodeLine{472     \textcolor{comment}{/* Get the hash and ensure it does not overflow the current capacity */}}
+\DoxyCodeLine{473     hash        = \mbox{\hyperlink{uhashtable_8c_aee31db0f156eaae75d46c275450f392e}{\_uhash\_64}}(key);}
+\DoxyCodeLine{474     entry\_index = (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\_t}})(hash \& (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})(table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} -\/ 1));}
+\DoxyCodeLine{475 }
+\DoxyCodeLine{476     \textcolor{comment}{/* Check if the graveyard load is under the threshold */}}
+\DoxyCodeLine{477     \textcolor{keywordflow}{if}((\textcolor{keywordtype}{float})table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} * \mbox{\hyperlink{uhashtable_8c_ac692d079184deeecc8475bc75b5a21ba}{HT\_MAX\_GRAVEYARD\_FACTOR}} < table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}})}
+\DoxyCodeLine{478     \{}
+\DoxyCodeLine{479         \textcolor{comment}{/* Rehash with a growth factor or 1 to keep the same capacity */}}
+\DoxyCodeLine{480         err = \mbox{\hyperlink{uhashtable_8c_a467f7118260ef6f993a93c55faa36431}{\_uhashtable\_rehash}}(table, 1);}
+\DoxyCodeLine{481         \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{482         \{}
+\DoxyCodeLine{483             \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{484         \}}
+\DoxyCodeLine{485     \}}
+\DoxyCodeLine{486 }
+\DoxyCodeLine{487     \textcolor{comment}{/* Search for the entry in the table. Note that due to the fact that our}}
+\DoxyCodeLine{488 \textcolor{comment}{     * load factor should always be under 1.0, there is at least one entry that}}
+\DoxyCodeLine{489 \textcolor{comment}{     * is NULL. Hence we cannot have an infinite loop here. */}}
+\DoxyCodeLine{490     \textcolor{keywordflow}{while}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{491     \{}
+\DoxyCodeLine{492         \textcolor{comment}{/* Found the entry */}}
+\DoxyCodeLine{493         \textcolor{keywordflow}{if}(table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_ab4c3b12445fae2df7439fd1f0f767358}{key}} == key \&\&}
+\DoxyCodeLine{494            table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{495         \{}
+\DoxyCodeLine{496             \textcolor{keywordflow}{if}(data != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{497             \{}
+\DoxyCodeLine{498                 *data = table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a735984d41155bc1032e09bece8f8d66d}{data}};}
+\DoxyCodeLine{499             \}}
+\DoxyCodeLine{500             table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}}[entry\_index]-\/>\mbox{\hyperlink{structuhashtable__entry__t_a97bb7a73f339f51bd597d5942b4e1628}{is\_used}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{501 }
+\DoxyCodeLine{502             ++table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}};}
+\DoxyCodeLine{503             -\/-\/table-\/>\mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{504 }
+\DoxyCodeLine{505             \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{506         \}}
+\DoxyCodeLine{507 }
+\DoxyCodeLine{508         \textcolor{comment}{/* Increment the index */}}
+\DoxyCodeLine{509         entry\_index = (entry\_index + 1) \% table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}};}
+\DoxyCodeLine{510     \}}
+\DoxyCodeLine{511 }
+\DoxyCodeLine{512     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}};}
+\DoxyCodeLine{513 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c_afc513a0be47b9028258f750346bbc414_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uhashtable_8c_adba2caa76e6636d49ba7538597d10952}\label{uhashtable_8c_adba2caa76e6636d49ba7538597d10952}} 
+\index{uhashtable.c@{uhashtable.c}!uhashtable\_set@{uhashtable\_set}}
+\index{uhashtable\_set@{uhashtable\_set}!uhashtable.c@{uhashtable.c}}
+\doxysubsubsection{\texorpdfstring{uhashtable\_set()}{uhashtable\_set()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} uhashtable\+\_\+set (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structuhashtable__t}{uhashtable\+\_\+t}} $\ast$}]{table,  }\item[{const uintptr\+\_\+t}]{key,  }\item[{void $\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Sets a value in the hash table. 
+
+Sets a value in the hash table. If the value already exists, the previous value is overwritten, otherwise, a new entry is created.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em table} & The table to set the data into. \\
+\hline
+\mbox{\texttt{ in}}  & {\em key} & The key to associate to the data. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data to set in the table.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 433 of file uhashtable.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{436 \{}
+\DoxyCodeLine{437     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{438 }
+\DoxyCodeLine{439     \textcolor{keywordflow}{if}(table == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || table-\/>\mbox{\hyperlink{structuhashtable__t_aeec919785c406d2cabc467e8d0fc0f31}{entries}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{440     \{}
+\DoxyCodeLine{441         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{442     \}}
+\DoxyCodeLine{443 }
+\DoxyCodeLine{444     \textcolor{comment}{/* Check if the current load is under the threshold, double the size */}}
+\DoxyCodeLine{445     \textcolor{keywordflow}{if}((\textcolor{keywordtype}{float})table-\/>\mbox{\hyperlink{structuhashtable__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} * \mbox{\hyperlink{uhashtable_8c_ae0eb456851578fd546fcc7f95b6e1e45}{HT\_MAX\_LOAD\_FACTOR}} <}
+\DoxyCodeLine{446        table-\/>\mbox{\hyperlink{structuhashtable__t_a854352f53b148adc24983a58a1866d66}{size}} + table-\/>\mbox{\hyperlink{structuhashtable__t_aff3f618d728a254c5f36856775626497}{graveyard\_size}})}
+\DoxyCodeLine{447     \{}
+\DoxyCodeLine{448         err = \mbox{\hyperlink{uhashtable_8c_a467f7118260ef6f993a93c55faa36431}{\_uhashtable\_rehash}}(table, 2);}
+\DoxyCodeLine{449         \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{450         \{}
+\DoxyCodeLine{451             \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{452         \}}
+\DoxyCodeLine{453     \}}
+\DoxyCodeLine{454 }
+\DoxyCodeLine{455     \textcolor{comment}{/* Insert the entry */}}
+\DoxyCodeLine{456     \textcolor{keywordflow}{return} \mbox{\hyperlink{uhashtable_8c_ad1bac19afa6b5926bd1a266777a7cddb}{\_uhashtable\_set\_entry}}(table, key, data);}
+\DoxyCodeLine{457 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uhashtable_8c_adba2caa76e6636d49ba7538597d10952_cgraph}
+\end{center}
+\end{figure}

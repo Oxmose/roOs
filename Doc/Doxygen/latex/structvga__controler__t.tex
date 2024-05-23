@@ -1,0 +1,195 @@
+\hypertarget{structvga__controler__t}{}\doxysection{vga\+\_\+controler\+\_\+t Struct Reference}
+\label{structvga__controler__t}\index{vga\_controler\_t@{vga\_controler\_t}}
+
+
+x86 VGA Text driver controler.  
+
+
+
+
+Collaboration diagram for vga\+\_\+controler\+\_\+t\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=284pt]{structvga__controler__t__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}{line\+Count}}
+\begin{DoxyCompactList}\small\item\em Screen line resolution. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}{column\+Count}}
+\begin{DoxyCompactList}\small\item\em Screen column resolution. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}{cpu\+Comm\+Port}}
+\begin{DoxyCompactList}\small\item\em CPU command port. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}{cpu\+Data\+Port}}
+\begin{DoxyCompactList}\small\item\em CPU data port. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}{screen\+Scheme}}
+\begin{DoxyCompactList}\small\item\em Stores the curent screen\textquotesingle{}s color scheme. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}{screen\+Cursor}}
+\begin{DoxyCompactList}\small\item\em Stores the curent screen\textquotesingle{}s cursor settings. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}{last\+Printed\+Cursor}}
+\begin{DoxyCompactList}\small\item\em Curent screen\textquotesingle{}s cursor settings of the last printed character. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} $\ast$ \mbox{\hyperlink{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}{p\+Last\+Columns}}
+\begin{DoxyCompactList}\small\item\em Column index of the last printed character for each line. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} $\ast$ \mbox{\hyperlink{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}{p\+Framebuffer}}
+\begin{DoxyCompactList}\small\item\em VGA frame buffer address. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}{framebuffer\+Size}}
+\begin{DoxyCompactList}\small\item\em Size in bytes of the framebuffer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+x86 VGA Text driver controler. 
+
+Definition at line 68 of file vgatext.\+c.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}\label{structvga__controler__t_ae049f8a0bb9c7022a535baa9ebe7ba67}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!columnCount@{columnCount}}
+\index{columnCount@{columnCount}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{columnCount}{columnCount}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} column\+Count}
+
+
+
+Screen column resolution. 
+
+
+
+Definition at line 74 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}\label{structvga__controler__t_ac72caf9943fbc07bf03a53417847dc89}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!cpuCommPort@{cpuCommPort}}
+\index{cpuCommPort@{cpuCommPort}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{cpuCommPort}{cpuCommPort}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} cpu\+Comm\+Port}
+
+
+
+CPU command port. 
+
+
+
+Definition at line 77 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}\label{structvga__controler__t_ab62d2255eb71103d0c3cf8cf42405f3b}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!cpuDataPort@{cpuDataPort}}
+\index{cpuDataPort@{cpuDataPort}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{cpuDataPort}{cpuDataPort}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} cpu\+Data\+Port}
+
+
+
+CPU data port. 
+
+
+
+Definition at line 80 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}\label{structvga__controler__t_a3c1c0916d8a139901f2782b1a4fa3611}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!framebufferSize@{framebufferSize}}
+\index{framebufferSize@{framebufferSize}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{framebufferSize}{framebufferSize}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} framebuffer\+Size}
+
+
+
+Size in bytes of the framebuffer. 
+
+
+
+Definition at line 98 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}\label{structvga__controler__t_a241d7849c07e25e622c124744eff8f49}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!lastPrintedCursor@{lastPrintedCursor}}
+\index{lastPrintedCursor@{lastPrintedCursor}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{lastPrintedCursor}{lastPrintedCursor}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} last\+Printed\+Cursor}
+
+
+
+Curent screen\textquotesingle{}s cursor settings of the last printed character. 
+
+
+
+Definition at line 89 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}\label{structvga__controler__t_a7419f054adaffdbce530bed74f8e4d70}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!lineCount@{lineCount}}
+\index{lineCount@{lineCount}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{lineCount}{lineCount}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} line\+Count}
+
+
+
+Screen line resolution. 
+
+
+
+Definition at line 71 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}\label{structvga__controler__t_a33cd12c5f3ff0345ed5513b73412a4f9}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!pFramebuffer@{pFramebuffer}}
+\index{pFramebuffer@{pFramebuffer}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{pFramebuffer}{pFramebuffer}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}$\ast$ p\+Framebuffer}
+
+
+
+VGA frame buffer address. 
+
+
+
+Definition at line 95 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}\label{structvga__controler__t_ae49df9ebd94a8be72638fb8f37a907ee}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!pLastColumns@{pLastColumns}}
+\index{pLastColumns@{pLastColumns}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{pLastColumns}{pLastColumns}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}$\ast$ p\+Last\+Columns}
+
+
+
+Column index of the last printed character for each line. 
+
+
+
+Definition at line 92 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}\label{structvga__controler__t_ac17e25ac1f06e4d9abeb9999484663aa}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!screenCursor@{screenCursor}}
+\index{screenCursor@{screenCursor}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{screenCursor}{screenCursor}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} screen\+Cursor}
+
+
+
+Stores the curent screen\textquotesingle{}s cursor settings. 
+
+
+
+Definition at line 86 of file vgatext.\+c.
+
+\mbox{\Hypertarget{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}\label{structvga__controler__t_a0ccafa90975687748aa833a9ce49e308}} 
+\index{vga\_controler\_t@{vga\_controler\_t}!screenScheme@{screenScheme}}
+\index{screenScheme@{screenScheme}!vga\_controler\_t@{vga\_controler\_t}}
+\doxysubsubsection{\texorpdfstring{screenScheme}{screenScheme}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} screen\+Scheme}
+
+
+
+Stores the curent screen\textquotesingle{}s color scheme. 
+
+
+
+Definition at line 83 of file vgatext.\+c.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Arch/\+Board/x86/src/\mbox{\hyperlink{vgatext_8c}{vgatext.\+c}}\end{DoxyCompactItemize}

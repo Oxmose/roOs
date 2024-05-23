@@ -6,6 +6,11 @@
         "type_traits": "c",
         "cpu_interrupt.h": "c",
         "panic.h": "c",
-        "kernel_output.h": "c"
+        "kerneloutput.h": "c",
+        "time_mgt.h": "c",
+        "test_framework.h": "c",
+        "devtree.h": "c",
+        "vgatext.h": "c",
+        "config.h": "c"
     }
 }

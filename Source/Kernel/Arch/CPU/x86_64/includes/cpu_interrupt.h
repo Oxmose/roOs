@@ -44,23 +44,9 @@
 /** @brief Maximal customizable accepted exception line. */
 #define MAX_EXCEPTION_LINE 0x1F
 
-/** @brief Master PIC spurious IRQ number. */
-#define PIC_SPURIOUS_IRQ_MASTER 0x07
-/** @brief Slave PIC spurious IRQ number. */
-#define PIC_SPURIOUS_IRQ_SLAVE  0x0F
-
-/** @brief Offset of the first line of an IRQ interrupt from PIC. */
-#define INT_PIC_IRQ_OFFSET     0x30
 /** @brief Offset of the first line of an IRQ interrupt from IO-APIC. */
 #define INT_IOAPIC_IRQ_OFFSET  0x40
 
-/** @brief PIC's minimal IRQ number. */
-#define PIC_MIN_IRQ_LINE 0
-/** @brief PIC's maximal IRQ number. */
-#define PIC_MAX_IRQ_LINE 15
-
-/** @brief PIT IRQ number. */
-#define PIT_IRQ_LINE              0
 /** @brief Keyboard IRQ number. */
 #define KBD_IRQ_LINE              1
 /** @brief Serial COM2-4 IRQ number. */
@@ -85,7 +71,7 @@
 /** @brief Defines the panic interrupt line. */
 #define PANIC_INT_LINE             0x2A
 /** @brief Defines the sys call interrupt line. */
-#define SYSCALL_INT_LINE           0x30
+#define SYSCALL_INT_LINE           0x3B
 
 /** @brief LAPIC spurious interrupt vector. */
 #define LAPIC_SPURIOUS_INT_LINE MAX_INTERRUPT_LINE

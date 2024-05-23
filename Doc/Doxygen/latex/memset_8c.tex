@@ -1,0 +1,65 @@
+\hypertarget{memset_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memset.c File Reference}
+\label{memset_8c}\index{Source/Kernel/Libs/libc/src/memset.c@{Source/Kernel/Libs/libc/src/memset.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memset.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{memset_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memset_8c_aa4075a014de11292d9105188ddbeb216}{memset}} (void $\ast$dst, int c, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memset_8c_aa4075a014de11292d9105188ddbeb216}\label{memset_8c_aa4075a014de11292d9105188ddbeb216}} 
+\index{memset.c@{memset.c}!memset@{memset}}
+\index{memset@{memset}!memset.c@{memset.c}}
+\doxysubsubsection{\texorpdfstring{memset()}{memset()}}
+{\footnotesize\ttfamily void$\ast$ memset (\begin{DoxyParamCaption}\item[{void $\ast$}]{dst,  }\item[{int}]{c,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memset.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77 \textcolor{preprocessor}{\#if defined(\_\_i386\_\_)}}
+\DoxyCodeLine{78     \textcolor{keywordtype}{size\_t} nl = n >> 2;}
+\DoxyCodeLine{79     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}cld ; rep ; stosl ; movl \%3,\%0 ; rep ; stosb"{}}}
+\DoxyCodeLine{80               : \textcolor{stringliteral}{"{}+c"{}} (nl), \textcolor{stringliteral}{"{}+D"{}} (q)}
+\DoxyCodeLine{81               : \textcolor{stringliteral}{"{}a"{}} ((\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char})c * 0x01010101U), \textcolor{stringliteral}{"{}r"{}} (n \& 3));}
+\DoxyCodeLine{82 \textcolor{preprocessor}{\#elif defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{83     \textcolor{keywordtype}{size\_t} nq = n >> 3;}
+\DoxyCodeLine{84     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}cld ; rep ; stosq ; movl \%3,\%\%ecx ; rep ; stosb"{}}}
+\DoxyCodeLine{85               :\textcolor{stringliteral}{"{}+c"{}} (nq), \textcolor{stringliteral}{"{}+D"{}} (q)}
+\DoxyCodeLine{86               : \textcolor{stringliteral}{"{}a"{}} ((\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char})c * 0x0101010101010101U),}
+\DoxyCodeLine{87             \textcolor{stringliteral}{"{}r"{}} ((\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}) n \& 7));}
+\DoxyCodeLine{88 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{89     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{90         *q++ = c;}
+\DoxyCodeLine{91     \}}
+\DoxyCodeLine{92 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{95 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{memset_8c_aa4075a014de11292d9105188ddbeb216_icgraph}
+\end{center}
+\end{figure}

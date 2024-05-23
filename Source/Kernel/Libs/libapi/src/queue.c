@@ -27,7 +27,7 @@
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipulation */
 #include <panic.h>         /* Kernel panic */
-#include <kernel_output.h> /* Kernel output methods */
+#include <kerneloutput.h> /* Kernel output methods */
 
 /* Configuration files */
 #include <config.h>

@@ -28,7 +28,7 @@
 #include <stdint.h>        /* Generic int types */
 #include <kerror.h>        /* Kernel error codes */
 #include <interrupts.h>    /* Interrupt manager */
-#include <kernel_output.h> /* Kernel outputs */
+#include <kerneloutput.h> /* Kernel outputs */
 
 /* Configuration files */
 #include <config.h>
@@ -69,7 +69,7 @@
 /** @brief Stores the number of main kernel's timer tick since the
  * initialization of the time manager.
  */
-static uint64_t sys_tick_count;
+static uint64_t sys_tick_count = 0;
 
 /** @brief The kernel's main timer interrupt source.
  *
@@ -106,7 +106,7 @@ static kernel_timer_t sys_rtc_timer = {
 };
 
 /** @brief Active wait counter per CPU. */
-static volatile uint64_t active_wait;
+static volatile uint64_t active_wait = 0;
 
 /** @brief Stores the routine to call the scheduler. */
 void (*schedule_routine)(kernel_thread_t*) = NULL;
@@ -171,7 +171,6 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
         }
     }
 
-
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Time manager main handler");
@@ -196,108 +195,49 @@ static void _time_rtc_timer_handler(kernel_thread_t* curr_thread)
     kernel_interrupt_set_irq_eoi(sys_rtc_timer.get_irq());
 }
 
-OS_RETURN_E time_init(const kernel_timer_t* main_timer,
-                      const kernel_timer_t* rtc_timer)
+OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
+                            const TIMER_TYPE_E kType)
 {
-    OS_RETURN_E err;
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INIT_TIME_MGT_START, 4,
-                       (uintptr_t)main_timer & 0xFFFFFFFF,
-                       (uintptr_t)main_timer >> 32,
-                       (uintptr_t)rtc_timer & 0xFFFFFFFF,
-                       (uintptr_t)rtc_timer >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INIT_TIME_MGT_START, 4,
-                       (uintptr_t)main_timer & 0xFFFFFFFF,
-                       (uintptr_t)0,
-                       (uintptr_t)rtc_timer & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
+    OS_RETURN_E retCode;
+
+    /* TODO: Add tracing */
 
     /* Check the main timer integrity */
-    if(main_timer == NULL ||
-       main_timer->get_frequency == NULL ||
-       main_timer->set_frequency == NULL ||
-       main_timer->enable == NULL ||
-       main_timer->disable == NULL ||
-       main_timer->set_handler == NULL ||
-       main_timer->remove_handler == NULL ||
-       main_timer->get_irq == NULL)
+    if(kpTimer == NULL ||
+       kpTimer->get_frequency == NULL ||
+       kpTimer->set_frequency == NULL ||
+       kpTimer->enable == NULL ||
+       kpTimer->disable == NULL ||
+       kpTimer->set_handler == NULL ||
+       kpTimer->remove_handler == NULL ||
+       kpTimer->get_irq == NULL)
 
     {
         return OS_ERR_NULL_POINTER;
     }
-    sys_main_timer = *main_timer;
 
-    /* Check the rtc timer integrity */
-    if(rtc_timer != NULL)
+    retCode = OS_NO_ERR;
+
+    switch(kType)
     {
-        if(rtc_timer->get_frequency != NULL &&
-           rtc_timer->set_frequency != NULL &&
-           rtc_timer->enable != NULL &&
-           rtc_timer->disable != NULL &&
-           rtc_timer->set_handler != NULL &&
-           rtc_timer->remove_handler != NULL &&
-           rtc_timer->get_irq != NULL)
-        {
-            sys_rtc_timer = *rtc_timer;
-        }
-        else
-        {
-            return OS_ERR_NULL_POINTER;
-        }
+        case MAIN_TIMER:
+            sys_main_timer = *kpTimer;
+            retCode = sys_main_timer.set_handler(_time_main_timer_handler);
+            if(retCode == OS_NO_ERR)
+            {
+                sys_main_timer.enable();
+            }
+            break;
+        case RTC_TIMER:
+            sys_rtc_timer = *kpTimer;
+            retCode = sys_rtc_timer.set_handler(_time_rtc_timer_handler);
+            break;
+        default:
+            /* TODO: Add other timers */
+            retCode = OS_ERR_NOT_SUPPORTED;
     }
 
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Time manager Initialization");
-
-    /* Init the system's values */
-    sys_tick_count = 0;
-    active_wait    = 0;
-
-    /* Sets all the possible timer interrutps */
-    if(sys_main_timer.set_time_ns != NULL)
-    {
-        sys_main_timer.set_time_ns(0);
-    }
-    sys_main_timer.set_frequency(KERNEL_MAIN_TIMER_FREQ);
-
-    err = sys_main_timer.set_handler(_time_main_timer_handler);
-    if(err != OS_NO_ERR)
-    {
-        return err;
-    }
-
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Initialized main timer");
-
-    if(sys_rtc_timer.set_frequency != NULL)
-    {
-        sys_rtc_timer.set_frequency(KERNEL_RTC_TIMER_FREQ);
-
-        err = sys_rtc_timer.set_handler(_time_rtc_timer_handler);
-        if(err != OS_NO_ERR)
-        {
-            return err;
-        }
-    }
-
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Initialized RTC timer");
-
-    /* Enables all the possible timers */
-    sys_main_timer.enable();
-    if(sys_rtc_timer.set_frequency != NULL)
-    {
-        sys_rtc_timer.enable();
-    }
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INIT_TIME_MGT_END, 0);
-
-    return OS_NO_ERR;
+    return retCode;
 }
 
 uint64_t time_get_current_uptime(void)

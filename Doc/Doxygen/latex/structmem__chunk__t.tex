@@ -1,0 +1,103 @@
+\hypertarget{structmem__chunk__t}{}\doxysection{mem\+\_\+chunk\+\_\+t Struct Reference}
+\label{structmem__chunk__t}\index{mem\_chunk\_t@{mem\_chunk\_t}}
+
+
+Kernel\textquotesingle{}s heap allocator memory chunk representation.  
+
+
+
+
+Collaboration diagram for mem\+\_\+chunk\+\_\+t\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=182pt]{structmem__chunk__t__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} \mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}
+\begin{DoxyCompactList}\small\item\em Memory chunk list. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}}
+\begin{DoxyCompactList}\small\item\em Used flag. \end{DoxyCompactList}\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} $\ast$ \mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}}\\
+\>\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\_t}} \mbox{\hyperlink{structmem__chunk__t_a2d77b2c1440c3478ec73aeee4d40b4b8}{free}}\\
+\}; \\
+
+\end{tabbing}\begin{DoxyCompactList}\small\item\em If used, the union contains the chunk\textquotesingle{}s data, else a list of free mem. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Kernel\textquotesingle{}s heap allocator memory chunk representation. 
+
+Definition at line 72 of file kheap.\+c.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structmem__chunk__t_adca9f438da243bd0b9fd89e2ebbb247a}\label{structmem__chunk__t_adca9f438da243bd0b9fd89e2ebbb247a}} 
+\doxysubsubsection{\texorpdfstring{}{}}
+{\footnotesize\ttfamily union \{ ... \} }
+
+
+
+If used, the union contains the chunk\textquotesingle{}s data, else a list of free mem. 
+
+\mbox{\Hypertarget{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}\label{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}} 
+\index{mem\_chunk\_t@{mem\_chunk\_t}!all@{all}}
+\index{all@{all}!mem\_chunk\_t@{mem\_chunk\_t}}
+\doxysubsubsection{\texorpdfstring{all}{all}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} all}
+
+
+
+Memory chunk list. 
+
+
+
+Definition at line 75 of file kheap.\+c.
+
+\mbox{\Hypertarget{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}\label{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}} 
+\index{mem\_chunk\_t@{mem\_chunk\_t}!data@{data}}
+\index{data@{data}!mem\_chunk\_t@{mem\_chunk\_t}}
+\doxysubsubsection{\texorpdfstring{data}{data}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}$\ast$ data}
+
+
+
+Definition at line 84 of file kheap.\+c.
+
+\mbox{\Hypertarget{structmem__chunk__t_a2d77b2c1440c3478ec73aeee4d40b4b8}\label{structmem__chunk__t_a2d77b2c1440c3478ec73aeee4d40b4b8}} 
+\index{mem\_chunk\_t@{mem\_chunk\_t}!free@{free}}
+\index{free@{free}!mem\_chunk\_t@{mem\_chunk\_t}}
+\doxysubsubsection{\texorpdfstring{free}{free}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} free}
+
+
+
+Definition at line 85 of file kheap.\+c.
+
+\mbox{\Hypertarget{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}\label{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}} 
+\index{mem\_chunk\_t@{mem\_chunk\_t}!used@{used}}
+\index{used@{used}!mem\_chunk\_t@{mem\_chunk\_t}}
+\doxysubsubsection{\texorpdfstring{used}{used}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} used}
+
+
+
+Used flag. 
+
+
+
+Definition at line 78 of file kheap.\+c.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Core/src/\mbox{\hyperlink{kheap_8c}{kheap.\+c}}\end{DoxyCompactItemize}

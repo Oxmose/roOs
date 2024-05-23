@@ -27,7 +27,7 @@
 #include <exceptions.h>
 #include <cpu_interrupt.h>
 #include <panic.h>
-#include <kernel_output.h>
+#include <kerneloutput.h>
 #include <cpu.h>
 
 /* Configuration files */

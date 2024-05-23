@@ -1,0 +1,71 @@
+\hypertarget{memmove_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memmove.c File Reference}
+\label{memmove_8c}\index{Source/Kernel/Libs/libc/src/memmove.c@{Source/Kernel/Libs/libc/src/memmove.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memmove.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=270pt]{memmove_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memmove_8c_ab899fcd8b18646556321959b86923289}{memmove}} (void $\ast$dst, const void $\ast$src, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memmove_8c_ab899fcd8b18646556321959b86923289}\label{memmove_8c_ab899fcd8b18646556321959b86923289}} 
+\index{memmove.c@{memmove.c}!memmove@{memmove}}
+\index{memmove@{memmove}!memmove.c@{memmove.c}}
+\doxysubsubsection{\texorpdfstring{memmove()}{memmove()}}
+{\footnotesize\ttfamily void$\ast$ memmove (\begin{DoxyParamCaption}\item[{void $\ast$}]{dst,  }\item[{const void $\ast$}]{src,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memmove.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *p = src;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{77 \textcolor{preprocessor}{\#if defined(\_\_i386\_\_) || defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{78     \textcolor{keywordflow}{if} (q < p) \{}
+\DoxyCodeLine{79         \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}cld ; rep ; movsb"{}}}
+\DoxyCodeLine{80                  : \textcolor{stringliteral}{"{}+c"{}} (n), \textcolor{stringliteral}{"{}+S"{}}(p), \textcolor{stringliteral}{"{}+D"{}}(q));}
+\DoxyCodeLine{81     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{82         p += (n -\/ 1);}
+\DoxyCodeLine{83         q += (n -\/ 1);}
+\DoxyCodeLine{84         \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}std ; rep ; movsb"{}}}
+\DoxyCodeLine{85                  : \textcolor{stringliteral}{"{}+c"{}} (n), \textcolor{stringliteral}{"{}+S"{}}(p), \textcolor{stringliteral}{"{}+D"{}}(q));}
+\DoxyCodeLine{86     \}}
+\DoxyCodeLine{87 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{88     \textcolor{keywordflow}{if} (q < p) \{}
+\DoxyCodeLine{89         \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{90             *q++ = *p++;}
+\DoxyCodeLine{91         \}}
+\DoxyCodeLine{92     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{93         p += n;}
+\DoxyCodeLine{94         q += n;}
+\DoxyCodeLine{95         \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{96             *-\/-\/q = *-\/-\/p;}
+\DoxyCodeLine{97         \}}
+\DoxyCodeLine{98     \}}
+\DoxyCodeLine{99 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{100     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{101 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{memmove_8c_ab899fcd8b18646556321959b86923289_icgraph}
+\end{center}
+\end{figure}

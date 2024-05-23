@@ -1,6 +1,6 @@
 [
     {
-        "name": "Interrupt Suite",
-        "group": ["INTERRUPT", "EXCEPTION"]
+        "name": "Device Tree Lib Suite",
+        "group": ["DEVTREE"]
     }
 ]

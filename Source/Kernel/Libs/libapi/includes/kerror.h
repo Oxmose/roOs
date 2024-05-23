@@ -58,6 +58,8 @@ typedef enum
     OS_ERR_OUT_OF_BOUND                    = 9,
     /** @brief Feature not supported */
     OS_ERR_NOT_SUPPORTED                   = 10,
+    /** @brief Memory mapping already exists */
+    OS_ERR_MAPPING_ALREADY_EXISTS          = 11,
 } OS_RETURN_E;
 
 /*******************************************************************************

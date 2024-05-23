@@ -1,0 +1,46 @@
+\hypertarget{strstr_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strstr.c File Reference}
+\label{strstr_8c}\index{Source/Kernel/Libs/libc/src/strstr.c@{Source/Kernel/Libs/libc/src/strstr.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strstr.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strstr_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strstr_8c_a4a710d86541afc6b7dafddcdb4b1c94f}{strstr}} (const char $\ast$haystack, const char $\ast$needle)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strstr_8c_a4a710d86541afc6b7dafddcdb4b1c94f}\label{strstr_8c_a4a710d86541afc6b7dafddcdb4b1c94f}} 
+\index{strstr.c@{strstr.c}!strstr@{strstr}}
+\index{strstr@{strstr}!strstr.c@{strstr.c}}
+\doxysubsubsection{\texorpdfstring{strstr()}{strstr()}}
+{\footnotesize\ttfamily char$\ast$ strstr (\begin{DoxyParamCaption}\item[{const char $\ast$}]{haystack,  }\item[{const char $\ast$}]{needle }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strstr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordflow}{return} (\textcolor{keywordtype}{char} *)\mbox{\hyperlink{string_8h_af1f712eaf1dad2a7cd01bd9618bd37c1}{memmem}}(haystack, \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(haystack), needle,}
+\DoxyCodeLine{76                   \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(needle));}
+\DoxyCodeLine{77 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=325pt]{strstr_8c_a4a710d86541afc6b7dafddcdb4b1c94f_cgraph}
+\end{center}
+\end{figure}

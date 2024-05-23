@@ -1,0 +1,869 @@
+\hypertarget{interrupts_8h}{}\doxysection{Source/\+Kernel/\+Core/includes/interrupts.h File Reference}
+\label{interrupts_8h}\index{Source/Kernel/Core/includes/interrupts.h@{Source/Kernel/Core/includes/interrupts.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$ctrl\+\_\+block.\+h$>$}\newline
+Include dependency graph for interrupts.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines the basic interface for an interrupt management driver (let it be PIC or IO APIC for instance). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void($\ast$ \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}}) (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$curr\+\_\+thread)
+\begin{DoxyCompactList}\small\item\em Custom interrupt handler structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}} \{ \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\+\_\+\+TYPE\+\_\+\+SPURIOUS}}
+, \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\+\_\+\+TYPE\+\_\+\+REGULAR}}
+ \}
+\begin{DoxyCompactList}\small\item\em Interrupt types enumeration. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{interrupts_8h_acbc11e0977ede8062ce000240adad2f5}{kernel\+\_\+interrupt\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the kernel\textquotesingle{}s interrupt manager. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{interrupts_8h_ad09692ab615f14b26f0ff7fe7d4b017e}{kernel\+\_\+interrupt\+\_\+handler}} (void)
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s main interrupt handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{interrupts_8h_aef3d21d6ea4f263055cda063c8ab5d7e}{kernel\+\_\+interrupt\+\_\+set\+\_\+driver}} (const \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}} $\ast$driver)
+\begin{DoxyCompactList}\small\item\em Set the driver to be used by the kernel to manage interrupts. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}{kernel\+\_\+interrupt\+\_\+register\+\_\+irq\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number, \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}} handler)
+\begin{DoxyCompactList}\small\item\em Registers a new interrupt handler for the desired IRQ number. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f}{kernel\+\_\+interrupt\+\_\+remove\+\_\+irq\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Unregisters an interrupt handler for the desired IRQ number. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{interrupts_8h_a71dddc5e6cefb3017cb11ad2042c527e}{kernel\+\_\+interrupt\+\_\+register\+\_\+int\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} interrupt\+\_\+line, \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}} handler)
+\begin{DoxyCompactList}\small\item\em Registers an interrupt handler for the desired interrupt line. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{interrupts_8h_aa84061766be89f56b3ede6f7e9fa3fae}{kernel\+\_\+interrupt\+\_\+remove\+\_\+int\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} interrupt\+\_\+line)
+\begin{DoxyCompactList}\small\item\em Unregisters a new interrupt handler for the desired interrupt line. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{interrupts_8h_a1da2e043445852bd2c46d242a4730504}{kernel\+\_\+interrupt\+\_\+restore}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} prev\+\_\+state)
+\begin{DoxyCompactList}\small\item\em Restores the CPU interrupts state. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\+\_\+interrupt\+\_\+disable}} (void)
+\begin{DoxyCompactList}\small\item\em Disables the CPU interrupts. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\+\_\+interrupt\+\_\+set\+\_\+irq\+\_\+mask}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} enabled)
+\begin{DoxyCompactList}\small\item\em Sets the IRQ mask for the IRQ number given as parameter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3}{kernel\+\_\+interrupt\+\_\+set\+\_\+irq\+\_\+eoi}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Acknowleges an IRQ. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}\label{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}} 
+\index{interrupts.h@{interrupts.h}!custom\_handler\_t@{custom\_handler\_t}}
+\index{custom\_handler\_t@{custom\_handler\_t}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{custom\_handler\_t}{custom\_handler\_t}}
+{\footnotesize\ttfamily typedef void($\ast$ custom\+\_\+handler\+\_\+t) (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$curr\+\_\+thread)}
+
+
+
+Custom interrupt handler structure. 
+
+
+
+Definition at line 58 of file interrupts.\+h.
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}\label{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}} 
+\index{interrupts.h@{interrupts.h}!INTERRUPT\_TYPE\_E@{INTERRUPT\_TYPE\_E}}
+\index{INTERRUPT\_TYPE\_E@{INTERRUPT\_TYPE\_E}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{INTERRUPT\_TYPE\_E}{INTERRUPT\_TYPE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}}}
+
+
+
+Interrupt types enumeration. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INTERRUPT\_TYPE\_SPURIOUS@{INTERRUPT\_TYPE\_SPURIOUS}!interrupts.h@{interrupts.h}}\index{interrupts.h@{interrupts.h}!INTERRUPT\_TYPE\_SPURIOUS@{INTERRUPT\_TYPE\_SPURIOUS}}}\mbox{\Hypertarget{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}\label{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}} 
+INTERRUPT\+\_\+\+TYPE\+\_\+\+SPURIOUS&Spurious interrupt type. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INTERRUPT\_TYPE\_REGULAR@{INTERRUPT\_TYPE\_REGULAR}!interrupts.h@{interrupts.h}}\index{interrupts.h@{interrupts.h}!INTERRUPT\_TYPE\_REGULAR@{INTERRUPT\_TYPE\_REGULAR}}}\mbox{\Hypertarget{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}\label{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}} 
+INTERRUPT\+\_\+\+TYPE\+\_\+\+REGULAR&Regular interrupt type. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 49 of file interrupts.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{50 \{}
+\DoxyCodeLine{52     \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}},}
+\DoxyCodeLine{54     \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}}}
+\DoxyCodeLine{55 \} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\_TYPE\_E}};}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}\label{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_disable@{kernel\_interrupt\_disable}}
+\index{kernel\_interrupt\_disable@{kernel\_interrupt\_disable}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_disable()}{kernel\_interrupt\_disable()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} kernel\+\_\+interrupt\+\_\+disable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Disables the CPU interrupts. 
+
+Disables the CPU interrupts by setting the EFLAGS accordingly.
+
+\begin{DoxyReturn}{Returns}
+The current interrupt state is returned to be restored latter in the execution of the kernel. 
+\end{DoxyReturn}
+
+
+Definition at line 475 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{476 \{}
+\DoxyCodeLine{477     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} prev\_state;}
+\DoxyCodeLine{478 }
+\DoxyCodeLine{479     prev\_state = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab897f1916ae72cb93264cb5a900d9557}{\_cpu\_get\_interrupt\_state}}();}
+\DoxyCodeLine{480 }
+\DoxyCodeLine{481     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_DISABLE\_INTERRUPT, 1, prev\_state);}
+\DoxyCodeLine{482 }
+\DoxyCodeLine{483     \textcolor{keywordflow}{if}(prev\_state == 0)}
+\DoxyCodeLine{484     \{}
+\DoxyCodeLine{485         \textcolor{keywordflow}{return} 0;}
+\DoxyCodeLine{486     \}}
+\DoxyCodeLine{487 }
+\DoxyCodeLine{488     \mbox{\hyperlink{i386_2includes_2cpu_8h_a401d19612dec3ea51665475ac63b5560}{\_cpu\_clear\_interrupt}}();}
+\DoxyCodeLine{489 }
+\DoxyCodeLine{490     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Disabled HW INT"{}});}
+\DoxyCodeLine{491 }
+\DoxyCodeLine{492     \textcolor{keywordflow}{return} prev\_state;}
+\DoxyCodeLine{493 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_ad09692ab615f14b26f0ff7fe7d4b017e}\label{interrupts_8h_ad09692ab615f14b26f0ff7fe7d4b017e}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_handler@{kernel\_interrupt\_handler}}
+\index{kernel\_interrupt\_handler@{kernel\_interrupt\_handler}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_handler()}{kernel\_interrupt\_handler()}}
+{\footnotesize\ttfamily void kernel\+\_\+interrupt\+\_\+handler (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Kernel\textquotesingle{}s main interrupt handler. 
+
+Generic and global interrupt handler. This function should only be called by an assembly interrupt handler. The function will dispatch the interrupt to the desired function to handle the interrupt. 
+
+Definition at line 167 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{168 \{}
+\DoxyCodeLine{169     \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\_handler\_t}} handler;}
+\DoxyCodeLine{170     \mbox{\hyperlink{structkernel__thread__t}{kernel\_thread\_t}}* \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}};}
+\DoxyCodeLine{171     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}         int\_id;}
+\DoxyCodeLine{172 }
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174     \textcolor{comment}{/* Get the current thread */}}
+\DoxyCodeLine{175     \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}} = \mbox{\hyperlink{scheduler_8h_a4e3f24ab31faec52f61d9070ae34b75c}{scheduler\_get\_current\_thread}}();}
+\DoxyCodeLine{176     int\_id         = \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}}.\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}}.\mbox{\hyperlink{structint__context__t_a3368558e1a109ce19d039561903f5f41}{int\_id}};}
+\DoxyCodeLine{177 }
+\DoxyCodeLine{178     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_HANDLER\_START, 2,}
+\DoxyCodeLine{179                        int\_id, \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a50eaf778d1569b701389e0794bbd39d3}{tid}});}
+\DoxyCodeLine{180 }
+\DoxyCodeLine{181     \textcolor{comment}{/* If interrupts are disabled */}}
+\DoxyCodeLine{182     \textcolor{keywordflow}{if}(\mbox{\hyperlink{i386_2includes_2cpu_8h_ab388a90d72ed7ceb4141e53c1c170476}{\_cpu\_get\_saved\_interrupt\_state}}(\&\mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}}) == 0 \&\&}
+\DoxyCodeLine{183        int\_id != \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\_INT\_LINE}} \&\&}
+\DoxyCodeLine{184        int\_id != \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a500495e3a345d964f20bfd91256092f5}{SCHEDULER\_SW\_INT\_LINE}} \&\&}
+\DoxyCodeLine{185        int\_id >= \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}{MIN\_INTERRUPT\_LINE}})}
+\DoxyCodeLine{186     \{}
+\DoxyCodeLine{187         \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{188                      \textcolor{stringliteral}{"{}Blocked interrupt \%u"{}}, int\_id);}
+\DoxyCodeLine{189         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{190     \}}
+\DoxyCodeLine{191 }
+\DoxyCodeLine{192     \textcolor{keywordflow}{if}(int\_id == \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\_INT\_LINE}})}
+\DoxyCodeLine{193     \{}
+\DoxyCodeLine{194         \mbox{\hyperlink{i386_2includes_2panic_8h_ab321ec2a0169f75f3384243e99f32c94}{panic\_handler}}(\mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}});}
+\DoxyCodeLine{195     \}}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Int \%d"{}}, int\_id);}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199     \textcolor{comment}{/* Check for spurious interrupt */}}
+\DoxyCodeLine{200     \textcolor{keywordflow}{if}(\mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_aadf8a678de409691b8409a5fff93bb55}{driver\_handle\_spurious}}(int\_id) ==}
+\DoxyCodeLine{201        \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}})}
+\DoxyCodeLine{202     \{}
+\DoxyCodeLine{203         \mbox{\hyperlink{interrupts_8c_a679a130fba2c3d0136b7f205b3b6bb3c}{\_spurious\_handler}}();}
+\DoxyCodeLine{204         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{205     \}}
+\DoxyCodeLine{206 }
+\DoxyCodeLine{207     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Non spurious \%d"{}},}
+\DoxyCodeLine{208                  int\_id);}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210     \textcolor{comment}{/* Select custom handlers */}}
+\DoxyCodeLine{211     \textcolor{keywordflow}{if}(int\_id < \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}{INT\_ENTRY\_COUNT}} \&\&}
+\DoxyCodeLine{212        \mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[int\_id] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{213     \{}
+\DoxyCodeLine{214         handler = \mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[int\_id];}
+\DoxyCodeLine{215     \}}
+\DoxyCodeLine{216     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{217     \{}
+\DoxyCodeLine{218         handler = \mbox{\hyperlink{i386_2includes_2panic_8h_ab321ec2a0169f75f3384243e99f32c94}{panic\_handler}};}
+\DoxyCodeLine{219     \}}
+\DoxyCodeLine{220 }
+\DoxyCodeLine{221     \textcolor{comment}{/* Execute the handler */}}
+\DoxyCodeLine{222     handler(\mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}});}
+\DoxyCodeLine{223 }
+\DoxyCodeLine{224     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_HANDLER\_END, 2,}
+\DoxyCodeLine{225                        int\_id, \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a50eaf778d1569b701389e0794bbd39d3}{tid}});}
+\DoxyCodeLine{226 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_ad09692ab615f14b26f0ff7fe7d4b017e_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_acbc11e0977ede8062ce000240adad2f5}\label{interrupts_8h_acbc11e0977ede8062ce000240adad2f5}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_init@{kernel\_interrupt\_init}}
+\index{kernel\_interrupt\_init@{kernel\_interrupt\_init}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_init()}{kernel\_interrupt\_init()}}
+{\footnotesize\ttfamily void kernel\+\_\+interrupt\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the kernel\textquotesingle{}s interrupt manager. 
+
+Blanks the handlers memory, initializes panic and spurious interrupt lines handlers. 
+
+Definition at line 228 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{229 \{}
+\DoxyCodeLine{230     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_INIT\_START, 0);}
+\DoxyCodeLine{231     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{232                  \textcolor{stringliteral}{"{}Initializing interrupt manager."{}});}
+\DoxyCodeLine{233 }
+\DoxyCodeLine{234     \textcolor{comment}{/* Blank custom interrupt handlers */}}
+\DoxyCodeLine{235     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(\mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}},}
+\DoxyCodeLine{236            0,}
+\DoxyCodeLine{237            \textcolor{keyword}{sizeof}(\mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\_handler\_t}}) * \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}{INT\_ENTRY\_COUNT}});}
+\DoxyCodeLine{238 }
+\DoxyCodeLine{239     \textcolor{comment}{/* Attach the special PANIC interrupt for when we don't know what to do */}}
+\DoxyCodeLine{240     \mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\_INT\_LINE}}] = \mbox{\hyperlink{i386_2includes_2panic_8h_ab321ec2a0169f75f3384243e99f32c94}{panic\_handler}};}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242     \textcolor{comment}{/* Init state */}}
+\DoxyCodeLine{243     \mbox{\hyperlink{interrupts_8c_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{244     \mbox{\hyperlink{interrupts_8c_afbeb5f4679cbc62d452ff89b84c23e53}{spurious\_interrupt\_count}} = 0;}
+\DoxyCodeLine{245 }
+\DoxyCodeLine{246     \textcolor{comment}{/* Init driver */}}
+\DoxyCodeLine{247     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}{driver\_get\_irq\_int\_line}} = \mbox{\hyperlink{interrupts_8c_a91224bdff54671d40638078c8cc08aaf}{\_init\_driver\_get\_irq\_int\_line}};}
+\DoxyCodeLine{248     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_aadf8a678de409691b8409a5fff93bb55}{driver\_handle\_spurious}}  = \mbox{\hyperlink{interrupts_8c_a861e0daa1a8c62d57200805e38867f6d}{\_init\_driver\_handle\_spurious}};}
+\DoxyCodeLine{249     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a6104aa38bdacd06ef8fcd1645aeaf5ac}{driver\_set\_irq\_eoi}}      = \mbox{\hyperlink{interrupts_8c_a6334c2af478f42b5f2eda88eb19ef384}{\_init\_driver\_set\_irq\_eoi}};}
+\DoxyCodeLine{250     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a1adacbd2d8f3624e70571503d73b4250}{driver\_set\_irq\_mask}}     = \mbox{\hyperlink{interrupts_8c_a19b59adef3832606d32f7cad92ac2522}{\_init\_driver\_set\_irq\_mask}};}
+\DoxyCodeLine{251 }
+\DoxyCodeLine{252     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_aa69248d8dfed4e2214f787b8c3f1ad98}{interrupt\_test}}, \mbox{\hyperlink{test__list_8h_a6dc4449529fbb9ed9f306884e086e633}{TEST\_INTERRUPT\_ENABLED}});}
+\DoxyCodeLine{253 }
+\DoxyCodeLine{254     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_INIT\_END, 0);}
+\DoxyCodeLine{255 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_acbc11e0977ede8062ce000240adad2f5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=290pt]{interrupts_8h_acbc11e0977ede8062ce000240adad2f5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_a71dddc5e6cefb3017cb11ad2042c527e}\label{interrupts_8h_a71dddc5e6cefb3017cb11ad2042c527e}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_register\_int\_handler@{kernel\_interrupt\_register\_int\_handler}}
+\index{kernel\_interrupt\_register\_int\_handler@{kernel\_interrupt\_register\_int\_handler}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_register\_int\_handler()}{kernel\_interrupt\_register\_int\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+interrupt\+\_\+register\+\_\+int\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{interrupt\+\_\+line,  }\item[{\mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}}}]{handler }\end{DoxyParamCaption})}
+
+
+
+Registers an interrupt handler for the desired interrupt line. 
+
+Registers a custom interrupt handler to be executed. The interrupt line must be greater or equal to the minimal authorized custom interrupt line and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em interrupt\+\_\+line} & The interrupt line to attach the handler to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em handler} & The handler for the desired interrupt.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code. 
+\end{DoxyReturn}
+
+
+Definition at line 298 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{300 \{}
+\DoxyCodeLine{301     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{302 }
+\DoxyCodeLine{303 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{304     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_START, 3,}
+\DoxyCodeLine{305                        interrupt\_line,}
+\DoxyCodeLine{306                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{307                        (uintptr\_t)handler >> 32);}
+\DoxyCodeLine{308 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{309     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_START, 3,}
+\DoxyCodeLine{310                        interrupt\_line,}
+\DoxyCodeLine{311                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{312                        (uintptr\_t)0);}
+\DoxyCodeLine{313 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{314 }
+\DoxyCodeLine{315     \textcolor{keywordflow}{if}(interrupt\_line < \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}{MIN\_INTERRUPT\_LINE}} ||}
+\DoxyCodeLine{316        interrupt\_line > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\_INTERRUPT\_LINE}})}
+\DoxyCodeLine{317     \{}
+\DoxyCodeLine{318         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_END, 2,}
+\DoxyCodeLine{319                            interrupt\_line,}
+\DoxyCodeLine{320                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}});}
+\DoxyCodeLine{321 }
+\DoxyCodeLine{322         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}};}
+\DoxyCodeLine{323     \}}
+\DoxyCodeLine{324 }
+\DoxyCodeLine{325     \textcolor{keywordflow}{if}(handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{326     \{}
+\DoxyCodeLine{327         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_END, 2,}
+\DoxyCodeLine{328                            interrupt\_line,}
+\DoxyCodeLine{329                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{330 }
+\DoxyCodeLine{331         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{332     \}}
+\DoxyCodeLine{333 }
+\DoxyCodeLine{334     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{335 }
+\DoxyCodeLine{336     \textcolor{keywordflow}{if}(\mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[interrupt\_line] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{337     \{}
+\DoxyCodeLine{338         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{339         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_END, 2,}
+\DoxyCodeLine{340                            interrupt\_line,}
+\DoxyCodeLine{341                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a79b3a233dd01b2244bcc0b97084598e2}{OS\_ERR\_INTERRUPT\_ALREADY\_REGISTERED}});}
+\DoxyCodeLine{342 }
+\DoxyCodeLine{343         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a79b3a233dd01b2244bcc0b97084598e2}{OS\_ERR\_INTERRUPT\_ALREADY\_REGISTERED}};}
+\DoxyCodeLine{344     \}}
+\DoxyCodeLine{345 }
+\DoxyCodeLine{346     \mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[interrupt\_line] = handler;}
+\DoxyCodeLine{347 }
+\DoxyCodeLine{348     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{349                  \textcolor{stringliteral}{"{}Added INT \%u handler at 0x\%p"{}}, interrupt\_line, handler);}
+\DoxyCodeLine{350 }
+\DoxyCodeLine{351     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REGISTER\_END, 2,}
+\DoxyCodeLine{352                        interrupt\_line,}
+\DoxyCodeLine{353                        \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{354 }
+\DoxyCodeLine{355     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{356 }
+\DoxyCodeLine{357     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{358 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a71dddc5e6cefb3017cb11ad2042c527e_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}\label{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_register\_irq\_handler@{kernel\_interrupt\_register\_irq\_handler}}
+\index{kernel\_interrupt\_register\_irq\_handler@{kernel\_interrupt\_register\_irq\_handler}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_register\_irq\_handler()}{kernel\_interrupt\_register\_irq\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+interrupt\+\_\+register\+\_\+irq\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number,  }\item[{\mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}}}]{handler }\end{DoxyParamCaption})}
+
+
+
+Registers a new interrupt handler for the desired IRQ number. 
+
+Registers a custom interrupt handler to be executed. The IRQ number must be greater or equal to the minimal authorized custom IRQ number and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The IRQ number to attach the handler to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em handler} & The handler for the desired interrupt.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code. 
+\end{DoxyReturn}
+
+
+Definition at line 404 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{406 \{}
+\DoxyCodeLine{407     \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}}     int\_line;}
+\DoxyCodeLine{408     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} ret\_code;}
+\DoxyCodeLine{409 }
+\DoxyCodeLine{410 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{411     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REGISTER\_START, 3,}
+\DoxyCodeLine{412                        irq\_number,}
+\DoxyCodeLine{413                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{414                        (uintptr\_t)handler >> 32);}
+\DoxyCodeLine{415 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{416     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REGISTER\_START, 3,}
+\DoxyCodeLine{417                        irq\_number,}
+\DoxyCodeLine{418                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{419                        (uintptr\_t)0);}
+\DoxyCodeLine{420 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{421 }
+\DoxyCodeLine{422     \textcolor{comment}{/* Get the interrupt line attached to the IRQ number. */}}
+\DoxyCodeLine{423     int\_line = \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}{driver\_get\_irq\_int\_line}}(irq\_number);}
+\DoxyCodeLine{424 }
+\DoxyCodeLine{425     \textcolor{keywordflow}{if}(int\_line < 0)}
+\DoxyCodeLine{426     \{}
+\DoxyCodeLine{427         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REGISTER\_END, 1,}
+\DoxyCodeLine{428                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}});}
+\DoxyCodeLine{429         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}};}
+\DoxyCodeLine{430     \}}
+\DoxyCodeLine{431 }
+\DoxyCodeLine{432     ret\_code = \mbox{\hyperlink{interrupts_8c_a71dddc5e6cefb3017cb11ad2042c527e}{kernel\_interrupt\_register\_int\_handler}}(int\_line, handler);}
+\DoxyCodeLine{433 }
+\DoxyCodeLine{434     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REGISTER\_END, 1, ret\_code);}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436     \textcolor{keywordflow}{return} ret\_code;}
+\DoxyCodeLine{437 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_aa84061766be89f56b3ede6f7e9fa3fae}\label{interrupts_8h_aa84061766be89f56b3ede6f7e9fa3fae}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_remove\_int\_handler@{kernel\_interrupt\_remove\_int\_handler}}
+\index{kernel\_interrupt\_remove\_int\_handler@{kernel\_interrupt\_remove\_int\_handler}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_remove\_int\_handler()}{kernel\_interrupt\_remove\_int\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+interrupt\+\_\+remove\+\_\+int\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{interrupt\+\_\+line }\end{DoxyParamCaption})}
+
+
+
+Unregisters a new interrupt handler for the desired interrupt line. 
+
+Unregisters a custom interrupt handler to be executed. The interrupt line must be greater or equal to the minimal authorized custom interrupt line and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em interrupt\+\_\+line} & The interrupt line to deattach the handler from.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the desired interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the interrupt line has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 360 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{361 \{}
+\DoxyCodeLine{362     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{363 }
+\DoxyCodeLine{364     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REMOVE\_START, 1,}
+\DoxyCodeLine{365                        interrupt\_line);}
+\DoxyCodeLine{366 }
+\DoxyCodeLine{367     \textcolor{keywordflow}{if}(interrupt\_line < \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}{MIN\_INTERRUPT\_LINE}} ||}
+\DoxyCodeLine{368        interrupt\_line > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\_INTERRUPT\_LINE}})}
+\DoxyCodeLine{369     \{}
+\DoxyCodeLine{370         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REMOVE\_END, 2,}
+\DoxyCodeLine{371                            interrupt\_line,}
+\DoxyCodeLine{372                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}});}
+\DoxyCodeLine{373 }
+\DoxyCodeLine{374         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}};}
+\DoxyCodeLine{375     \}}
+\DoxyCodeLine{376 }
+\DoxyCodeLine{377     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{378 }
+\DoxyCodeLine{379     \textcolor{keywordflow}{if}(\mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[interrupt\_line] == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{380     \{}
+\DoxyCodeLine{381         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{382 }
+\DoxyCodeLine{383         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REMOVE\_END, 2,}
+\DoxyCodeLine{384                            interrupt\_line,}
+\DoxyCodeLine{385                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aed3ac95521556e0ab713bff93f8d7666}{OS\_ERR\_INTERRUPT\_NOT\_REGISTERED}});}
+\DoxyCodeLine{386 }
+\DoxyCodeLine{387         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aed3ac95521556e0ab713bff93f8d7666}{OS\_ERR\_INTERRUPT\_NOT\_REGISTERED}};}
+\DoxyCodeLine{388     \}}
+\DoxyCodeLine{389 }
+\DoxyCodeLine{390     \mbox{\hyperlink{interrupts_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[interrupt\_line] = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{391 }
+\DoxyCodeLine{392     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{393                  \textcolor{stringliteral}{"{}Removed interrupt \%u handle"{}}, interrupt\_line);}
+\DoxyCodeLine{394 }
+\DoxyCodeLine{395     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_REMOVE\_END, 2,}
+\DoxyCodeLine{396                        interrupt\_line,}
+\DoxyCodeLine{397                        \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{398 }
+\DoxyCodeLine{399     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{400 }
+\DoxyCodeLine{401     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{402 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_aa84061766be89f56b3ede6f7e9fa3fae_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f}\label{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_remove\_irq\_handler@{kernel\_interrupt\_remove\_irq\_handler}}
+\index{kernel\_interrupt\_remove\_irq\_handler@{kernel\_interrupt\_remove\_irq\_handler}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_remove\_irq\_handler()}{kernel\_interrupt\_remove\_irq\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+interrupt\+\_\+remove\+\_\+irq\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number }\end{DoxyParamCaption})}
+
+
+
+Unregisters an interrupt handler for the desired IRQ number. 
+
+Unregisters a custom interrupt handler to be executed. The IRQ number must be greater or equal to the minimal authorized custom IRQ number and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The IRQ number to detach the handler from.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\begin{DoxyItemize}
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the IRQ attached to the interrupt line is not allowed.
+\end{DoxyItemize}
+\item OS\+\_\+\+ERR\+\_\+\+NO\+\_\+\+SUCH\+\_\+\+IRQ\+\_\+\+LINE is returned if the IRQ number is not supported.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the IRQ has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 439 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{440 \{}
+\DoxyCodeLine{441     \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}}     int\_line;}
+\DoxyCodeLine{442     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} ret\_code;}
+\DoxyCodeLine{443 }
+\DoxyCodeLine{444     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REMOVE\_START, 1, irq\_number);}
+\DoxyCodeLine{445 }
+\DoxyCodeLine{446     \textcolor{comment}{/* Get the interrupt line attached to the IRQ number. */}}
+\DoxyCodeLine{447     int\_line = \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a25edd3e67722b2f2c454f03587588e69}{driver\_get\_irq\_int\_line}}(irq\_number);}
+\DoxyCodeLine{448 }
+\DoxyCodeLine{449     \textcolor{keywordflow}{if}(int\_line < 0)}
+\DoxyCodeLine{450     \{}
+\DoxyCodeLine{451         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REMOVE\_END, 2,}
+\DoxyCodeLine{452                            irq\_number,}
+\DoxyCodeLine{453                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}});}
+\DoxyCodeLine{454 }
+\DoxyCodeLine{455         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}};}
+\DoxyCodeLine{456     \}}
+\DoxyCodeLine{457 }
+\DoxyCodeLine{458     ret\_code = \mbox{\hyperlink{interrupts_8c_aa84061766be89f56b3ede6f7e9fa3fae}{kernel\_interrupt\_remove\_int\_handler}}(int\_line);}
+\DoxyCodeLine{459 }
+\DoxyCodeLine{460     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_IRQ\_REMOVE\_END, 2, irq\_number, ret\_code);}
+\DoxyCodeLine{461 }
+\DoxyCodeLine{462     \textcolor{keywordflow}{return} ret\_code;}
+\DoxyCodeLine{463 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_a1da2e043445852bd2c46d242a4730504}\label{interrupts_8h_a1da2e043445852bd2c46d242a4730504}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_restore@{kernel\_interrupt\_restore}}
+\index{kernel\_interrupt\_restore@{kernel\_interrupt\_restore}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_restore()}{kernel\_interrupt\_restore()}}
+{\footnotesize\ttfamily void kernel\+\_\+interrupt\+\_\+restore (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{prev\+\_\+state }\end{DoxyParamCaption})}
+
+
+
+Restores the CPU interrupts state. 
+
+Restores the CPU interrupts state by setting the EFLAGS accordingly.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em prev\+\_\+state} & The previous interrupts state that has to be retored. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 465 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{466 \{}
+\DoxyCodeLine{467     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RESTORE\_INTERRUPT, 1, prev\_state);}
+\DoxyCodeLine{468     \textcolor{keywordflow}{if}(prev\_state != 0)}
+\DoxyCodeLine{469     \{}
+\DoxyCodeLine{470         \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Enabled HW INT"{}});}
+\DoxyCodeLine{471         \mbox{\hyperlink{i386_2includes_2cpu_8h_a40381bd8509969b5750967d8b44ab96f}{\_cpu\_set\_interrupt}}();}
+\DoxyCodeLine{472     \}}
+\DoxyCodeLine{473 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a1da2e043445852bd2c46d242a4730504_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{interrupts_8h_a1da2e043445852bd2c46d242a4730504_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_aef3d21d6ea4f263055cda063c8ab5d7e}\label{interrupts_8h_aef3d21d6ea4f263055cda063c8ab5d7e}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_set\_driver@{kernel\_interrupt\_set\_driver}}
+\index{kernel\_interrupt\_set\_driver@{kernel\_interrupt\_set\_driver}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_set\_driver()}{kernel\_interrupt\_set\_driver()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+interrupt\+\_\+set\+\_\+driver (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}} $\ast$}]{driver }\end{DoxyParamCaption})}
+
+
+
+Set the driver to be used by the kernel to manage interrupts. 
+
+Changes the current interrupt manager by the new driver given as parameter. The old driver structure is removed from memory.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em driver} & The driver structure to be used by the interrupt manager.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if one of the driver\textquotesingle{}s function pointers is NULL or the driver\textquotesingle{}s pointer is NULL. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 257 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{258 \{}
+\DoxyCodeLine{259     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{260 }
+\DoxyCodeLine{261 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{262     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_SET\_DRIVER\_START, 2,}
+\DoxyCodeLine{263                        (uintptr\_t)driver \& 0xFFFFFFFF,}
+\DoxyCodeLine{264                        (uintptr\_t)driver >> 32);}
+\DoxyCodeLine{265 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{266     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_SET\_DRIVER\_START, 2,}
+\DoxyCodeLine{267                        (uintptr\_t)driver \& 0xFFFFFFFF,}
+\DoxyCodeLine{268                        (uintptr\_t)0);}
+\DoxyCodeLine{269 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{270 }
+\DoxyCodeLine{271 }
+\DoxyCodeLine{272     \textcolor{keywordflow}{if}(driver == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{273        driver-\/>driver\_set\_irq\_eoi == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{274        driver-\/>driver\_set\_irq\_mask == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{275        driver-\/>driver\_handle\_spurious == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{276        driver-\/>driver\_get\_irq\_int\_line == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{277     \{}
+\DoxyCodeLine{278         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_SET\_DRIVER\_END, 1,}
+\DoxyCodeLine{279                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{280 }
+\DoxyCodeLine{281         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{282     \}}
+\DoxyCodeLine{283 }
+\DoxyCodeLine{284     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{285 }
+\DoxyCodeLine{286     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}} = *driver;}
+\DoxyCodeLine{287 }
+\DoxyCodeLine{288     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{289 }
+\DoxyCodeLine{290     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{291                  \textcolor{stringliteral}{"{}Set new interrupt driver at 0x\%p."{}}, driver);}
+\DoxyCodeLine{292 }
+\DoxyCodeLine{293     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INTERRUPT\_SET\_DRIVER\_END, 1, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{296 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{interrupts_8h_aef3d21d6ea4f263055cda063c8ab5d7e_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3}\label{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_set\_irq\_eoi@{kernel\_interrupt\_set\_irq\_eoi}}
+\index{kernel\_interrupt\_set\_irq\_eoi@{kernel\_interrupt\_set\_irq\_eoi}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_set\_irq\_eoi()}{kernel\_interrupt\_set\_irq\_eoi()}}
+{\footnotesize\ttfamily void kernel\+\_\+interrupt\+\_\+set\+\_\+irq\+\_\+eoi (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number }\end{DoxyParamCaption})}
+
+
+
+Acknowleges an IRQ. 
+
+Acknowleges an IRQ.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The irq number to acknowledge. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 506 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{507 \{}
+\DoxyCodeLine{508     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_SET\_IRQ\_EOI, 1, irq\_number);}
+\DoxyCodeLine{509 }
+\DoxyCodeLine{510     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}},  \textcolor{stringliteral}{"{}INTERRUPTS"{}}, \textcolor{stringliteral}{"{}IRQ EOI: \%u"{}},}
+\DoxyCodeLine{511                  irq\_number);}
+\DoxyCodeLine{512 }
+\DoxyCodeLine{513     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a6104aa38bdacd06ef8fcd1645aeaf5ac}{driver\_set\_irq\_eoi}}(irq\_number);}
+\DoxyCodeLine{514 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}\label{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}} 
+\index{interrupts.h@{interrupts.h}!kernel\_interrupt\_set\_irq\_mask@{kernel\_interrupt\_set\_irq\_mask}}
+\index{kernel\_interrupt\_set\_irq\_mask@{kernel\_interrupt\_set\_irq\_mask}!interrupts.h@{interrupts.h}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_set\_irq\_mask()}{kernel\_interrupt\_set\_irq\_mask()}}
+{\footnotesize\ttfamily void kernel\+\_\+interrupt\+\_\+set\+\_\+irq\+\_\+mask (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{enabled }\end{DoxyParamCaption})}
+
+
+
+Sets the IRQ mask for the IRQ number given as parameter. 
+
+Sets the IRQ mask for the IRQ number given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The irq number to enable/disable. \\
+\hline
+\mbox{\texttt{ in}}  & {\em enabled} & Must be set to 1 to enable the IRQ or 0 to disable the IRQ. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 495 of file interrupts.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{497 \{}
+\DoxyCodeLine{498     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_SET\_IRQ\_MASK, 2, irq\_number, enabled);}
+\DoxyCodeLine{499 }
+\DoxyCodeLine{500     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af3d608a10209f30f9765b2e075643816}{INTERRUPTS\_DEBUG\_ENABLED}}, \mbox{\hyperlink{interrupts_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{501                  \textcolor{stringliteral}{"{}IRQ Mask change: \%u \%u"{}}, irq\_number, enabled);}
+\DoxyCodeLine{502 }
+\DoxyCodeLine{503     \mbox{\hyperlink{interrupts_8c_a6787b7d5f66ce6401b8ca0aae66ee2ef}{interrupt\_driver}}.\mbox{\hyperlink{structinterrupt__driver__t_a1adacbd2d8f3624e70571503d73b4250}{driver\_set\_irq\_mask}}(irq\_number, enabled);}
+\DoxyCodeLine{504 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82_icgraph}
+\end{center}
+\end{figure}

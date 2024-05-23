@@ -24,7 +24,7 @@
 #include <stdint.h>         /* Generic int types */
 #include <stddef.h>         /* Standard definition */
 #include <string.h>         /* Memory manipulation */
-#include <kernel_output.h>  /* Kernel output */
+#include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h>  /* Interrupt manager */
 #include <panic.h>          /* Kernel Panic */
 
@@ -217,197 +217,197 @@
  ***************************/
 
 /** @brief CPUID Streaming SIMD Extensions 3 flag. */
-#define ECX_SSE3      (1 << 0)
+#define ECX_SSE3      (1U << 0)
 /** @brief CPUID PCLMULQDQ Instruction flag. */
-#define ECX_PCLMULQDQ (1 << 1)
+#define ECX_PCLMULQDQ (1U << 1)
 /** @brief CPUID 64-Bit Debug Store Area flag. */
-#define ECX_DTES64    (1 << 2)
+#define ECX_DTES64    (1U << 2)
 /** @brief CPUID MONITOR/MWAIT flag. */
-#define ECX_MONITOR   (1 << 3)
+#define ECX_MONITOR   (1U << 3)
 /** @brief CPUID CPL Qualified Debug Store flag. */
-#define ECX_DS_CPL    (1 << 4)
+#define ECX_DS_CPL    (1U << 4)
 /** @brief CPUID Virtual Machine Extensions flag. */
-#define ECX_VMX       (1 << 5)
+#define ECX_VMX       (1U << 5)
 /** @brief CPUID Safer Mode Extensions flag. */
-#define ECX_SMX       (1 << 6)
+#define ECX_SMX       (1U << 6)
 /** @brief CPUID Enhanced SpeedStep Technology flag. */
-#define ECX_EST       (1 << 7)
+#define ECX_EST       (1U << 7)
 /** @brief CPUID Thermal Monitor 2 flag. */
-#define ECX_TM2       (1 << 8)
+#define ECX_TM2       (1U << 8)
 /** @brief CPUID Supplemental Streaming SIMD Extensions 3 flag. */
-#define ECX_SSSE3     (1 << 9)
+#define ECX_SSSE3     (1U << 9)
 /** @brief CPUID L1 Context ID flag. */
-#define ECX_CNXT_ID   (1 << 10)
+#define ECX_CNXT_ID   (1U << 10)
 /** @brief CPUID Fused Multiply Add flag. */
-#define ECX_FMA       (1 << 12)
+#define ECX_FMA       (1U << 12)
 /** @brief CPUID CMPXCHG16B Instruction flag. */
-#define ECX_CX16      (1 << 13)
+#define ECX_CX16      (1U << 13)
 /** @brief CPUID xTPR Update Control flag. */
-#define ECX_XTPR      (1 << 14)
+#define ECX_XTPR      (1U << 14)
 /** @brief CPUID Perf/Debug Capability MSR flag. */
-#define ECX_PDCM      (1 << 15)
+#define ECX_PDCM      (1U << 15)
 /** @brief CPUID Process-context Identifiers flag. */
-#define ECX_PCID      (1 << 17)
+#define ECX_PCID      (1U << 17)
 /** @brief CPUID Direct Cache Access flag. */
-#define ECX_DCA       (1 << 18)
+#define ECX_DCA       (1U << 18)
 /** @brief CPUID Streaming SIMD Extensions 4.1 flag. */
-#define ECX_SSE41     (1 << 19)
+#define ECX_SSE41     (1U << 19)
 /** @brief CPUID Streaming SIMD Extensions 4.2 flag. */
-#define ECX_SSE42     (1 << 20)
+#define ECX_SSE42     (1U << 20)
 /** @brief CPUID Extended xAPIC Support flag. */
-#define ECX_X2APIC    (1 << 21)
+#define ECX_X2APIC    (1U << 21)
 /** @brief CPUID MOVBE Instruction flag. */
-#define ECX_MOVBE     (1 << 22)
+#define ECX_MOVBE     (1U << 22)
 /** @brief CPUID POPCNT Instruction flag. */
-#define ECX_POPCNT    (1 << 23)
+#define ECX_POPCNT    (1U << 23)
 /** @brief CPUID Local APIC supports TSC Deadline flag. */
-#define ECX_TSC       (1 << 24)
+#define ECX_TSC       (1U << 24)
 /** @brief CPUID AESNI Instruction flag. */
-#define ECX_AESNI     (1 << 25)
+#define ECX_AESNI     (1U << 25)
 /** @brief CPUID XSAVE/XSTOR States flag. */
-#define ECX_XSAVE     (1 << 26)
+#define ECX_XSAVE     (1U << 26)
 /** @brief CPUID OS Enabled Extended State Management flag. */
-#define ECX_OSXSAVE   (1 << 27)
+#define ECX_OSXSAVE   (1U << 27)
 /** @brief CPUID AVX Instructions flag. */
-#define ECX_AVX       (1 << 28)
+#define ECX_AVX       (1U << 28)
 /** @brief CPUID 16-bit Floating Point Instructions flag. */
-#define ECX_F16C      (1 << 29)
+#define ECX_F16C      (1U << 29)
 /** @brief CPUID RDRAND Instruction flag. */
-#define ECX_RDRAND    (1 << 30)
+#define ECX_RDRAND    (1U << 30)
 /** @brief CPUID Floating-Point Unit On-Chip flag. */
-#define EDX_FPU       (1 << 0)
+#define EDX_FPU       (1U << 0)
 /** @brief CPUID Virtual 8086 Mode Extensions flag. */
-#define EDX_VME       (1 << 1)
+#define EDX_VME       (1U << 1)
 /** @brief CPUID Debugging Extensions flag. */
-#define EDX_DE        (1 << 2)
+#define EDX_DE        (1U << 2)
 /** @brief CPUID Page Size Extension flag. */
-#define EDX_PSE       (1 << 3)
+#define EDX_PSE       (1U << 3)
 /** @brief CPUID Time Stamp Counter flag. */
-#define EDX_TSC       (1 << 4)
+#define EDX_TSC       (1U << 4)
 /** @brief CPUID Model Specific Registers flag. */
-#define EDX_MSR       (1 << 5)
+#define EDX_MSR       (1U << 5)
 /** @brief CPUID Physical Address Extension flag. */
-#define EDX_PAE       (1 << 6)
+#define EDX_PAE       (1U << 6)
 /** @brief CPUID Machine-Check Exception flag. */
-#define EDX_MCE       (1 << 7)
+#define EDX_MCE       (1U << 7)
 /** @brief CPUID CMPXCHG8 Instruction flag. */
-#define EDX_CX8       (1 << 8)
+#define EDX_CX8       (1U << 8)
 /** @brief CPUID APIC On-Chip flag. */
-#define EDX_APIC      (1 << 9)
+#define EDX_APIC      (1U << 9)
 /** @brief CPUID SYSENTER/SYSEXIT instructions flag. */
-#define EDX_SEP       (1 << 11)
+#define EDX_SEP       (1U << 11)
 /** @brief CPUID Memory Type Range Registers flag. */
-#define EDX_MTRR      (1 << 12)
+#define EDX_MTRR      (1U << 12)
 /** @brief CPUID Page Global Bit flag. */
-#define EDX_PGE       (1 << 13)
+#define EDX_PGE       (1U << 13)
 /** @brief CPUID Machine-Check Architecture flag. */
-#define EDX_MCA       (1 << 14)
+#define EDX_MCA       (1U << 14)
 /** @brief CPUID Conditional Move Instruction flag. */
-#define EDX_CMOV      (1 << 15)
+#define EDX_CMOV      (1U << 15)
 /** @brief CPUID Page Attribute Table flag. */
-#define EDX_PAT       (1 << 16)
+#define EDX_PAT       (1U << 16)
 /** @brief CPUID 36-bit Page Size Extension flag. */
-#define EDX_PSE36     (1 << 17)
+#define EDX_PSE36     (1U << 17)
 /** @brief CPUID Processor Serial Number flag. */
-#define EDX_PSN       (1 << 18)
+#define EDX_PSN       (1U << 18)
 /** @brief CPUID CLFLUSH Instruction flag. */
-#define EDX_CLFLUSH   (1 << 19)
+#define EDX_CLFLUSH   (1U << 19)
 /** @brief CPUID Debug Store flag. */
-#define EDX_DS        (1 << 21)
+#define EDX_DS        (1U << 21)
 /** @brief CPUID Thermal Monitor and Clock Facilities flag. */
-#define EDX_ACPI      (1 << 22)
+#define EDX_ACPI      (1U << 22)
 /** @brief CPUID MMX Technology flag. */
-#define EDX_MMX       (1 << 23)
+#define EDX_MMX       (1U << 23)
 /** @brief CPUID FXSAVE and FXSTOR Instructions flag. */
-#define EDX_FXSR      (1 << 24)
+#define EDX_FXSR      (1U << 24)
 /** @brief CPUID Streaming SIMD Extensions flag. */
-#define EDX_SSE       (1 << 25)
+#define EDX_SSE       (1U << 25)
 /** @brief CPUID Streaming SIMD Extensions 2 flag. */
-#define EDX_SSE2      (1 << 26)
+#define EDX_SSE2      (1U << 26)
 /** @brief CPUID Self Snoop flag. */
-#define EDX_SS        (1 << 27)
+#define EDX_SS        (1U << 27)
 /** @brief CPUID Multi-Threading flag. */
-#define EDX_HTT       (1 << 28)
+#define EDX_HTT       (1U << 28)
 /** @brief CPUID Thermal Monitor flag. */
-#define EDX_TM        (1 << 29)
+#define EDX_TM        (1U << 29)
 /** @brief CPUID Pending Break Enable flag. */
-#define EDX_PBE       (1 << 31)
+#define EDX_PBE       (1U << 31)
 
 /****************************
  * Extended Features
  ***************************/
 /** @brief CPUID SYSCALL/SYSRET flag. */
-#define EDX_SYSCALL   (1 << 11)
+#define EDX_SYSCALL   (1U << 11)
 /** @brief CPUID Multiprocessor flag. */
-#define EDX_MP        (1 << 19)
+#define EDX_MP        (1U << 19)
 /** @brief CPUID Execute Disable Bit flag. */
-#define EDX_XD        (1 << 20)
+#define EDX_XD        (1U << 20)
 /** @brief CPUID MMX etended flag. */
-#define EDX_MMX_EX    (1 << 22)
+#define EDX_MMX_EX    (1U << 22)
 /** @brief CPUID FXSAVE/STOR available flag. */
-#define EDX_FXSR     (1 << 24)
+#define EDX_FXSR     (1U << 24)
 /** @brief CPUID FXSAVE/STOR optimized flag. */
-#define EDX_FXSR_OPT  (1 << 25)
+#define EDX_FXSR_OPT  (1U << 25)
 /** @brief CPUID 1 GB Pages flag. */
-#define EDX_1GB_PAGE  (1 << 26)
+#define EDX_1GB_PAGE  (1U << 26)
 /** @brief CPUID RDTSCP and IA32_TSC_AUX flag. */
-#define EDX_RDTSCP    (1 << 27)
+#define EDX_RDTSCP    (1U << 27)
 /** @brief CPUID 64-bit Architecture flag. */
-#define EDX_64_BIT    (1 << 29)
+#define EDX_64_BIT    (1U << 29)
 /** @brief CPUID 3D Now etended flag. */
-#define EDX_3DNOW_EX  (1 << 30)
+#define EDX_3DNOW_EX  (1U << 30)
 /** @brief CPUID 3D Now flag. */
-#define EDX_3DNOW     (1 << 31)
+#define EDX_3DNOW     (1U << 31)
 /** @brief CPUID LAHF Available in long mode flag */
-#define ECX_LAHF_LM   (1 << 0)
+#define ECX_LAHF_LM   (1U << 0)
 /** @brief CPUID Hyperthreading not valid flag */
-#define ECX_CMP_LEG   (1 << 1)
+#define ECX_CMP_LEG   (1U << 1)
 /** @brief CPUID Secure Virtual Machine flag */
-#define ECX_SVM       (1 << 2)
+#define ECX_SVM       (1U << 2)
 /** @brief CPUID Extended API space flag */
-#define ECX_EXTAPIC   (1 << 3)
+#define ECX_EXTAPIC   (1U << 3)
 /** @brief CPUID CR8 in protected mode flag */
-#define ECX_CR8_LEG   (1 << 4)
+#define ECX_CR8_LEG   (1U << 4)
 /** @brief CPUID ABM available flag */
-#define ECX_ABM       (1 << 5)
+#define ECX_ABM       (1U << 5)
 /** @brief CPUID SSE4A flag */
-#define ECX_SSE4A     (1 << 6)
+#define ECX_SSE4A     (1U << 6)
 /** @brief CPUID Misaligne SSE mode flag */
-#define ECX_MISASSE   (1 << 7)
+#define ECX_MISASSE   (1U << 7)
 /** @brief CPUID Prefetch flag */
-#define ECX_PREFETCH  (1 << 8)
+#define ECX_PREFETCH  (1U << 8)
 /** @brief CPUID OS Visible workaround flag */
-#define ECX_OSVW      (1 << 9)
+#define ECX_OSVW      (1U << 9)
 /** @brief CPUID Instruction based sampling flag */
-#define ECX_IBS       (1 << 10)
+#define ECX_IBS       (1U << 10)
 /** @brief CPUID XIO intruction set flag */
-#define ECX_XOP       (1 << 11)
+#define ECX_XOP       (1U << 11)
 /** @brief CPUID SKINIT instructions flag */
-#define ECX_SKINIT    (1 << 12)
+#define ECX_SKINIT    (1U << 12)
 /** @brief CPUID watchdog timer flag */
-#define ECX_WDT       (1 << 13)
+#define ECX_WDT       (1U << 13)
 /** @brief CPUID Light weight profiling flag */
-#define ECX_LWP       (1 << 15)
+#define ECX_LWP       (1U << 15)
 /** @brief CPUID 4 operand fuxed multiply add flag */
-#define ECX_FMA4      (1 << 16)
+#define ECX_FMA4      (1U << 16)
 /** @brief CPUID Translation cache extension flag */
-#define ECX_TCE       (1 << 17)
+#define ECX_TCE       (1U << 17)
 /** @brief CPUID NODE_ID MSR flag */
-#define ECX_NODEIDMSR (1 << 19)
+#define ECX_NODEIDMSR (1U << 19)
 /** @brief CPUID Trailing bit manipulation flag */
-#define ECX_TBM       (1 << 21)
+#define ECX_TBM       (1U << 21)
 /** @brief CPUID Topology extension flag */
-#define ECX_TOPOEX    (1 << 22)
+#define ECX_TOPOEX    (1U << 22)
 /** @brief CPUID Core performance counter extensions flag */
-#define ECX_PERF_CORE (1 << 23)
+#define ECX_PERF_CORE (1U << 23)
 /** @brief CPUID NB performance counter extensions flag */
-#define ECX_PERF_NB   (1 << 24)
+#define ECX_PERF_NB   (1U << 24)
 /** @brief CPUID Data breakpoint extensions flag */
-#define ECX_DBX       (1 << 26)
+#define ECX_DBX       (1U << 26)
 /** @brief CPUID Performance TSC flag */
-#define ECX_PERF_TSC  (1 << 27)
+#define ECX_PERF_TSC  (1U << 27)
 /** @brief CPUID L2I perf counter extensions flag */
-#define ECX_PCX_L2I   (1 << 28)
+#define ECX_PCX_L2I   (1U << 28)
 
 /****************************
  * CPU Vendor signatures

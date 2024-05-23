@@ -1,0 +1,758 @@
+\hypertarget{vector_8c}{}\doxysection{Source/\+Kernel/\+Libs/libapi/src/vector.c File Reference}
+\label{vector_8c}\index{Source/Kernel/Libs/libapi/src/vector.c@{Source/Kernel/Libs/libapi/src/vector.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+{\ttfamily \#include $<$vector.\+h$>$}\newline
+Include dependency graph for vector.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{vector_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{vector_8c_a07e31b02257cf34f3d96f58cb2173c52}{VECTOR\+\_\+\+GROWTH\+\_\+\+FACTOR}}~2
+\begin{DoxyCompactList}\small\item\em Growth factor used when the vector has not space left. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vector_8c_a6e4d5f25bb8d3b44a2cc3adab0e64314}{GROW\+\_\+\+VECTOR\+\_\+\+SIZE}}(vector,  new\+\_\+size,  new\+\_\+array)
+\begin{DoxyCompactList}\small\item\em Used to grow the size of a vector. The new vector is filled with previous data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$ \mbox{\hyperlink{vector_8c_a79f36f00021412a87d393d3441661555}{vector\+\_\+create}} (\mbox{\hyperlink{structvector__alloc__t}{vector\+\_\+alloc\+\_\+t}} allocator, void $\ast$init\+\_\+data, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} size, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$error)
+\begin{DoxyCompactList}\small\item\em Creates a new vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_acfcdbe2fe6dd74635cbe7857d89e35a1}{vector\+\_\+destroy}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector)
+\begin{DoxyCompactList}\small\item\em Destroys a vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_acd1ca879ac210f3f83efa9bfe39b0635}{vector\+\_\+clear}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector)
+\begin{DoxyCompactList}\small\item\em Clears a vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$ \mbox{\hyperlink{vector_8c_a6b1b8a27d7ca1880044f2a113d33ca3a}{vector\+\_\+copy}} (const \mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$src, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$error)
+\begin{DoxyCompactList}\small\item\em Performs a copy of a vector and returns it. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_a1b5ffb93884f4259634d6e25581a993b}{vector\+\_\+shrink\+\_\+to\+\_\+fit}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector)
+\begin{DoxyCompactList}\small\item\em Shrinks a vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_a387767b3a208f22f690fc100e9a479ff}{vector\+\_\+resize}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} size)
+\begin{DoxyCompactList}\small\item\em Resizes a vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_a5db1edd65cbf5eca1b9daf950ae5ed55}{vector\+\_\+insert}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, void $\ast$data, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} position)
+\begin{DoxyCompactList}\small\item\em Inserts an element in the vector at the position provided in the parameters. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_a1203eb5bddde9d79b640156c4ba30890}{vector\+\_\+push}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Inserts an element at the end of the vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_ab2f1fefbb168a828572532c6e3149d35}{vector\+\_\+pop}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, void $\ast$$\ast$data)
+\begin{DoxyCompactList}\small\item\em Removes an element at the end of the vector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_a494d4ccacfbfd8b2bdb469aa5f8ae0fa}{vector\+\_\+get}} (const \mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} position, void $\ast$$\ast$data)
+\begin{DoxyCompactList}\small\item\em Returns the value of an element. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{vector_8c_aa25fbaf196f6e70961c5f6f78b5b1482}{vector\+\_\+set}} (\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$vector, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} position, void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Sets the value of an element. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{vector_8c_a6e4d5f25bb8d3b44a2cc3adab0e64314}\label{vector_8c_a6e4d5f25bb8d3b44a2cc3adab0e64314}} 
+\index{vector.c@{vector.c}!GROW\_VECTOR\_SIZE@{GROW\_VECTOR\_SIZE}}
+\index{GROW\_VECTOR\_SIZE@{GROW\_VECTOR\_SIZE}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{GROW\_VECTOR\_SIZE}{GROW\_VECTOR\_SIZE}}
+{\footnotesize\ttfamily \#define GROW\+\_\+\+VECTOR\+\_\+\+SIZE(\begin{DoxyParamCaption}\item[{}]{vector,  }\item[{}]{new\+\_\+size,  }\item[{}]{new\+\_\+array }\end{DoxyParamCaption})}
+
+
+
+Used to grow the size of a vector. The new vector is filled with previous data. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to update. \\
+\hline
+\mbox{\texttt{ out}}  & {\em new\+\_\+size} & The new size to be computed. \\
+\hline
+\mbox{\texttt{ out}}  & {\em new\+\_\+array} & The array to receive the created memory region. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 70 of file vector.\+c.
+
+\mbox{\Hypertarget{vector_8c_a07e31b02257cf34f3d96f58cb2173c52}\label{vector_8c_a07e31b02257cf34f3d96f58cb2173c52}} 
+\index{vector.c@{vector.c}!VECTOR\_GROWTH\_FACTOR@{VECTOR\_GROWTH\_FACTOR}}
+\index{VECTOR\_GROWTH\_FACTOR@{VECTOR\_GROWTH\_FACTOR}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{VECTOR\_GROWTH\_FACTOR}{VECTOR\_GROWTH\_FACTOR}}
+{\footnotesize\ttfamily \#define VECTOR\+\_\+\+GROWTH\+\_\+\+FACTOR~2}
+
+
+
+Growth factor used when the vector has not space left. 
+
+\begin{DoxyWarning}{Warning}
+This value must be greater than 1. 
+\end{DoxyWarning}
+
+
+Definition at line 49 of file vector.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{vector_8c_acd1ca879ac210f3f83efa9bfe39b0635}\label{vector_8c_acd1ca879ac210f3f83efa9bfe39b0635}} 
+\index{vector.c@{vector.c}!vector\_clear@{vector\_clear}}
+\index{vector\_clear@{vector\_clear}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_clear()}{vector\_clear()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+clear (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector }\end{DoxyParamCaption})}
+
+
+
+Clears a vector. 
+
+Clears a vector. The memory used by the vector is not released and its capacity unchanged. If its elements were allocated dynamically, it is the responsability of the user to release the memory of these elements.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to clear.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 215 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{216 \{}
+\DoxyCodeLine{217     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{218     \{}
+\DoxyCodeLine{219         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{220     \}}
+\DoxyCodeLine{221 }
+\DoxyCodeLine{222     vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} = 0;}
+\DoxyCodeLine{223 }
+\DoxyCodeLine{224     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{225 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a6b1b8a27d7ca1880044f2a113d33ca3a}\label{vector_8c_a6b1b8a27d7ca1880044f2a113d33ca3a}} 
+\index{vector.c@{vector.c}!vector\_copy@{vector\_copy}}
+\index{vector\_copy@{vector\_copy}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_copy()}{vector\_copy()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structvector__t}{vector\+\_\+t}}$\ast$ vector\+\_\+copy (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{src,  }\item[{\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$}]{error }\end{DoxyParamCaption})}
+
+
+
+Performs a copy of a vector and returns it. 
+
+Copies a vector to another vector. The function initialize the destination vector before performing the copy.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em src} & The source vector. \\
+\hline
+\mbox{\texttt{ in}}  & {\em error} & The error status buffer.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The copy of the vector is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 227 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{228 \{}
+\DoxyCodeLine{229     \mbox{\hyperlink{structvector__t}{vector\_t}}* copy;}
+\DoxyCodeLine{230 }
+\DoxyCodeLine{231     \textcolor{keywordflow}{if}(src == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{232     \{}
+\DoxyCodeLine{233         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{234         \{}
+\DoxyCodeLine{235             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{236         \}}
+\DoxyCodeLine{237         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{238     \}}
+\DoxyCodeLine{239 }
+\DoxyCodeLine{240     copy = \mbox{\hyperlink{vector_8c_a79f36f00021412a87d393d3441661555}{vector\_create}}(src-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}, \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}, src-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}, error);}
+\DoxyCodeLine{241     \textcolor{keywordflow}{if}(copy == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || *error != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{242     \{}
+\DoxyCodeLine{243         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{244     \}}
+\DoxyCodeLine{245 }
+\DoxyCodeLine{246     \textcolor{comment}{/* Here we do not need to copy the entire array, just the part that contains}}
+\DoxyCodeLine{247 \textcolor{comment}{     * valid data as size <= capacity.}}
+\DoxyCodeLine{248 \textcolor{comment}{     */}}
+\DoxyCodeLine{249     copy-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} = src-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{250     \mbox{\hyperlink{string_8h_a0a3e682eff8f0c6e8adc371f54cc9f3f}{memcpy}}(copy-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}, src-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}, src-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{251 }
+\DoxyCodeLine{252     \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{253     \{}
+\DoxyCodeLine{254         *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{255     \}}
+\DoxyCodeLine{256 }
+\DoxyCodeLine{257     \textcolor{keywordflow}{return} copy;}
+\DoxyCodeLine{258 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=275pt]{vector_8c_a6b1b8a27d7ca1880044f2a113d33ca3a_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vector_8c_a79f36f00021412a87d393d3441661555}\label{vector_8c_a79f36f00021412a87d393d3441661555}} 
+\index{vector.c@{vector.c}!vector\_create@{vector\_create}}
+\index{vector\_create@{vector\_create}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_create()}{vector\_create()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structvector__t}{vector\+\_\+t}}$\ast$ vector\+\_\+create (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__alloc__t}{vector\+\_\+alloc\+\_\+t}}}]{allocator,  }\item[{void $\ast$}]{init\+\_\+data,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{size,  }\item[{\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} $\ast$}]{error }\end{DoxyParamCaption})}
+
+
+
+Creates a new vector. 
+
+Creates a new vector of the size given as parameter. The vector will allocate the required memory and initialize the memory with the value provided as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em allocator} & The allocator to be used when allocating and freeing the vector. \\
+\hline
+\mbox{\texttt{ in}}  & {\em init\+\_\+data} & The initial data to set to the elements of the vector during its creation. \\
+\hline
+\mbox{\texttt{ in}}  & {\em size} & The initial size of the vector. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The error buffer to received the error status.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the created vector is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 131 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{135 \{}
+\DoxyCodeLine{136     \mbox{\hyperlink{structvector__t}{vector\_t}}* vector;}
+\DoxyCodeLine{137     \textcolor{keywordtype}{size\_t}    i;}
+\DoxyCodeLine{138 }
+\DoxyCodeLine{139     \textcolor{keywordflow}{if}(allocator.\mbox{\hyperlink{structvector__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || allocator.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{140     \{}
+\DoxyCodeLine{141         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{142         \{}
+\DoxyCodeLine{143             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{144         \}}
+\DoxyCodeLine{145         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{146     \}}
+\DoxyCodeLine{147 }
+\DoxyCodeLine{148     vector = allocator.\mbox{\hyperlink{structvector__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structvector__t}{vector\_t}}));}
+\DoxyCodeLine{149     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{150     \{}
+\DoxyCodeLine{151         \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{152         \{}
+\DoxyCodeLine{153             *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{154         \}}
+\DoxyCodeLine{155         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{156     \}}
+\DoxyCodeLine{157 }
+\DoxyCodeLine{158     \textcolor{comment}{/* Allocate the data */}}
+\DoxyCodeLine{159     vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{160     \textcolor{keywordflow}{if}(size != 0)}
+\DoxyCodeLine{161     \{}
+\DoxyCodeLine{162         vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}} = allocator.\mbox{\hyperlink{structvector__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(size * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{163         \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{164         \{}
+\DoxyCodeLine{165             \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{166             \{}
+\DoxyCodeLine{167                 *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{168             \}}
+\DoxyCodeLine{169             \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{170         \}}
+\DoxyCodeLine{171     \}}
+\DoxyCodeLine{172 }
+\DoxyCodeLine{173     \textcolor{comment}{/* Initialize the data */}}
+\DoxyCodeLine{174     \textcolor{keywordflow}{for}(i = 0; i < size; ++i)}
+\DoxyCodeLine{175     \{}
+\DoxyCodeLine{176         vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[i] = init\_data;}
+\DoxyCodeLine{177     \}}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179     \textcolor{comment}{/* Initialize the attributes */}}
+\DoxyCodeLine{180     vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}} = allocator;}
+\DoxyCodeLine{181     vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}      = size;}
+\DoxyCodeLine{182     vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}  = size;}
+\DoxyCodeLine{183 }
+\DoxyCodeLine{184     \textcolor{keywordflow}{if}(error != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{185     \{}
+\DoxyCodeLine{186         *error = \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{187     \}}
+\DoxyCodeLine{188     \textcolor{keywordflow}{return} vector;}
+\DoxyCodeLine{189 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=275pt]{vector_8c_a79f36f00021412a87d393d3441661555_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vector_8c_acfcdbe2fe6dd74635cbe7857d89e35a1}\label{vector_8c_acfcdbe2fe6dd74635cbe7857d89e35a1}} 
+\index{vector.c@{vector.c}!vector\_destroy@{vector\_destroy}}
+\index{vector\_destroy@{vector\_destroy}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_destroy()}{vector\_destroy()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector }\end{DoxyParamCaption})}
+
+
+
+Destroys a vector. 
+
+Destroys a vector. The memory used by the vector is released, however, if its elements were allocated dynamically, it is the responsability of the user to release the memory of these elements.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to destroy.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 191 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{192 \{}
+\DoxyCodeLine{193     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{194     \{}
+\DoxyCodeLine{195         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{196     \}}
+\DoxyCodeLine{197 }
+\DoxyCodeLine{198     \textcolor{comment}{/* Release the data */}}
+\DoxyCodeLine{199     \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{200     \{}
+\DoxyCodeLine{201         vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}});}
+\DoxyCodeLine{202     \}}
+\DoxyCodeLine{203 }
+\DoxyCodeLine{204     \textcolor{comment}{/* Reset the attributes */}}
+\DoxyCodeLine{205     vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}     = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{206     vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}      = 0;}
+\DoxyCodeLine{207     vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}}  = 0;}
+\DoxyCodeLine{208 }
+\DoxyCodeLine{209     \textcolor{comment}{/* Free vector structure */}}
+\DoxyCodeLine{210     vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector);}
+\DoxyCodeLine{211 }
+\DoxyCodeLine{212     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{213 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a494d4ccacfbfd8b2bdb469aa5f8ae0fa}\label{vector_8c_a494d4ccacfbfd8b2bdb469aa5f8ae0fa}} 
+\index{vector.c@{vector.c}!vector\_get@{vector\_get}}
+\index{vector\_get@{vector\_get}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_get()}{vector\_get()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+get (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{position,  }\item[{void $\ast$$\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Returns the value of an element. 
+
+Returns the value of an element at the position provided in parameters. Note that the vector\textquotesingle{}s array can be accesses directly from the structure\textquotesingle{}s attributes. This function tests the bounds of the vector to ensure the user accesses a position inside the vector.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vector} & The vector to use. \\
+\hline
+\mbox{\texttt{ in}}  & {\em position} & The position of the element to retrieve. \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & The data buffer to retreive the element.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 419 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{422 \{}
+\DoxyCodeLine{423     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || data == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{424     \{}
+\DoxyCodeLine{425         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{426     \}}
+\DoxyCodeLine{427 }
+\DoxyCodeLine{428     \textcolor{keywordflow}{if}(position >= vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}})}
+\DoxyCodeLine{429     \{}
+\DoxyCodeLine{430         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87}{OS\_ERR\_OUT\_OF\_BOUND}};}
+\DoxyCodeLine{431     \}}
+\DoxyCodeLine{432 }
+\DoxyCodeLine{433     \textcolor{comment}{/* Return the data */}}
+\DoxyCodeLine{434     *data = vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[position];}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{437 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a5db1edd65cbf5eca1b9daf950ae5ed55}\label{vector_8c_a5db1edd65cbf5eca1b9daf950ae5ed55}} 
+\index{vector.c@{vector.c}!vector\_insert@{vector\_insert}}
+\index{vector\_insert@{vector\_insert}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_insert()}{vector\_insert()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+insert (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{void $\ast$}]{data,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{position }\end{DoxyParamCaption})}
+
+
+
+Inserts an element in the vector at the position provided in the parameters. 
+
+Inserts an element in the vector at the position provided in the parameters. If the position is greater than the size, an error is returned.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to modify. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data to insert. \\
+\hline
+\mbox{\texttt{ in}}  & {\em position} & The position to insert the data to.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 350 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{353 \{}
+\DoxyCodeLine{354     \textcolor{keywordtype}{size\_t} new\_size;}
+\DoxyCodeLine{355     \textcolor{keywordtype}{size\_t} i;}
+\DoxyCodeLine{356     \textcolor{keywordtype}{void}** new\_array;}
+\DoxyCodeLine{357 }
+\DoxyCodeLine{358     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{359     \{}
+\DoxyCodeLine{360         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{361     \}}
+\DoxyCodeLine{362 }
+\DoxyCodeLine{363     \textcolor{keywordflow}{if}(position > vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}})}
+\DoxyCodeLine{364     \{}
+\DoxyCodeLine{365         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87}{OS\_ERR\_OUT\_OF\_BOUND}};}
+\DoxyCodeLine{366     \}}
+\DoxyCodeLine{367 }
+\DoxyCodeLine{368     \textcolor{comment}{/* First, check if we should update the capacity of the vector */}}
+\DoxyCodeLine{369     \mbox{\hyperlink{vector_8c_a6e4d5f25bb8d3b44a2cc3adab0e64314}{GROW\_VECTOR\_SIZE}}(vector, new\_size, new\_array);}
+\DoxyCodeLine{370 }
+\DoxyCodeLine{371     \textcolor{comment}{/* Move the old data and insert the new data */}}
+\DoxyCodeLine{372     \textcolor{keywordflow}{for}(i = vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}; i > position; -\/-\/i)}
+\DoxyCodeLine{373     \{}
+\DoxyCodeLine{374         vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[i] = vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[i -\/ 1];}
+\DoxyCodeLine{375     \}}
+\DoxyCodeLine{376     vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[position] = data;}
+\DoxyCodeLine{377     ++vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{378 }
+\DoxyCodeLine{379     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{380 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_ab2f1fefbb168a828572532c6e3149d35}\label{vector_8c_ab2f1fefbb168a828572532c6e3149d35}} 
+\index{vector.c@{vector.c}!vector\_pop@{vector\_pop}}
+\index{vector\_pop@{vector\_pop}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_pop()}{vector\_pop()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+pop (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{void $\ast$$\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Removes an element at the end of the vector. 
+
+Removes an element at the end of the vector.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to modify. \\
+\hline
+\mbox{\texttt{ out}}  & {\em data} & The data buffer to retreive the element that was removed.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 401 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{402 \{}
+\DoxyCodeLine{403     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || data == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{404     \{}
+\DoxyCodeLine{405         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{406     \}}
+\DoxyCodeLine{407 }
+\DoxyCodeLine{408     \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} == 0)}
+\DoxyCodeLine{409     \{}
+\DoxyCodeLine{410         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87}{OS\_ERR\_OUT\_OF\_BOUND}};}
+\DoxyCodeLine{411     \}}
+\DoxyCodeLine{412 }
+\DoxyCodeLine{413     \textcolor{comment}{/* Return the last data */}}
+\DoxyCodeLine{414     *data = vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[-\/-\/vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}];}
+\DoxyCodeLine{415 }
+\DoxyCodeLine{416     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{417 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a1203eb5bddde9d79b640156c4ba30890}\label{vector_8c_a1203eb5bddde9d79b640156c4ba30890}} 
+\index{vector.c@{vector.c}!vector\_push@{vector\_push}}
+\index{vector\_push@{vector\_push}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_push()}{vector\_push()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+push (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{void $\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Inserts an element at the end of the vector. 
+
+Inserts an element at the end of the vector.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to modify. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data to insert.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 382 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{383 \{}
+\DoxyCodeLine{384     \textcolor{keywordtype}{size\_t} new\_size;}
+\DoxyCodeLine{385     \textcolor{keywordtype}{void}** new\_array;}
+\DoxyCodeLine{386 }
+\DoxyCodeLine{387     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{388     \{}
+\DoxyCodeLine{389         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{390     \}}
+\DoxyCodeLine{391 }
+\DoxyCodeLine{392     \textcolor{comment}{/* First, check if we should update the capacity of the vector */}}
+\DoxyCodeLine{393     \mbox{\hyperlink{vector_8c_a6e4d5f25bb8d3b44a2cc3adab0e64314}{GROW\_VECTOR\_SIZE}}(vector, new\_size, new\_array);}
+\DoxyCodeLine{394 }
+\DoxyCodeLine{395     \textcolor{comment}{/* Insert the new data */}}
+\DoxyCodeLine{396     vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}++] = data;}
+\DoxyCodeLine{397 }
+\DoxyCodeLine{398     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{399 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a387767b3a208f22f690fc100e9a479ff}\label{vector_8c_a387767b3a208f22f690fc100e9a479ff}} 
+\index{vector.c@{vector.c}!vector\_resize@{vector\_resize}}
+\index{vector\_resize@{vector\_resize}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_resize()}{vector\_resize()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+resize (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})}
+
+
+
+Resizes a vector. 
+
+Resizes a vector. If the size set is smaller than the current capacity of the vector, the size is reduced but the capacity unchanged. If its elements were allocated dynamically, it is the responsability of the user to release the memory of these elements. If the size is biger than the vector\textquotesingle{}s capacity, it is expanded to fit the new size.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to resize. \\
+\hline
+\mbox{\texttt{ in}}  & {\em size} & The size of apply to the vector.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 301 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{302 \{}
+\DoxyCodeLine{303     \textcolor{keywordtype}{void}*       new\_array;}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{306     \{}
+\DoxyCodeLine{307         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{308     \}}
+\DoxyCodeLine{309 }
+\DoxyCodeLine{310     \textcolor{comment}{/* Only resize if the capacity is different than the capacity */}}
+\DoxyCodeLine{311     \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} < size)}
+\DoxyCodeLine{312     \{}
+\DoxyCodeLine{313         \textcolor{keywordflow}{if}(size != 0)}
+\DoxyCodeLine{314         \{}
+\DoxyCodeLine{315             \textcolor{comment}{/* Allocate new array */}}
+\DoxyCodeLine{316             new\_array = vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(size * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{317             \textcolor{keywordflow}{if}(new\_array == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{318             \{}
+\DoxyCodeLine{319                 \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{320             \}}
+\DoxyCodeLine{321 }
+\DoxyCodeLine{322             \textcolor{comment}{/* Copy array */}}
+\DoxyCodeLine{323             \mbox{\hyperlink{string_8h_a0a3e682eff8f0c6e8adc371f54cc9f3f}{memcpy}}(new\_array,}
+\DoxyCodeLine{324                    vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}},}
+\DoxyCodeLine{325                    \mbox{\hyperlink{stddef_8h_aacc3ee1a7f283f8ef65cea31f4436a95}{MAX}}(vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}, size) * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{326 }
+\DoxyCodeLine{327             \textcolor{comment}{/* Free old array */}}
+\DoxyCodeLine{328             vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}});}
+\DoxyCodeLine{329             vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}    = new\_array;}
+\DoxyCodeLine{330             vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} = size;}
+\DoxyCodeLine{331             vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}     = size;}
+\DoxyCodeLine{332         \}}
+\DoxyCodeLine{333         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{334         \{}
+\DoxyCodeLine{335             \textcolor{comment}{/* Free all memory */}}
+\DoxyCodeLine{336             vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}});}
+\DoxyCodeLine{337             vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{338             vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} = 0;}
+\DoxyCodeLine{339             vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}}     = 0;}
+\DoxyCodeLine{340         \}}
+\DoxyCodeLine{341     \}}
+\DoxyCodeLine{342     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{343     \{}
+\DoxyCodeLine{344         vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} = size;}
+\DoxyCodeLine{345     \}}
+\DoxyCodeLine{346 }
+\DoxyCodeLine{347     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{348 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=257pt]{vector_8c_a387767b3a208f22f690fc100e9a479ff_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{vector_8c_aa25fbaf196f6e70961c5f6f78b5b1482}\label{vector_8c_aa25fbaf196f6e70961c5f6f78b5b1482}} 
+\index{vector.c@{vector.c}!vector\_set@{vector\_set}}
+\index{vector\_set@{vector\_set}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_set()}{vector\_set()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+set (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{position,  }\item[{void $\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Sets the value of an element. 
+
+Sets the value of an element at the position provided in parameters. Note that the vector\textquotesingle{}s array can be accesses directly from the structure\textquotesingle{}s attributes. This function tests the bounds of the vector to ensure the user accesses a position inside the vector.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to use. \\
+\hline
+\mbox{\texttt{ in}}  & {\em position} & The position of the element to retrieve. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data to set at the given position.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 439 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{440 \{}
+\DoxyCodeLine{441     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{442     \{}
+\DoxyCodeLine{443         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{444     \}}
+\DoxyCodeLine{445 }
+\DoxyCodeLine{446     \textcolor{keywordflow}{if}(position >= vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}})}
+\DoxyCodeLine{447     \{}
+\DoxyCodeLine{448         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87}{OS\_ERR\_OUT\_OF\_BOUND}};}
+\DoxyCodeLine{449     \}}
+\DoxyCodeLine{450 }
+\DoxyCodeLine{451     \textcolor{comment}{/* Sets the data */}}
+\DoxyCodeLine{452     vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}[position] = data;}
+\DoxyCodeLine{453 }
+\DoxyCodeLine{454     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{455 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{vector_8c_a1b5ffb93884f4259634d6e25581a993b}\label{vector_8c_a1b5ffb93884f4259634d6e25581a993b}} 
+\index{vector.c@{vector.c}!vector\_shrink\_to\_fit@{vector\_shrink\_to\_fit}}
+\index{vector\_shrink\_to\_fit@{vector\_shrink\_to\_fit}!vector.c@{vector.c}}
+\doxysubsubsection{\texorpdfstring{vector\_shrink\_to\_fit()}{vector\_shrink\_to\_fit()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} vector\+\_\+shrink\+\_\+to\+\_\+fit (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvector__t}{vector\+\_\+t}} $\ast$}]{vector }\end{DoxyParamCaption})}
+
+
+
+Shrinks a vector. 
+
+Shrinks a vector. The memory used by the vector that is empty is released and its capacity set to fit the number of element that the vector contains.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em vector} & The vector to shrink.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error status is retuned. 
+\end{DoxyReturn}
+
+
+Definition at line 260 of file vector.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{261 \{}
+\DoxyCodeLine{262     \textcolor{keywordtype}{void}*       new\_array;}
+\DoxyCodeLine{263 }
+\DoxyCodeLine{264     \textcolor{keywordflow}{if}(vector == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{265     \{}
+\DoxyCodeLine{266         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{267     \}}
+\DoxyCodeLine{268 }
+\DoxyCodeLine{269     \textcolor{comment}{/* Only resize if the capacity is different than the size */}}
+\DoxyCodeLine{270     \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} > vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}})}
+\DoxyCodeLine{271     \{}
+\DoxyCodeLine{272         \textcolor{keywordflow}{if}(vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} != 0)}
+\DoxyCodeLine{273         \{}
+\DoxyCodeLine{274             \textcolor{comment}{/* Allocate new array */}}
+\DoxyCodeLine{275             new\_array = vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}}(vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{276             \textcolor{keywordflow}{if}(new\_array == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{277             \{}
+\DoxyCodeLine{278                 \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}};}
+\DoxyCodeLine{279             \}}
+\DoxyCodeLine{280 }
+\DoxyCodeLine{281             \textcolor{comment}{/* Copy array */}}
+\DoxyCodeLine{282             \mbox{\hyperlink{string_8h_a0a3e682eff8f0c6e8adc371f54cc9f3f}{memcpy}}(new\_array, vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}, vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}} * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{283 }
+\DoxyCodeLine{284             \textcolor{comment}{/* Free old array */}}
+\DoxyCodeLine{285             vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}});}
+\DoxyCodeLine{286             vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}    = new\_array;}
+\DoxyCodeLine{287             vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} = vector-\/>\mbox{\hyperlink{structvector__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{288         \}}
+\DoxyCodeLine{289         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{290         \{}
+\DoxyCodeLine{291             \textcolor{comment}{/* Free all memory */}}
+\DoxyCodeLine{292             vector-\/>\mbox{\hyperlink{structvector__t_a4eb0228144b7046195d33132a5363f15}{allocator}}.\mbox{\hyperlink{structvector__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}}(vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}});}
+\DoxyCodeLine{293             vector-\/>\mbox{\hyperlink{structvector__t_a2d79efa09314aa9c70b607c8736dc05c}{array}}    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{294             vector-\/>\mbox{\hyperlink{structvector__t_ad721fc6ca6a3d6ba3bc506576622aab0}{capacity}} = 0;}
+\DoxyCodeLine{295         \}}
+\DoxyCodeLine{296     \}}
+\DoxyCodeLine{297 }
+\DoxyCodeLine{298     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{299 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=288pt]{vector_8c_a1b5ffb93884f4259634d6e25581a993b_cgraph}
+\end{center}
+\end{figure}

@@ -97,7 +97,7 @@ align 8
 multiboot_header_end:
 
 section .low_startup_code
-align 4
+
 ;-------------------------------------------------------------------------------
 ; Kernel entry point
 __kinit:
@@ -190,7 +190,6 @@ __kinit_end_print_end:
     cli
     hlt
     jmp __kinit_end
-
 
 ;-------------------------------------------------------------------------------
 ; DATA

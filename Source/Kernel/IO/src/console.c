@@ -23,8 +23,13 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h> /* Generic int types */
+#include <stdint.h> /* Generic int types and bool */
+#include <stddef.h> /* Standard definition */
 #include <kerror.h> /* Kernel error codes */
+
+#if DEBUG_LOG_UART
+#include <uart.h>   /* Include the UART for debug */
+#endif
 
 /* Configuration files */
 #include <config.h>
@@ -48,6 +53,23 @@
  * MACROS
  ******************************************************************************/
 
+/**
+ * @brief Execute a function if it exists.
+ *
+ * @param[in] FUNC The function to execute.
+ * @param[in/out] ... Function parameters.
+ */
+#define EXEC_IF_SET(DRIVER, FUNC, ...) { \
+    if(DRIVER.FUNC != NULL)              \
+    {                                    \
+        DRIVER.FUNC(__VA_ARGS__);        \
+    }                                    \
+}
+
+/*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
 /* None */
 
 /*******************************************************************************
@@ -62,127 +84,80 @@
 
 /************************** Static global variables ***************************/
 /** @brief Stores the currently selected driver */
-static kernel_console_driver_t console_driver = {NULL};
-
-/*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/* None */
+static console_driver_t sConsoleDriver = {NULL};
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-OS_RETURN_E console_set_selected_driver(const kernel_console_driver_t* driver)
+OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
 {
 #ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
-                       (uintptr_t)driver & 0xFFFFFFFF,
-                       (uintptr_t)driver >> 32);
+                       (uintptr_t)pkDriver & 0xFFFFFFFF,
+                       (uintptr_t)pkDriver >> 32);
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
                        (uintptr_t)driver,
                        0);
 #endif
 
-    if(driver == NULL ||
-       driver->clear_screen == NULL ||
-       driver->put_string == NULL ||
-       driver->put_char == NULL ||
-       driver->console_write_keyboard == NULL)
-    {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END, 1,
-                           OS_ERR_NULL_POINTER);
-        return OS_ERR_NULL_POINTER;
-    }
-
-    console_driver = *driver;
+    sConsoleDriver = *pkDriver;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END, 1,
                        OS_NO_ERR);
     return OS_NO_ERR;
 }
 
-void console_clear_screen(void)
+void consoleClear(void)
 {
-    if(console_driver.clear_screen != NULL)
-    {
-        console_driver.clear_screen();
-    }
+    EXEC_IF_SET(sConsoleDriver, pClear);
 }
 
-void console_put_cursor_at(const uint32_t line, const uint32_t column)
+void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
 {
-    if(console_driver.put_cursor_at != NULL)
-    {
-        console_driver.put_cursor_at(line, column);
-    }
+    EXEC_IF_SET(sConsoleDriver, pPutCursor, kLine, kColumn);
 }
 
-void console_save_cursor(cursor_t* buffer)
+void consoleSaveCursor(cursor_t* pBuffer)
 {
-    if(console_driver.save_cursor != NULL)
-    {
-        return console_driver.save_cursor(buffer);
-    }
+    EXEC_IF_SET(sConsoleDriver, pSaveCursor, pBuffer);
 }
 
-void console_restore_cursor(const cursor_t buffer)
+void consoleRestoreCursor(const cursor_t* pkBuffer)
 {
-    if(console_driver.restore_cursor != NULL)
-    {
-        return console_driver.restore_cursor(buffer);
-    }
+    EXEC_IF_SET(sConsoleDriver, pRestoreCursor, pkBuffer);
 }
 
-void console_scroll(const SCROLL_DIRECTION_E direction,
-                    const uint32_t lines_count)
+void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
 {
-    if(console_driver.scroll != NULL)
-    {
-        console_driver.scroll(direction, lines_count);
-    }
+    EXEC_IF_SET(sConsoleDriver, pScroll, kDirection, kLines);
 }
 
-void console_set_color_scheme(colorscheme_t color_scheme)
+void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
 {
-    if(console_driver.set_color_scheme != NULL)
-    {
-        console_driver.set_color_scheme(color_scheme);
-    }
+    EXEC_IF_SET(sConsoleDriver, pSetColorScheme, pkColorScheme);
 }
 
-void console_save_color_scheme(colorscheme_t* buffer)
+void consoleSaveColorScheme(colorscheme_t* pBuffer)
 {
-    if(console_driver.save_color_scheme != NULL)
-    {
-        return console_driver.save_color_scheme(buffer);
-    }
+    EXEC_IF_SET(sConsoleDriver, pSaveColorScheme, pBuffer);
 }
 
-void console_put_string(const char* str)
+void consolePutString(const char* pkString)
 {
-    if(console_driver.put_string != NULL)
-    {
-        console_driver.put_string(str);
-    }
+#if DEBUG_LOG_UART
+    uart_put_string(pkString);
+#endif
+    EXEC_IF_SET(sConsoleDriver, pPutString, pkString);
 }
 
-void console_put_char(const char character)
+void consolePutChar(const char kCharacter)
 {
-    if(console_driver.put_char != NULL)
-    {
-        console_driver.put_char(character);
-    }
-}
-
-void console_console_write_keyboard(const char* str, const size_t len)
-{
-    if(console_driver.console_write_keyboard != NULL)
-    {
-        console_driver.console_write_keyboard(str, len);
-    }
+#if DEBUG_LOG_UART
+    uart_put_char(kCharacter);
+#endif
+    EXEC_IF_SET(sConsoleDriver, pPutChar, kCharacter);
 }
 
 /************************************ EOF *************************************/

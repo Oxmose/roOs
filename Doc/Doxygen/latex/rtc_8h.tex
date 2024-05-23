@@ -1,0 +1,804 @@
+\hypertarget{rtc_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/includes/rtc.h File Reference}
+\label{rtc_8h}\index{Source/Kernel/Arch/Board/x86/includes/rtc.h@{Source/Kernel/Arch/Board/x86/includes/rtc.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+{\ttfamily \#include $<$ctrl\+\_\+block.\+h$>$}\newline
+Include dependency graph for rtc.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{rtc_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=348pt]{rtc_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structdate__t}{date\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em RTC date structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{rtc_8h_acf9024748b942a7ae375cf75951afa9c}{rtc\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the RTC settings and interrupt management. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{rtc_8h_abec68bd2863d22f5a8e12ab89f8134f4}{rtc\+\_\+enable}} (void)
+\begin{DoxyCompactList}\small\item\em Enables RTC ticks. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{rtc_8h_a775327dfc005a543b369b6777babd294}{rtc\+\_\+disable}} (void)
+\begin{DoxyCompactList}\small\item\em Disables RTC ticks. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{rtc_8h_a2a46bfc9e178b252bb51acb4ed8984c0}{rtc\+\_\+set\+\_\+frequency}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} frequency)
+\begin{DoxyCompactList}\small\item\em Sets the RTC\textquotesingle{}s tick frequency. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{rtc_8h_a33048d4e3147f9bf5ccc621bc6a9d35b}{rtc\+\_\+get\+\_\+frequency}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the RTC tick frequency in Hz. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{rtc_8h_a0b514eaa3e580628086e3240726e98c5}{rtc\+\_\+set\+\_\+handler}} (void($\ast$handler)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$))
+\begin{DoxyCompactList}\small\item\em Sets the RTC tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{rtc_8h_aaeb480e326421e924f38e848cb95e3ae}{rtc\+\_\+remove\+\_\+handler}} (void)
+\begin{DoxyCompactList}\small\item\em Removes the RTC tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structdate__t}{date\+\_\+t}} \mbox{\hyperlink{rtc_8h_a6c06df496524c49178c2fe07124f560f}{rtc\+\_\+get\+\_\+current\+\_\+date}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the current date. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{rtc_8h_a24ac57f47bb5ad41e37f71959299a548}{rtc\+\_\+get\+\_\+current\+\_\+daytime}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the current daytime in seconds. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{rtc_8h_ac368a39917dd5c70b25c56a2f38793d0}{rtc\+\_\+update\+\_\+time}} (void)
+\begin{DoxyCompactList}\small\item\em Updates the system\textquotesingle{}s time and date. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{rtc_8h_a8ef990b00cb02f589b981f1f80f6b7c7}{rtc\+\_\+get\+\_\+irq}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the RTC IRQ number. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$ \mbox{\hyperlink{rtc_8h_a735e26cce1cfbd90fe227a55cb9cc941}{rtc\+\_\+get\+\_\+driver}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the RTC driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{rtc_8h_a775327dfc005a543b369b6777babd294}\label{rtc_8h_a775327dfc005a543b369b6777babd294}} 
+\index{rtc.h@{rtc.h}!rtc\_disable@{rtc\_disable}}
+\index{rtc\_disable@{rtc\_disable}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_disable()}{rtc\_disable()}}
+{\footnotesize\ttfamily void rtc\+\_\+disable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Disables RTC ticks. 
+
+Disables RTC ticks by setting the RTC\textquotesingle{}s IRQ mask. 
+
+Definition at line 265 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{266 \{}
+\DoxyCodeLine{267     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{268 }
+\DoxyCodeLine{269     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_DISABLE\_START, 1, \mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{270 }
+\DoxyCodeLine{271     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{272 }
+\DoxyCodeLine{273     \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} < \mbox{\hyperlink{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}})}
+\DoxyCodeLine{274     \{}
+\DoxyCodeLine{275         ++\mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}};}
+\DoxyCodeLine{276     \}}
+\DoxyCodeLine{277 }
+\DoxyCodeLine{278     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Disable RTC (nesting \%d)"{}},}
+\DoxyCodeLine{279                  \mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{280     \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\_interrupt\_set\_irq\_mask}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}}, 0);}
+\DoxyCodeLine{281 }
+\DoxyCodeLine{282     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_DISABLE\_END, 1, \mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{283 }
+\DoxyCodeLine{284     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{285 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{rtc_8h_a775327dfc005a543b369b6777babd294_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_a775327dfc005a543b369b6777babd294_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_abec68bd2863d22f5a8e12ab89f8134f4}\label{rtc_8h_abec68bd2863d22f5a8e12ab89f8134f4}} 
+\index{rtc.h@{rtc.h}!rtc\_enable@{rtc\_enable}}
+\index{rtc\_enable@{rtc\_enable}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_enable()}{rtc\_enable()}}
+{\footnotesize\ttfamily void rtc\+\_\+enable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Enables RTC ticks. 
+
+Enables RTC ticks by clearing the RTC\textquotesingle{}s IRQ mask. 
+
+Definition at line 238 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{239 \{}
+\DoxyCodeLine{240     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_ENABLE\_START, 0);}
+\DoxyCodeLine{243 }
+\DoxyCodeLine{244     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{245 }
+\DoxyCodeLine{246     \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} > 0)}
+\DoxyCodeLine{247     \{}
+\DoxyCodeLine{248         -\/-\/\mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}};}
+\DoxyCodeLine{249     \}}
+\DoxyCodeLine{250 }
+\DoxyCodeLine{251     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{252                  \textcolor{stringliteral}{"{}Enable RTC (nesting \%d, freq \%d)"{}},}
+\DoxyCodeLine{253                  \mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}},}
+\DoxyCodeLine{254                  \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}});}
+\DoxyCodeLine{255     \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} == 0 \&\& \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}} != 0)}
+\DoxyCodeLine{256     \{}
+\DoxyCodeLine{257         \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\_interrupt\_set\_irq\_mask}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}}, 1);}
+\DoxyCodeLine{258     \}}
+\DoxyCodeLine{259 }
+\DoxyCodeLine{260     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_ENABLE\_END, 0);}
+\DoxyCodeLine{261 }
+\DoxyCodeLine{262     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{263 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{rtc_8h_abec68bd2863d22f5a8e12ab89f8134f4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_abec68bd2863d22f5a8e12ab89f8134f4_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_a6c06df496524c49178c2fe07124f560f}\label{rtc_8h_a6c06df496524c49178c2fe07124f560f}} 
+\index{rtc.h@{rtc.h}!rtc\_get\_current\_date@{rtc\_get\_current\_date}}
+\index{rtc\_get\_current\_date@{rtc\_get\_current\_date}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_get\_current\_date()}{rtc\_get\_current\_date()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structdate__t}{date\+\_\+t}} rtc\+\_\+get\+\_\+current\+\_\+date (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the current date. 
+
+Returns the current date in RTC date format.
+
+\begin{DoxyReturn}{Returns}
+The current date in in RTC date format 
+\end{DoxyReturn}
+
+
+Definition at line 473 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{474 \{}
+\DoxyCodeLine{475     \textcolor{keywordflow}{return} \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}};}
+\DoxyCodeLine{476 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{rtc_8h_a24ac57f47bb5ad41e37f71959299a548}\label{rtc_8h_a24ac57f47bb5ad41e37f71959299a548}} 
+\index{rtc.h@{rtc.h}!rtc\_get\_current\_daytime@{rtc\_get\_current\_daytime}}
+\index{rtc\_get\_current\_daytime@{rtc\_get\_current\_daytime}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_get\_current\_daytime()}{rtc\_get\_current\_daytime()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} rtc\+\_\+get\+\_\+current\+\_\+daytime (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the current daytime in seconds. 
+
+Returns the current daytime in seconds.
+
+\begin{DoxyReturn}{Returns}
+The current daytime in seconds. 
+\end{DoxyReturn}
+
+
+Definition at line 468 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{469 \{}
+\DoxyCodeLine{470     \textcolor{keywordflow}{return} \mbox{\hyperlink{rtc_8c_a30bb1d6544a5ed866a4eb812dba089bb}{day\_time}};}
+\DoxyCodeLine{471 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{rtc_8h_a735e26cce1cfbd90fe227a55cb9cc941}\label{rtc_8h_a735e26cce1cfbd90fe227a55cb9cc941}} 
+\index{rtc.h@{rtc.h}!rtc\_get\_driver@{rtc\_get\_driver}}
+\index{rtc\_get\_driver@{rtc\_get\_driver}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_get\_driver()}{rtc\_get\_driver()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}}$\ast$ rtc\+\_\+get\+\_\+driver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the RTC driver. 
+
+Returns a constant handle to the RTC driver.
+
+\begin{DoxyReturn}{Returns}
+A constant handle to the RTC driver is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 579 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{580 \{}
+\DoxyCodeLine{581     \textcolor{keywordflow}{return} \&\mbox{\hyperlink{rtc_8c_a51da72e3faae722dda5cf17ecc7253f9}{rtc\_driver}};}
+\DoxyCodeLine{582 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=259pt]{rtc_8h_a735e26cce1cfbd90fe227a55cb9cc941_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_a33048d4e3147f9bf5ccc621bc6a9d35b}\label{rtc_8h_a33048d4e3147f9bf5ccc621bc6a9d35b}} 
+\index{rtc.h@{rtc.h}!rtc\_get\_frequency@{rtc\_get\_frequency}}
+\index{rtc\_get\_frequency@{rtc\_get\_frequency}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_get\_frequency()}{rtc\_get\_frequency()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} rtc\+\_\+get\+\_\+frequency (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the RTC tick frequency in Hz. 
+
+Returns the RTC tick frequency in Hz.
+
+\begin{DoxyReturn}{Returns}
+The RTC tick frequency in Hz. 
+\end{DoxyReturn}
+
+
+Definition at line 385 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{386 \{}
+\DoxyCodeLine{387     \textcolor{keywordflow}{return} \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}};}
+\DoxyCodeLine{388 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{rtc_8h_a8ef990b00cb02f589b981f1f80f6b7c7}\label{rtc_8h_a8ef990b00cb02f589b981f1f80f6b7c7}} 
+\index{rtc.h@{rtc.h}!rtc\_get\_irq@{rtc\_get\_irq}}
+\index{rtc\_get\_irq@{rtc\_get\_irq}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_get\_irq()}{rtc\_get\_irq()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} rtc\+\_\+get\+\_\+irq (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the RTC IRQ number. 
+
+Returns the RTC IRQ number.
+
+\begin{DoxyReturn}{Returns}
+The RTC IRQ number. 
+\end{DoxyReturn}
+
+
+Definition at line 574 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{575 \{}
+\DoxyCodeLine{576     \textcolor{keywordflow}{return} \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}};}
+\DoxyCodeLine{577 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{rtc_8h_acf9024748b942a7ae375cf75951afa9c}\label{rtc_8h_acf9024748b942a7ae375cf75951afa9c}} 
+\index{rtc.h@{rtc.h}!rtc\_init@{rtc\_init}}
+\index{rtc\_init@{rtc\_init}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_init()}{rtc\_init()}}
+{\footnotesize\ttfamily void rtc\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the RTC settings and interrupt management. 
+
+Initializes RTC settings, sets the RTC interrupt manager and enables interrupts for the RTC. 
+
+Definition at line 189 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{190 \{}
+\DoxyCodeLine{191     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{192     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}      prev\_ored;}
+\DoxyCodeLine{193     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}      prev\_rate;}
+\DoxyCodeLine{194 }
+\DoxyCodeLine{195     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_INIT\_START, 0);}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197     \textcolor{comment}{/* Init system times */}}
+\DoxyCodeLine{198     \mbox{\hyperlink{rtc_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} = 1;}
+\DoxyCodeLine{199 }
+\DoxyCodeLine{200     \textcolor{comment}{/* Init real times */}}
+\DoxyCodeLine{201     \mbox{\hyperlink{rtc_8c_a30bb1d6544a5ed866a4eb812dba089bb}{day\_time}}     = 0;}
+\DoxyCodeLine{202     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_af0aee19230f21efa6e426269eb2cbabd}{weekday}} = 0;}
+\DoxyCodeLine{203     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}}     = 0;}
+\DoxyCodeLine{204     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}}   = 0;}
+\DoxyCodeLine{205     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}}    = 0;}
+\DoxyCodeLine{206 }
+\DoxyCodeLine{207     \textcolor{comment}{/* Init CMOS IRQ8 */}}
+\DoxyCodeLine{208     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_a17a7a341664cc0666ddb806eb9f02130}{CMOS\_REG\_B}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{209     prev\_ored = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{210     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_a17a7a341664cc0666ddb806eb9f02130}{CMOS\_REG\_B}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{211     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(prev\_ored | \mbox{\hyperlink{rtc_8c_ae70acfbc422e023f011d831a09735231}{CMOS\_ENABLE\_RTC}}, \mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{212 }
+\DoxyCodeLine{213     \textcolor{comment}{/* Init CMOS IRQ8 rate */}}
+\DoxyCodeLine{214     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_aaff388dbcc5c0e04c59afb25d902e942}{CMOS\_REG\_A}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{215     prev\_rate = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{216     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_aaff388dbcc5c0e04c59afb25d902e942}{CMOS\_REG\_A}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{217     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((prev\_rate \& 0xF0) | \mbox{\hyperlink{rtc_8c_a8ad0ba153aa4d4a90c14c6566d1b81e3}{RTC\_INIT\_RATE}}, \mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{218     \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}} = (\mbox{\hyperlink{rtc_8c_a95957a857841ac1ea71f4ff0ad14ef96}{RTC\_QUARTZ\_FREQ}} >> (\mbox{\hyperlink{rtc_8c_a8ad0ba153aa4d4a90c14c6566d1b81e3}{RTC\_INIT\_RATE}} -\/ 1));}
+\DoxyCodeLine{219 }
+\DoxyCodeLine{220     \textcolor{comment}{/* Set rtc clock interrupt handler */}}
+\DoxyCodeLine{221     err = \mbox{\hyperlink{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}{kernel\_interrupt\_register\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}}, \mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{222     \mbox{\hyperlink{rtc_8c_abd2a0e125f31143767d7360009fc714f}{RTC\_ASSERT}}(err == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}}, \textcolor{stringliteral}{"{}Could not register RTC handler"{}}, err);}
+\DoxyCodeLine{223 }
+\DoxyCodeLine{224     \textcolor{comment}{/* Clear mask before setting IRQ */}}
+\DoxyCodeLine{225     \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\_interrupt\_set\_irq\_mask}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}}, 0);}
+\DoxyCodeLine{226 }
+\DoxyCodeLine{227     \textcolor{comment}{/* Just dummy read register C to unlock interrupt */}}
+\DoxyCodeLine{228     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a54922fa5ca55f63a2b7733de5fa5ca58}{CMOS\_REG\_C}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{229     \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{230 }
+\DoxyCodeLine{231     \mbox{\hyperlink{time__mgt_8h_a61b9d5bf4b49fac93643ab0ee02bbccd}{time\_register\_rtc\_manager}}(\mbox{\hyperlink{rtc_8c_ac368a39917dd5c70b25c56a2f38793d0}{rtc\_update\_time}});}
+\DoxyCodeLine{232 }
+\DoxyCodeLine{233     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}RTC Initialized"{}});}
+\DoxyCodeLine{234 }
+\DoxyCodeLine{235     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_INIT\_END, 1, \mbox{\hyperlink{config_8h_aba1cad844ee443b46e15899ba48fe271}{KERNEL\_RTC\_TIMER\_FREQ}});}
+\DoxyCodeLine{236 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_acf9024748b942a7ae375cf75951afa9c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=225pt]{rtc_8h_acf9024748b942a7ae375cf75951afa9c_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_aaeb480e326421e924f38e848cb95e3ae}\label{rtc_8h_aaeb480e326421e924f38e848cb95e3ae}} 
+\index{rtc.h@{rtc.h}!rtc\_remove\_handler@{rtc\_remove\_handler}}
+\index{rtc\_remove\_handler@{rtc\_remove\_handler}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_remove\_handler()}{rtc\_remove\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} rtc\+\_\+remove\+\_\+handler (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Removes the RTC tick handler. 
+
+Removes the RTC tick handler.
+
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the RTC interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the RTC line has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 450 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{451 \{}
+\DoxyCodeLine{452     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Default RTC handler set 0x\%p"{}},}
+\DoxyCodeLine{453                  \mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{454 }
+\DoxyCodeLine{455 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{456     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_REMOVE\_HANDLER, 2,}
+\DoxyCodeLine{457                        (uintptr\_t)\mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{458                        (uintptr\_t)\mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} >> 32);}
+\DoxyCodeLine{459 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{460     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_REMOVE\_HANDLER, 2,}
+\DoxyCodeLine{461                        (uintptr\_t)\mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{462                        (uintptr\_t)0);}
+\DoxyCodeLine{463 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{464 }
+\DoxyCodeLine{465     \textcolor{keywordflow}{return} \mbox{\hyperlink{rtc_8c_a0b514eaa3e580628086e3240726e98c5}{rtc\_set\_handler}}(\mbox{\hyperlink{rtc_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{466 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_aaeb480e326421e924f38e848cb95e3ae_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_a2a46bfc9e178b252bb51acb4ed8984c0}\label{rtc_8h_a2a46bfc9e178b252bb51acb4ed8984c0}} 
+\index{rtc.h@{rtc.h}!rtc\_set\_frequency@{rtc\_set\_frequency}}
+\index{rtc\_set\_frequency@{rtc\_set\_frequency}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_set\_frequency()}{rtc\_set\_frequency()}}
+{\footnotesize\ttfamily void rtc\+\_\+set\+\_\+frequency (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{frequency }\end{DoxyParamCaption})}
+
+
+
+Sets the RTC\textquotesingle{}s tick frequency. 
+
+Sets the RTC\textquotesingle{}s tick frequency. The value must be between 2Hz and 8192Hz.
+
+\begin{DoxyWarning}{Warning}
+The value must be between 2Hz and 8192Hz. The lower boundary RTC frequency will be selected (refer to the code to understand the 14 available frequencies).
+\end{DoxyWarning}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em frequency} & The new frequency to be set to the RTC. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 287 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{288 \{}
+\DoxyCodeLine{289     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}    prev\_rate;}
+\DoxyCodeLine{290     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}    rate;}
+\DoxyCodeLine{291     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}    int\_state;}
+\DoxyCodeLine{292 }
+\DoxyCodeLine{293     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_SET\_FREQ\_START, 1, frequency);}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295     \textcolor{keywordflow}{if}(frequency < RTC\_MIN\_FREQ || frequency > \mbox{\hyperlink{rtc_8c_aa0db3052259b81b9289d88102b18c1f1}{RTC\_MAX\_FREQ}})}
+\DoxyCodeLine{296     \{}
+\DoxyCodeLine{297         \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}} = 0;}
+\DoxyCodeLine{298         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}RTC timer frequency out of bound \%u not in [\%u:\%u]\(\backslash\)n"{}},}
+\DoxyCodeLine{299                      frequency,}
+\DoxyCodeLine{300                      \mbox{\hyperlink{rtc_8c_a86517fe6aabde74eee34f51b9817b712}{RTC\_MIN\_FREQ}},}
+\DoxyCodeLine{301                      \mbox{\hyperlink{rtc_8c_aa0db3052259b81b9289d88102b18c1f1}{RTC\_MAX\_FREQ}});}
+\DoxyCodeLine{302         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{303     \}}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305     \textcolor{comment}{/* Choose the closest rate to the frequency */}}
+\DoxyCodeLine{306     \textcolor{keywordflow}{if}(frequency < 4)}
+\DoxyCodeLine{307     \{}
+\DoxyCodeLine{308         rate = 15;}
+\DoxyCodeLine{309     \}}
+\DoxyCodeLine{310     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 8)}
+\DoxyCodeLine{311     \{}
+\DoxyCodeLine{312         rate = 14;}
+\DoxyCodeLine{313     \}}
+\DoxyCodeLine{314     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 16)}
+\DoxyCodeLine{315     \{}
+\DoxyCodeLine{316         rate = 13;}
+\DoxyCodeLine{317     \}}
+\DoxyCodeLine{318     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 32)}
+\DoxyCodeLine{319     \{}
+\DoxyCodeLine{320         rate = 12;}
+\DoxyCodeLine{321     \}}
+\DoxyCodeLine{322     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 64)}
+\DoxyCodeLine{323     \{}
+\DoxyCodeLine{324         rate = 11;}
+\DoxyCodeLine{325     \}}
+\DoxyCodeLine{326     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 128)}
+\DoxyCodeLine{327     \{}
+\DoxyCodeLine{328         rate = 10;}
+\DoxyCodeLine{329     \}}
+\DoxyCodeLine{330     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 256)}
+\DoxyCodeLine{331     \{}
+\DoxyCodeLine{332         rate = 9;}
+\DoxyCodeLine{333     \}}
+\DoxyCodeLine{334     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 512)}
+\DoxyCodeLine{335     \{}
+\DoxyCodeLine{336         rate = 8;}
+\DoxyCodeLine{337     \}}
+\DoxyCodeLine{338     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 1024)}
+\DoxyCodeLine{339     \{}
+\DoxyCodeLine{340         rate = 7;}
+\DoxyCodeLine{341     \}}
+\DoxyCodeLine{342     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 2048)}
+\DoxyCodeLine{343     \{}
+\DoxyCodeLine{344         rate = 6;}
+\DoxyCodeLine{345     \}}
+\DoxyCodeLine{346     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 4096)}
+\DoxyCodeLine{347     \{}
+\DoxyCodeLine{348         rate = 5;}
+\DoxyCodeLine{349     \}}
+\DoxyCodeLine{350     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(frequency < 8192)}
+\DoxyCodeLine{351     \{}
+\DoxyCodeLine{352         rate = 4;}
+\DoxyCodeLine{353     \}}
+\DoxyCodeLine{354     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{355     \{}
+\DoxyCodeLine{356         rate = 3;}
+\DoxyCodeLine{357     \}}
+\DoxyCodeLine{358 }
+\DoxyCodeLine{359     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{360 }
+\DoxyCodeLine{361     \textcolor{comment}{/* Disable RTC IRQ */}}
+\DoxyCodeLine{362     \mbox{\hyperlink{rtc_8c_a775327dfc005a543b369b6777babd294}{rtc\_disable}}();}
+\DoxyCodeLine{363 }
+\DoxyCodeLine{364     \textcolor{comment}{/* Set clock frequency */}}
+\DoxyCodeLine{365      \textcolor{comment}{/* Init CMOS IRQ8 rate */}}
+\DoxyCodeLine{366     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_aaff388dbcc5c0e04c59afb25d902e942}{CMOS\_REG\_A}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{367     prev\_rate = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{368     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((\mbox{\hyperlink{rtc_8c_afac99a56b513d03cc82f2d54912f790c}{CMOS\_NMI\_DISABLE\_BIT}} << 7) | \mbox{\hyperlink{rtc_8c_aaff388dbcc5c0e04c59afb25d902e942}{CMOS\_REG\_A}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{369     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((prev\_rate \& 0xF0) | rate, \mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{370 }
+\DoxyCodeLine{371     \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}} = (\mbox{\hyperlink{rtc_8c_a95957a857841ac1ea71f4ff0ad14ef96}{RTC\_QUARTZ\_FREQ}} >> (rate -\/ 1));}
+\DoxyCodeLine{372 }
+\DoxyCodeLine{373     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}New RTC rate set (\%d: \%dHz)"{}},}
+\DoxyCodeLine{374                  rate,}
+\DoxyCodeLine{375                  \mbox{\hyperlink{rtc_8c_a41e4e8e0ca3d47fe6fc77eec85c25808}{rtc\_frequency}});}
+\DoxyCodeLine{376 }
+\DoxyCodeLine{377     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{378 }
+\DoxyCodeLine{379     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_SET\_FREQ\_END, 1, frequency);}
+\DoxyCodeLine{380 }
+\DoxyCodeLine{381     \textcolor{comment}{/* Enable RTC IRQ */}}
+\DoxyCodeLine{382     \mbox{\hyperlink{rtc_8c_abec68bd2863d22f5a8e12ab89f8134f4}{rtc\_enable}}();}
+\DoxyCodeLine{383 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_a2a46bfc9e178b252bb51acb4ed8984c0_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_a0b514eaa3e580628086e3240726e98c5}\label{rtc_8h_a0b514eaa3e580628086e3240726e98c5}} 
+\index{rtc.h@{rtc.h}!rtc\_set\_handler@{rtc\_set\_handler}}
+\index{rtc\_set\_handler@{rtc\_set\_handler}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_set\_handler()}{rtc\_set\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} rtc\+\_\+set\+\_\+handler (\begin{DoxyParamCaption}\item[{void($\ast$)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$)}]{handler }\end{DoxyParamCaption})}
+
+
+
+Sets the RTC tick handler. 
+
+Sets the RTC tick handler. This function will be called at each RTC tick received.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handler} & The handler of the RTC interrupt.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the handler is NULL.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the RTC interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the pointer to the handler is NULL.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+ALREADY\+\_\+\+REGISTERED is returned if a handler is already registered for the RTC. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 390 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{391 \{}
+\DoxyCodeLine{392     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{393     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}    int\_state;}
+\DoxyCodeLine{394 }
+\DoxyCodeLine{395 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{396     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_SET\_HANDLER, 2,}
+\DoxyCodeLine{397                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{398                        (uintptr\_t)handler >> 32);}
+\DoxyCodeLine{399 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{400     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_SET\_HANDLER, 2,}
+\DoxyCodeLine{401                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{402                        (uintptr\_t)0);}
+\DoxyCodeLine{403 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{404 }
+\DoxyCodeLine{405     \textcolor{keywordflow}{if}(handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{406     \{}
+\DoxyCodeLine{407         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{408     \}}
+\DoxyCodeLine{409 }
+\DoxyCodeLine{410     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{411 }
+\DoxyCodeLine{412     \mbox{\hyperlink{rtc_8c_a775327dfc005a543b369b6777babd294}{rtc\_disable}}();}
+\DoxyCodeLine{413 }
+\DoxyCodeLine{414     \textcolor{comment}{/* Remove the current handler */}}
+\DoxyCodeLine{415     err = \mbox{\hyperlink{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f}{kernel\_interrupt\_remove\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}});}
+\DoxyCodeLine{416     \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{417     \{}
+\DoxyCodeLine{418         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{419         \mbox{\hyperlink{rtc_8c_abec68bd2863d22f5a8e12ab89f8134f4}{rtc\_enable}}();}
+\DoxyCodeLine{420         \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{421     \}}
+\DoxyCodeLine{422 }
+\DoxyCodeLine{423     err = \mbox{\hyperlink{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}{kernel\_interrupt\_register\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\_IRQ\_LINE}}, handler);}
+\DoxyCodeLine{424     \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{425     \{}
+\DoxyCodeLine{426         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{427         \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{428     \}}
+\DoxyCodeLine{429 }
+\DoxyCodeLine{430     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}New RTC handler set (0x\%p)"{}},}
+\DoxyCodeLine{431                  handler);}
+\DoxyCodeLine{432 }
+\DoxyCodeLine{433     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{434 }
+\DoxyCodeLine{435     \mbox{\hyperlink{rtc_8c_abec68bd2863d22f5a8e12ab89f8134f4}{rtc\_enable}}();}
+\DoxyCodeLine{436 }
+\DoxyCodeLine{437     \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{438 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_a0b514eaa3e580628086e3240726e98c5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{rtc_8h_a0b514eaa3e580628086e3240726e98c5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{rtc_8h_ac368a39917dd5c70b25c56a2f38793d0}\label{rtc_8h_ac368a39917dd5c70b25c56a2f38793d0}} 
+\index{rtc.h@{rtc.h}!rtc\_update\_time@{rtc\_update\_time}}
+\index{rtc\_update\_time@{rtc\_update\_time}!rtc.h@{rtc.h}}
+\doxysubsubsection{\texorpdfstring{rtc\_update\_time()}{rtc\_update\_time()}}
+{\footnotesize\ttfamily void rtc\+\_\+update\+\_\+time (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Updates the system\textquotesingle{}s time and date. 
+
+Updates the system\textquotesingle{}s time and date. This function also reads the CMOS registers. By doing that, the RTC registers are cleaned and the RTC able to interrupt the CPU again.
+
+\begin{DoxyWarning}{Warning}
+You MUST call that function in every RTC handler or the RTC will never raise interrupt again. 
+\end{DoxyWarning}
+
+
+Definition at line 478 of file rtc.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{479 \{}
+\DoxyCodeLine{480     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} seconds;}
+\DoxyCodeLine{481     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} minutes;}
+\DoxyCodeLine{482     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} hours;}
+\DoxyCodeLine{483     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} century;}
+\DoxyCodeLine{484     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} reg\_b;}
+\DoxyCodeLine{485 }
+\DoxyCodeLine{486     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_UPDATE\_TIME\_START, 0);}
+\DoxyCodeLine{487 }
+\DoxyCodeLine{488     \textcolor{comment}{/* Set time */}}
+\DoxyCodeLine{489     \textcolor{comment}{/* Select CMOS seconds register and read */}}
+\DoxyCodeLine{490     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a36d230deb0b9ae531748da42c1f4aad6}{CMOS\_SECONDS\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{491     seconds = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{492 }
+\DoxyCodeLine{493     \textcolor{comment}{/* Select CMOS minutes register and read */}}
+\DoxyCodeLine{494     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_ac75f023aacdaf2c016358033957aa273}{CMOS\_MINUTES\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{495     minutes = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{496 }
+\DoxyCodeLine{497     \textcolor{comment}{/* Select CMOS hours register and read */}}
+\DoxyCodeLine{498     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_ae8da9a7941e00799560b33515f0623a9}{CMOS\_HOURS\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{499     hours = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{500 }
+\DoxyCodeLine{501     \textcolor{comment}{/* Select CMOS day register and read */}}
+\DoxyCodeLine{502     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a338e801763955e94732220c457e03181}{CMOS\_DAY\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{503     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}} = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{504 }
+\DoxyCodeLine{505     \textcolor{comment}{/* Select CMOS month register and read */}}
+\DoxyCodeLine{506     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a71b017e600228cd79dd570b0346d8fd1}{CMOS\_MONTH\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{507     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}} = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{508 }
+\DoxyCodeLine{509     \textcolor{comment}{/* Select CMOS years register and read */}}
+\DoxyCodeLine{510     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a8d09106f36c9031c66c5ccba9796ddf3}{CMOS\_YEAR\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{511     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{512 }
+\DoxyCodeLine{513     \textcolor{comment}{/* Select CMOS century register and read */}}
+\DoxyCodeLine{514     \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_aa3dc6ac910f570c1facf328c47c93459}{CMOS\_CENTURY\_REGISTER}} != 0)}
+\DoxyCodeLine{515     \{}
+\DoxyCodeLine{516         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_aa3dc6ac910f570c1facf328c47c93459}{CMOS\_CENTURY\_REGISTER}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{517         century = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{518     \}}
+\DoxyCodeLine{519     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{520     \{}
+\DoxyCodeLine{521         century = \mbox{\hyperlink{config_8h_a916b9f5d8c141fdb31021b395a238536}{CURRENT\_YEAR}} / 100;}
+\DoxyCodeLine{522     \}}
+\DoxyCodeLine{523 }
+\DoxyCodeLine{524     \textcolor{comment}{/* Convert BCD to binary if necessary */}}
+\DoxyCodeLine{525     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a17a7a341664cc0666ddb806eb9f02130}{CMOS\_REG\_B}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{526     reg\_b = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{527 }
+\DoxyCodeLine{528     \textcolor{keywordflow}{if}((reg\_b \& 0x04) == 0)}
+\DoxyCodeLine{529     \{}
+\DoxyCodeLine{530         seconds = (seconds \& 0x0F) + ((seconds / 16) * 10);}
+\DoxyCodeLine{531         minutes = (minutes \& 0x0F) + ((minutes / 16) * 10);}
+\DoxyCodeLine{532         hours = ((hours \& 0x0F) + (((hours \& 0x70) / 16) * 10)) |}
+\DoxyCodeLine{533             (hours \& 0x80);}
+\DoxyCodeLine{534         \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}} = (\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}} \& 0x0F) + ((\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}} / 16) * 10);}
+\DoxyCodeLine{535         \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}} = (\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}} \& 0x0F) + ((\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}} / 16) * 10);}
+\DoxyCodeLine{536         \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} = (\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} \& 0x0F) + ((\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} / 16) * 10);}
+\DoxyCodeLine{537 }
+\DoxyCodeLine{538         \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_aa3dc6ac910f570c1facf328c47c93459}{CMOS\_CENTURY\_REGISTER}} != 0)}
+\DoxyCodeLine{539         \{}
+\DoxyCodeLine{540             century = (century \& 0x0F) + ((century / 16) * 10);}
+\DoxyCodeLine{541         \}}
+\DoxyCodeLine{542     \}}
+\DoxyCodeLine{543 }
+\DoxyCodeLine{544     \textcolor{comment}{/*  Convert to 24H */}}
+\DoxyCodeLine{545     \textcolor{keywordflow}{if}((reg\_b \& 0x02) == 0 \&\& (hours \& 0x80) >= 1)}
+\DoxyCodeLine{546     \{}
+\DoxyCodeLine{547         hours = ((hours \& 0x7F) + 12) \% 24;}
+\DoxyCodeLine{548     \}}
+\DoxyCodeLine{549 }
+\DoxyCodeLine{550     \textcolor{comment}{/* Get year */}}
+\DoxyCodeLine{551     \textcolor{keywordflow}{if}(\mbox{\hyperlink{rtc_8c_aa3dc6ac910f570c1facf328c47c93459}{CMOS\_CENTURY\_REGISTER}} != 0)}
+\DoxyCodeLine{552     \{}
+\DoxyCodeLine{553         \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} += century * 100;}
+\DoxyCodeLine{554     \}}
+\DoxyCodeLine{555     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{556     \{}
+\DoxyCodeLine{557         \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} = \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} + 2000;}
+\DoxyCodeLine{558     \}}
+\DoxyCodeLine{559 }
+\DoxyCodeLine{560     \textcolor{comment}{/* Compute week day and day time */}}
+\DoxyCodeLine{561     \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_af0aee19230f21efa6e426269eb2cbabd}{weekday}} = ((\mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_aaac4cc80ac84d626e36efc43f2260660}{day}} + \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a2b35975dfac711962b75b6eed01a8b76}{month}} + \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} + \mbox{\hyperlink{rtc_8c_afde06411957b2605d7680270bfbaf259}{date}}.\mbox{\hyperlink{structdate__t_a57ca98d8f6d4baf0fe41c583c7dcb0d5}{year}} / 4)}
+\DoxyCodeLine{562             + 1) \% 7 + 1;}
+\DoxyCodeLine{563     \mbox{\hyperlink{rtc_8c_a30bb1d6544a5ed866a4eb812dba089bb}{day\_time}} = seconds + 60 * minutes + 3600 * hours;}
+\DoxyCodeLine{564 }
+\DoxyCodeLine{565     \textcolor{comment}{/* Clear C Register */}}
+\DoxyCodeLine{566     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{rtc_8c_a54922fa5ca55f63a2b7733de5fa5ca58}{CMOS\_REG\_C}}, \mbox{\hyperlink{rtc_8c_a41fa5e5fbe903c9d29c9542f89063487}{CMOS\_COMM\_PORT}});}
+\DoxyCodeLine{567     \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{rtc_8c_abaa1d2c0815d36f47eccec69775f400a}{CMOS\_DATA\_PORT}});}
+\DoxyCodeLine{568 }
+\DoxyCodeLine{569     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_UPDATE\_TIME\_END, 0);}
+\DoxyCodeLine{570 }
+\DoxyCodeLine{571     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a9eb1f3d81ce7b3e811564b2fe35b7b69}{RTC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{rtc_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Updated RTC"{}});}
+\DoxyCodeLine{572 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=278pt]{rtc_8h_ac368a39917dd5c70b25c56a2f38793d0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{rtc_8h_ac368a39917dd5c70b25c56a2f38793d0_icgraph}
+\end{center}
+\end{figure}

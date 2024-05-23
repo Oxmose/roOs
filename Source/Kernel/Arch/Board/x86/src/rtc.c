@@ -28,7 +28,7 @@
 #include <cpu_interrupt.h> /* CPU Interrupts Settings */
 #include <interrupts.h>    /* Interrupt Manager*/
 #include <critical.h>      /* Critical Sections */
-#include <kernel_output.h> /* Kernel Outputs */
+#include <kerneloutput.h> /* Kernel Outputs */
 #include <panic.h>         /* Kernel Panic */
 
 /* Configuration files */
@@ -180,7 +180,7 @@ static void _dummy_handler(kernel_thread_t* curr_thread)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DUMMY_HANDLER, 0);
 
-    rtc_update_time();
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Interrupt");
 
     /* EOI */
     kernel_interrupt_set_irq_eoi(RTC_IRQ_LINE);
@@ -221,19 +221,14 @@ void rtc_init(void)
     err = kernel_interrupt_register_irq_handler(RTC_IRQ_LINE, _dummy_handler);
     RTC_ASSERT(err == OS_NO_ERR, "Could not register RTC handler", err);
 
-    /* Set mask before setting IRQ */
-    kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 1);
+    /* Clear mask before setting IRQ */
+    kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 0);
 
     /* Just dummy read register C to unlock interrupt */
     _cpu_outb(CMOS_REG_C, CMOS_COMM_PORT);
     _cpu_inb(CMOS_DATA_PORT);
 
-    rtc_set_frequency(KERNEL_RTC_TIMER_FREQ);
-    rtc_enable();
-    rtc_update_time();
-
-    err = time_register_rtc_manager(rtc_update_time);
-    RTC_ASSERT(err == OS_NO_ERR, "Could not register RTC manager", err);
+    time_register_rtc_manager(rtc_update_time);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Initialized");
 
@@ -253,9 +248,11 @@ void rtc_enable(void)
         --disabled_nesting;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Enable RTC (nesting %d)",
-                 disabled_nesting);
-    if(disabled_nesting == 0)
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME,
+                 "Enable RTC (nesting %d, freq %d)",
+                 disabled_nesting,
+                 rtc_frequency);
+    if(disabled_nesting == 0 && rtc_frequency != 0)
     {
         kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 1);
     }
@@ -295,9 +292,15 @@ void rtc_set_frequency(const uint32_t frequency)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_FREQ_START, 1, frequency);
 
-    RTC_ASSERT((frequency >= RTC_MIN_FREQ && frequency <= RTC_MAX_FREQ),
-               "RTC timer frequency out of bound",
-               OS_ERR_OUT_OF_BOUND);
+    if(frequency < RTC_MIN_FREQ || frequency > RTC_MAX_FREQ)
+    {
+        rtc_frequency = 0;
+        KERNEL_ERROR("RTC timer frequency out of bound %u not in [%u:%u]\n",
+                     frequency,
+                     RTC_MIN_FREQ,
+                     RTC_MAX_FREQ);
+        return;
+    }
 
     /* Choose the closest rate to the frequency */
     if(frequency < 4)

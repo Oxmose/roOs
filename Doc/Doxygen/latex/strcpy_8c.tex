@@ -1,0 +1,53 @@
+\hypertarget{strcpy_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strcpy.c File Reference}
+\label{strcpy_8c}\index{Source/Kernel/Libs/libc/src/strcpy.c@{Source/Kernel/Libs/libc/src/strcpy.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strcpy.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strcpy_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strcpy_8c_a1a8e0d046aa6ccaf2c9947e3142e4786}{strcpy}} (char $\ast$dst, const char $\ast$src)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strcpy_8c_a1a8e0d046aa6ccaf2c9947e3142e4786}\label{strcpy_8c_a1a8e0d046aa6ccaf2c9947e3142e4786}} 
+\index{strcpy.c@{strcpy.c}!strcpy@{strcpy}}
+\index{strcpy@{strcpy}!strcpy.c@{strcpy.c}}
+\doxysubsubsection{\texorpdfstring{strcpy()}{strcpy()}}
+{\footnotesize\ttfamily char$\ast$ strcpy (\begin{DoxyParamCaption}\item[{char $\ast$}]{dst,  }\item[{const char $\ast$}]{src }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strcpy.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{76     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *p = src;}
+\DoxyCodeLine{77     \textcolor{keywordtype}{char} ch;}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79     \textcolor{keywordflow}{do} \{}
+\DoxyCodeLine{80         *q++ = ch = *p++;}
+\DoxyCodeLine{81     \}\textcolor{keywordflow}{while} (ch);}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{84 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=207pt]{strcpy_8c_a1a8e0d046aa6ccaf2c9947e3142e4786_icgraph}
+\end{center}
+\end{figure}

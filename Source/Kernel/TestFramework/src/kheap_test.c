@@ -26,7 +26,7 @@
 /* Included headers */
 #include <kheap.h>
 #include <panic.h>
-#include <kernel_output.h>
+#include <kerneloutput.h>
 
 /* Configuration files */
 #include <config.h>

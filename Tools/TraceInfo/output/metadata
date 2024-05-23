@@ -454,6 +454,9 @@ event {
 event {
     id = 54;
     name = "Kernel Init PIC End";
+    fields := struct {
+        xuint32_t ret_code;
+    };
 };
 
 event {
@@ -544,6 +547,7 @@ event {
     name = "Kernel PIT Init End";
     fields := struct {
         uint32_t frequency;
+        xuint32_t ret_code;
     };
 };
 

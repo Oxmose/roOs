@@ -26,7 +26,7 @@
 #include <vector.h>
 #include <stdint.h>
 #include <kheap.h>
-#include <kernel_output.h>
+#include <kerneloutput.h>
 
 /* Configuration files */
 #include <config.h>

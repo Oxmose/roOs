@@ -450,13 +450,17 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     retCode = OS_NO_ERR;
 
 ATTACH_END:
-    if(pDrvCtrl != NULL)
+
+    if(retCode != OS_NO_ERR)
     {
-        kfree(pDrvCtrl);
-    }
-    if(pConsoleDrv != NULL)
-    {
-        kfree(pConsoleDrv);
+        if(pDrvCtrl != NULL)
+        {
+            kfree(pDrvCtrl);
+        }
+        if(pConsoleDrv != NULL)
+        {
+            kfree(pConsoleDrv);
+        }
     }
     KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_END, 1, (uintptr_t(retCode)));
     return retCode;

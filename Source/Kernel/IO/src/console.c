@@ -111,37 +111,57 @@ OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
 
 void consoleClear(void)
 {
-    EXEC_IF_SET(sConsoleDriver, pClear);
+    EXEC_IF_SET(sConsoleDriver, pClear, sConsoleDriver.pDriverCtrl);
 }
 
 void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
 {
-    EXEC_IF_SET(sConsoleDriver, pPutCursor, kLine, kColumn);
+    EXEC_IF_SET(sConsoleDriver, 
+                pPutCursor, 
+                sConsoleDriver.pDriverCtrl, 
+                kLine, 
+                kColumn);
 }
 
 void consoleSaveCursor(cursor_t* pBuffer)
 {
-    EXEC_IF_SET(sConsoleDriver, pSaveCursor, pBuffer);
+    EXEC_IF_SET(sConsoleDriver, 
+                pSaveCursor, 
+                sConsoleDriver.pDriverCtrl, 
+                pBuffer);
 }
 
 void consoleRestoreCursor(const cursor_t* pkBuffer)
 {
-    EXEC_IF_SET(sConsoleDriver, pRestoreCursor, pkBuffer);
+    EXEC_IF_SET(sConsoleDriver,
+                pRestoreCursor, 
+                sConsoleDriver.pDriverCtrl, 
+                pkBuffer);
 }
 
 void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
 {
-    EXEC_IF_SET(sConsoleDriver, pScroll, kDirection, kLines);
+    EXEC_IF_SET(sConsoleDriver, 
+                pScroll, 
+                sConsoleDriver.pDriverCtrl, 
+                kDirection, 
+                kLines);
 }
 
 void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
 {
-    EXEC_IF_SET(sConsoleDriver, pSetColorScheme, pkColorScheme);
+    EXEC_IF_SET(sConsoleDriver, 
+                pSetColorScheme, 
+                sConsoleDriver.pDriverCtrl, 
+                pkColorScheme);
 }
 
 void consoleSaveColorScheme(colorscheme_t* pBuffer)
 {
-    EXEC_IF_SET(sConsoleDriver, pSaveColorScheme, pBuffer);
+    EXEC_IF_SET(sConsoleDriver, 
+                pSaveColorScheme, 
+                sConsoleDriver.pDriverCtrl, 
+                pBuffer);
 }
 
 void consolePutString(const char* pkString)
@@ -149,7 +169,10 @@ void consolePutString(const char* pkString)
 #if DEBUG_LOG_UART
     uartDebugPutString(pkString);
 #endif
-    EXEC_IF_SET(sConsoleDriver, pPutString, pkString);
+    EXEC_IF_SET(sConsoleDriver, 
+                pPutString, 
+                sConsoleDriver.pDriverCtrl, 
+                pkString);
 }
 
 void consolePutChar(const char kCharacter)
@@ -157,7 +180,10 @@ void consolePutChar(const char kCharacter)
 #if DEBUG_LOG_UART
     uartDebugPutChar(kCharacter);
 #endif
-    EXEC_IF_SET(sConsoleDriver, pPutChar, kCharacter);
+    EXEC_IF_SET(sConsoleDriver, 
+                pPutChar, 
+                sConsoleDriver.pDriverCtrl, 
+                kCharacter);
 }
 
 /************************************ EOF *************************************/

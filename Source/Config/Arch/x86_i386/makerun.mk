@@ -24,11 +24,11 @@ pre-run:
 	cp -R Config/Arch/x86_i386/GRUB ./$(BUILD_DIR)/
 	cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
 #cp ./$(BUILD_DIR)/utk.initrd ./$(BUILD_DIR)/GRUB/boot/
-	grub-mkrescue -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
+	grub-mkrescue -d ../Tools/i386-pc -o ./$(BUILD_DIR)/utk_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
 
 run: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -monitor telnet:127.0.0.1:55555,server,nowait
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso 
 
 qemu-test-mode: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu TEST MODE\e[22m\e[39m"

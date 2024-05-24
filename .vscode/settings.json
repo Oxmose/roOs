@@ -11,6 +11,8 @@
         "test_framework.h": "c",
         "devtree.h": "c",
         "vgatext.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "stdint.h": "c",
+        "ctrl_block.h": "c"
     }
 }

@@ -5,9 +5,9 @@
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 23/04/2023
+ * @date 24/05/2024
  *
- * @version 1.0
+ * @version 2.0
  *
  * @brief UART communication driver.
  *
@@ -23,13 +23,15 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h>         /* Generic int types */
-#include <stddef.h>         /* Standard definitions */
-#include <string.h>         /* String manipulation */
-#include <console.h>        /* Console driver manager */
-#include <cpu.h>            /* CPU Ports */
-#include <kerneloutput.h>  /* Kernel outputs */
-#include <critical.h>       /* Critical sections */
+#include <cpu.h>          /* CPU port manipulation */
+#include <kheap.h>        /* Memory allocation */
+#include <stdint.h>       /* Generic int types */
+#include <string.h>       /* String manipualtion */
+#include <kerror.h>       /* Kernel error */
+#include <devtree.h>      /* Device tree */
+#include <console.h>      /* Console driver manager */
+#include <drivermgr.h>    /* Driver manager service */
+#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -44,26 +46,12 @@
 /** @brief Current module name */
 #define MODULE_NAME "X86 UART"
 
-/** @brief Serial COM1 base port ID. */
-#define SERIAL_COM1_BASE 0x3F8
-/** @brief Serial COM2 base port ID. */
-#define SERIAL_COM2_BASE 0x2F8
-/** @brief Serial COM3 base port ID. */
-#define SERIAL_COM3_BASE 0x3E8
-/** @brief Serial COM4 base port ID. */
-#define SERIAL_COM4_BASE 0x2E8
-
-/** @brief Redefinition of serial COM1 base port ID for ease of use. */
-#define COM1 SERIAL_COM1_BASE
-/** @brief Redefinition of serial COM2 base port ID for ease of use. */
-#define COM2 SERIAL_COM2_BASE
-/** @brief Redefinition of serial COM3 base port ID for ease of use. */
-#define COM3 SERIAL_COM3_BASE
-/** @brief Redefinition of serial COM4 base port ID for ease of use. */
-#define COM4 SERIAL_COM4_BASE
-
-/** @brief Defines the port that is used to print data. */
-#define SERIAL_OUTPUT_PORT COM1
+/** @brief FDT property for baudrate */
+#define UART_FDT_RATE_PROP   "baudrate"
+/** @brief FDT property for comm ports */
+#define UART_FDT_COMM_PROP   "comm"
+/** @brief FDT property for console output set */
+#define UART_FDT_IS_CON_PROP "is-console"
 
 /** @brief Serial data length flag: 5 bits. */
 #define SERIAL_DATA_LENGTH_5 0x00
@@ -157,6 +145,14 @@
  */
 #define SERIAL_LINE_STATUS_PORT(port)   (port + 5)
 
+#if DEBUG_LOG_UART
+/** @brief Defines the port that is used to print debug data. */
+#define SERIAL_DEBUG_PORT 0x3F8
+#endif
+
+/** @brief Cast a pointer to a UART driver controler */
+#define GET_CONTROLER(PTR) ((uart_controler_t*)PTR)
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -200,11 +196,145 @@ typedef enum
     BAUDRATE_115200 = 1,
 } SERIAL_BAUDRATE_E;
 
+/** @brief x86 UART Text driver controler. */
+typedef struct
+{
+    /** @brief CPU command port. */
+    uint16_t cpuCommPort;
+
+    /** @brief Baudrate */
+    SERIAL_BAUDRATE_E baudrate;
+} uart_controler_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
 
 /* None */
+
+/*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/**
+ * @brief Attaches the UART driver to the system.
+ *
+ * @details Attaches the UART driver to the system. This function will use the
+ * FDT to initialize the UART hardware and retreive the UART parameters.
+ *
+ * @param[in] pkFdtNode The FDT node with the compatible declared
+ * by the driver.
+ *
+ * @return The success state or the error code.
+ */
+static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode);
+
+/**
+ * @brief Sets line parameters for the desired port.
+ *
+ * @details Sets line parameters for the desired port.
+ *
+ * @param[in] kAttr The settings for the port's line.
+ * @param[in] kCom The port to set.
+ */
+static inline void _uartSetLine(const uint8_t kAttr, const uint16_t kCom);
+
+/**
+ * @brief Sets buffer parameters for the desired port.
+ *
+ * @details Sets buffer parameters for the desired port.
+ *
+ * @param[in] kAttr The settings for the port's line.
+ * @param[in] kCom The port to set.
+ *
+ * @return OS_NO_ERR on success, no other value is returned.
+ */
+static inline void _uartSetBuffer(const uint8_t kAttr, const uint16_t kCom);
+
+/**
+ * @brief Sets the port's baudrate.
+ *
+ * @details Sets the port's baudrate.
+ *
+ * @param[in] kRate The desired baudrate for the port.
+ * @param[in] kCom The port to set.
+ */
+static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
+                                    const uint16_t          kCom);
+
+/**
+ * @brief Writes the data given as patameter on the desired port.
+ *
+ * @details The function will output the data given as parameter on the selected
+ * port. This call is blocking until the data has been sent to the uart port
+ * controler.
+ *
+ * @param[in] kPort The desired port to write the data to.
+ * @param[in] kData The byte to write to the uart port.
+ */
+static inline void _uartWrite(const uint16_t kPort, const uint8_t kData);
+
+/**
+ * @brief Write the string given as patameter on the debug port.
+ *
+ * @details The function will output the data given as parameter on the debug
+ * port. This call is blocking until the data has been sent to the uart port
+ * controler.
+ *
+ * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in] kpString The string to write to the uart port.
+ *
+ * @warning string must be NULL terminated.
+ */
+static void _uartPutString(void* pDrvCtrl, const char* kpString);
+
+/**
+ * @brief Write the character given as patameter on the debug port.
+ *
+ * @details The function will output the character given as parameter on the
+ * debug port. This call is blocking until the data has been sent to the uart
+ * port controler.
+ *
+ * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in] kCharacter The character to write to the uart port.
+ */
+static void _uartPutChar(void* pDrvCtrl, const char kCharacter);
+
+/**
+ * @brief Clears the screen.
+ *
+ * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @details On 80x25 uart screen, this function will print 80 line feeds
+ * and thus, clear the screen.
+ */
+static void _uartClear(void* pDrvCtrl);
+
+/**
+ * @brief Scrolls the screen downn.
+ *
+ * @details Scrolls the screen by printing lines feed to the uart.
+ * This function can only be called with parameter direction to
+ * SCROLL_DOWN. Otherwise, this function has no effect.
+ *
+ * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in] kDirection Should always be SCROLL_DOWN.
+ * @param[in] kLines The amount of lines to scroll down.
+ */
+static void _uartScroll(void*                    pDrvCtrl,
+                        const SCROLL_DIRECTION_E kDirection,
+                        const uint32_t           kLines);
+
+/**
+ * @brief Returns the canonical baudrate for a given BPS baudrate
+ *
+ * @details Returns the canonical baudrate for a given BPS baudrate based on the
+ * driver's specifications.
+ *
+ * @param[in] kBaudrate The BPS baudrate to convert.
+ *
+ * @return The canonical baudrate for a given BPS baudrate is returned.
+*/
+static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -214,258 +344,296 @@ typedef enum
 /* None */
 
 /************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
-
-/**
- * @brief Serial text driver instance.
- */
-static console_driver_t uart_text_driver =
-{
-    .pClear           = uart_clear_screen,
-    .pPutCursor       = NULL,
-    .pSaveCursor      = NULL,
-    .pRestoreCursor   = NULL,
-    .pScroll          = uart_scroll,
-    .pSetColorScheme  = NULL,
-    .pSaveColorScheme = NULL,
-    .pPutString       = uart_put_string,
-    .pPutChar         = uart_put_char,
+/** @brief UART driver instance. */
+driver_t x86UARTDriver = {
+    .pName         = "X86 UART Text Driver",
+    .pDescription  = "X86 UART Text Driver for UTK",
+    .pCompatible   = "x86,x86-generic-serial",
+    .pVersion      = "2.0",
+    .pDriverAttach = _uartAttach
 };
 
-/** @brief Concurrency lock for the uart driver*/
-static uint32_t uart_lock = KERNEL_SPINLOCK_INIT_VALUE;
-
-/*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/**
- * @brief Sets line parameters for the desired port.
- *
- * @details Sets line parameters for the desired port.
- *
- * @param[in] attr The settings for the port's line.
- * @param[in] com The port to set.
- */
-static void _set_line(const uint8_t attr, const uint8_t com);
-
-/**
- * @brief Sets buffer parameters for the desired port.
- *
- * @details Sets buffer parameters for the desired port.
- *
- * @param[in] attr The settings for the port's buffer.
- * @param[in] com The port to set.
- *
- * @return OS_NO_ERR on success, no other value is returned.
- */
-static void _set_buffer(const uint8_t attr, const uint8_t com);
-
-/**
- * @brief Sets the port's baudrate.
- *
- * @details Sets the port's baudrate.
- *
- * @param[in] rate The desired baudrate for the port.
- * @param[in] com The port to set.
- */
-static void _set_baudrate(SERIAL_BAUDRATE_E rate, const uint8_t com);
-
-/**
- * @brief Writes the data given as patameter on the desired port.
- *
- * @details The function will output the data given as parameter on the selected
- * port. This call is blocking until the data has been sent to the uart port
- * controler.
- *
- * @param[in] port The desired port to write the data to.
- * @param[in] data The byte to write to the uart port.
- */
-static void _uart_write(const uint32_t port, const uint8_t data);
+/************************** Static global variables ***************************/
+/* None */
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-static void _set_line(const uint8_t attr, const uint8_t com)
+static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 {
-    _cpu_outb(attr, SERIAL_LINE_COMMAND_PORT(com));
+    const uintptr_t*  ptrProp;
+    size_t            propLen;
+    OS_RETURN_E       retCode;
+    uart_controler_t* pDrvCtrl;
+    console_driver_t* pConsoleDrv;
 
-    KERNEL_DEBUG(SERIAL_DEBUG_ENABLED, MODULE_NAME,
-                 "Set line attributes of port 0x%04x to %u",
-                 com, attr);
-}
-
-static void _set_buffer(const uint8_t attr, const uint8_t com)
-{
-    _cpu_outb(attr, SERIAL_FIFO_COMMAND_PORT(com));
-
-    KERNEL_DEBUG(SERIAL_DEBUG_ENABLED, MODULE_NAME,
-                 "Set buffer attributes of port 0x%04x to %u",
-                 com, attr);
-}
-
-static void _set_baudrate(SERIAL_BAUDRATE_E rate, const uint8_t com)
-{
-    _cpu_outb(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(com));
-    _cpu_outb((rate >> 8) & 0x00FF, SERIAL_DATA_PORT(com));
-    _cpu_outb(rate & 0x00FF, SERIAL_DATA_PORT_2(com));
-
-    KERNEL_DEBUG(SERIAL_DEBUG_ENABLED, MODULE_NAME,
-                 "Set baud rate of port 0x%04x to %u",
-                 com, rate);
-}
-
-static void _uart_write(const uint32_t port, const uint8_t data)
-{
-    /* Wait for empty transmit */
-    KERNEL_SPINLOCK_LOCK(uart_lock);
-    while((_cpu_inb(SERIAL_LINE_STATUS_PORT(port)) & 0x20) == 0){}
-    if(data == '\n')
-    {
-        _cpu_outb('\r', port);
-        _cpu_outb('\n', port);
-    }
-    else
-    {
-        _cpu_outb(data, port);
-    }
-    KERNEL_SPINLOCK_UNLOCK(uart_lock);
-}
-
-
-void uart_init(void)
-{
-    uint8_t i;
+    pDrvCtrl    = NULL;
+    pConsoleDrv = NULL;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_START, 0);
 
-    /* Init all comm ports */
-    for(i = 0; i < 4; ++i)
+    /* Init structures */
+    pDrvCtrl = kmalloc(sizeof(uart_controler_t));
+    if(pDrvCtrl == NULL)
     {
-        uint8_t  attr;
-        uint32_t com;
+        KERNEL_ERROR("Failed to allocate driver controler.\n");
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    pConsoleDrv = kmalloc(sizeof(uart_controler_t));
+    if(pConsoleDrv == NULL)
+    {
+        KERNEL_ERROR("Failed to allocate driver instance.\n");
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    pConsoleDrv->pClear           = _uartClear,
+    pConsoleDrv->pPutCursor       = NULL,
+    pConsoleDrv->pSaveCursor      = NULL,
+    pConsoleDrv->pRestoreCursor   = NULL,
+    pConsoleDrv->pScroll          = _uartScroll,
+    pConsoleDrv->pSetColorScheme  = NULL,
+    pConsoleDrv->pSaveColorScheme = NULL,
+    pConsoleDrv->pPutString       = _uartPutString,
+    pConsoleDrv->pPutChar         = _uartPutChar,
+    pConsoleDrv->pDriverCtrl      = pDrvCtrl;
 
-        if(i == 0)
-        {
-            com = SERIAL_COM1_BASE;
-        }
-        else if(i == 1)
-        {
-            com = SERIAL_COM2_BASE;
-        }
-        else if(i == 2)
-        {
-            com = SERIAL_COM3_BASE;
-        }
-        else if(i == 3)
-        {
-            com = SERIAL_COM4_BASE;
-        }
-        else
-        {
-            com = SERIAL_COM1_BASE;
-        }
+    /* Get the UART CPU communication ports */
+    ptrProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    {
+        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*ptrProp);
 
-        attr = SERIAL_DATA_LENGTH_8 | SERIAL_STOP_BIT_1;
+#if DEBUG_LOG_UART
+    /* Check if we are trying to attach the debug port */
+    if(pDrvCtrl->cpuCommPort == SERIAL_DEBUG_PORT)
+    {
+        retCode = OS_ERR_UNAUTHORIZED_ACTION;
+        goto ATTACH_END;
+    }
+#endif
 
-        /* Enable interrupt on recv for COM1 and COM2 */
-        if(com == SERIAL_COM1_BASE || com == SERIAL_COM2_BASE)
+    /* Get the UART CPU baudrate */
+    ptrProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    {
+        KERNEL_ERROR("Failed to retreive the baudrate from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    pDrvCtrl->baudrate = FDTTOCPU32(*ptrProp);
+
+    /* Init line */
+    _uartSetBaudrate(_uartGetCanonicalRate(pDrvCtrl->baudrate),
+                     pDrvCtrl->cpuCommPort);
+    _uartSetLine(SERIAL_DATA_LENGTH_8 | SERIAL_STOP_BIT_1,
+                 pDrvCtrl->cpuCommPort);
+    _uartSetBuffer(0xC0 | SERIAL_ENABLE_FIFO | SERIAL_CLEAR_RECV_FIFO |
+                   SERIAL_CLEAR_SEND_FIFO | SERIAL_FIFO_DEPTH_14,
+                   pDrvCtrl->cpuCommPort);
+
+    /* Set as output if needed */
+    if(fdtGetProp(pkFdtNode, UART_FDT_IS_CON_PROP, &propLen) != NULL)
+    {
+        retCode = consoleSetDriver(pConsoleDrv);
+        if(retCode != OS_NO_ERR)
         {
-            _cpu_outb(0x01, SERIAL_DATA_PORT_2(com));
+            KERNEL_ERROR("Failed to set UART driver as console driver.\n");
+            goto ATTACH_END;
         }
-        else
-        {
-            _cpu_outb(0x00, SERIAL_DATA_PORT_2(com));
-        }
-
-        /* Init line */
-        _set_baudrate(BAUDRATE_115200, com);
-        _set_line(attr, com);
-        _set_buffer(0xC0 | SERIAL_ENABLE_FIFO | SERIAL_CLEAR_RECV_FIFO |
-                    SERIAL_CLEAR_SEND_FIFO | SERIAL_FIFO_DEPTH_14, com);
-
-        /* Enable interrupt */
-        _cpu_outb(0x0B, SERIAL_MODEM_COMMAND_PORT(com));
     }
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_END, 0);
-    KERNEL_DEBUG(SERIAL_DEBUG_ENABLED, MODULE_NAME, "UART Initialized");
+    retCode = OS_NO_ERR;
+
+ATTACH_END:
+    if(pDrvCtrl != NULL)
+    {
+        kfree(pDrvCtrl);
+    }
+    if(pConsoleDrv != NULL)
+    {
+        kfree(pConsoleDrv);
+    }
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_END, 1, (uintptr_t(retCode)));
+    return retCode;
 }
 
-void uart_clear_screen(void)
+
+static inline void _uartSetLine(const uint8_t kAttr, const uint16_t kCom)
+{
+    _cpu_outb(kAttr, SERIAL_LINE_COMMAND_PORT(kCom));
+}
+
+static inline void _uartSetBuffer(const uint8_t kAttr, const uint16_t kCom)
+{
+    _cpu_outb(kAttr, SERIAL_FIFO_COMMAND_PORT(kCom));
+}
+
+static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
+                                    const uint16_t kCom)
+{
+    _cpu_outb(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(kCom));
+    _cpu_outb((kRate >> 8) & 0x00FF, SERIAL_DATA_PORT(kCom));
+    _cpu_outb(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
+}
+
+static inline void _uartWrite(const uint16_t kPort, const uint8_t kData)
+{
+    /* Wait for empty transmit */
+    while((_cpu_inb(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
+    if(kData == '\n')
+    {
+        _cpu_outb('\r', kPort);
+        _cpu_outb('\n', kPort);
+    }
+    else
+    {
+        _cpu_outb(kData, kPort);
+    }
+}
+
+void _uartClear(void* pDrvCtrl)
 {
     uint8_t i;
 
     /* On 80x25 screen, just print 25 line feed. */
     for(i = 0; i < 25; ++i)
     {
-        _uart_write(SERIAL_OUTPUT_PORT, '\n');
+        _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, '\n');
     }
 }
 
-void uart_scroll(const SCROLL_DIRECTION_E direction,
-                 const uint32_t lines_count)
+void _uartScroll(void* pDrvCtrl,
+                 const SCROLL_DIRECTION_E kDirection,
+                 const uint32_t kLines)
 {
     uint32_t i;
 
-    if(direction == SCROLL_DOWN)
+    if(kDirection == SCROLL_DOWN)
     {
         /* Just print lines_count line feed. */
-        for(i = 0; i < lines_count; ++i)
+        for(i = 0; i < kLines; ++i)
         {
-            _uart_write(SERIAL_OUTPUT_PORT, '\n');
+            _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, '\n');
         }
     }
 }
 
-uint8_t uart_read(const uint32_t port)
-{
-    uint8_t  val;
-
-    /* Wait for data to be received */
-    KERNEL_SPINLOCK_LOCK(uart_lock);
-
-    while(uart_received(port) == 0){}
-
-    /* Read available data on port */
-    val = _cpu_inb(SERIAL_DATA_PORT(port));
-
-    KERNEL_SPINLOCK_UNLOCK(uart_lock);
-
-    return val;
-}
-
-void uart_put_string(const char* string)
+void _uartPutString(void* pDrvCtrl,
+                    const char* kpString)
 {
     size_t i;
-    for(i = 0; i < strlen(string); ++i)
+    size_t stringLen;
+
+    stringLen = strlen(kpString);
+
+    for(i = 0; i < stringLen; ++i)
     {
-        _uart_write(SERIAL_OUTPUT_PORT, string[i]);
+        _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, kpString[i]);
     }
 }
 
-void uart_put_char(const char character)
+void _uartPutChar(void* pDrvCtrl, const char kCharacter)
 {
-    _uart_write(SERIAL_OUTPUT_PORT, character);
+    _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, kCharacter);
 }
 
-bool_t uart_received(const uint32_t port)
+static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
 {
-    bool_t   ret;
-
-    /* Read on LINE status port */
-    ret = _cpu_inb(SERIAL_LINE_STATUS_PORT(port)) & 0x01;
-
-    return ret;
+    switch (kBaudrate)
+    {
+        case 50:
+            return 2304;
+            break;
+        case 75:
+            return 1536;
+            break;
+        case 150:
+            return 768;
+            break;
+        case 300:
+            return 384;
+            break;
+        case 600:
+            return 192;
+            break;
+        case 1200:
+            return 96;
+            break;
+        case 1800:
+            return 64;
+            break;
+        case 2400:
+            return 48;
+            break;
+        case 4800:
+            return 24;
+            break;
+        case 7200:
+            return 16;
+            break;
+        case 9600:
+            return 12;
+            break;
+        case 14400:
+            return 8;
+            break;
+        case 19200:
+            return 6;
+            break;
+        case 38400:
+            return 3;
+            break;
+        case 57600:
+            return 2;
+            break;
+        case 115200:
+        default:
+            return 1;
+    }
 }
 
-const console_driver_t* uart_get_driver(void)
+#if DEBUG_LOG_UART
+void uartDebugInit(void)
 {
-    return &uart_text_driver;
+    /* Init line */
+    _uartSetBaudrate(DEBUG_LOG_UART_RATE, SERIAL_DEBUG_PORT);
+    _uartSetLine(SERIAL_DATA_LENGTH_8 | SERIAL_STOP_BIT_1,
+                SERIAL_DEBUG_PORT);
+    _uartSetBuffer(0xC0 |
+                SERIAL_ENABLE_FIFO |
+                SERIAL_CLEAR_RECV_FIFO |
+                SERIAL_CLEAR_SEND_FIFO |
+                SERIAL_FIFO_DEPTH_14,
+                SERIAL_DEBUG_PORT);
+
+
 }
 
+void uartDebugPutString(const char* kpString)
+{
+    size_t i;
+    size_t stringLen;
+
+    stringLen = strlen(kpString);
+
+    for(i = 0; i < stringLen; ++i)
+    {
+        _uartWrite(SERIAL_DEBUG_PORT, kpString[i]);
+    }
+}
+
+void uartDebugPutChar(const char kCharacter)
+{
+    _uartWrite(SERIAL_DEBUG_PORT, kCharacter);
+}
+#endif
+
+/***************************** DRIVER REGISTRATION ****************************/
+DRIVERMGR_REG(x86UARTDriver);
 
 /************************************ EOF *************************************/

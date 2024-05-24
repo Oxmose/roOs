@@ -150,14 +150,6 @@ static void walkFdtNodes(const fdt_node_t* pkNode)
                     }
                     break;
                 }
-                else
-                {
-                    KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED,
-                                MODULE_NAME,
-                                "%s not compatible with %s.",
-                                pDriver->pCompatible,
-                                pCompatible);
-                }
                 driverTableCursor += sizeof(uintptr_t);
                 pDriver = *(driver_t**)driverTableCursor;
             }

@@ -126,7 +126,7 @@ void kickstart(void)
 
 #if DEBUG_LOG_UART
     /* Init serial driver */
-    uart_init();
+    uartDebugInit();
 #endif
 
     /* TODO: remove */
@@ -158,15 +158,16 @@ void kickstart(void)
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
 
-    /* Validate architecture (must be done after interrupt init because of
-     * potential kernel panic)
-     */
+    /* Validate architecture */
     validate_architecture();
     KERNEL_SUCCESS("Architecture validated\n");
 
 #if TEST_INTERRUPT_ENABLED
     TEST_FRAMEWORK_END();
 #endif
+
+    /* Restore interrupts */
+    kernel_interrupt_restore(1);
 
     TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
@@ -176,13 +177,6 @@ void kickstart(void)
 #if TEST_KHEAP_ENABLED
     TEST_FRAMEWORK_END();
 #endif
-
-    /* Initialize the RTC */
-    //rtc_init();
-    //KERNEL_SUCCESS("RTC initialized\n");
-
-    /* Restore interrupts */
-    kernel_interrupt_restore(1);
 
 #if 1
     uint32_t rt = 0;

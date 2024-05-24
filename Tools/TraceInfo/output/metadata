@@ -368,6 +368,9 @@ event {
 event {
     id = 42;
     name = "Kernel UART Driver Init End";
+    fields := struct {
+        uint32_t ret_code;
+    };
 };
 
 event {
@@ -626,6 +629,7 @@ event {
     name = "Kernel RTC Init End";
     fields := struct {
         uint32_t frequency;
+        xuint32_t ret_code;
     };
 };
 

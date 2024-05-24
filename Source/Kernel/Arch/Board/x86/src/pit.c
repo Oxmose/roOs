@@ -45,8 +45,6 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief FDT property for chaining  */
-#define PIT_FDT_HASSLAVE_PROP   "is-chained"
 /** @brief FDT property for inetrrupt  */
 #define PIT_FDT_INT_PROP        "interrupts"
 /** @brief FDT property for comm ports */
@@ -96,7 +94,6 @@ typedef struct
 
     /** @brief Keeps track on the PIT enabled state. */
     uint32_t disabledNesting;
-
 } pit_controler_t;
 
 /*******************************************************************************
@@ -124,6 +121,17 @@ typedef struct
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
+/**
+ * @brief Attaches the PIT driver to the system.
+ *
+ * @details Attaches the PIT driver to the system. This function will use the
+ * FDT to initialize the PIT hardware and retreive the PIT parameters.
+ *
+ * @param[in] pkFdtNode The FDT node with the compatible declared
+ * by the driver.
+ *
+ * @return The success state or the error code.
+ */
 static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode);
 
 /**
@@ -132,35 +140,36 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode);
  * @details PIT interrupt handler set at the initialization of the PIT.
  * Dummy routine setting EOI.
  *
- * @param[in, out] curr_thread The current thread at the interrupt.
+ * @param[in] pCurrThread Unused, the current thread at the
+ * interrupt.
  */
-static void _dummy_handler(kernel_thread_t* curr_thread);
+static void _pitDummyHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Enables PIT ticks.
  *
  * @details Enables PIT ticks by clearing the PIT's IRQ mask.
  */
-void pit_enable(void);
+static void _pitEnable(void);
 
 /**
  * @brief Disables PIT ticks.
  *
  * @details Disables PIT ticks by setting the PIT's IRQ mask.
  */
-void pit_disable(void);
+static void _pitDisable(void);
 
 /**
  * @brief Sets the PIT's tick frequency.
  *
- * @details Sets the PIT's tick frequency. The value must be between 20Hz and
- * 8000Hz.
+ * @details Sets the PIT's tick frequency. The value must be between the PIT
+ * frequency range.
  *
- * @warning The value must be between 20Hz and 8000Hz
+ * @warning The value must be between in the PIT frequency range.
  *
- * @param[in] freq The new frequency to be set to the PIT.
+ * @param[in] kFreq The new frequency to be set to the PIT.
  */
-void pit_set_frequency(const uint32_t freq);
+static void _pitSetFrequency(const uint32_t kFreq);
 
 /**
  * @brief Returns the PIT tick frequency in Hz.
@@ -169,7 +178,7 @@ void pit_set_frequency(const uint32_t freq);
  *
  * @return The PIT tick frequency in Hz.
  */
-uint32_t pit_get_frequency(void);
+static uint32_t _pitGetFrequency(void);
 
 /**
  * @brief Sets the PIT tick handler.
@@ -177,7 +186,7 @@ uint32_t pit_get_frequency(void);
  * @details Sets the PIT tick handler. This function will be called at each PIT
  * tick received.
  *
- * @param[in] handler The handler of the PIT interrupt.
+ * @param[in] pHandler The handler of the PIT interrupt.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
@@ -188,7 +197,7 @@ uint32_t pit_get_frequency(void);
  * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
  * registered for the PIT.
  */
-OS_RETURN_E pit_set_handler(void(*handler)(kernel_thread_t*));
+static OS_RETURN_E _pitSetHandler(void(*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Removes the PIT tick handler.
@@ -202,7 +211,7 @@ OS_RETURN_E pit_set_handler(void(*handler)(kernel_thread_t*));
  * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the PIT line has no handler
  * attached.
  */
-OS_RETURN_E pit_remove_handler(void);
+static OS_RETURN_E _pitRemoveHandler(void);
 
 /**
  * @brief Returns the PIT IRQ number.
@@ -211,7 +220,7 @@ OS_RETURN_E pit_remove_handler(void);
  *
  * @return The PIT IRQ number.
  */
-uint32_t pit_get_irq(void);
+static uint32_t _pitGetIrq(void);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -244,16 +253,19 @@ static pit_controler_t sDrvCtrl = {
 };
 
 /** @brief PIT timer driver instance. */
-static kernel_timer_t pit_driver = {
-    .get_frequency  = pit_get_frequency,
-    .set_frequency  = pit_set_frequency,
+static kernel_timer_t sPitDriver = {
+    .get_frequency  = _pitGetFrequency,
+    .set_frequency  = _pitSetFrequency,
     .get_time_ns    = NULL,
     .set_time_ns    = NULL,
-    .enable         = pit_enable,
-    .disable        = pit_disable,
-    .set_handler    = pit_set_handler,
-    .remove_handler = pit_remove_handler,
-    .get_irq        = pit_get_irq
+    .get_date       = NULL,
+    .get_daytime    = NULL,
+    .enable         = _pitEnable,
+    .disable        = _pitDisable,
+    .set_handler    = _pitSetHandler,
+    .remove_handler = _pitRemoveHandler,
+    .get_irq        = _pitGetIrq,
+    .tickManager    = NULL
 };
 
 /*******************************************************************************
@@ -360,24 +372,26 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     sDrvCtrl.disabledNesting = 1;
 
     /* Set PIT frequency */
-    pit_set_frequency(sDrvCtrl.selectedFrequency);
+    _pitSetFrequency(sDrvCtrl.selectedFrequency);
 
     /* Check if we should register as main timer */
     if(fdtGetProp(pkFdtNode, PIT_FDT_ISMAIN_PROP, &propLen) != NULL)
     {
-        retCode = timeMgtAddTimer(&pit_driver, MAIN_TIMER);
+        retCode = timeMgtAddTimer(&sPitDriver, MAIN_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set PIT driver as main timer.\n");
+            KERNEL_ERROR("Failed to set PIT driver as main timer. Error %d\n",
+                         retCode);
             goto ATTACH_END;
         }
     }
     else
     {
-        retCode = timeMgtAddTimer(&pit_driver, AUX_TIMER);
+        retCode = timeMgtAddTimer(&sPitDriver, AUX_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set PIT driver as main timer.\n");
+            KERNEL_ERROR("Failed to set PIT driver as aux timer. Error %d\n",
+                         retCode);
             goto ATTACH_END;
         }
     }
@@ -390,9 +404,9 @@ ATTACH_END:
     return retCode;
 }
 
-static void _dummy_handler(kernel_thread_t* curr_thread)
+static void _pitDummyHandler(kernel_thread_t* pCurrThread)
 {
-    (void)curr_thread;
+    (void)pCurrThread;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_DUMMY_HANDLER, 0);
 
@@ -400,13 +414,13 @@ static void _dummy_handler(kernel_thread_t* curr_thread)
     kernel_interrupt_set_irq_eoi(sDrvCtrl.irqNumber);
 }
 
-void pit_enable(void)
+static void _pitEnable(void)
 {
-    uint32_t int_state;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_ENABLE_START, 0);
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
     if(sDrvCtrl.disabledNesting > 0)
     {
@@ -423,18 +437,18 @@ void pit_enable(void)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_ENABLE_END, 0);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 }
 
-void pit_disable(void)
+static void _pitDisable(void)
 {
-    uint32_t int_state;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_DISABLE_START,
                        1,
                        sDrvCtrl.disabledNesting);
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
     if(sDrvCtrl.disabledNesting < UINT32_MAX)
     {
@@ -449,119 +463,124 @@ void pit_disable(void)
                        1,
                        sDrvCtrl.disabledNesting);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 }
 
-void pit_set_frequency(const uint32_t freq)
+static void _pitSetFrequency(const uint32_t kFreq)
 {
-    uint32_t int_state;
-    uint16_t tick_freq;
+    uint32_t intState;
+    uint16_t tickFreq;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_SET_FREQ_START, 1, freq);
 
-    if(sDrvCtrl.frequencyLow > freq || sDrvCtrl.frequencyHigh < freq)
+    if(sDrvCtrl.frequencyLow > kFreq || sDrvCtrl.frequencyHigh < kFreq)
     {
         KERNEL_ERROR("Selected PIT frequency is not within range.\n");
         return;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
     /* Disable PIT IRQ */
-    pit_disable();
+    _pitDisable();
 
-    sDrvCtrl.selectedFrequency = freq;
+    sDrvCtrl.selectedFrequency = kFreq;
 
     /* Set clock frequency */
-    tick_freq = (uint16_t)(sDrvCtrl.quartzFrequency / freq);
+    tickFreq = (uint16_t)(sDrvCtrl.quartzFrequency / kFreq);
     _cpu_outb(PIT_COMM_SET_FREQ, sDrvCtrl.cpuCommPort);
-    _cpu_outb(tick_freq & 0x00FF, sDrvCtrl.cpuDataPort);
-    _cpu_outb(tick_freq >> 8, sDrvCtrl.cpuDataPort);
+    _cpu_outb(tickFreq & 0x00FF, sDrvCtrl.cpuDataPort);
+    _cpu_outb(tickFreq >> 8, sDrvCtrl.cpuDataPort);
 
-    KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "New PIT frequency set (%d)", freq);
+    KERNEL_DEBUG(PIT_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "New PIT frequency set (%d)",
+                 kFreq);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_SET_FREQ_END, 1, freq);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_SET_FREQ_END, 1, kFreq);
 
     /* Enable PIT IRQ */
-    pit_enable();
+    _pitEnable();
 }
 
-uint32_t pit_get_frequency(void)
+static uint32_t _pitGetFrequency(void)
 {
     return sDrvCtrl.selectedFrequency;
 }
 
-OS_RETURN_E pit_set_handler(void(*handler)(kernel_thread_t*))
+static OS_RETURN_E _pitSetHandler(void(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E err;
-    uint32_t    int_state;
+    uint32_t    intState;
 
 #ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_SET_HANDLER, 2,
-                       (uintptr_t)handler & 0xFFFFFFFF,
-                       (uintptr_t)handler >> 32);
+                       (uintptr_t)pHandler & 0xFFFFFFFF,
+                       (uintptr_t)pHandler >> 32);
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_SET_HANDLER, 2,
-                       (uintptr_t)handler & 0xFFFFFFFF,
+                       (uintptr_t)pHandler & 0xFFFFFFFF,
                        (uintptr_t)0);
 #endif
 
-    if(handler == NULL)
+    if(pHandler == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    pit_disable();
+    _pitDisable();
 
     /* Remove the current handler */
     err = kernel_interrupt_remove_irq_handler(sDrvCtrl.irqNumber);
     if(err != OS_NO_ERR && err != OS_ERR_INTERRUPT_NOT_REGISTERED)
     {
-        EXIT_CRITICAL(int_state);
+        EXIT_CRITICAL(intState);
         KERNEL_ERROR("Failed to remove PIT irqHandler. Error: %d\n", err);
-        pit_enable();
+        _pitEnable();
         return err;
     }
 
-    err = kernel_interrupt_register_irq_handler(sDrvCtrl.irqNumber, handler);
+    err = kernel_interrupt_register_irq_handler(sDrvCtrl.irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        EXIT_CRITICAL(int_state);
+        EXIT_CRITICAL(intState);
         KERNEL_ERROR("Failed to register PIT irqHandler. Error: %d\n", err);
-        pit_enable();
         return err;
     }
 
-    KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "New PIT handler set 0x%p", handler);
+    KERNEL_DEBUG(PIT_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "New PIT handler set 0x%p",
+                 pHandler);
 
-    EXIT_CRITICAL(int_state);
-    pit_enable();
+    EXIT_CRITICAL(intState);
+    _pitEnable();
 
     return err;
 }
 
-OS_RETURN_E pit_remove_handler(void)
+static OS_RETURN_E _pitRemoveHandler(void)
 {
     KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "Default PIT handler set 0x%p",
-                 _dummy_handler);
+                 _pitDummyHandler);
 #ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_REMOVE_HANDLER, 2,
-                       (uintptr_t)_dummy_handler & 0xFFFFFFFF,
-                       (uintptr_t)_dummy_handler >> 32);
+                       (uintptr_t)_pitDummyHandler & 0xFFFFFFFF,
+                       (uintptr_t)_pitDummyHandler >> 32);
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIT_REMOVE_HANDLER, 2,
-                       (uintptr_t)_dummy_handler & 0xFFFFFFFF,
+                       (uintptr_t)_pitDummyHandler & 0xFFFFFFFF,
                        (uintptr_t)0);
 #endif
 
-    return pit_set_handler(_dummy_handler);
+    return _pitSetHandler(_pitDummyHandler);
 }
 
-uint32_t pit_get_irq(void)
+static uint32_t _pitGetIrq(void)
 {
     return sDrvCtrl.irqNumber;
 }

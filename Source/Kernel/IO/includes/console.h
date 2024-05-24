@@ -88,8 +88,11 @@ typedef struct
 {
     /**
      * @brief Clears the console, the background color is set to black.
+     *
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      */
-    void (*pClear)(void);
+    void (*pClear)(void* pDriverCtrl);
 
     /**
      * @brief Places the cursor to the coordinates given as parameters.
@@ -97,10 +100,14 @@ typedef struct
      * @details The function places the console cursor at the desired coordinates
      * based on the line and column parameter.
      *
-     * @param[in] uint32_t kLine - The line index where to place the cursor.
-     * @param[in] uint32_t kColumn - The column index where to place the cursor.
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] kLine The line index where to place the cursor.
+     * @param[in] kColumn The column index where to place the cursor.
      */
-    void (*pPutCursor)(const uint32_t kLine, const uint32_t kColumn);
+    void (*pPutCursor)(void* pDriverCtrl,
+                       const uint32_t kLine,
+                       const uint32_t kColumn);
 
     /**
      * @brief Saves the cursor attributes in the buffer given as paramter.
@@ -108,10 +115,12 @@ typedef struct
      * @details Fills the buffer given s parameter with the current value of the
      * cursor.
      *
-     * @param[out] cursor_t* pBuffer - The cursor buffer in which the current
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[out] pBuffer The cursor buffer in which the current
      * cursor position is going to be saved.
      */
-    void (*pSaveCursor)(cursor_t* pBuffer);
+    void (*pSaveCursor)(void* pDriverCtrl, cursor_t* pBuffer);
 
     /**
      * @brief Restores the cursor attributes from the buffer given as parameter.
@@ -119,10 +128,12 @@ typedef struct
      * @details The function will restores the cursor attributes from the buffer
      * given as parameter.
      *
-     * @param[in] cursor_t* pBuffer - The buffer containing the cursor's
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] pBuffer The buffer containing the cursor's
      * attributes.
      */
-    void (*pRestoreCursor)(const cursor_t* pBuffer);
+    void (*pRestoreCursor)(void* pDriverCtrl, const cursor_t* pBuffer);
 
     /**
      * @brief Scrolls in the desired direction of lines_count lines.
@@ -130,11 +141,15 @@ typedef struct
      * @details The function will use the driver to scroll of lines_count line
      * in the desired direction.
      *
-     * @param[in] SCROLL_DIRECTION_E kDirection - The direction to which the
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] kDirection The direction to which the
      * console should be scrolled.
-     * @param[in] uint32_t kLines - The number of lines to scroll.
+     * @param[in] kLines The number of lines to scroll.
      */
-    void (*pScroll)(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines);
+    void (*pScroll)(void* pDriverCtrl,
+                    const SCROLL_DIRECTION_E kDirection,
+                    const uint32_t kLines);
 
     /**
      * @brief Sets the color scheme of the console.
@@ -142,10 +157,13 @@ typedef struct
      * @details Replaces the curent color scheme used t output data with the new
      * one given as parameter.
      *
-     * @param[in] colorscheme_t* kpColorScheme - The new color scheme to apply
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] kpColorScheme The new color scheme to apply
      * to the console.
      */
-    void (*pSetColorScheme)(const colorscheme_t* kpColorScheme);
+    void (*pSetColorScheme)(void* pDriverCtrl,
+                            const colorscheme_t* kpColorScheme);
 
     /**
      * @brief Saves the color scheme in the buffer given as parameter.
@@ -153,10 +171,12 @@ typedef struct
      * @details Fills the buffer given as parameter with the current console's
      * color scheme value.
      *
-     * @param[out] colorscheme_t* pBuffer - The buffer that will receive the
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[out] pBuffer The buffer that will receive the
      * current color scheme used by the console.
      */
-    void (*pSaveColorScheme)(colorscheme_t* pBuffer);
+    void (*pSaveColorScheme)(void* pDriverCtrl, colorscheme_t* pBuffer);
 
     /**
      * ­@brief Put a string to console.
@@ -164,11 +184,13 @@ typedef struct
      * @details The function will display the string given as parameter to the
      * console using the selected driver.
      *
-     * @param[in] char* kpString - The string to display on the console.
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] kpString The string to display on the console.
      *
      * @warning kpString must be NULL terminated.
      */
-    void (*pPutString)(const char* kpString);
+    void (*pPutString)(void* pDriverCtrl, const char* kpString);
 
     /**
      * ­@brief Put a character to console.
@@ -176,9 +198,16 @@ typedef struct
      * @details The function will display the character given as parameter to
      * the console using the selected driver.
      *
-     * @param[in] char kCharacter - The char to display on the console.
+     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     * @param[in] kCharacter The char to display on the console.
      */
-    void (*pPutChar)(const char kCharacter);
+    void (*pPutChar)(void* pDriverCtrl, const char kCharacter);
+
+    /** @brief Contains a pointer to the driver controler, set by the driver
+     * at the moment of the initialization of this structure.
+     */
+    void* pDriverCtrl;
 } console_driver_t;
 
 /*******************************************************************************
@@ -227,8 +256,8 @@ void consoleClear(void);
  * @details The function places the console cursor at the desired coordinates
  * based on the line and column parameter.
  *
- * @param[in] uint32_t kLine - The line index where to place the cursor.
- * @param[in] uint32_t kColumn - The column index where to place the cursor.
+ * @param[in] kLine The line index where to place the cursor.
+ * @param[in] kColumn The column index where to place the cursor.
  */
 void consolePutCursor(const uint32_t kLine, const uint32_t kColumn);
 
@@ -238,7 +267,7 @@ void consolePutCursor(const uint32_t kLine, const uint32_t kColumn);
  * @details Fills the buffer given s parameter with the current value of the
  * cursor.
  *
- * @param[out] cursor_t* pBuffer - The cursor buffer in which the current cursor
+ * @param[out] pBuffer The cursor buffer in which the current cursor
  * position is going to be saved.
  */
 void consoleSaveCursor(cursor_t* pBuffer);
@@ -259,9 +288,9 @@ void consoleRestoreCursor(const cursor_t* kpBuffer);
  * @details The function will use the driver to scroll of lines_count line in
  * the desired direction.
  *
- * @param[in] SCROLL_DIRECTION_E kDirection - The direction to which the console
+ * @param[in] kDirection The direction to which the console
  * should be scrolled.
- * @param[in] uint32_t kLines - The number of lines to scroll.
+ * @param[in] kLines The number of lines to scroll.
  */
 void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines);
 
@@ -271,7 +300,7 @@ void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines);
  * @details Replaces the curent color scheme used t output data with the new
  * one given as parameter.
  *
- * @param[in] colorscheme_t* pkColorScheme - The new color scheme to apply to
+ * @param[in] pkColorScheme The new color scheme to apply to
  * the console.
  */
 void consoleSetColorScheme(const colorscheme_t* pkColorScheme);
@@ -282,7 +311,7 @@ void consoleSetColorScheme(const colorscheme_t* pkColorScheme);
  * @details Fills the buffer given as parameter with the current console's
  * color scheme value.
  *
- * @param[out] colorscheme_t* pBuffer - The buffer that will receive the current
+ * @param[out] pBuffer The buffer that will receive the current
  * color scheme used by the console.
  */
 void consoleSaveColorScheme(colorscheme_t* pBuffer);
@@ -293,7 +322,7 @@ void consoleSaveColorScheme(colorscheme_t* pBuffer);
  * @details The function will display the string given as parameter to the
  * console using the selected driver.
  *
- * @param[in] char* kpString - The string to display on the console.
+ * @param[in] kpString The string to display on the console.
  *
  * @warning kpString must be NULL terminated.
  */
@@ -305,7 +334,7 @@ void consolePutString(const char* kpString);
  * @details The function will display the character given as parameter to the
  * console using the selected driver.
  *
- * @param[in] char kCharacter - The char to display on the console.
+ * @param[in] kCharacter The char to display on the console.
  */
 void consolePutChar(const char kCharacter);
 

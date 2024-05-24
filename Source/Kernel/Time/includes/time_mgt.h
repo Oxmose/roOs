@@ -41,6 +41,30 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
+/** @brief Date structure. */
+typedef struct
+{
+    /** @brief Day of the week. */
+    uint16_t weekday;
+    /** @brief Day of the month. */
+    uint16_t day;
+    /** @brief Month of the year. */
+    uint16_t month;
+    /** @brief Year. */
+    uint16_t year;
+} date_t;
+
+/** @brief Time structure. */
+typedef struct
+{
+    /** @brief Hours. */
+    uint8_t hours;
+    /** @brief Minutes. */
+    uint8_t minutes;
+    /** @brief Seconds. */
+    uint8_t seconds;
+} time_t;
+
 typedef enum
 {
     MAIN_TIMER,
@@ -93,6 +117,24 @@ typedef struct
      * @param[in] time_ns The time in nanoseconds to set.
      */
     void (*set_time_ns)(const uint64_t time_ns);
+
+    /**
+     * @brief Returns the current date.
+     *
+     * @details Returns the current date in RTC date format.
+     *
+     * @returns The current date in in RTC date format
+     */
+    date_t (*get_date)(void);
+
+    /**
+     * @brief Returns the current daytime.
+     *
+     * @details Returns the current daytime.
+     *
+     * @returns The current daytime.
+     */
+    time_t (*get_daytime)(void);
 
     /**
      * @brief The function should enable the timer's interrupt.
@@ -152,6 +194,14 @@ typedef struct
      * source.
      */
     uint32_t (*get_irq)(void);
+
+    /** @brief This function can be used to execute an operation in the
+     * driver at every tick of the timer.
+     *
+     * @details This function can be used to execute an operation in the
+     * driver at every tick of the timer such as a tick acknowledge.
+     */
+    void (*tickManager)(void);
 } kernel_timer_t;
 
 /*******************************************************************************
@@ -183,8 +233,8 @@ typedef struct
  * @details Adds a timer to the managerr. Set the basic time structures
  * and interrupts.
  *
- * @param[in] kernel_timer_t* kpTimer - The timer to add.
- * @param[in] TIMER_TYPE_E kType - The timer type..
+ * @param[in] kpTimer The timer to add.
+ * @param[in] kType The timer type..
  *
  * @warning All the interrupt managers and timer sources drivers must be
  * initialized before using this function.
@@ -239,19 +289,6 @@ void time_wait_no_sched(const uint64_t ns);
  */
 OS_RETURN_E time_register_scheduler(void(*scheduler_call)(kernel_thread_t*));
 
-/**
- * @brief Registers the function to call the RTC manager.
- *
- * @details Registers the function to call the RTC manager. This function
- * will be called at each tick of the RTC timer.
- *
- * @param[in] rtc_manager The rtc manager routine to call every RTC tick.
- *
- * @return The success state or the error code.
- * - OS_NO_ERR is returned if no error is encountered.
- * - OS_ERR_NULL_POINTER if the scheduler routine pointer is NULL.
- */
-OS_RETURN_E time_register_rtc_manager(void (*rtc_manager)(void));
 
 #endif /* #ifndef __TIME_TIME_MGT_H_ */
 

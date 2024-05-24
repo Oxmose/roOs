@@ -81,6 +81,8 @@ static kernel_timer_t sys_main_timer = {
     .set_frequency  = NULL,
     .get_time_ns    = NULL,
     .set_time_ns    = NULL,
+    .get_date       = NULL,
+    .get_daytime    = NULL,
     .enable         = NULL,
     .disable        = NULL,
     .set_handler    = NULL,
@@ -98,6 +100,8 @@ static kernel_timer_t sys_rtc_timer = {
     .set_frequency  = NULL,
     .get_time_ns    = NULL,
     .set_time_ns    = NULL,
+    .get_date       = NULL,
+    .get_daytime    = NULL,
     .enable         = NULL,
     .disable        = NULL,
     .set_handler    = NULL,
@@ -110,9 +114,6 @@ static volatile uint64_t active_wait = 0;
 
 /** @brief Stores the routine to call the scheduler. */
 void (*schedule_routine)(kernel_thread_t*) = NULL;
-
-/** @brief RTC interrupt manager */
-void (*rtc_int_manager)(void) = NULL;
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -154,6 +155,11 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
     /* EOI */
     kernel_interrupt_set_irq_eoi(sys_main_timer.get_irq());
 
+    if(sys_main_timer.tickManager != NULL)
+    {
+        sys_main_timer.tickManager();
+    }
+
     if(schedule_routine != NULL)
     {
         /* We might never come back from here */
@@ -161,10 +167,21 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
     }
     else
     {
-        if(active_wait != 0)
+        /* TODO: remove that and use lifetime timer is availabe */
+        if(active_wait != 0 && sys_main_timer.get_time_ns != NULL)
         {
+            /* Use precise time */
             curr_time = sys_main_timer.get_time_ns();
             if(active_wait <= curr_time)
+            {
+                active_wait = 0;
+            }
+        }
+        else
+        {
+            /* Use ticks */
+            if(active_wait <= sys_tick_count * 1000000000 /
+                              sys_main_timer.get_frequency())
             {
                 active_wait = 0;
             }
@@ -182,9 +199,10 @@ static void _time_rtc_timer_handler(kernel_thread_t* curr_thread)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_TIMER_HANDLER, 0);
 
-    if(rtc_int_manager != NULL)
+
+    if(sys_rtc_timer.tickManager != NULL)
     {
-        rtc_int_manager();
+        sys_rtc_timer.tickManager();
     }
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
@@ -231,6 +249,10 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
         case RTC_TIMER:
             sys_rtc_timer = *kpTimer;
             retCode = sys_rtc_timer.set_handler(_time_rtc_timer_handler);
+            if(retCode == OS_NO_ERR)
+            {
+                sys_rtc_timer.enable();
+            }
             break;
         default:
             /* TODO: Add other timers */
@@ -274,7 +296,21 @@ void time_wait_no_sched(const uint64_t ns)
     {
         return;
     }
-    active_wait = ns;
+
+    /* TODO: Use lifetime timer is availabe and wait for count in this function
+     * don't rely on ticks
+     */
+    if(sys_main_timer.get_time_ns != NULL)
+    {
+        /* Use precise time */
+        active_wait = ns + sys_main_timer.get_time_ns();
+    }
+    else
+    {
+        /* Use ticks */
+        active_wait = ns + sys_tick_count * 1000000000 /
+                           sys_main_timer.get_frequency();
+    }
     while(active_wait > 0){}
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_END, 2,
@@ -305,32 +341,6 @@ OS_RETURN_E time_register_scheduler(void(*scheduler_call)(kernel_thread_t*))
                  "Registered scheduler routine at 0x%p", scheduler_call);
 
     schedule_routine = scheduler_call;
-
-    return OS_NO_ERR;
-}
-
-OS_RETURN_E time_register_rtc_manager(void (*rtc_manager)(void))
-{
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_RTC_MGT, 2,
-                       (uintptr_t)rtc_manager & 0xFFFFFFF,
-                       (uintptr_t)rtc_manager >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_RTC_MGT, 2,
-                       (uintptr_t)rtc_manager & 0xFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
-    if(rtc_manager == NULL)
-    {
-        return OS_ERR_NULL_POINTER;
-    }
-
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Registered RTC routine at 0x%p", rtc_manager);
-
-    rtc_int_manager = rtc_manager;
 
     return OS_NO_ERR;
 }

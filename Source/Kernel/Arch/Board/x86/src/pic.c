@@ -155,7 +155,17 @@ typedef struct
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
-
+/**
+ * @brief Attaches the PIC driver to the system.
+ *
+ * @details Attaches the PIC driver to the system. This function will use the
+ * FDT to initialize the PIC hardware and retreive the PIC parameters.
+ *
+ * @param[in] pkFdtNode The FDT node with the compatible declared
+ * by the driver.
+ *
+ * @return The success state or the error code.
+ */
 static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
 
 /**
@@ -163,8 +173,8 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
  *
  * @details Sets the IRQ mask for the IRQ number given as parameter.
  *
- * @param[in] uint32_t kIrqNumber - The IRQ number to enable/disable.
- * @param[in] bool_t kEnabled - Must be set to TRUE to enable the IRQ or FALSE
+ * @param[in] kIrqNumber The IRQ number to enable/disable.
+ * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
  * to disable the IRQ.
  */
 static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled);
@@ -174,7 +184,7 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  *
  * @details Acknowlege an IRQ by setting the End Of Interrupt bit for this IRQ.
  *
- * @param[in] uint32_t kIrqNumber - The irq number to Acknowlege.
+ * @param[in] kIrqNumber The irq number to Acknowlege.
  */
 static void _picSetIRQEOI(const uint32_t kIrqNumber);
 
@@ -185,7 +195,7 @@ static void _picSetIRQEOI(const uint32_t kIrqNumber);
  * @details Checks if the serviced interrupt is a spurious
  * interrupt. The function also handles the spurious interrupt.
  *
- * @param[in] uint32_t kIntNumber - The interrupt number of the interrupt to
+ * @param[in] kIntNumber The interrupt number of the interrupt to
  * test.
  *
  * @return The function will return the interrupt type.
@@ -200,7 +210,7 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber);
  * @details Returns the interrupt line attached to an IRQ. -1 is returned
  * if the IRQ number is not supported by the driver.
  *
- * @param[in] uint32_t kIrqNumber - The IRQ number of which to get the interrupt
+ * @param[in] kIrqNumber The IRQ number of which to get the interrupt
  * line.
  *
  * @return The interrupt line attached to an IRQ. -1 is returned if the IRQ

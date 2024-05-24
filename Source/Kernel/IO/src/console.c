@@ -147,7 +147,7 @@ void consoleSaveColorScheme(colorscheme_t* pBuffer)
 void consolePutString(const char* pkString)
 {
 #if DEBUG_LOG_UART
-    uart_put_string(pkString);
+    uartDebugPutString(pkString);
 #endif
     EXEC_IF_SET(sConsoleDriver, pPutString, pkString);
 }
@@ -155,7 +155,7 @@ void consolePutString(const char* pkString)
 void consolePutChar(const char kCharacter)
 {
 #if DEBUG_LOG_UART
-    uart_put_char(kCharacter);
+    uartDebugPutChar(kCharacter);
 #endif
     EXEC_IF_SET(sConsoleDriver, pPutChar, kCharacter);
 }

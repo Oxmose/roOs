@@ -46,22 +46,16 @@
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
-#define DEBUG_LOG_UART 1
+#define DEBUG_LOG_UART      1
+#define DEBUG_LOG_UART_RATE BAUDRATE_115200
 
 /* Defines the limit address allocable by the kernel */
 #define KERNEL_VIRTUAL_ADDR_MAX      0x100000000
 #define KERNEL_VIRTUAL_ADDR_MAX_MASK 0xFFFFFFFF
 
-
 /** @brief Defines the maximum number of process in the system. This number is
  * limited by the PCID feature.*/
 #define KERNEL_MAX_PROCESS 4096
-
-/** @brief System's main timer interrupt frequency */
-#define KERNEL_MAIN_TIMER_FREQ 1000
-
-/** @brief System's RTC interrupt frequency */
-#define KERNEL_RTC_TIMER_FREQ 0
 
 /** @brief Current year */
 #define CURRENT_YEAR 2024

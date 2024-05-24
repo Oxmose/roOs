@@ -5,9 +5,9 @@
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 18/05/2023
+ * @date 25/05/2024
  *
- * @version 1.0
+ * @version 2.0
  *
  * @brief RTC (Real Time Clock) driver.
  *
@@ -22,14 +22,15 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <time_mgt.h>      /* Time Management */
-#include <kerror.h>        /* Kernel Errors */
-#include <cpu.h>           /* CPU Management */
-#include <cpu_interrupt.h> /* CPU Interrupts Settings */
-#include <interrupts.h>    /* Interrupt Manager*/
-#include <critical.h>      /* Critical Sections */
-#include <kerneloutput.h> /* Kernel Outputs */
-#include <panic.h>         /* Kernel Panic */
+#include <cpu.h>          /* CPU port manipulation */
+#include <panic.h>        /* Kernel panic */
+#include <stdint.h>       /* Generic int types */
+#include <kerror.h>       /* Kernel error */
+#include <critical.h>     /* Kernel critical locks */
+#include <time_mgt.h>     /* Timers manager */
+#include <drivermgr.h>    /* Driver manager */
+#include <interrupts.h>   /* Interrupt manager */
+#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -44,15 +45,21 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* RTC settings */
-/** @brief Initial RTC tick rate. */
+/** @brief FDT property for inetrrupt  */
+#define RTC_FDT_INT_PROP        "interrupts"
+/** @brief FDT property for comm ports */
+#define RTC_FDT_COMM_PROP       "comm"
+/** @brief FDT property for comm ports */
+#define RTC_FDT_QUARTZ_PROP     "qartz-freq"
+/** @brief FDT property for frequency */
+#define RTC_FDT_SELFREQ_PROP    "freq"
+/** @brief FDT property for frequency range */
+#define RTC_FDT_FREQRANGE_PROP  "freq-range"
+/** @brief FDT property for main timer */
+#define RTC_FDT_ISRTC_PROP      "is-rtc"
+
+/** @brief Initial RTC rate */
 #define RTC_INIT_RATE 10
-/** @brief RTC minimal frequency. */
-#define RTC_MIN_FREQ 2
-/** @brief RTC maximal frequency. */
-#define RTC_MAX_FREQ 8192
-/** @brief RTC quartz frequency. */
-#define RTC_QUARTZ_FREQ 32768
 
 /* CMOS registers  */
 /** @brief CMOS seconds register id. */
@@ -84,11 +91,6 @@
 /** @brief CMOS C register id. */
 #define CMOS_REG_C           0x0C
 
-/** @brief CMOS CPU command port id. */
-#define CMOS_COMM_PORT 0x70
-/** @brief CMOS CPU data port id. */
-#define CMOS_DATA_PORT 0x71
-
 /** @brief Current module name */
 #define MODULE_NAME "X86 RTC"
 
@@ -96,7 +98,33 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief x86 RTC driver controler. */
+typedef struct
+{
+    /** @brief CPU command port. */
+    uint16_t cpuCommPort;
+
+    /** @brief CPU data port. */
+    uint16_t cpuDataPort;
+
+    /** @brief RTC IRQ number. */
+    uint8_t irqNumber;
+
+    /** @brief Main quarts frequency. */
+    uint32_t quartzFrequency;
+
+    /** @brief Selected interrupt frequency. */
+    uint32_t selectedFrequency;
+
+    /** @brief Frequency range low. */
+    uint32_t frequencyLow;
+
+    /** @brief Frequency range low. */
+    uint32_t frequencyHigh;
+
+    /** @brief Keeps track on the RTC enabled state. */
+    uint32_t disabledNesting;
+} rtc_controler_t;
 
 /*******************************************************************************
  * MACROS
@@ -120,45 +148,21 @@
 }
 
 /*******************************************************************************
- * GLOBAL VARIABLES
- ******************************************************************************/
-
-/************************* Imported global variables **************************/
-/* None */
-
-/************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
-
-/** @brief Stores the real day time in seconds. */
-static uint32_t day_time;
-
-/** @brief Stores the system's current date. */
-static date_t date;
-
-/** @brief Keeps track on the RTC enabled state. */
-static uint32_t disabled_nesting;
-
-/** @brief Keeps track of the current frequency. */
-static uint32_t rtc_frequency;
-
-/** @brief RTC driver instance. */
-static kernel_timer_t rtc_driver = {
-    .get_frequency  = rtc_get_frequency,
-    .set_frequency  = rtc_set_frequency,
-    .get_time_ns    = NULL,
-    .set_time_ns    = NULL,
-    .enable         = rtc_enable,
-    .disable        = rtc_disable,
-    .set_handler    = rtc_set_handler,
-    .remove_handler = rtc_remove_handler,
-    .get_irq        = rtc_get_irq
-};
-
-/*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
+
+/**
+ * @brief Attaches the RTC driver to the system.
+ *
+ * @details Attaches the RTC driver to the system. This function will use the
+ * FDT to initialize the RTC hardware and retreive the RTC parameters.
+ *
+ * @param[in] pkFdtNode The FDT node with the compatible declared
+ * by the driver.
+ *
+ * @return The success state or the error code.
+ */
+static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode);
 
 /**
  * @brief Initial RTC interrupt handler.
@@ -166,17 +170,335 @@ static kernel_timer_t rtc_driver = {
  * @details RTC interrupt handler set at the initialization of the RTC.
  * Dummy routine setting EOI.
  *
- * @param[in, out] curr_thread The current thread at the interrupt.
+ * @param[in] pCurrThread Unused, the current thread at the
+ * interrupt.
  */
-static void _dummy_handler(kernel_thread_t* curr_thread);
+static void _rtcDummyHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Enables RTC ticks.
+ *
+ * @details Enables RTC ticks by clearing the RTC's IRQ mask.
+ */
+static void _rtcEnable(void);
+
+/**
+ * @brief Disables RTC ticks.
+ *
+ * @details Disables RTC ticks by setting the RTC's IRQ mask.
+ */
+static void _rtcDisable(void);
+
+/**
+ * @brief Sets the RTC's tick frequency.
+ *
+ * @details Sets the RTC's tick frequency. The value must be between 2Hz and
+ * 8192Hz.
+ *
+ * @warning The value must be between 2Hz and 8192Hz. The lower boundary RTC
+ * frequency will be selected (refer to the code to understand the 14 available
+ * frequencies).
+ *
+ * @param[in] kFrequency The new frequency to be set to the RTC.
+ */
+static void _rtcSetFrequency(const uint32_t kFrequency);
+
+/**
+ * @brief Returns the RTC tick frequency in Hz.
+ *
+ * @details Returns the RTC tick frequency in Hz.
+ *
+ * @return The RTC tick frequency in Hz.
+ */
+static uint32_t _rtcGetFrequency(void);
+
+/**
+ * @brief Sets the RTC tick handler.
+ *
+ * @details Sets the RTC tick handler. This function will be called at each RTC
+ * tick received.
+ *
+ * @param[in] pHandler The handler of the RTC interrupt.
+ *
+ * @return The success state or the error code.
+ * - OS_NO_ERR is returned if no error is encountered.
+ * - OS_ERR_NULL_POINTER is returned if the handler is NULL.
+ * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the RTC interrupt line
+ *   is not allowed.
+ * - OS_ERR_NULL_POINTER is returned if the pointer to the handler is NULL.
+ * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
+ *   registered for the RTC.
+ */
+static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*));
+
+/**
+ * @brief Removes the RTC tick handler.
+ *
+ * @details Removes the RTC tick handler.
+ *
+ * @return The success state or the error code.
+ * - OS_NO_ERR is returned if no error is encountered.
+ * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the RTC interrupt line
+ * is not allowed.
+ * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the RTC line has no handler
+ * attached.
+ */
+static OS_RETURN_E _rtcRemoveHandler(void);
+
+/**
+ * @brief Returns the current date.
+ *
+ * @details Returns the current date in RTC date format.
+ *
+ * @returns The current date in in RTC date format
+ */
+static date_t _rtcGetDate(void);
+
+/**
+ * @brief Returns the current daytime in seconds.
+ *
+ * @details Returns the current daytime in seconds.
+ *
+ * @returns The current daytime in seconds.
+ */
+static time_t _rtcGetDaytime(void);
+
+/**
+ * @brief Updates the system's time and date.
+ *
+ * @details Updates the system's time and date. This function also reads the
+ * CMOS registers. By doing that, the RTC registers are cleaned and the RTC able
+ * to interrupt the CPU again.
+ *
+ * @param[out] pDate The date to update.
+ * @param[out] pTime The time to update.
+ *
+ * @warning You MUST call that function in every RTC handler or the RTC will
+ * never raise interrupt again.
+ */
+static void _rtcUpdateTime(date_t* pDate, time_t* pTime);
+
+/**
+ * @brief Sends EOI to RTC itself.
+ *
+ * @details Sends EOI to RTC itself. The RTC requires to acknoledge its
+ * interrupts otherwise, no further interrupt is generated.
+ */
+static void _rtcAckowledgeInt(void);
+
+/**
+ * @brief Returns the RTC IRQ number.
+ *
+ * @details Returns the RTC IRQ number.
+ *
+ * @return The RTC IRQ number.
+ */
+static uint32_t _rtcGetIrq(void);
+
+/*******************************************************************************
+ * GLOBAL VARIABLES
+ ******************************************************************************/
+
+/************************* Imported global variables **************************/
+/* None */
+
+/************************* Exported global variables **************************/
+/** @brief RTC driver instance. */
+driver_t x86RTCDriver = {
+    .pName         = "X86 RTC Driver",
+    .pDescription  = "X86 Real Time Clock Driver for UTK",
+    .pCompatible   = "x86,x86-rtc",
+    .pVersion      = "2.0",
+    .pDriverAttach = _rtcAttach
+};
+
+/************************** Static global variables ***************************/
+/** @brief RTC driver controler instance. */
+static rtc_controler_t sDrvCtrl = {
+    .cpuCommPort       = 0,
+    .cpuDataPort       = 0,
+    .irqNumber         = 0,
+    .quartzFrequency   = 0,
+    .selectedFrequency = 0,
+    .frequencyLow      = 0,
+    .frequencyHigh     = 0,
+    .disabledNesting   = 0
+};
+
+/** @brief RTC driver instance. */
+static kernel_timer_t sRtcDriver = {
+    .get_frequency  = _rtcGetFrequency,
+    .set_frequency  = _rtcSetFrequency,
+    .get_time_ns    = NULL,
+    .set_time_ns    = NULL,
+    .get_date       = _rtcGetDate,
+    .get_daytime    = _rtcGetDaytime,
+    .enable         = _rtcEnable,
+    .disable        = _rtcDisable,
+    .set_handler    = _rtcSetHandler,
+    .remove_handler = _rtcRemoveHandler,
+    .get_irq        = _rtcGetIrq,
+    .tickManager    = _rtcAckowledgeInt
+};
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _dummy_handler(kernel_thread_t* curr_thread)
+static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
 {
-    (void)curr_thread;
+    const uintptr_t* ptrProp;
+    size_t           propLen;
+    OS_RETURN_E      retCode;
+    int8_t           prevOred;
+    int8_t           prevRate;
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_INIT_START, 0);
+
+    /* Get IRQ lines */
+    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    {
+        KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.irqNumber = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "IRQ: %d",
+                 sDrvCtrl.irqNumber);
+
+    /* Get communication ports */
+    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    {
+        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*ptrProp);
+    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(ptrProp + 1));
+
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "COMM: 0x%x | DATA: 0x%x",
+                 sDrvCtrl.cpuCommPort,
+                 sDrvCtrl.cpuDataPort);
+
+    /* Get quartz frequency */
+    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    {
+        KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.quartzFrequency = FDTTOCPU32(*ptrProp);
+
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Quartz Frequency: %dHz",
+                 sDrvCtrl.quartzFrequency);
+
+    /* Get selected frequency */
+    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    {
+        KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.selectedFrequency = FDTTOCPU32(*ptrProp);
+
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Selected Frequency: %dHz",
+                 sDrvCtrl.selectedFrequency);
+
+    /* Get the frequency range */
+    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
+    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    {
+        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+    sDrvCtrl.frequencyLow  = (uint32_t)FDTTOCPU32(*ptrProp);
+    sDrvCtrl.frequencyHigh = (uint32_t)FDTTOCPU32(*(ptrProp + 1));
+
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Frequency Range: %dHz / %dHz",
+                 sDrvCtrl.frequencyLow,
+                 sDrvCtrl.frequencyHigh);
+
+    /* Check if frequency is within bounds */
+    if(sDrvCtrl.frequencyLow > sDrvCtrl.selectedFrequency ||
+       sDrvCtrl.frequencyHigh < sDrvCtrl.selectedFrequency)
+    {
+        KERNEL_ERROR("Selected RTC frequency is not within range.\n");
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+
+    /* Init system times */
+    sDrvCtrl.disabledNesting = 1;
+
+    /* Init CMOS IRQ8 */
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    prevOred = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    _cpu_outb(prevOred | CMOS_ENABLE_RTC, sDrvCtrl.cpuDataPort);
+
+    /* Init CMOS IRQ8 rate */
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    prevRate = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    _cpu_outb((prevRate & 0xF0) | RTC_INIT_RATE, sDrvCtrl.cpuDataPort);
+
+    /* Set RTC frequency */
+    _rtcSetFrequency(sDrvCtrl.selectedFrequency);
+
+    /* Just dummy read register C to unlock interrupt */
+    _rtcAckowledgeInt();
+
+    /* Check if we should register as main timer */
+    if(fdtGetProp(pkFdtNode, RTC_FDT_ISRTC_PROP, &propLen) != NULL)
+    {
+        retCode = timeMgtAddTimer(&sRtcDriver, RTC_TIMER);
+        if(retCode != OS_NO_ERR)
+        {
+            KERNEL_ERROR("Failed to set RTC driver as RTC timer. Error %d\n",
+                         retCode);
+            goto ATTACH_END;
+        }
+    }
+    else
+    {
+        retCode = timeMgtAddTimer(&sRtcDriver, AUX_TIMER);
+        if(retCode != OS_NO_ERR)
+        {
+            KERNEL_ERROR("Failed to set RTC driver as RTC timer. Error %d\n",
+                         retCode);
+            goto ATTACH_END;
+        }
+    }
+
+ATTACH_END:
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_INIT_END,
+                       2,
+                       sDrvCtrl.selectedFrequency,
+                       (uintptr_t)retCode);
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Initialized");
+    return retCode;
+
+}
+
+static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
+{
+    (void)pCurrThread;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DUMMY_HANDLER, 0);
 
@@ -186,168 +508,127 @@ static void _dummy_handler(kernel_thread_t* curr_thread)
     kernel_interrupt_set_irq_eoi(RTC_IRQ_LINE);
 }
 
-void rtc_init(void)
+static void _rtcEnable(void)
 {
-    OS_RETURN_E err;
-    int8_t      prev_ored;
-    int8_t      prev_rate;
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_INIT_START, 0);
-
-    /* Init system times */
-    disabled_nesting = 1;
-
-    /* Init real times */
-    day_time     = 0;
-    date.weekday = 0;
-    date.day     = 0;
-    date.month   = 0;
-    date.year    = 0;
-
-    /* Init CMOS IRQ8 */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, CMOS_COMM_PORT);
-    prev_ored = _cpu_inb(CMOS_DATA_PORT);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, CMOS_COMM_PORT);
-    _cpu_outb(prev_ored | CMOS_ENABLE_RTC, CMOS_DATA_PORT);
-
-    /* Init CMOS IRQ8 rate */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, CMOS_COMM_PORT);
-    prev_rate = _cpu_inb(CMOS_DATA_PORT);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, CMOS_COMM_PORT);
-    _cpu_outb((prev_rate & 0xF0) | RTC_INIT_RATE, CMOS_DATA_PORT);
-    rtc_frequency = (RTC_QUARTZ_FREQ >> (RTC_INIT_RATE - 1));
-
-    /* Set rtc clock interrupt handler */
-    err = kernel_interrupt_register_irq_handler(RTC_IRQ_LINE, _dummy_handler);
-    RTC_ASSERT(err == OS_NO_ERR, "Could not register RTC handler", err);
-
-    /* Clear mask before setting IRQ */
-    kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 0);
-
-    /* Just dummy read register C to unlock interrupt */
-    _cpu_outb(CMOS_REG_C, CMOS_COMM_PORT);
-    _cpu_inb(CMOS_DATA_PORT);
-
-    time_register_rtc_manager(rtc_update_time);
-
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Initialized");
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_INIT_END, 1, KERNEL_RTC_TIMER_FREQ);
-}
-
-void rtc_enable(void)
-{
-    uint32_t int_state;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_ENABLE_START, 0);
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    if(disabled_nesting > 0)
+    if(sDrvCtrl.disabledNesting > 0)
     {
-        --disabled_nesting;
+        --sDrvCtrl.disabledNesting;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME,
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
                  "Enable RTC (nesting %d, freq %d)",
-                 disabled_nesting,
-                 rtc_frequency);
-    if(disabled_nesting == 0 && rtc_frequency != 0)
+                 sDrvCtrl.disabledNesting,
+                 sDrvCtrl.selectedFrequency);
+    if(sDrvCtrl.disabledNesting == 0 && sDrvCtrl.selectedFrequency != 0)
     {
         kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 1);
     }
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_ENABLE_END, 0);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 }
 
-void rtc_disable(void)
+static void _rtcDisable(void)
 {
-    uint32_t int_state;
+    uint32_t intState;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_START, 1, disabled_nesting);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_START,
+                       1,
+                       sDrvCtrl.disabledNesting);
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    if(disabled_nesting < UINT32_MAX)
+    if(sDrvCtrl.disabledNesting < UINT32_MAX)
     {
-        ++disabled_nesting;
+        ++sDrvCtrl.disabledNesting;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Disable RTC (nesting %d)",
-                 disabled_nesting);
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Disable RTC (nesting %d)",
+                 sDrvCtrl.disabledNesting);
     kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 0);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_END, 1, disabled_nesting);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_END,
+                       1,
+                       sDrvCtrl.disabledNesting);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 }
 
-void rtc_set_frequency(const uint32_t frequency)
+static void _rtcSetFrequency(const uint32_t kFrequency)
 {
-    uint32_t    prev_rate;
+    uint32_t    prevRate;
     uint32_t    rate;
-    uint32_t    int_state;
+    uint32_t    intState;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_FREQ_START, 1, frequency);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_FREQ_START, 1, kFrequency);
 
-    if(frequency < RTC_MIN_FREQ || frequency > RTC_MAX_FREQ)
+    if(kFrequency < sDrvCtrl.frequencyLow ||
+       kFrequency > sDrvCtrl.frequencyHigh)
     {
-        rtc_frequency = 0;
+        sDrvCtrl.selectedFrequency = 0;
         KERNEL_ERROR("RTC timer frequency out of bound %u not in [%u:%u]\n",
-                     frequency,
-                     RTC_MIN_FREQ,
-                     RTC_MAX_FREQ);
+                     kFrequency,
+                     sDrvCtrl.frequencyLow,
+                     sDrvCtrl.frequencyHigh);
         return;
     }
 
     /* Choose the closest rate to the frequency */
-    if(frequency < 4)
+    if(kFrequency < 4)
     {
         rate = 15;
     }
-    else if(frequency < 8)
+    else if(kFrequency < 8)
     {
         rate = 14;
     }
-    else if(frequency < 16)
+    else if(kFrequency < 16)
     {
         rate = 13;
     }
-    else if(frequency < 32)
+    else if(kFrequency < 32)
     {
         rate = 12;
     }
-    else if(frequency < 64)
+    else if(kFrequency < 64)
     {
         rate = 11;
     }
-    else if(frequency < 128)
+    else if(kFrequency < 128)
     {
         rate = 10;
     }
-    else if(frequency < 256)
+    else if(kFrequency < 256)
     {
         rate = 9;
     }
-    else if(frequency < 512)
+    else if(kFrequency < 512)
     {
         rate = 8;
     }
-    else if(frequency < 1024)
+    else if(kFrequency < 1024)
     {
         rate = 7;
     }
-    else if(frequency < 2048)
+    else if(kFrequency < 2048)
     {
         rate = 6;
     }
-    else if(frequency < 4096)
+    else if(kFrequency < 4096)
     {
         rate = 5;
     }
-    else if(frequency < 8192)
+    else if(kFrequency < 8192)
     {
         rate = 4;
     }
@@ -356,41 +637,44 @@ void rtc_set_frequency(const uint32_t frequency)
         rate = 3;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
     /* Disable RTC IRQ */
-    rtc_disable();
+    _rtcDisable();
 
     /* Set clock frequency */
      /* Init CMOS IRQ8 rate */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, CMOS_COMM_PORT);
-    prev_rate = _cpu_inb(CMOS_DATA_PORT);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, CMOS_COMM_PORT);
-    _cpu_outb((prev_rate & 0xF0) | rate, CMOS_DATA_PORT);
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    prevRate = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    _cpu_outb((prevRate & 0xF0) | rate, sDrvCtrl.cpuDataPort);
 
-    rtc_frequency = (RTC_QUARTZ_FREQ >> (rate - 1));
+    sDrvCtrl.selectedFrequency = (sDrvCtrl.quartzFrequency >> (rate - 1));
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "New RTC rate set (%d: %dHz)",
+    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "New RTC rate set (%d: %dHz)",
                  rate,
-                 rtc_frequency);
-
-    EXIT_CRITICAL(int_state);
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_FREQ_END, 1, frequency);
+                 sDrvCtrl.selectedFrequency);
 
     /* Enable RTC IRQ */
-    rtc_enable();
+    _rtcEnable();
+
+    EXIT_CRITICAL(intState);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_FREQ_END, 1, kFrequency);
+
 }
 
-uint32_t rtc_get_frequency(void)
+static uint32_t _rtcGetFrequency(void)
 {
-    return rtc_frequency;
+    return sDrvCtrl.selectedFrequency;
 }
 
-OS_RETURN_E rtc_set_handler(void(*handler)(kernel_thread_t*))
+static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E err;
-    uint32_t    int_state;
+    uint32_t    intState;
 
 #ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_SET_HANDLER, 2,
@@ -402,119 +686,113 @@ OS_RETURN_E rtc_set_handler(void(*handler)(kernel_thread_t*))
                        (uintptr_t)0);
 #endif
 
-    if(handler == NULL)
+    if(pHandler == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    rtc_disable();
+    _rtcDisable();
 
     /* Remove the current handler */
     err = kernel_interrupt_remove_irq_handler(RTC_IRQ_LINE);
-    if(err != OS_NO_ERR)
+    if(err != OS_NO_ERR && err != OS_ERR_INTERRUPT_NOT_REGISTERED)
     {
-        EXIT_CRITICAL(int_state);
-        rtc_enable();
+        EXIT_CRITICAL(intState);
+        KERNEL_ERROR("Failed to remove RTC irqHandler. Error: %d\n", err);
+        _rtcEnable();
         return err;
     }
 
-    err = kernel_interrupt_register_irq_handler(RTC_IRQ_LINE, handler);
+    err = kernel_interrupt_register_irq_handler(RTC_IRQ_LINE, pHandler);
     if(err != OS_NO_ERR)
     {
-        EXIT_CRITICAL(int_state);
+        EXIT_CRITICAL(intState);
+        KERNEL_ERROR("Failed to register RTC irqHandler. Error: %d\n", err);
         return err;
     }
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "New RTC handler set (0x%p)",
-                 handler);
+                 pHandler);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 
-    rtc_enable();
+    _rtcEnable();
 
     return err;
 }
 
-/**
- * @brief Sets the time elasped in ns.
- *
- * @details Returns the time elasped in ns. The timer can be get with the
- * rtc_get_time_ns function.
- *
- * @param[in] time_ns The time in nanoseconds to set.
- */
-void rtc_set_time_ns(const uint64_t time_ns);
-
-OS_RETURN_E rtc_remove_handler(void)
+static OS_RETURN_E _rtcRemoveHandler(void)
 {
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Default RTC handler set 0x%p",
-                 _dummy_handler);
+                 _rtcDummyHandler);
 
 #ifdef ARCH_64_BITS
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_REMOVE_HANDLER, 2,
-                       (uintptr_t)_dummy_handler & 0xFFFFFFFF,
-                       (uintptr_t)_dummy_handler >> 32);
+                       (uintptr_t)_rtcDummyHandler & 0xFFFFFFFF,
+                       (uintptr_t)_rtcDummyHandler >> 32);
 #else
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_REMOVE_HANDLER, 2,
-                       (uintptr_t)_dummy_handler & 0xFFFFFFFF,
+                       (uintptr_t)_rtcDummyHandler & 0xFFFFFFFF,
                        (uintptr_t)0);
 #endif
 
-    return rtc_set_handler(_dummy_handler);
+    return _rtcSetHandler(_rtcDummyHandler);
 }
 
-uint32_t rtc_get_current_daytime(void)
+static time_t _rtcGetDaytime(void)
 {
-    return day_time;
+    time_t retTime;
+    date_t retDate;
+    _rtcUpdateTime(&retDate, &retTime);
+    return retTime;
 }
 
-date_t rtc_get_current_date(void)
+static date_t _rtcGetDate(void)
 {
-    return date;
+    time_t retTime;
+    date_t retDate;
+    _rtcUpdateTime(&retDate, &retTime);
+    return retDate;
 }
 
-void rtc_update_time(void)
+static void _rtcUpdateTime(date_t* pDate, time_t* pTime)
 {
-    uint8_t seconds;
-    uint8_t minutes;
-    uint32_t hours;
     uint8_t century;
-    uint8_t reg_b;
+    uint8_t regB;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_UPDATE_TIME_START, 0);
 
-    /* Set time */
     /* Select CMOS seconds register and read */
-    _cpu_outb(CMOS_SECONDS_REGISTER, CMOS_COMM_PORT);
-    seconds = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_SECONDS_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->seconds = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS minutes register and read */
-    _cpu_outb(CMOS_MINUTES_REGISTER, CMOS_COMM_PORT);
-    minutes = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_MINUTES_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->minutes = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS hours register and read */
-    _cpu_outb(CMOS_HOURS_REGISTER, CMOS_COMM_PORT);
-    hours = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_HOURS_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->hours = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS day register and read */
-    _cpu_outb(CMOS_DAY_REGISTER, CMOS_COMM_PORT);
-    date.day = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_DAY_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->day = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS month register and read */
-    _cpu_outb(CMOS_MONTH_REGISTER, CMOS_COMM_PORT);
-    date.month = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_MONTH_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->month = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS years register and read */
-    _cpu_outb(CMOS_YEAR_REGISTER, CMOS_COMM_PORT);
-    date.year = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_YEAR_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->year = _cpu_inb(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS century register and read */
     if(CMOS_CENTURY_REGISTER != 0)
     {
-        _cpu_outb(CMOS_CENTURY_REGISTER, CMOS_COMM_PORT);
-        century = _cpu_inb(CMOS_DATA_PORT);
+        _cpu_outb(CMOS_CENTURY_REGISTER, sDrvCtrl.cpuCommPort);
+        century = _cpu_inb(sDrvCtrl.cpuDataPort);
     }
     else
     {
@@ -522,18 +800,19 @@ void rtc_update_time(void)
     }
 
     /* Convert BCD to binary if necessary */
-    _cpu_outb(CMOS_REG_B, CMOS_COMM_PORT);
-    reg_b = _cpu_inb(CMOS_DATA_PORT);
+    _cpu_outb(CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    regB = _cpu_inb(sDrvCtrl.cpuDataPort);
 
-    if((reg_b & 0x04) == 0)
+    if((regB & 0x04) == 0)
     {
-        seconds = (seconds & 0x0F) + ((seconds / 16) * 10);
-        minutes = (minutes & 0x0F) + ((minutes / 16) * 10);
-        hours = ((hours & 0x0F) + (((hours & 0x70) / 16) * 10)) |
-            (hours & 0x80);
-        date.day = (date.day & 0x0F) + ((date.day / 16) * 10);
-        date.month = (date.month & 0x0F) + ((date.month / 16) * 10);
-        date.year = (date.year & 0x0F) + ((date.year / 16) * 10);
+        pTime->seconds = (pTime->seconds & 0x0F) + ((pTime->seconds / 16) * 10);
+        pTime->minutes = (pTime->minutes & 0x0F) + ((pTime->minutes / 16) * 10);
+        pTime-> hours = ((pTime->hours & 0x0F) +
+                         (((pTime->hours & 0x70) / 16) * 10)) |
+                         (pTime->hours & 0x80);
+        pDate->day = (pDate->day & 0x0F) + ((pDate->day / 16) * 10);
+        pDate->month = (pDate->month & 0x0F) + ((pDate->month / 16) * 10);
+        pDate->year = (pDate->year & 0x0F) + ((pDate->year / 16) * 10);
 
         if(CMOS_CENTURY_REGISTER != 0)
         {
@@ -542,43 +821,44 @@ void rtc_update_time(void)
     }
 
     /*  Convert to 24H */
-    if((reg_b & 0x02) == 0 && (hours & 0x80) >= 1)
+    if((regB & 0x02) == 0 && (pTime->hours & 0x80) >= 1)
     {
-        hours = ((hours & 0x7F) + 12) % 24;
+        pTime->hours = ((pTime->hours & 0x7F) + 12) % 24;
     }
 
     /* Get year */
     if(CMOS_CENTURY_REGISTER != 0)
     {
-        date.year += century * 100;
+        pDate->year += century * 100;
     }
     else
     {
-        date.year = date.year + 2000;
+        pDate->year = pDate->year + 2000;
     }
 
     /* Compute week day and day time */
-    date.weekday = ((date.day + date.month + date.year + date.year / 4)
-            + 1) % 7 + 1;
-    day_time = seconds + 60 * minutes + 3600 * hours;
-
-    /* Clear C Register */
-    _cpu_outb(CMOS_REG_C, CMOS_COMM_PORT);
-    _cpu_inb(CMOS_DATA_PORT);
+    pDate->weekday = ((pDate->day + pDate->month + pDate->year + pDate->year /
+                       4)
+                       + 1) % 7 + 1;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_UPDATE_TIME_END, 0);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Updated RTC");
 }
 
-uint32_t rtc_get_irq(void)
+static void _rtcAckowledgeInt(void)
+{
+    /* Clear C Register */
+    _cpu_outb(CMOS_REG_C, sDrvCtrl.cpuCommPort);
+    _cpu_inb(sDrvCtrl.cpuDataPort);
+}
+
+static uint32_t _rtcGetIrq(void)
 {
     return RTC_IRQ_LINE;
 }
 
-const kernel_timer_t* rtc_get_driver(void)
-{
-    return &rtc_driver;
-}
+/***************************** DRIVER REGISTRATION ****************************/
+DRIVERMGR_REG(x86RTCDriver);
 
 /************************************ EOF *************************************/

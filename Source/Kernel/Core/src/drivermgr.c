@@ -164,28 +164,23 @@ static void walkFdtNodes(const fdt_node_t* pkNode)
 void driverManagerInit(void)
 {
     const fdt_node_t* pFdtRootNode;
-
-#if DEVMGR_DEBUG_ENABLED
     driver_t* pDriver;
     uintptr_t driverTableCursor;
 
     /* Display list of registered drivers */
     driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
     pDriver = *(driver_t**)driverTableCursor;
-    KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED, MODULE_NAME, "List of drivers");
+    KERNEL_INFO("List of registered drivers\n");
     while(pDriver != NULL)
     {
-        KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "%s - %s",
+        KERNEL_INFO("%s - %s\n",
                      pDriver->pName,
                      pDriver->pDescription);
         driverTableCursor += sizeof(uintptr_t);
         pDriver = *(driver_t**)driverTableCursor;
     }
 
-    KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED, MODULE_NAME, "------------------------");
-#endif
+    KERNEL_INFO("------------------------\n");
 
     /* Get the FDT root node and walk it to register drivers */
     pFdtRootNode = fdtGetRoot();

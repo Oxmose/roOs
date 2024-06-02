@@ -488,9 +488,9 @@ static void _pitSetFrequency(const uint32_t kFreq)
 
     /* Set clock frequency */
     tickFreq = (uint16_t)(sDrvCtrl.quartzFrequency / kFreq);
-    _cpu_outb(PIT_COMM_SET_FREQ, sDrvCtrl.cpuCommPort);
-    _cpu_outb(tickFreq & 0x00FF, sDrvCtrl.cpuDataPort);
-    _cpu_outb(tickFreq >> 8, sDrvCtrl.cpuDataPort);
+    _cpuOutB(PIT_COMM_SET_FREQ, sDrvCtrl.cpuCommPort);
+    _cpuOutB(tickFreq & 0x00FF, sDrvCtrl.cpuDataPort);
+    _cpuOutB(tickFreq >> 8, sDrvCtrl.cpuDataPort);
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,

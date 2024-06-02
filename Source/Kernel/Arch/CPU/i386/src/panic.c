@@ -23,16 +23,16 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <cpu_interrupt.h>       /* Interrupt management */
+#include <cpu.h>              /* CPU management */
+#include <stdint.h>           /* Generic int types */
+#include <string.h>           /* Memset */
+#include <console.h>          /* Console service */
 #include <vgatext.h>          /* VGA console driver*/
-#include <kerneloutput.h>        /* Kernel output methods */
-#include <console.h>              /* Console service */
-#include <stdint.h>               /* Generic int types */
-#include <cpu.h>                  /* CPU management */
-#include <string.h>               /* Memset */
-#include <ctrl_block.h>           /* Thread's control block */
-#include <interrupts.h>           /* Interrupts manager */
-#include <time_mgt.h>             /* Time management */
+#include <time_mgt.h>         /* Time management */
+#include <ctrl_block.h>       /* Thread's control block */
+#include <interrupts.h>       /* Interrupts manager */
+#include <kerneloutput.h>     /* Kernel output methods */
+#include <cpu_interrupt.h>    /* Interrupt management */
 
 /* Configuration files */
 #include <config.h>
@@ -72,19 +72,19 @@
 
 /************************** Static global variables ***************************/
 /** @brief Stores the current kernel panic error code. */
-static uint32_t panic_code = 0;
+static uint32_t sPanicCode = 0;
 
 /** @brief Stores the line at which the kernel panic was called. */
-static uint32_t panic_line;
+static uint32_t sPanicLine;
 
 /** @brief Stores the file from which the panic was called. */
-static const char* panic_file;
+static const char* skpPanicFile;
 
 /** @brief Stores the module related to the panic. */
-static const char* panic_module;
+static const char* skpPanicModule;
 
 /** @brief Stores the message related to the panic. */
-static const char* panic_msg;
+static const char* skpPanicMsg;
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -97,9 +97,9 @@ static const char* panic_msg;
  * title, the interrupt number, the error code and the error string that caused
  * the panic.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] kpVCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_panic_header(const virtual_cpu_t* vcpu);
+static void _printHeader(const virtual_cpu_t* kpVCpu);
 
 /**
  * @brief Prints the CPU state at the moment of the panic.
@@ -107,9 +107,9 @@ static void _print_panic_header(const virtual_cpu_t* vcpu);
  * @details Prints the CPU state at the moment of the panic. All CPU registers
  * are dumped.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] kpVCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_state(const virtual_cpu_t* vcpu);
+static void _printCpuState(const virtual_cpu_t* kpVCpu);
 
 /**
  * @brief Prints the CPU flags at the moment of the panic.
@@ -117,9 +117,9 @@ static void _print_cpu_state(const virtual_cpu_t* vcpu);
  * @details Prints the CPU flags at the moment of the panic. The flags are
  * pretty printed for better reading.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] kpVCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_flags(const virtual_cpu_t* vcpu);
+static void _printCpuFlags(const virtual_cpu_t* kpVCpu);
 
 /**
  * @brief Prints the stack frame rewind at the moment of the panic.
@@ -128,21 +128,21 @@ static void _print_cpu_flags(const virtual_cpu_t* vcpu);
  * will be unwinded and the symbols printed based on the information passed by
  * multiboot at initialization time.
  */
-static void _print_stack_trace(void);
+static void _printStackTrace(void);
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _print_panic_header(const virtual_cpu_t* vcpu)
+static void _printHeader(const virtual_cpu_t* kpVCpu)
 {
-    const int_context_t* int_state;
+    const int_context_t* kpIntState;
 
-    int_state = &vcpu->int_context;
+    kpIntState = &kpVCpu->intContext;
 
     kernel_printf("##############################    KERNEL PANIC    ##########"
                     "####################\n");
-    switch(int_state->int_id)
+    switch(kpIntState->intId)
     {
         case 0:
             kernel_printf("Division by zero                        ");
@@ -215,20 +215,21 @@ static void _print_panic_header(const virtual_cpu_t* vcpu)
     }
 
     kernel_printf("          INT ID: 0x%02X                 \n",
-                  int_state->int_id);
+                  kpIntState->intId);
     kernel_printf("Instruction [EIP]: 0x%p                     Error code: "
-                    "0x%X       \n", int_state->eip, int_state->error_code);
-    kernel_printf("                                                            "
-                    "                   \n");
+                    "0x%X       \n", 
+                    kpIntState->eip, 
+                    kpIntState->errorCode);
+    kernel_printf("\n\n");
 }
 
-static void _print_cpu_state(const virtual_cpu_t* vcpu)
+static void _printCpuState(const virtual_cpu_t* kpVCpu)
 {
-    const cpu_state_t*   cpu_state;
-    const int_context_t* int_state;
+    const cpu_state_t*   cpuState;
+    const int_context_t* intState;
 
-    int_state = &vcpu->int_context;
-    cpu_state = &vcpu->vcpu;
+    intState = &kpVCpu->intContext;
+    cpuState = &kpVCpu->vCpu;
 
     uint32_t CR0;
     uint32_t CR2;
@@ -249,50 +250,57 @@ static void _print_cpu_state(const virtual_cpu_t* vcpu)
     : "%eax"
     );
 
-    kernel_printf("EAX: 0x%p | EBX: 0x%p | ECX: 0x%p | EDX: "
-                    "0x%p  \n", cpu_state->eax, cpu_state->ebx,
-                    cpu_state->ecx,  cpu_state->edx);
-    kernel_printf("ESI: 0x%p | EDI: 0x%p | EBP: 0x%p | ESP: "
-                    "0x%p  \n", cpu_state->esi, cpu_state->edi,
-                    cpu_state->ebp, cpu_state->esp);
-    kernel_printf("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p | CR4: "
-                    "0x%p  \n", CR0, CR2, CR3, CR4);
+    kernel_printf("EAX: 0x%p | EBX: 0x%p | ECX: 0x%p | EDX: 0x%p  \n", 
+                  cpuState->eax, 
+                  cpuState->ebx,
+                  cpuState->ecx,  
+                  cpuState->edx);
+    kernel_printf("ESI: 0x%p | EDI: 0x%p | EBP: 0x%p | ESP: 0x%p  \n", 
+                  cpuState->esi, 
+                  cpuState->edi,
+                  cpuState->ebp, 
+                  cpuState->esp);
+    kernel_printf("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p | CR4: 0x%p  \n", 
+                  CR0, 
+                  CR2, 
+                  CR3, 
+                  CR4);
     kernel_printf("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
                   "FS: 0x%04X | GS: 0x%04X\n",
-                    int_state->cs & 0xFFFF,
-                    cpu_state->ds & 0xFFFF,
-                    cpu_state->ss & 0xFFFF,
-                    cpu_state->es & 0xFFFF ,
-                    cpu_state->fs & 0xFFFF ,
-                    cpu_state->gs & 0xFFFF);
+                  intState->cs & 0xFFFF,
+                  cpuState->ds & 0xFFFF,
+                  cpuState->ss & 0xFFFF,
+                  cpuState->es & 0xFFFF ,
+                  cpuState->fs & 0xFFFF ,
+                  cpuState->gs & 0xFFFF);
 }
 
-static void _print_cpu_flags(const virtual_cpu_t* vcpu)
+static void _printCpuFlags(const virtual_cpu_t* kpVCpu)
 {
-    const int_context_t* int_state;
+    const int_context_t* intState;
 
-    int_state = &vcpu->int_context;
+    intState = &kpVCpu->intContext;
 
-    int8_t cf_f = (int_state->eflags & 0x1);
-    int8_t pf_f = (int_state->eflags & 0x4) >> 2;
-    int8_t af_f = (int_state->eflags & 0x10) >> 4;
-    int8_t zf_f = (int_state->eflags & 0x40) >> 6;
-    int8_t sf_f = (int_state->eflags & 0x80) >> 7;
-    int8_t tf_f = (int_state->eflags & 0x100) >> 8;
-    int8_t if_f = (int_state->eflags & 0x200) >> 9;
-    int8_t df_f = (int_state->eflags & 0x400) >> 10;
-    int8_t of_f = (int_state->eflags & 0x800) >> 11;
-    int8_t nf_f = (int_state->eflags & 0x4000) >> 14;
-    int8_t rf_f = (int_state->eflags & 0x10000) >> 16;
-    int8_t vm_f = (int_state->eflags & 0x20000) >> 17;
-    int8_t ac_f = (int_state->eflags & 0x40000) >> 18;
-    int8_t id_f = (int_state->eflags & 0x200000) >> 21;
-    int8_t iopl0_f = (int_state->eflags & 0x1000) >> 12;
-    int8_t iopl1_f = (int_state->eflags & 0x2000) >> 13;
-    int8_t vif_f = (int_state->eflags & 0x8000) >> 19;
-    int8_t vip_f = (int_state->eflags & 0x100000) >> 20;
+    int8_t cf_f = (intState->eflags & 0x1);
+    int8_t pf_f = (intState->eflags & 0x4) >> 2;
+    int8_t af_f = (intState->eflags & 0x10) >> 4;
+    int8_t zf_f = (intState->eflags & 0x40) >> 6;
+    int8_t sf_f = (intState->eflags & 0x80) >> 7;
+    int8_t tf_f = (intState->eflags & 0x100) >> 8;
+    int8_t if_f = (intState->eflags & 0x200) >> 9;
+    int8_t df_f = (intState->eflags & 0x400) >> 10;
+    int8_t of_f = (intState->eflags & 0x800) >> 11;
+    int8_t nf_f = (intState->eflags & 0x4000) >> 14;
+    int8_t rf_f = (intState->eflags & 0x10000) >> 16;
+    int8_t vm_f = (intState->eflags & 0x20000) >> 17;
+    int8_t ac_f = (intState->eflags & 0x40000) >> 18;
+    int8_t id_f = (intState->eflags & 0x200000) >> 21;
+    int8_t iopl0_f = (intState->eflags & 0x1000) >> 12;
+    int8_t iopl1_f = (intState->eflags & 0x2000) >> 13;
+    int8_t vif_f = (intState->eflags & 0x8000) >> 19;
+    int8_t vip_f = (intState->eflags & 0x100000) >> 20;
 
-    kernel_printf("EFLAGS: 0x%p | ", int_state->eflags);
+    kernel_printf("EFLAGS: 0x%p | ", intState->eflags);
 
     if(cf_f != 0)
     {
@@ -365,24 +373,24 @@ static void _print_cpu_flags(const virtual_cpu_t* vcpu)
     kernel_printf("\n");
 }
 
-static void _print_stack_trace(void)
+static void _printStackTrace(void)
 {
     size_t        i;
-    uintptr_t*    call_addr;
-    uintptr_t*    last_ebp;
+    uintptr_t*    callAddr;
+    uintptr_t*    lastEBP;
     char*         symbol;
 
     /* Get ebp */
-    __asm__ __volatile__ ("mov %%ebp, %0\n\t" : "=m" (last_ebp));
+    __asm__ __volatile__ ("mov %%ebp, %0\n\t" : "=m" (lastEBP));
 
     /* Get the return address */
-    call_addr = *(uintptr_t**)(last_ebp + 1);
-    for(i = 0; i < STACK_TRACE_SIZE && call_addr != NULL; ++i)
+    callAddr = *(uintptr_t**)(lastEBP + 1);
+    for(i = 0; i < STACK_TRACE_SIZE && callAddr != NULL; ++i)
     {
         /* Get the associated symbol */
         symbol = NULL;
 
-        kernel_printf("[%u] 0x%p in %s", i, call_addr,
+        kernel_printf("[%u] 0x%p in %s", i, callAddr,
                       symbol == NULL ? "[NO_SYMBOL]" : symbol);
         if(i % 2 == 0)
         {
@@ -393,80 +401,84 @@ static void _print_stack_trace(void)
             kernel_printf("\n");
         }
 
-        last_ebp  = (uintptr_t*)*last_ebp;
-        call_addr = *(uintptr_t**)(last_ebp + 1);
+        lastEBP  = (uintptr_t*)*lastEBP;
+        callAddr = *(uintptr_t**)(lastEBP + 1);
     }
 
 
 }
 
-void panic_handler(kernel_thread_t* curr_thread)
+void kernelPanicHandler(kernel_thread_t* pCurrThread)
 {
-    colorscheme_t panic_scheme;
-    cursor_t      panic_cursor;
+    colorscheme_t consoleScheme;
+    cursor_t      consoleCursor;
 
-    uint32_t cpu_id;
+    uint32_t cpuId;
 
     uint32_t time;
     uint32_t hours;
     uint32_t minutes;
     uint32_t seconds;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_START, 1, panic_code);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_START, 1, sPanicCode);
 
     kernel_interrupt_disable();
 
-    time    = 0;
+    time    = 0; // TODO: Get RTC time.
     hours   = time / 3600;
     minutes = (time / 60) % 60;
     seconds = time % 60;
 
-    cpu_id = 0;
+    cpuId = 0; // TODO: Get CPU id
 
-    panic_scheme.background = BG_BLACK;
-    panic_scheme.foreground = FG_CYAN;
-    panic_scheme.vga_color  = TRUE;
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_CYAN;
+    consoleScheme.vgaColor   = TRUE;
 
-    consoleSetColorScheme(&panic_scheme);
+    consoleSetColorScheme(&consoleScheme);
 
     /* Clear screen */
     consoleClear();
-    panic_cursor.x = 0;
-    panic_cursor.y = 0;
-    consoleRestoreCursor(&panic_cursor);
+    consoleCursor.x = 0;
+    consoleCursor.y = 0;
+    consoleRestoreCursor(&consoleCursor);
 
-    _print_panic_header(&curr_thread->v_cpu);
-    _print_cpu_state(&curr_thread->v_cpu);
-    _print_cpu_flags(&curr_thread->v_cpu);
+    _printHeader(&pCurrThread->v_cpu);
+    _printCpuState(&pCurrThread->v_cpu);
+    _printCpuFlags(&pCurrThread->v_cpu);
 
     kernel_printf("\n--------------------------------- INFORMATION ------------"
                     "----------------------\n");
     kernel_printf("Core ID: %u | Time: %02u:%02u:%02u [%llu]\n"
-                  "Thread: %s (%u) | Process: %s (%u)\n", cpu_id,
-                  hours, minutes, seconds, time_get_current_uptime(),
-                  curr_thread->name,
-                  curr_thread->tid,
-                  "NO_PROCESS",
-                  0);
+                  "Thread: %s (%u) | Process: %s (%u)\n",
+                  cpuId,
+                  hours, 
+                  minutes, 
+                  seconds, 
+                  time_get_current_uptime(),
+                  pCurrThread->name,
+                  pCurrThread->tid,
+                  "NO_PROCESS", // TODO: Process name
+                  0); // TODO: Process ID
 
-    kernel_printf("File: %s at line %d\n", panic_file, panic_line);
+    kernel_printf("File: %s at line %d\n", skpPanicFile, sPanicLine);
 
-    if(strlen(panic_module) != 0)
+    if(strlen(skpPanicModule) != 0)
     {
-        kernel_printf("[%s] | ", panic_module);
+        kernel_printf("[%s] | ", skpPanicModule);
     }
-    kernel_printf("%s (%d)\n\n", panic_msg, panic_code);
+    kernel_printf("%s (%d)\n\n", skpPanicMsg, sPanicCode);
 
-    _print_stack_trace();
+    _printStackTrace();
 
     /* Hide cursor */
-    panic_scheme.background = BG_BLACK;
-    panic_scheme.foreground = FG_BLACK;
-    panic_scheme.vga_color  = TRUE;
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_BLACK;
+    consoleScheme.vgaColor   = TRUE;
 
-    consoleSetColorScheme(&panic_scheme);
+    consoleSetColorScheme(&consoleScheme);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, panic_code);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, sPanicCode);
 
     TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
                             TRUE,
@@ -482,36 +494,36 @@ void panic_handler(kernel_thread_t* curr_thread)
     while(1)
     {
         kernel_interrupt_disable();
-        _cpu_hlt();
+        _cpuHalt();
     }
 }
 
-void kernel_panic(const uint32_t error_code,
-                  const char* module,
-                  const char* msg,
-                  const char* file,
-                  const size_t line)
+void kernelPanic(const uint32_t kErrorCode,
+                 const char*    kpModule,
+                 const char*    kpMsg,
+                 const char*    kpFile,
+                 const size_t   kLine)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, error_code);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, kErrorCode);
 
     /* We don't need interrupt anymore */
     kernel_interrupt_disable();
 
     /* Set the parameters */
-    panic_code   = error_code;
-    panic_module = module;
-    panic_msg    = msg;
-    panic_file   = file;
-    panic_line   = line;
+    sPanicCode     = kErrorCode;
+    skpPanicModule = kpModule;
+    skpPanicMsg    = kpMsg;
+    skpPanicFile   = kpFile;
+    sPanicLine     = kLine;
 
     /* Call the panic formater */
-    cpu_raise_interrupt(PANIC_INT_LINE);
+    cpuRaiseInterrupt(PANIC_INT_LINE);
 
     /* We should never get here, but just in case */
     while(1)
     {
         kernel_interrupt_disable();
-        _cpu_hlt();
+        _cpuHalt();
     }
 }
 

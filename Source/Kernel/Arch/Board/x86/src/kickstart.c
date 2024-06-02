@@ -23,19 +23,15 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <console.h>        /* Kernel console */
+#include <cpu.h>           /* CPU manager */
+#include <uart.h>          /* UART driver */
+#include <panic.h>         /* Kernel Panic */
+#include <kheap.h>         /* Kernel heap */
+#include <devtree.h>       /* Device tree manager */
+#include <drivermgr.h>     /* Driver manager */
+#include <interrupts.h>    /* Interrupt manager */
+#include <exceptions.h>    /* Exception manager */
 #include <kerneloutput.h>  /* Kernel logger */
-#include <cpu.h>            /* CPU manager */
-#include <panic.h>          /* Kernel Panic */
-#include <uart.h>           /* UART driver */
-#include <interrupts.h>     /* Interrupt manager */
-#include <exceptions.h>     /* Exception manager */
-#include <pic.h>            /* PIC driver */
-#include <pit.h>            /* PIT driver */
-#include <rtc.h>            /* RTC driver */
-#include <kheap.h>          /* Kernel heap */
-#include <devtree.h>        /* Device tree manager */
-#include <drivermgr.h>      /* Driver manager */
 
 /* Configuration files */
 #include <config.h>
@@ -81,19 +77,6 @@
 }
 
 /*******************************************************************************
- * GLOBAL VARIABLES
- ******************************************************************************/
-
-/************************* Imported global variables **************************/
-extern uintptr_t _KERNEL_DEV_TREE_BASE;
-
-/************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
-/* None */
-
-/*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
@@ -107,6 +90,21 @@ extern uintptr_t _KERNEL_DEV_TREE_BASE;
  * should be able to catch the return as an error.
  */
 void kickstart(void);
+
+/*******************************************************************************
+ * GLOBAL VARIABLES
+ ******************************************************************************/
+
+/************************* Imported global variables **************************/
+
+/** @brief Kernel device tree loading virtual address in memory */
+extern uintptr_t _KERNEL_DEV_TREE_BASE;
+
+/************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
+/* None */
 
 /*******************************************************************************
  * FUNCTIONS
@@ -135,7 +133,7 @@ void kickstart(void)
     KERNEL_INFO("UTK Kickstart\n");
 
     /* Initialize the CPU */
-    cpu_init();
+    cpuInit();
     KERNEL_SUCCESS("CPU initialized\n");
 
     /* Initialize interrupts manager */
@@ -159,7 +157,7 @@ void kickstart(void)
     KERNEL_SUCCESS("Drivers initialized\n");
 
     /* Validate architecture */
-    validate_architecture();
+    cpuValidateArchitecture();
     KERNEL_SUCCESS("Architecture validated\n");
 
 #if TEST_INTERRUPT_ENABLED
@@ -188,7 +186,7 @@ void kickstart(void)
         {
             kernel_printf(".");
         }
-        _cpu_hlt();
+        _cpuHalt();
     }
 #endif
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);

@@ -71,10 +71,10 @@
  *
  * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @param[in-out] lock The lock to lock.
+ * @param[in, out] lock The lock to lock.
 */
 #define KERNEL_SPINLOCK_LOCK(LOCK) {    \
-    cpu_lock_spinlock(&LOCK);           \
+    cpuSpinlockAcquire(&LOCK);           \
 }
 
 /**
@@ -85,7 +85,7 @@
  * @param[out] lock The lock to unlock.
 */
 #define KERNEL_SPINLOCK_UNLOCK(LOCK) {  \
-    cpu_unlock_spinlock(&LOCK);         \
+    cpuSpinlockRelease(&LOCK);         \
 }
 
 /**
@@ -124,9 +124,9 @@
  *
  * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @param[in-out] lock The pointer to the lock to lock.
+ * @param[in, out] lock The pointer to the lock to lock.
 */
-void cpu_lock_spinlock(volatile uint32_t * lock);
+void cpuSpinlockAcquire(volatile uint32_t * lock);
 
 /**
  * @brief Unlocks a spinlock.
@@ -135,7 +135,7 @@ void cpu_lock_spinlock(volatile uint32_t * lock);
  *
  * @param[out] lock The pointer to the lock to unlock.
 */
-void cpu_unlock_spinlock(volatile uint32_t * lock);
+void cpuSpinlockRelease(volatile uint32_t * lock);
 
 
 #endif /* #ifndef __X86_64_CRITICAL_H_ */

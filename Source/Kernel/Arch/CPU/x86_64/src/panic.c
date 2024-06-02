@@ -96,9 +96,9 @@ static const char* panic_msg;
  * title, the interrupt number, the error code and the error string that caused
  * the panic.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] vCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_panic_header(const virtual_cpu_t* vcpu);
+static void _print_panic_header(const virtual_cpu_t* vCpu);
 
 /**
  * @brief Prints the CPU state at the moment of the panic.
@@ -106,9 +106,9 @@ static void _print_panic_header(const virtual_cpu_t* vcpu);
  * @details Prints the CPU state at the moment of the panic. All CPU registers
  * are dumped.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] vCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_state(const virtual_cpu_t* vcpu);
+static void _print_cpu_state(const virtual_cpu_t* vCpu);
 
 /**
  * @brief Prints the CPU flags at the moment of the panic.
@@ -116,9 +116,9 @@ static void _print_cpu_state(const virtual_cpu_t* vcpu);
  * @details Prints the CPU flags at the moment of the panic. The flags are
  * pretty printed for better reading.
  *
- * @param[in] vcpu The pointer to the VCPU state at the moment of the panic.
+ * @param[in] vCpu The pointer to the VCPU state at the moment of the panic.
  */
-static void _print_cpu_flags(const virtual_cpu_t* vcpu);
+static void _print_cpu_flags(const virtual_cpu_t* vCpu);
 
 /**
  * @brief Prints the stack frame rewind at the moment of the panic.
@@ -133,15 +133,15 @@ static void _print_stack_trace(void);
  * FUNCTIONS
  ******************************************************************************/
 
-static void _print_panic_header(const virtual_cpu_t* vcpu)
+static void _print_panic_header(const virtual_cpu_t* vCpu)
 {
     const int_context_t* int_state;
 
-    int_state = &vcpu->int_context;
+    int_state = &vCpu->intContext;
 
     kernel_printf("##############################    KERNEL PANIC    ##########"
                     "####################\n");
-    switch(int_state->int_id)
+    switch(int_state->intId)
     {
         case 0:
             kernel_printf("Division by zero                        ");
@@ -214,20 +214,20 @@ static void _print_panic_header(const virtual_cpu_t* vcpu)
     }
 
     kernel_printf("          INT ID: 0x%02X                 \n",
-                  int_state->int_id);
+                  int_state->intId);
     kernel_printf("Instruction [EIP]: 0x%p             Error code: "
-                    "0x%X       \n", int_state->rip, int_state->error_code);
+                    "0x%X       \n", int_state->rip, int_state->errorCode);
     kernel_printf("                                                            "
                     "                   \n");
 }
 
-static void _print_cpu_state(const virtual_cpu_t* vcpu)
+static void _print_cpu_state(const virtual_cpu_t* vCpu)
 {
     const cpu_state_t*   cpu_state;
     const int_context_t* int_state;
 
-    int_state = &vcpu->int_context;
-    cpu_state = &vcpu->vcpu;
+    int_state = &vCpu->intContext;
+    cpu_state = &vCpu->vCpu;
 
     uint64_t CR0;
     uint64_t CR2;
@@ -271,11 +271,11 @@ static void _print_cpu_state(const virtual_cpu_t* vcpu)
                     cpu_state->gs & 0xFFFF);
 }
 
-static void _print_cpu_flags(const virtual_cpu_t* vcpu)
+static void _print_cpu_flags(const virtual_cpu_t* vCpu)
 {
     const int_context_t* int_state;
 
-    int_state = &vcpu->int_context;
+    int_state = &vCpu->intContext;
 
     int8_t cf_f = (int_state->rflags & 0x1);
     int8_t pf_f = (int_state->rflags & 0x4) >> 2;
@@ -401,7 +401,7 @@ static void _print_stack_trace(void)
     }
 }
 
-void panic_handler(kernel_thread_t* curr_thread)
+void kernelPanicHandler(kernel_thread_t* curr_thread)
 {
     colorscheme_t panic_scheme;
     cursor_t      panic_cursor;
@@ -426,7 +426,7 @@ void panic_handler(kernel_thread_t* curr_thread)
 
     panic_scheme.background = BG_BLACK;
     panic_scheme.foreground = FG_CYAN;
-    panic_scheme.vga_color  = TRUE;
+    panic_scheme.vgaColor  = TRUE;
 
     consoleSetColorScheme(panic_scheme);
 
@@ -463,7 +463,7 @@ void panic_handler(kernel_thread_t* curr_thread)
     /* Hide cursor */
     panic_scheme.background = BG_BLACK;
     panic_scheme.foreground = FG_BLACK;
-    panic_scheme.vga_color  = TRUE;
+    panic_scheme.vgaColor  = TRUE;
 
     consoleSetColorScheme(panic_scheme);
 
@@ -483,36 +483,36 @@ void panic_handler(kernel_thread_t* curr_thread)
     while(1)
     {
         kernel_interrupt_disable();
-        _cpu_hlt();
+        _cpuHalt();
     }
 }
 
-void kernel_panic(const uint32_t error_code,
+void kernelPanic(const uint32_t errorCode,
                   const char* module,
                   const char* msg,
                   const char* file,
                   const size_t line)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, error_code);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, errorCode);
 
     /* We don't need interrupt anymore */
     kernel_interrupt_disable();
 
     /* Set the parameters */
-    panic_code   = error_code;
+    panic_code   = errorCode;
     panic_module = module;
     panic_msg    = msg;
     panic_file   = file;
     panic_line   = line;
 
     /* Call the panic formater */
-    cpu_raise_interrupt(PANIC_INT_LINE);
+    cpuRaiseInterrupt(PANIC_INT_LINE);
 
     /* We should never get here, but just in case */
     while(1)
     {
         kernel_interrupt_disable();
-        _cpu_hlt();
+        _cpuHalt();
     }
 }
 

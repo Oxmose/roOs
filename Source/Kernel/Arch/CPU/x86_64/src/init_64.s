@@ -52,8 +52,7 @@ global __kinit_x86_64
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
 ;-------------------------------------------------------------------------------
-global _kernel_multiboot_ptr
-global _kernel_cpu_count
+; None
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -85,7 +84,7 @@ __bss_init:
 
     ; Update the booted CPU count
     mov eax, 1
-    mov rbx, _kernel_cpu_count
+    mov rbx, _bootedCPUCount
     mov [rbx], eax
 
     ; Enable SSE
@@ -132,7 +131,7 @@ _kernel_multiboot_ptr:
     dd 0x00000000
     dd 0x00000000
 
-_kernel_cpu_count:
+_bootedCPUCount:
     dd 0x00000000
 
 _kinit_end_of_line:

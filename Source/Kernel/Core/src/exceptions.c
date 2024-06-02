@@ -50,6 +50,9 @@
 /** @brief Current module's name */
 #define MODULE_NAME "EXCEPTIONS"
 
+/** @brief Divide by zero exception line. */
+#define DIV_BY_ZERO_LINE           0x00
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -103,7 +106,7 @@ extern custom_handler_t kernel_interrupt_handlers[INT_ENTRY_COUNT];
  * @details Handles a divide by zero exception raised by the cpu. The thread
  * will just be killed.
  *
- * @param[in-out] current_thread The current thread at the moment of the division
+ * @param[in, out] current_thread The current thread at the moment of the division
  * by zero.
  */
 static void _div_by_zero_handler(kernel_thread_t* current_thread);
@@ -114,14 +117,14 @@ static void _div_by_zero_handler(kernel_thread_t* current_thread);
 
 static void _div_by_zero_handler(kernel_thread_t* current_thread)
 {
-    uint32_t int_id;
+    uint32_t intId;
 
-    int_id = current_thread->v_cpu.int_context.int_id;
+    intId = current_thread->v_cpu.intContext.intId;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_DIV_BY_ZERO, 1, current_thread->tid);
 
     /* If the exception line is not the divide by zero exception */
-    EXC_ASSERT(int_id != DIV_BY_ZERO_LINE,
+    EXC_ASSERT(intId != DIV_BY_ZERO_LINE,
                "Divide by zero invocated with wrong exception line.",
                OS_ERR_INCORRECT_VALUE);
 

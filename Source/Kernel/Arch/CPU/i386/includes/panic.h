@@ -25,7 +25,6 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <cpu.h>          /* CPU structures */
 #include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Pointer types */
 #include <ctrl_block.h>   /* Thread's control block */
@@ -59,7 +58,7 @@
 #define PANIC(ERROR, MODULE, MSG, IS_KERNEL) {                          \
     if(IS_KERNEL == TRUE)                                               \
     {                                                                   \
-        kernel_panic(ERROR, MODULE, MSG, __FILE__, __LINE__);           \
+        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);           \
     }                                                                   \
     else                                                                \
     {                                                                   \
@@ -90,12 +89,12 @@
  * @details Displays the kernel panic screen. This screen dumps the CPU registers
  * and the stack state before the panic occured.
  *
- * @param[in, out] curr_thread The thread that generated the panic
+ * @param[in, out] pCurrThread The thread that generated the panic
  *
  * @warning Panic should never be called, it must only be used as an interrupt
  * handler.
  */
-void panic_handler(kernel_thread_t* curr_thread);
+void kernelPanicHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Causes a kernel panic.
@@ -103,18 +102,18 @@ void panic_handler(kernel_thread_t* curr_thread);
  * @details Causes a kernel panic. This will raise an interrupt to generate the
  * panic.
  *
- * @param[in] error_code The error code to display on the kernel panic's screen.
- * @param[in] module The module that generated the panic. Can be empty when not
- * relevant.
- * @param[in] msg The message to display in the kernel's panig screen.
- * @param[in] file The name of the source file where the panic was called.
- * @param[in] line The line at which the panic was called.
+ * @param[in] kErrorCode The error code to display on the kernel panic's screen.
+ * @param[in] kpModule The module that generated the panic. Can be empty when 
+ * not relevant.
+ * @param[in] kpMsg The message to display in the kernel's panig screen.
+ * @param[in] kpFile The name of the source file where the panic was called.
+ * @param[in] kLine The line at which the panic was called.
  */
-void kernel_panic(const uint32_t error_code,
-                  const char* module,
-                  const char* msg,
-                  const char* file,
-                  const size_t line);
+void kernelPanic(const uint32_t kErrorCode,
+                 const char*    kpModule,
+                 const char*    kpMsg,
+                 const char*    kpFile,
+                 const size_t   kLine);
 
 #endif /* #ifndef __I386_PANIC_H_ */
 

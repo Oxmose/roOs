@@ -34,8 +34,8 @@
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-global cpu_lock_spinlock
-global cpu_unlock_spinlock
+global cpuSpinlockAcquire
+global cpuSpinlockRelease
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -48,22 +48,22 @@ section .text
 ; Param:
 ;     Input: ESP + 4: Address of the lock
 
-cpu_lock_spinlock:
+cpuSpinlockAcquire:
     push eax
     mov  eax, [esp + 8]
 
-__pause_spinlock_entry:
+__pauseSpinlockEntry:
     lock bts dword [eax], 0
-    jc   __pause_spinlock_pause
+    jc   __pauseSpinlockPause
 
     pop eax
     ret
 
-__pause_spinlock_pause:
+__pauseSpinlockPause:
     pause
     test  dword [eax], 1
-    jnz   __pause_spinlock_pause
-    jmp   __pause_spinlock_entry
+    jnz   __pauseSpinlockPause
+    jmp   __pauseSpinlockEntry
 
 ;-------------------------------------------------------------------------------
 ; Unlock Spinlock
@@ -71,7 +71,7 @@ __pause_spinlock_pause:
 ; Param:
 ;     Input: ESP + 4: Address of the lock
 
-cpu_unlock_spinlock:
+cpuSpinlockRelease:
     push eax
     mov  eax, [esp + 8]
     mov  dword [eax], 0
@@ -82,3 +82,4 @@ cpu_unlock_spinlock:
 ; DATA
 ;-------------------------------------------------------------------------------
 
+;************************************ EOF **************************************

@@ -196,7 +196,7 @@ typedef enum
     BAUDRATE_115200 = 1,
 } SERIAL_BAUDRATE_E;
 
-/** @brief x86 UART Text driver controler. */
+/** @brief x86 UART driver controler. */
 typedef struct
 {
     /** @brief CPU command port. */
@@ -275,13 +275,13 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
 static inline void _uartWrite(const uint16_t kPort, const uint8_t kData);
 
 /**
- * @brief Write the string given as patameter on the debug port.
+ * @brief Write the string given as patameter on the desired port.
  *
- * @details The function will output the data given as parameter on the debug
+ * @details The function will output the data given as parameter on the desired
  * port. This call is blocking until the data has been sent to the uart port
  * controler.
  *
- * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
  * @param[in] kpString The string to write to the uart port.
  *
  * @warning string must be NULL terminated.
@@ -289,13 +289,13 @@ static inline void _uartWrite(const uint16_t kPort, const uint8_t kData);
 static void _uartPutString(void* pDrvCtrl, const char* kpString);
 
 /**
- * @brief Write the character given as patameter on the debug port.
+ * @brief Write the character given as patameter on the desired port.
  *
  * @details The function will output the character given as parameter on the
- * debug port. This call is blocking until the data has been sent to the uart
+ * desired port. This call is blocking until the data has been sent to the uart
  * port controler.
  *
- * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
  * @param[in] kCharacter The character to write to the uart port.
  */
 static void _uartPutChar(void* pDrvCtrl, const char kCharacter);
@@ -303,7 +303,7 @@ static void _uartPutChar(void* pDrvCtrl, const char kCharacter);
 /**
  * @brief Clears the screen.
  *
- * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
  * @details On 80x25 uart screen, this function will print 80 line feeds
  * and thus, clear the screen.
  */
@@ -316,7 +316,7 @@ static void _uartClear(void* pDrvCtrl);
  * This function can only be called with parameter direction to
  * SCROLL_DOWN. Otherwise, this function has no effect.
  *
- * @param[in-out] pDrvCtrl The UART driver controler to use.
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
  * @param[in] kDirection Should always be SCROLL_DOWN.
  * @param[in] kLines The amount of lines to scroll down.
  */
@@ -346,8 +346,8 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate);
 /************************* Exported global variables **************************/
 /** @brief UART driver instance. */
 driver_t x86UARTDriver = {
-    .pName         = "X86 UART Text Driver",
-    .pDescription  = "X86 UART Text Driver for UTK",
+    .pName         = "X86 UART Driver",
+    .pDescription  = "X86 UART Driver for UTK",
     .pCompatible   = "x86,x86-generic-serial",
     .pVersion      = "2.0",
     .pDriverAttach = _uartAttach
@@ -469,34 +469,34 @@ ATTACH_END:
 
 static inline void _uartSetLine(const uint8_t kAttr, const uint16_t kCom)
 {
-    _cpu_outb(kAttr, SERIAL_LINE_COMMAND_PORT(kCom));
+    _cpuOutB(kAttr, SERIAL_LINE_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBuffer(const uint8_t kAttr, const uint16_t kCom)
 {
-    _cpu_outb(kAttr, SERIAL_FIFO_COMMAND_PORT(kCom));
+    _cpuOutB(kAttr, SERIAL_FIFO_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
                                     const uint16_t kCom)
 {
-    _cpu_outb(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(kCom));
-    _cpu_outb((kRate >> 8) & 0x00FF, SERIAL_DATA_PORT(kCom));
-    _cpu_outb(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
+    _cpuOutB(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(kCom));
+    _cpuOutB((kRate >> 8) & 0x00FF, SERIAL_DATA_PORT(kCom));
+    _cpuOutB(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
 }
 
 static inline void _uartWrite(const uint16_t kPort, const uint8_t kData)
 {
     /* Wait for empty transmit */
-    while((_cpu_inb(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
+    while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
     if(kData == '\n')
     {
-        _cpu_outb('\r', kPort);
-        _cpu_outb('\n', kPort);
+        _cpuOutB('\r', kPort);
+        _cpuOutB('\n', kPort);
     }
     else
     {
-        _cpu_outb(kData, kPort);
+        _cpuOutB(kData, kPort);
     }
 }
 

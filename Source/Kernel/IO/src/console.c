@@ -57,7 +57,7 @@
  * @brief Execute a function if it exists.
  *
  * @param[in] FUNC The function to execute.
- * @param[in/out] ... Function parameters.
+ * @param[in, out] ... Function parameters.
  */
 #define EXEC_IF_SET(DRIVER, FUNC, ...) { \
     if(DRIVER.FUNC != NULL)              \

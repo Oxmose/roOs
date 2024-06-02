@@ -84,7 +84,7 @@ static void incrementer_handler(kernel_thread_t* curr_thread)
 
     if(counter < UINT32_MAX)
     {
-        counter += curr_thread->v_cpu.int_context.int_id;
+        counter += curr_thread->v_cpu.intContext.intId;
     }
 }
 
@@ -92,7 +92,7 @@ static void decrementer_handler(kernel_thread_t* curr_thread)
 {
     if(counter > 0)
     {
-        counter -= curr_thread->v_cpu.int_context.int_id;
+        counter -= curr_thread->v_cpu.intContext.intId;
     }
 }
 
@@ -230,8 +230,8 @@ static void test_sw_interupts(void)
     OS_RETURN_E err;
 
     /* We just dont care about HW interrupt from PIC, disable them */
-    _cpu_outb(0xFF, 0x21);
-    _cpu_outb(0xFF, 0xA1);
+    _cpuOutB(0xFF, 0x21);
+    _cpuOutB(0xFF, 0xA1);
 
     /* TEST REGISTER < MIN */
     err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE - 1,

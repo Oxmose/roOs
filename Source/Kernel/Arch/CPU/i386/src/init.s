@@ -38,7 +38,7 @@ CHECKSUM    equ -(MAGIC + FLAGS)
 ;-------------------------------------------------------------------------------
 ; Kernel memory layout
 KERNEL_START_PAGE_ID equ (KERNEL_MEM_OFFSET >> 22)
-__kinit_low          equ (__kinit - KERNEL_MEM_OFFSET)
+__kinitLow           equ (__kinit - KERNEL_MEM_OFFSET)
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
@@ -56,13 +56,12 @@ extern kickstart
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
 global __kinit
-global __kinit_low
+global __kinitLow
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
 ;-------------------------------------------------------------------------------
-global _kernel_multiboot_ptr
-global _kernel_init_cpu_count
+; None
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -105,11 +104,8 @@ __kinit:
     push  0
     popfd
 
-    ; Save Multiboot info to memory
-    mov dword [_kernel_multiboot_ptr], ebx
-
     ; Map the higher half addresses
-    mov eax, (_kinit_pgdir - KERNEL_MEM_OFFSET)
+    mov eax, (_kinitPGDir - KERNEL_MEM_OFFSET)
     mov cr3, eax
 
     ; Enable 4MB pages
@@ -138,24 +134,20 @@ __kinit:
     ; Init BSS
     mov  edi, _START_BSS_ADDR
     xor  esi, esi
-__bss_init:
+__bssInit:
     mov  [edi], esi
     add  edi, 4
     cmp  edi, _END_BSS_ADDR
-    jb   __bss_init
+    jb   __bssInit
 
     ; Load high mem kernel entry point
-    mov eax, __kinit_high
+    mov eax, __kinitHigh
     jmp eax
-
-; Multiboot structues pointer
-_kernel_multiboot_ptr:
-    dq 0x0000000000000000
 
 section .high_startup_code
 align 4
 ; High memory loader
-__kinit_high:
+__kinitHigh:
     ; Init stack
     mov eax, _KERNEL_STACKS_BASE
     mov ebx, KERNEL_STACK_SIZE - 16
@@ -165,31 +157,31 @@ __kinit_high:
 
     ; Update the booted CPU count
     mov eax, 1
-    mov [_kernel_cpu_count], eax
+    mov [_bootedCPUCount], eax
 
     call kickstart
 
-__kinit_end:
+__kinitEnd:
     mov eax, 0xB8F00
-    mov ebx, _kinit_end_of_line
+    mov ebx, _kinitEndOfLine
     mov cl, 0xF0
 
-__kinit_end_print:
+__kinitEndPrint:
     mov dl, [ebx]
     cmp dl, 0
-    jbe __kinit_end_print_end
+    jbe __kinitEndPrintEnd
     mov [eax], dl
     add eax, 1
     mov [eax], cl
     add ebx, 1
     add eax, 1
-    jmp __kinit_end_print
+    jmp __kinitEndPrint
 
-__kinit_end_print_end:
+__kinitEndPrintEnd:
     ; Disable interrupt and loop forever
     cli
     hlt
-    jmp __kinit_end
+    jmp __kinitEnd
 
 ;-------------------------------------------------------------------------------
 ; DATA
@@ -201,7 +193,7 @@ section .data
 ; 16MB mapped for high addresses
 ; 4MB mapped 1-1 for low addresses
 align 0x1000
-_kinit_pgdir:
+_kinitPGDir:
     ; First 4MB R/W Present.
     dd 0x00000083
     ; Pages before kernel space.
@@ -217,10 +209,10 @@ _kinit_pgdir:
     times (1024 - KERNEL_START_PAGE_ID - 4) dd 0  ; Pages after the kernel.
 
 ; Number of booted CPUs
-_kernel_cpu_count:
+_bootedCPUCount:
     dd 0x00000000
 
-_kinit_end_of_line:
+_kinitEndOfLine:
     db " END OF LINE "
     db 0
 

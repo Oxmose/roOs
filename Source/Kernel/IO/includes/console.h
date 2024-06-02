@@ -78,7 +78,7 @@ typedef struct
      * @brief Set to 1 if using the VGA color designation for foreground and
      * background. If set to 0, then regular 32 bits RGBA designation is used.
      */
-    bool_t vga_color;
+    bool_t vgaColor;
 } colorscheme_t;
 
 /**
@@ -89,7 +89,7 @@ typedef struct
     /**
      * @brief Clears the console, the background color is set to black.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      */
     void (*pClear)(void* pDriverCtrl);
@@ -100,7 +100,7 @@ typedef struct
      * @details The function places the console cursor at the desired coordinates
      * based on the line and column parameter.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] kLine The line index where to place the cursor.
      * @param[in] kColumn The column index where to place the cursor.
@@ -115,7 +115,7 @@ typedef struct
      * @details Fills the buffer given s parameter with the current value of the
      * cursor.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[out] pBuffer The cursor buffer in which the current
      * cursor position is going to be saved.
@@ -128,7 +128,7 @@ typedef struct
      * @details The function will restores the cursor attributes from the buffer
      * given as parameter.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] pBuffer The buffer containing the cursor's
      * attributes.
@@ -141,7 +141,7 @@ typedef struct
      * @details The function will use the driver to scroll of lines_count line
      * in the desired direction.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] kDirection The direction to which the
      * console should be scrolled.
@@ -157,7 +157,7 @@ typedef struct
      * @details Replaces the curent color scheme used t output data with the new
      * one given as parameter.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] kpColorScheme The new color scheme to apply
      * to the console.
@@ -171,7 +171,7 @@ typedef struct
      * @details Fills the buffer given as parameter with the current console's
      * color scheme value.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[out] pBuffer The buffer that will receive the
      * current color scheme used by the console.
@@ -184,7 +184,7 @@ typedef struct
      * @details The function will display the string given as parameter to the
      * console using the selected driver.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] kpString The string to display on the console.
      *
@@ -198,7 +198,7 @@ typedef struct
      * @details The function will display the character given as parameter to
      * the console using the selected driver.
      *
-     * @param[in-out] pDriverCtrl The driver controler used by the registered
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      * @param[in] kCharacter The char to display on the console.
      */

@@ -41,7 +41,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Divide by zero exception line. */
+#define DIV_BY_ZERO_LINE           0x00
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -92,9 +93,9 @@ static void _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
 #ifdef ARCH_64_BITS
-    curr_thread->v_cpu.int_context.rip = (uintptr_t)_end;
+    curr_thread->v_cpu.intContext.rip = (uintptr_t)_end;
 #else
-    curr_thread->v_cpu.int_context.eip = (uintptr_t)_end;
+    curr_thread->v_cpu.intContext.eip = (uintptr_t)_end;
 #endif
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,

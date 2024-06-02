@@ -447,16 +447,16 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     sDrvCtrl.disabledNesting = 1;
 
     /* Init CMOS IRQ8 */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
-    prevOred = _cpu_inb(sDrvCtrl.cpuDataPort);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
-    _cpu_outb(prevOred | CMOS_ENABLE_RTC, sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    prevOred = _cpuInB(sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    _cpuOutB(prevOred | CMOS_ENABLE_RTC, sDrvCtrl.cpuDataPort);
 
     /* Init CMOS IRQ8 rate */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
-    prevRate = _cpu_inb(sDrvCtrl.cpuDataPort);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
-    _cpu_outb((prevRate & 0xF0) | RTC_INIT_RATE, sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    prevRate = _cpuInB(sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    _cpuOutB((prevRate & 0xF0) | RTC_INIT_RATE, sDrvCtrl.cpuDataPort);
 
     /* Set RTC frequency */
     _rtcSetFrequency(sDrvCtrl.selectedFrequency);
@@ -505,7 +505,7 @@ static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Interrupt");
 
     /* EOI */
-    kernel_interrupt_set_irq_eoi(RTC_IRQ_LINE);
+    kernel_interrupt_set_irq_eoi(sDrvCtrl.irqNumber);
 }
 
 static void _rtcEnable(void)
@@ -528,7 +528,7 @@ static void _rtcEnable(void)
                  sDrvCtrl.selectedFrequency);
     if(sDrvCtrl.disabledNesting == 0 && sDrvCtrl.selectedFrequency != 0)
     {
-        kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 1);
+        kernel_interrupt_set_irq_mask(sDrvCtrl.irqNumber, 1);
     }
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_ENABLE_END, 0);
@@ -555,7 +555,7 @@ static void _rtcDisable(void)
                  MODULE_NAME,
                  "Disable RTC (nesting %d)",
                  sDrvCtrl.disabledNesting);
-    kernel_interrupt_set_irq_mask(RTC_IRQ_LINE, 0);
+    kernel_interrupt_set_irq_mask(sDrvCtrl.irqNumber, 0);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_END,
                        1,
@@ -644,10 +644,10 @@ static void _rtcSetFrequency(const uint32_t kFrequency)
 
     /* Set clock frequency */
      /* Init CMOS IRQ8 rate */
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
-    prevRate = _cpu_inb(sDrvCtrl.cpuDataPort);
-    _cpu_outb((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
-    _cpu_outb((prevRate & 0xF0) | rate, sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    prevRate = _cpuInB(sDrvCtrl.cpuDataPort);
+    _cpuOutB((CMOS_NMI_DISABLE_BIT << 7) | CMOS_REG_A, sDrvCtrl.cpuCommPort);
+    _cpuOutB((prevRate & 0xF0) | rate, sDrvCtrl.cpuDataPort);
 
     sDrvCtrl.selectedFrequency = (sDrvCtrl.quartzFrequency >> (rate - 1));
 
@@ -696,7 +696,7 @@ static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*))
     _rtcDisable();
 
     /* Remove the current handler */
-    err = kernel_interrupt_remove_irq_handler(RTC_IRQ_LINE);
+    err = kernel_interrupt_remove_irq_handler(sDrvCtrl.irqNumber);
     if(err != OS_NO_ERR && err != OS_ERR_INTERRUPT_NOT_REGISTERED)
     {
         EXIT_CRITICAL(intState);
@@ -705,7 +705,7 @@ static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*))
         return err;
     }
 
-    err = kernel_interrupt_register_irq_handler(RTC_IRQ_LINE, pHandler);
+    err = kernel_interrupt_register_irq_handler(sDrvCtrl.irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
         EXIT_CRITICAL(intState);
@@ -765,34 +765,34 @@ static void _rtcUpdateTime(date_t* pDate, time_t* pTime)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_UPDATE_TIME_START, 0);
 
     /* Select CMOS seconds register and read */
-    _cpu_outb(CMOS_SECONDS_REGISTER, sDrvCtrl.cpuCommPort);
-    pTime->seconds = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_SECONDS_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->seconds = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS minutes register and read */
-    _cpu_outb(CMOS_MINUTES_REGISTER, sDrvCtrl.cpuCommPort);
-    pTime->minutes = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_MINUTES_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->minutes = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS hours register and read */
-    _cpu_outb(CMOS_HOURS_REGISTER, sDrvCtrl.cpuCommPort);
-    pTime->hours = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_HOURS_REGISTER, sDrvCtrl.cpuCommPort);
+    pTime->hours = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS day register and read */
-    _cpu_outb(CMOS_DAY_REGISTER, sDrvCtrl.cpuCommPort);
-    pDate->day = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_DAY_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->day = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS month register and read */
-    _cpu_outb(CMOS_MONTH_REGISTER, sDrvCtrl.cpuCommPort);
-    pDate->month = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_MONTH_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->month = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS years register and read */
-    _cpu_outb(CMOS_YEAR_REGISTER, sDrvCtrl.cpuCommPort);
-    pDate->year = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_YEAR_REGISTER, sDrvCtrl.cpuCommPort);
+    pDate->year = _cpuInB(sDrvCtrl.cpuDataPort);
 
     /* Select CMOS century register and read */
     if(CMOS_CENTURY_REGISTER != 0)
     {
-        _cpu_outb(CMOS_CENTURY_REGISTER, sDrvCtrl.cpuCommPort);
-        century = _cpu_inb(sDrvCtrl.cpuDataPort);
+        _cpuOutB(CMOS_CENTURY_REGISTER, sDrvCtrl.cpuCommPort);
+        century = _cpuInB(sDrvCtrl.cpuDataPort);
     }
     else
     {
@@ -800,8 +800,8 @@ static void _rtcUpdateTime(date_t* pDate, time_t* pTime)
     }
 
     /* Convert BCD to binary if necessary */
-    _cpu_outb(CMOS_REG_B, sDrvCtrl.cpuCommPort);
-    regB = _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_REG_B, sDrvCtrl.cpuCommPort);
+    regB = _cpuInB(sDrvCtrl.cpuDataPort);
 
     if((regB & 0x04) == 0)
     {
@@ -849,13 +849,13 @@ static void _rtcUpdateTime(date_t* pDate, time_t* pTime)
 static void _rtcAckowledgeInt(void)
 {
     /* Clear C Register */
-    _cpu_outb(CMOS_REG_C, sDrvCtrl.cpuCommPort);
-    _cpu_inb(sDrvCtrl.cpuDataPort);
+    _cpuOutB(CMOS_REG_C, sDrvCtrl.cpuCommPort);
+    _cpuInB(sDrvCtrl.cpuDataPort);
 }
 
 static uint32_t _rtcGetIrq(void)
 {
-    return RTC_IRQ_LINE;
+    return sDrvCtrl.irqNumber;
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

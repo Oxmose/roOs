@@ -2587,7 +2587,7 @@ static void _cpu_setup_tss(void)
                        (uintptr_t)cpu_tss >> 32);
 }
 
-void cpu_init(void)
+void cpuInit(void)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_START, 0);
 
@@ -2599,7 +2599,7 @@ void cpu_init(void)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_END, 0);
 }
 
-OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line)
+OS_RETURN_E cpuRaiseInterrupt(const uint32_t interrupt_line)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, interrupt_line);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME,
@@ -3390,7 +3390,7 @@ OS_RETURN_E cpu_raise_interrupt(const uint32_t interrupt_line)
     return OS_NO_ERR;
 }
 
-void validate_architecture(void)
+void cpuValidateArchitecture(void)
 {
     /* eax, ebx, ecx, edx */
     volatile int32_t  regs[4];
@@ -3409,7 +3409,7 @@ void validate_architecture(void)
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU", "Detecting cpu capabilities");
 
-    ret = _cpu_cpuid(CPUID_GETVENDORSTRING, (uint32_t*)regs);
+    ret = _cpuCPUID(CPUID_GETVENDORSTRING, (uint32_t*)regs);
 
     CPU_ASSERT(ret != 0,
                "CPU does not support CPUID",
@@ -3435,7 +3435,7 @@ void validate_architecture(void)
 #endif
 
     /* Get CPUID features */
-    _cpu_cpuid(CPUID_GETFEATURES, (uint32_t*)regs);
+    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
 
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
     memset(output_buff, 0, 512 * sizeof(char));
@@ -3560,10 +3560,10 @@ void validate_architecture(void)
     { CONCAT_STR(output_buff, output_buff_index, "PBE - "); }
 
     /* Check for extended features */
-    _cpu_cpuid(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regs_ext);
+    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regs_ext);
     if((uint32_t)regs_ext[0] >= (uint32_t)CPUID_INTELFEATURES)
     {
-        _cpu_cpuid(CPUID_INTELFEATURES, (uint32_t*)regs_ext);
+        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regs_ext);
 
         if((regs_ext[3] & EDX_SYSCALL) == EDX_SYSCALL)
         { CONCAT_STR(output_buff, output_buff_index, "SYSCALL - "); }

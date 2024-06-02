@@ -46,7 +46,7 @@
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
-#define DEBUG_LOG_UART      0
+#define DEBUG_LOG_UART      1
 #define DEBUG_LOG_UART_RATE BAUDRATE_115200
 
 /* Defines the limit address allocable by the kernel */

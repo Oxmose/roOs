@@ -163,7 +163,7 @@ event {
     id = 16;
     name = "Kernel Panic Handler Start";
     fields := struct {
-        uint32_t error_code;
+        uint32_t errorCode;
     };
 };
 
@@ -171,7 +171,7 @@ event {
     id = 17;
     name = "Kernel Panic Handler End";
     fields := struct {
-        uint32_t error_code;
+        uint32_t errorCode;
     };
 };
 

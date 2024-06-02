@@ -68,7 +68,7 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/** @brief x86 VGA Text driver controler. */
+/** @brief x86 VGA driver controler. */
 typedef struct
 {
     /** @brief Screen line resolution. */
@@ -162,7 +162,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode);
  * @details Prints a character to the selected coordinates by setting the memory
  * accordingly.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kLine The line index where to write the character.
  * @param[in] kColumn The colums index where to write the character.
  * @param[in] kCharacter The character to display on the screem.
@@ -175,7 +175,7 @@ inline static void _vgaPrintChar(void*          pDriverCtrl,
 /**
  * @brief Processes the character in parameters.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @details Check the character nature and code. Corresponding to the
  * character's code, an action is taken. A regular character will be printed
  * whereas \\n will create a line feed.
@@ -188,7 +188,7 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter);
  * @brief Clears the screen by printing null character character on black
  * background.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  */
 static void _vgaClearFramebuffer(void* pDriverCtrl);
 
@@ -199,7 +199,7 @@ static void _vgaClearFramebuffer(void* pDriverCtrl);
  * parameters. The function will check the boundaries or the position parameters
  * before setting the cursor position.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kLine The line index where to place the cursor.
  * @param[in] column The column index where to place the cursor.
  */
@@ -213,7 +213,7 @@ static void _vgaPutCursor(void*          pDriverCtrl,
  * @details Fills the buffer given as parrameter with the current cursor
  * settings.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[out] pBuffer The cursor buffer in which the current cursor
  * position is going to be saved.
  */
@@ -225,7 +225,7 @@ static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer);
  * @details The function will restores the cursor attributes from the buffer
  * given as parameter.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kpBuffer The cursor buffer containing the new
  * coordinates of the cursor.
  */
@@ -237,7 +237,7 @@ static void _vgaResotreCursor(void* pDriverCtrl, const cursor_t* kpBuffer);
  * @details The function will scroll of lines_count line in the desired
  * direction.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kDirection The direction to whoch the console
  * should be scrolled.
  * @param[in] kLines The number of lines to scroll.
@@ -253,7 +253,7 @@ static void _vgaScroll(void*                    pDriverCtrl,
  * @details Replaces the curent color scheme used t output data with the new
  * one given as parameter.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kpColorScheme The new color scheme to apply to
  * the screen console.
  */
@@ -267,7 +267,7 @@ static void _vgaSetScheme(void*                pDriverCtrl,
  * @details Fills the buffer given as parameter with the current screen's
  * color scheme value.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[out] pBuffer The buffer that will receive the current
  * color scheme used by the screen console.
  */
@@ -279,7 +279,7 @@ static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer);
  * @details The function will display the string given as parameter to the
  * screen.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kpString The string to display on the screen.
  *
  * @warning kpString must be NULL terminated.
@@ -292,7 +292,7 @@ static void _vgaPutString(void* pDriverCtrl, const char* kpString);
  * @details The function will display the character given as parameter to the
  * screen.
  *
- * @param[in-out] pDriverCtrl The VGA driver controler to use.
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
  * @param[in] kCharacter The char to display on the screen.
  */
 static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
@@ -305,10 +305,10 @@ static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
 /* None */
 
 /************************* Exported global variables **************************/
-/** @brief VGA text driver instance. */
+/** @brief VGA driver instance. */
 driver_t x86VGADriver = {
-    .pName         = "X86 VGA Text Driver",
-    .pDescription  = "X86 VGA Text Driver for UTK",
+    .pName         = "X86 VGA driver",
+    .pDescription  = "X86 VGA driver for UTK",
     .pCompatible   = "x86,x86-vga-text",
     .pVersion      = "2.0",
     .pDriverAttach = _vgaConsoleAttach
@@ -428,7 +428,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         }
     }
 
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA text driver initialized");
+    KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA driver initialized");
     retCode = OS_NO_ERR;
 
 ATTACH_END:
@@ -632,8 +632,8 @@ static void _vgaPutCursor(void* pDriverCtrl,
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
     /* Checks the values of line and column */
-    if(kLine > pCtrl->columnCount ||
-       kColumn > pCtrl->lineCount)
+    if(kLine > pCtrl->lineCount ||
+       kColumn > pCtrl->columnCount)
     {
         return;
     }
@@ -646,12 +646,12 @@ static void _vgaPutCursor(void* pDriverCtrl,
     cursorPosition = kColumn + kLine * pCtrl->columnCount;
 
     /* Send low part to the screen */
-    _cpu_outb(VGA_CONSOLE_CURSOR_COMM_LOW, pCtrl->cpuCommPort);
-    _cpu_outb((int8_t)(cursorPosition & 0x00FF), pCtrl->cpuDataPort);
+    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_LOW, pCtrl->cpuCommPort);
+    _cpuOutB((int8_t)(cursorPosition & 0x00FF), pCtrl->cpuDataPort);
 
     /* Send high part to the screen */
-    _cpu_outb(VGA_CONSOLE_CURSOR_COMM_HIGH, pCtrl->cpuCommPort);
-    _cpu_outb((int8_t)((cursorPosition & 0xFF00) >> 8), pCtrl->cpuDataPort);
+    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_HIGH, pCtrl->cpuCommPort);
+    _cpuOutB((int8_t)((cursorPosition & 0xFF00) >> 8), pCtrl->cpuDataPort);
 }
 
 static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)

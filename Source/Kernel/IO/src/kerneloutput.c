@@ -503,7 +503,7 @@ void kernel_error(const char* fmt, ...)
 
     new_scheme.foreground = FG_RED;
     new_scheme.background = BG_BLACK;
-    new_scheme.vga_color  = TRUE;
+    new_scheme.vgaColor  = TRUE;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -536,7 +536,7 @@ void kernel_success(const char* fmt, ...)
 
     new_scheme.foreground = FG_GREEN;
     new_scheme.background = BG_BLACK;
-    new_scheme.vga_color  = TRUE;
+    new_scheme.vgaColor  = TRUE;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -569,7 +569,7 @@ void kernel_info(const char* fmt, ...)
 
     new_scheme.foreground = FG_CYAN;
     new_scheme.background = BG_BLACK;
-    new_scheme.vga_color  = TRUE;
+    new_scheme.vgaColor  = TRUE;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -602,7 +602,7 @@ void kernel_warning(const char* fmt, ...)
 
     new_scheme.foreground = FG_BROWN;
     new_scheme.background = BG_BLACK;
-    new_scheme.vga_color  = TRUE;
+    new_scheme.vgaColor  = TRUE;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -635,7 +635,7 @@ void kernel_debug(const char* fmt, ...)
 
     new_scheme.foreground = FG_YELLOW;
     new_scheme.background = BG_BLACK;
-    new_scheme.vga_color  = TRUE;
+    new_scheme.vgaColor  = TRUE;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);

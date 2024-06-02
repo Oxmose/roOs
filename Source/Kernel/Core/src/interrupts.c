@@ -168,36 +168,35 @@ void kernel_interrupt_handler(void)
 {
     custom_handler_t handler;
     kernel_thread_t* current_thread;
-    uint32_t         int_id;
+    uint32_t         intId;
 
 
     /* Get the current thread */
     current_thread = scheduler_get_current_thread();
-    int_id         = current_thread->v_cpu.int_context.int_id;
+    intId          = current_thread->v_cpu.intContext.intId;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_HANDLER_START, 2,
-                       int_id, current_thread->tid);
+                       intId, current_thread->tid);
 
     /* If interrupts are disabled */
-    if(_cpu_get_saved_interrupt_state(&current_thread->v_cpu) == 0 &&
-       int_id != PANIC_INT_LINE &&
-       int_id != SCHEDULER_SW_INT_LINE &&
-       int_id >= MIN_INTERRUPT_LINE)
+    if(_cpuGetContextIntState(&current_thread->v_cpu) == 0 &&
+       intId != PANIC_INT_LINE &&
+       intId >= MIN_INTERRUPT_LINE)
     {
         KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
-                     "Blocked interrupt %u", int_id);
+                     "Blocked interrupt %u", intId);
         return;
     }
 
-    if(int_id == PANIC_INT_LINE)
+    if(intId == PANIC_INT_LINE)
     {
-        panic_handler(current_thread);
+        kernelPanicHandler(current_thread);
     }
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Int %d", int_id);
+    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Int %d", intId);
 
     /* Check for spurious interrupt */
-    if(interrupt_driver.driver_handle_spurious(int_id) ==
+    if(interrupt_driver.driver_handle_spurious(intId) ==
        INTERRUPT_TYPE_SPURIOUS)
     {
         _spurious_handler();
@@ -205,24 +204,24 @@ void kernel_interrupt_handler(void)
     }
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Non spurious %d",
-                 int_id);
+                 intId);
 
     /* Select custom handlers */
-    if(int_id < INT_ENTRY_COUNT &&
-       kernel_interrupt_handlers[int_id] != NULL)
+    if(intId < INT_ENTRY_COUNT &&
+       kernel_interrupt_handlers[intId] != NULL)
     {
-        handler = kernel_interrupt_handlers[int_id];
+        handler = kernel_interrupt_handlers[intId];
     }
     else
     {
-        handler = panic_handler;
+        handler = kernelPanicHandler;
     }
 
     /* Execute the handler */
     handler(current_thread);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_HANDLER_END, 2,
-                       int_id, current_thread->tid);
+                       intId, current_thread->tid);
 }
 
 void kernel_interrupt_init(void)
@@ -237,7 +236,7 @@ void kernel_interrupt_init(void)
            sizeof(custom_handler_t) * INT_ENTRY_COUNT);
 
     /* Attach the special PANIC interrupt for when we don't know what to do */
-    kernel_interrupt_handlers[PANIC_INT_LINE] = panic_handler;
+    kernel_interrupt_handlers[PANIC_INT_LINE] = kernelPanicHandler;
 
     /* Init state */
     kernel_interrupt_disable();
@@ -468,7 +467,7 @@ void kernel_interrupt_restore(const uint32_t prev_state)
     if(prev_state != 0)
     {
         KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Enabled HW INT");
-        _cpu_set_interrupt();
+        _cpuSetInterrupt();
     }
 }
 
@@ -476,7 +475,7 @@ uint32_t kernel_interrupt_disable(void)
 {
     uint32_t prev_state;
 
-    prev_state = _cpu_get_interrupt_state();
+    prev_state = _cpuGeIntState();
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_DISABLE_INTERRUPT, 1, prev_state);
 
@@ -485,7 +484,7 @@ uint32_t kernel_interrupt_disable(void)
         return 0;
     }
 
-    _cpu_clear_interrupt();
+    _cpuClearInterrupt();
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Disabled HW INT");
 

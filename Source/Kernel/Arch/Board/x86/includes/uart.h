@@ -63,10 +63,38 @@
  ******************************************************************************/
 
 #if DEBUG_LOG_UART
+/**
+ * @brief Initializes the UART debugging driver.
+ *
+ * @details Initializes the UART debugging driver. This UART is used to output
+ * debugging printfs used by the kernel an drivers.
+ */
 void uartDebugInit(void);
 
+/**
+ * @brief Write the string given as patameter on the debug port.
+ *
+ * @details The function will output the data given as parameter on the debug
+ * port. This call is blocking until the data has been sent to the uart port
+ * controler.
+ *
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
+ * @param[in] kpString The string to write to the uart port.
+ *
+ * @warning string must be NULL terminated.
+ */
 void uartDebugPutString(const char* kpString);
 
+/**
+ * @brief Write the character given as patameter on the debug port.
+ *
+ * @details The function will output the character given as parameter on the
+ * debug port. This call is blocking until the data has been sent to the uart
+ * port controler.
+ *
+ * @param[in, out] pDrvCtrl The UART driver controler to use.
+ * @param[in] kCharacter The character to write to the uart port.
+ */
 void uartDebugPutChar(const char kCharacter);
 #endif
 

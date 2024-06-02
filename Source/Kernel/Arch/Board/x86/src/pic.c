@@ -312,26 +312,26 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Initialize the master, remap IRQs */
-    _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuMasterCommPort);
-    _cpu_outb(PIC0_BASE_INTERRUPT_LINE, sDrvCtrl.cpuMasterDataPort);
-    _cpu_outb(0x4, sDrvCtrl.cpuMasterDataPort);
-    _cpu_outb(PIC_ICW4_8086, sDrvCtrl.cpuMasterDataPort);
+    _cpuOutB(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuMasterCommPort);
+    _cpuOutB(PIC0_BASE_INTERRUPT_LINE, sDrvCtrl.cpuMasterDataPort);
+    _cpuOutB(0x4, sDrvCtrl.cpuMasterDataPort);
+    _cpuOutB(PIC_ICW4_8086, sDrvCtrl.cpuMasterDataPort);
     /* Set EOI */
-    _cpu_outb(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
+    _cpuOutB(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
     /* Disable all IRQs */
-    _cpu_outb(0xFF, sDrvCtrl.cpuMasterDataPort);
+    _cpuOutB(0xFF, sDrvCtrl.cpuMasterDataPort);
 
     if(sDrvCtrl.hasSlave == TRUE)
     {
         /* Initialize the slave, remap IRQs */
-        _cpu_outb(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuSlaveCommPort);
-        _cpu_outb(PIC1_BASE_INTERRUPT_LINE, sDrvCtrl.cpuSlaveDataPort);
-        _cpu_outb(0x2,  sDrvCtrl.cpuSlaveDataPort);
-        _cpu_outb(PIC_ICW4_8086,  sDrvCtrl.cpuSlaveDataPort);
+        _cpuOutB(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuSlaveCommPort);
+        _cpuOutB(PIC1_BASE_INTERRUPT_LINE, sDrvCtrl.cpuSlaveDataPort);
+        _cpuOutB(0x2,  sDrvCtrl.cpuSlaveDataPort);
+        _cpuOutB(PIC_ICW4_8086,  sDrvCtrl.cpuSlaveDataPort);
         /* Set EOI for */
-        _cpu_outb(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
+        _cpuOutB(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
         /* Disable all IRQs */
-        _cpu_outb(0xFF, sDrvCtrl.cpuSlaveDataPort);
+        _cpuOutB(0xFF, sDrvCtrl.cpuSlaveDataPort);
     }
 
     /* Register as interrupt controler */
@@ -369,7 +369,7 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
     if(kIrqNumber < 8)
     {
         /* Retrieve initial mask */
-        initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
+        initMask = _cpuInB(sDrvCtrl.cpuMasterDataPort);
 
         /* Set new mask value */
         if(kEnabled == FALSE)
@@ -382,12 +382,12 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
         }
 
         /* Set new mask */
-        _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
+        _cpuOutB(initMask, sDrvCtrl.cpuMasterDataPort);
 
         KERNEL_DEBUG(PIC_DEBUG_ENABLED,
                      MODULE_NAME,
                      "New PIC Mask M: 0x%02x",
-                     _cpu_inb(sDrvCtrl.cpuMasterDataPort));
+                     _cpuInB(sDrvCtrl.cpuMasterDataPort));
     }
 
     /* Manage slave PIC. WARNING, cascading will be enabled */
@@ -401,16 +401,16 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
         cascadingNumber = kIrqNumber - 8;
 
         /* Retrieve initial mask */
-        initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
+        initMask = _cpuInB(sDrvCtrl.cpuMasterDataPort);
 
         /* Set new mask value */
         initMask &= ~(1 << PIC_CASCADING_IRQ);
 
         /* Set new mask */
-        _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
+        _cpuOutB(initMask, sDrvCtrl.cpuMasterDataPort);
 
         /* Retrieve initial mask */
-        initMask = _cpu_inb(sDrvCtrl.cpuSlaveDataPort);
+        initMask = _cpuInB(sDrvCtrl.cpuSlaveDataPort);
 
         /* Set new mask value */
         if(kEnabled == FALSE)
@@ -423,26 +423,26 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
         }
 
         /* Set new mask */
-        _cpu_outb(initMask, sDrvCtrl.cpuSlaveDataPort);
+        _cpuOutB(initMask, sDrvCtrl.cpuSlaveDataPort);
 
         /* If all is masked then disable cascading */
         if(initMask == 0xFF)
         {
             /* Retrieve initial mask */
-            initMask = _cpu_inb(sDrvCtrl.cpuMasterDataPort);
+            initMask = _cpuInB(sDrvCtrl.cpuMasterDataPort);
 
             /* Set new mask value */
             initMask  |= 1 << PIC_CASCADING_IRQ;
 
             /* Set new mask */
-            _cpu_outb(initMask, sDrvCtrl.cpuMasterDataPort);
+            _cpuOutB(initMask, sDrvCtrl.cpuMasterDataPort);
         }
 
         KERNEL_DEBUG(PIC_DEBUG_ENABLED,
                  MODULE_NAME,
                  "New PIC Mask M: 0x%02x S: 0x%02x",
-                 _cpu_inb(sDrvCtrl.cpuMasterDataPort),
-                 _cpu_inb(sDrvCtrl.cpuSlaveDataPort));
+                 _cpuInB(sDrvCtrl.cpuMasterDataPort),
+                 _cpuInB(sDrvCtrl.cpuSlaveDataPort));
     }
 
 
@@ -471,9 +471,9 @@ static void _picSetIRQEOI(const uint32_t kIrqNumber)
                    "Could not find PIC IRQ (chained)",
                    OS_ERR_NO_SUCH_IRQ);
 
-        _cpu_outb(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
+        _cpuOutB(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
     }
-    _cpu_outb(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
+    _cpuOutB(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_END, 1, kIrqNumber);
 
@@ -522,8 +522,8 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
         }
 
         /* Read the ISR mask */
-        _cpu_outb(PIC_READ_ISR, sDrvCtrl.cpuSlaveCommPort);
-        isrVal = _cpu_inb(sDrvCtrl.cpuSlaveCommPort);
+        _cpuOutB(PIC_READ_ISR, sDrvCtrl.cpuSlaveCommPort);
+        isrVal = _cpuInB(sDrvCtrl.cpuSlaveCommPort);
         if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
@@ -557,8 +557,8 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
         }
 
         /* Read the ISR mask */
-        _cpu_outb(PIC_READ_ISR, sDrvCtrl.cpuMasterCommPort);
-        isrVal = _cpu_inb(sDrvCtrl.cpuMasterCommPort);
+        _cpuOutB(PIC_READ_ISR, sDrvCtrl.cpuMasterCommPort);
+        isrVal = _cpuInB(sDrvCtrl.cpuMasterCommPort);
         if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,

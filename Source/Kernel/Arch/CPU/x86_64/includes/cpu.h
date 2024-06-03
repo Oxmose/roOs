@@ -151,13 +151,13 @@ typedef struct
  * @param[in] ext The opperation code for the CPUID instruction.
  * @return The highest supported input value for CPUID instruction.
  */
-inline static uint32_t _cpuGetCPUIDMax (const uint32_t ext)
+inline static uint32_t _cpuGetCPUIDMax (const uint32_t kExt)
 {
     uint32_t regs[4];
 
     /* Host supports CPUID. Return highest supported CPUID input value. */
     __asm__ __volatile__("cpuid":"=a"(*regs),"=b"(*(regs+1)),
-                         "=c"(*(regs+2)),"=d"(*(regs+3)):"a"(ext));
+                         "=c"(*(regs+2)),"=d"(*(regs+3)):"a"(kExt));
 
     return regs[0];
 }
@@ -170,21 +170,21 @@ inline static uint32_t _cpuGetCPUIDMax (const uint32_t ext)
  * supported and returns 1 for valid CPUID information or 0 for
  * unsupported CPUID leaf. All pointers are required to be non-null.
  *
- * @param[in] code The opperation code for the CPUID instruction.
+ * @param[in] kCode The opperation code for the CPUID instruction.
  * @param[out] regs The register used to store the CPUID instruction return.
  * @return 1 in case of succes, 0 otherwise.
  */
-inline static int32_t _cpuCPUID(const uint32_t code, uint32_t regs[4])
+inline static int32_t _cpuCPUID(const uint32_t kCode, uint32_t regs[4])
 {
-    uint32_t ext = code & 0x80000000;
+    uint32_t ext      = kCode & 0x80000000;
     uint32_t maxlevel = _cpuGetCPUIDMax(ext);
 
-    if (maxlevel == 0 || maxlevel < code)
+    if (maxlevel == 0 || maxlevel < kCode)
     {
         return 0;
     }
     __asm__ __volatile__("cpuid":"=a"(*regs),"=b"(*(regs+1)),
-                         "=c"(*(regs+2)),"=d"(*(regs+3)):"a"(code));
+                         "=c"(*(regs+2)),"=d"(*(regs+3)):"a"(kCode));
     return 1;
 }
 
@@ -232,15 +232,15 @@ inline static uint64_t _cpuSaveFlags(void)
 /**
  * @brief Restores CPU flags
  *
- * @param[in] flags The flags to be restored.
+ * @param[in] kFlags The flags to be restored.
  */
-inline static void _cpuRestoreFlags(const uint64_t flags)
+inline static void _cpuRestoreFlags(const uint64_t kFlags)
 {
     __asm__ __volatile__(
         "push    %0\n\t"
         "popfq\n\t"
         :
-        : "g" (flags)
+        : "g" (kFlags)
         : "memory"
     );
 }
@@ -248,34 +248,34 @@ inline static void _cpuRestoreFlags(const uint64_t flags)
 /**
  * @brief Writes byte on port.
  *
- * @param[in] value The value to send to the port.
- * @param[in] port The port to which the value has to be written.
+ * @param[in] kValue The value to send to the port.
+ * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutB(const uint8_t value, const uint16_t port)
+inline static void _cpuOutB(const uint8_t kValue, const uint16_t kPort)
 {
-    __asm__ __volatile__("outb %0, %1" : : "a" (value), "Nd" (port));
+    __asm__ __volatile__("outb %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
 
 /**
  * @brief Writes word on port.
  *
- * @param[in] value The value to send to the port.
- * @param[in] port The port to which the value has to be written.
+ * @param[in] kValue The value to send to the port.
+ * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutW(const uint16_t value, const uint16_t port)
+inline static void _cpuOutW(const uint16_t kValue, const uint16_t kPort)
 {
-    __asm__ __volatile__("outw %0, %1" : : "a" (value), "Nd" (port));
+    __asm__ __volatile__("outw %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
 
 /**
  * @brief Writes long on port.
  *
- * @param[in] value The value to send to the port.
- * @param[in] port The port to which the value has to be written.
+ * @param[in] kValue The value to send to the port.
+ * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutL(const uint32_t value, const uint16_t port)
+inline static void _cpuOutL(const uint32_t kValue, const uint16_t kPort)
 {
-    __asm__ __volatile__("outl %0, %1" : : "a" (value), "Nd" (port));
+    __asm__ __volatile__("outl %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
 
 /**
@@ -283,12 +283,12 @@ inline static void _cpuOutL(const uint32_t value, const uint16_t port)
  *
  * @return The value read from the port.
  *
- * @param[in] port The port to which the value has to be read.
+ * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint8_t _cpuInB(const uint16_t port)
+inline static uint8_t _cpuInB(const uint16_t kPort)
 {
     uint8_t rega;
-    __asm__ __volatile__("inb %1,%0" : "=a" (rega) : "Nd" (port));
+    __asm__ __volatile__("inb %1,%0" : "=a" (rega) : "Nd" (kPort));
     return rega;
 }
 
@@ -297,12 +297,12 @@ inline static uint8_t _cpuInB(const uint16_t port)
  *
  * @return The value read from the port.
  *
- * @param[in] port The port to which the value has to be read.
+ * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint16_t _cpuInW(const uint16_t port)
+inline static uint16_t _cpuInW(const uint16_t kPort)
 {
     uint16_t rega;
-    __asm__ __volatile__("inw %1,%0" : "=a" (rega) : "Nd" (port));
+    __asm__ __volatile__("inw %1,%0" : "=a" (rega) : "Nd" (kPort));
     return rega;
 }
 
@@ -311,12 +311,12 @@ inline static uint16_t _cpuInW(const uint16_t port)
  *
  * @return The value read from the port.
  *
- * @param[in] port The port to which the value has to be read.
+ * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint32_t _cpuInL(const uint16_t port)
+inline static uint32_t _cpuInL(const uint16_t kPort)
 {
     uint32_t rega;
-    __asm__ __volatile__("inl %1,%0" : "=a" (rega) : "Nd" (port));
+    __asm__ __volatile__("inl %1,%0" : "=a" (rega) : "Nd" (kPort));
     return rega;
 }
 
@@ -326,13 +326,13 @@ inline static uint32_t _cpuInL(const uint16_t port)
  *
  * @details Returns the saved interrupt state based on the stack state.
  *
- * @param[in] vCpu The current thread's virtual CPU.
+ * @param[in] kpVCpu The current thread's virtual CPU.
  *
  * @return The current savec interrupt state: 1 if enabled, 0 otherwise.
  */
-inline static uint32_t _cpuGetContextIntState(const virtual_cpu_t* pVCpu)
+inline static uint32_t _cpuGetContextIntState(const virtual_cpu_t* kpVCpu)
 {
-    return pVCpu->intContext.rflags & CPU_RFLAGS_IF;
+    return kpVCpu->intContext.rflags & CPU_RFLAGS_IF;
 }
 
 /**
@@ -346,6 +346,7 @@ inline static uint32_t _cpuGeIntState(void)
 {
     return ((_cpuSaveFlags() & CPU_RFLAGS_IF) != 0);
 }
+
 /**
  * @brief Initializes the CPU.
  *
@@ -358,13 +359,13 @@ void cpuInit(void);
  *
  * @details Raises a software CPU interrupt on the desired line.
  *
- * @param[in] interrupt_line The line on which the interrupt should be raised.
+ * @param[in] kInterruptLine The line on which the interrupt should be raised.
  *
  * @return OS_NO_ERR shoudl be return in case of success.
  * - OS_ERR_UNAUTHORIZED_ACTION Is returned if the interrupt line is not
  * correct.
  */
-OS_RETURN_E cpuRaiseInterrupt(const uint32_t interrupt_line);
+OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine);
 
 /**
  * @brief Checks the architecture's feature and requirements for UTK.

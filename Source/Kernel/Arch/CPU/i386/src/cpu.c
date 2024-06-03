@@ -21,12 +21,12 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <panic.h>          /* Kernel Panic */
-#include <stdint.h>         /* Generic int types */
-#include <stddef.h>         /* Standard definition */
-#include <string.h>         /* Memory manipulation */
+#include <panic.h>         /* Kernel Panic */
+#include <stdint.h>        /* Generic int types */
+#include <stddef.h>        /* Standard definition */
+#include <string.h>        /* Memory manipulation */
 #include <kerneloutput.h>  /* Kernel output */
-#include <cpu_interrupt.h>  /* Interrupt manager */
+#include <cpu_interrupt.h> /* Interrupt manager */
 
 /* Configuration files */
 #include <config.h>
@@ -2224,9 +2224,9 @@ static void _setupTSS(void);
  * @param[in] kFlags The flags to be set for the GDT entry.
  */
 static void _formatGDTEntry(uint64_t*      pEntry,
-                            const uint32_t kBase, 
+                            const uint32_t kBase,
                             const uint32_t kLimit,
-                            const uint8_t  kType, 
+                            const uint8_t  kType,
                             const uint32_t kFlags);
 
 /**
@@ -2242,7 +2242,7 @@ static void _formatGDTEntry(uint64_t*      pEntry,
  */
 static void _formatIDTEntry(uint64_t*       pEntry,
                             const uintptr_t kHandler,
-                            const uint8_t   kType, 
+                            const uint8_t   kType,
                             const uint32_t  kFlags);
 
 /*******************************************************************************
@@ -2250,9 +2250,9 @@ static void _formatIDTEntry(uint64_t*       pEntry,
  ******************************************************************************/
 
 static void _formatGDTEntry(uint64_t*      pEntry,
-                            const uint32_t kBase, 
+                            const uint32_t kBase,
                             const uint32_t kLimit,
-                            const uint8_t  kType, 
+                            const uint8_t  kType,
                             const uint32_t kFlags)
 {
     uint32_t loPart = 0;
@@ -2292,7 +2292,7 @@ static void _formatGDTEntry(uint64_t*      pEntry,
 
 static void _formatIDTEntry(uint64_t*       pEntry,
                             const uintptr_t kHandler,
-                            const uint8_t   kType, 
+                            const uint8_t   kType,
                             const uint32_t  kFlags)
 {
     uint32_t loPart = 0;
@@ -2399,39 +2399,39 @@ static void _setupGDT(void)
 
     /* Load the segments */
     _formatGDTEntry(&sGDT[KERNEL_CS_32 / 8],
-                    KERNEL_CODE_SEGMENT_BASE_32, 
+                    KERNEL_CODE_SEGMENT_BASE_32,
                     KERNEL_CODE_SEGMENT_LIMIT_32,
-                    kernelCodeSegType, 
+                    kernelCodeSegType,
                     kernelCodeSegFlags);
 
     _formatGDTEntry(&sGDT[KERNEL_DS_32 / 8],
-                    KERNEL_DATA_SEGMENT_BASE_32, 
+                    KERNEL_DATA_SEGMENT_BASE_32,
                     KERNEL_DATA_SEGMENT_LIMIT_32,
-                    kernelDataSegType, 
+                    kernelDataSegType,
                     kernelDataSegFlags);
 
     _formatGDTEntry(&sGDT[KERNEL_CS_16 / 8],
-                    KERNEL_CODE_SEGMENT_BASE_16, 
+                    KERNEL_CODE_SEGMENT_BASE_16,
                     KERNEL_CODE_SEGMENT_LIMIT_16,
-                    kernelCode16SegType, 
+                    kernelCode16SegType,
                     kernelCode16SegFlags);
 
     _formatGDTEntry(&sGDT[KERNEL_DS_16 / 8],
-                    KERNEL_DATA_SEGMENT_BASE_16, 
+                    KERNEL_DATA_SEGMENT_BASE_16,
                     KERNEL_DATA_SEGMENT_LIMIT_16,
-                    kernelData16SegType, 
+                    kernelData16SegType,
                     kernelData16SegFlags);
 
     _formatGDTEntry(&sGDT[USER_CS_32 / 8],
-                    USER_CODE_SEGMENT_BASE_32, 
+                    USER_CODE_SEGMENT_BASE_32,
                     USER_CODE_SEGMENT_LIMIT_32,
-                    userCodeSegType, 
+                    userCodeSegType,
                     userCodeSegFlags);
 
     _formatGDTEntry(&sGDT[USER_DS_32 / 8],
-                    USER_DATA_SEGMENT_BASE_32, 
+                    USER_DATA_SEGMENT_BASE_32,
                     USER_DATA_SEGMENT_LIMIT_32,
-                    userDataSegType, 
+                    userDataSegType,
                     userDataSegFlags);
 
     for(i = 0; i < MAX_CPU_COUNT; ++i)
@@ -2439,7 +2439,7 @@ static void _setupGDT(void)
         _formatGDTEntry(&sGDT[(TSS_SEGMENT + i * 0x08) / 8],
                         (uintptr_t)&sTSS[i],
                         sizeof(cpu_tss_entry_t),
-                        tssSegType, 
+                        tssSegType,
                         tssSegFlags);
     }
 
@@ -2546,14 +2546,14 @@ void cpuInit(void)
 OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, kInterruptLine);
-    KERNEL_DEBUG(CPU_DEBUG_ENABLED, 
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
                  MODULE_NAME,
-                 "Requesting interrupt raise %d", 
+                 "Requesting interrupt raise %d",
                  kInterruptLine);
 
     if(kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
                            2,
                            kInterruptLine,
                            OS_ERR_UNAUTHORIZED_ACTION);
@@ -3332,9 +3332,9 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
             break;
     }
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
                        2,
-                       kInterruptLine, 
+                       kInterruptLine,
                        OS_NO_ERR);
     return OS_NO_ERR;
 }

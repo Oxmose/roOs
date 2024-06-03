@@ -22,9 +22,9 @@
  ******************************************************************************/
 
 /* Includes */
-#include <kerror.h>        /* Kernel error codes */
-#include <string.h>        /* String manipulation */
-#include <devtree.h>       /* FDT library */
+#include <kerror.h>       /* Kernel error codes */
+#include <string.h>       /* String manipulation */
+#include <devtree.h>      /* FDT library */
 #include <kerneloutput.h> /* Kernel output services */
 
 /* Configuration files */
@@ -76,11 +76,27 @@
 }
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/**
+ * @brief Walks the FDT nodes starting from the current node.
+ *
+ * @details Walks the FDT nodes starting from the current node. The walk is
+ * performed as a depth first search walk. For each node, the compatible is
+ * compared to the list of registered drivers. If a driver is compatible, its
+ * attach function is called.
+ *
+ * @param[in] pkNode The node to start the walk from.
+ */
+static void _walkFdtNodes(const fdt_node_t* pkNode);
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/** @brief Start of the registered kernel drivers table */
+/** @brief Start address of the registered kernel drivers table */
 extern uintptr_t _START_DRV_TABLE_ADDR;
 
 /************************* Exported global variables **************************/
@@ -90,19 +106,13 @@ extern uintptr_t _START_DRV_TABLE_ADDR;
 /* None */
 
 /*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-static void walkFdtNodes(const fdt_node_t* pkNode);
-
-/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void walkFdtNodes(const fdt_node_t* pkNode)
+static void _walkFdtNodes(const fdt_node_t* pkNode)
 {
-    const char* pCompatible;
-    const char* pStatus;
+    const char* kpCompatible;
+    const char* kpStatus;
     driver_t*   pDriver;
     uintptr_t   driverTableCursor;
     size_t      propLen;
@@ -114,17 +124,17 @@ static void walkFdtNodes(const fdt_node_t* pkNode)
     }
 
     /* Manage disabled nodes */
-    pStatus = fdtGetProp(pkNode, STATUS_PROP_NAME, &propLen);
-    if(pStatus == NULL || (propLen == 5 && strcmp(pStatus, "okay") == 0))
+    kpStatus = fdtGetProp(pkNode, STATUS_PROP_NAME, &propLen);
+    if(kpStatus == NULL || (propLen == 5 && strcmp(kpStatus, "okay") == 0))
     {
         /* Get the node compatible */
-        pCompatible = fdtGetProp(pkNode, COMPATIBLE_PROP_NAME, &propLen);
-        if(pCompatible != NULL && propLen > 0)
+        kpCompatible = fdtGetProp(pkNode, COMPATIBLE_PROP_NAME, &propLen);
+        if(kpCompatible != NULL && propLen > 0)
         {
             KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED,
                         MODULE_NAME,
                         "Detected %s",
-                        pCompatible);
+                        kpCompatible);
 
             /* Get the head of the registered drivers section */
             driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
@@ -133,7 +143,7 @@ static void walkFdtNodes(const fdt_node_t* pkNode)
             /* Compare with the list of registered drivers */
             while(pDriver != NULL)
             {
-                if(strcmp(pDriver->pCompatible, pCompatible) == 0)
+                if(strcmp(pDriver->pCompatible, kpCompatible) == 0)
                 {
                     retCode = pDriver->pDriverAttach(pkNode);
                     if(retCode == OS_NO_ERR)
@@ -157,15 +167,15 @@ static void walkFdtNodes(const fdt_node_t* pkNode)
     }
 
     /* Got to next nodes */
-    walkFdtNodes(fdtGetChild(pkNode));
-    walkFdtNodes(fdtGetNextNode(pkNode));
+    _walkFdtNodes(fdtGetChild(pkNode));
+    _walkFdtNodes(fdtGetNextNode(pkNode));
 }
 
 void driverManagerInit(void)
 {
-    const fdt_node_t* pFdtRootNode;
-    driver_t* pDriver;
-    uintptr_t driverTableCursor;
+    const fdt_node_t* kpFdtRootNode;
+    driver_t*         pDriver;
+    uintptr_t         driverTableCursor;
 
     /* Display list of registered drivers */
     driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
@@ -174,8 +184,8 @@ void driverManagerInit(void)
     while(pDriver != NULL)
     {
         KERNEL_INFO("%s - %s\n",
-                     pDriver->pName,
-                     pDriver->pDescription);
+                    pDriver->pName,
+                    pDriver->pDescription);
         driverTableCursor += sizeof(uintptr_t);
         pDriver = *(driver_t**)driverTableCursor;
     }
@@ -183,15 +193,15 @@ void driverManagerInit(void)
     KERNEL_INFO("------------------------\n");
 
     /* Get the FDT root node and walk it to register drivers */
-    pFdtRootNode = fdtGetRoot();
-    if(pFdtRootNode == NULL)
+    kpFdtRootNode = fdtGetRoot();
+    if(kpFdtRootNode == NULL)
     {
         KERNEL_ERROR("Failed to get FDT root node in driver manager.\n");
         return;
     }
 
     /* Perform the registration */
-    walkFdtNodes(pFdtRootNode);
+    _walkFdtNodes(kpFdtRootNode);
 }
 
 /************************************ EOF *************************************/

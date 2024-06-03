@@ -96,26 +96,26 @@ void queue_test(void)
     }
 
     /* Create node */
-    nodes[0] = queue_create_node((void*) 0, QUEUE_ALLOCATOR(kmalloc, kfree), &error);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_NODE0_ID,
+    nodes[0] = queueCreateNode((void*) 0, QUEUE_ALLOCATOR(kmalloc, kfree), &error);
+    TEST_POINT_ASSERT_RCODE(TEST_queueCreateNode0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_NODE1_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueCreateNode1_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)nodes[0],
                              TEST_OS_QUEUE_ENABLED);
 
     /* Delete node */
-    error = queue_delete_node(&nodes[0]);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETE_NODE0_ID,
+    error = queueDeleteNode(&nodes[0]);
+    TEST_POINT_ASSERT_RCODE(TEST_queueDeleteNode0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_DELETE_NODE1_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueDeleteNode1_ID,
                              nodes[0] == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)nodes[0],
@@ -124,13 +124,13 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Create node */
-    nodes[0] = queue_create_node((void*) 0, QUEUE_ALLOCATOR(kmalloc, kfree), &error);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_NODE2_ID,
+    nodes[0] = queueCreateNode((void*) 0, QUEUE_ALLOCATOR(kmalloc, kfree), &error);
+    TEST_POINT_ASSERT_RCODE(TEST_queueCreateNode2_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_NODE3_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueCreateNode3_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)nodes[0],
@@ -139,26 +139,26 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Create queue */
-    queue = queue_create_queue(QUEUE_ALLOCATOR(kmalloc, kfree), &error);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_QUEUE0_ID,
+    queue = queueCreate(QUEUE_ALLOCATOR(kmalloc, kfree), &error);
+    TEST_POINT_ASSERT_RCODE(TEST_queueCreate0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_QUEUE1_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueCreate1_ID,
                              queue != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)queue,
                              TEST_OS_QUEUE_ENABLED);
 
     /* Delete queue */
-    error = queue_delete_queue(&queue);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETE_QUEUE0_ID,
+    error = queueDelete(&queue);
+    TEST_POINT_ASSERT_RCODE(TEST_queueDelete0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_DELETE_QUEUE1_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueDelete1_ID,
                              queue == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)queue,
@@ -167,20 +167,20 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Create queue */
-    queue = queue_create_queue(QUEUE_ALLOCATOR(kmalloc, kfree),&error);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_QUEUE2_ID,
+    queue = queueCreate(QUEUE_ALLOCATOR(kmalloc, kfree),&error);
+    TEST_POINT_ASSERT_RCODE(TEST_queueCreate2_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_QUEUE3_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueCreate3_ID,
                              queue != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)queue,
                              TEST_OS_QUEUE_ENABLED);
 
     /* Enqueue node */
-    error = queue_push(nodes[0], queue);
+    error = queuePush(nodes[0], queue);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSH0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -188,20 +188,20 @@ void queue_test(void)
                             TEST_OS_QUEUE_ENABLED);
 
     /* Delete node */
-    error = queue_delete_node(&nodes[0]);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETE_NODE2_ID,
+    error = queueDeleteNode(&nodes[0]);
+    TEST_POINT_ASSERT_RCODE(TEST_queueDeleteNode2_ID,
                             error == OS_ERR_UNAUTHORIZED_ACTION,
                             OS_ERR_UNAUTHORIZED_ACTION,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_DELETE_NODE3_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueDeleteNode3_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)nodes[0],
                              TEST_OS_QUEUE_ENABLED);
 
     /* Enqueue NULL node */
-    error = queue_push(NULL, queue);
+    error = queuePush(NULL, queue);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSH1_ID,
                             error == OS_ERR_NULL_POINTER,
                             OS_ERR_NULL_POINTER,
@@ -209,13 +209,13 @@ void queue_test(void)
                             TEST_OS_QUEUE_ENABLED);
 
     /* Delete queue */
-    error = queue_delete_queue(&queue);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETE_QUEUE2_ID,
+    error = queueDelete(&queue);
+    TEST_POINT_ASSERT_RCODE(TEST_queueDelete2_ID,
                             error == OS_ERR_UNAUTHORIZED_ACTION,
                             OS_ERR_UNAUTHORIZED_ACTION,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_DELETE_QUEUE3_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueDelete3_ID,
                              queue != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)queue,
@@ -224,7 +224,7 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Dequeue node */
-    nodes[0] = queue_pop(queue, &error);
+    nodes[0] = queuePop(queue, &error);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_POP0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -241,13 +241,13 @@ void queue_test(void)
     /* Create more nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = queue_create_node((void*) (uintptr_t)unsorted[i % 10], QUEUE_ALLOCATOR(kmalloc, kfree), &error);
-        TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_NODEBURST0_ID(i * 2),
+        nodes[i] = queueCreateNode((void*) (uintptr_t)unsorted[i % 10], QUEUE_ALLOCATOR(kmalloc, kfree), &error);
+        TEST_POINT_ASSERT_RCODE(TEST_queueCreateNodeBURST0_ID(i * 2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
                                 TEST_OS_QUEUE_ENABLED);
-        TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_NODEBURST0_ID(i * 2 + 1),
+        TEST_POINT_ASSERT_UDWORD(TEST_queueCreateNodeBURST0_ID(i * 2 + 1),
                                  nodes[i] != NULL,
                                  (uint64_t)1,
                                  (uint64_t)(uintptr_t)nodes[i],
@@ -258,7 +258,7 @@ void queue_test(void)
     /* Enqueue nodes with prio */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        error = queue_push_prio(nodes[i], queue, (uintptr_t)nodes[i]->data);
+        error = queuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->data);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSHPRIOBURST0_ID(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -271,7 +271,7 @@ void queue_test(void)
     /* Dequeue nodes and check order */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = queue_pop(queue, &error);
+        nodes[i] = queuePop(queue, &error);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_POPBURST0_ID(i * 3),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -301,7 +301,7 @@ void queue_test(void)
     /* Delete nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        error = queue_delete_node(&nodes[i]);
+        error = queueDeleteNode(&nodes[i]);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETENODEBURST0_ID(i * 2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -317,13 +317,13 @@ void queue_test(void)
     /* Create more nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = queue_create_node((void*) (uintptr_t)unsorted[i % 10], QUEUE_ALLOCATOR(kmalloc, kfree), &error);
-        TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_NODEBURST1_ID(i * 2),
+        nodes[i] = queueCreateNode((void*) (uintptr_t)unsorted[i % 10], QUEUE_ALLOCATOR(kmalloc, kfree), &error);
+        TEST_POINT_ASSERT_RCODE(TEST_queueCreateNodeBURST1_ID(i * 2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
                                 TEST_OS_QUEUE_ENABLED);
-        TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_CREATE_NODEBURST1_ID(i * 2 + 1),
+        TEST_POINT_ASSERT_UDWORD(TEST_queueCreateNodeBURST1_ID(i * 2 + 1),
                                  nodes[i] != NULL,
                                  (uint64_t)1,
                                  (uint64_t)(uintptr_t)nodes[i],
@@ -335,7 +335,7 @@ void queue_test(void)
     /* Enqueue without prio */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        error = queue_push(nodes[i], queue);
+        error = queuePush(nodes[i], queue);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSHBURST0_ID(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -346,7 +346,7 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Find a present node */
-    find =  queue_find(queue, (void*) 9, &error);
+    find =  queueFind(queue, (void*) 9, &error);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_FIND0_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -366,7 +366,7 @@ void queue_test(void)
     error = OS_ERR_NULL_POINTER;
 
     /* Find a not present node */
-    find = queue_find(queue, (void*) 42, &error);
+    find = queueFind(queue, (void*) 42, &error);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_CREATE_FIND3_ID,
                             error == OS_ERR_INCORRECT_VALUE,
                             OS_ERR_INCORRECT_VALUE,
@@ -383,7 +383,7 @@ void queue_test(void)
     /* Dequeue nodes and check "non order" */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = queue_pop(queue, &error);
+        nodes[i] = queuePop(queue, &error);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_POPBURST1_ID(i * 3),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -410,7 +410,7 @@ void queue_test(void)
                             TEST_OS_QUEUE_ENABLED);
 
     /* Dequeue node on empty queue */
-    find = queue_pop(queue, &error);
+    find = queuePop(queue, &error);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_POP2_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -423,20 +423,20 @@ void queue_test(void)
                              TEST_OS_QUEUE_ENABLED);
 
     /* Delete queue */
-    error = queue_delete_queue(&queue);
-    TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETE_QUEUE4_ID,
+    error = queueDelete(&queue);
+    TEST_POINT_ASSERT_RCODE(TEST_queueDelete4_ID,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
                             TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_ASSERT_UDWORD(TEST_QUEUE_DELETE_QUEUE5_ID,
+    TEST_POINT_ASSERT_UDWORD(TEST_queueDelete5_ID,
                              queue == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)queue,
                              TEST_OS_QUEUE_ENABLED);
 
     /* Enqueue node on NULL queue */
-    error = queue_push(nodes[0], queue);
+    error = queuePush(nodes[0], queue);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSH2_ID,
                             error == OS_ERR_NULL_POINTER,
                             OS_ERR_NULL_POINTER,
@@ -444,7 +444,7 @@ void queue_test(void)
                             TEST_OS_QUEUE_ENABLED);
 
     /* Dequeue node on NULL queue */
-    find = queue_pop(queue, &error);
+    find = queuePop(queue, &error);
     TEST_POINT_ASSERT_RCODE(TEST_QUEUE_POP4_ID,
                             error == OS_ERR_NULL_POINTER,
                             OS_ERR_NULL_POINTER,
@@ -459,7 +459,7 @@ void queue_test(void)
     /* Delete nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        error = queue_delete_node(&nodes[i]);
+        error = queueDeleteNode(&nodes[i]);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_DELETENODEBURST1_ID(i * 2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,

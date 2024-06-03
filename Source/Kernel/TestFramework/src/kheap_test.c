@@ -97,7 +97,7 @@ void kheap_test(void)
                              TEST_KHEAP_ENABLED);
 
     next_addr = addr_expected[0] + sizeof(uintptr_t) * 2;
-    mem_free  = kheap_get_free();
+    mem_free  = kHeapGetFree();
     for(i = 0; i < 200; ++i)
     {
         sizes[i] = sizeof(uintptr_t) * 2 * (i + 1);
@@ -112,7 +112,7 @@ void kheap_test(void)
                                  TEST_KHEAP_ENABLED);
 
         allocated_expected[i] = (uint64_t)(uintptr_t)address[i] - next_addr + sizes[i];
-        new_mem_free = kheap_get_free();
+        new_mem_free = kHeapGetFree();
         TEST_POINT_ASSERT_UDWORD(TEST_KHEAP_MEM_FREE0_ID(i),
                                  new_mem_free == mem_free - allocated_expected[i],
                                  mem_free - allocated_expected[i],
@@ -129,7 +129,7 @@ void kheap_test(void)
         kfree(address[i]);
     }
 
-    mem_free = kheap_get_free();
+    mem_free = kHeapGetFree();
     for(i = 0; i < 200; ++i)
     {
         sizes[i] = sizeof(uintptr_t) * 2 * (i + 1);
@@ -141,7 +141,7 @@ void kheap_test(void)
                                  (uint64_t)(uintptr_t)address[i],
                                  TEST_KHEAP_ENABLED);
 
-        new_mem_free = kheap_get_free();
+        new_mem_free = kHeapGetFree();
         TEST_POINT_ASSERT_UDWORD(TEST_KHEAP_MEM_FREE1_ID(i),
                                  new_mem_free == mem_free - allocated_expected[i],
                                  mem_free - allocated_expected[i],

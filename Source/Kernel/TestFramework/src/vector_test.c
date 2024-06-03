@@ -85,7 +85,7 @@ void vector_test(void)
     vector_t* vector_cpy;
     OS_RETURN_E err;
 
-    vector = vector_create(VECTOR_ALLOCATOR(kmalloc, kfree), (void*)0, 0, &err);
+    vector = vectorCreate(VECTOR_ALLOCATOR(kmalloc, kfree), (void*)0, 0, &err);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_CREATE0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -109,7 +109,7 @@ void vector_test(void)
 
     for(i = 0; i < 20; ++i)
     {
-        err = vector_push(vector, (void*)i);
+        err = vectorPush(vector, (void*)i);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_PUSHBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -135,7 +135,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -150,7 +150,7 @@ void vector_test(void)
 
     for(i = 0; i < 30; i += 2)
     {
-        err = vector_insert(vector, (void*)(i + 100), i);
+        err = vectorInsert(vector, (void*)(i + 100), i);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_INSERTBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -176,7 +176,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
 
         if(i < 30)
         {
@@ -217,7 +217,7 @@ void vector_test(void)
     {
         data2 = 19 - i;
 
-        err = vector_pop(vector, (void**)&data);
+        err = vectorPop(vector, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_POPBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -251,7 +251,7 @@ void vector_test(void)
             data2 = 14 + i - 29;
         }
 
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST2_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -278,7 +278,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; i++)
     {
-        err = vector_set(vector, i, (void*)i);
+        err = vectorSet(vector, i, (void*)i);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_SETBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -293,7 +293,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST3_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -317,7 +317,7 @@ void vector_test(void)
                              (uint64_t)vector->capacity,
                              TEST_OS_VECTOR_ENABLED);
 
-    err = vector_resize(vector, 20);
+    err = vectorResize(vector, 20);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_RESIZE0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -336,7 +336,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST4_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -349,7 +349,7 @@ void vector_test(void)
                                  TEST_OS_VECTOR_ENABLED);
     }
 
-    err = vector_resize(vector, 80);
+    err = vectorResize(vector, 80);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_RESIZE3_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -368,7 +368,7 @@ void vector_test(void)
 
     for(i = 0; i < 20; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST5_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -381,7 +381,7 @@ void vector_test(void)
                                  TEST_OS_VECTOR_ENABLED);
     }
 
-    err = vector_resize(vector, 20);
+    err = vectorResize(vector, 20);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_RESIZE6_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -398,7 +398,7 @@ void vector_test(void)
                              (uint64_t)vector->capacity,
                              TEST_OS_VECTOR_ENABLED);
 
-    err = vector_shrink_to_fit(vector);
+    err = vectorSrink(vector);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_SHRINK0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -417,7 +417,7 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        vector_get(vector, i, (void**)&data);
+        vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST6_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -430,7 +430,7 @@ void vector_test(void)
                                  TEST_OS_VECTOR_ENABLED);
     }
 
-    vector_cpy = vector_copy(vector, &err);
+    vector_cpy = vectorCopy(vector, &err);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_COPY0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -444,13 +444,13 @@ void vector_test(void)
 
     for(i = 0; i < vector->size; ++i)
     {
-        err = vector_get(vector, i, (void**)&data);
+        err = vectorGet(vector, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST7_ID(i * 4),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
                                 err,
                                 TEST_OS_VECTOR_ENABLED);
-        err = vector_get(vector_cpy, i, (void**)&data2);
+        err = vectorGet(vector_cpy, i, (void**)&data2);
         TEST_POINT_ASSERT_RCODE(TEST_VECTOR_GETBURST7_ID(i * 4 + 1),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -478,7 +478,7 @@ void vector_test(void)
                              (uint64_t)(uintptr_t)vector_cpy->capacity,
                              TEST_OS_VECTOR_ENABLED);
 
-    err = vector_clear(vector);
+    err = vectorClear(vector);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_CLEAR0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -495,7 +495,7 @@ void vector_test(void)
                              (uint64_t)(uintptr_t)vector->capacity,
                              TEST_OS_VECTOR_ENABLED);
 
-    err = vector_destroy(vector_cpy);
+    err = vectorDestroy(vector_cpy);
     TEST_POINT_ASSERT_RCODE(TEST_VECTOR_DESTROY0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,

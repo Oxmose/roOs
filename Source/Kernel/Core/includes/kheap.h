@@ -71,7 +71,7 @@
  * @details Setups kernel heap management. It will also allign kernel heap start
  * and initialize the basic heap parameters such as its size.
  */
-void kheap_init(void);
+void kHeapInit(void);
 
 /**
  * @brief Allocate memory from the kernel heap.
@@ -79,12 +79,12 @@ void kheap_init(void);
  * @details Allocate a chunk of memory form the kernel heap and returns the
  * start address of the chunk.
  *
- * ­@param[in] size The number of byte to allocate.
+ * @param[in] kSize The number of byte to allocate.
  *
  * @return A pointer to the start address of the allocated memory is returned.
  * If the memory cannot be allocated, this pointer will be NULL.
  */
-void* kmalloc(const size_t size);
+void* kmalloc(const size_t kSize);
 
 /**
  * @brief Free allocated memory.
@@ -103,7 +103,7 @@ void kfree(void* ptr);
  *
  * @return The kernel heap available memory is returned.
  */
-uint32_t kheap_get_free(void);
+uint32_t kHeapGetFree(void);
 
 #endif /* #ifndef __CORE_KHEAP_H_ */
 

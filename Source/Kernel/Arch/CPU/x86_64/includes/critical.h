@@ -51,7 +51,7 @@
  * disables interrupts.
  */
 #define ENTER_CRITICAL(INT_STATE) {         \
-    INT_STATE = kernel_interrupt_disable(); \
+    INT_STATE = interruptDisable(); \
 }
 
 /**
@@ -63,7 +63,7 @@
  * interrupt state.
  */
 #define EXIT_CRITICAL(INT_STATE) {           \
-    kernel_interrupt_restore(INT_STATE);     \
+    interruptRestore(INT_STATE);     \
 }
 
 /**
@@ -71,7 +71,7 @@
  *
  * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @param[in, out] lock The lock to lock.
+ * @param[in, out] LOCK The lock to lock.
 */
 #define KERNEL_SPINLOCK_LOCK(LOCK) {    \
     cpuSpinlockAcquire(&LOCK);           \
@@ -82,7 +82,7 @@
  *
  * @details Unlocks a spinlock. This function is safe in kernel mode.
  *
- * @param[out] lock The lock to unlock.
+ * @param[out] LOCK The lock to unlock.
 */
 #define KERNEL_SPINLOCK_UNLOCK(LOCK) {  \
     cpuSpinlockRelease(&LOCK);         \
@@ -93,7 +93,7 @@
  *
  * @details Initializes a spinlock. This function is safe in kernel mode.
  *
- * @param[out] lock The lock to initialize.
+ * @param[out] LOCK The lock to initialize.
 */
 #define KERNEL_SPINLOCK_INIT(LOCK) {                        \
     (volatile uint32_t)LOCK = KERNEL_SPINLOCK_INIT_VALUE;   \
@@ -124,18 +124,18 @@
  *
  * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @param[in, out] lock The pointer to the lock to lock.
+ * @param[in, out] pLock The pointer to the lock to lock.
 */
-void cpuSpinlockAcquire(volatile uint32_t * lock);
+void cpuSpinlockAcquire(volatile uint32_t * pLock);
 
 /**
  * @brief Unlocks a spinlock.
  *
  * @details Unlocks a spinlock. This function is safe in kernel mode.
  *
- * @param[out] lock The pointer to the lock to unlock.
+ * @param[out] pLock The pointer to the lock to unlock.
 */
-void cpuSpinlockRelease(volatile uint32_t * lock);
+void cpuSpinlockRelease(volatile uint32_t * pLock);
 
 
 #endif /* #ifndef __X86_64_CRITICAL_H_ */

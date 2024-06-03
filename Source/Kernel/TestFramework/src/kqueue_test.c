@@ -96,48 +96,48 @@ void kqueue_test(void)
     }
 
     /* Create node */
-    nodes[0] = kqueue_create_node((void*) 0);
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_NODE0_ID,
+    nodes[0] = kQueueCreateNode((void*) 0);
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreateNode0_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)nodes[0],
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Delete node */
-    kqueue_delete_node(&nodes[0]);
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_DELETE_NODE0_ID,
+    kQueueDestroyNode(&nodes[0]);
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueDeleteNode0_ID,
                              nodes[0] == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)nodes[0],
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Create node */
-    nodes[0] = kqueue_create_node((void*) 0);
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_NODE1_ID,
+    nodes[0] = kQueueCreateNode((void*) 0);
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreateNode1_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)nodes[0],
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Create queue */
-    queue = kqueue_create_queue();
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_QUEUE0_ID,
+    queue = kQueueCreate();
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreate0_ID,
                              queue != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)queue,
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Delete queue */
-    kqueue_delete_queue(&queue);
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_DELETE_QUEUE0_ID,
+    kQueueDestroy(&queue);
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueDelete0_ID,
                              queue == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)queue,
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Create queue */
-    queue = kqueue_create_queue();
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_QUEUE1_ID,
+    queue = kQueueCreate();
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreate1_ID,
                              queue != NULL,
                              (uint64_t)1,
                              (uint64_t)(uintptr_t)queue,
@@ -145,7 +145,7 @@ void kqueue_test(void)
 
     /* Enqueue node */
     old_size = queue->size;
-    kqueue_push(nodes[0], queue);
+    kQueuePush(nodes[0], queue);
     TEST_POINT_ASSERT_UINT(TEST_KQUEUE_PUSH0_ID,
                            old_size + 1 == queue->size,
                            old_size + 1,
@@ -153,7 +153,7 @@ void kqueue_test(void)
                            TEST_OS_KQUEUE_ENABLED);
 
     /* Dequeue node */
-    nodes[0] = kqueue_pop(queue);
+    nodes[0] = kQueuePop(queue);
     TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_POP0_ID,
                              nodes[0] != NULL,
                              (uint64_t)1,
@@ -163,8 +163,8 @@ void kqueue_test(void)
     /* Create more nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = kqueue_create_node((void*) (uintptr_t)unsorted[i % 10]);
-        TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_NODEBURST0_ID(i),
+        nodes[i] = kQueueCreateNode((void*) (uintptr_t)unsorted[i % 10]);
+        TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreateNodeBURST0_ID(i),
                                  nodes[i] != NULL,
                                  (uint64_t)1,
                                  (uint64_t)(uintptr_t)nodes[i],
@@ -175,7 +175,7 @@ void kqueue_test(void)
     for(uint8_t i = 0; i < 40; ++i)
     {
         old_size = queue->size;
-        kqueue_push_prio(nodes[i], queue, (uintptr_t)nodes[i]->data);
+        kQueuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->data);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_PUSHPRIOBURST0_ID(i),
                                old_size + 1 == queue->size,
                                old_size + 1,
@@ -187,7 +187,7 @@ void kqueue_test(void)
     for(uint8_t i = 0; i < 40; ++i)
     {
         old_size = queue->size;
-        nodes[i] = kqueue_pop(queue);
+        nodes[i] = kQueuePop(queue);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_POPBURST0_ID(i * 3),
                                old_size - 1 == queue->size,
                                old_size - 1,
@@ -215,7 +215,7 @@ void kqueue_test(void)
     /* Delete nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        kqueue_delete_node(&nodes[i]);
+        kQueueDestroyNode(&nodes[i]);
         TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_DELETENODEBURST0_ID(i),
                                  nodes[i] == NULL,
                                  (uint64_t)(uintptr_t)NULL,
@@ -226,8 +226,8 @@ void kqueue_test(void)
     /* Create more nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        nodes[i] = kqueue_create_node((void*) (uintptr_t)unsorted[i % 10]);
-        TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_NODEBURST1_ID(i),
+        nodes[i] = kQueueCreateNode((void*) (uintptr_t)unsorted[i % 10]);
+        TEST_POINT_ASSERT_UDWORD(TEST_KqueueCreateNodeBURST1_ID(i),
                                  nodes[i] != NULL,
                                  (uint64_t)1,
                                  (uint64_t)(uintptr_t)nodes[i],
@@ -238,7 +238,7 @@ void kqueue_test(void)
     for(uint8_t i = 0; i < 40; ++i)
     {
         old_size = queue->size;
-        kqueue_push(nodes[i], queue);
+        kQueuePush(nodes[i], queue);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_PUSHBURST0_ID(i),
                                old_size + 1 == queue->size,
                                old_size + 1,
@@ -247,7 +247,7 @@ void kqueue_test(void)
     }
 
     /* Find a present node */
-    find = kqueue_find(queue, (void*) 9);
+    find = kQueueFind(queue, (void*) 9);
     TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_FIND0_ID,
                              find != NULL,
                              (uint64_t)1,
@@ -260,7 +260,7 @@ void kqueue_test(void)
                            TEST_OS_KQUEUE_ENABLED);
 
     /* Find a not present node */
-    find = kqueue_find(queue, (void*) 42);
+    find = kQueueFind(queue, (void*) 42);
     TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_CREATE_FIND2_ID,
                              find == NULL,
                              (uint64_t)(uintptr_t)NULL,
@@ -271,7 +271,7 @@ void kqueue_test(void)
     for(uint8_t i = 0; i < 40; ++i)
     {
         old_size = queue->size;
-        nodes[i] = kqueue_pop(queue);
+        nodes[i] = kQueuePop(queue);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_POPBURST1_ID(i * 3),
                                old_size - 1 == queue->size,
                                old_size - 1,
@@ -296,7 +296,7 @@ void kqueue_test(void)
                             TEST_OS_KQUEUE_ENABLED);
 
     /* Dequeue node on empty queue */
-    find = kqueue_pop(queue);
+    find = kQueuePop(queue);
     TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_POP1_ID,
                              find == NULL,
                              (uint64_t)(uintptr_t)NULL,
@@ -304,8 +304,8 @@ void kqueue_test(void)
                              TEST_OS_KQUEUE_ENABLED);
 
     /* Delete queue */
-    kqueue_delete_queue(&queue);
-    TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_DELETE_QUEUE1_ID,
+    kQueueDestroy(&queue);
+    TEST_POINT_ASSERT_UDWORD(TEST_KqueueDelete1_ID,
                              queue == NULL,
                              (uint64_t)(uintptr_t)NULL,
                              (uint64_t)(uintptr_t)queue,
@@ -314,7 +314,7 @@ void kqueue_test(void)
     /* Delete nodes */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        kqueue_delete_node(&nodes[i]);
+        kQueueDestroyNode(&nodes[i]);
         TEST_POINT_ASSERT_UDWORD(TEST_KQUEUE_DELETENODEBURST1_ID(i),
                                  nodes[i] == NULL,
                                  (uint64_t)(uintptr_t)NULL,

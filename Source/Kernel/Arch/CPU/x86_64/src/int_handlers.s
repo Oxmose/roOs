@@ -30,7 +30,7 @@ global __intHandler%1
 __intHandler%1:
     push    0                       ; push 0 as dummy error code
     push    %1                      ; push the interrupt number
-    jmp     __generic_interrupt_handler   ; jump to the common handler
+    jmp     __intHandlerEntry   ; jump to the common handler
 %endmacro
 
 %macro ERR_CODE_INT_HANDLER 1    ; Interrupt that do not come with an
@@ -39,20 +39,20 @@ __intHandler%1:
 global __intHandler%1
 __intHandler%1:
     push    %1                      ; push the interrupt number
-    jmp     __generic_interrupt_handler   ; jump to the common handler
+    jmp     __intHandlerEntry   ; jump to the common handler
 %endmacro
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
-extern current_thread
+extern pCurrentThread
 
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
 
-extern kernel_interrupt_handler
+extern interruptMainHandler
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -64,13 +64,13 @@ extern kernel_interrupt_handler
 ;-------------------------------------------------------------------------------
 
 section .text
-__generic_interrupt_handler:
+__intHandlerEntry:
         ; Save a bit of context
         push rax
         push rbx
 
         ; Get the current thread handle
-        mov rbx, current_thread
+        mov rbx, pCurrentThread
         mov rax, [rbx]
 
         ; Save the interrupt context
@@ -122,10 +122,10 @@ __generic_interrupt_handler:
         pop rax ; Restore
 
         ; call the C generic interrupt handler
-        call kernel_interrupt_handler
+        call interruptMainHandler
 
         ; Get the current thread handle
-        mov rbx, current_thread
+        mov rbx, pCurrentThread
         mov rax, [rbx]
 
         ; Restore registers

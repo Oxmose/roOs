@@ -93,18 +93,21 @@ static console_driver_t sConsoleDriver = {NULL};
 OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
 {
 #ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START,
+                       2,
                        (uintptr_t)pkDriver & 0xFFFFFFFF,
                        (uintptr_t)pkDriver >> 32);
 #else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START, 2,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START,
+                       2,
                        (uintptr_t)driver,
                        0);
 #endif
 
     sConsoleDriver = *pkDriver;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END, 1,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END,
+                       1,
                        OS_NO_ERR);
     return OS_NO_ERR;
 }
@@ -116,51 +119,51 @@ void consoleClear(void)
 
 void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
 {
-    EXEC_IF_SET(sConsoleDriver, 
-                pPutCursor, 
-                sConsoleDriver.pDriverCtrl, 
-                kLine, 
+    EXEC_IF_SET(sConsoleDriver,
+                pPutCursor,
+                sConsoleDriver.pDriverCtrl,
+                kLine,
                 kColumn);
 }
 
 void consoleSaveCursor(cursor_t* pBuffer)
 {
-    EXEC_IF_SET(sConsoleDriver, 
-                pSaveCursor, 
-                sConsoleDriver.pDriverCtrl, 
+    EXEC_IF_SET(sConsoleDriver,
+                pSaveCursor,
+                sConsoleDriver.pDriverCtrl,
                 pBuffer);
 }
 
 void consoleRestoreCursor(const cursor_t* pkBuffer)
 {
     EXEC_IF_SET(sConsoleDriver,
-                pRestoreCursor, 
-                sConsoleDriver.pDriverCtrl, 
+                pRestoreCursor,
+                sConsoleDriver.pDriverCtrl,
                 pkBuffer);
 }
 
 void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
 {
-    EXEC_IF_SET(sConsoleDriver, 
-                pScroll, 
-                sConsoleDriver.pDriverCtrl, 
-                kDirection, 
+    EXEC_IF_SET(sConsoleDriver,
+                pScroll,
+                sConsoleDriver.pDriverCtrl,
+                kDirection,
                 kLines);
 }
 
 void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
 {
-    EXEC_IF_SET(sConsoleDriver, 
-                pSetColorScheme, 
-                sConsoleDriver.pDriverCtrl, 
+    EXEC_IF_SET(sConsoleDriver,
+                pSetColorScheme,
+                sConsoleDriver.pDriverCtrl,
                 pkColorScheme);
 }
 
 void consoleSaveColorScheme(colorscheme_t* pBuffer)
 {
-    EXEC_IF_SET(sConsoleDriver, 
-                pSaveColorScheme, 
-                sConsoleDriver.pDriverCtrl, 
+    EXEC_IF_SET(sConsoleDriver,
+                pSaveColorScheme,
+                sConsoleDriver.pDriverCtrl,
                 pBuffer);
 }
 
@@ -169,9 +172,9 @@ void consolePutString(const char* pkString)
 #if DEBUG_LOG_UART
     uartDebugPutString(pkString);
 #endif
-    EXEC_IF_SET(sConsoleDriver, 
-                pPutString, 
-                sConsoleDriver.pDriverCtrl, 
+    EXEC_IF_SET(sConsoleDriver,
+                pPutString,
+                sConsoleDriver.pDriverCtrl,
                 pkString);
 }
 
@@ -180,9 +183,9 @@ void consolePutChar(const char kCharacter)
 #if DEBUG_LOG_UART
     uartDebugPutChar(kCharacter);
 #endif
-    EXEC_IF_SET(sConsoleDriver, 
-                pPutChar, 
-                sConsoleDriver.pDriverCtrl, 
+    EXEC_IF_SET(sConsoleDriver,
+                pPutChar,
+                sConsoleDriver.pDriverCtrl,
                 kCharacter);
 }
 

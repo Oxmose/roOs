@@ -28,6 +28,9 @@
  * CONSTANTS
  ******************************************************************************/
 
+/** @brief Number of entries in the kernel's IDT. */
+#define IDT_ENTRY_COUNT 256
+
 /** @brief Minimal customizable accepted interrupt line. */
 #define MIN_INTERRUPT_LINE 0x20
 /** @brief Maximal customizable accepted interrupt line. */

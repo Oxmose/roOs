@@ -47,7 +47,7 @@ extern kickstart
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-global __kinit_x86_64
+global __kinitx86_64
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
@@ -60,20 +60,16 @@ global __kinit_x86_64
 
 section .text
 align 4
-__kinit_x86_64:
-    ; Get multiboot pointer from 32 bit stage
-    mov rax, _kernel_multiboot_ptr
-    mov [rax], rbx
-
+__kinitx86_64:
     ; Init BSS
     mov  rbx, _END_BSS_ADDR
     mov  rdi, _START_BSS_ADDR
     xor  rsi, rsi
-__bss_init:
+__bssInit:
     mov  [rdi], rsi
     add  rdi, 8
     cmp  rdi, rbx
-    jb   __bss_init
+    jb   __bssInit
 
     ; Init stack
     mov rax, _KERNEL_STACKS_BASE
@@ -99,27 +95,27 @@ __bss_init:
 
     call kickstart
 
-__kinit_x64_end:
+__kinitx64End:
     mov rax, 0xB8F00
-    mov rbx, _kinit_end_of_line
+    mov rbx, _kinitEndOfLine
     mov cl, 0xF0
 
-__kinit_x64_end_print:
+__kinitx64EndPrint:
     mov dl, [rbx]
     cmp dl, 0
-    jbe __kinit_x64_end_print_end
+    jbe __kinitx64EndPrintEnd
     mov [rax], dl
     add rax, 1
     mov [rax], cl
     add rbx, 1
     add rax, 1
-    jmp __kinit_x64_end_print
+    jmp __kinitx64EndPrint
 
-__kinit_x64_end_print_end:
+__kinitx64EndPrintEnd:
     ; Disable interrupt and loop forever
     cli
     hlt
-    jmp __kinit_x64_end_print_end
+    jmp __kinitx64EndPrintEnd
 
 ;-------------------------------------------------------------------------------
 ; DATA
@@ -127,13 +123,9 @@ __kinit_x64_end_print_end:
 
 section .data
 
-_kernel_multiboot_ptr:
-    dd 0x00000000
-    dd 0x00000000
-
 _bootedCPUCount:
     dd 0x00000000
 
-_kinit_end_of_line:
+_kinitEndOfLine:
     db " END OF LINE "
     db 0

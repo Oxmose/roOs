@@ -21,13 +21,13 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stddef.h>        /* Standard defined types */
-#include <stdint.h>        /* Standard int types and bool */
+#include <kheap.h>        /* Kernel heap */
+#include <panic.h>        /* Kernel panic */
+#include <stddef.h>       /* Standard defined types */
+#include <stdint.h>       /* Standard int types and bool */
+#include <kerror.h>       /* Kernel error codes */
+#include <string.h>       /* Memory manipulation */
 #include <kerneloutput.h> /* Kernel logging */
-#include <panic.h>         /* Kernel panic */
-#include <kerror.h>        /* Kernel error codes */
-#include <kheap.h>         /* Kernel heap */
-#include <string.h>        /* Memory manipulation */
 
 /* Configuration files */
 #include <config.h>
@@ -69,52 +69,78 @@
 /** @brief File Device Tree Header structure. */
 typedef struct
 {
+    /** @brief FDT Magic number */
     uint32_t magic;
+    /** @brief FDT total size  */
     uint32_t size;
+    /** @brief FDT structures offset */
     uint32_t offStructs;
+    /** @brief FDT strings offset */
     uint32_t offStrings;
+    /** @brief FDT reserved memory map */
     uint32_t offMemRsvMap;
+    /** @brief FDT version */
     uint32_t version;
+    /** @brief FDT last compatible version */
     uint32_t lastCompatVersion;
+    /** @brief FDT boot CPU identifier */
     uint32_t bootCPUId;
+    /** @brief FDT string table size */
     uint32_t sizeStrings;
+    /** @brief FDT structures table size */
     uint32_t sizeStructs;
 } fdt_header_t;
 
 /** @brief pHandle struct */
 typedef struct phandle_t
 {
+    /** @brief pHandle identifier */
     uint32_t id;
+    /** @brief Link to the node */
     void*    pLink;
 
+    /** @brief Next phandle in the list */
     struct phandle_t* pNext;
 } phandle_t;
 
 /** @brief Internal descriptor for the FDT */
 typedef struct
 {
+
+    /** @brief Number of structures */
     uint32_t  nbStructs;
 
+    /** @brief Struct table pointer */
     uint32_t*   pStructs;
+    /** @brief String table pointer */
     const char* pStrings;
 
+    /** @brief First root node of the FDT */
     fdt_node_t* pFirstNode;
 
+    /** @brief FDT pHandle list */
     phandle_t* pHandleList;
 } fdt_descriptor_t;
 
 /** @brief Specific property actions */
 typedef struct
 {
-    const char*       pName;
-    const size_t      nameSize;
-    void        (*pAction)(fdt_node_t*, fdt_property_t*);
+    /** @brief Action name (property name) */
+    const char*  pName;
+
+    /** @brief Property name size */
+    const size_t nameSize;
+
+    /** @brief Action function pointer */
+    void         (*pAction)(fdt_node_t*, fdt_property_t*);
 } specprop_action_t;
 
 /** @brief Specific property table */
 typedef struct
 {
+    /** @brief Number of properties with specific action. */
     uint32_t          numberOfProps;
+    /** @brief Table of actions */
     specprop_action_t pSpecProps[3];
 } specprop_table_t;
 
@@ -123,6 +149,7 @@ typedef struct
  * MACROS
  ******************************************************************************/
 
+/** @brief Align memory with FDT boundaries. */
 #define ALIGN(VAL, ALIGN_V) \
         ((((VAL) + ((ALIGN_V) - 1)) / (ALIGN_V)) * (ALIGN_V))
 
@@ -131,23 +158,128 @@ typedef struct
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
+/**
+ * @brief Links a node to another in the FDT tree.
+ *
+ * @details Links a node to another in the FDT tree. This is used to reverse the
+ * FDT read order (First Read Last Seen).
+ *
+ * @param[in, out] pNode The node to link.
+ * @param[in, out] pNextNode The next node to link.
+*/
 static inline void linkNode(fdt_node_t* pNode, fdt_node_t* pNextNode);
+
+/**
+ * @brief Links a property to another in the FDT tree.
+ *
+ * @details Links a property to another in the FDT tree. This is used to reverse
+ * the FDT read order (First Read Last Seen).
+ *
+ * @param[in, out] pProp The property to link.
+ * @param[in, out] pLinkProp The next property to link.
+*/
 static inline void linkProperty(fdt_property_t* pProp,
                                 fdt_property_t* pLinkProp);
 
-static fdt_node_t* parseNode(uint32_t* pOffset,
+/**
+ * @brief Parses a node in the FDT.
+ *
+ * @details Parses a node in the FDT based on the current offset. The function
+ * populates the node and returns it.
+ *
+ * @param[in, out] pOffset The current offset in the FDT. The offset is updated
+ * by this function.
+ * @param[in] kAddrCells Current address-cells value.
+ * @param[in] kSizeCells Current size-cells value.
+ *
+ * @returns A new node parsed from the FDT is returned.
+*/
+static fdt_node_t* parseNode(uint32_t*     pOffset,
                              const uint8_t kAddrCells,
                              const uint8_t kSizeCells);
-static fdt_property_t* parseProperty(uint32_t* pOffset,
+
+/**
+ * @brief Parses a property in the FDT.
+ *
+ * @details Parses a property in the FDT based on the current offset. The
+ * function populates the property and returns it.
+ *
+ * @param[in, out] pOffset The current offset in the FDT. The offset is updated
+ * by this function.
+ * @param[in] pNode The node from which we should parse the property from.
+ *
+ * @returns A new property parsed from the FDT is returned.
+*/
+static fdt_property_t* parseProperty(uint32_t*   pOffset,
                                      fdt_node_t* pNode);
+
+/**
+ * @brief Applies an action on a node for a specific property.
+ *
+ * @details Applies an action on a node for a specific property. Some properties
+ * such as address-cells and size-cells have specific effect on parsing. This
+ * function applies the action based on the property given as parameter.
+ *
+ * @param[in, out] pNode The node where the property was found. Might be
+ * modified by the specific property action.
+ * @param[in] pProperty The property to apply.
+*/
 static void applyPropertyAction(fdt_node_t* pNode, fdt_property_t* pProperty);
-static void applyActionAddressCells(fdt_node_t* pNode,
+
+/**
+ * @brief Applies an action on a node for a specific property.
+ *
+ * @details Applies an action on a node for a specific property. Some properties
+ * such as address-cells and size-cells have specific effect on parsing. This
+ * function applies the action based on the property given as parameter.
+ *
+ * @param[in, out] pNode The node where the property was found. Might be
+ * modified by the specific property action.
+ * @param[in] pProperty The property to apply.
+*/
+static void applyActionAddressCells(fdt_node_t*     pNode,
                                     fdt_property_t* pProperty);
+
+/**
+ * @brief Applies an action on a node for a specific property.
+ *
+ * @details Applies an action on a node for a specific property. Some properties
+ * such as address-cells and size-cells have specific effect on parsing. This
+ * function applies the action based on the property given as parameter.
+ *
+ * @param[in, out] pNode The node where the property was found. Might be
+ * modified by the specific property action.
+ * @param[in] pProperty The property to apply.
+*/
 static void applyActionSizeCells(fdt_node_t* pNode, fdt_property_t* pProperty);
-static void applyActionPhandle(fdt_node_t* pNode,
+
+/**
+ * @brief Applies an action on a node for a specific property.
+ *
+ * @details Applies an action on a node for a specific property. Some properties
+ * such as address-cells and size-cells have specific effect on parsing. This
+ * function applies the action based on the property given as parameter.
+ *
+ * @param[in, out] pNode The node where the property was found. Might be
+ * modified by the specific property action.
+ * @param[in] pProperty The property to apply.
+*/
+static void applyActionPhandle(fdt_node_t*     pNode,
                                fdt_property_t* pProperty);
-static inline const void* fdtInternalReadProperty(const fdt_property_t* pProperty,
-                                                  size_t* pReadSize);
+
+/**
+ * @brief Reads a property from the internal FDT.
+ *
+ * @details Reads a property from the internal FDT. The function reads the
+ * property and gets its size. The size is updated in pReadSize.
+ *
+ * @param[in] kpProperty The property to read.
+ * @param[out] pReadSize The buffer that receives the property size.
+ *
+ * @returns The pointer to the property cells is returned.
+*/
+static inline const void* fdtInternalReadProperty(const fdt_property_t* kpProperty,
+                                                  size_t*               pReadSize);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -160,14 +292,17 @@ static inline const void* fdtInternalReadProperty(const fdt_property_t* pPropert
 /* None */
 
 /************************** Static global variables ***************************/
-fdt_descriptor_t fdtDesc;
 
-specprop_table_t specPropTable = {
+/** @brief The current contructed FDT desriptor. */
+static fdt_descriptor_t sFdtDesc;
+
+/** @brief Talbe that contains the specific properties actions. */
+static specprop_table_t sSpecPropTable = {
     .numberOfProps = 3,
     .pSpecProps = {
-        {"phandle", 7, applyActionPhandle},
+        {"phandle",         7, applyActionPhandle},
         {"#address-cells", 14, applyActionAddressCells},
-        {"#size-cells", 11, applyActionSizeCells},
+        {"#size-cells",    11, applyActionSizeCells},
     }
 };
 
@@ -182,7 +317,7 @@ static inline void linkNode(fdt_node_t* pNode, fdt_node_t* pLinkNode)
         pNode = pNode->pNextNode;
     }
     pLinkNode->pNextNode = NULL;
-    pNode->pNextNode = pLinkNode;
+    pNode->pNextNode     = pLinkNode;
 }
 
 static inline void linkProperty(fdt_property_t* pProp,
@@ -193,13 +328,13 @@ static inline void linkProperty(fdt_property_t* pProp,
         pProp = pProp->pNextProp;
     }
     pLinkProp->pNextProp = NULL;
-    pProp->pNextProp = pLinkProp;
+    pProp->pNextProp     = pLinkProp;
 }
 
-static inline const void* fdtInternalReadProperty(const fdt_property_t* pProperty,
-                                                  size_t* pReadSize)
+static inline const void* fdtInternalReadProperty(const fdt_property_t* kpProperty,
+                                                  size_t*               pReadSize)
 {
-    if(pProperty == NULL)
+    if(kpProperty == NULL)
     {
         if(pReadSize != NULL)
         {
@@ -210,13 +345,13 @@ static inline const void* fdtInternalReadProperty(const fdt_property_t* pPropert
 
     if(pReadSize != NULL)
     {
-        *pReadSize = pProperty->length;
+        *pReadSize = kpProperty->length;
     }
 
-    return pProperty->pCells;
+    return kpProperty->pCells;
 }
 
-static void applyActionPhandle(fdt_node_t* pNode,
+static void applyActionPhandle(fdt_node_t*     pNode,
                                fdt_property_t* pProperty)
 {
     phandle_t* pNewHandle;
@@ -232,8 +367,8 @@ static void applyActionPhandle(fdt_node_t* pNode,
 
     pNewHandle->id    = FDTTOCPU32(*pProperty->pCells);
     pNewHandle->pLink = (void*)pNode;
-    pNewHandle->pNext = fdtDesc.pHandleList;
-    fdtDesc.pHandleList = pNewHandle;
+    pNewHandle->pNext = sFdtDesc.pHandleList;
+    sFdtDesc.pHandleList = pNewHandle;
 
     KERNEL_DEBUG(DTB_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -242,10 +377,10 @@ static void applyActionPhandle(fdt_node_t* pNode,
                  pNewHandle->id);
 }
 
-static void applyActionAddressCells(fdt_node_t* pNode,
+static void applyActionAddressCells(fdt_node_t*     pNode,
                                     fdt_property_t* pProperty)
 {
-    uint32_t        propertySize;
+    size_t          propertySize;
     const uint32_t* pPropertyPtr;
 
     propertySize = sizeof(uint32_t);
@@ -264,10 +399,10 @@ static void applyActionAddressCells(fdt_node_t* pNode,
                  pNode->addrCells);
 }
 
-static void applyActionSizeCells(fdt_node_t* pNode,
+static void applyActionSizeCells(fdt_node_t*     pNode,
                                  fdt_property_t* pProperty)
 {
-    uint32_t        propertySize;
+    size_t          propertySize;
     const uint32_t* pPropertyPtr;
 
     propertySize = sizeof(uint32_t);
@@ -295,18 +430,18 @@ static void applyPropertyAction(fdt_node_t* pNode, fdt_property_t* pProperty)
     propNameLength = strlen(pProperty->pName);
 
     /* Check all properties */
-    for(i = 0; i < specPropTable.numberOfProps; ++i)
+    for(i = 0; i < sSpecPropTable.numberOfProps; ++i)
     {
-        if(propNameLength == specPropTable.pSpecProps[i].nameSize &&
-           specPropTable.pSpecProps[i].pAction != NULL &&
-           strcmp(pProperty->pName, specPropTable.pSpecProps[i].pName) == 0)
+        if(propNameLength == sSpecPropTable.pSpecProps[i].nameSize &&
+           sSpecPropTable.pSpecProps[i].pAction != NULL &&
+           strcmp(pProperty->pName, sSpecPropTable.pSpecProps[i].pName) == 0)
         {
-            specPropTable.pSpecProps[i].pAction(pNode, pProperty);
+            sSpecPropTable.pSpecProps[i].pAction(pNode, pProperty);
         }
     }
 }
 
-static fdt_property_t* parseProperty(uint32_t* pOffset,
+static fdt_property_t* parseProperty(uint32_t*   pOffset,
                                      fdt_node_t* pNode)
 {
     fdt_property_t* pProperty;
@@ -315,7 +450,7 @@ static fdt_property_t* parseProperty(uint32_t* pOffset,
     const uint32_t* pInitProperty;
 
     /* Check if start property */
-    if(FDTTOCPU32(fdtDesc.pStructs[*pOffset]) != FDT_PROP)
+    if(FDTTOCPU32(sFdtDesc.pStructs[*pOffset]) != FDT_PROP)
     {
         return NULL;
     }
@@ -333,12 +468,12 @@ static fdt_property_t* parseProperty(uint32_t* pOffset,
     memset(pProperty, 0, sizeof(fdt_property_t));
 
 
-    pInitProperty = (uint32_t*)&fdtDesc.pStructs[*pOffset];
+    pInitProperty = (uint32_t*)&sFdtDesc.pStructs[*pOffset];
     *pOffset += 2;
 
     /* Get the length and name */
     pProperty->length = FDTTOCPU32(pInitProperty[0]);
-    pName = fdtDesc.pStrings + FDTTOCPU32(pInitProperty[1]);
+    pName = sFdtDesc.pStrings + FDTTOCPU32(pInitProperty[1]);
     length = strlen(pName);
 
     pProperty->pName = kmalloc(length + 1);
@@ -363,7 +498,7 @@ static fdt_property_t* parseProperty(uint32_t* pOffset,
                 "Failed to allocate new property cells",
                 TRUE);
         }
-        memcpy(pProperty->pCells, fdtDesc.pStructs + *pOffset, pProperty->length);
+        memcpy(pProperty->pCells, sFdtDesc.pStructs + *pOffset, pProperty->length);
     }
     else
     {
@@ -383,7 +518,7 @@ static fdt_property_t* parseProperty(uint32_t* pOffset,
     return pProperty;
 }
 
-static fdt_node_t* parseNode(uint32_t* pOffset,
+static fdt_node_t* parseNode(uint32_t*     pOffset,
                              const uint8_t kAddrCells,
                              const uint8_t kSizeCells)
 {
@@ -395,7 +530,7 @@ static fdt_node_t* parseNode(uint32_t* pOffset,
     uint32_t        cursor;
 
     /* Check if start node */
-    if(FDTTOCPU32(fdtDesc.pStructs[*pOffset]) != FDT_BEGIN_NODE)
+    if(FDTTOCPU32(sFdtDesc.pStructs[*pOffset]) != FDT_BEGIN_NODE)
     {
         return NULL;
     }
@@ -417,7 +552,7 @@ static fdt_node_t* parseNode(uint32_t* pOffset,
     pNode->sizeCells = kSizeCells;
 
     /* Get name and copy */
-    pInitName = (char*)&fdtDesc.pStructs[*pOffset];
+    pInitName = (char*)&sFdtDesc.pStructs[*pOffset];
     length    = strlen(pInitName);
 
     pNode->pName = kmalloc(length + 1);
@@ -437,9 +572,9 @@ static fdt_node_t* parseNode(uint32_t* pOffset,
     *pOffset += ALIGN(length + 1, FDT_CELL_SIZE) / FDT_CELL_SIZE;
 
     /* Walk the node until we reache the number of structs */
-    while(fdtDesc.nbStructs > *pOffset)
+    while(sFdtDesc.nbStructs > *pOffset)
     {
-        cursor = FDTTOCPU32(fdtDesc.pStructs[*pOffset]);
+        cursor = FDTTOCPU32(sFdtDesc.pStructs[*pOffset]);
         if(cursor == FDT_BEGIN_NODE)
         {
             /* New Child */
@@ -514,30 +649,30 @@ void fdtInit(const uintptr_t kStartAddr)
               TRUE);
     }
 
-    memset(&fdtDesc, 0, sizeof(fdt_descriptor_t));
+    memset(&sFdtDesc, 0, sizeof(fdt_descriptor_t));
 
     /* Get the structs and strings addresses */
-    fdtDesc.pStructs = (uint32_t*)(kStartAddr + FDTTOCPU32(pHeader->offStructs));
-    fdtDesc.pStrings = (char*)(kStartAddr + FDTTOCPU32(pHeader->offStrings));
+    sFdtDesc.pStructs = (uint32_t*)(kStartAddr + FDTTOCPU32(pHeader->offStructs));
+    sFdtDesc.pStrings = (char*)(kStartAddr + FDTTOCPU32(pHeader->offStrings));
 
-    fdtDesc.nbStructs = FDTTOCPU32(pHeader->sizeStructs) / sizeof(uint32_t);
+    sFdtDesc.nbStructs = FDTTOCPU32(pHeader->sizeStructs) / sizeof(uint32_t);
 
     /* Now start parsing the first level */
-    for(i = 0; i < fdtDesc.nbStructs; ++i)
+    for(i = 0; i < sFdtDesc.nbStructs; ++i)
     {
         /* Get the node and add to root */
         pNode = parseNode(&i, INIT_ADDR_CELLS, INIT_SIZE_CELLS);
         if(pNode != NULL)
         {
             /* Link node */
-            if(fdtDesc.pFirstNode == NULL)
+            if(sFdtDesc.pFirstNode == NULL)
             {
                 pNode->pNextNode = NULL;
-                fdtDesc.pFirstNode = pNode;
+                sFdtDesc.pFirstNode = pNode;
             }
             else
             {
-                linkNode(fdtDesc.pFirstNode, pNode);
+                linkNode(sFdtDesc.pFirstNode, pNode);
             }
         }
     }
@@ -546,8 +681,8 @@ void fdtInit(const uintptr_t kStartAddr)
 }
 
 const void* fdtGetProp(const fdt_node_t* pkFdtNode,
-                       const char* pkName,
-                       size_t* pReadSize)
+                       const char*       pkName,
+                       size_t*           pReadSize)
 {
     const fdt_property_t* pProp;
     void*                 retVal;
@@ -597,7 +732,7 @@ const void* fdtGetProp(const fdt_node_t* pkFdtNode,
 
 const fdt_node_t* fdtGetRoot(void)
 {
-    return fdtDesc.pFirstNode;
+    return sFdtDesc.pFirstNode;
 }
 
 const fdt_node_t* fdtGetNextNode(const fdt_node_t* pkNode)
@@ -643,7 +778,7 @@ const fdt_node_t* fdtGetNodeByHandle(const uint32_t kHandleId)
 {
     const phandle_t* pHandle;
 
-    pHandle = fdtDesc.pHandleList;
+    pHandle = sFdtDesc.pHandleList;
     while(pHandle != NULL)
     {
         if(pHandle->id == kHandleId)
@@ -654,31 +789,6 @@ const fdt_node_t* fdtGetNodeByHandle(const uint32_t kHandleId)
     }
 
     return NULL;
-}
-
-bool_t fdtMatchCompatible(const fdt_node_t* pkNode, const char* pkCompatible)
-{
-    const char* pkCompatibleProp;
-    size_t      propLen;
-
-    if(pkNode == NULL || pkCompatible == NULL)
-    {
-        return FALSE;
-    }
-
-    /* Get comaptible and check */
-    propLen = sizeof(char*);
-    pkCompatibleProp = fdtGetProp(pkNode, "compatible", &propLen);
-
-    if(pkCompatibleProp != NULL && propLen > 0)
-    {
-        if(strncmp(pkCompatibleProp, pkCompatible, propLen) == 0)
-        {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
 }
 
 /************************************ EOF *************************************/

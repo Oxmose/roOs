@@ -120,7 +120,7 @@ void kickstart(void)
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_START, 0);
 
-    kernel_interrupt_disable();
+    interruptDisable();
 
 #if DEBUG_LOG_UART
     /* Init serial driver */
@@ -137,15 +137,15 @@ void kickstart(void)
     KERNEL_SUCCESS("CPU initialized\n");
 
     /* Initialize interrupts manager */
-    kernel_interrupt_init();
+    interruptInit();
     KERNEL_SUCCESS("Interrupt manager initialized\n");
 
     /* Initialize exceptions manager */
-    kernel_exception_init();
+    exceptionInit();
     KERNEL_SUCCESS("Exception manager initialized\n");
 
     /* Initialize kernel heap */
-    kheap_init();
+    kHeapInit();
     KERNEL_SUCCESS("Kernel heap initialized\n");
 
     /* Init FDT */
@@ -165,7 +165,7 @@ void kickstart(void)
 #endif
 
     /* Restore interrupts */
-    kernel_interrupt_restore(1);
+    interruptRestore(1);
 
     TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
@@ -184,7 +184,8 @@ void kickstart(void)
         ++rt;
         if(rt % 100 == 0)
         {
-            kernel_printf(".");
+            kprintf(".");
+            kprintfFlush();
         }
         _cpuHalt();
     }

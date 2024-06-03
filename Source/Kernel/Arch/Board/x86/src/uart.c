@@ -361,7 +361,7 @@ driver_t x86UARTDriver = {
  ******************************************************************************/
 static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 {
-    const uintptr_t*  ptrProp;
+    const uint32_t*   uintProp;
     size_t            propLen;
     OS_RETURN_E       retCode;
     uart_controler_t* pDrvCtrl;
@@ -380,7 +380,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-    pConsoleDrv = kmalloc(sizeof(uart_controler_t));
+    pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
     {
         KERNEL_ERROR("Failed to allocate driver instance.\n");
@@ -399,14 +399,14 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->pDriverCtrl      = pDrvCtrl;
 
     /* Get the UART CPU communication ports */
-    ptrProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    uintProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*ptrProp);
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
 
 #if DEBUG_LOG_UART
     /* Check if we are trying to attach the debug port */
@@ -418,14 +418,14 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 #endif
 
     /* Get the UART CPU baudrate */
-    ptrProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    uintProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the baudrate from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->baudrate = FDTTOCPU32(*ptrProp);
+    pDrvCtrl->baudrate = FDTTOCPU32(*uintProp);
 
     /* Init line */
     _uartSetBaudrate(_uartGetCanonicalRate(pDrvCtrl->baudrate),

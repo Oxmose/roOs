@@ -3,7 +3,7 @@ DEP_LIBS     =
 DEP_MODULES  =
 
 ifeq ($(TESTS), TRUE)
-DEP_LIBS = --start-group -ltestframework
+DEP_LIBS += --start-group -ltestframework
 endif
 DEP_LIBS += --whole-archive -larch
 DEP_LIBS += -lcore

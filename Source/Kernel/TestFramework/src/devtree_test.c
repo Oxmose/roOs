@@ -89,18 +89,18 @@ void walkNodes(const fdt_node_t* pkNode, const uint8_t kLevel)
 
     for(i = 0; i < kLevel; ++i)
     {
-        kernel_printf("  ");
+        kprintf("  ");
     }
-    kernel_printf("-> %s\n", pkNode->pName);
+    kprintf("-> %s\n", pkNode->pName);
     pProp = fdtGetFirstProp(pkNode);
     while(pProp != NULL)
     {
         for(i = 0; i < kLevel; ++i)
         {
-            kernel_printf("  ");
+            kprintf("  ");
         }
 
-        kernel_printf("   | %s\n", pProp->pName);
+        kprintf("   | %s\n", pProp->pName);
         pProp = fdtGetNextProp(pProp);
     }
     walkNodes(fdtGetChild(pkNode), kLevel + 1);
@@ -125,7 +125,7 @@ void devtreeTest(void)
     /* TEST FOR WALKING */
     walkNodes(pkNode, 0);
 
-    kernel_printf("------------ END OF FDT ------------\n");
+    kprintf("------------ END OF FDT ------------\n");
 
     /* TEST TO GET ROOT COMPATIBLE */
     pkNode = fdtGetRoot();

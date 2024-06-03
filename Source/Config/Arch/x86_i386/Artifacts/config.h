@@ -69,14 +69,11 @@
  * Set to 0 to disable debug output for a specific module
  * Set to 1 to enable debug output for a specific module
  ******************************************************************************/
-#define ACPI_DEBUG_ENABLED 0
 #define CPU_DEBUG_ENABLED 0
 #define EXCEPTIONS_DEBUG_ENABLED 0
 #define INTERRUPTS_DEBUG_ENABLED 0
-#define IOAPIC_DEBUG_ENABLED 0
 #define KHEAP_DEBUG_ENABLED 0
 #define KICKSTART_DEBUG_ENABLED 0
-#define LAPIC_DEBUG_ENABLED 0
 #define PIC_DEBUG_ENABLED 0
 #define PIT_DEBUG_ENABLED 0
 #define QUEUE_DEBUG_ENABLED 0
@@ -87,6 +84,6 @@
 #define TIME_MGT_DEBUG_ENABLED 0
 #define VGA_DEBUG_ENABLED 0
 #define DTB_DEBUG_ENABLED 0
-#define DEVMGR_DEBUG_ENABLED 0
+#define DEVMGR_DEBUG_ENABLED 1
 
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

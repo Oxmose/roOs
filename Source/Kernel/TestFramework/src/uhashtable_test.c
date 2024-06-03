@@ -88,7 +88,7 @@ void uhashtable_test(void)
     uint32_t     data;
     OS_RETURN_E  err;
 
-    table = uhashtable_create(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
+    table = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
     TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_CREATE0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -112,7 +112,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 26; ++i)
     {
-        err = uhashtable_set(table, i, (void*)(i * 10));
+        err = uhashtableSet(table, i, (void*)(i * 10));
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_SETBURST0_ID(i),
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -133,7 +133,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 26; ++i)
     {
-        err = uhashtable_get(table, i, (void**)&data);
+        err = uhashtableGet(table, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_GETBURST0_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -159,7 +159,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 26; i += 2)
     {
-        err = uhashtable_set(table, i, (void*)(i * 100));
+        err = uhashtableSet(table, i, (void*)(i * 100));
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_SETBURST1_ID(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -180,7 +180,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 26; i += 2)
     {
-        err = uhashtable_set(table, i, (void*)(i * 1000));
+        err = uhashtableSet(table, i, (void*)(i * 1000));
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_SETBURST2_ID(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -201,7 +201,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 26; ++i)
     {
-        err = uhashtable_get(table, i, (void**)&data);
+        err = uhashtableGet(table, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_GETBURST1_ID(i * 2),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -229,7 +229,7 @@ void uhashtable_test(void)
     {
         if(i % 2 == 0)
         {
-            err = uhashtable_remove(table, i, NULL);
+            err = uhashtableRemove(table, i, NULL);
             TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_REMOVEBURST0_ID(i),
                                     err == OS_NO_ERR,
                                     OS_NO_ERR,
@@ -250,7 +250,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 30; ++i)
     {
-        err = uhashtable_get(table, i, (void**)&data);
+        err = uhashtableGet(table, i, (void**)&data);
 
         if(err != OS_NO_ERR)
         {
@@ -285,7 +285,7 @@ void uhashtable_test(void)
                              (uint64_t)table->capacity,
                              TEST_OS_UHASHTABLE_ENABLED);
 
-    err = uhashtable_destroy(table);
+    err = uhashtableDestroy(table);
     TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_DESTROY0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -304,7 +304,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 30; ++i)
     {
-        err = uhashtable_get(table, i, (void**)&data);
+        err = uhashtableGet(table, i, (void**)&data);
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_GETBURST3_ID(i),
                                 err == OS_ERR_NULL_POINTER,
                                 OS_ERR_NULL_POINTER,
@@ -312,7 +312,7 @@ void uhashtable_test(void)
                                 TEST_OS_UHASHTABLE_ENABLED);
     }
 
-    table = uhashtable_create(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
+    table = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
     TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_CREATE4_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -344,7 +344,7 @@ void uhashtable_test(void)
     for(i = 0; i < 200; ++i)
     {
         table_data[i] = _random_get();
-        err = uhashtable_set(table, i, (void*)(uintptr_t)table_data[i]);
+        err = uhashtableSet(table, i, (void*)(uintptr_t)table_data[i]);
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_SETBURST3_ID(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -364,7 +364,7 @@ void uhashtable_test(void)
 
     for(i = 0; i < 200; ++i)
     {
-        err = uhashtable_get(table, i, (void**)&data);
+        err = uhashtableGet(table, i, (void**)&data);
 
         TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_GETBURST4_ID(i * 2),
                                 err == OS_NO_ERR,
@@ -378,7 +378,7 @@ void uhashtable_test(void)
                                  TEST_OS_UHASHTABLE_ENABLED)
     }
 
-    err = uhashtable_destroy(table);
+    err = uhashtableDestroy(table);
     TEST_POINT_ASSERT_UDWORD(TEST_UHASHTABLE_DESTROY3_ID,
                              err == OS_NO_ERR,
                              (uint64_t)OS_NO_ERR,

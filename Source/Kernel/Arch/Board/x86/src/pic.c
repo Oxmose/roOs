@@ -177,7 +177,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
  * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
  * to disable the IRQ.
  */
-static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
 
 /**
  * @brief Acknowleges an IRQ.
@@ -186,7 +186,7 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  *
  * @param[in] kIrqNumber The irq number to Acknowlege.
  */
-static void _picSetIRQEOI(const uint32_t kIrqNumber);
+static void _picpSetIrqEOI(const uint32_t kIrqNumber);
 
 /**
  * @brief Checks if the serviced interrupt is a spurious
@@ -202,7 +202,7 @@ static void _picSetIRQEOI(const uint32_t kIrqNumber);
  * - INTERRUPT_TYPE_SPURIOUS if the current interrupt is a spurious one.
  * - INTERRUPT_TYPE_REGULAR if the current interrupt is a regular one.
  */
-static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber);
+static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber);
 
 /**
  * @brief Returns the interrupt line attached to an IRQ.
@@ -239,10 +239,10 @@ driver_t x86PICDriver = {
 /************************** Static global variables ***************************/
 /** @brief PIC interrupt driver instance. */
 static interrupt_driver_t sPicDriver = {
-    .driver_set_irq_mask     = _picSetIRQMask,
-    .driver_set_irq_eoi      = _picSetIRQEOI,
-    .driver_handle_spurious  = _picHandleSpurious,
-    .driver_get_irq_int_line = _picGetInterruptLine
+    .pSetIrqMask     = _picpSetIrqMask,
+    .pSetIrqEOI      = _picpSetIrqEOI,
+    .pHandleSpurious  = _picpHandleSpurious,
+    .pGetIrqInterruptLine = _picGetInterruptLine
 };
 
 /** @brief PIC driver controler instance */
@@ -261,9 +261,9 @@ static pic_controler_t sDrvCtrl = {
 
 static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
 {
-    const uintptr_t* ptrProp;
-    size_t           propLen;
-    OS_RETURN_E      retCode;
+    const uint32_t* uintProp;
+    size_t          propLen;
+    OS_RETURN_E     retCode;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_START, 0);
 
@@ -274,41 +274,41 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Get IRQ offset */
-    ptrProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    uintProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the PIC IRQ offset from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.intOffset = (uint8_t)FDTTOCPU32(*ptrProp);
+    sDrvCtrl.intOffset = (uint8_t)FDTTOCPU32(*uintProp);
 
 
     /* Get the com ports */
-    ptrProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
+    uintProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
     if(sDrvCtrl.hasSlave == TRUE)
     {
-        if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 4)
+        if(uintProp == NULL || propLen != sizeof(uint32_t) * 4)
         {
             KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }
-        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*ptrProp);
-        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
-        sDrvCtrl.cpuSlaveCommPort  = (uint8_t)FDTTOCPU32(*(ptrProp + 2));
-        sDrvCtrl.cpuSlaveDataPort  = (uint8_t)FDTTOCPU32(*(ptrProp + 3));
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*uintProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+        sDrvCtrl.cpuSlaveCommPort  = (uint8_t)FDTTOCPU32(*(uintProp + 2));
+        sDrvCtrl.cpuSlaveDataPort  = (uint8_t)FDTTOCPU32(*(uintProp + 3));
     }
     else
     {
-        if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+        if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
         {
             KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }
-        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*ptrProp);
-        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*uintProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(uintProp + 1));
     }
 
     /* Initialize the master, remap IRQs */
@@ -335,7 +335,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Register as interrupt controler */
-    retCode = kernel_interrupt_set_driver(&sPicDriver);
+    retCode = interruptSetDriver(&sPicDriver);
     PIC_ASSERT(retCode == OS_NO_ERR,
                "Could register PIC in interrupt manager",
                retCode);
@@ -348,7 +348,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
+static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 {
     uint8_t  initMask;
     uint32_t intState;
@@ -455,7 +455,7 @@ static void _picSetIRQMask(const uint32_t kIrqNumber, const bool_t kEnabled)
     EXIT_CRITICAL(intState);
 }
 
-static void _picSetIRQEOI(const uint32_t kIrqNumber)
+static void _picpSetIrqEOI(const uint32_t kIrqNumber)
 {
     KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_START, 1, kIrqNumber);
 
@@ -480,7 +480,7 @@ static void _picSetIRQEOI(const uint32_t kIrqNumber)
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC IRQ EOI");
 }
 
-static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
+static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
 {
     uint8_t  isrVal;
     uint32_t irqNumber;
@@ -535,7 +535,7 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
         else
         {
             /* Send EOI on master */
-            _picSetIRQEOI(PIC_CASCADING_IRQ);
+            _picpSetIrqEOI(PIC_CASCADING_IRQ);
             KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
                                2,
                                kIntNumber,

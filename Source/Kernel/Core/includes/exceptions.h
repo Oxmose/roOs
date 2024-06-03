@@ -26,9 +26,9 @@
  * INCLUDES
  ******************************************************************************/
 
+#include <cpu.h>        /* CPU structures and settings */
 #include <stdint.h>     /* Generic int types */
 #include <stddef.h>     /* Standard definitions */
-#include <cpu.h>        /* CPU structures and settings */
 #include <kerror.h>     /* Kernel error codes */
 #include <ctrl_block.h> /* Kernel control blocks */
 #include <interrupts.h> /* Interrupts blocks */
@@ -74,7 +74,7 @@
  * @details Blanks the handlers memory and initialize the first 32 exceptions to
  * catch exceptions.
  */
-void kernel_exception_init(void);
+void exceptionInit(void);
 
 /**
  * @brief Registers a new exception handler for the desired exception line.
@@ -83,7 +83,7 @@ void kernel_exception_init(void);
  * line must be greater or equal to the minimal authorized custom exception line
  * and less than the maximal one.
  *
- * @param[in] exception_line The exception line to attach the handler to.
+ * @param[in] kExceptionLine The exception line to attach the handler to.
  * @param[in] handler The handler for the desired exception.
  *
  * @return The success state or the error code.
@@ -95,8 +95,8 @@ void kernel_exception_init(void);
  * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a
  * handler is already registered for this exception line.
  */
-OS_RETURN_E kernel_exception_register_handler(const uint32_t exception_line,
-                                              custom_handler_t handler);
+OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
+                              custom_handler_t handler);
 
 /**
  * @brief Unregisters a new exception handler for the desired exception line.
@@ -105,7 +105,7 @@ OS_RETURN_E kernel_exception_register_handler(const uint32_t exception_line,
  * line must be greater or equal to the minimal authorized custom exception line
  * and less than the maximal one.
  *
- * @param[in] exception_line The exception line to deattach the handler from.
+ * @param[in] kExceptionLine The exception line to deattach the handler from.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
@@ -114,7 +114,7 @@ OS_RETURN_E kernel_exception_register_handler(const uint32_t exception_line,
  * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the exception line has no
  * handler attached.
  */
-OS_RETURN_E kernel_exception_remove_handler(const uint32_t exception_line);
+OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine);
 
 #endif /* #ifndef __CORE_EXCEPTIONS_H_ */
 

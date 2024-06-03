@@ -24,15 +24,15 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h>             /* Generic int types */
-#include <stddef.h>             /* Standard definitions */
-#include <string.h>             /* String manipulation */
-#include <cpu.h>                /* CPU management */
-#include <cpu_interrupt.h>      /* CPU interrupts settings */
-#include <panic.h>              /* Kernel panic */
-#include <kerneloutput.h>      /* Kernel output methods */
-#include <critical.h>           /* Critical sections */
-#include <scheduler.h>          /* Kernel scheduler */
+#include <cpu.h>           /* CPU management */
+#include <panic.h>         /* Kernel panic */
+#include <stdint.h>        /* Generic int types */
+#include <stddef.h>        /* Standard definitions */
+#include <string.h>        /* String manipulation */
+#include <critical.h>      /* Critical sections */
+#include <scheduler.h>     /* Kernel scheduler */
+#include <kerneloutput.h>  /* Kernel output methods */
+#include <cpu_interrupt.h> /* CPU interrupts settings */
 
 /* Configuration files */
 #include <config.h>
@@ -51,7 +51,7 @@
 #define MODULE_NAME "EXCEPTIONS"
 
 /** @brief Divide by zero exception line. */
-#define DIV_BY_ZERO_LINE           0x00
+#define DIV_BY_ZERO_LINE 0x00
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -83,20 +83,6 @@
 }
 
 /*******************************************************************************
- * GLOBAL VARIABLES
- ******************************************************************************/
-
-/************************* Imported global variables **************************/
-/** @brief Stores the handlers for each exception, defined in exceptions.h */
-extern custom_handler_t kernel_interrupt_handlers[INT_ENTRY_COUNT];
-
-/************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
-/* None */
-
-/*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
@@ -106,22 +92,37 @@ extern custom_handler_t kernel_interrupt_handlers[INT_ENTRY_COUNT];
  * @details Handles a divide by zero exception raised by the cpu. The thread
  * will just be killed.
  *
- * @param[in, out] current_thread The current thread at the moment of the division
+ * @param[in, out] pCurrThread The current thread at the moment of the division
  * by zero.
  */
-static void _div_by_zero_handler(kernel_thread_t* current_thread);
+static void _divByZeroHandler(kernel_thread_t* pCurrThread);
+
+/*******************************************************************************
+ * GLOBAL VARIABLES
+ ******************************************************************************/
+
+/************************* Imported global variables **************************/
+
+/** @brief Stores the handlers for each interrupt, defined in interrupt.c. */
+extern custom_handler_t kernelInterruptHandlerTable[INT_ENTRY_COUNT];
+
+/************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
+/* None */
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _div_by_zero_handler(kernel_thread_t* current_thread)
+static void _divByZeroHandler(kernel_thread_t* pCurrThread)
 {
     uint32_t intId;
 
-    intId = current_thread->v_cpu.intContext.intId;
+    intId = pCurrThread->vCpu.intContext.intId;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_DIV_BY_ZERO, 1, current_thread->tid);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_DIV_BY_ZERO, 1, pCurrThread->tid);
 
     /* If the exception line is not the divide by zero exception */
     EXC_ASSERT(intId != DIV_BY_ZERO_LINE,
@@ -133,7 +134,7 @@ static void _div_by_zero_handler(kernel_thread_t* current_thread)
 
 }
 
-void kernel_exception_init(void)
+void exceptionInit(void)
 {
     OS_RETURN_E err;
 
@@ -142,8 +143,7 @@ void kernel_exception_init(void)
     KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED, "EXCEPTIONS",
                  "Initializing exception manager.");
 
-    err = kernel_exception_register_handler(DIV_BY_ZERO_LINE,
-                                            _div_by_zero_handler);
+    err = exceptionRegister(DIV_BY_ZERO_LINE, _divByZeroHandler);
     EXC_ASSERT(err == OS_NO_ERR,
                "Could not initialize exception manager.",
                err);
@@ -153,28 +153,31 @@ void kernel_exception_init(void)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_INIT_END, 0);
 }
 
-OS_RETURN_E kernel_exception_register_handler(const uint32_t exception_line,
-                                              custom_handler_t handler)
+OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
+                              custom_handler_t handler)
 {
-    uint32_t int_state;
+    uint32_t intState;
 
 #ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_START, 3,
-                       exception_line,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_START,
+                       3,
+                       kExceptionLine,
                        (uintptr_t)handler & 0xFFFFFFFF,
                        (uintptr_t)handler >> 32);
 #else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_START, 3,
-                       exception_line,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_START,
+                       3,
+                       kExceptionLine,
                        (uintptr_t)handler & 0xFFFFFFFF,
                        (uintptr_t)0);
 #endif
 
-    if((int32_t)exception_line < MIN_EXCEPTION_LINE ||
-       exception_line > MAX_EXCEPTION_LINE)
+    if((int32_t)kExceptionLine < MIN_EXCEPTION_LINE ||
+       kExceptionLine > MAX_EXCEPTION_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END, 2,
-                           exception_line,
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END,
+                           2,
+                           kExceptionLine,
                            OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
@@ -182,77 +185,88 @@ OS_RETURN_E kernel_exception_register_handler(const uint32_t exception_line,
 
     if(handler == NULL)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END, 2,
-                           exception_line,
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END,
+                           2,
+                           kExceptionLine,
                            OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    if(kernel_interrupt_handlers[exception_line] != NULL)
+    if(kernelInterruptHandlerTable[kExceptionLine] != NULL)
     {
-        EXIT_CRITICAL(int_state);
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END, 2,
-                           exception_line,
+        EXIT_CRITICAL(intState);
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END,
+                           2,
+                           kExceptionLine,
                            OS_ERR_INTERRUPT_ALREADY_REGISTERED);
 
         return OS_ERR_INTERRUPT_ALREADY_REGISTERED;
     }
 
-    kernel_interrupt_handlers[exception_line] = handler;
+    kernelInterruptHandlerTable[kExceptionLine] = handler;
 
-    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED, "EXCEPTIONS",
-                 "Added exception %u handler at 0x%p", exception_line, handler);
+    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED,
+                 "EXCEPTIONS",
+                 "Added exception %u handler at 0x%p",
+                 kExceptionLine,
+                 handler);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END, 2,
-                       exception_line,
+    EXIT_CRITICAL(intState);
+
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REGISTER_END,
+                       2,
+                       kExceptionLine,
                        OS_NO_ERR);
 
-    EXIT_CRITICAL(int_state);
     return OS_NO_ERR;
 }
 
-OS_RETURN_E kernel_exception_remove_handler(const uint32_t exception_line)
+OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
 {
-    uint32_t int_state;
+    uint32_t intState;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_START, 1,
-                       exception_line);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_START, 1, kExceptionLine);
 
-    if((int32_t)exception_line < MIN_EXCEPTION_LINE ||
-       exception_line > MAX_EXCEPTION_LINE)
+    if((int32_t)kExceptionLine < MIN_EXCEPTION_LINE ||
+       kExceptionLine > MAX_EXCEPTION_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END, 2,
-                           exception_line,
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END,
+                           2,
+                           kExceptionLine,
                            OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
-    ENTER_CRITICAL(int_state);
+    ENTER_CRITICAL(intState);
 
-    if(kernel_interrupt_handlers[exception_line] == NULL)
+    if(kernelInterruptHandlerTable[kExceptionLine] == NULL)
     {
-        EXIT_CRITICAL(int_state);
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END, 2,
-                           exception_line,
+        EXIT_CRITICAL(intState);
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END,
+                           2,
+                           kExceptionLine,
                            OS_ERR_INTERRUPT_NOT_REGISTERED);
 
         return OS_ERR_INTERRUPT_NOT_REGISTERED;
     }
 
-    kernel_interrupt_handlers[exception_line] = NULL;
+    kernelInterruptHandlerTable[kExceptionLine] = NULL;
 
-    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED, "EXCEPTIONS",
-                 "Removed exception %u handle", exception_line);
+    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED,
+                 "EXCEPTIONS",
+                 "Removed exception %u handle",
+                 kExceptionLine);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END, 2,
-                       exception_line,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_EXCEPTION_REMOVE_END,
+                       2,
+                       kExceptionLine,
                        OS_NO_ERR);
 
-    EXIT_CRITICAL(int_state);
+    EXIT_CRITICAL(intState);
 
     return OS_NO_ERR;
 }

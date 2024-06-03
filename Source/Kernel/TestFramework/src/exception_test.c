@@ -93,9 +93,9 @@ static void _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
 #ifdef ARCH_64_BITS
-    curr_thread->v_cpu.intContext.rip = (uintptr_t)_end;
+    curr_thread->vCpu.intContext.rip = (uintptr_t)_end;
 #else
-    curr_thread->v_cpu.intContext.eip = (uintptr_t)_end;
+    curr_thread->vCpu.intContext.eip = (uintptr_t)_end;
 #endif
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,
@@ -110,7 +110,7 @@ void exception_test(void)
     OS_RETURN_E err;
 
     /* TEST REGISTER < MIN */
-    err = kernel_exception_register_handler(MIN_EXCEPTION_LINE - 1, _dummy);
+    err = exceptionRegister(MIN_EXCEPTION_LINE - 1, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_MIN_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -118,7 +118,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST REGISTER > MAX */
-    err = kernel_exception_register_handler(MAX_EXCEPTION_LINE + 1, _dummy);
+    err = exceptionRegister(MAX_EXCEPTION_LINE + 1, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_MAX_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -126,7 +126,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST REMOVE < MIN */
-    err = kernel_exception_remove_handler(MIN_EXCEPTION_LINE - 1);
+    err = exceptionRemove(MIN_EXCEPTION_LINE - 1);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_MIN_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -134,7 +134,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST REMOVE > MAX */
-    err = kernel_exception_remove_handler(MAX_EXCEPTION_LINE + 1);
+    err = exceptionRemove(MAX_EXCEPTION_LINE + 1);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_MAX_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -142,7 +142,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST NULL HANDLER */
-    err = kernel_exception_register_handler(MIN_EXCEPTION_LINE, NULL);
+    err = exceptionRegister(MIN_EXCEPTION_LINE, NULL);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_NULL_ID,
                             err == OS_ERR_NULL_POINTER,
                             OS_ERR_NULL_POINTER,
@@ -150,7 +150,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST REMOVE WHEN NOT REGISTERED */
-    err = kernel_exception_remove_handler(MIN_EXCEPTION_LINE);
+    err = exceptionRemove(MIN_EXCEPTION_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_REGISTERED_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -158,7 +158,7 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
      /* TEST REMOVE WHEN NOT REGISTERED */
-    err = kernel_exception_remove_handler(MIN_EXCEPTION_LINE);
+    err = exceptionRemove(MIN_EXCEPTION_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_NONREGISTERED_ID,
                             err == OS_ERR_INTERRUPT_NOT_REGISTERED,
                             OS_ERR_INTERRUPT_NOT_REGISTERED,
@@ -166,14 +166,14 @@ void exception_test(void)
                             TEST_EXCEPTION_ENABLED);
 
     /* TEST REGISTER WHEN ALREADY REGISTERED */
-    err = kernel_exception_register_handler(MIN_EXCEPTION_LINE, _dummy);
+    err = exceptionRegister(MIN_EXCEPTION_LINE, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
                             err,
                             TEST_EXCEPTION_ENABLED);
 
-    err = kernel_exception_register_handler(DIV_BY_ZERO_LINE, _dummy);
+    err = exceptionRegister(DIV_BY_ZERO_LINE, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_ALREADY_REGISTERED_ID,
                             err == OS_ERR_INTERRUPT_ALREADY_REGISTERED,
                             OS_ERR_INTERRUPT_ALREADY_REGISTERED,

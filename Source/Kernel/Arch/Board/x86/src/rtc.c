@@ -286,15 +286,6 @@ static void _rtcUpdateTime(date_t* pDate, time_t* pTime);
  */
 static void _rtcAckowledgeInt(void);
 
-/**
- * @brief Returns the RTC IRQ number.
- *
- * @details Returns the RTC IRQ number.
- *
- * @return The RTC IRQ number.
- */
-static uint32_t _rtcGetIrq(void);
-
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -327,18 +318,17 @@ static rtc_controler_t sDrvCtrl = {
 
 /** @brief RTC driver instance. */
 static kernel_timer_t sRtcDriver = {
-    .get_frequency  = _rtcGetFrequency,
-    .set_frequency  = _rtcSetFrequency,
-    .get_time_ns    = NULL,
-    .set_time_ns    = NULL,
-    .get_date       = _rtcGetDate,
-    .get_daytime    = _rtcGetDaytime,
-    .enable         = _rtcEnable,
-    .disable        = _rtcDisable,
-    .set_handler    = _rtcSetHandler,
-    .remove_handler = _rtcRemoveHandler,
-    .get_irq        = _rtcGetIrq,
-    .tickManager    = _rtcAckowledgeInt
+    .pGetFrequency  = _rtcGetFrequency,
+    .pSetFrequency  = _rtcSetFrequency,
+    .pGetTimeNs     = NULL,
+    .pSetTimeNs     = NULL,
+    .pGetDate       = _rtcGetDate,
+    .pGetDaytime    = _rtcGetDaytime,
+    .pEnable        = _rtcEnable,
+    .pDisable       = _rtcDisable,
+    .pSetHandler    = _rtcSetHandler,
+    .pRemoveHandler = _rtcRemoveHandler,
+    .pTickManager   = _rtcAckowledgeInt
 };
 
 /*******************************************************************************
@@ -347,23 +337,23 @@ static kernel_timer_t sRtcDriver = {
 
 static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
 {
-    const uintptr_t* ptrProp;
-    size_t           propLen;
-    OS_RETURN_E      retCode;
-    int8_t           prevOred;
-    int8_t           prevRate;
+    const uint32_t* uintProp;
+    size_t          propLen;
+    OS_RETURN_E     retCode;
+    int8_t          prevOred;
+    int8_t          prevRate;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_INIT_START, 0);
 
     /* Get IRQ lines */
-    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.irqNumber = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+    sDrvCtrl.irqNumber = (uint8_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -371,15 +361,15 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  sDrvCtrl.irqNumber);
 
     /* Get communication ports */
-    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*ptrProp);
-    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(ptrProp + 1));
+    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
+    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -388,14 +378,14 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  sDrvCtrl.cpuDataPort);
 
     /* Get quartz frequency */
-    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.quartzFrequency = FDTTOCPU32(*ptrProp);
+    sDrvCtrl.quartzFrequency = FDTTOCPU32(*uintProp);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -403,14 +393,14 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  sDrvCtrl.quartzFrequency);
 
     /* Get selected frequency */
-    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t))
+    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.selectedFrequency = FDTTOCPU32(*ptrProp);
+    sDrvCtrl.selectedFrequency = FDTTOCPU32(*uintProp);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -418,15 +408,15 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  sDrvCtrl.selectedFrequency);
 
     /* Get the frequency range */
-    ptrProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.frequencyLow  = (uint32_t)FDTTOCPU32(*ptrProp);
-    sDrvCtrl.frequencyHigh = (uint32_t)FDTTOCPU32(*(ptrProp + 1));
+    sDrvCtrl.frequencyLow  = (uint32_t)FDTTOCPU32(*uintProp);
+    sDrvCtrl.frequencyHigh = (uint32_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -505,7 +495,7 @@ static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Interrupt");
 
     /* EOI */
-    kernel_interrupt_set_irq_eoi(sDrvCtrl.irqNumber);
+    interruptIRQSetEOI(sDrvCtrl.irqNumber);
 }
 
 static void _rtcEnable(void)
@@ -528,7 +518,7 @@ static void _rtcEnable(void)
                  sDrvCtrl.selectedFrequency);
     if(sDrvCtrl.disabledNesting == 0 && sDrvCtrl.selectedFrequency != 0)
     {
-        kernel_interrupt_set_irq_mask(sDrvCtrl.irqNumber, 1);
+        interruptIRQSetMask(sDrvCtrl.irqNumber, 1);
     }
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_ENABLE_END, 0);
@@ -555,7 +545,7 @@ static void _rtcDisable(void)
                  MODULE_NAME,
                  "Disable RTC (nesting %d)",
                  sDrvCtrl.disabledNesting);
-    kernel_interrupt_set_irq_mask(sDrvCtrl.irqNumber, 0);
+    interruptIRQSetMask(sDrvCtrl.irqNumber, 0);
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_DISABLE_END,
                        1,
@@ -696,7 +686,7 @@ static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*))
     _rtcDisable();
 
     /* Remove the current handler */
-    err = kernel_interrupt_remove_irq_handler(sDrvCtrl.irqNumber);
+    err = interruptIRQRemove(sDrvCtrl.irqNumber);
     if(err != OS_NO_ERR && err != OS_ERR_INTERRUPT_NOT_REGISTERED)
     {
         EXIT_CRITICAL(intState);
@@ -705,7 +695,7 @@ static OS_RETURN_E _rtcSetHandler(void(*pHandler)(kernel_thread_t*))
         return err;
     }
 
-    err = kernel_interrupt_register_irq_handler(sDrvCtrl.irqNumber, pHandler);
+    err = interruptIRQRegister(sDrvCtrl.irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
         EXIT_CRITICAL(intState);
@@ -851,11 +841,9 @@ static void _rtcAckowledgeInt(void)
     /* Clear C Register */
     _cpuOutB(CMOS_REG_C, sDrvCtrl.cpuCommPort);
     _cpuInB(sDrvCtrl.cpuDataPort);
-}
 
-static uint32_t _rtcGetIrq(void)
-{
-    return sDrvCtrl.irqNumber;
+    /* Set EOI */
+    interruptIRQSetEOI(sDrvCtrl.irqNumber);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

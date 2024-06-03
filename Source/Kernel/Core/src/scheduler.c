@@ -75,8 +75,9 @@
 /************************* Exported global variables **************************/
 
 /** @brief Pointer to the currently kernel thread */
-kernel_thread_t* current_thread = NULL;
+kernel_thread_t* pCurrentThread = NULL;
 
+/* TODO: Remove */
 kernel_thread_t dummy_thread;
 
 /************************** Static global variables ***************************/
@@ -89,15 +90,17 @@ kernel_thread_t dummy_thread;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+/* TODO: Remove */
 void scheduler_dummy_init(void);
 void scheduler_dummy_init(void)
 {
-    current_thread = &dummy_thread;
+    pCurrentThread = &dummy_thread;
 }
 
-kernel_thread_t* scheduler_get_current_thread(void)
+kernel_thread_t* schedGetCurrentThread(void)
 {
-    return current_thread;
+    return pCurrentThread;
 }
 
 /************************************ EOF *************************************/

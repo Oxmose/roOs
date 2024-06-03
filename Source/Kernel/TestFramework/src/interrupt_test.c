@@ -84,7 +84,7 @@ static void incrementer_handler(kernel_thread_t* curr_thread)
 
     if(counter < UINT32_MAX)
     {
-        counter += curr_thread->v_cpu.intContext.intId;
+        counter += curr_thread->vCpu.intContext.intId;
     }
 }
 
@@ -92,7 +92,7 @@ static void decrementer_handler(kernel_thread_t* curr_thread)
 {
     if(counter > 0)
     {
-        counter -= curr_thread->v_cpu.intContext.intId;
+        counter -= curr_thread->vCpu.intContext.intId;
     }
 }
 
@@ -102,7 +102,7 @@ static void test_sw_interupts_lock(void)
     uint32_t    int_state;
     uint32_t    cnt_val;
 
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE,
+    err = interruptRegister(MIN_INTERRUPT_LINE,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REG_HANDLER0_ID,
                             err == OS_NO_ERR,
@@ -110,7 +110,7 @@ static void test_sw_interupts_lock(void)
                             err,
                             TEST_INTERRUPT_ENABLED);
 
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE + 1,
+    err = interruptRegister(MIN_INTERRUPT_LINE + 1,
                                                 decrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REG_HANDLER1_ID,
                             err == OS_NO_ERR,
@@ -130,7 +130,7 @@ static void test_sw_interupts_lock(void)
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
-    kernel_interrupt_restore(1);
+    interruptRestore(1);
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK1_ID,
                            cnt_val == counter,
@@ -151,7 +151,7 @@ static void test_sw_interupts_lock(void)
 
     cnt_val = counter;
 
-    kernel_interrupt_disable();
+    interruptDisable();
     int_state = 0;
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
@@ -162,7 +162,7 @@ static void test_sw_interupts_lock(void)
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
-    kernel_interrupt_restore(int_state);
+    interruptRestore(int_state);
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
 
@@ -172,7 +172,7 @@ static void test_sw_interupts_lock(void)
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
-    kernel_interrupt_restore(int_state);
+    interruptRestore(int_state);
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
 
@@ -182,7 +182,7 @@ static void test_sw_interupts_lock(void)
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
-    kernel_interrupt_restore(1);
+    interruptRestore(1);
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
 
@@ -192,9 +192,9 @@ static void test_sw_interupts_lock(void)
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
-    kernel_interrupt_restore(1);
-    kernel_interrupt_restore(1);
-    int_state = kernel_interrupt_disable();
+    interruptRestore(1);
+    interruptRestore(1);
+    int_state = interruptDisable();
 
     cnt_val = counter;
 
@@ -207,14 +207,14 @@ static void test_sw_interupts_lock(void)
                            TEST_INTERRUPT_ENABLED);
 
 
-    err = kernel_interrupt_remove_int_handler(MIN_INTERRUPT_LINE);
+    err = interruptRemove(MIN_INTERRUPT_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REM_HANDLER0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
                             err,
                             TEST_INTERRUPT_ENABLED);
 
-    err = kernel_interrupt_remove_int_handler(MIN_INTERRUPT_LINE + 1);
+    err = interruptRemove(MIN_INTERRUPT_LINE + 1);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REM_HANDLER1_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -234,7 +234,7 @@ static void test_sw_interupts(void)
     _cpuOutB(0xFF, 0xA1);
 
     /* TEST REGISTER < MIN */
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE - 1,
+    err = interruptRegister(MIN_INTERRUPT_LINE - 1,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_BAD_HANDLER0_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -243,7 +243,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST REGISTER > MAX */
-    err = kernel_interrupt_register_int_handler(MAX_INTERRUPT_LINE + 1,
+    err = interruptRegister(MAX_INTERRUPT_LINE + 1,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_BAD_HANDLER1_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -252,7 +252,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST REMOVE < MIN */
-    err = kernel_interrupt_remove_int_handler(MIN_INTERRUPT_LINE - 1);
+    err = interruptRemove(MIN_INTERRUPT_LINE - 1);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_BAD_HANDLER0_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -260,7 +260,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST REMOVE > MAX */
-    err = kernel_interrupt_remove_int_handler(MAX_INTERRUPT_LINE + 1);
+    err = interruptRemove(MAX_INTERRUPT_LINE + 1);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_BAD_HANDLER1_ID,
                             err == OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
@@ -268,7 +268,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST NULL HANDLER */
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE, NULL);
+    err = interruptRegister(MIN_INTERRUPT_LINE, NULL);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_BAD_HANDLER2_ID,
                             err == OS_ERR_NULL_POINTER,
                             OS_ERR_NULL_POINTER,
@@ -276,7 +276,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST REMOVE WHEN NOT REGISTERED */
-    err = kernel_interrupt_remove_int_handler(MIN_INTERRUPT_LINE);
+    err = interruptRemove(MIN_INTERRUPT_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_BAD_HANDLER2_ID,
                             err == OS_ERR_INTERRUPT_NOT_REGISTERED,
                             OS_ERR_INTERRUPT_NOT_REGISTERED,
@@ -284,7 +284,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* TEST REGISTER WHEN ALREADY REGISTERED */
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE,
+    err = interruptRegister(MIN_INTERRUPT_LINE,
                                                incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_HANDLER0_ID,
                             err == OS_NO_ERR,
@@ -292,7 +292,7 @@ static void test_sw_interupts(void)
                             err,
                             TEST_INTERRUPT_ENABLED);
 
-    err = kernel_interrupt_register_int_handler(MIN_INTERRUPT_LINE,
+    err = interruptRegister(MIN_INTERRUPT_LINE,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_ALREADY_REG_HANDLER0_ID,
                             err == OS_ERR_INTERRUPT_ALREADY_REGISTERED,
@@ -301,7 +301,7 @@ static void test_sw_interupts(void)
                             TEST_INTERRUPT_ENABLED);
 
     /* INIT THINGS */
-    err = kernel_interrupt_remove_int_handler(MIN_INTERRUPT_LINE);
+    err = interruptRemove(MIN_INTERRUPT_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_HANDLER0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -321,7 +321,7 @@ static void test_sw_interupts(void)
         {
             continue;
         }
-        err = kernel_interrupt_register_int_handler(i, incrementer_handler);
+        err = interruptRegister(i, incrementer_handler);
         TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG0_SWINT_HANDLER(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -330,7 +330,7 @@ static void test_sw_interupts(void)
         cnt_val += i;
     }
 
-    kernel_interrupt_restore(1);
+    interruptRestore(1);
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 0));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
@@ -553,7 +553,7 @@ static void test_sw_interupts(void)
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 221));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 222));
 
-    int_state = kernel_interrupt_disable();
+    int_state = interruptDisable();
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_COUNTER_CHECK0_ID,
                            cnt_val == counter,
@@ -571,7 +571,7 @@ static void test_sw_interupts(void)
             continue;
         }
 
-        err = kernel_interrupt_remove_int_handler(i);
+        err = interruptRemove(i);
         TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM0_SWINT_HANDLER(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -589,7 +589,7 @@ static void test_sw_interupts(void)
         {
             continue;
         }
-        err = kernel_interrupt_register_int_handler(i, decrementer_handler);
+        err = interruptRegister(i, decrementer_handler);
         TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG1_SWINT_HANDLER(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -598,7 +598,7 @@ static void test_sw_interupts(void)
         cnt_val -= i;
     }
 
-    kernel_interrupt_restore(int_state);
+    interruptRestore(int_state);
 
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 0));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
@@ -821,7 +821,7 @@ static void test_sw_interupts(void)
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 221));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 222));
 
-    int_state = kernel_interrupt_disable();
+    int_state = interruptDisable();
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_COUNTER_CHECK1_ID,
                            cnt_val == counter,
@@ -839,7 +839,7 @@ static void test_sw_interupts(void)
             continue;
         }
 
-        err = kernel_interrupt_remove_int_handler(i);
+        err = interruptRemove(i);
         TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM1_SWINT_HANDLER(i),
                                 err == OS_NO_ERR,
                                 OS_NO_ERR,

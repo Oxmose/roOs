@@ -44,27 +44,27 @@
 typedef struct kqueue_node
 {
     /** @brief Next node in the queue. */
-    struct kqueue_node* next;
+    struct kqueue_node* pNext;
     /** @brief Previous node in the queue. */
-    struct kqueue_node* prev;
+    struct kqueue_node* pPrev;
 
     /** @brief Tell if the node is present in a queue or stands alone. */
     bool_t enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
-    uintptr_t priority;
+    uint32_t priority;
 
     /** @brief Node's data pointer. Store the address of the contained data. */
-    void* data;
+    void* pData;
 } kqueue_node_t;
 
 /** @brief Queue structure. */
 typedef struct
 {
     /** @brief Head of the queue. */
-    struct kqueue_node* head;
+    kqueue_node_t* pHead;
     /** @brief Tail of the queue. */
-    struct kqueue_node* tail;
+    kqueue_node_t* pTail;
 
     /** @brief Current queue's size. */
     size_t size;
@@ -101,11 +101,11 @@ typedef struct
  *
  * @warning A node should be only used in one queue at most.
  *
- * @param[in] data The pointer to the data to carry in the node.
+ * @param[in] pData The pointer to the data to carry in the node.
  *
  * @returns The node pointer is returned.
  */
-kqueue_node_t* kqueue_create_node(void* data);
+kqueue_node_t* kQueueCreateNode(void* pData);
 
 /**
  * @brief Deletes a queue node.
@@ -113,9 +113,9 @@ kqueue_node_t* kqueue_create_node(void* data);
  * @details Deletes a node from the memory. The node should not be used in any
  * queue. If it is the case, the function will return an error.
  *
- * @param[in, out] node The node pointer of pointer to destroy.
+ * @param[in, out] ppNode The node pointer of pointer to destroy.
  */
-void kqueue_delete_node(kqueue_node_t** node);
+void kQueueDestroyNode(kqueue_node_t** ppNode);
 
 /**
  * @brief Creates an empty queue ready to be used.
@@ -123,7 +123,7 @@ void kqueue_delete_node(kqueue_node_t** node);
  * @details Creates and initializes a new queue. The returned queue is
  * ready to be used.
  */
-kqueue_t* kqueue_create_queue(void);
+kqueue_t* kQueueCreate(void);
 
 /**
  * @brief Deletes a previously created queue.
@@ -131,9 +131,9 @@ kqueue_t* kqueue_create_queue(void);
  * @details Delete a queue from the memory. If the queue is not empty an error
  * is returned.
  *
- * @param[in, out] queue The queue pointer of pointer to destroy.
+ * @param[in, out] ppQueue The queue pointer of pointer to destroy.
  */
-void kqueue_delete_queue(kqueue_t** queue);
+void kQueueDestroy(kqueue_t** ppQueue);
 
 /**
  * @brief Enlists a node in the queue.
@@ -141,10 +141,10 @@ void kqueue_delete_queue(kqueue_t** queue);
  * @details Enlists a node in the queue given as parameter. The data will be
  * placed in the tail of the queue.
  *
- * @param[in] node A now node to add in the queue.
- * @param[in, out] queue The queue to manage.
+ * @param[in, out] pNode A now node to add in the queue.
+ * @param[in, out] pQueue The queue to manage.
  */
-void kqueue_push(kqueue_node_t* node, kqueue_t* queue);
+void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue);
 
 /**
  * @brief Enlists a node in the queue.
@@ -152,13 +152,13 @@ void kqueue_push(kqueue_node_t* node, kqueue_t* queue);
  * @details Enlist a node in the queue given as parameter. The data will be
  * placed in the queue with regard to the priority argument.
  *
- * @param[in] node A now node to add in the queue.
- * @param[in, out] queue The queue to manage.
- * @param[in] priority The element priority.
+ * @param[in, out] pNode A now node to add in the queue.
+ * @param[in, out] pQueue The queue to manage.
+ * @param[in] kPriority The element priority.
  */
-void kqueue_push_prio(kqueue_node_t* node,
-                      kqueue_t* queue,
-                      const uintptr_t priority);
+void kQueuePushPrio(kqueue_node_t* pNode,
+                    kqueue_t*      pQueue,
+                    const uint32_t kPriority);
 
 /**
  * @brief Removes a node from a queue.
@@ -166,11 +166,11 @@ void kqueue_push_prio(kqueue_node_t* node,
  * @details Removes a node from the queue given as parameter. The retreived node
  * that is returned is the one placed in the head of the QUEUE.
  *
- * @param[in, out] queue The queue to manage.
+ * @param[in, out] pQueue The queue to manage.
  *
  * @return The data pointer placed in the head of the queue is returned.
  */
-kqueue_node_t* kqueue_pop(kqueue_t* queue);
+kqueue_node_t* kQueuePop(kqueue_t* pQueue);
 
 /**
  * @brief Finds a node containing the data given as parameter in the queue.
@@ -178,12 +178,12 @@ kqueue_node_t* kqueue_pop(kqueue_t* queue);
  * @details Find a node containing the data given as parameter in the queue.
  * An error is set if not any node is found.
  *
- * @param[in] queue The queue to search the data in.
+ * @param[in] pQueue The queue to search the data in.
  * @param[in] data The data contained by the node to find.
  *
  * @return The function returns a pointer to the node if found, NULL otherwise.
  */
-kqueue_node_t* kqueue_find(kqueue_t* queue, void* data);
+kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData);
 
 /**
  * @brief Removes a node from a queue.
@@ -191,12 +191,12 @@ kqueue_node_t* kqueue_find(kqueue_t* queue, void* data);
  * @details Removes a node from a queue given as parameter. If the node is not
  * found, nothing is done and an error is returned.
  *
- * @param[in, out] queue The queue containing the node.
- * @param[in] node The node to remove.
- * @param[in] panic Tells if the function should generate a kernel panic of the
+ * @param[in, out] pQueue The queue containing the node.
+ * @param[in, out] pNode The node to remove.
+ * @param[in] kPanic Tells if the function should generate a kernel panic if the
  * node is not found.
  */
-void kqueue_remove(kqueue_t* queue, kqueue_node_t* node, const bool_t panic);
+void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic);
 
 
 #endif /* #ifndef __CORE_KQUEUE_H_ */

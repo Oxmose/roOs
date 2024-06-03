@@ -259,42 +259,42 @@ void test_framework_end(void)
     test_item_t* test_cursor;
 
     /* Print output header */
-    kernel_printf("\n#-------- TESTING SECTION START --------#\n");
-    kernel_printf("{\n");
-    kernel_printf("\t\"version\": \"" TEST_FRAMEWORK_VERSION "\",\n");
-    kernel_printf("\t\"name\": \"" TEST_FRAMEWORK_TEST_NAME "\",\n");
-    kernel_printf("\t\"number_of_tests\": %d,\n", test_count);
-    kernel_printf("\t\"failures\": %d,\n", failures);
-    kernel_printf("\t\"success\": %d,\n", success);
-    kernel_printf("\t\"test_suite\": {\n");
+    kprintf("\n#-------- TESTING SECTION START --------#\n");
+    kprintf("{\n");
+    kprintf("\t\"version\": \"" TEST_FRAMEWORK_VERSION "\",\n");
+    kprintf("\t\"name\": \"" TEST_FRAMEWORK_TEST_NAME "\",\n");
+    kprintf("\t\"number_of_tests\": %d,\n", test_count);
+    kprintf("\t\"failures\": %d,\n", failures);
+    kprintf("\t\"success\": %d,\n", success);
+    kprintf("\t\"test_suite\": {\n");
 
     test_cursor = test_list;
 
     for(i = 0; i < test_count && test_cursor != NULL; ++i)
     {
-        kernel_printf("\t\t\"%d\": {\n", test_cursor->id);
+        kprintf("\t\t\"%d\": {\n", test_cursor->id);
 
-        kernel_printf("\t\t\t\"result\": %lu,\n", test_cursor->value);
-        kernel_printf("\t\t\t\"expected\": %lu,\n", test_cursor->expected);
-        kernel_printf("\t\t\t\"status\": %d,\n", test_cursor->status);
-        kernel_printf("\t\t\t\"type\": %d\n", test_cursor->type);
+        kprintf("\t\t\t\"result\": %lu,\n", test_cursor->value);
+        kprintf("\t\t\t\"expected\": %lu,\n", test_cursor->expected);
+        kprintf("\t\t\t\"status\": %d,\n", test_cursor->status);
+        kprintf("\t\t\t\"type\": %d\n", test_cursor->type);
 
-        kernel_printf("\t\t}");
+        kprintf("\t\t}");
         if(i < test_count - 1)
         {
-            kernel_printf(",\n");
+            kprintf(",\n");
         }
         else
         {
-            kernel_printf("\n");
+            kprintf("\n");
         }
 
         test_cursor = test_cursor->next;
     }
 
-    kernel_printf("\t}\n");
-    kernel_printf("}\n");
-    kernel_printf("#-------- TESTING SECTION END --------#\n");
+    kprintf("\t}\n");
+    kprintf("}\n");
+    kprintf("#-------- TESTING SECTION END --------#\n");
 
     _kill_qemu();
 }

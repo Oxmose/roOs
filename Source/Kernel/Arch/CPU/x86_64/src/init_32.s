@@ -40,7 +40,7 @@ CHECKSUM    equ -(MAGIC + FLAGS)
 KERNEL_PML4_ENTRY    equ (KERNEL_MEM_OFFSET >> 39)
 KERNEL_PDPT_ENTRY    equ (KERNEL_MEM_OFFSET >> 30)
 KERNEL_PDT_ENTRY     equ (KERNEL_MEM_OFFSET >> 21)
-__kinit_low          equ (__kinit - KERNEL_MEM_OFFSET)
+__kinitLow           equ (__kinit - KERNEL_MEM_OFFSET)
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
@@ -49,13 +49,13 @@ __kinit_low          equ (__kinit - KERNEL_MEM_OFFSET)
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
-extern __kinit_x86_64
+extern __kinitx86_64
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
 global __kinit
-global __kinit_low
+global __kinitLow
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
@@ -102,86 +102,83 @@ __kinit:
     push  0
     popfd
 
-    ; Save Multiboot info to memory
-    mov [__multiboot_data_ptr_tmp], ebx
-
     ; Set temporary stack
-    mov esp, _kinit_stack_end
+    mov esp, _kinitStackEnd
     mov ebp, esp
 
     ; Check for 64 bits compatibility
-    call __kinit_check_lm_available
+    call __kinitCheckLMAvailable
 
     ; Set 64 bits capable GDT
     lgdt [_gdt_tmp_ptr]
 
     ; Update code segment
-    jmp dword (_gdt_tmp.code_32 - _gdt_tmp):__kinit_set_segments
+    jmp dword (_gdtTmp.code_32 - _gdtTmp):__kinitSetSegments
 
-__kinit_set_segments:
+__kinitSetSegments:
     ; Update data segments
-    mov eax, (_gdt_tmp.data_32 - _gdt_tmp)
+    mov eax, (_gdtTmp.data_32 - _gdtTmp)
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ss, ax
 
-__kinit_init_pml4t:
+__kinitInitPml4t:
     ; Set PML4T
-    mov ebx, _paging_pdpt0             ; First entry to PDPT0
+    mov ebx, _pagingPdpt0             ; First entry to PDPT0
     or  ebx, 0x3                       ; Present and writable
-    mov eax, _paging_pml4t
+    mov eax, _pagingPml4t
     mov [eax], ebx
 
     xor ebx, ebx
-__kinit_blank_pml4t:
+__kinitBlankPml4t:
     add eax, 8
-    cmp eax, _paging_pdpt0
+    cmp eax, _pagingPdpt0
     mov [eax], ebx
-    jne __kinit_blank_pml4t
+    jne __kinitBlankPml4t
 
     ; Set PDPT0
-    mov ebx, _paging_pdt0             ; First entry to PDT0
+    mov ebx, _pagingPdt0             ; First entry to PDT0
     or  ebx, 0x3                      ; Present and writable
-    mov eax, _paging_pdpt0
+    mov eax, _pagingPdpt0
     mov [eax], ebx
 
     xor ebx, ebx
-__kinit_blank_pdpt:
+__kinitBlankPdpt:
     add eax, 8
-    cmp eax, _paging_pdt0
+    cmp eax, _pagingPdt0
     mov [eax], ebx
-    jne __kinit_blank_pdpt
+    jne __kinitBlankPdpt
 
     ; Set PDPT0
     mov ebx, 0x83                       ; Present, writable, 2MB page
-    mov eax, _paging_pdt0
-__kinit_init_pdt0:
+    mov eax, _pagingPdt0
+__kinitInitPdt0:
     mov [eax], ebx
     add eax, 8
     add ebx, 0x200000
     xor ebx, ebx                        ; Rest entries will be not present
-    cmp eax, (_paging_pdt0 + 0x1000)
-    jne __kinit_init_pdt0
+    cmp eax, (_pagingPdt0 + 0x1000)
+    jne __kinitInitPdt0
 
-__kinit_init_pml4tk:
+__kinitInitPml4tk:
     ; Set PML4T for kernel
     mov eax, KERNEL_PML4_ENTRY
     and eax, 0x1FF
     shl eax, 3
 
     ; If it is the same as the loader, skip
-    mov ebx, _paging_pdpt0
+    mov ebx, _pagingPdpt0
     cmp eax, 0
-    je  __kinit_init_pdptk
+    je  __kinitInitPdptk
 
-    add eax, _paging_pml4t
-    mov ebx, _paging_pdptk
+    add eax, _pagingPml4t
+    mov ebx, _pagingPdptk
     or  ebx, 0x3                ; Present and writable
     mov [eax], ebx
 
-__kinit_init_pdptk:
+__kinitInitPdptk:
     and ebx, 0xFFFFFF00
     ; Set the PDPT for kernel
     mov eax, KERNEL_PDPT_ENTRY
@@ -189,11 +186,11 @@ __kinit_init_pdptk:
     shl eax, 3
 
     add eax, ebx
-    mov ebx, _paging_pdtk
+    mov ebx, _pagingPdtk
     or  ebx, 0x3                ; Present and writable
     mov [eax], ebx
 
-__kinit_init_pdtk:
+__kinitInitPdtk:
     ; Set the PDT entries for kernel
     and ebx, 0xFFFFFF00
     mov eax, KERNEL_PDT_ENTRY
@@ -204,18 +201,18 @@ __kinit_init_pdtk:
     add ecx, 0x800
     mov ebx, 0x83                     ; Present, writable, 2MB page
 
-__kinit_init_pdtk_loop:
+__kinitInitPdtkLoop:
     ; Set the rest of the entries to reach 512Mb mapping
     mov [eax], ebx
     add eax, 8
     add ebx, 0x200000
     cmp eax, ecx
-    jne __kinit_init_pdtk_loop
+    jne __kinitInitPdtkLoop
 
-__kinit_init_lm:
+__kinitInitLM:
     ; Long mode switch
     ; Set CR3
-    mov eax, _paging_pml4t
+    mov eax, _pagingPml4t
     mov cr3, eax
 
     ; Enable PAE
@@ -235,23 +232,21 @@ __kinit_init_lm:
     mov cr0, eax
 
     ; Far jump to 64 bit mode
-    jmp (_gdt_tmp.code_64 - _gdt_tmp):__kinit_64b_entry
+    jmp (_gdtTmp.code_64 - _gdtTmp):__kinit64bEntry
 
 ;-------------------------------------------------------------------------------
 ; ARCH
 [bits 64]
 
-__kinit_64b_entry:
-    ; Save multiboot information
-    mov rbx, [__multiboot_data_ptr_tmp]
-    mov rax, __kinit_x86_64
+__kinit64bEntry:
+    mov rax, __kinitx86_64
     jmp rax
 
-__kinit_end:
+__kinitEnd:
     ; Disable interrupt and loop forever
     cli
     hlt
-    jmp __kinit_end
+    jmp __kinitEnd
 
 
 ;-------------------------------------------------------------------------------
@@ -260,7 +255,7 @@ __kinit_end:
 
 ;-------------------------------------------------------------------------------
 ; Long mode availability test
-__kinit_check_lm_available:
+__kinitCheckLMAvailable:
     push eax
     push ebx
     push ecx
@@ -288,14 +283,14 @@ __kinit_check_lm_available:
 
     ; Compare eax and ecx, should have one bit flipped
     cmp eax, ecx
-    je  __kinit_lm_unavailable
+    je  __kinitLMUnAvailable
 
 
     ; 2) Check CPUID extended features
     mov eax, 0x80000000
     cpuid
     cmp eax, 0x80000001
-    jb  __kinit_lm_unavailable
+    jb  __kinitLMUnAvailable
 
 
     ; 3) Detect LM with CPUID
@@ -303,7 +298,7 @@ __kinit_check_lm_available:
     cpuid
     and edx, 0x20000000
     cmp edx, 0
-    je __kinit_lm_unavailable
+    je __kinitLMUnAvailable
 
     pop edx
     pop ecx
@@ -311,11 +306,11 @@ __kinit_check_lm_available:
     pop eax
     ret
 
-__kinit_lm_unavailable:
+__kinitLMUnAvailable:
     mov eax, 0
     mov ebx, 0
-    mov ecx, _no_lm_msg
-    call __kinit_kernel_error
+    mov ecx, _noLMMessage
+    call __kinitKernelError
 __kinit_lm_unavailable_loop:
     cli
     hlt
@@ -323,7 +318,7 @@ __kinit_lm_unavailable_loop:
 
 ;-------------------------------------------------------------------------------
 ; Error output function
-__kinit_kernel_error: ; Print string pointed by BX
+__kinitKernelError: ; Print string pointed by BX
     pusha       ; Save registers
 
     ; Compute start address
@@ -335,39 +330,36 @@ __kinit_kernel_error: ; Print string pointed by BX
     add eax, 0xB8000 ; VGA buffer address
     mov ebx, ecx
 
-__kinit_kernel_error_loop:      ; Display loop
+__kinitKernelErrorLoop:      ; Display loop
     mov cl, [ebx]            ; Load character into cx
     cmp cl, 0                 ; Compare for NULL end
-    je __kinit_kernel_error_end ; If NULL exit
+    je __kinitKernelErrorEnd ; If NULL exit
     mov ch, 0x0007
     mov [eax], cx             ; Printf current character
     add eax, 2                ; Move cursor
 
     add ebx, 1                   ; Move to next character
-    jmp __kinit_kernel_error_loop ; Loop
+    jmp __kinitKernelErrorLoop ; Loop
 
-__kinit_kernel_error_end:
+__kinitKernelErrorEnd:
     popa ; Restore registers
     ret
 
-;-
+
 ;-------------------------------------------------------------------------------
 ; DATA
 ;-------------------------------------------------------------------------------
 
 section .data
 
-__multiboot_data_ptr_tmp:
-    dd 0x00000000
-    dd 0x00000000
-
-_no_lm_msg:
-    db "Your system is not 64 bits compatible, use the 32 bits version of UTK", 0
+_noLMMessage:
+    db "Your system is not 64 bits compatible, use the 32 bits version of UTK"
+    db 0
 
 ;-------------------------------------------------------------------------------
 ; Boot temporary GDT
 align 32
-_gdt_tmp:
+_gdtTmp:
     .null:
         dd 0x00000000
         dd 0x00000000
@@ -421,25 +413,24 @@ _gdt_tmp:
         db 0x00
 
 _gdt_tmp_ptr:                      ; GDT pointer for 16bit access
-    dw _gdt_tmp_ptr - _gdt_tmp - 1 ; GDT limit
-    dd _gdt_tmp                    ; GDT base address
+    dw _gdt_tmp_ptr - _gdtTmp - 1 ; GDT limit
+    dd _gdtTmp                    ; GDT base address
 
 ;-------------------------------------------------------------------------------
 ; Boot temporary paging structures
 align 0x1000
-_paging_pml4t:
+_pagingPml4t:
     times 0x1000 db 0x00
-_paging_pdpt0:
+_pagingPdpt0:
     times 0x1000 db 0x00
-_paging_pdptk:
+_pagingPdptk:
     times 0x1000 db 0x00
-_paging_pdt0:
+_pagingPdt0:
     times 0x1000 db 0x00
-_paging_pdtk:
+_pagingPdtk:
     times 0x1000 db 0x00
 
 section .bss
-
-_kinit_stack_start:
-    resb 0x200
-_kinit_stack_end:
+_kinitStackStart:
+resb 0x200
+_kinitStackEnd:

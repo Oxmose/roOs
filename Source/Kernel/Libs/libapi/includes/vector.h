@@ -47,19 +47,19 @@ typedef struct
     /**
      * @brief The memory allocation function used by the allocator.
      *
-     * @param[in] alloc_size The size in bytes to be allocated.
+     * @param[in] allocSize The size in bytes to be allocated.
      *
      * @return A pointer to the allocated memory is returned. NULL is returned
      * if no memory was allocated.
      */
-    void*(*malloc)(size_t alloc_size);
+    void*(*pMalloc)(size_t allocSize);
 
     /**
      * @brief The memory free function used by the allocator.
      *
      * @param[out] ptr The start address of the memory to free.
      */
-    void(*free)(void* ptr);
+    void(*pFree)(void* ptr);
 } vector_alloc_t;
 
 /** @brief Vector structure. */
@@ -69,7 +69,7 @@ typedef struct
     vector_alloc_t allocator;
 
     /** @brief Storage array of the vector */
-    void** array;
+    void** ppArray;
 
     /** @brief Current vector's size. */
     size_t size;
@@ -85,10 +85,10 @@ typedef struct
 /**
  * @brief Create an allocator structure.
  *
- * @param[in] malloc The memory allocation function used by the allocator.
- * @param[in] free The memory free function used by the allocator.
+ * @param[in] MALLOC The memory allocation function used by the allocator.
+ * @param[in] FREE The memory free function used by the allocator.
  */
-#define VECTOR_ALLOCATOR(malloc, free) (vector_alloc_t){malloc, free}
+#define VECTOR_ALLOCATOR(MALLOC, FREE) (vector_alloc_t){MALLOC, FREE}
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -116,17 +116,17 @@ typedef struct
  *
  * @param[in] allocator The allocator to be used when allocating and freeing the
  * vector.
- * @param[in] init_data The initial data to set to the elements of the vector
+ * @param[in] pInitData The initial data to set to the elements of the vector
  * during its creation.
- * @param[in] size The initial size of the vector.
- * @param[out] error The error buffer to received the error status.
+ * @param[in] kSize The initial size of the vector.
+ * @param[out] pError The error buffer to received the error status.
  *
  * @returns A pointer to the created vector is returned.
  */
-vector_t* vector_create(vector_alloc_t allocator,
-                        void* init_data,
-                        const size_t size,
-                        OS_RETURN_E* error);
+vector_t* vectorCreate(vector_alloc_t allocator,
+                       void*          pInitData,
+                       const size_t   kSize,
+                       OS_RETURN_E*   pError);
 
 /**
  * @brief Destroys a vector.
@@ -135,11 +135,11 @@ vector_t* vector_create(vector_alloc_t allocator,
  * however, if its elements were allocated dynamically, it is the responsability
  * of the user to release the memory of these elements.
  *
- * @param[out] vector The vector to destroy.
+ * @param[out] pVector The vector to destroy.
  *
  * @returns The error status is retuned.
  */
-OS_RETURN_E vector_destroy(vector_t* vector);
+OS_RETURN_E vectorDestroy(vector_t* pVector);
 
 /**
  * @brief Clears a vector.
@@ -148,11 +148,11 @@ OS_RETURN_E vector_destroy(vector_t* vector);
  * its capacity unchanged. If its elements were allocated dynamically, it is the
  * responsability of the user to release the memory of these elements.
  *
- * @param[out] vector The vector to clear.
+ * @param[out] pVector The vector to clear.
  *
  * @returns The error status is retuned.
  */
-OS_RETURN_E vector_clear(vector_t* vector);
+OS_RETURN_E vectorClear(vector_t* pVector);
 
 /**
  * @brief Performs a copy of a vector and returns it.
@@ -160,12 +160,12 @@ OS_RETURN_E vector_clear(vector_t* vector);
  * @details Copies a vector to another vector. The function
  * initialize the destination vector before performing the copy.
  *
- * @param[in] src The source vector.
- * @param[in] error The error status buffer.
+ * @param[in] pSrc The source vector.
+ * @param[in] pError The error status buffer.
  *
  * @return The copy of the vector is returned.
  */
-vector_t* vector_copy(const vector_t* src, OS_RETURN_E* error);
+vector_t* vectorCopy(const vector_t* pSrc, OS_RETURN_E* pError);
 
 /**
  * @brief Shrinks a vector.
@@ -174,11 +174,11 @@ vector_t* vector_copy(const vector_t* src, OS_RETURN_E* error);
  * released and its capacity set to fit the number of element that the vector
  * contains.
  *
- * @param[out] vector The vector to shrink.
+ * @param[out] pVector The vector to shrink.
  *
  * @returns The error status is retuned.
  */
-OS_RETURN_E vector_shrink_to_fit(vector_t* vector);
+OS_RETURN_E vectorSrink(vector_t* pVector);
 
 /**
  * @brief Resizes a vector.
@@ -189,12 +189,12 @@ OS_RETURN_E vector_shrink_to_fit(vector_t* vector);
  * user to release the memory of these elements. If the size is biger than the
  * vector's capacity, it is expanded to fit the new size.
  *
- * @param[out] vector The vector to resize.
- * @param[in] size The size of apply to the vector.
+ * @param[out] pVector The vector to resize.
+ * @param[in] kSize The size of apply to the vector.
  *
  * @returns The error status is retuned.
  */
-OS_RETURN_E vector_resize(vector_t* vector, const size_t size);
+OS_RETURN_E vectorResize(vector_t* pVector, const size_t kSize);
 
 /**
  * @brief Inserts an element in the vector at the position provided in the
@@ -203,39 +203,39 @@ OS_RETURN_E vector_resize(vector_t* vector, const size_t size);
  * @details Inserts an element in the vector at the position provided in the
  * parameters. If the position is greater than the size, an error is returned.
  *
- * @param[out] vector The vector to modify.
- * @param[in] data The data to insert.
- * @param[in] position The position to insert the data to.
+ * @param[out] pVector The vector to modify.
+ * @param[in] pData The data to insert.
+ * @param[in] kPosition The position to insert the data to.
  *
  * @return The error status is retuned.
  */
-OS_RETURN_E vector_insert(vector_t* vector,
-                          void* data,
-                          const size_t position);
+OS_RETURN_E vectorInsert(vector_t*    pVector,
+                         void*        pData,
+                         const size_t kPosition);
 
 /**
  * @brief Inserts an element at the end of the vector.
  *
  * @details Inserts an element at the end of the vector.
  *
- * @param[out] vector The vector to modify.
- * @param[in] data The data to insert.
+ * @param[out] pVector The vector to modify.
+ * @param[in] pData The data to insert.
  *
  * @return The error status is retuned.
  */
-OS_RETURN_E vector_push(vector_t* vector, void* data);
+OS_RETURN_E vectorPush(vector_t* pVector, void* pData);
 
 /**
  * @brief Removes an element at the end of the vector.
  *
  * @details Removes an element at the end of the vector.
  *
- * @param[out] vector The vector to modify.
- * @param[out] data The data buffer to retreive the element that was removed.
+ * @param[out] pVector The vector to modify.
+ * @param[out] ppData The data buffer to retreive the element that was removed.
  *
  * @return The error status is retuned.
  */
-OS_RETURN_E vector_pop(vector_t* vector, void** data);
+OS_RETURN_E vectorPop(vector_t* pVector, void** ppData);
 
 /**
  * @brief Returns the value of an element.
@@ -245,15 +245,15 @@ OS_RETURN_E vector_pop(vector_t* vector, void** data);
  * structure's attributes. This function tests the bounds of the vector to
  * ensure the user accesses a position inside the vector.
  *
- * @param[in] vector The vector to use.
- * @param[in] position The position of the element to retrieve.
- * @param[out] data The data buffer to retreive the element.
+ * @param[in] pVector The vector to use.
+ * @param[in] kPosition The position of the element to retrieve.
+ * @param[out] ppData The data buffer to retreive the element.
  *
  * @return The error status is retuned.
  */
-OS_RETURN_E vector_get(const vector_t* vector,
-                       const size_t position,
-                       void** data);
+OS_RETURN_E vectorGet(const vector_t* pVector,
+                      const size_t    kPosition,
+                      void**          ppData);
 
 /**
  * @brief Sets the value of an element.
@@ -263,13 +263,13 @@ OS_RETURN_E vector_get(const vector_t* vector,
  * structure's attributes. This function tests the bounds of the vector to
  * ensure the user accesses a position inside the vector.
  *
- * @param[out] vector The vector to use.
- * @param[in] position The position of the element to retrieve.
- * @param[in] data The data to set at the given position.
+ * @param[out] pVector The vector to use.
+ * @param[in] kPosition The position of the element to retrieve.
+ * @param[in] pData The data to set at the given position.
  *
  * @return The error status is retuned.
  */
-OS_RETURN_E vector_set(vector_t* vector, const size_t position, void* data);
+OS_RETURN_E vectorSet(vector_t* pVector, const size_t kPosition, void* pData);
 
 #endif /* #ifndef __LIB_VECTOR_H_ */
 

@@ -40,12 +40,27 @@
 /** @brief Defines the generic definition for a driver used in the kernel */
 typedef struct
 {
+    /** @brief Driver's name. */
     const char* pName;
+    /** @brief Driver's description. */
     const char* pDescription;
+    /** @brief Driver's compatible string. */
     const char* pCompatible;
+    /** @brief Driver's version. */
     const char* pVersion;
 
-    OS_RETURN_E (*pDriverAttach)(const fdt_node_t*);
+    /**
+     * @brief Driver's attatch function.
+     *
+     * @details Driver's attatch function. This function is called when a device
+     * is detected and is compatible with the driver's compatible string.
+     * It should initialize the driver and / or device.
+     *
+     * @param[in] pNode The FDT node that matches the driver's compatible.
+     *
+     * @return The functon should return the error state of the driver.
+     */
+    OS_RETURN_E (*pDriverAttach)(const fdt_node_t* pNode);
 } driver_t;
 
 /*******************************************************************************
@@ -57,7 +72,7 @@ typedef struct
  *
  * @details Registers a new driver in the kernel's driver table.
  *
- * @param[in] driver_t DRIVER The driver to add to the driver table
+ * @param[in] DRIVER The driver to add to the driver table.
  */
 #define DRIVERMGR_REG(DRIVER)                                                 \
     driver_t* DRVENT_##DRIVER __attribute__ ((section (".utk_driver_tbl"))) = \

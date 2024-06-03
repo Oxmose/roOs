@@ -46,13 +46,13 @@ __intHandler%1:
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
-extern current_thread
+extern pCurrentThread
 
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
 
-extern kernel_interrupt_handler
+extern interruptMainHandler
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -70,7 +70,7 @@ __intHandlerEntry:
         push ebx
 
         ; Get the current thread handle
-        mov eax, [current_thread]
+        mov eax, [pCurrentThread]
 
         ; Save the interrupt context
         mov ebx, [esp+8]  ; Int id
@@ -112,10 +112,10 @@ __intHandlerEntry:
         pop eax ; Restore
 
         ; call the C generic interrupt handler
-        call kernel_interrupt_handler
+        call interruptMainHandler
 
         ; Get the current thread handle
-        mov eax, [current_thread]
+        mov eax, [pCurrentThread]
 
         ; Restore registers
         mov ds,  [eax+68]

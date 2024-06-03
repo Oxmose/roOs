@@ -47,19 +47,19 @@ typedef struct
     /**
      * @brief The memory allocation function used by the allocator.
      *
-     * @param[in] alloc_size The size in bytes to be allocated.
+     * @param[in] allocSize The size in bytes to be allocated.
      *
      * @return A pointer to the allocated memory is returned. NULL is returned
      * if no memory was allocated.
      */
-    void*(*malloc)(size_t alloc_size);
+    void*(*pMalloc)(size_t allocSize);
 
     /**
      * @brief The memory free function used by the allocator.
      *
      * @param[out] ptr The start address of the memory to free.
      */
-    void(*free)(void* ptr);
+    void(*pFree)(void* ptr);
 } uhashtable_alloc_t;
 
 /** @brief Unsigned hash table entry structure. */
@@ -71,10 +71,10 @@ typedef struct
     uintptr_t key;
 
     /** @brief Data associated to the key. */
-    void* data;
+    void* pData;
 
     /** @brief Tells if the entry is used or not. */
-    bool_t is_used;
+    bool_t isUsed;
 } uhashtable_entry_t;
 
 /** @brief Unsigned hash table structure. */
@@ -84,7 +84,7 @@ typedef struct
     uhashtable_alloc_t allocator;
 
     /** @brief Hash table entries. */
-    uhashtable_entry_t** entries;
+    uhashtable_entry_t** ppEntries;
 
     /** @brief Current hash table capacity. */
     size_t capacity;
@@ -93,7 +93,7 @@ typedef struct
     size_t size;
 
     /** @brief Contains the number of deleted item still in the table. */
-    size_t graveyard_size;
+    size_t graveyardSize;
 } uhashtable_t;
 
 /*******************************************************************************
@@ -103,10 +103,10 @@ typedef struct
 /**
  * @brief Create an allocator structure.
  *
- * @param[in] malloc The memory allocation function used by the allocator.
- * @param[in] free The memory free function used by the alloctor.
+ * @param[in] MALLOC The memory allocation function used by the allocator.
+ * @param[in] FREE The memory free function used by the alloctor.
  */
-#define UHASHTABLE_ALLOCATOR(malloc, free) (uhashtable_alloc_t){malloc, free}
+#define UHASHTABLE_ALLOCATOR(MALLOC, FREE) (uhashtable_alloc_t){MALLOC, FREE}
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -134,12 +134,12 @@ typedef struct
  *
  * @param[in] allocator The allocator to be used when allocating and freeing the
  * hash table.
- * @param[out] error The buffer to return the error status.
+ * @param[out] pError The buffer to return the error status.
  *
  * @returns A pointer to the newly created table is returned.
  */
-uhashtable_t* uhashtable_create(uhashtable_alloc_t allocator,
-                                OS_RETURN_E* error);
+uhashtable_t* uhashtableCreate(uhashtable_alloc_t allocator,
+                               OS_RETURN_E*       pError);
 
 /**
  * @brief Destroys an unsigned hash table.
@@ -148,11 +148,11 @@ uhashtable_t* uhashtable_create(uhashtable_alloc_t allocator,
  * released. It is the responsability of the user to free the memory used by the
  * data contained in the hash table.
  *
- * @param[out] table The unsigned hash table to destroy.
+ * @param[out] pTable The unsigned hash table to destroy.
  *
  * @returns The error status is returned.
  */
-OS_RETURN_E uhashtable_destroy(uhashtable_t* table);
+OS_RETURN_E uhashtableDestroy(uhashtable_t* pTable);
 
 /**
  * @brief Returns the value attached to the key provided in parameters.
@@ -160,15 +160,15 @@ OS_RETURN_E uhashtable_destroy(uhashtable_t* table);
  * @details Returns the value attached to the key provided in parameters. If the
  * key is not in the table, OS_ERR_INCORRECT_VALUE is returned.
  *
- * @param[in] table The table to search.
- * @param[in] key The key to search.
- * @param[out] data The data buffer to receive the data associated to the key.
+ * @param[in] pTable The table to search.
+ * @param[in] kKey The key to search.
+ * @param[out] ppData The data buffer to receive the data associated to the key.
  *
  * @returns The error status is returned.
  */
-OS_RETURN_E uhashtable_get(const uhashtable_t* table,
-                           const uintptr_t key,
-                           void** data);
+OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
+                          const uintptr_t     kKey,
+                          void**              ppData);
 
 /**
  * @brief Sets a value in the hash table.
@@ -176,15 +176,15 @@ OS_RETURN_E uhashtable_get(const uhashtable_t* table,
  * @details Sets a value in the hash table. If the value already exists, the
  * previous value is overwritten, otherwise, a new entry is created.
  *
- * @param[in,out] table The table to set the data into.
- * @param[in] key The key to associate to the data.
- * @param[in] data The data to set in the table.
+ * @param[in,out] pTable The table to set the data into.
+ * @param[in] kKey The key to associate to the data.
+ * @param[in] pData The data to set in the table.
  *
  * @returns The error status is returned.
  */
-OS_RETURN_E uhashtable_set(uhashtable_t* table,
-                           const uintptr_t key,
-                           void* data);
+OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
+                          const uintptr_t kKey,
+                          void*           pData);
 
 /**
  * @brief Removes an entry from the table.
@@ -193,17 +193,17 @@ OS_RETURN_E uhashtable_set(uhashtable_t* table,
  * attached to the key provided in parameters. If the
  * key is not in the table, OS_ERR_INCORRECT_VALUE is returned.
  *
- * @param[in] table The table to remove the entry in.
- * @param[in] key The key to remove.
- * @param[out] data The data buffer to receive the data associated to the key.
+ * @param[in] pTable The table to remove the entry in.
+ * @param[in] kKey The key to remove.
+ * @param[out] ppData The data buffer to receive the data associated to the key.
  * This parameter can be set to NULL is the user does not want to retreive the
  * removed data.
  *
  * @returns The error status is returned.
  */
-OS_RETURN_E uhashtable_remove(uhashtable_t* table,
-                              const uintptr_t key,
-                              void** data);
+OS_RETURN_E uhashtableRemove(uhashtable_t*   pTable,
+                             const uintptr_t kKey,
+                             void**          ppData);
 
 #endif /* #ifndef __LIB_UHASHTABLE_H_ */
 

@@ -77,17 +77,16 @@ static uint64_t sys_tick_count = 0;
  * are NULL, the driver is not initialized.
  */
 static kernel_timer_t sys_main_timer = {
-    .get_frequency  = NULL,
-    .set_frequency  = NULL,
-    .get_time_ns    = NULL,
-    .set_time_ns    = NULL,
-    .get_date       = NULL,
-    .get_daytime    = NULL,
-    .enable         = NULL,
-    .disable        = NULL,
-    .set_handler    = NULL,
-    .remove_handler = NULL,
-    .get_irq        = NULL
+    .pGetFrequency  = NULL,
+    .pSetFrequency  = NULL,
+    .pGetTimeNs     = NULL,
+    .pSetTimeNs     = NULL,
+    .pGetDate       = NULL,
+    .pGetDaytime    = NULL,
+    .pEnable        = NULL,
+    .pDisable       = NULL,
+    .pSetHandler    = NULL,
+    .pRemoveHandler = NULL
 };
 
 /** @brief The kernel's RTC timer interrupt source.
@@ -96,24 +95,23 @@ static kernel_timer_t sys_main_timer = {
  * are NULL, the driver is not initialized.
  */
 static kernel_timer_t sys_rtc_timer = {
-    .get_frequency  = NULL,
-    .set_frequency  = NULL,
-    .get_time_ns    = NULL,
-    .set_time_ns    = NULL,
-    .get_date       = NULL,
-    .get_daytime    = NULL,
-    .enable         = NULL,
-    .disable        = NULL,
-    .set_handler    = NULL,
-    .remove_handler = NULL,
-    .get_irq        = NULL
+    .pGetFrequency  = NULL,
+    .pSetFrequency  = NULL,
+    .pGetTimeNs     = NULL,
+    .pSetTimeNs     = NULL,
+    .pGetDate       = NULL,
+    .pGetDaytime    = NULL,
+    .pEnable        = NULL,
+    .pDisable       = NULL,
+    .pSetHandler    = NULL,
+    .pRemoveHandler = NULL,
 };
 
 /** @brief Active wait counter per CPU. */
 static volatile uint64_t active_wait = 0;
 
 /** @brief Stores the routine to call the scheduler. */
-void (*schedule_routine)(kernel_thread_t*) = NULL;
+void (*sSchedRoutine)(kernel_thread_t*) = NULL;
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -125,9 +123,9 @@ void (*schedule_routine)(kernel_thread_t*) = NULL;
  * @details The kernel's main timer interrupt handler. This must be connected to
  * the main timer of the system.
  *
- * @param[in, out] curr_thread Current thread at the moment of the interrupt.
+ * @param[in, out] pCurrThread Current thread at the moment of the interrupt.
  */
-static void _time_main_timer_handler(kernel_thread_t* curr_thread);
+static void _mainTimerHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief The kernel's RTC timer interrupt handler.
@@ -135,15 +133,15 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread);
  * @details The kernel's RTC timer interrupt handler. This must be connected to
  * the RTC timer of the system.
  *
- * @param[in, out] curr_thread Current thread at the moment of the interrupt.
+ * @param[in, out] pCurrThread Current thread at the moment of the interrupt.
  */
-static void _time_rtc_timer_handler(kernel_thread_t* curr_thread);
+static void _rtcTimerHandler(kernel_thread_t* pCurrThread);
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _time_main_timer_handler(kernel_thread_t* curr_thread)
+static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
     uint64_t curr_time;
 
@@ -152,26 +150,23 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
     /* Add a tick count */
     ++sys_tick_count;
 
-    /* EOI */
-    kernel_interrupt_set_irq_eoi(sys_main_timer.get_irq()); // TODO: Move this to timer driver, we might not even need get IRQ anymore
-
-    if(sys_main_timer.tickManager != NULL)
+    if(sys_main_timer.pTickManager != NULL)
     {
-        sys_main_timer.tickManager();
+        sys_main_timer.pTickManager();
     }
 
-    if(schedule_routine != NULL)
+    if(sSchedRoutine != NULL)
     {
         /* We might never come back from here */
-        schedule_routine(curr_thread);
+        sSchedRoutine(pCurrThread);
     }
     else
     {
         /* TODO: remove that and use lifetime timer is availabe */
-        if(active_wait != 0 && sys_main_timer.get_time_ns != NULL)
+        if(active_wait != 0 && sys_main_timer.pGetTimeNs != NULL)
         {
             /* Use precise time */
-            curr_time = sys_main_timer.get_time_ns();
+            curr_time = sys_main_timer.pGetTimeNs();
             if(active_wait <= curr_time)
             {
                 active_wait = 0;
@@ -181,7 +176,7 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
         {
             /* Use ticks */
             if(active_wait <= sys_tick_count * 1000000000 /
-                              sys_main_timer.get_frequency())
+                              sys_main_timer.pGetFrequency())
             {
                 active_wait = 0;
             }
@@ -193,42 +188,37 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
                  "Time manager main handler");
 }
 
-static void _time_rtc_timer_handler(kernel_thread_t* curr_thread)
+static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 {
-    (void)curr_thread;
+    (void)pCurrThread;
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_TIMER_HANDLER, 0);
 
 
-    if(sys_rtc_timer.tickManager != NULL)
+    if(sys_rtc_timer.pTickManager != NULL)
     {
-        sys_rtc_timer.tickManager();
+        sys_rtc_timer.pTickManager();
     }
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Time manager RTC handler");
-
-    /* EOI */
-    kernel_interrupt_set_irq_eoi(sys_rtc_timer.get_irq());
 }
 
 OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
-                            const TIMER_TYPE_E kType)
+                            const TIMER_TYPE_E    kType)
 {
     OS_RETURN_E retCode;
 
-    /* TODO: Add tracing */
-
     /* Check the main timer integrity */
     if(kpTimer == NULL ||
-       kpTimer->get_frequency == NULL ||
-       kpTimer->set_frequency == NULL ||
-       kpTimer->enable == NULL ||
-       kpTimer->disable == NULL ||
-       kpTimer->set_handler == NULL ||
-       kpTimer->remove_handler == NULL ||
-       kpTimer->get_irq == NULL)
+       kpTimer->pGetFrequency == NULL ||
+       kpTimer->pSetFrequency == NULL ||
+       kpTimer->pEnable == NULL ||
+       kpTimer->pDisable == NULL ||
+       kpTimer->pSetHandler == NULL ||
+       kpTimer->pRemoveHandler == NULL ||
+       kpTimer->pTickManager == NULL)
 
     {
         return OS_ERR_NULL_POINTER;
@@ -240,97 +230,99 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     {
         case MAIN_TIMER:
             sys_main_timer = *kpTimer;
-            retCode = sys_main_timer.set_handler(_time_main_timer_handler);
-            if(retCode == OS_NO_ERR)
-            {
-                sys_main_timer.enable();
-            }
+            retCode = sys_main_timer.pSetHandler(_mainTimerHandler);
             break;
         case RTC_TIMER:
             sys_rtc_timer = *kpTimer;
-            retCode = sys_rtc_timer.set_handler(_time_rtc_timer_handler);
-            if(retCode == OS_NO_ERR)
-            {
-                sys_rtc_timer.enable();
-            }
+            retCode = sys_rtc_timer.pSetHandler(_rtcTimerHandler);
             break;
         default:
             /* TODO: Add other timers */
             retCode = OS_ERR_NOT_SUPPORTED;
     }
 
+    if(retCode == OS_NO_ERR)
+    {
+        kpTimer->pEnable();
+    }
+
     return retCode;
 }
 
-uint64_t time_get_current_uptime(void)
+uint64_t timeGetUptime(void)
 {
-    if(sys_main_timer.get_time_ns == NULL)
+    if(sys_main_timer.pGetTimeNs == NULL)
     {
-        if(sys_main_timer.get_frequency == NULL)
+        if(sys_main_timer.pGetFrequency == NULL)
         {
             return 0;
         }
 
-        return sys_tick_count * 1000000000ULL / sys_main_timer.get_frequency();
+        return sys_tick_count * 1000000000ULL / sys_main_timer.pGetFrequency();
     }
 
-    return sys_main_timer.get_time_ns();
+    return sys_main_timer.pGetTimeNs();
 }
 
-uint64_t time_get_tick_count(void)
+uint64_t timeGetTicks(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_GET_TICK_COUNT, 2,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_GET_TICK_COUNT,
+                       2,
                        (uint32_t)sys_tick_count,
                        (uint32_t)(sys_tick_count >> 32));
 
     return sys_tick_count;
 }
 
-void time_wait_no_sched(const uint64_t ns)
+void timeWaitNoScheduler(const uint64_t ns)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_START, 2,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_START,
+                       2,
                        (uint32_t)ns,
                        (uint32_t)(ns >> 32));
 
-    if(schedule_routine != NULL)
+    if(sSchedRoutine != NULL)
     {
         return;
     }
 
-    /* TODO: Use lifetime timer is availabe and wait for count in this function
+    /* TODO: Use lifetime timer if availabe and wait for count in this function
      * don't rely on ticks
      */
-    if(sys_main_timer.get_time_ns != NULL)
+    if(sys_main_timer.pGetTimeNs != NULL)
     {
         /* Use precise time */
-        active_wait = ns + sys_main_timer.get_time_ns();
+        active_wait = ns + sys_main_timer.pGetTimeNs();
     }
     else
     {
         /* Use ticks */
         active_wait = ns + sys_tick_count * 1000000000 /
-                           sys_main_timer.get_frequency();
+                           sys_main_timer.pGetFrequency();
     }
     while(active_wait > 0){}
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_END, 2,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_END,
+                       2,
                        (uint32_t)ns,
                        (uint32_t)(ns >> 32));
 }
 
-OS_RETURN_E time_register_scheduler(void(*scheduler_call)(kernel_thread_t*))
+OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
 {
 #ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED, 2,
-                       (uintptr_t)scheduler_call & 0xFFFFFFFF,
-                       (uintptr_t)scheduler_call >> 32);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED,
+                       2,
+                       (uintptr_t)pSchedRoutine & 0xFFFFFFFF,
+                       (uintptr_t)pSchedRoutine >> 32);
 #else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED, 2,
-                       (uintptr_t)scheduler_call & 0xFFFFFFFF,
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED,
+                       2,
+                       (uintptr_t)pSchedRoutine & 0xFFFFFFFF,
                        (uintptr_t)0);
 #endif
 
-    if(scheduler_call == NULL)
+    if(pSchedRoutine == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
@@ -338,9 +330,10 @@ OS_RETURN_E time_register_scheduler(void(*scheduler_call)(kernel_thread_t*))
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
                  MODULE_NAME,
-                 "Registered scheduler routine at 0x%p", scheduler_call);
+                 "Registered scheduler routine at 0x%p",
+                 pSchedRoutine);
 
-    schedule_routine = scheduler_call;
+    sSchedRoutine = pSchedRoutine;
 
     return OS_NO_ERR;
 }

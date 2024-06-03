@@ -20,6 +20,7 @@
         "limits": "c",
         "locale": "c",
         "ratio": "c",
-        "tuple": "c"
+        "tuple": "c",
+        "compare": "c"
     }
 }

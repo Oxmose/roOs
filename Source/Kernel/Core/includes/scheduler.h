@@ -69,7 +69,7 @@
  *
  * @return A handle to the current running thread is returned.
  */
-kernel_thread_t* scheduler_get_current_thread(void);
+kernel_thread_t* schedGetCurrentThread(void);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

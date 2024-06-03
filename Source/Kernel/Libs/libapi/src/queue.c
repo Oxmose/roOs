@@ -23,10 +23,10 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stddef.h>        /* Standard definitions */
-#include <stdint.h>        /* Generic int types */
-#include <string.h>        /* String manipulation */
-#include <panic.h>         /* Kernel panic */
+#include <panic.h>        /* Kernel panic */
+#include <stddef.h>       /* Standard definitions */
+#include <stdint.h>       /* Generic int types */
+#include <string.h>       /* String manipulation */
 #include <kerneloutput.h> /* Kernel output methods */
 
 /* Configuration files */
@@ -57,6 +57,12 @@
 /* None */
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/* None */
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
@@ -70,73 +76,68 @@
 /* None */
 
 /*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/* None */
-
-/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-queue_node_t* queue_create_node(void* data,
-                                queue_alloc_t allocator,
-                                OS_RETURN_E *error)
+queue_node_t* queueCreateNode(void*         pData,
+                              queue_alloc_t allocator,
+                              OS_RETURN_E*  pError)
 {
-    queue_node_t* new_node;
+    queue_node_t* pNewNode;
 
     /* Create new node */
-    new_node = allocator.malloc(sizeof(queue_node_t));
+    pNewNode = allocator.pMalloc(sizeof(queue_node_t));
 
-    if(new_node == NULL)
+    if(pNewNode == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_NO_MORE_MEMORY;
+            *pError = OS_ERR_NO_MORE_MEMORY;
         }
         return NULL;
     }
-     /* Init the structure */
-    memset(new_node, 0, sizeof(queue_node_t));
-    new_node->allocator = allocator;
-    new_node->data = data;
-    if(error != NULL)
+
+    /* Init the structure */
+    memset(pNewNode, 0, sizeof(queue_node_t));
+    pNewNode->allocator = allocator;
+    pNewNode->pData     = pData;
+    if(pError != NULL)
     {
-        *error = OS_NO_ERR;
+        *pError = OS_NO_ERR;
     }
-    return new_node;
+    return pNewNode;
 }
 
-OS_RETURN_E queue_delete_node(queue_node_t** node)
+OS_RETURN_E queueDeleteNode(queue_node_t** ppNode)
 {
-    if(node == NULL || *node == NULL)
+    if(ppNode == NULL || *ppNode == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Check queue chaining */
-    if((*node)->enlisted != FALSE)
+    if((*ppNode)->enlisted != FALSE)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    (*node)->allocator.free(*node);
-    *node = NULL;
+    (*ppNode)->allocator.pFree(*ppNode);
+    *ppNode = NULL;
 
     return OS_NO_ERR;
 }
 
-queue_t* queue_create_queue(queue_alloc_t allocator, OS_RETURN_E *error)
+queue_t* queueCreate(queue_alloc_t allocator, OS_RETURN_E* pEerror)
 {
     queue_t* newqueue;
 
     /* Create new node */
-    newqueue = allocator.malloc(sizeof(queue_t));
+    newqueue = allocator.pMalloc(sizeof(queue_t));
     if(newqueue == NULL)
     {
-        if(error != NULL)
+        if(pEerror != NULL)
         {
-            *error = OS_ERR_NO_MORE_MEMORY;
+            *pEerror = OS_ERR_NO_MORE_MEMORY;
         }
         return NULL;
     }
@@ -145,68 +146,76 @@ queue_t* queue_create_queue(queue_alloc_t allocator, OS_RETURN_E *error)
     memset(newqueue, 0, sizeof(queue_t));
     newqueue->allocator = allocator;
 
-    if(error != NULL)
+    if(pEerror != NULL)
     {
-        *error = OS_NO_ERR;
+        *pEerror = OS_NO_ERR;
     }
 
     return newqueue;
 }
 
-OS_RETURN_E queue_delete_queue(queue_t** queue)
+OS_RETURN_E queueDelete(queue_t** ppQueue)
 {
-    if(queue == NULL || *queue == NULL)
+    if(ppQueue == NULL || *ppQueue == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Check queue chaining */
-    if((*queue)->head != NULL || (*queue)->tail != NULL)
+    if((*ppQueue)->pHead != NULL || (*ppQueue)->pTail != NULL)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    (*queue)->allocator.free(*queue);
-    *queue = NULL;
+    (*ppQueue)->allocator.pFree(*ppQueue);
+    *ppQueue = NULL;
 
     return OS_NO_ERR;
 }
 
-OS_RETURN_E queue_push(queue_node_t* node, queue_t* queue)
+OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue)
 {
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE", "Queue 0x%p in queue 0x%p", node,
-                 queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Queue 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node == NULL || queue == NULL)
+    if(pNode == NULL || pQueue == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         /* Set the first item */
-        queue->head = node;
-        queue->tail = node;
-        node->next = NULL;
-        node->prev = NULL;
+        pQueue->pHead = pNode;
+        pQueue->pTail = pNode;
+        pNode->pNext  = NULL;
+        pNode->pPrev  = NULL;
     }
     else
     {
         /* Just put on the head */
-        node->next = queue->head;
-        node->prev = NULL;
-        queue->head->prev = node;
-        queue->head = node;
+        pNode->pNext         = pQueue->pHead;
+        pNode->pPrev         = NULL;
+        pQueue->pHead->pPrev = pNode;
+        pQueue->pHead        = pNode;
     }
 
-    ++queue->size;
-    node->enlisted = TRUE;
+    ++pQueue->size;
+    pNode->enlisted = TRUE;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE",
-                 "Enqueue element 0x%p in queue 0x%p", node, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Enqueue element 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node->next != NULL && node->prev != NULL && node->next == node->prev)
+    if(pNode->pNext != NULL &&
+       pNode->pPrev != NULL &&
+       pNode->pNext == pNode->pPrev)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
@@ -215,70 +224,79 @@ OS_RETURN_E queue_push(queue_node_t* node, queue_t* queue)
 }
 
 
-OS_RETURN_E queue_push_prio(queue_node_t* node,
-                            queue_t* queue,
-                            const uintptr_t priority)
+OS_RETURN_E queuePushPrio(queue_node_t*   pNode,
+                            queue_t*        pQueue,
+                            const uintptr_t kPriority)
 {
-    queue_node_t* cursor;
+    queue_node_t* pCursor;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE", "Enqueue 0x%p in queue 0x%p",
-                 node, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Enqueue 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node == NULL || queue == NULL)
+    if(pNode == NULL || pQueue == NULL)
     {
         KERNEL_ERROR("[QUEUE] Enqueue NULL");
         return OS_ERR_NULL_POINTER;
     }
 
-    node->priority = priority;
+    pNode->priority = kPriority;
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         /* Set the first item */
-        queue->head = node;
-        queue->tail = node;
-        node->next = NULL;
-        node->prev = NULL;
+        pQueue->pHead = pNode;
+        pQueue->pTail = pNode;
+        pNode->pNext  = NULL;
+        pNode->pPrev  = NULL;
     }
     else
     {
-        cursor = queue->head;
-        while(cursor != NULL && cursor->priority > priority)
+        pCursor = pQueue->pHead;
+        while(pCursor != NULL && pCursor->priority > kPriority)
         {
-            cursor = cursor->next;
+            pCursor = pCursor->pNext;
         }
 
-        if(cursor != NULL)
+        if(pCursor != NULL)
         {
-            node->next = cursor;
-            node->prev = cursor->prev;
-            cursor->prev = node;
-            if(node->prev != NULL)
+            pNode->pNext   = pCursor;
+            pNode->pPrev   = pCursor->pPrev;
+            pCursor->pPrev = pNode;
+
+            if(pNode->pPrev != NULL)
             {
-                node->prev->next = node;
+                pNode->pPrev->pNext = pNode;
             }
             else
             {
-                queue->head = node;
+                pQueue->pHead = pNode;
             }
         }
         else
         {
             /* Just put on the tail */
-            node->prev = queue->tail;
-            node->next = NULL;
-            queue->tail->next = node;
-            queue->tail = node;
+            pNode->pPrev         = pQueue->pTail;
+            pNode->pNext         = NULL;
+            pQueue->pTail->pNext = pNode;
+            pQueue->pTail        = pNode;
         }
     }
-    ++queue->size;
-    node->enlisted = TRUE;
+    ++pQueue->size;
+    pNode->enlisted = TRUE;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE",
-                 "Enqueue element 0x%p in queue 0x%p", node, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Enqueue element 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node->next != NULL && node->prev != NULL && node->next == node->prev)
+    if(pNode->pNext != NULL &&
+       pNode->pPrev != NULL &&
+       pNode->pNext == pNode->pPrev)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
@@ -286,156 +304,167 @@ OS_RETURN_E queue_push_prio(queue_node_t* node,
     return OS_NO_ERR;
 }
 
-queue_node_t* queue_pop(queue_t* queue, OS_RETURN_E* error)
+queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError)
 {
-    queue_node_t* node;
+    queue_node_t* pNode;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE", "Dequeue element in queue 0x%p",
-                 queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Dequeue element in queue 0x%p",
+                 pQueue);
 
-    if(queue == NULL)
+    if(pQueue == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_NULL_POINTER;
+            *pError = OS_ERR_NULL_POINTER;
         }
         return NULL;
     }
 
-    if(error != NULL)
+    if(pError != NULL)
     {
-        *error = OS_NO_ERR;
+        *pError = OS_NO_ERR;
     }
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         return NULL;
     }
 
     /* Dequeue the last item */
-    node = queue->tail;
+    pNode = pQueue->pTail;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE",
-                 "Dequeue element 0x%p in queue 0x%p", node, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Dequeue element 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node->prev != NULL)
+    if(pNode->pPrev != NULL)
     {
-        node->prev->next = NULL;
-        queue->tail = node->prev;
+        pNode->pPrev->pNext = NULL;
+        pQueue->pTail = pNode->pPrev;
     }
     else
     {
-        queue->head = NULL;
-        queue->tail = NULL;
+        pQueue->pHead = NULL;
+        pQueue->pTail = NULL;
     }
 
-    --queue->size;
+    --pQueue->size;
 
-    node->next = NULL;
-    node->prev = NULL;
-    node->enlisted = FALSE;
+    pNode->pNext = NULL;
+    pNode->pPrev = NULL;
+    pNode->enlisted = FALSE;
 
-    if(error != NULL)
+    if(pError != NULL)
     {
-        *error = OS_NO_ERR;
+        *pError = OS_NO_ERR;
     }
 
-    return node;
+    return pNode;
 }
 
-queue_node_t* queue_find(queue_t* queue, void* data, OS_RETURN_E *error)
+queue_node_t* queueFind(queue_t*pQueue, void* pData, OS_RETURN_E* pError)
 {
-    queue_node_t* node;
+    queue_node_t* pNode;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE",
-                 "Find data 0x%p in queue 0x%p", data, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Find data 0x%p in queue 0x%p",
+                 pData,
+                 pQueue);
 
     /* If this queue is empty */
-    if(queue == NULL)
+    if(pQueue == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_NULL_POINTER;
+            *pError = OS_ERR_NULL_POINTER;
         }
         return NULL;
     }
 
     /* Search for the data */
-    node = queue->head;
-    while(node != NULL && node->data != data)
+    pNode = pQueue->pHead;
+    while(pNode != NULL && pNode->pData != pData)
     {
-        node = node->next;
+        pNode = pNode->pNext;
     }
 
     /* No such data */
-    if(node == NULL)
+    if(pNode == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_INCORRECT_VALUE;
+            *pError = OS_ERR_INCORRECT_VALUE;
         }
         return NULL;
     }
 
-    if(error != NULL)
+    if(pError != NULL)
     {
-        *error = OS_NO_ERR;
+        *pError = OS_NO_ERR;
     }
 
-    return node;
+    return pNode;
 }
 
-OS_RETURN_E queue_remove(queue_t* queue, queue_node_t* node)
+OS_RETURN_E queueRemove(queue_t* pQueue, queue_node_t* pNode)
 {
-    queue_node_t* cursor;
+    queue_node_t* pCursor;
 
-    if(queue == NULL || node == NULL)
+    if(pQueue == NULL || pNode == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED, "QUEUE",
-                 "Remove node node 0x%p in queue 0x%p", node, queue);
+    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
+                 "QUEUE",
+                 "Remove node node 0x%p in queue 0x%p",
+                 pNode,
+                 pQueue);
 
     /* Search for node in the queue*/
-    cursor = queue->head;
-    while(cursor != NULL && cursor != node)
+    pCursor = pQueue->pHead;
+    while(pCursor != NULL && pCursor != pNode)
     {
-        cursor = cursor->next;
+        pCursor = pCursor->pNext;
     }
 
-    if(cursor == NULL)
+    if(pCursor == NULL)
     {
         return OS_ERR_INCORRECT_VALUE;
     }
 
     /* Manage link */
-    if(cursor->prev != NULL && cursor->next != NULL)
+    if(pCursor->pPrev != NULL && pCursor->pNext != NULL)
     {
-        cursor->prev->next = cursor->next;
-        cursor->next->prev = cursor->prev;
+        pCursor->pPrev->pNext = pCursor->pNext;
+        pCursor->pNext->pPrev = pCursor->pPrev;
     }
-    else if(cursor->prev == NULL && cursor->next != NULL)
+    else if(pCursor->pPrev == NULL && pCursor->pNext != NULL)
     {
-        queue->head = cursor->next;
-        cursor->next->prev = NULL;
+        pQueue->pHead = pCursor->pNext;
+        pCursor->pNext->pPrev = NULL;
     }
-    else if(cursor->prev != NULL && cursor->next == NULL)
+    else if(pCursor->pPrev != NULL && pCursor->pNext == NULL)
     {
-        queue->tail = cursor->prev;
-        cursor->prev->next = NULL;
+        pQueue->pTail = pCursor->pPrev;
+        pCursor->pPrev->pNext = NULL;
     }
     else
     {
-        queue->head = NULL;
-        queue->tail = NULL;
+        pQueue->pHead = NULL;
+        pQueue->pTail = NULL;
     }
 
-    node->next = NULL;
-    node->prev = NULL;
+    pNode->pNext = NULL;
+    pNode->pPrev = NULL;
 
-    node->enlisted = FALSE;
+    pNode->enlisted = FALSE;
 
     return OS_NO_ERR;
 }

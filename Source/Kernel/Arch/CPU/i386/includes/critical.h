@@ -51,7 +51,7 @@
  * disables interrupts.
  */
 #define ENTER_CRITICAL(INT_STATE) {         \
-    INT_STATE = kernel_interrupt_disable(); \
+    INT_STATE = interruptDisable(); \
 }
 
 /**
@@ -63,7 +63,7 @@
  * interrupt state.
  */
 #define EXIT_CRITICAL(INT_STATE) {           \
-    kernel_interrupt_restore(INT_STATE);     \
+    interruptRestore(INT_STATE);     \
 }
 
 /**

@@ -9,10 +9,17 @@
 # makefiles.
 ################################################################################
 
-CC = x86_64-elf-gcc
-AS = nasm
-LD = x86_64-elf-ld
-OBJCOPY = x86_64-elf-objcopy
+ifeq ($(UNAME_S),Darwin)
+	CC = x86_64-elf-gcc
+	AS = nasm
+	LD = x86_64-elf-ld
+	OBJCOPY = x86_64-elf-objcopy
+else
+	CC = gcc
+	AS = nasm
+	LD = ld
+	OBJCOPY = objcopy
+endif
 
 LINKER_FILE = ../../Config/Arch/x86_i386/linker.ld
 

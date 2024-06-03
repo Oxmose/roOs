@@ -21,15 +21,21 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h>         /* Generic int types */
-#include <stddef.h>         /* Standard definition */
-#include <string.h>         /* Memory manipulation */
+#include <panic.h>         /* Kernel Panic */
+#include <stdint.h>        /* Generic int types */
+#include <stddef.h>        /* Standard definition */
+#include <string.h>        /* Memory manipulation */
 #include <kerneloutput.h>  /* Kernel output */
-#include <cpu_interrupt.h>  /* Interrupt manager */
-#include <panic.h>          /* Kernel Panic */
+#include <cpu_interrupt.h> /* Interrupt manager */
+
+/* Configuration files */
+#include <config.h>
 
 /* Header file */
 #include <cpu.h>
+
+/* Unit test header */
+#include <test_framework.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -511,35 +517,29 @@
 /**
  * @brief CPU IDT entry. Describes an entry in the IDT.
  */
-struct cpu_idt_entry
+typedef struct
 {
     /** @brief ISR low address. */
-    uint16_t off_low;
+    uint16_t offLow;
 
     /** @brief Code segment selector. */
-    uint16_t c_sel;
+    uint16_t cSel;
 
     /** @brief Entry IST number. */
-    uint8_t ist;
+    uint8_t  ist;
 
     /** @brief Entry flags. */
-    uint8_t flags;
+    uint8_t  flags;
 
     /** @brief ISR middle address. */
-    uint16_t off_mid;
+    uint16_t offMid;
 
     /** @brief ISR high address. */
-    uint32_t off_hig;
+    uint32_t offHi;
 
     /** @brief Must be zero. */
-    uint32_t reserved1;
-};
-
-/**
- * @brief Defines the cpu_idt_entry_t type as a shortcut for struct
- * cpu_idt_entry.
- */
-typedef struct cpu_idt_entry cpu_idt_entry_t;
+    uint32_t reserved;
+} cpu_idt_entry_t;
 
 /**
  * @brief Define the GDT pointer, contains the  address and limit of the GDT.
@@ -547,7 +547,7 @@ typedef struct cpu_idt_entry cpu_idt_entry_t;
 typedef struct
 {
     /** @brief The GDT size. */
-    uint16_t size;
+    uint16_t  size;
 
     /** @brief The GDT address. */
     uintptr_t base;
@@ -559,7 +559,7 @@ typedef struct
 typedef struct
 {
     /** @brief The IDT size. */
-    uint16_t size;
+    uint16_t  size;
 
     /** @brief The IDT address. */
     uintptr_t base;
@@ -585,7 +585,7 @@ typedef struct cpu_tss_entry
     uint64_t ist6;
     uint64_t ist7;
     uint64_t reserved2;
-    uint16_t iomap_base;
+    uint16_t ioMapBase;
     uint16_t reserved3;
 } __attribute__((__packed__)) cpu_tss_entry_t;
 
@@ -639,1558 +639,1558 @@ extern int8_t _KERNEL_STACKS_BASE;
  * @brief Assembly interrupt handler for line 0.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_0(void);
+extern void __intHandler0(void);
 /**
  * @brief Assembly interrupt handler for line 1.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_1(void);
+extern void __intHandler1(void);
 /**
  * @brief Assembly interrupt handler for line 2.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_2(void);
+extern void __intHandler2(void);
 /**
  * @brief Assembly interrupt handler for line 3.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_3(void);
+extern void __intHandler3(void);
 /**
  * @brief Assembly interrupt handler for line 4.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_4(void);
+extern void __intHandler4(void);
 /**
  * @brief Assembly interrupt handler for line 5.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_5(void);
+extern void __intHandler5(void);
 /**
  * @brief Assembly interrupt handler for line 6.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_6(void);
+extern void __intHandler6(void);
 /**
  * @brief Assembly interrupt handler for line 7.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_7(void);
+extern void __intHandler7(void);
 /**
  * @brief Assembly interrupt handler for line 8.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_8(void);
+extern void __intHandler8(void);
 /**
  * @brief Assembly interrupt handler for line 9.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_9(void);
+extern void __intHandler9(void);
 /**
  * @brief Assembly interrupt handler for line 10.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_10(void);
+extern void __intHandler10(void);
 /**
  * @brief Assembly interrupt handler for line 11.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_11(void);
+extern void __intHandler11(void);
 /**
  * @brief Assembly interrupt handler for line 12.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_12(void);
+extern void __intHandler12(void);
 /**
  * @brief Assembly interrupt handler for line 13.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_13(void);
+extern void __intHandler13(void);
 /**
  * @brief Assembly interrupt handler for line 14.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_14(void);
+extern void __intHandler14(void);
 /**
  * @brief Assembly interrupt handler for line 15.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_15(void);
+extern void __intHandler15(void);
 /**
  * @brief Assembly interrupt handler for line 16.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_16(void);
+extern void __intHandler16(void);
 /**
  * @brief Assembly interrupt handler for line 17.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_17(void);
+extern void __intHandler17(void);
 /**
  * @brief Assembly interrupt handler for line 18.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_18(void);
+extern void __intHandler18(void);
 /**
  * @brief Assembly interrupt handler for line 19.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_19(void);
+extern void __intHandler19(void);
 /**
  * @brief Assembly interrupt handler for line 20.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_20(void);
+extern void __intHandler20(void);
 /**
  * @brief Assembly interrupt handler for line 21.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_21(void);
+extern void __intHandler21(void);
 /**
  * @brief Assembly interrupt handler for line 22.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_22(void);
+extern void __intHandler22(void);
 /**
  * @brief Assembly interrupt handler for line 23.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_23(void);
+extern void __intHandler23(void);
 /**
  * @brief Assembly interrupt handler for line 24.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_24(void);
+extern void __intHandler24(void);
 /**
  * @brief Assembly interrupt handler for line 25.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_25(void);
+extern void __intHandler25(void);
 /**
  * @brief Assembly interrupt handler for line 26.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_26(void);
+extern void __intHandler26(void);
 /**
  * @brief Assembly interrupt handler for line 27.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_27(void);
+extern void __intHandler27(void);
 /**
  * @brief Assembly interrupt handler for line 28.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_28(void);
+extern void __intHandler28(void);
 /**
  * @brief Assembly interrupt handler for line 29.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_29(void);
+extern void __intHandler29(void);
 /**
  * @brief Assembly interrupt handler for line 30.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_30(void);
+extern void __intHandler30(void);
 /**
  * @brief Assembly interrupt handler for line 31.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_31(void);
+extern void __intHandler31(void);
 /**
  * @brief Assembly interrupt handler for line 32.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_32(void);
+extern void __intHandler32(void);
 /**
  * @brief Assembly interrupt handler for line 33.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_33(void);
+extern void __intHandler33(void);
 /**
  * @brief Assembly interrupt handler for line 34.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_34(void);
+extern void __intHandler34(void);
 /**
  * @brief Assembly interrupt handler for line 35.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_35(void);
+extern void __intHandler35(void);
 /**
  * @brief Assembly interrupt handler for line 36.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_36(void);
+extern void __intHandler36(void);
 /**
  * @brief Assembly interrupt handler for line 37.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_37(void);
+extern void __intHandler37(void);
 /**
  * @brief Assembly interrupt handler for line 38.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_38(void);
+extern void __intHandler38(void);
 /**
  * @brief Assembly interrupt handler for line 39.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_39(void);
+extern void __intHandler39(void);
 /**
  * @brief Assembly interrupt handler for line 40.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_40(void);
+extern void __intHandler40(void);
 /**
  * @brief Assembly interrupt handler for line 41.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_41(void);
+extern void __intHandler41(void);
 /**
  * @brief Assembly interrupt handler for line 42.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_42(void);
+extern void __intHandler42(void);
 /**
  * @brief Assembly interrupt handler for line 43.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_43(void);
+extern void __intHandler43(void);
 /**
  * @brief Assembly interrupt handler for line 44.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_44(void);
+extern void __intHandler44(void);
 /**
  * @brief Assembly interrupt handler for line 45.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_45(void);
+extern void __intHandler45(void);
 /**
  * @brief Assembly interrupt handler for line 46.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_46(void);
+extern void __intHandler46(void);
 /**
  * @brief Assembly interrupt handler for line 47.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_47(void);
+extern void __intHandler47(void);
 /**
  * @brief Assembly interrupt handler for line 48.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_48(void);
+extern void __intHandler48(void);
 /**
  * @brief Assembly interrupt handler for line 49.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_49(void);
+extern void __intHandler49(void);
 /**
  * @brief Assembly interrupt handler for line 50.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_50(void);
+extern void __intHandler50(void);
 /**
  * @brief Assembly interrupt handler for line 51.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_51(void);
+extern void __intHandler51(void);
 /**
  * @brief Assembly interrupt handler for line 52.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_52(void);
+extern void __intHandler52(void);
 /**
  * @brief Assembly interrupt handler for line 53.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_53(void);
+extern void __intHandler53(void);
 /**
  * @brief Assembly interrupt handler for line 54.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_54(void);
+extern void __intHandler54(void);
 /**
  * @brief Assembly interrupt handler for line 55.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_55(void);
+extern void __intHandler55(void);
 /**
  * @brief Assembly interrupt handler for line 56.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_56(void);
+extern void __intHandler56(void);
 /**
  * @brief Assembly interrupt handler for line 57.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_57(void);
+extern void __intHandler57(void);
 /**
  * @brief Assembly interrupt handler for line 58.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_58(void);
+extern void __intHandler58(void);
 /**
  * @brief Assembly interrupt handler for line 59.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_59(void);
+extern void __intHandler59(void);
 /**
  * @brief Assembly interrupt handler for line 60.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_60(void);
+extern void __intHandler60(void);
 /**
  * @brief Assembly interrupt handler for line 61.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_61(void);
+extern void __intHandler61(void);
 /**
  * @brief Assembly interrupt handler for line 62.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_62(void);
+extern void __intHandler62(void);
 /**
  * @brief Assembly interrupt handler for line 63.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_63(void);
+extern void __intHandler63(void);
 /**
  * @brief Assembly interrupt handler for line 64.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_64(void);
+extern void __intHandler64(void);
 /**
  * @brief Assembly interrupt handler for line 65.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_65(void);
+extern void __intHandler65(void);
 /**
  * @brief Assembly interrupt handler for line 66.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_66(void);
+extern void __intHandler66(void);
 /**
  * @brief Assembly interrupt handler for line 67.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_67(void);
+extern void __intHandler67(void);
 /**
  * @brief Assembly interrupt handler for line 68.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_68(void);
+extern void __intHandler68(void);
 /**
  * @brief Assembly interrupt handler for line 69.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_69(void);
+extern void __intHandler69(void);
 /**
  * @brief Assembly interrupt handler for line 70.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_70(void);
+extern void __intHandler70(void);
 /**
  * @brief Assembly interrupt handler for line 71.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_71(void);
+extern void __intHandler71(void);
 /**
  * @brief Assembly interrupt handler for line 72.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_72(void);
+extern void __intHandler72(void);
 /**
  * @brief Assembly interrupt handler for line 73.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_73(void);
+extern void __intHandler73(void);
 /**
  * @brief Assembly interrupt handler for line 74.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_74(void);
+extern void __intHandler74(void);
 /**
  * @brief Assembly interrupt handler for line 75.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_75(void);
+extern void __intHandler75(void);
 /**
  * @brief Assembly interrupt handler for line 76.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_76(void);
+extern void __intHandler76(void);
 /**
  * @brief Assembly interrupt handler for line 77.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_77(void);
+extern void __intHandler77(void);
 /**
  * @brief Assembly interrupt handler for line 78.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_78(void);
+extern void __intHandler78(void);
 /**
  * @brief Assembly interrupt handler for line 79.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_79(void);
+extern void __intHandler79(void);
 /**
  * @brief Assembly interrupt handler for line 80.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_80(void);
+extern void __intHandler80(void);
 /**
  * @brief Assembly interrupt handler for line 81.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_81(void);
+extern void __intHandler81(void);
 /**
  * @brief Assembly interrupt handler for line 82.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_82(void);
+extern void __intHandler82(void);
 /**
  * @brief Assembly interrupt handler for line 83.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_83(void);
+extern void __intHandler83(void);
 /**
  * @brief Assembly interrupt handler for line 84.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_84(void);
+extern void __intHandler84(void);
 /**
  * @brief Assembly interrupt handler for line 85.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_85(void);
+extern void __intHandler85(void);
 /**
  * @brief Assembly interrupt handler for line 86.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_86(void);
+extern void __intHandler86(void);
 /**
  * @brief Assembly interrupt handler for line 87.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_87(void);
+extern void __intHandler87(void);
 /**
  * @brief Assembly interrupt handler for line 88.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_88(void);
+extern void __intHandler88(void);
 /**
  * @brief Assembly interrupt handler for line 89.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_89(void);
+extern void __intHandler89(void);
 /**
  * @brief Assembly interrupt handler for line 90.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_90(void);
+extern void __intHandler90(void);
 /**
  * @brief Assembly interrupt handler for line 91.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_91(void);
+extern void __intHandler91(void);
 /**
  * @brief Assembly interrupt handler for line 92.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_92(void);
+extern void __intHandler92(void);
 /**
  * @brief Assembly interrupt handler for line 93.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_93(void);
+extern void __intHandler93(void);
 /**
  * @brief Assembly interrupt handler for line 94.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_94(void);
+extern void __intHandler94(void);
 /**
  * @brief Assembly interrupt handler for line 95.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_95(void);
+extern void __intHandler95(void);
 /**
  * @brief Assembly interrupt handler for line 96.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_96(void);
+extern void __intHandler96(void);
 /**
  * @brief Assembly interrupt handler for line 97.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_97(void);
+extern void __intHandler97(void);
 /**
  * @brief Assembly interrupt handler for line 98.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_98(void);
+extern void __intHandler98(void);
 /**
  * @brief Assembly interrupt handler for line 99.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_99(void);
+extern void __intHandler99(void);
 /**
  * @brief Assembly interrupt handler for line 100.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_100(void);
+extern void __intHandler100(void);
 /**
  * @brief Assembly interrupt handler for line 101.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_101(void);
+extern void __intHandler101(void);
 /**
  * @brief Assembly interrupt handler for line 102.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_102(void);
+extern void __intHandler102(void);
 /**
  * @brief Assembly interrupt handler for line 103.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_103(void);
+extern void __intHandler103(void);
 /**
  * @brief Assembly interrupt handler for line 104.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_104(void);
+extern void __intHandler104(void);
 /**
  * @brief Assembly interrupt handler for line 105.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_105(void);
+extern void __intHandler105(void);
 /**
  * @brief Assembly interrupt handler for line 106.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_106(void);
+extern void __intHandler106(void);
 /**
  * @brief Assembly interrupt handler for line 107.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_107(void);
+extern void __intHandler107(void);
 /**
  * @brief Assembly interrupt handler for line 108.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_108(void);
+extern void __intHandler108(void);
 /**
  * @brief Assembly interrupt handler for line 109.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_109(void);
+extern void __intHandler109(void);
 /**
  * @brief Assembly interrupt handler for line 110.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_110(void);
+extern void __intHandler110(void);
 /**
  * @brief Assembly interrupt handler for line 111.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_111(void);
+extern void __intHandler111(void);
 /**
  * @brief Assembly interrupt handler for line 112.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_112(void);
+extern void __intHandler112(void);
 /**
  * @brief Assembly interrupt handler for line 113.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_113(void);
+extern void __intHandler113(void);
 /**
  * @brief Assembly interrupt handler for line 114.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_114(void);
+extern void __intHandler114(void);
 /**
  * @brief Assembly interrupt handler for line 115.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_115(void);
+extern void __intHandler115(void);
 /**
  * @brief Assembly interrupt handler for line 116.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_116(void);
+extern void __intHandler116(void);
 /**
  * @brief Assembly interrupt handler for line 117.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_117(void);
+extern void __intHandler117(void);
 /**
  * @brief Assembly interrupt handler for line 118.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_118(void);
+extern void __intHandler118(void);
 /**
  * @brief Assembly interrupt handler for line 119.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_119(void);
+extern void __intHandler119(void);
 /**
  * @brief Assembly interrupt handler for line 120.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_120(void);
+extern void __intHandler120(void);
 /**
  * @brief Assembly interrupt handler for line 121.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_121(void);
+extern void __intHandler121(void);
 /**
  * @brief Assembly interrupt handler for line 122.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_122(void);
+extern void __intHandler122(void);
 /**
  * @brief Assembly interrupt handler for line 123.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_123(void);
+extern void __intHandler123(void);
 /**
  * @brief Assembly interrupt handler for line 124.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_124(void);
+extern void __intHandler124(void);
 /**
  * @brief Assembly interrupt handler for line 125.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_125(void);
+extern void __intHandler125(void);
 /**
  * @brief Assembly interrupt handler for line 126.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_126(void);
+extern void __intHandler126(void);
 /**
  * @brief Assembly interrupt handler for line 127.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_127(void);
+extern void __intHandler127(void);
 /**
  * @brief Assembly interrupt handler for line 128.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_128(void);
+extern void __intHandler128(void);
 /**
  * @brief Assembly interrupt handler for line 129.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_129(void);
+extern void __intHandler129(void);
 /**
  * @brief Assembly interrupt handler for line 130.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_130(void);
+extern void __intHandler130(void);
 /**
  * @brief Assembly interrupt handler for line 131.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_131(void);
+extern void __intHandler131(void);
 /**
  * @brief Assembly interrupt handler for line 132.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_132(void);
+extern void __intHandler132(void);
 /**
  * @brief Assembly interrupt handler for line 133.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_133(void);
+extern void __intHandler133(void);
 /**
  * @brief Assembly interrupt handler for line 134.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_134(void);
+extern void __intHandler134(void);
 /**
  * @brief Assembly interrupt handler for line 135.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_135(void);
+extern void __intHandler135(void);
 /**
  * @brief Assembly interrupt handler for line 136.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_136(void);
+extern void __intHandler136(void);
 /**
  * @brief Assembly interrupt handler for line 137.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_137(void);
+extern void __intHandler137(void);
 /**
  * @brief Assembly interrupt handler for line 138.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_138(void);
+extern void __intHandler138(void);
 /**
  * @brief Assembly interrupt handler for line 139.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_139(void);
+extern void __intHandler139(void);
 /**
  * @brief Assembly interrupt handler for line 140.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_140(void);
+extern void __intHandler140(void);
 /**
  * @brief Assembly interrupt handler for line 141.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_141(void);
+extern void __intHandler141(void);
 /**
  * @brief Assembly interrupt handler for line 142.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_142(void);
+extern void __intHandler142(void);
 /**
  * @brief Assembly interrupt handler for line 143.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_143(void);
+extern void __intHandler143(void);
 /**
  * @brief Assembly interrupt handler for line 144.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_144(void);
+extern void __intHandler144(void);
 /**
  * @brief Assembly interrupt handler for line 145.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_145(void);
+extern void __intHandler145(void);
 /**
  * @brief Assembly interrupt handler for line 146.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_146(void);
+extern void __intHandler146(void);
 /**
  * @brief Assembly interrupt handler for line 147.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_147(void);
+extern void __intHandler147(void);
 /**
  * @brief Assembly interrupt handler for line 148.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_148(void);
+extern void __intHandler148(void);
 /**
  * @brief Assembly interrupt handler for line 149.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_149(void);
+extern void __intHandler149(void);
 /**
  * @brief Assembly interrupt handler for line 150.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_150(void);
+extern void __intHandler150(void);
 /**
  * @brief Assembly interrupt handler for line 151.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_151(void);
+extern void __intHandler151(void);
 /**
  * @brief Assembly interrupt handler for line 152.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_152(void);
+extern void __intHandler152(void);
 /**
  * @brief Assembly interrupt handler for line 153.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_153(void);
+extern void __intHandler153(void);
 /**
  * @brief Assembly interrupt handler for line 154.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_154(void);
+extern void __intHandler154(void);
 /**
  * @brief Assembly interrupt handler for line 155.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_155(void);
+extern void __intHandler155(void);
 /**
  * @brief Assembly interrupt handler for line 156.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_156(void);
+extern void __intHandler156(void);
 /**
  * @brief Assembly interrupt handler for line 157.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_157(void);
+extern void __intHandler157(void);
 /**
  * @brief Assembly interrupt handler for line 158.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_158(void);
+extern void __intHandler158(void);
 /**
  * @brief Assembly interrupt handler for line 159.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_159(void);
+extern void __intHandler159(void);
 /**
  * @brief Assembly interrupt handler for line 160.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_160(void);
+extern void __intHandler160(void);
 /**
  * @brief Assembly interrupt handler for line 161.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_161(void);
+extern void __intHandler161(void);
 /**
  * @brief Assembly interrupt handler for line 162.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_162(void);
+extern void __intHandler162(void);
 /**
  * @brief Assembly interrupt handler for line 163.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_163(void);
+extern void __intHandler163(void);
 /**
  * @brief Assembly interrupt handler for line 164.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_164(void);
+extern void __intHandler164(void);
 /**
  * @brief Assembly interrupt handler for line 165.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_165(void);
+extern void __intHandler165(void);
 /**
  * @brief Assembly interrupt handler for line 166.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_166(void);
+extern void __intHandler166(void);
 /**
  * @brief Assembly interrupt handler for line 167.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_167(void);
+extern void __intHandler167(void);
 /**
  * @brief Assembly interrupt handler for line 168.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_168(void);
+extern void __intHandler168(void);
 /**
  * @brief Assembly interrupt handler for line 169.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_169(void);
+extern void __intHandler169(void);
 /**
  * @brief Assembly interrupt handler for line 170.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_170(void);
+extern void __intHandler170(void);
 /**
  * @brief Assembly interrupt handler for line 171.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_171(void);
+extern void __intHandler171(void);
 /**
  * @brief Assembly interrupt handler for line 172.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_172(void);
+extern void __intHandler172(void);
 /**
  * @brief Assembly interrupt handler for line 173.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_173(void);
+extern void __intHandler173(void);
 /**
  * @brief Assembly interrupt handler for line 174.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_174(void);
+extern void __intHandler174(void);
 /**
  * @brief Assembly interrupt handler for line 175.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_175(void);
+extern void __intHandler175(void);
 /**
  * @brief Assembly interrupt handler for line 176.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_176(void);
+extern void __intHandler176(void);
 /**
  * @brief Assembly interrupt handler for line 177.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_177(void);
+extern void __intHandler177(void);
 /**
  * @brief Assembly interrupt handler for line 178.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_178(void);
+extern void __intHandler178(void);
 /**
  * @brief Assembly interrupt handler for line 179.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_179(void);
+extern void __intHandler179(void);
 /**
  * @brief Assembly interrupt handler for line 180.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_180(void);
+extern void __intHandler180(void);
 /**
  * @brief Assembly interrupt handler for line 181.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_181(void);
+extern void __intHandler181(void);
 /**
  * @brief Assembly interrupt handler for line 182.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_182(void);
+extern void __intHandler182(void);
 /**
  * @brief Assembly interrupt handler for line 183.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_183(void);
+extern void __intHandler183(void);
 /**
  * @brief Assembly interrupt handler for line 184.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_184(void);
+extern void __intHandler184(void);
 /**
  * @brief Assembly interrupt handler for line 185.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_185(void);
+extern void __intHandler185(void);
 /**
  * @brief Assembly interrupt handler for line 186.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_186(void);
+extern void __intHandler186(void);
 /**
  * @brief Assembly interrupt handler for line 187.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_187(void);
+extern void __intHandler187(void);
 /**
  * @brief Assembly interrupt handler for line 188.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_188(void);
+extern void __intHandler188(void);
 /**
  * @brief Assembly interrupt handler for line 189.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_189(void);
+extern void __intHandler189(void);
 /**
  * @brief Assembly interrupt handler for line 190.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_190(void);
+extern void __intHandler190(void);
 /**
  * @brief Assembly interrupt handler for line 191.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_191(void);
+extern void __intHandler191(void);
 /**
  * @brief Assembly interrupt handler for line 192.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_192(void);
+extern void __intHandler192(void);
 /**
  * @brief Assembly interrupt handler for line 193.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_193(void);
+extern void __intHandler193(void);
 /**
  * @brief Assembly interrupt handler for line 194.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_194(void);
+extern void __intHandler194(void);
 /**
  * @brief Assembly interrupt handler for line 195.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_195(void);
+extern void __intHandler195(void);
 /**
  * @brief Assembly interrupt handler for line 196.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_196(void);
+extern void __intHandler196(void);
 /**
  * @brief Assembly interrupt handler for line 197.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_197(void);
+extern void __intHandler197(void);
 /**
  * @brief Assembly interrupt handler for line 198.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_198(void);
+extern void __intHandler198(void);
 /**
  * @brief Assembly interrupt handler for line 199.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_199(void);
+extern void __intHandler199(void);
 /**
  * @brief Assembly interrupt handler for line 200.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_200(void);
+extern void __intHandler200(void);
 /**
  * @brief Assembly interrupt handler for line 201.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_201(void);
+extern void __intHandler201(void);
 /**
  * @brief Assembly interrupt handler for line 202.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_202(void);
+extern void __intHandler202(void);
 /**
  * @brief Assembly interrupt handler for line 203.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_203(void);
+extern void __intHandler203(void);
 /**
  * @brief Assembly interrupt handler for line 204.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_204(void);
+extern void __intHandler204(void);
 /**
  * @brief Assembly interrupt handler for line 205.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_205(void);
+extern void __intHandler205(void);
 /**
  * @brief Assembly interrupt handler for line 206.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_206(void);
+extern void __intHandler206(void);
 /**
  * @brief Assembly interrupt handler for line 207.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_207(void);
+extern void __intHandler207(void);
 /**
  * @brief Assembly interrupt handler for line 208.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_208(void);
+extern void __intHandler208(void);
 /**
  * @brief Assembly interrupt handler for line 209.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_209(void);
+extern void __intHandler209(void);
 /**
  * @brief Assembly interrupt handler for line 210.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_210(void);
+extern void __intHandler210(void);
 /**
  * @brief Assembly interrupt handler for line 211.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_211(void);
+extern void __intHandler211(void);
 /**
  * @brief Assembly interrupt handler for line 212.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_212(void);
+extern void __intHandler212(void);
 /**
  * @brief Assembly interrupt handler for line 213.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_213(void);
+extern void __intHandler213(void);
 /**
  * @brief Assembly interrupt handler for line 214.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_214(void);
+extern void __intHandler214(void);
 /**
  * @brief Assembly interrupt handler for line 215.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_215(void);
+extern void __intHandler215(void);
 /**
  * @brief Assembly interrupt handler for line 216.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_216(void);
+extern void __intHandler216(void);
 /**
  * @brief Assembly interrupt handler for line 217.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_217(void);
+extern void __intHandler217(void);
 /**
  * @brief Assembly interrupt handler for line 218.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_218(void);
+extern void __intHandler218(void);
 /**
  * @brief Assembly interrupt handler for line 219.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_219(void);
+extern void __intHandler219(void);
 /**
  * @brief Assembly interrupt handler for line 220.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_220(void);
+extern void __intHandler220(void);
 /**
  * @brief Assembly interrupt handler for line 221.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_221(void);
+extern void __intHandler221(void);
 /**
  * @brief Assembly interrupt handler for line 222.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_222(void);
+extern void __intHandler222(void);
 /**
  * @brief Assembly interrupt handler for line 223.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_223(void);
+extern void __intHandler223(void);
 /**
  * @brief Assembly interrupt handler for line 224.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_224(void);
+extern void __intHandler224(void);
 /**
  * @brief Assembly interrupt handler for line 225.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_225(void);
+extern void __intHandler225(void);
 /**
  * @brief Assembly interrupt handler for line 226.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_226(void);
+extern void __intHandler226(void);
 /**
  * @brief Assembly interrupt handler for line 227.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_227(void);
+extern void __intHandler227(void);
 /**
  * @brief Assembly interrupt handler for line 228.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_228(void);
+extern void __intHandler228(void);
 /**
  * @brief Assembly interrupt handler for line 229.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_229(void);
+extern void __intHandler229(void);
 /**
  * @brief Assembly interrupt handler for line 230.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_230(void);
+extern void __intHandler230(void);
 /**
  * @brief Assembly interrupt handler for line 231.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_231(void);
+extern void __intHandler231(void);
 /**
  * @brief Assembly interrupt handler for line 232.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_232(void);
+extern void __intHandler232(void);
 /**
  * @brief Assembly interrupt handler for line 233.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_233(void);
+extern void __intHandler233(void);
 /**
  * @brief Assembly interrupt handler for line 234.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_234(void);
+extern void __intHandler234(void);
 /**
  * @brief Assembly interrupt handler for line 235.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_235(void);
+extern void __intHandler235(void);
 /**
  * @brief Assembly interrupt handler for line 236.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_236(void);
+extern void __intHandler236(void);
 /**
  * @brief Assembly interrupt handler for line 237.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_237(void);
+extern void __intHandler237(void);
 /**
  * @brief Assembly interrupt handler for line 238.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_238(void);
+extern void __intHandler238(void);
 /**
  * @brief Assembly interrupt handler for line 239.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_239(void);
+extern void __intHandler239(void);
 /**
  * @brief Assembly interrupt handler for line 240.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_240(void);
+extern void __intHandler240(void);
 /**
  * @brief Assembly interrupt handler for line 241.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_241(void);
+extern void __intHandler241(void);
 /**
  * @brief Assembly interrupt handler for line 242.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_242(void);
+extern void __intHandler242(void);
 /**
  * @brief Assembly interrupt handler for line 243.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_243(void);
+extern void __intHandler243(void);
 /**
  * @brief Assembly interrupt handler for line 244.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_244(void);
+extern void __intHandler244(void);
 /**
  * @brief Assembly interrupt handler for line 245.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_245(void);
+extern void __intHandler245(void);
 /**
  * @brief Assembly interrupt handler for line 246.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_246(void);
+extern void __intHandler246(void);
 /**
  * @brief Assembly interrupt handler for line 247.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_247(void);
+extern void __intHandler247(void);
 /**
  * @brief Assembly interrupt handler for line 248.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_248(void);
+extern void __intHandler248(void);
 /**
  * @brief Assembly interrupt handler for line 249.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_249(void);
+extern void __intHandler249(void);
 /**
  * @brief Assembly interrupt handler for line 250.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_250(void);
+extern void __intHandler250(void);
 /**
  * @brief Assembly interrupt handler for line 251.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_251(void);
+extern void __intHandler251(void);
 /**
  * @brief Assembly interrupt handler for line 252.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_252(void);
+extern void __intHandler252(void);
 /**
  * @brief Assembly interrupt handler for line 253.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_253(void);
+extern void __intHandler253(void);
 /**
  * @brief Assembly interrupt handler for line 254.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_254(void);
+extern void __intHandler254(void);
 /**
  * @brief Assembly interrupt handler for line 255.
  * Saves the context and calls the generic interrupt handler
  */
-extern void interrupt_handler_255(void);
+extern void __intHandler255(void);
 
 /************************* Exported global variables **************************/
 /* None */
 
 /************************** Static global variables ***************************/
 /** @brief CPU GDT space in memory. */
-static uint64_t cpu_gdt[GDT_ENTRY_COUNT] __attribute__((aligned(8)));
+static uint64_t sGDT[GDT_ENTRY_COUNT]        __attribute__((aligned(8)));
 /** @brief Kernel GDT structure */
-static gdt_ptr_t cpu_gdt_ptr __attribute__((aligned(8)));
+static gdt_ptr_t sGDTPtr                     __attribute__((aligned(8)));
 
 /** @brief CPU IDT space in memory. */
-static cpu_idt_entry_t cpu_idt[IDT_ENTRY_COUNT] __attribute__((aligned(8)));
+static cpu_idt_entry_t sIDT[IDT_ENTRY_COUNT] __attribute__((aligned(8)));
 /** @brief Kernel IDT structure */
-static idt_ptr_t cpu_idt_ptr __attribute__((aligned(8)));
+static idt_ptr_t sIDTPtr                     __attribute__((aligned(8)));
 
 /** @brief CPU TSS structures */
-static cpu_tss_entry_t cpu_tss[MAX_CPU_COUNT] __attribute__((aligned(8)));
+static cpu_tss_entry_t sTSS[MAX_CPU_COUNT]   __attribute__((aligned(8)));
 
 /** @brief Stores the CPU interrupt handlers entry point */
-static uintptr_t cpu_int_handlers[IDT_ENTRY_COUNT] = {
-    (uintptr_t)interrupt_handler_0,
-    (uintptr_t)interrupt_handler_1,
-    (uintptr_t)interrupt_handler_2,
-    (uintptr_t)interrupt_handler_3,
-    (uintptr_t)interrupt_handler_4,
-    (uintptr_t)interrupt_handler_5,
-    (uintptr_t)interrupt_handler_6,
-    (uintptr_t)interrupt_handler_7,
-    (uintptr_t)interrupt_handler_8,
-    (uintptr_t)interrupt_handler_9,
-    (uintptr_t)interrupt_handler_10,
-    (uintptr_t)interrupt_handler_11,
-    (uintptr_t)interrupt_handler_12,
-    (uintptr_t)interrupt_handler_13,
-    (uintptr_t)interrupt_handler_14,
-    (uintptr_t)interrupt_handler_15,
-    (uintptr_t)interrupt_handler_16,
-    (uintptr_t)interrupt_handler_17,
-    (uintptr_t)interrupt_handler_18,
-    (uintptr_t)interrupt_handler_19,
-    (uintptr_t)interrupt_handler_20,
-    (uintptr_t)interrupt_handler_21,
-    (uintptr_t)interrupt_handler_22,
-    (uintptr_t)interrupt_handler_23,
-    (uintptr_t)interrupt_handler_24,
-    (uintptr_t)interrupt_handler_25,
-    (uintptr_t)interrupt_handler_26,
-    (uintptr_t)interrupt_handler_27,
-    (uintptr_t)interrupt_handler_28,
-    (uintptr_t)interrupt_handler_29,
-    (uintptr_t)interrupt_handler_30,
-    (uintptr_t)interrupt_handler_31,
-    (uintptr_t)interrupt_handler_32,
-    (uintptr_t)interrupt_handler_33,
-    (uintptr_t)interrupt_handler_34,
-    (uintptr_t)interrupt_handler_35,
-    (uintptr_t)interrupt_handler_36,
-    (uintptr_t)interrupt_handler_37,
-    (uintptr_t)interrupt_handler_38,
-    (uintptr_t)interrupt_handler_39,
-    (uintptr_t)interrupt_handler_40,
-    (uintptr_t)interrupt_handler_41,
-    (uintptr_t)interrupt_handler_42,
-    (uintptr_t)interrupt_handler_43,
-    (uintptr_t)interrupt_handler_44,
-    (uintptr_t)interrupt_handler_45,
-    (uintptr_t)interrupt_handler_46,
-    (uintptr_t)interrupt_handler_47,
-    (uintptr_t)interrupt_handler_48,
-    (uintptr_t)interrupt_handler_49,
-    (uintptr_t)interrupt_handler_50,
-    (uintptr_t)interrupt_handler_51,
-    (uintptr_t)interrupt_handler_52,
-    (uintptr_t)interrupt_handler_53,
-    (uintptr_t)interrupt_handler_54,
-    (uintptr_t)interrupt_handler_55,
-    (uintptr_t)interrupt_handler_56,
-    (uintptr_t)interrupt_handler_57,
-    (uintptr_t)interrupt_handler_58,
-    (uintptr_t)interrupt_handler_59,
-    (uintptr_t)interrupt_handler_60,
-    (uintptr_t)interrupt_handler_61,
-    (uintptr_t)interrupt_handler_62,
-    (uintptr_t)interrupt_handler_63,
-    (uintptr_t)interrupt_handler_64,
-    (uintptr_t)interrupt_handler_65,
-    (uintptr_t)interrupt_handler_66,
-    (uintptr_t)interrupt_handler_67,
-    (uintptr_t)interrupt_handler_68,
-    (uintptr_t)interrupt_handler_69,
-    (uintptr_t)interrupt_handler_70,
-    (uintptr_t)interrupt_handler_71,
-    (uintptr_t)interrupt_handler_72,
-    (uintptr_t)interrupt_handler_73,
-    (uintptr_t)interrupt_handler_74,
-    (uintptr_t)interrupt_handler_75,
-    (uintptr_t)interrupt_handler_76,
-    (uintptr_t)interrupt_handler_77,
-    (uintptr_t)interrupt_handler_78,
-    (uintptr_t)interrupt_handler_79,
-    (uintptr_t)interrupt_handler_80,
-    (uintptr_t)interrupt_handler_81,
-    (uintptr_t)interrupt_handler_82,
-    (uintptr_t)interrupt_handler_83,
-    (uintptr_t)interrupt_handler_84,
-    (uintptr_t)interrupt_handler_85,
-    (uintptr_t)interrupt_handler_86,
-    (uintptr_t)interrupt_handler_87,
-    (uintptr_t)interrupt_handler_88,
-    (uintptr_t)interrupt_handler_89,
-    (uintptr_t)interrupt_handler_90,
-    (uintptr_t)interrupt_handler_91,
-    (uintptr_t)interrupt_handler_92,
-    (uintptr_t)interrupt_handler_93,
-    (uintptr_t)interrupt_handler_94,
-    (uintptr_t)interrupt_handler_95,
-    (uintptr_t)interrupt_handler_96,
-    (uintptr_t)interrupt_handler_97,
-    (uintptr_t)interrupt_handler_98,
-    (uintptr_t)interrupt_handler_99,
-    (uintptr_t)interrupt_handler_100,
-    (uintptr_t)interrupt_handler_101,
-    (uintptr_t)interrupt_handler_102,
-    (uintptr_t)interrupt_handler_103,
-    (uintptr_t)interrupt_handler_104,
-    (uintptr_t)interrupt_handler_105,
-    (uintptr_t)interrupt_handler_106,
-    (uintptr_t)interrupt_handler_107,
-    (uintptr_t)interrupt_handler_108,
-    (uintptr_t)interrupt_handler_109,
-    (uintptr_t)interrupt_handler_110,
-    (uintptr_t)interrupt_handler_111,
-    (uintptr_t)interrupt_handler_112,
-    (uintptr_t)interrupt_handler_113,
-    (uintptr_t)interrupt_handler_114,
-    (uintptr_t)interrupt_handler_115,
-    (uintptr_t)interrupt_handler_116,
-    (uintptr_t)interrupt_handler_117,
-    (uintptr_t)interrupt_handler_118,
-    (uintptr_t)interrupt_handler_119,
-    (uintptr_t)interrupt_handler_120,
-    (uintptr_t)interrupt_handler_121,
-    (uintptr_t)interrupt_handler_122,
-    (uintptr_t)interrupt_handler_123,
-    (uintptr_t)interrupt_handler_124,
-    (uintptr_t)interrupt_handler_125,
-    (uintptr_t)interrupt_handler_126,
-    (uintptr_t)interrupt_handler_127,
-    (uintptr_t)interrupt_handler_128,
-    (uintptr_t)interrupt_handler_129,
-    (uintptr_t)interrupt_handler_130,
-    (uintptr_t)interrupt_handler_131,
-    (uintptr_t)interrupt_handler_132,
-    (uintptr_t)interrupt_handler_133,
-    (uintptr_t)interrupt_handler_134,
-    (uintptr_t)interrupt_handler_135,
-    (uintptr_t)interrupt_handler_136,
-    (uintptr_t)interrupt_handler_137,
-    (uintptr_t)interrupt_handler_138,
-    (uintptr_t)interrupt_handler_139,
-    (uintptr_t)interrupt_handler_140,
-    (uintptr_t)interrupt_handler_141,
-    (uintptr_t)interrupt_handler_142,
-    (uintptr_t)interrupt_handler_143,
-    (uintptr_t)interrupt_handler_144,
-    (uintptr_t)interrupt_handler_145,
-    (uintptr_t)interrupt_handler_146,
-    (uintptr_t)interrupt_handler_147,
-    (uintptr_t)interrupt_handler_148,
-    (uintptr_t)interrupt_handler_149,
-    (uintptr_t)interrupt_handler_150,
-    (uintptr_t)interrupt_handler_151,
-    (uintptr_t)interrupt_handler_152,
-    (uintptr_t)interrupt_handler_153,
-    (uintptr_t)interrupt_handler_154,
-    (uintptr_t)interrupt_handler_155,
-    (uintptr_t)interrupt_handler_156,
-    (uintptr_t)interrupt_handler_157,
-    (uintptr_t)interrupt_handler_158,
-    (uintptr_t)interrupt_handler_159,
-    (uintptr_t)interrupt_handler_160,
-    (uintptr_t)interrupt_handler_161,
-    (uintptr_t)interrupt_handler_162,
-    (uintptr_t)interrupt_handler_163,
-    (uintptr_t)interrupt_handler_164,
-    (uintptr_t)interrupt_handler_165,
-    (uintptr_t)interrupt_handler_166,
-    (uintptr_t)interrupt_handler_167,
-    (uintptr_t)interrupt_handler_168,
-    (uintptr_t)interrupt_handler_169,
-    (uintptr_t)interrupt_handler_170,
-    (uintptr_t)interrupt_handler_171,
-    (uintptr_t)interrupt_handler_172,
-    (uintptr_t)interrupt_handler_173,
-    (uintptr_t)interrupt_handler_174,
-    (uintptr_t)interrupt_handler_175,
-    (uintptr_t)interrupt_handler_176,
-    (uintptr_t)interrupt_handler_177,
-    (uintptr_t)interrupt_handler_178,
-    (uintptr_t)interrupt_handler_179,
-    (uintptr_t)interrupt_handler_180,
-    (uintptr_t)interrupt_handler_181,
-    (uintptr_t)interrupt_handler_182,
-    (uintptr_t)interrupt_handler_183,
-    (uintptr_t)interrupt_handler_184,
-    (uintptr_t)interrupt_handler_185,
-    (uintptr_t)interrupt_handler_186,
-    (uintptr_t)interrupt_handler_187,
-    (uintptr_t)interrupt_handler_188,
-    (uintptr_t)interrupt_handler_189,
-    (uintptr_t)interrupt_handler_190,
-    (uintptr_t)interrupt_handler_191,
-    (uintptr_t)interrupt_handler_192,
-    (uintptr_t)interrupt_handler_193,
-    (uintptr_t)interrupt_handler_194,
-    (uintptr_t)interrupt_handler_195,
-    (uintptr_t)interrupt_handler_196,
-    (uintptr_t)interrupt_handler_197,
-    (uintptr_t)interrupt_handler_198,
-    (uintptr_t)interrupt_handler_199,
-    (uintptr_t)interrupt_handler_200,
-    (uintptr_t)interrupt_handler_201,
-    (uintptr_t)interrupt_handler_202,
-    (uintptr_t)interrupt_handler_203,
-    (uintptr_t)interrupt_handler_204,
-    (uintptr_t)interrupt_handler_205,
-    (uintptr_t)interrupt_handler_206,
-    (uintptr_t)interrupt_handler_207,
-    (uintptr_t)interrupt_handler_208,
-    (uintptr_t)interrupt_handler_209,
-    (uintptr_t)interrupt_handler_210,
-    (uintptr_t)interrupt_handler_211,
-    (uintptr_t)interrupt_handler_212,
-    (uintptr_t)interrupt_handler_213,
-    (uintptr_t)interrupt_handler_214,
-    (uintptr_t)interrupt_handler_215,
-    (uintptr_t)interrupt_handler_216,
-    (uintptr_t)interrupt_handler_217,
-    (uintptr_t)interrupt_handler_218,
-    (uintptr_t)interrupt_handler_219,
-    (uintptr_t)interrupt_handler_220,
-    (uintptr_t)interrupt_handler_221,
-    (uintptr_t)interrupt_handler_222,
-    (uintptr_t)interrupt_handler_223,
-    (uintptr_t)interrupt_handler_224,
-    (uintptr_t)interrupt_handler_225,
-    (uintptr_t)interrupt_handler_226,
-    (uintptr_t)interrupt_handler_227,
-    (uintptr_t)interrupt_handler_228,
-    (uintptr_t)interrupt_handler_229,
-    (uintptr_t)interrupt_handler_230,
-    (uintptr_t)interrupt_handler_231,
-    (uintptr_t)interrupt_handler_232,
-    (uintptr_t)interrupt_handler_233,
-    (uintptr_t)interrupt_handler_234,
-    (uintptr_t)interrupt_handler_235,
-    (uintptr_t)interrupt_handler_236,
-    (uintptr_t)interrupt_handler_237,
-    (uintptr_t)interrupt_handler_238,
-    (uintptr_t)interrupt_handler_239,
-    (uintptr_t)interrupt_handler_240,
-    (uintptr_t)interrupt_handler_241,
-    (uintptr_t)interrupt_handler_242,
-    (uintptr_t)interrupt_handler_243,
-    (uintptr_t)interrupt_handler_244,
-    (uintptr_t)interrupt_handler_245,
-    (uintptr_t)interrupt_handler_246,
-    (uintptr_t)interrupt_handler_247,
-    (uintptr_t)interrupt_handler_248,
-    (uintptr_t)interrupt_handler_249,
-    (uintptr_t)interrupt_handler_250,
-    (uintptr_t)interrupt_handler_251,
-    (uintptr_t)interrupt_handler_252,
-    (uintptr_t)interrupt_handler_253,
-    (uintptr_t)interrupt_handler_254,
-    (uintptr_t)interrupt_handler_255
+static uintptr_t sIntHandlerTable[IDT_ENTRY_COUNT] = {
+    (uintptr_t)__intHandler0,
+    (uintptr_t)__intHandler1,
+    (uintptr_t)__intHandler2,
+    (uintptr_t)__intHandler3,
+    (uintptr_t)__intHandler4,
+    (uintptr_t)__intHandler5,
+    (uintptr_t)__intHandler6,
+    (uintptr_t)__intHandler7,
+    (uintptr_t)__intHandler8,
+    (uintptr_t)__intHandler9,
+    (uintptr_t)__intHandler10,
+    (uintptr_t)__intHandler11,
+    (uintptr_t)__intHandler12,
+    (uintptr_t)__intHandler13,
+    (uintptr_t)__intHandler14,
+    (uintptr_t)__intHandler15,
+    (uintptr_t)__intHandler16,
+    (uintptr_t)__intHandler17,
+    (uintptr_t)__intHandler18,
+    (uintptr_t)__intHandler19,
+    (uintptr_t)__intHandler20,
+    (uintptr_t)__intHandler21,
+    (uintptr_t)__intHandler22,
+    (uintptr_t)__intHandler23,
+    (uintptr_t)__intHandler24,
+    (uintptr_t)__intHandler25,
+    (uintptr_t)__intHandler26,
+    (uintptr_t)__intHandler27,
+    (uintptr_t)__intHandler28,
+    (uintptr_t)__intHandler29,
+    (uintptr_t)__intHandler30,
+    (uintptr_t)__intHandler31,
+    (uintptr_t)__intHandler32,
+    (uintptr_t)__intHandler33,
+    (uintptr_t)__intHandler34,
+    (uintptr_t)__intHandler35,
+    (uintptr_t)__intHandler36,
+    (uintptr_t)__intHandler37,
+    (uintptr_t)__intHandler38,
+    (uintptr_t)__intHandler39,
+    (uintptr_t)__intHandler40,
+    (uintptr_t)__intHandler41,
+    (uintptr_t)__intHandler42,
+    (uintptr_t)__intHandler43,
+    (uintptr_t)__intHandler44,
+    (uintptr_t)__intHandler45,
+    (uintptr_t)__intHandler46,
+    (uintptr_t)__intHandler47,
+    (uintptr_t)__intHandler48,
+    (uintptr_t)__intHandler49,
+    (uintptr_t)__intHandler50,
+    (uintptr_t)__intHandler51,
+    (uintptr_t)__intHandler52,
+    (uintptr_t)__intHandler53,
+    (uintptr_t)__intHandler54,
+    (uintptr_t)__intHandler55,
+    (uintptr_t)__intHandler56,
+    (uintptr_t)__intHandler57,
+    (uintptr_t)__intHandler58,
+    (uintptr_t)__intHandler59,
+    (uintptr_t)__intHandler60,
+    (uintptr_t)__intHandler61,
+    (uintptr_t)__intHandler62,
+    (uintptr_t)__intHandler63,
+    (uintptr_t)__intHandler64,
+    (uintptr_t)__intHandler65,
+    (uintptr_t)__intHandler66,
+    (uintptr_t)__intHandler67,
+    (uintptr_t)__intHandler68,
+    (uintptr_t)__intHandler69,
+    (uintptr_t)__intHandler70,
+    (uintptr_t)__intHandler71,
+    (uintptr_t)__intHandler72,
+    (uintptr_t)__intHandler73,
+    (uintptr_t)__intHandler74,
+    (uintptr_t)__intHandler75,
+    (uintptr_t)__intHandler76,
+    (uintptr_t)__intHandler77,
+    (uintptr_t)__intHandler78,
+    (uintptr_t)__intHandler79,
+    (uintptr_t)__intHandler80,
+    (uintptr_t)__intHandler81,
+    (uintptr_t)__intHandler82,
+    (uintptr_t)__intHandler83,
+    (uintptr_t)__intHandler84,
+    (uintptr_t)__intHandler85,
+    (uintptr_t)__intHandler86,
+    (uintptr_t)__intHandler87,
+    (uintptr_t)__intHandler88,
+    (uintptr_t)__intHandler89,
+    (uintptr_t)__intHandler90,
+    (uintptr_t)__intHandler91,
+    (uintptr_t)__intHandler92,
+    (uintptr_t)__intHandler93,
+    (uintptr_t)__intHandler94,
+    (uintptr_t)__intHandler95,
+    (uintptr_t)__intHandler96,
+    (uintptr_t)__intHandler97,
+    (uintptr_t)__intHandler98,
+    (uintptr_t)__intHandler99,
+    (uintptr_t)__intHandler100,
+    (uintptr_t)__intHandler101,
+    (uintptr_t)__intHandler102,
+    (uintptr_t)__intHandler103,
+    (uintptr_t)__intHandler104,
+    (uintptr_t)__intHandler105,
+    (uintptr_t)__intHandler106,
+    (uintptr_t)__intHandler107,
+    (uintptr_t)__intHandler108,
+    (uintptr_t)__intHandler109,
+    (uintptr_t)__intHandler110,
+    (uintptr_t)__intHandler111,
+    (uintptr_t)__intHandler112,
+    (uintptr_t)__intHandler113,
+    (uintptr_t)__intHandler114,
+    (uintptr_t)__intHandler115,
+    (uintptr_t)__intHandler116,
+    (uintptr_t)__intHandler117,
+    (uintptr_t)__intHandler118,
+    (uintptr_t)__intHandler119,
+    (uintptr_t)__intHandler120,
+    (uintptr_t)__intHandler121,
+    (uintptr_t)__intHandler122,
+    (uintptr_t)__intHandler123,
+    (uintptr_t)__intHandler124,
+    (uintptr_t)__intHandler125,
+    (uintptr_t)__intHandler126,
+    (uintptr_t)__intHandler127,
+    (uintptr_t)__intHandler128,
+    (uintptr_t)__intHandler129,
+    (uintptr_t)__intHandler130,
+    (uintptr_t)__intHandler131,
+    (uintptr_t)__intHandler132,
+    (uintptr_t)__intHandler133,
+    (uintptr_t)__intHandler134,
+    (uintptr_t)__intHandler135,
+    (uintptr_t)__intHandler136,
+    (uintptr_t)__intHandler137,
+    (uintptr_t)__intHandler138,
+    (uintptr_t)__intHandler139,
+    (uintptr_t)__intHandler140,
+    (uintptr_t)__intHandler141,
+    (uintptr_t)__intHandler142,
+    (uintptr_t)__intHandler143,
+    (uintptr_t)__intHandler144,
+    (uintptr_t)__intHandler145,
+    (uintptr_t)__intHandler146,
+    (uintptr_t)__intHandler147,
+    (uintptr_t)__intHandler148,
+    (uintptr_t)__intHandler149,
+    (uintptr_t)__intHandler150,
+    (uintptr_t)__intHandler151,
+    (uintptr_t)__intHandler152,
+    (uintptr_t)__intHandler153,
+    (uintptr_t)__intHandler154,
+    (uintptr_t)__intHandler155,
+    (uintptr_t)__intHandler156,
+    (uintptr_t)__intHandler157,
+    (uintptr_t)__intHandler158,
+    (uintptr_t)__intHandler159,
+    (uintptr_t)__intHandler160,
+    (uintptr_t)__intHandler161,
+    (uintptr_t)__intHandler162,
+    (uintptr_t)__intHandler163,
+    (uintptr_t)__intHandler164,
+    (uintptr_t)__intHandler165,
+    (uintptr_t)__intHandler166,
+    (uintptr_t)__intHandler167,
+    (uintptr_t)__intHandler168,
+    (uintptr_t)__intHandler169,
+    (uintptr_t)__intHandler170,
+    (uintptr_t)__intHandler171,
+    (uintptr_t)__intHandler172,
+    (uintptr_t)__intHandler173,
+    (uintptr_t)__intHandler174,
+    (uintptr_t)__intHandler175,
+    (uintptr_t)__intHandler176,
+    (uintptr_t)__intHandler177,
+    (uintptr_t)__intHandler178,
+    (uintptr_t)__intHandler179,
+    (uintptr_t)__intHandler180,
+    (uintptr_t)__intHandler181,
+    (uintptr_t)__intHandler182,
+    (uintptr_t)__intHandler183,
+    (uintptr_t)__intHandler184,
+    (uintptr_t)__intHandler185,
+    (uintptr_t)__intHandler186,
+    (uintptr_t)__intHandler187,
+    (uintptr_t)__intHandler188,
+    (uintptr_t)__intHandler189,
+    (uintptr_t)__intHandler190,
+    (uintptr_t)__intHandler191,
+    (uintptr_t)__intHandler192,
+    (uintptr_t)__intHandler193,
+    (uintptr_t)__intHandler194,
+    (uintptr_t)__intHandler195,
+    (uintptr_t)__intHandler196,
+    (uintptr_t)__intHandler197,
+    (uintptr_t)__intHandler198,
+    (uintptr_t)__intHandler199,
+    (uintptr_t)__intHandler200,
+    (uintptr_t)__intHandler201,
+    (uintptr_t)__intHandler202,
+    (uintptr_t)__intHandler203,
+    (uintptr_t)__intHandler204,
+    (uintptr_t)__intHandler205,
+    (uintptr_t)__intHandler206,
+    (uintptr_t)__intHandler207,
+    (uintptr_t)__intHandler208,
+    (uintptr_t)__intHandler209,
+    (uintptr_t)__intHandler210,
+    (uintptr_t)__intHandler211,
+    (uintptr_t)__intHandler212,
+    (uintptr_t)__intHandler213,
+    (uintptr_t)__intHandler214,
+    (uintptr_t)__intHandler215,
+    (uintptr_t)__intHandler216,
+    (uintptr_t)__intHandler217,
+    (uintptr_t)__intHandler218,
+    (uintptr_t)__intHandler219,
+    (uintptr_t)__intHandler220,
+    (uintptr_t)__intHandler221,
+    (uintptr_t)__intHandler222,
+    (uintptr_t)__intHandler223,
+    (uintptr_t)__intHandler224,
+    (uintptr_t)__intHandler225,
+    (uintptr_t)__intHandler226,
+    (uintptr_t)__intHandler227,
+    (uintptr_t)__intHandler228,
+    (uintptr_t)__intHandler229,
+    (uintptr_t)__intHandler230,
+    (uintptr_t)__intHandler231,
+    (uintptr_t)__intHandler232,
+    (uintptr_t)__intHandler233,
+    (uintptr_t)__intHandler234,
+    (uintptr_t)__intHandler235,
+    (uintptr_t)__intHandler236,
+    (uintptr_t)__intHandler237,
+    (uintptr_t)__intHandler238,
+    (uintptr_t)__intHandler239,
+    (uintptr_t)__intHandler240,
+    (uintptr_t)__intHandler241,
+    (uintptr_t)__intHandler242,
+    (uintptr_t)__intHandler243,
+    (uintptr_t)__intHandler244,
+    (uintptr_t)__intHandler245,
+    (uintptr_t)__intHandler246,
+    (uintptr_t)__intHandler247,
+    (uintptr_t)__intHandler248,
+    (uintptr_t)__intHandler249,
+    (uintptr_t)__intHandler250,
+    (uintptr_t)__intHandler251,
+    (uintptr_t)__intHandler252,
+    (uintptr_t)__intHandler253,
+    (uintptr_t)__intHandler254,
+    (uintptr_t)__intHandler255
 };
 
 /*******************************************************************************
@@ -2205,7 +2205,7 @@ static uintptr_t cpu_int_handlers[IDT_ENTRY_COUNT] = {
  * Once done, the function sets the segment registers (CS, DS, ES, FS, GS, SS)
  * of the CPU according to the kernel's settings.
  */
-static void _cpu_setup_gdt(void);
+static void _setupGDT(void);
 
 /**
  * @brief Setups the generic kernel's IDT in memory and loads it in the IDT
@@ -2215,7 +2215,7 @@ static void _cpu_setup_gdt(void);
  * table by adding basic support to the x86 exception (interrutps 0 to 32).
  * The rest of the interrupts are not set.
  */
-static void _cpu_setup_idt(void);
+static void _setupIDT(void);
 
 /**
  *  @brief Setups the main CPU TSS for the kernel.
@@ -2223,7 +2223,7 @@ static void _cpu_setup_idt(void);
  * @details Initializes the main CPU's TSS with kernel settings in memory and
  * loads it in the TSS register.
  */
-static void _cpu_setup_tss(void);
+static void _setupTSS(void);
 
 /**
  * @brief Formats a GDT entry.
@@ -2231,15 +2231,17 @@ static void _cpu_setup_tss(void);
  * @details Formats data given as parameter into a standard GDT entry.
  * The result is directly written in the memory pointed by the entry parameter.
  *
- * @param[out] entry The pointer to the entry structure to format.
- * @param[in] base  The base address of the segment for the GDT entry.
- * @param[in] limit The limit address of the segment for the GDT entry.
- * @param[in] type  The type of segment for the GDT entry.
- * @param[in] flags The flags to be set for the GDT entry.
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kBase  The base address of the segment for the GDT entry.
+ * @param[in] kLimit The limit address of the segment for the GDT entry.
+ * @param[in] kType  The type of segment for the GDT entry.
+ * @param[in] kFlags The flags to be set for the GDT entry.
  */
-static void _format_gdt_entry(uint64_t* entry,
-                              const uint32_t base, const uint32_t limit,
-                              const uint8_t type, const uint32_t flags);
+static void _formatGDTEntry(uint64_t*      pEntry,
+                            const uint32_t kBase,
+                            const uint32_t kLimit,
+                            const uint8_t  kType,
+                            const uint32_t kFlags);
 
 /**
  * @brief Formats an IDT entry.
@@ -2247,22 +2249,25 @@ static void _format_gdt_entry(uint64_t* entry,
  * @details Formats data given as parameter into a standard IDT entry.
  * The result is directly written in the memory pointed by the entry parameter.
  *
- * @param[out] entry The pointer to the entry structure to format.
- * @param[in] handler The handler function for the IDT entry.
- * @param[in] type  The type of segment for the IDT entry.
- * @param[in] flags The flags to be set for the IDT entry.
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kandler The handler function for the IDT entry.
+ * @param[in] kType  The type of segment for the IDT entry.
+ * @param[in] kFlags The flags to be set for the IDT entry.
  */
-static void _format_idt_entry(cpu_idt_entry_t* entry,
-                              const uintptr_t handler,
-                              const uint8_t type, const uint32_t flags);
+static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
+                            const uintptr_t  kHandler,
+                            const uint8_t    kType,
+                            const uint32_t   kFlags);
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _format_gdt_entry(uint64_t* entry,
-                              const uint32_t base, const uint32_t limit,
-                              const uint8_t type, const uint32_t flags)
+static void _formatGDTEntry(uint64_t*      pEntry,
+                            const uint32_t kBase,
+                            const uint32_t kLimit,
+                            const uint8_t  kType,
+                            const uint32_t kFlags)
 {
     uint32_t lo_part = 0;
     uint32_t hi_part = 0;
@@ -2270,54 +2275,55 @@ static void _format_gdt_entry(uint64_t* entry,
     /*
      * Low part[31;0] = Base[15;0] Limit[15;0]
      */
-    lo_part = ((base & 0xFFFF) << 16) | (limit & 0xFFFF);
+    lo_part = ((kBase & 0xFFFF) << 16) | (kLimit & 0xFFFF);
 
     /*
      * High part[7;0] = Base[23;16]
      */
-    hi_part = (base >> 16) & 0xFF;
+    hi_part = (kBase >> 16) & 0xFF;
     /*
      * High part[11;8] = Type[3;0]
      */
-    hi_part |= (type & 0xF) << 8;
+    hi_part |= (kType & 0xF) << 8;
     /*
      * High part[15;12] = Seg_Present[1;0]Privilege[2;0]Descriptor_Type[1;0]
      * High part[23;20] = Granularity[1;0]Op_Size[1;0]L[1;0]AVL[1;0]
      */
-    hi_part |= flags & 0x00F0F000;
+    hi_part |= kFlags & 0x00F0F000;
 
     /*
      * High part[19;16] = Limit[19;16]
      */
-    hi_part |= limit & 0xF0000;
+    hi_part |= kLimit & 0xF0000;
     /*
      * High part[31;24] = Base[31;24]
      */
-    hi_part |= base & 0xFF000000;
+    hi_part |= kBase & 0xFF000000;
 
     /* Set the value of the entry */
-    *entry = lo_part | (((uint64_t) hi_part) << 32);
+    *pEntry = lo_part | (((uint64_t) hi_part) << 32);
 }
 
-static void _format_idt_entry(cpu_idt_entry_t* entry,
-                              const uintptr_t handler,
-                              const uint8_t type, const uint32_t flags)
+static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
+                            const uintptr_t  kHandler,
+                            const uint8_t    kType,
+                            const uint32_t   kFlags)
 {
     /* Set offset */
-    entry->off_low   = handler & 0x000000000000FFFF;
-    entry->off_mid   = (handler >> 16) & 0x000000000000FFFF;
-    entry->off_hig   = (handler >> 32) & 0x00000000FFFFFFFF;
+    pEntry->offLow = kHandler & 0x000000000000FFFF;
+    pEntry->offMid = (kHandler >> 16) & 0x000000000000FFFF;
+    pEntry->offHi  = (kHandler >> 32) & 0x00000000FFFFFFFF;
 
     /* Set selector and flags */
-    entry->c_sel     = KERNEL_CS_64;
-    entry->flags     = (flags & 0xF0) | (type & 0x0F);
+    pEntry->cSel  = KERNEL_CS_64;
+    pEntry->flags = (kFlags & 0xF0) | (kType & 0x0F);
 
     /* Zeroise */
-    entry->ist       = 0;
-    entry->reserved1 = 0;
+    pEntry->ist      = 0;
+    pEntry->reserved = 0;
 }
 
-static void _cpu_setup_gdt(void)
+static void _setupGDT(void)
 {
     uint32_t i;
 
@@ -2329,105 +2335,100 @@ static void _cpu_setup_gdt(void)
      ***********************************/
 
     /* Set the kernel 64 bits code descriptor */
-    uint32_t kernel_code_64_seg_flags = GDT_FLAG_64_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_CODE_TYPE;
+    uint32_t kernelCode64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_CODE_TYPE;
 
-    uint32_t kernel_code_64_seg_type =  GDT_TYPE_EXECUTABLE |
-                                        GDT_TYPE_READABLE |
-                                        GDT_TYPE_PROTECTED;
+    uint32_t kernelCode64SegType =  GDT_TYPE_EXECUTABLE |
+                                    GDT_TYPE_READABLE |
+                                    GDT_TYPE_PROTECTED;
 
     /* Set the kernel 64 bits data descriptor */
-    uint32_t kernel_data_64_seg_flags = GDT_FLAG_64_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_DATA_TYPE;
+    uint32_t kernelData64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_DATA_TYPE;
 
-    uint32_t kernel_data_64_seg_type =  GDT_TYPE_WRITABLE |
-                                        GDT_TYPE_GROW_DOWN;
+    uint32_t kernelData64SegType =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
 
     /* Set the kernel code descriptor */
-    uint32_t kernel_code_32_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                        GDT_FLAG_32_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_CODE_TYPE;
+    uint32_t kernelCode32SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                    GDT_FLAG_32_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_CODE_TYPE;
 
-    uint32_t kernel_code_32_seg_type =  GDT_TYPE_EXECUTABLE |
-                                        GDT_TYPE_READABLE |
-                                        GDT_TYPE_PROTECTED;
+    uint32_t kernelCode32SegType =  GDT_TYPE_EXECUTABLE |
+                                    GDT_TYPE_READABLE |
+                                    GDT_TYPE_PROTECTED;
 
     /* Set the kernel data descriptor */
-    uint32_t kernel_data_32_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                        GDT_FLAG_32_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_DATA_TYPE;
+    uint32_t kernelData32SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                    GDT_FLAG_32_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_DATA_TYPE;
 
-    uint32_t kernel_data_32_seg_type =  GDT_TYPE_WRITABLE |
-                                        GDT_TYPE_GROW_DOWN;
+    uint32_t kernelData32SegType =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
 
     /* Set the kernel 16 bits code descriptor */
-    uint32_t kernel_code_16_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                        GDT_FLAG_16_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_CODE_TYPE;
+    uint32_t kernelCode16SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                    GDT_FLAG_16_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_CODE_TYPE;
 
-    uint32_t kernel_code_16_seg_type =  GDT_TYPE_EXECUTABLE |
-                                        GDT_TYPE_READABLE |
-                                        GDT_TYPE_PROTECTED;
+    uint32_t kernelCode16SegType =  GDT_TYPE_EXECUTABLE |
+                                    GDT_TYPE_READABLE |
+                                    GDT_TYPE_PROTECTED;
 
     /* Set the kernel 16 bits data descriptor */
-    uint32_t kernel_data_16_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                        GDT_FLAG_16_BIT_SEGMENT |
-                                        GDT_FLAG_PL0 |
-                                        GDT_FLAG_SEGMENT_PRESENT |
-                                        GDT_FLAG_DATA_TYPE;
+    uint32_t kernelData16SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                    GDT_FLAG_16_BIT_SEGMENT |
+                                    GDT_FLAG_PL0 |
+                                    GDT_FLAG_SEGMENT_PRESENT |
+                                    GDT_FLAG_DATA_TYPE;
 
-    uint32_t kernel_data_16_seg_type =  GDT_TYPE_WRITABLE |
-                                        GDT_TYPE_GROW_DOWN;
+    uint32_t kernelData16SegType  = GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
 
     /* Set the user 32 bits code descriptor */
-    uint32_t user_code_32_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                      GDT_FLAG_32_BIT_SEGMENT |
-                                      GDT_FLAG_PL3 |
-                                      GDT_FLAG_SEGMENT_PRESENT |
-                                      GDT_FLAG_CODE_TYPE;
+    uint32_t userCode32SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                  GDT_FLAG_32_BIT_SEGMENT |
+                                  GDT_FLAG_PL3 |
+                                  GDT_FLAG_SEGMENT_PRESENT |
+                                  GDT_FLAG_CODE_TYPE;
 
-    uint32_t user_code_32_seg_type =  GDT_TYPE_EXECUTABLE |
-                                      GDT_TYPE_READABLE |
-                                      GDT_TYPE_PROTECTED;
+    uint32_t userCode32SegType  = GDT_TYPE_EXECUTABLE |
+                                  GDT_TYPE_READABLE |
+                                  GDT_TYPE_PROTECTED;
 
     /* Set the user 32 bits data descriptor */
-    uint32_t user_data_32_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                                      GDT_FLAG_32_BIT_SEGMENT |
-                                      GDT_FLAG_PL3 |
-                                      GDT_FLAG_SEGMENT_PRESENT |
-                                      GDT_FLAG_DATA_TYPE;
+    uint32_t userData32SegFlags = GDT_FLAG_GRANULARITY_4K |
+                                  GDT_FLAG_32_BIT_SEGMENT |
+                                  GDT_FLAG_PL3 |
+                                  GDT_FLAG_SEGMENT_PRESENT |
+                                  GDT_FLAG_DATA_TYPE;
 
-    uint32_t user_data_32_seg_type =  GDT_TYPE_WRITABLE |
-                                      GDT_TYPE_GROW_DOWN;
+    uint32_t userData32SegType  =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
 
     /* Set the user 64 bits code descriptor */
-    uint32_t user_code_64_seg_flags = GDT_FLAG_64_BIT_SEGMENT |
-                                      GDT_FLAG_PL3 |
-                                      GDT_FLAG_SEGMENT_PRESENT |
-                                      GDT_FLAG_CODE_TYPE;
+    uint32_t userCode64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
+                                  GDT_FLAG_PL3 |
+                                  GDT_FLAG_SEGMENT_PRESENT |
+                                  GDT_FLAG_CODE_TYPE;
 
-    uint32_t user_code_64_seg_type =  GDT_TYPE_EXECUTABLE |
-                                      GDT_TYPE_READABLE |
-                                      GDT_TYPE_PROTECTED;
+    uint32_t userCode64SegType  = GDT_TYPE_EXECUTABLE |
+                                  GDT_TYPE_READABLE |
+                                  GDT_TYPE_PROTECTED;
 
     /* Set the user 64 bits data descriptor */
-    uint32_t user_data_64_seg_flags = GDT_FLAG_64_BIT_SEGMENT |
-                                      GDT_FLAG_PL3 |
-                                      GDT_FLAG_SEGMENT_PRESENT |
-                                      GDT_FLAG_DATA_TYPE;
+    uint32_t userData64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
+                                  GDT_FLAG_PL3 |
+                                  GDT_FLAG_SEGMENT_PRESENT |
+                                  GDT_FLAG_DATA_TYPE;
 
-    uint32_t user_data_64_seg_type =  GDT_TYPE_WRITABLE |
-                                      GDT_TYPE_GROW_DOWN;
+    uint32_t userData64SegType  = GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
 
     /************************************
      * TSS ENTRY
@@ -2443,65 +2444,85 @@ static void _cpu_setup_gdt(void)
                             GDT_TYPE_EXECUTABLE;
 
     /* Blank the GDT, set the NULL descriptor */
-    memset(cpu_gdt, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
+    memset(sGDT, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
 
     /* Load the segments */
-    _format_gdt_entry(&cpu_gdt[KERNEL_CS_64 / 8],
-                      KERNEL_CODE_SEGMENT_BASE_64, KERNEL_CODE_SEGMENT_LIMIT_64,
-                      kernel_code_64_seg_type, kernel_code_64_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_CS_64 / 8],
+                    KERNEL_CODE_SEGMENT_BASE_64,
+                    KERNEL_CODE_SEGMENT_LIMIT_64,
+                    kernelCode64SegType,
+                    kernelCode64SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[KERNEL_DS_64 / 8],
-                      KERNEL_DATA_SEGMENT_BASE_64, KERNEL_DATA_SEGMENT_LIMIT_64,
-                      kernel_data_64_seg_type, kernel_data_64_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_DS_64 / 8],
+                    KERNEL_DATA_SEGMENT_BASE_64,
+                    KERNEL_DATA_SEGMENT_LIMIT_64,
+                    kernelData64SegType,
+                    kernelData64SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[KERNEL_CS_32 / 8],
-                      KERNEL_CODE_SEGMENT_BASE_32, KERNEL_CODE_SEGMENT_LIMIT_32,
-                      kernel_code_32_seg_type, kernel_code_32_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_CS_32 / 8],
+                    KERNEL_CODE_SEGMENT_BASE_32,
+                    KERNEL_CODE_SEGMENT_LIMIT_32,
+                    kernelCode32SegType,
+                    kernelCode32SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[KERNEL_DS_32 / 8],
-                      KERNEL_DATA_SEGMENT_BASE_32, KERNEL_DATA_SEGMENT_LIMIT_32,
-                      kernel_data_32_seg_type, kernel_data_32_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_DS_32 / 8],
+                    KERNEL_DATA_SEGMENT_BASE_32,
+                    KERNEL_DATA_SEGMENT_LIMIT_32,
+                    kernelData32SegType,
+                    kernelData32SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[KERNEL_CS_16 / 8],
-                      KERNEL_CODE_SEGMENT_BASE_16, KERNEL_CODE_SEGMENT_LIMIT_16,
-                      kernel_code_16_seg_type, kernel_code_16_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_CS_16 / 8],
+                    KERNEL_CODE_SEGMENT_BASE_16,
+                    KERNEL_CODE_SEGMENT_LIMIT_16,
+                    kernelCode16SegType,
+                    kernelCode16SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[KERNEL_DS_16 / 8],
-                      KERNEL_DATA_SEGMENT_BASE_16, KERNEL_DATA_SEGMENT_LIMIT_16,
-                      kernel_data_16_seg_type, kernel_data_16_seg_flags);
+    _formatGDTEntry(&sGDT[KERNEL_DS_16 / 8],
+                    KERNEL_DATA_SEGMENT_BASE_16,
+                    KERNEL_DATA_SEGMENT_LIMIT_16,
+                    kernelData16SegType,
+                    kernelData16SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[USER_CS_64 / 8],
-                      USER_CODE_SEGMENT_BASE_64, USER_CODE_SEGMENT_LIMIT_64,
-                      user_code_64_seg_type, user_code_64_seg_flags);
+    _formatGDTEntry(&sGDT[USER_CS_64 / 8],
+                    USER_CODE_SEGMENT_BASE_64,
+                    USER_CODE_SEGMENT_LIMIT_64,
+                    userCode64SegType,
+                    userCode64SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[USER_DS_64 / 8],
-                      USER_DATA_SEGMENT_BASE_64, USER_DATA_SEGMENT_LIMIT_64,
-                      user_data_64_seg_type, user_data_64_seg_flags);
+    _formatGDTEntry(&sGDT[USER_DS_64 / 8],
+                    USER_DATA_SEGMENT_BASE_64,
+                    USER_DATA_SEGMENT_LIMIT_64,
+                    userData64SegType,
+                    userData64SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[USER_CS_32 / 8],
-                      USER_CODE_SEGMENT_BASE_32, USER_CODE_SEGMENT_LIMIT_32,
-                      user_code_32_seg_type, user_code_32_seg_flags);
+    _formatGDTEntry(&sGDT[USER_CS_32 / 8],
+                    USER_CODE_SEGMENT_BASE_32,
+                    USER_CODE_SEGMENT_LIMIT_32,
+                    userCode32SegType,
+                    userCode32SegFlags);
 
-    _format_gdt_entry(&cpu_gdt[USER_DS_32 / 8],
-                      USER_DATA_SEGMENT_BASE_32, USER_DATA_SEGMENT_LIMIT_32,
-                      user_data_32_seg_type, user_data_32_seg_flags);
+    _formatGDTEntry(&sGDT[USER_DS_32 / 8],
+                    USER_DATA_SEGMENT_BASE_32,
+                    USER_DATA_SEGMENT_LIMIT_32,
+                    userData32SegType,
+                    userData32SegFlags);
 
     for(i = 0; i < MAX_CPU_COUNT; ++i)
     {
-        _format_gdt_entry(&cpu_gdt[(TSS_SEGMENT + i * 0x08) / 8],
-                          (uintptr_t)&cpu_tss[i],
-                          ((uintptr_t)(&cpu_tss[i])) +
-                          sizeof(cpu_tss_entry_t),
-                          tss_seg_type, tss_seg_flags);
+        _formatGDTEntry(&sGDT[(TSS_SEGMENT + i * 0x08) / 8],
+                        (uintptr_t)&sTSS[i],
+                        ((uintptr_t)(&sTSS[i])) + sizeof(cpu_tss_entry_t),
+                        tss_seg_type,
+                        tss_seg_flags);
     }
 
     /* Set the GDT descriptor */
-    cpu_gdt_ptr.size = ((sizeof(uint64_t) * GDT_ENTRY_COUNT) - 1);
-    cpu_gdt_ptr.base = (uintptr_t)&cpu_gdt;
+    sGDTPtr.size = ((sizeof(uint64_t) * GDT_ENTRY_COUNT) - 1);
+    sGDTPtr.base = (uintptr_t)&sGDT;
 
     /* Load the GDT */
-    __asm__ __volatile__("lgdt %0" :: "m" (cpu_gdt_ptr.size),
-                                      "m" (cpu_gdt_ptr.base));
+    __asm__ __volatile__("lgdt %0" :: "m" (sGDTPtr.size),
+                                      "m" (sGDTPtr.base));
 
     /* Load segment selectors with a far jump for CS*/
     __asm__ __volatile__("movw %w0,%%ds\n\t"
@@ -2517,14 +2538,15 @@ static void _cpu_setup_gdt(void)
                          "lretq\n\t"
                          "new_gdt_seg_: \n\t" :: "i" (KERNEL_CS_64) : "rax");
 
-    KERNEL_SUCCESS("GDT Initialized at 0x%P\n", cpu_gdt_ptr.base);
+    KERNEL_SUCCESS("GDT Initialized at 0x%P\n", sGDTPtr.base);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_END, 2,
-                       cpu_gdt_ptr.base & 0xFFFFFFFF,
-                       cpu_gdt_ptr.base >> 32);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_END,
+                       2,
+                       sGDTPtr.base & 0xFFFFFFFF,
+                       sGDTPtr.base >> 32);
 }
 
-static void _cpu_setup_idt(void)
+static void _setupIDT(void)
 {
     uint32_t i;
 
@@ -2532,34 +2554,35 @@ static void _cpu_setup_idt(void)
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting IDT");
 
     /* Blank the IDT */
-    memset(cpu_idt, 0, sizeof(uint64_t) * IDT_ENTRY_COUNT);
+    memset(sIDT, 0, sizeof(cpu_idt_entry_t) * IDT_ENTRY_COUNT);
 
     /* Set interrupt handlers for each interrupt
      * This allows to redirect all interrupts to a global handler in C
      */
     for(i = 0; i < IDT_ENTRY_COUNT; ++i)
     {
-        _format_idt_entry(&cpu_idt[i],
-                          cpu_int_handlers[i],
-                          IDT_TYPE_INT_GATE, IDT_FLAG_PRESENT | IDT_FLAG_PL0);
+        _formatIDTEntry(&sIDT[i],
+                        sIntHandlerTable[i],
+                        IDT_TYPE_INT_GATE, IDT_FLAG_PRESENT | IDT_FLAG_PL0);
     }
 
     /* Set the GDT descriptor */
-    cpu_idt_ptr.size = ((sizeof(cpu_idt_entry_t) * IDT_ENTRY_COUNT) - 1);
-    cpu_idt_ptr.base = (uintptr_t)&cpu_idt;
+    sIDTPtr.size = ((sizeof(cpu_idt_entry_t) * IDT_ENTRY_COUNT) - 1);
+    sIDTPtr.base = (uintptr_t)&sIDT;
 
     /* Load the GDT */
-    __asm__ __volatile__("lidt %0" :: "m" (cpu_idt_ptr.size),
-                                      "m" (cpu_idt_ptr.base));
+    __asm__ __volatile__("lidt %0" :: "m" (sIDTPtr.size),
+                                      "m" (sIDTPtr.base));
 
-    KERNEL_SUCCESS("IDT Initialized at 0x%P\n", cpu_idt_ptr.base);
+    KERNEL_SUCCESS("IDT Initialized at 0x%P\n", sIDTPtr.base);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_END, 2,
-                       cpu_idt_ptr.base & 0xFFFFFFFF,
-                       cpu_idt_ptr.base >> 32);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_END,
+                       2,
+                       sIDTPtr.base & 0xFFFFFFFF,
+                       sIDTPtr.base >> 32);
 }
 
-static void _cpu_setup_tss(void)
+static void _setupTSS(void)
 {
     uint32_t i;
 
@@ -2567,24 +2590,25 @@ static void _cpu_setup_tss(void)
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting TSS");
 
     /* Blank the TSS */
-    memset(cpu_tss, 0, sizeof(cpu_tss_entry_t) * MAX_CPU_COUNT);
+    memset(sTSS, 0, sizeof(cpu_tss_entry_t) * MAX_CPU_COUNT);
 
     /* Set basic values */
     for(i = 0; i < MAX_CPU_COUNT; ++i)
     {
-        cpu_tss[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
-                          KERNEL_STACK_SIZE * (i + 1) - sizeof(uint32_t);
-        cpu_tss[i].iomap_base = sizeof(cpu_tss_entry_t);
+        sTSS[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
+                        KERNEL_STACK_SIZE * (i + 1) - sizeof(uint32_t);
+        sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
     }
 
-    /* Load TSS */
+    /* TODO: Load TSS */
     //__asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
 
-    KERNEL_SUCCESS("TSS Initialized at 0x%P\n", cpu_tss);
+    KERNEL_SUCCESS("TSS Initialized at 0x%P\n", sTSS);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_END, 2,
-                       (uintptr_t)cpu_tss & 0xFFFFFFFF,
-                       (uintptr_t)cpu_tss >> 32);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_END,
+                       2,
+                       (uintptr_t)sTSS & 0xFFFFFFFF,
+                       (uintptr_t)sTSS >> 32);
 }
 
 void cpuInit(void)
@@ -2592,28 +2616,29 @@ void cpuInit(void)
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_START, 0);
 
     /* Init the GDT, IDT and TSS */
-    _cpu_setup_gdt();
-    _cpu_setup_idt();
-    _cpu_setup_tss();
+    _setupGDT();
+    _setupIDT();
+    _setupTSS();
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_END, 0);
 }
 
-OS_RETURN_E cpuRaiseInterrupt(const uint32_t interrupt_line)
+OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, interrupt_line);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, kInterruptLine);
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME,
-                 "Requesting interrupt raise %d", interrupt_line);
+                 "Requesting interrupt raise %d", kInterruptLine);
 
-    if(interrupt_line > MAX_INTERRUPT_LINE)
+    if(kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 2,
-                           interrupt_line,
+        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
+                           2,
+                           kInterruptLine,
                            OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    switch(interrupt_line)
+    switch(kInterruptLine)
     {
         case 0:
             __asm__ __volatile__("int %0" :: "i" (0));
@@ -3385,8 +3410,10 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t interrupt_line)
             break;
     }
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END, 2,
-                       interrupt_line, OS_NO_ERR);
+    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
+                       2,
+                       interrupt_line,
+                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -3398,11 +3425,11 @@ void cpuValidateArchitecture(void)
     uint32_t          ret;
 
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-    uint32_t output_buff_index;
-    char     output_buff[512];
-    char     vendor_str[26] = "CPU Vendor:             \n\0";
+    uint32_t outputBuffIndex;
+    char     outputBuff[512];
+    char     vendorString[26] = "CPU Vendor:             \n\0";
 
-    output_buff_index = 0;
+    outputBuffIndex = 0;
 #endif
 
     KERNEL_TRACE_EVENT(EVENT_KERNEL_VALIDATE_ARCH_START, 0);
@@ -3420,144 +3447,144 @@ void cpuValidateArchitecture(void)
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
     for(int8_t j = 0; j < 4; ++j)
     {
-        vendor_str[12 + j] = (char)((regs[1] >> (j * 8)) & 0xFF);
+        vendorString[12 + j] = (char)((regs[1] >> (j * 8)) & 0xFF);
     }
     for(int8_t j = 0; j < 4; ++j)
     {
-        vendor_str[16 + j] = (char)((regs[3] >> (j * 8)) & 0xFF);
+        vendorString[16 + j] = (char)((regs[3] >> (j * 8)) & 0xFF);
     }
     for(int8_t j = 0; j < 4; ++j)
     {
-        vendor_str[20 + j] = (char)((regs[2] >> (j * 8)) & 0xFF);
+        vendorString[20 + j] = (char)((regs[2] >> (j * 8)) & 0xFF);
     }
 
-    KERNEL_INFO(vendor_str);
+    KERNEL_INFO(vendorString);
 #endif
 
     /* Get CPUID features */
     _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
 
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-    memset(output_buff, 0, 512 * sizeof(char));
-    strncpy(output_buff, "CPU Features: ", 14);
-    output_buff_index = 14;
+    memset(outputBuff, 0, 512 * sizeof(char));
+    strncpy(outputBuff, "CPU Features: ", 14);
+    outputBuffIndex = 14;
 
     if((regs[2] & ECX_SSE3) == ECX_SSE3)
-    { CONCAT_STR(output_buff, output_buff_index, "SSE3 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE3 - "); }
     if((regs[2] & ECX_PCLMULQDQ) == ECX_PCLMULQDQ)
-    { CONCAT_STR(output_buff, output_buff_index, "PCLMULQDQ - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PCLMULQDQ - "); }
     if((regs[2] & ECX_DTES64) == ECX_DTES64)
-    { CONCAT_STR(output_buff, output_buff_index, "DTES64 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "DTES64 - "); }
     if((regs[2] & ECX_MONITOR) == ECX_MONITOR)
-    { CONCAT_STR(output_buff, output_buff_index, "MONITOR - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MONITOR - "); }
     if((regs[2] & ECX_DS_CPL) == ECX_DS_CPL)
-    { CONCAT_STR(output_buff, output_buff_index, "DS_CPL - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "DS_CPL - "); }
     if((regs[2] & ECX_VMX) == ECX_VMX)
-    { CONCAT_STR(output_buff, output_buff_index, "VMX - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "VMX - "); }
     if((regs[2] & ECX_SMX) == ECX_SMX)
-    { CONCAT_STR(output_buff, output_buff_index, "SMX - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SMX - "); }
     if((regs[2] & ECX_EST) == ECX_EST)
-    { CONCAT_STR(output_buff, output_buff_index, "EST - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "EST - "); }
     if((regs[2] & ECX_TM2) == ECX_TM2)
-    { CONCAT_STR(output_buff, output_buff_index, "TM2 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "TM2 - "); }
     if((regs[2] & ECX_SSSE3) == ECX_SSSE3)
-    { CONCAT_STR(output_buff, output_buff_index, "SSSE3 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSSE3 - "); }
     if((regs[2] & ECX_CNXT_ID) == ECX_CNXT_ID)
-    { CONCAT_STR(output_buff, output_buff_index, "CNXT_ID - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "CNXT_ID - "); }
     if((regs[2] & ECX_FMA) == ECX_FMA)
-    { CONCAT_STR(output_buff, output_buff_index, "FMA - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "FMA - "); }
     if((regs[2] & ECX_CX16) == ECX_CX16)
-    { CONCAT_STR(output_buff, output_buff_index, "CX16 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "CX16 - "); }
     if((regs[2] & ECX_XTPR) == ECX_XTPR)
-    { CONCAT_STR(output_buff, output_buff_index, "XTPR - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "XTPR - "); }
     if((regs[2] & ECX_PDCM) == ECX_PDCM)
-    { CONCAT_STR(output_buff, output_buff_index, "PDCM - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PDCM - "); }
     if((regs[2] & ECX_PCID) == ECX_PCID)
-    { CONCAT_STR(output_buff, output_buff_index, "PCID - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PCID - "); }
     if((regs[2] & ECX_DCA) == ECX_DCA)
-    { CONCAT_STR(output_buff, output_buff_index, "DCA - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "DCA - "); }
     if((regs[2] & ECX_SSE41) == ECX_SSE41)
-    { CONCAT_STR(output_buff, output_buff_index, "SSE41 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE41 - "); }
     if((regs[2] & ECX_SSE42) == ECX_SSE42)
-    { CONCAT_STR(output_buff, output_buff_index, "SSE42 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE42 - "); }
     if((regs[2] & ECX_X2APIC) == ECX_X2APIC)
-    { CONCAT_STR(output_buff, output_buff_index, "X2APIC - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "X2APIC - "); }
     if((regs[2] & ECX_MOVBE) == ECX_MOVBE)
-    { CONCAT_STR(output_buff, output_buff_index, "MOVBE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MOVBE - "); }
     if((regs[2] & ECX_POPCNT) == ECX_POPCNT)
-    { CONCAT_STR(output_buff, output_buff_index, "POPCNT - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "POPCNT - "); }
     if((regs[2] & ECX_TSC) == ECX_TSC)
-    { CONCAT_STR(output_buff, output_buff_index, "TSC - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
     if((regs[2] & ECX_AESNI) == ECX_AESNI)
-    { CONCAT_STR(output_buff, output_buff_index, "AESNI - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "AESNI - "); }
     if((regs[2] & ECX_XSAVE) == ECX_XSAVE)
-    { CONCAT_STR(output_buff, output_buff_index, "XSAVE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "XSAVE - "); }
     if((regs[2] & ECX_OSXSAVE) == ECX_OSXSAVE)
-    { CONCAT_STR(output_buff, output_buff_index, "OSXSAVE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "OSXSAVE - "); }
     if((regs[2] & ECX_AVX) == ECX_AVX)
-    { CONCAT_STR(output_buff, output_buff_index, "AVX - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "AVX - "); }
     if((regs[2] & ECX_F16C) == ECX_F16C)
-    { CONCAT_STR(output_buff, output_buff_index, "F16C - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "F16C - "); }
     if((regs[2] & ECX_RDRAND) == ECX_RDRAND)
-    { CONCAT_STR(output_buff, output_buff_index, "RDRAND - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "RDRAND - "); }
     if((regs[3] & EDX_FPU) == EDX_FPU)
-    { CONCAT_STR(output_buff, output_buff_index, "FPU - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "FPU - "); }
     if((regs[3] & EDX_VME) == EDX_VME)
-    { CONCAT_STR(output_buff, output_buff_index, "VME - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "VME - "); }
     if((regs[3] & EDX_DE) == EDX_DE)
-    { CONCAT_STR(output_buff, output_buff_index, "DE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "DE - "); }
     if((regs[3] & EDX_PSE) == EDX_PSE)
-    { CONCAT_STR(output_buff, output_buff_index, "PSE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PSE - "); }
     if((regs[3] & EDX_TSC) == EDX_TSC)
-    { CONCAT_STR(output_buff, output_buff_index, "TSC - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
     if((regs[3] & EDX_MSR) == EDX_MSR)
-    { CONCAT_STR(output_buff, output_buff_index, "MSR - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MSR - "); }
     if((regs[3] & EDX_PAE) == EDX_PAE)
-    { CONCAT_STR(output_buff, output_buff_index, "PAE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PAE - "); }
     if((regs[3] & EDX_MCE) == EDX_MCE)
-    { CONCAT_STR(output_buff, output_buff_index, "MCE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MCE - "); }
     if((regs[3] & EDX_CX8) == EDX_CX8)
-    { CONCAT_STR(output_buff, output_buff_index, "CX8 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "CX8 - "); }
     if((regs[3] & EDX_APIC) == EDX_APIC)
-    { CONCAT_STR(output_buff, output_buff_index, "APIC - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "APIC - "); }
     if((regs[3] & EDX_SEP) == EDX_SEP)
-    { CONCAT_STR(output_buff, output_buff_index, "SEP - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SEP - "); }
     if((regs[3] & EDX_MTRR) == EDX_MTRR)
-    { CONCAT_STR(output_buff, output_buff_index, "MTRR - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MTRR - "); }
     if((regs[3] & EDX_PGE) == EDX_PGE)
-    { CONCAT_STR(output_buff, output_buff_index, "PGE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PGE - "); }
     if((regs[3] & EDX_MCA) == EDX_MCA)
-    { CONCAT_STR(output_buff, output_buff_index, "MCA - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MCA - "); }
     if((regs[3] & EDX_CMOV) == EDX_CMOV)
-    { CONCAT_STR(output_buff, output_buff_index, "CMOV - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "CMOV - "); }
     if((regs[3] & EDX_PAT) == EDX_PAT)
-    { CONCAT_STR(output_buff, output_buff_index, "PAT - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PAT - "); }
     if((regs[3] & EDX_PSE36) == EDX_PSE36)
-    { CONCAT_STR(output_buff, output_buff_index, "PSE36 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PSE36 - "); }
     if((regs[3] & EDX_PSN) == EDX_PSN)
-    { CONCAT_STR(output_buff, output_buff_index, "PSN - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PSN - "); }
     if((regs[3] & EDX_CLFLUSH) == EDX_CLFLUSH)
-    { CONCAT_STR(output_buff, output_buff_index, "CLFLUSH - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "CLFLUSH - "); }
     if((regs[3] & EDX_DS) == EDX_DS)
-    { CONCAT_STR(output_buff, output_buff_index, "DS - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "DS - "); }
     if((regs[3] & EDX_ACPI) == EDX_ACPI)
-    { CONCAT_STR(output_buff, output_buff_index, "ACPI - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "ACPI - "); }
     if((regs[3] & EDX_MMX) == EDX_MMX)
-    { CONCAT_STR(output_buff, output_buff_index, "MMX - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "MMX - "); }
     if((regs[3] & EDX_FXSR) == EDX_FXSR)
-    { CONCAT_STR(output_buff, output_buff_index, "FXSR - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR - "); }
     if((regs[3] & EDX_SSE) == EDX_SSE)
-    { CONCAT_STR(output_buff, output_buff_index, "SSE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE - "); }
     if((regs[3] & EDX_SSE2) == EDX_SSE2)
-    { CONCAT_STR(output_buff, output_buff_index, "SSE2 - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE2 - "); }
     if((regs[3] & EDX_SS) == EDX_SS)
-    { CONCAT_STR(output_buff, output_buff_index, "SS - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "SS - "); }
     if((regs[3] & EDX_HTT) == EDX_HTT)
-    { CONCAT_STR(output_buff, output_buff_index, "HTT - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "HTT - "); }
     if((regs[3] & EDX_TM) == EDX_TM)
-    { CONCAT_STR(output_buff, output_buff_index, "TM - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "TM - "); }
     if((regs[3] & EDX_PBE) == EDX_PBE)
-    { CONCAT_STR(output_buff, output_buff_index, "PBE - "); }
+    { CONCAT_STR(outputBuff, outputBuffIndex, "PBE - "); }
 
     /* Check for extended features */
     _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regs_ext);
@@ -3566,82 +3593,82 @@ void cpuValidateArchitecture(void)
         _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regs_ext);
 
         if((regs_ext[3] & EDX_SYSCALL) == EDX_SYSCALL)
-        { CONCAT_STR(output_buff, output_buff_index, "SYSCALL - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "SYSCALL - "); }
         if((regs_ext[3] & EDX_MP) == EDX_MP)
-        { CONCAT_STR(output_buff, output_buff_index, "MP - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "MP - "); }
         if((regs_ext[3] & EDX_XD) == EDX_XD)
-        { CONCAT_STR(output_buff, output_buff_index, "XD - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "XD - "); }
         if((regs_ext[3] & EDX_MMX_EX) == EDX_MMX_EX)
-        { CONCAT_STR(output_buff, output_buff_index, "MMX_EX - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "MMX_EX - "); }
         if((regs_ext[3] & EDX_FXSR) == EDX_FXSR)
-        { CONCAT_STR(output_buff, output_buff_index, "FXSR - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR - "); }
         if((regs_ext[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
-        { CONCAT_STR(output_buff, output_buff_index, "FXSR_OPT - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR_OPT - "); }
         if((regs_ext[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
-        { CONCAT_STR(output_buff, output_buff_index, "1GB_PAGE - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "1GB_PAGE - "); }
         if((regs_ext[3] & EDX_RDTSCP) == EDX_RDTSCP)
-        { CONCAT_STR(output_buff, output_buff_index, "RDTSCP - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "RDTSCP - "); }
         if((regs_ext[3] & EDX_64_BIT) == EDX_64_BIT)
-        { CONCAT_STR(output_buff, output_buff_index, "X64 - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "X64 - "); }
         if((regs_ext[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
-        { CONCAT_STR(output_buff, output_buff_index, "3DNOW_EX - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW_EX - "); }
         if((regs_ext[3] & EDX_3DNOW) == EDX_3DNOW)
-        { CONCAT_STR(output_buff, output_buff_index, "3DNOW - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW - "); }
         if((regs_ext[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
-        { CONCAT_STR(output_buff, output_buff_index, "LAHF_LM - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "LAHF_LM - "); }
         if((regs_ext[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
-        { CONCAT_STR(output_buff, output_buff_index, "CMP_LEG - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "CMP_LEG - "); }
         if((regs_ext[2] & ECX_SVM) == ECX_SVM)
-        { CONCAT_STR(output_buff, output_buff_index, "SVM - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "SVM - "); }
         if((regs_ext[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
-        { CONCAT_STR(output_buff, output_buff_index, "EXTAPIC - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "EXTAPIC - "); }
         if((regs_ext[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
-        { CONCAT_STR(output_buff, output_buff_index, "CR8_LEG - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "CR8_LEG - "); }
         if((regs_ext[2] & ECX_ABM) == ECX_ABM)
-        { CONCAT_STR(output_buff, output_buff_index, "ABM - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "ABM - "); }
         if((regs_ext[2] & ECX_SSE4A) == ECX_SSE4A)
-        { CONCAT_STR(output_buff, output_buff_index, "SSE4A - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "SSE4A - "); }
         if((regs_ext[2] & ECX_MISASSE) == ECX_MISASSE)
-        { CONCAT_STR(output_buff, output_buff_index, "MISALIGNED_SSE - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "MISALIGNED_SSE - "); }
         if((regs_ext[2] & ECX_PREFETCH) == ECX_PREFETCH)
-        { CONCAT_STR(output_buff, output_buff_index, "PREFETCH - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "PREFETCH - "); }
         if((regs_ext[2] & ECX_OSVW) == ECX_OSVW)
-        { CONCAT_STR(output_buff, output_buff_index, "OSVW - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "OSVW - "); }
         if((regs_ext[2] & ECX_IBS) == ECX_IBS)
-        { CONCAT_STR(output_buff, output_buff_index, "IBS - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "IBS - "); }
         if((regs_ext[2] & ECX_XOP) == ECX_XOP)
-        { CONCAT_STR(output_buff, output_buff_index, "XOP - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "XOP - "); }
         if((regs_ext[2] & ECX_SKINIT) == ECX_SKINIT)
-        { CONCAT_STR(output_buff, output_buff_index, "SKINIT - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "SKINIT - "); }
         if((regs_ext[2] & ECX_WDT) == ECX_WDT)
-        { CONCAT_STR(output_buff, output_buff_index, "WDT - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "WDT - "); }
         if((regs_ext[2] & ECX_LWP) == ECX_LWP)
-        { CONCAT_STR(output_buff, output_buff_index, "LWP - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "LWP - "); }
         if((regs_ext[2] & ECX_FMA4) == ECX_FMA4)
-        { CONCAT_STR(output_buff, output_buff_index, "FMA4 - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "FMA4 - "); }
         if((regs_ext[2] & ECX_TCE) == ECX_TCE)
-        { CONCAT_STR(output_buff, output_buff_index, "TCE - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "TCE - "); }
         if((regs_ext[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
-        { CONCAT_STR(output_buff, output_buff_index, "NODE_ID_MSR - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "NODE_ID_MSR - "); }
         if((regs_ext[2] & ECX_TBM) == ECX_TBM)
-        { CONCAT_STR(output_buff, output_buff_index, "TMB - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "TMB - "); }
         if((regs_ext[2] & ECX_TOPOEX) == ECX_TOPOEX)
-        { CONCAT_STR(output_buff, output_buff_index, "TOPOEX - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "TOPOEX - "); }
         if((regs_ext[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
-        { CONCAT_STR(output_buff, output_buff_index, "PERF_CORE - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_CORE - "); }
         if((regs_ext[2] & ECX_PERF_NB) == ECX_PERF_NB)
-        { CONCAT_STR(output_buff, output_buff_index, "PERF_NB - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_NB - "); }
         if((regs_ext[2] & ECX_DBX) == ECX_DBX)
-        { CONCAT_STR(output_buff, output_buff_index, "DBX - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "DBX - "); }
         if((regs_ext[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
-        { CONCAT_STR(output_buff, output_buff_index, "TSC - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
         if((regs_ext[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
-        { CONCAT_STR(output_buff, output_buff_index, "PCX_L2I - "); }
+        { CONCAT_STR(outputBuff, outputBuffIndex, "PCX_L2I - "); }
     }
 
-    output_buff[output_buff_index - 2] = '\n';
-    output_buff[output_buff_index - 1] = 0;
-    KERNEL_INFO(output_buff);
+    outputBuff[outputBuffIndex - 2] = '\n';
+    outputBuff[outputBuffIndex - 1] = 0;
+    KERNEL_INFO(outputBuff);
 #else
     (void)regs_ext;
 #endif

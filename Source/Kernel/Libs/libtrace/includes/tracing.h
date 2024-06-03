@@ -24,9 +24,9 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <trace_events.h> /* Trace event definitions */
 #include <stdint.h>       /* Generic int types */
 #include <config.h>       /* Kernel configuration */
+#include <trace_events.h> /* Trace event definitions */
 
 /*******************************************************************************
  * CONSTANTS
@@ -54,7 +54,7 @@
  * Metadata are interpreted as uint32_t.
  *
  */
-#define KERNEL_TRACE_EVENT(...) kernel_trace_event(__VA_ARGS__);
+#define KERNEL_TRACE_EVENT(...) kernelTraceEvent(__VA_ARGS__);
 
 #else
 
@@ -87,13 +87,14 @@
  * @details Traces an event, the first parameter is the type of the event
  * and the subsequent parameters are the metadata associated with the event.
  *
- * @param[in] event The event identifier.
- * @param[in] field_count The number of metadata associated with the event.
+ * @param[in] kEvent The event identifier.
+ * @param[in] kFieldCount The number of metadata associated with the event.
  * @param ... The event metadata associated with the event. Metadata are
  * interpreted as uint32_t.
  */
-void kernel_trace_event(const TRACE_EVENT_E event, const uint32_t field_count,
-                        ...);
+void kernelTraceEvent(const TRACE_EVENT_E kEvent,
+                      const uint32_t      kFieldCount,
+                      ...);
 
 #endif /* #ifndef __LIB_TRACING_H_ */
 

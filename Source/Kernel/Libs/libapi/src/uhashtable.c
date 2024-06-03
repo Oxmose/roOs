@@ -51,7 +51,8 @@
 /** @brief Maximal factor size of the graveyard. */
 #define HT_MAX_GRAVEYARD_FACTOR 0.3f
 
-/** @brief Maximal load factor (including graveyard).
+/**
+ * @brief Maximal load factor (including graveyard).
  *
  * @warning: Must always be strictly less than 1.0
 */
@@ -76,6 +77,68 @@
 /* None */
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/**
+ * @brief 64 bits hash function for uintptr_t keys.
+ *
+ * @details This function computes the 64 bits hash function for uintptr_t keys.
+ * The algorithm used is the FNV-1a hash algorithm.
+ *
+ * @param[in] kKey The key to hash.
+ *
+ * @return The computed hash is returned.
+ */
+inline static uint64_t _uhash64(const uintptr_t kKey);
+
+/**
+ * @brief Sets the data for a given entry in the unsigned hash table.
+ *
+ * @details Sets the data for a given entry in the unsigned hash table. If the
+ * entry does not exist it is created.
+ *
+ * @warning This function does not perform any check on the data, the key or the
+ * table itself.
+ *
+ * @param[in,out] pTable The table to set the value.
+ * @param[in] kKey The key to associate the data with.
+ * @param[in] pData The data to set.
+ *
+ * @return The error status is returned.
+ */
+static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*   pTable,
+                                       const uintptr_t kKey,
+                                       void*           pData);
+
+/**
+ * @brief Replaces an entry in the table, without allocating the entry.
+ *
+ * @details Replaces an entry in the table, without allocating the entry. The
+ * entry beging used it the one given as parameter.
+ *
+ * @param[out] pTable The table to use.
+ * @param[in] pEntry The entry to place.
+ */
+static void _uhashtableRehashEntry(uhashtable_t*       pTable,
+                                   uhashtable_entry_t* pEntry);
+
+/**
+ * @brief Rehashes the table and grows the table by a certain factor.
+ *
+ * @details Rehash the table and grows the table by a certain factor. The growth
+ * factor must be greater or equal to 1. In the latter case, only the rehashing
+ * is done.
+ *
+ * @param[out] pTable The table to grow.
+ * @param[in] kGrowth The growth factor to use.
+ *
+ * @return The error status is returned.
+ */
+static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth);
+
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
@@ -89,70 +152,10 @@
 /* None */
 
 /*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/**
- * @brief 64 bits hash function for uintptr_t keys.
- *
- * @details This function computes the 64 bits hash function for uintptr_t keys.
- * The algorithm used is the FNV-1a hash algorithm.
- *
- * @param[in] key The key to hash.
- * @return The computed hash is returned.
- */
-inline static uint64_t _uhash_64(const uintptr_t key);
-
-/**
- * @brief Sets the data for a given entry in the unsigned hash table.
- *
- * @details Sets the data for a given entry in the unsigned hash table. If the
- * entry does not exist it is created.
- *
- * @warning This function does not perform any check on the data, the key or the
- * table itself.
- *
- * @param[in,out] table The table to set the value.
- * @param[in] key The key to associate the data with.
- * @param[in] data The data to set.
- *
- * @return The error status is returned.
- */
-static OS_RETURN_E _uhashtable_set_entry(uhashtable_t* table,
-                                         const uintptr_t key,
-                                         void* data);
-
-/**
- * @brief Replaces an entry in the table, without allocating the entry.
- *
- * @details Replaces an entry in the table, without allocating the entry. The
- * entry beging used it the one given as parameter.
- *
- * @param[out] table The table to use.
- * @param[in] entry The entry to place.
- */
-static void _uhashtable_rehash_entry(uhashtable_t* table,
-                                     uhashtable_entry_t* entry);
-
-/**
- * @brief Rehashes the table and grows the table by a certain factor.
- *
- * @details Rehash the table and grows the table by a certain factor. The growth
- * factor must be greater or equal to 1. In the latter case, only the rehashing
- * is done.
- *
- * @param[out] table The table to grow.
- * @param[in] growth The growth factor to use.
- *
- * @return The error status is returned.
- */
-static OS_RETURN_E _uhashtable_rehash(uhashtable_t* table, const float growth);
-
-/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-inline static uint64_t _uhash_64(const uintptr_t key)
+inline static uint64_t _uhash64(const uintptr_t kKey)
 {
     uint64_t hash;
     size_t   i;
@@ -162,290 +165,290 @@ inline static uint64_t _uhash_64(const uintptr_t key)
 
     for(i = 0; i < sizeof(uintptr_t); ++i)
     {
-        hash ^= (uint64_t)((uint8_t)(key >> (i * 8)));
+        hash ^= (uint64_t)((uint8_t)(kKey >> (i * 8)));
         hash *= FNV_PRIME;
     }
 
     return hash;
 }
 
-static OS_RETURN_E _uhashtable_set_entry(uhashtable_t* table,
-                                         const uintptr_t key,
-                                         void* data)
+static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*     pTable,
+                                         const uintptr_t kKey,
+                                         void*           pData)
 {
     uint64_t hash;
-    size_t   entry_index;
+    size_t   entryIdx;
 
     /* Get the hash and ensure it does not overflow the current capacity */
-    hash        = _uhash_64(key);
-    entry_index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    hash        = _uhash64(kKey);
+    entryIdx = (size_t)(hash & (uint64_t)(pTable->capacity - 1));
 
     /* Search for the entry in the table. Note that due to the fact that our
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
-    while(table->entries[entry_index] != NULL &&
-          table->entries[entry_index]->is_used == TRUE)
+    while(pTable->ppEntries[entryIdx] != NULL &&
+          pTable->ppEntries[entryIdx]->isUsed == TRUE)
     {
         /* Found the entry */
-        if(table->entries[entry_index]->key == key)
+        if(pTable->ppEntries[entryIdx]->key == kKey)
         {
-            table->entries[entry_index]->data = data;
+            pTable->ppEntries[entryIdx]->pData = pData;
             return OS_NO_ERR;
         }
 
         /* Increment the index */
-        entry_index = (entry_index + 1) % table->capacity;
+        entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
     /* If we are here, we did not find the data, allocate if needed */
-    if(table->entries[entry_index] == NULL)
+    if(pTable->ppEntries[entryIdx] == NULL)
     {
-        table->entries[entry_index] =
-            table->allocator.malloc(sizeof(uhashtable_entry_t));
-        if(table->entries[entry_index] == NULL)
+        pTable->ppEntries[entryIdx] =
+            pTable->allocator.pMalloc(sizeof(uhashtable_entry_t));
+        if(pTable->ppEntries[entryIdx] == NULL)
         {
             return OS_ERR_NO_MORE_MEMORY;
         }
 
-        ++table->size;
+        ++pTable->size;
     }
     else
     {
         /* We found an entry from the graveyard, remove it */
-        --table->graveyard_size;
+        --pTable->graveyardSize;
     }
 
     /* Set the data */
-    table->entries[entry_index]->key     = key;
-    table->entries[entry_index]->data    = data;
-    table->entries[entry_index]->is_used = TRUE;
+    pTable->ppEntries[entryIdx]->key    = kKey;
+    pTable->ppEntries[entryIdx]->pData  = pData;
+    pTable->ppEntries[entryIdx]->isUsed = TRUE;
 
     return OS_NO_ERR;
 }
 
-static void _uhashtable_rehash_entry(uhashtable_t* table,
-                                     uhashtable_entry_t* entry)
+static void _uhashtableRehashEntry(uhashtable_t*       pTable,
+                                   uhashtable_entry_t* pEntry)
 {
     uint64_t hash;
-    size_t   entry_index;
+    size_t   entryIdx;
 
     /* Get the hash and ensure it does not overflow the current capacity */
-    hash        = _uhash_64(entry->key);
-    entry_index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    hash        = _uhash64(pEntry->key);
+    entryIdx = (size_t)(hash & (uint64_t)(pTable->capacity - 1));
 
     /* Search for the entry in the table. Note that due to the fact that our
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
-    while(table->entries[entry_index] != NULL &&
-          table->entries[entry_index]->is_used == TRUE)
+    while(pTable->ppEntries[entryIdx] != NULL &&
+          pTable->ppEntries[entryIdx]->isUsed == TRUE)
     {
         /* Found the entry */
-        if(table->entries[entry_index]->key == entry->key)
+        if(pTable->ppEntries[entryIdx]->key == pEntry->key)
         {
-            table->entries[entry_index]->data = entry->data;
+            pTable->ppEntries[entryIdx]->pData = pEntry->pData;
             return;
         }
 
         /* Increment the index */
-        entry_index = (entry_index + 1) % table->capacity;
+        entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
     /* Set the data */
-    table->entries[entry_index] = entry;
+    pTable->ppEntries[entryIdx] = pEntry;
 }
 
-static OS_RETURN_E _uhashtable_rehash(uhashtable_t* table, const float growth)
+static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth)
 {
     size_t               i;
-    size_t               new_capacity;
-    size_t               old_capacity;
-    uhashtable_entry_t** new_entries;
-    uhashtable_entry_t** old_entries;
+    size_t               newCapacity;
+    size_t               oldCapacity;
+    uhashtable_entry_t** ppNewEnt;
+    uhashtable_entry_t** ppOldEnt;
 
-    new_capacity = (size_t)((float)table->capacity * growth);
+    newCapacity = (size_t)((float)pTable->capacity * kGrowth);
 
     /* Check if did not overflow on the size */
-    if(new_capacity <= table->capacity)
+    if(newCapacity <= pTable->capacity)
     {
         return OS_ERR_OUT_OF_BOUND;
     }
 
     /* Save old entries */
-    old_entries  = table->entries;
-    old_capacity = table->capacity;
+    ppOldEnt  = pTable->ppEntries;
+    oldCapacity = pTable->capacity;
 
     /* Create a new entry table */
-    new_entries = table->allocator.malloc(sizeof(uhashtable_entry_t*) *
-                                          new_capacity);
-    if(new_entries == NULL)
+    ppNewEnt = pTable->allocator.pMalloc(sizeof(uhashtable_entry_t*) *
+                                           newCapacity);
+    if(ppNewEnt == NULL)
     {
         return OS_ERR_NO_MORE_MEMORY;
     }
 
-    memset(new_entries, 0, sizeof(uhashtable_entry_t*) * new_capacity);
-    table->capacity = new_capacity;
-    table->entries  = new_entries;
+    memset(ppNewEnt, 0, sizeof(uhashtable_entry_t*) * newCapacity);
+    pTable->capacity = newCapacity;
+    pTable->ppEntries  = ppNewEnt;
 
     /* Rehash the table, removes fragmentation and graveyard. */
-    for(i = 0; i < old_capacity; ++i)
+    for(i = 0; i < oldCapacity; ++i)
     {
-        if(old_entries[i] != NULL)
+        if(ppOldEnt[i] != NULL)
         {
             /* Check if it was an entry that was used */
-            if(old_entries[i]->is_used == TRUE)
+            if(ppOldEnt[i]->isUsed == TRUE)
             {
-                _uhashtable_rehash_entry(table, old_entries[i]);
+                _uhashtableRehashEntry(pTable, ppOldEnt[i]);
             }
             else
             {
                 /* The entry was not used, we can free it */
-                table->allocator.free(old_entries[i]);
+                pTable->allocator.pFree(ppOldEnt[i]);
             }
         }
     }
 
     /* Clean data */
-    table->graveyard_size = 0;
-    table->allocator.free(old_entries);
+    pTable->graveyardSize = 0;
+    pTable->allocator.pFree(ppOldEnt);
 
     return OS_NO_ERR;
 }
 
-uhashtable_t* uhashtable_create(uhashtable_alloc_t allocator,
-                                OS_RETURN_E* error)
+uhashtable_t* uhashtableCreate(uhashtable_alloc_t allocator,
+                                OS_RETURN_E*      pError)
 {
-    uhashtable_t* table;
+    uhashtable_t* pTable;
 
-    if(allocator.free == NULL || allocator.malloc == NULL)
+    if(allocator.pFree == NULL || allocator.pMalloc == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_NULL_POINTER;
+            *pError = OS_ERR_NULL_POINTER;
         }
         return NULL;
     }
 
     /* Initialize the table */
-    table = allocator.malloc(sizeof(uhashtable_t));
-    if(table == NULL)
+    pTable = allocator.pMalloc(sizeof(uhashtable_t));
+    if(pTable == NULL)
     {
-        if(error != NULL)
+        if(pError != NULL)
         {
-            *error = OS_ERR_NO_MORE_MEMORY;
+            *pError = OS_ERR_NO_MORE_MEMORY;
         }
         return NULL;
     }
 
-    table->entries = allocator.malloc(sizeof(uhashtable_entry_t*) *
+    pTable->ppEntries = allocator.pMalloc(sizeof(uhashtable_entry_t*) *
                                       HT_INITIAL_SIZE);
 
-    if(table->entries == NULL)
+    if(pTable->ppEntries == NULL)
     {
-        allocator.free(table);
-        if(error != NULL)
+        allocator.pFree(pTable);
+        if(pError != NULL)
         {
-            *error = OS_ERR_NO_MORE_MEMORY;
+            *pError = OS_ERR_NO_MORE_MEMORY;
         }
         return NULL;
     }
 
-    memset(table->entries, 0, sizeof(uhashtable_entry_t*) * HT_INITIAL_SIZE);
-    table->allocator      = allocator;
-    table->capacity       = HT_INITIAL_SIZE;
-    table->size           = 0;
-    table->graveyard_size = 0;
+    memset(pTable->ppEntries, 0, sizeof(uhashtable_entry_t*) * HT_INITIAL_SIZE);
+    pTable->allocator     = allocator;
+    pTable->capacity      = HT_INITIAL_SIZE;
+    pTable->size          = 0;
+    pTable->graveyardSize = 0;
 
-    if(error != NULL)
+    if(pError != NULL)
     {
-        *error = OS_NO_ERR;
+        *pError = OS_NO_ERR;
     }
 
-    return table;
+    return pTable;
 }
 
-OS_RETURN_E uhashtable_destroy(uhashtable_t* table)
+OS_RETURN_E uhashtableDestroy(uhashtable_t* pTable)
 {
     size_t i;
 
-    if(table == NULL || table->entries == NULL)
+    if(pTable == NULL || pTable->ppEntries == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Free the memory used by the table */
-    for(i = 0; i < table->capacity; ++i)
+    for(i = 0; i < pTable->capacity; ++i)
     {
-        if(table->entries[i] != NULL)
+        if(pTable->ppEntries[i] != NULL)
         {
-            table->allocator.free(table->entries[i]);
+            pTable->allocator.pFree(pTable->ppEntries[i]);
         }
     }
-    table->allocator.free(table->entries);
+    pTable->allocator.pFree(pTable->ppEntries);
 
     /* Reset attributes */
-    table->size           = 0;
-    table->capacity       = 0;
-    table->graveyard_size = 0;
-    table->entries        = NULL;
+    pTable->size           = 0;
+    pTable->capacity       = 0;
+    pTable->graveyardSize = 0;
+    pTable->ppEntries        = NULL;
 
     /* Free memory */
-    table->allocator.free(table);
+    pTable->allocator.pFree(pTable);
 
     return OS_NO_ERR;
 }
 
-OS_RETURN_E uhashtable_get(const uhashtable_t* table,
-                           const uintptr_t key,
-                           void** data)
+OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
+                          const uintptr_t     kKey,
+                          void**              ppData)
 {
     uint64_t hash;
-    size_t   entry_index;
+    size_t   entryIdx;
 
-    if(table == NULL || data == NULL || table->entries == NULL)
+    if(pTable == NULL || ppData == NULL || pTable->ppEntries == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Get the hash and ensure it does not overflow the current capacity */
-    hash        = _uhash_64(key);
-    entry_index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    hash        = _uhash64(kKey);
+    entryIdx = (size_t)(hash & (uint64_t)(pTable->capacity - 1));
 
     /* Search for the entry in the table. Note that due to the fact that our
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
-    while(table->entries[entry_index] != NULL)
+    while(pTable->ppEntries[entryIdx] != NULL)
     {
         /* Found the entry */
-        if(table->entries[entry_index]->key == key &&
-           table->entries[entry_index]->is_used == TRUE)
+        if(pTable->ppEntries[entryIdx]->key == kKey &&
+           pTable->ppEntries[entryIdx]->isUsed == TRUE)
         {
-            *data = table->entries[entry_index]->data;
+            *ppData = pTable->ppEntries[entryIdx]->pData;
             return OS_NO_ERR;
         }
 
         /* Increment the index */
-        entry_index = (entry_index + 1) % table->capacity;
+        entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
     return OS_ERR_INCORRECT_VALUE;
 }
 
-OS_RETURN_E uhashtable_set(uhashtable_t* table,
-                           const uintptr_t key,
-                           void* data)
+OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
+                          const uintptr_t kKey,
+                          void*           pData)
 {
     OS_RETURN_E err;
 
-    if(table == NULL || table->entries == NULL)
+    if(pTable == NULL || pTable->ppEntries == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Check if the current load is under the threshold, double the size */
-    if((float)table->capacity * HT_MAX_LOAD_FACTOR <
-       table->size + table->graveyard_size)
+    if((float)pTable->capacity * HT_MAX_LOAD_FACTOR <
+       pTable->size + pTable->graveyardSize)
     {
-        err = _uhashtable_rehash(table, 2);
+        err = _uhashtableRehash(pTable, 2);
         if(err != OS_NO_ERR)
         {
             return err;
@@ -453,31 +456,32 @@ OS_RETURN_E uhashtable_set(uhashtable_t* table,
     }
 
     /* Insert the entry */
-    return _uhashtable_set_entry(table, key, data);
+    return _uhashtableSetEntry(pTable, kKey, pData);
 }
 
-OS_RETURN_E uhashtable_remove(uhashtable_t* table,
-                              const uintptr_t key,
-                              void** data)
+OS_RETURN_E uhashtableRemove(uhashtable_t*    pTable,
+                              const uintptr_t kKey,
+                              void**          ppData)
 {
     uint64_t    hash;
-    size_t      entry_index;
+    size_t      entryIdx;
     OS_RETURN_E err;
 
-    if(table == NULL || table->entries == NULL)
+    if(pTable == NULL || pTable->ppEntries == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
 
     /* Get the hash and ensure it does not overflow the current capacity */
-    hash        = _uhash_64(key);
-    entry_index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    hash        = _uhash64(kKey);
+    entryIdx = (size_t)(hash & (uint64_t)(pTable->capacity - 1));
 
     /* Check if the graveyard load is under the threshold */
-    if((float)table->capacity * HT_MAX_GRAVEYARD_FACTOR < table->graveyard_size)
+    if((float)pTable->capacity * HT_MAX_GRAVEYARD_FACTOR <
+       pTable->graveyardSize)
     {
         /* Rehash with a growth factor or 1 to keep the same capacity */
-        err = _uhashtable_rehash(table, 1);
+        err = _uhashtableRehash(pTable, 1);
         if(err != OS_NO_ERR)
         {
             return err;
@@ -487,26 +491,26 @@ OS_RETURN_E uhashtable_remove(uhashtable_t* table,
     /* Search for the entry in the table. Note that due to the fact that our
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
-    while(table->entries[entry_index] != NULL)
+    while(pTable->ppEntries[entryIdx] != NULL)
     {
         /* Found the entry */
-        if(table->entries[entry_index]->key == key &&
-           table->entries[entry_index]->is_used == TRUE)
+        if(pTable->ppEntries[entryIdx]->key == kKey &&
+           pTable->ppEntries[entryIdx]->isUsed == TRUE)
         {
-            if(data != NULL)
+            if(ppData != NULL)
             {
-                *data = table->entries[entry_index]->data;
+                *ppData = pTable->ppEntries[entryIdx]->pData;
             }
-            table->entries[entry_index]->is_used = FALSE;
+            pTable->ppEntries[entryIdx]->isUsed = FALSE;
 
-            ++table->graveyard_size;
-            --table->size;
+            ++pTable->graveyardSize;
+            --pTable->size;
 
             return OS_NO_ERR;
         }
 
         /* Increment the index */
-        entry_index = (entry_index + 1) % table->capacity;
+        entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
     return OS_ERR_INCORRECT_VALUE;

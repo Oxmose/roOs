@@ -23,8 +23,8 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h>       /* Generic int types */
-#include <cpu.h>          /* CPU structures */
+#include <stdint.h> /* Generic int types */
+#include <cpu.h>    /* CPU structures */
 
 /*******************************************************************************
  * CONSTANTS
@@ -98,9 +98,9 @@ typedef enum
 typedef struct
 {
     /** @brief Thread's virtual CPU context, must be at the begining of the
-     * structure for easie interface with assembly.
+     * structure for easy interface with assembly.
      */
-    virtual_cpu_t v_cpu;
+    virtual_cpu_t vCpu;
 
     /**************************************
      * Thread properties
@@ -110,7 +110,7 @@ typedef struct
     int32_t tid;
 
     /** @brief Thread's name. */
-    char name[THREAD_NAME_MAX_LENGTH];
+    char pName[THREAD_NAME_MAX_LENGTH];
 
     /** @brief Thread's type. */
     THREAD_TYPE_E type;
@@ -128,59 +128,59 @@ typedef struct
     /** @brief Thread's wait type. This is inly relevant when the thread's state
      * is THREAD_STATE_WAITING.
      */
-    THREAD_WAIT_TYPE_E block_type;
+    THREAD_WAIT_TYPE_E blockType;
 
     /**************************************
      * System interface
      *************************************/
 
     /** @brief Thread's start arguments. */
-    void* args;
+    void* pArgs;
 
     /** @brief Thread's routine. */
-    void* (*entry_point)(void*);
+    void* (*pEntryPoint)(void*);
 
     /** @brief Thread's return value. */
-    void* ret_val;
+    void* retValue;
 
     /** @brief Thread's return state. This is only relevant when the thread
      * returned.
      */
-    THREAD_RETURN_STATE_E return_state;
+    THREAD_RETURN_STATE_E returnState;
 
     /** @brief Thread's return state. This is only relevant when when
      * return state is not THREAD_RETURN_STATE_RETURNED.
      */
-    THREAD_TERMINATE_CAUSE_E terminate_cause;
+    THREAD_TERMINATE_CAUSE_E terminateCause;
 
     /**************************************
      * Stacks
      *************************************/
 
     /** @brief Thread's stack. */
-    uintptr_t stack;
+    uintptr_t stackEnd;
 
     /** @brief Thread's stack size. */
-    uint32_t stack_size;
+    size_t    stackSize;
 
     /** @brief Thread's interrupt stack. */
-    uintptr_t int_stack;
+    uintptr_t intStackEnd;
 
     /** @brief Thread's interrupt stack size. */
-    uint32_t int_stack_size;
+    size_t    intStackSize;
 
     /**************************************
      * Time management
      *************************************/
 
     /** @brief Wake up time limit for the sleeping thread. */
-    uint64_t wakeup_time;
+    int64_t wakeupTime;
 
     /** @brief Thread's start time. */
-    uint64_t start_time;
+    int64_t startTime;
 
     /** @brief Thread's end time. */
-    uint64_t end_time;
+    int64_t endTime;
 } kernel_thread_t;
 
 /*******************************************************************************

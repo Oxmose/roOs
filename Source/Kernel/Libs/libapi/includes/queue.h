@@ -45,19 +45,19 @@ typedef struct
     /**
      * @brief The memory allocation function used by the allocator.
      *
-     * @param[in] alloc_size The size in bytes to be allocated.
+     * @param[in] allocSize The size in bytes to be allocated.
      *
      * @return A pointer to the allocated memory is returned. NULL is returned
      * if no memory was allocated.
      */
-    void*(*malloc)(size_t alloc_size);
+    void*(*pMalloc)(size_t allocSize);
 
     /**
      * @brief The memory free function used by the allocator.
      *
      * @param[out] ptr The start address of the memory to free.
      */
-    void(*free)(void* ptr);
+    void(*pFree)(void* ptr);
 } queue_alloc_t;
 
 /** @brief Queue node structure. */
@@ -67,18 +67,18 @@ typedef struct queue_node
     queue_alloc_t allocator;
 
     /** @brief Next node in the queue. */
-    struct queue_node* next;
+    struct queue_node* pNext;
     /** @brief Previous node in the queue. */
-    struct queue_node* prev;
+    struct queue_node* pPrev;
 
     /** @brief Tell if the node is present in a queue or stands alone. */
     bool_t enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
-    uintptr_t priority;
+    uint32_t priority;
 
     /** @brief Node's data pointer. Store the address of the contained data. */
-    void* data;
+    void* pData;
 } queue_node_t;
 
 /** @brief Queue structure. */
@@ -88,9 +88,9 @@ typedef struct
     queue_alloc_t allocator;
 
     /** @brief Head of the queue. */
-    queue_node_t* head;
+    queue_node_t* pHead;
     /** @brief Tail of the queue. */
-    queue_node_t* tail;
+    queue_node_t* pTail;
 
     /** @brief Current queue's size. */
     size_t size;
@@ -133,19 +133,19 @@ typedef struct
  *
  * @warning A node should be only used in one queue at most.
  *
- * @param[in] data The pointer to the data to carry in the node.
+ * @param[in] pData The pointer to the data to carry in the node.
  * @param[in] allocator The allocator to be used when allocating and freeing the
  * node.
- * @param[out] error A pointer to the variable that contains the function
+ * @param[out] pError A pointer to the variable that contains the function
  * success state. May be NULL. The error values can be the following:
  * - OS_ERR_NO_MORE_MEMORY if the allocator failed to allocate memory for the node.
  * - OS_NO_ERR if no error is encountered.
  *
  * @returns The node pointer is returned. In case of error NULL is returned.
  */
-queue_node_t* queue_create_node(void* data,
-                                queue_alloc_t allocator,
-                                OS_RETURN_E *error);
+queue_node_t* queueCreateNode(void*         pData,
+                              queue_alloc_t allocator,
+                              OS_RETURN_E*  pError);
 
 /**
  * @brief Deletes a queue node.
@@ -153,14 +153,14 @@ queue_node_t* queue_create_node(void* data,
  * @details Deletes a node from the memory. The node should not be used in any
  * queue. If it is the case, the function will return an error.
  *
- * @param[in, out] node The node pointer of pointer to destroy.
+ * @param[in, out] ppNode The node pointer of pointer to destroy.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the node is NULL.
  * - OS_ERR_UNAUTHORIZED_ACTION is returned if the node is still used in a list.
  */
-OS_RETURN_E queue_delete_node(queue_node_t** node);
+OS_RETURN_E queueDeleteNode(queue_node_t** ppNode);
 
 /**
  * @brief Creates an empty queue ready to be used.
@@ -170,14 +170,15 @@ OS_RETURN_E queue_delete_node(queue_node_t** node);
  *
  * @param[in] allocator The allocator to be used when allocating and freeing the
  * queue.
- * @param[out] error A pointer to the variable that will contain the function
+ * @param[out] pError A pointer to the variable that will contain the function
  * success state. May be NULL. The error values can be the following:
- * - OS_ERR_NO_MORE_MEMORY if the allocator failed to allocate memory for the queue.
+ * - OS_ERR_NO_MORE_MEMORY if the allocator failed to allocate memory for the
+ * queue.
  * - OS_NO_ERR if no error is encountered.
  *
  * @returns The queue pointer is returned. In case of error NULL is returned.
  */
-queue_t* queue_create_queue(queue_alloc_t allocator, OS_RETURN_E *error);
+queue_t* queueCreate(queue_alloc_t allocator, OS_RETURN_E* pError);
 
 /**
  * @brief Deletes a previously created queue.
@@ -185,14 +186,14 @@ queue_t* queue_create_queue(queue_alloc_t allocator, OS_RETURN_E *error);
  * @details Delete a queue from the memory. If the queue is not empty an error
  * is returned.
  *
- * @param[in, out] queue The queue pointer of pointer to destroy.
+ * @param[in, out] ppQueue The queue pointer of pointer to destroy.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue is NULL.
  * - OS_ERR_UNAUTHORIZED_ACTION is returned if the queue is not empty.
  */
-OS_RETURN_E queue_delete_queue(queue_t** queue);
+OS_RETURN_E queueDelete(queue_t** ppQueue);
 
 /**
  * @brief Enlists a node in the queue.
@@ -200,15 +201,15 @@ OS_RETURN_E queue_delete_queue(queue_t** queue);
  * @details Enlists a node in the queue given as parameter. The data will be
  * placed in the tail of the queue.
  *
- * @param[in] node A now node to add in the queue.
- * @param[in, out] queue The queue to manage.
+ * @param[in] pNode A now node to add in the queue.
+ * @param[in, out] pQueue The queue to manage.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
  */
-OS_RETURN_E queue_push(queue_node_t* node, queue_t* queue);
+OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue);
 
 /**
  * @brief Enlists a node in the queue.
@@ -216,18 +217,18 @@ OS_RETURN_E queue_push(queue_node_t* node, queue_t* queue);
  * @details Enlist a node in the queue given as parameter. The data will be
  * placed in the queue with regard to the priority argument.
  *
- * @param[in] node A now node to add in the queue.
- * @param[in, out] queue The queue to manage.
- * @param[in] priority The element priority.
+ * @param[in] pNode A now node to add in the queue.
+ * @param[in, out] pQueue The queue to manage.
+ * @param[in] kPriority The element priority.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
  */
-OS_RETURN_E queue_push_prio(queue_node_t* node,
-                            queue_t* queue,
-                            const uintptr_t priority);
+OS_RETURN_E queuePushPrio(queue_node_t*   pNode,
+                          queue_t*        pQueue,
+                          const uintptr_t kPriority);
 
 /**
  * @brief Removes a node from a queue.
@@ -235,8 +236,8 @@ OS_RETURN_E queue_push_prio(queue_node_t* node,
  * @details Removes a node from the queue given as parameter. The retreived node
  * that is returned is the one placed in the head of the QUEUE.
  *
- * @param[in, out] queue The queue to manage.
- * @param[out] error A pointer to the variable that contains the function
+ * @param[in, out] pQueue The queue to manage.
+ * @param[out] pError A pointer to the variable that contains the function
  * success state. May be NULL. The error values can be the following:
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
@@ -244,7 +245,7 @@ OS_RETURN_E queue_push_prio(queue_node_t* node,
  *
  * @return The data pointer placed in the head of the queue is returned.
  */
-queue_node_t* queue_pop(queue_t* queue, OS_RETURN_E* error);
+queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError);
 
 /**
  * @brief Finds a node containing the data given as parameter in the queue.
@@ -252,18 +253,19 @@ queue_node_t* queue_pop(queue_t* queue, OS_RETURN_E* error);
  * @details Find a node containing the data given as parameter in the queue.
  * An error is set if not any node is found.
  *
- * @param[in] queue The queue to search the data in.
- * @param[in] data The data contained by the node to find.
- * @param[out] error A pointer to the variable that contains the function
+ * @param[in] pQueue The queue to search the data in.
+ * @param[in] pData The data contained by the node to find.
+ * @param[out] pError A pointer to the variable that contains the function
  * successstate. May be NULL. The error values can be the following:
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
- * - OS_ERR_INCORRECT_VALUE is returned if the data could not be found in the queue.
+ * - OS_ERR_INCORRECT_VALUE is returned if the data could not be found in the
+ * queue.
  * - OS_NO_ERR if no error is encountered.
  *
  * @return The function returns a pointer to the node if found, NULL otherwise.
  */
-queue_node_t* queue_find(queue_t* queue, void* data, OS_RETURN_E *error);
+queue_node_t* queueFind(queue_t* pQueue, void* pData, OS_RETURN_E* pError);
 
 /**
  * @brief Removes a node from a queue.
@@ -271,16 +273,17 @@ queue_node_t* queue_find(queue_t* queue, void* data, OS_RETURN_E *error);
  * @details Removes a node from a queue given as parameter. If the node is not
  * found, nothing is done and an error is returned.
  *
- * @param[in, out] queue The queue containing the node.
- * @param[in] node The node to remove.
+ * @param[in, out] pQueue The queue containing the node.
+ * @param[in] pNode The node to remove.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
- * - OS_ERR_INCORRECT_VALUE is returned if the data could not be found in the queue.
+ * - OS_ERR_INCORRECT_VALUE is returned if the data could not be found in the
+ * queue.
  */
-OS_RETURN_E queue_remove(queue_t* queue, queue_node_t* node);
+OS_RETURN_E queueRemove(queue_t* pQueue, queue_node_t* pNode);
 
 #endif /* #ifndef __LIB_QUEUE_H_ */
 

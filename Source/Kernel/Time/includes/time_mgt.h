@@ -65,11 +65,16 @@ typedef struct
     uint8_t seconds;
 } time_t;
 
+/** @brief Defines the types of timers available. */
 typedef enum
 {
+    /** @brief Main timer, used for scheduling and general time keeping. */
     MAIN_TIMER,
+    /** @brief RTC timer, used real time clock information. */
     RTC_TIMER,
+    /** @brief Auxiliary timers, can be used for general purpose. */
     AUX_TIMER,
+    /** @brief Lifetime timer, keeps track of the uptime. */
     LIFETIME_TIMER
 } TIMER_TYPE_E;
 
@@ -85,7 +90,7 @@ typedef struct
      *
      * @return The function should return the frequency of the timer source.
      */
-    uint32_t (*get_frequency)(void);
+    uint32_t (*pGetFrequency)(void);
 
     /**
      * @brief The function should allow the kernel to set the frequency of a
@@ -94,29 +99,29 @@ typedef struct
      * @details The function should allow the kernel to set the frequency of a
      * timer source. The frequency is defined in Hz.
      *
-     * @param[in] frequency The frequency to apply to the timer source.
+     * @param[in] kFrequency The frequency to apply to the timer source.
      */
-    void (*set_frequency)(const uint32_t frequency);
+    void (*pSetFrequency)(const uint32_t kFrequency);
 
     /**
      * @brief Returns the time elasped since the last timer's reset in ns.
      *
      * @details Returns the time elasped since the last timer's reset in ns. The
-     * timer can be set with the set_time_ns function.
+     * timer can be set with the pSetTimeNs function.
      *
      * @return The time in nanosecond since the last timer reset is returned.
      */
-    uint64_t (*get_time_ns)(void);
+    uint64_t (*pGetTimeNs)(void);
 
     /**
      * @brief Sets the time elasped in ns.
      *
      * @details Sets the time elasped in ns. The timer can be get with the
-     * get_time_ns function.
+     * pGetTimeNs function.
      *
-     * @param[in] time_ns The time in nanoseconds to set.
+     * @param[in] kTimeNS The time in nanoseconds to set.
      */
-    void (*set_time_ns)(const uint64_t time_ns);
+    void (*pSetTimeNs)(const uint64_t kTimeNS);
 
     /**
      * @brief Returns the current date.
@@ -125,7 +130,7 @@ typedef struct
      *
      * @returns The current date in in RTC date format
      */
-    date_t (*get_date)(void);
+    date_t (*pGetDate)(void);
 
     /**
      * @brief Returns the current daytime.
@@ -134,21 +139,21 @@ typedef struct
      *
      * @returns The current daytime.
      */
-    time_t (*get_daytime)(void);
+    time_t (*pGetDaytime)(void);
 
     /**
      * @brief The function should enable the timer's interrupt.
      *
      * @details The function should enable the timer's interrupt.
      */
-    void (*enable)(void);
+    void (*pEnable)(void);
 
     /**
      * @brief The function should disable the timer's interrupt.
      *
      * @details The function should disable the timer's interrupt.
      */
-    void (*disable)(void);
+    void (*pDisable)(void);
 
     /**
      * @brief The function should set the timer's tick handler.
@@ -167,7 +172,7 @@ typedef struct
      * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
      *   registered for the timer.
      */
-    OS_RETURN_E (*set_handler)(void(*handler)(kernel_thread_t*));
+    OS_RETURN_E (*pSetHandler)(void(*handler)(kernel_thread_t*));
 
     /**
      * @brief The function should remove the timer tick handler.
@@ -181,19 +186,7 @@ typedef struct
      * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the timer line has no
      *   handler attached.
      */
-    OS_RETURN_E (*remove_handler)(void);
-
-    /**
-     * @brief The function should return the IRQ line associated to the timer
-     * source.
-     *
-     * @details The function should return the IRQ line associated to the timer
-     * source.
-     *
-     * @return The function should return the IRQ line associated to the timer
-     * source.
-     */
-    uint32_t (*get_irq)(void);
+    OS_RETURN_E (*pRemoveHandler)(void);
 
     /** @brief This function can be used to execute an operation in the
      * driver at every tick of the timer.
@@ -201,7 +194,7 @@ typedef struct
      * @details This function can be used to execute an operation in the
      * driver at every tick of the timer such as a tick acknowledge.
      */
-    void (*tickManager)(void);
+    void (*pTickManager)(void);
 } kernel_timer_t;
 
 /*******************************************************************************
@@ -242,7 +235,7 @@ typedef struct
  * @return The success state or the error code.
  */
 OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
-                            const TIMER_TYPE_E kType);
+                            const TIMER_TYPE_E    kType);
 
 /**
  * @brief Returns the current uptime.
@@ -251,7 +244,7 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
  *
  * @return The current uptime in ns.
  */
-uint64_t time_get_current_uptime(void);
+uint64_t timeGetUptime(void);
 
 /**
  * @brief Returns the number of system's ticks since the system started.
@@ -260,7 +253,7 @@ uint64_t time_get_current_uptime(void);
  *
  * @returns The number of system's ticks since the system started.
  */
-uint64_t time_get_tick_count(void);
+uint64_t timeGetTicks(void);
 
 /**
  * @brief Performs a wait for ms nanoseconds.
@@ -268,12 +261,12 @@ uint64_t time_get_tick_count(void);
  * @details Performs a wait for ms nanoseconds based on the kernel's main
  * timer.
  *
- * @param[in] ns The time to wait in nanoseconds.
+ * @param[in] kNs The time to wait in nanoseconds.
  *
  * @warning This function must only be called before the scheduler is
  * initialized. Otherwise the function will immediatly return.
  */
-void time_wait_no_sched(const uint64_t ns);
+void timeWaitNoScheduler(const uint64_t kNs);
 
 /**
  * @brief Registers the function to call the system's scheduler.
@@ -281,13 +274,13 @@ void time_wait_no_sched(const uint64_t ns);
  * @details Registers the function to call the system's scheduler. This function
  * will be called at each tick of the main timer.
  *
- * @param[in] scheduler_call The scheduling routine to call every tick.
+ * @param[in] pSchedRoutine The scheduling routine to call every tick.
  *
  * @return The success state or the error code.
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER if the scheduler routine pointer is NULL.
  */
-OS_RETURN_E time_register_scheduler(void(*scheduler_call)(kernel_thread_t*));
+OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*));
 
 
 #endif /* #ifndef __TIME_TIME_MGT_H_ */

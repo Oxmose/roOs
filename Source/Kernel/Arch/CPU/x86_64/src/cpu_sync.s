@@ -49,16 +49,16 @@ section .text
 ;     Input: rdi: Address of the lock
 
 cpuSpinlockAcquire:
-__pause_spinlock_entry:
+__pauseSpinlockEntry:
     lock bts dword [rdi], 0
-    jc   __pause_spinlock_pause
+    jc   __pauseSpinlockPause
     ret
 
-__pause_spinlock_pause:
+__pauseSpinlockPause:
     pause
     test  dword [rdi], 1
-    jnz   __pause_spinlock_pause
-    jmp   __pause_spinlock_entry
+    jnz   __pauseSpinlockPause
+    jmp   __pauseSpinlockEntry
 
 ;-------------------------------------------------------------------------------
 ; Unlock Spinlock

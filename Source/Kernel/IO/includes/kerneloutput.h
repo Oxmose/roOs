@@ -46,15 +46,15 @@
 
 /* Defines the output macros that can be enabled or disabled at compile time */
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-#define KERNEL_INFO(...)    kernel_info(__VA_ARGS__)
-#define KERNEL_SUCCESS(...) kernel_success(__VA_ARGS__)
+#define KERNEL_INFO(...)    kprintfInfo(__VA_ARGS__)
+#define KERNEL_SUCCESS(...) kprintfSuccess(__VA_ARGS__)
 #else
 #define KERNEL_INFO(...)
 #define KERNEL_SUCCESS(...)
 #endif
 
 #if KERNEL_LOG_LEVEL >= ERROR_LOG_LEVEL
-#define KERNEL_ERROR(...) kernel_error(__VA_ARGS__)
+#define KERNEL_ERROR(...) kprintfError(__VA_ARGS__)
 #else
 #define KERNEL_ERROR(...)
 #endif
@@ -64,7 +64,7 @@
 do {                                                                    \
     if(ENABLED)                                                         \
     {                                                                   \
-        kernel_debug(" " MODULE " | " STR " | " __FILE__ ":%d\n",       \
+        kprintfDebug(" " MODULE " | " STR " | " __FILE__ ":%d\n",       \
                      ##__VA_ARGS__, __LINE__);                          \
     }                                                                   \
 } while(0);
@@ -95,10 +95,10 @@ do {                                                                    \
  * @details Prints the desired string to the screen. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_printf(const char *fmt, ...);
+void kprintf(const char* pFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -107,10 +107,10 @@ void kernel_printf(const char *fmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_error(const char *fmt, ...);
+void kprintfError(const char* pFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -119,10 +119,10 @@ void kernel_error(const char *fmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_success(const char *fmt, ...);
+void kprintfSuccess(const char* pFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -131,10 +131,10 @@ void kernel_success(const char *fmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_info(const char *fmt, ...);
+void kprintfInfo(const char* pFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -143,10 +143,10 @@ void kernel_info(const char *fmt, ...);
  * at the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_debug(const char *fmt, ...);
+void kprintfDebug(const char* pFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -155,24 +155,18 @@ void kernel_debug(const char *fmt, ...);
  * at the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] fmt The format string to output.
+ * @param[in] pFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kernel_warning(const char *fmt, ...);
+void kprintfWarning(const char* pFmt, ...);
 
 /**
- * @brief Prints a string to the screen attached to the arguments list.
+ * @brief Flushes the output buffer.
  *
- * @details Prints the desired string to the screen with the argument list given
- * as parameter, this is conveniently be used by printf.
- *
- * @warning This function should only be called when the kernel is fully
- * initialized.
- *
- * @param[in] str The format string to output.
- * @param[in] args The arguments list.
+ * @details The output uses a buffer before sending the data to the output
+ * device. This function force a push to the device.
  */
-void kernel_doprint(const char* str, __builtin_va_list args);
+void kprintfFlush(void);
 
 #endif /* #ifndef __IO_KERNEL_OUTPUT_H_ */
 

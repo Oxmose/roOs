@@ -60,6 +60,19 @@
 /* None */
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/**
+ * @brief Initializes the tracing feature of the kernel.
+ *
+ * @details Initializes the tracing feature of the kernel. The trace buffer
+ * is initialized and the tracing feature ready to be used after this function
+ * is called.
+ */
+static void _kernelTraceInit(void);
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
@@ -74,83 +87,73 @@ extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 
 /************************** Static global variables ***************************/
 
-/** @brief Trace buffer cursor */
-static size_t cursor;
+/** @brief Trace buffer sCursor */
+static size_t sCursor;
 
-/** @brief Tells if the tracing was enabled. */
-static bool_t enabled = FALSE;
+/** @brief Tells if the tracing was sEnabled. */
+static bool_t sEnabled = FALSE;
 
 /** @brief Trace buffer address */
-static uint32_t* trace_buffer = (uint32_t*)&_KERNEL_TRACE_BUFFER_BASE;
+static uint32_t* spTraceBuffer = (uint32_t*)&_KERNEL_TRACE_BUFFER_BASE;
 /** @brief Trace buffer size */
-static size_t trace_buffer_size = (size_t)&_KERNEL_TRACE_BUFFER_SIZE;
-
-/*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/**
- * @brief Initializes the tracing feature of the kernel.
- *
- * @details Initializes the tracing feature of the kernel. The trace buffer
- * is initialized and the tracing feature ready to be used after this function
- * is called.
- */
-static void kernel_trace_init(void);
+static size_t sTraceBufferSize = (size_t)&_KERNEL_TRACE_BUFFER_SIZE;
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void kernel_trace_init(void)
+static void _kernelTraceInit(void)
 {
     /** Init the buffer */
-    memset(trace_buffer, 0, trace_buffer_size);
+    memset(spTraceBuffer, 0, sTraceBufferSize);
 
     /* Init the trace buffer header */
-    trace_buffer[0] = TRACE_LIB_MAGIC;
-    trace_buffer[1] = TRACE_LIB_VERSION;
+    spTraceBuffer[0] = TRACE_LIB_MAGIC;
+    spTraceBuffer[1] = TRACE_LIB_VERSION;
 
-    /* Init the cursor after the header */
-    cursor = TRACE_LIB_HEADER_LEN;
+    /* Init the sCursor after the header */
+    sCursor = TRACE_LIB_HEADER_LEN;
 
-    enabled = TRUE;
+    sEnabled = TRUE;
 }
 
-void kernel_trace_event(const TRACE_EVENT_E event, const uint32_t field_count,
-                        ...)
+void kernelTraceEvent(const TRACE_EVENT_E kEvent,
+                      const uint32_t      kFieldCount,
+                      ...)
 {
     __builtin_va_list args;
     uint32_t          i;
-    uint64_t          timestpamp;
+    uint64_t          timestamp;
 
     /* Init the tracing feature is needed */
-    if(enabled == FALSE)
+    if(sEnabled == FALSE)
     {
-        kernel_trace_init();
+        _kernelTraceInit();
     }
 
-    /* Get the variadic arguments */
-    __builtin_va_start(args, field_count);
+    /* TODO: Add locks */
 
-    /* Check the cursor position and cycle if needed */
-    if(cursor + sizeof(event) > trace_buffer_size)
+    /* Get the variadic arguments */
+    __builtin_va_start(args, kFieldCount);
+
+    /* Check the sCursor position and cycle if needed */
+    if(sCursor + sizeof(kEvent) > sTraceBufferSize)
     {
-        cursor = TRACE_LIB_HEADER_LEN;
+        sCursor = TRACE_LIB_HEADER_LEN;
     }
 
     /* Write the event */
-    trace_buffer[cursor++] = (uint32_t)event;
+    spTraceBuffer[sCursor++] = (uint32_t)kEvent;
 
     /* Write the timestamp */
-    timestpamp = time_get_current_uptime();
-    trace_buffer[cursor++] = (uint32_t)timestpamp;
-    trace_buffer[cursor++] = (uint32_t)(timestpamp >> 32);
+    timestamp = timeGetUptime();
+    spTraceBuffer[sCursor++] = (uint32_t)timestamp;
+    spTraceBuffer[sCursor++] = (uint32_t)(timestamp >> 32);
 
     /* Write all metadata */
-    for(i = 0; i < field_count; ++i)
+    for(i = 0; i < kFieldCount; ++i)
     {
-        trace_buffer[cursor++] = __builtin_va_arg(args, uint32_t);
+        spTraceBuffer[sCursor++] = __builtin_va_arg(args, uint32_t);
     }
 
     __builtin_va_end(args);

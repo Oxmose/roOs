@@ -25,13 +25,13 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stddef.h>        /* Standard definitions */
-#include <stdint.h>        /* Generic int types */
-#include <string.h>        /* String manipulation */
-#include <panic.h>         /* Kernel panic */
+#include <kheap.h>        /* Kernel heap */
+#include <panic.h>        /* Kernel panic */
+#include <stddef.h>       /* Standard definitions */
+#include <stdint.h>       /* Generic int types */
+#include <string.h>       /* String manipulation */
+#include <kerror.h>       /* Kernel errors definitions */
 #include <kerneloutput.h> /* Kernel output methods */
-#include <kheap.h>         /* Kernel heap */
-#include <kerror.h>        /* Kernel errors definitions */
 
 /* Configuration files */
 #include <config.h>
@@ -78,6 +78,12 @@
 }
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/* None */
+
+/*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
@@ -91,302 +97,324 @@
 /* None */
 
 /*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
-
-/* None */
-
-/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-kqueue_node_t* kqueue_create_node(void* data)
+kqueue_node_t* kQueueCreateNode(void* pData)
 {
-    kqueue_node_t* new_node;
+    kqueue_node_t* pNewNode;
 
     /* Create new node */
-    new_node = kmalloc(sizeof(kqueue_node_t));
-    KQUEUE_ASSERT(new_node != NULL, "Could not allocate knode", OS_ERR_NO_MORE_MEMORY);
+    pNewNode = kmalloc(sizeof(kqueue_node_t));
+    KQUEUE_ASSERT(pNewNode != NULL,
+                  "Could not allocate knode",
+                  OS_ERR_NO_MORE_MEMORY);
 
 
     /* Init the structure */
-    memset(new_node, 0, sizeof(kqueue_node_t));
-    new_node->data = data;
+    memset(pNewNode, 0, sizeof(kqueue_node_t));
+    pNewNode->pData = pData;
 
-    return new_node;
+    return pNewNode;
 }
 
-void kqueue_delete_node(kqueue_node_t** node)
+void kQueueDestroyNode(kqueue_node_t** ppNode)
 {
-    KQUEUE_ASSERT((node != NULL && *node != NULL),
+    KQUEUE_ASSERT((ppNode != NULL && *ppNode != NULL),
                   "Tried to delete a NULL node",
                   OS_ERR_NULL_POINTER);
 
-    KQUEUE_ASSERT((*node)->enlisted == FALSE,
+    KQUEUE_ASSERT((*ppNode)->enlisted == FALSE,
                   "Tried to delete an enlisted node",
                   OS_ERR_UNAUTHORIZED_ACTION);
 
-    kfree(*node);
-    *node = NULL;
+    kfree(*ppNode);
+    *ppNode = NULL;
 }
 
-kqueue_t* kqueue_create_queue(void)
+kqueue_t* kQueueCreate(void)
 {
-    kqueue_t* new_queue;
+    kqueue_t* pNewQueue;
 
     /* Create new node */
-    new_queue = kmalloc(sizeof(kqueue_t));
-    KQUEUE_ASSERT(new_queue != NULL,
+    pNewQueue = kmalloc(sizeof(kqueue_t));
+    KQUEUE_ASSERT(pNewQueue != NULL,
                   "Could not allocate kqueue",
                   OS_ERR_NO_MORE_MEMORY);
 
     /* Init the structure */
-    memset(new_queue, 0, sizeof(kqueue_t));
+    memset(pNewQueue, 0, sizeof(kqueue_t));
 
-    return new_queue;
+    return pNewQueue;
 }
 
-void kqueue_delete_queue(kqueue_t** queue)
+void kQueueDestroy(kqueue_t** ppQueue)
 {
-    KQUEUE_ASSERT((queue != NULL && *queue != NULL),
+    KQUEUE_ASSERT((ppQueue != NULL && *ppQueue != NULL),
                   "Tried to delete a NULL queue",
                   OS_ERR_NULL_POINTER);
 
-    KQUEUE_ASSERT(((*queue)->head == NULL && (*queue)->tail == NULL),
+    KQUEUE_ASSERT(((*ppQueue)->pHead == NULL && (*ppQueue)->pTail == NULL),
                   "Tried to delete a non empty queue",
                   OS_ERR_UNAUTHORIZED_ACTION);
 
-    kfree(*queue);
-    *queue = NULL;
+    kfree(*ppQueue);
+    *ppQueue = NULL;
 }
 
-void kqueue_push(kqueue_node_t* node, kqueue_t* queue)
+void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 {
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue try push knode 0x%p in kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue try push knode 0x%p in kqueue 0x%p",
+                 pNode,
+                 pQueue);
 
-    KQUEUE_ASSERT((node != NULL && queue != NULL),
+    KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         /* Set the first item */
-        queue->head = node;
-        queue->tail = node;
-        node->next = NULL;
-        node->prev = NULL;
+        pQueue->pHead = pNode;
+        pQueue->pTail = pNode;
+        pNode->pNext  = NULL;
+        pNode->pPrev  = NULL;
     }
     else
     {
         /* Just put on the head */
-        node->next = queue->head;
-        node->prev = NULL;
-        queue->head->prev = node;
-        queue->head = node;
+        pNode->pNext         = pQueue->pHead;
+        pNode->pPrev         = NULL;
+        pQueue->pHead->pPrev = pNode;
+        pQueue->pHead        = pNode;
     }
 
-    ++queue->size;
-    node->enlisted = TRUE;
+    ++pQueue->size;
+    pNode->enlisted = TRUE;
 
-    KQUEUE_ASSERT((node->next != node->prev ||
-                   node->next == NULL ||
-                   node->prev == NULL),
+    KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
+                   pNode->pNext == NULL ||
+                   pNode->pPrev == NULL),
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,  "KQUEUE",
-                 "KQueue pushed knode 0x%p in kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue pushed knode 0x%p in kqueue 0x%p",
+                 pNode,
+                 pQueue);
 }
 
 
-void kqueue_push_prio(kqueue_node_t* node,
-                      kqueue_t* queue,
-                      const uintptr_t priority)
+void kQueuePushPrio(kqueue_node_t* pNode,
+                    kqueue_t*      pQueue,
+                    const uint32_t kPriority)
 {
-    kqueue_node_t* cursor;
+    kqueue_node_t* pCursor;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue try push prio knode 0x%p in kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue try push prio knode 0x%p in kqueue 0x%p",
+                 pNode,
+                 pQueue);
 
-    KQUEUE_ASSERT((node != NULL && queue != NULL),
+    KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    node->priority = priority;
+    pNode->priority = kPriority;
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         /* Set the first item */
-        queue->head = node;
-        queue->tail = node;
-        node->next = NULL;
-        node->prev = NULL;
+        pQueue->pHead = pNode;
+        pQueue->pTail = pNode;
+        pNode->pNext  = NULL;
+        pNode->pPrev  = NULL;
     }
     else
     {
-        cursor = queue->head;
-        while(cursor != NULL && cursor->priority > priority)
+        pCursor = pQueue->pHead;
+        while(pCursor != NULL && pCursor->priority > kPriority)
         {
-            cursor = cursor->next;
+            pCursor = pCursor->pNext;
         }
 
-        if(cursor != NULL)
+        if(pCursor != NULL)
         {
-            node->next = cursor;
-            node->prev = cursor->prev;
-            cursor->prev = node;
-            if(node->prev != NULL)
+            pNode->pNext   = pCursor;
+            pNode->pPrev   = pCursor->pPrev;
+            pCursor->pPrev = pNode;
+
+            if(pNode->pPrev != NULL)
             {
-                node->prev->next = node;
+                pNode->pPrev->pNext = pNode;
             }
             else
             {
-                queue->head = node;
+                pQueue->pHead = pNode;
             }
         }
         else
         {
             /* Just put on the tail */
-            node->prev = queue->tail;
-            node->next = NULL;
-            queue->tail->next = node;
-            queue->tail = node;
+            pNode->pPrev         = pQueue->pTail;
+            pNode->pNext         = NULL;
+            pQueue->pTail->pNext = pNode;
+            pQueue->pTail        = pNode;
         }
     }
-    ++queue->size;
-    node->enlisted = TRUE;
+    ++pQueue->size;
+    pNode->enlisted = TRUE;
 
-    KQUEUE_ASSERT((node->next != node->prev ||
-                   node->next == NULL ||
-                   node->prev == NULL),
+    KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
+                   pNode->pNext == NULL ||
+                   pNode->pPrev == NULL),
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue pushed knode 0x%p in kqueue 0x%p", node, queue);
+                 "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
 }
 
-kqueue_node_t* kqueue_pop(kqueue_t* queue)
+kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 {
-    kqueue_node_t* node;
+    kqueue_node_t* pNode;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue try pop knode from kqueue 0x%p", queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue try pop knode from kqueue 0x%p",
+                 pQueue);
 
-    KQUEUE_ASSERT(queue != NULL,
+    KQUEUE_ASSERT(pQueue != NULL,
                   "Cannot pop NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
     /* If this queue is empty */
-    if(queue->head == NULL)
+    if(pQueue->pHead == NULL)
     {
         return NULL;
     }
 
     /* Dequeue the last item */
-    node = queue->tail;
+    pNode = pQueue->pTail;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "Pop knode 0x%p from kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "Pop knode 0x%p from kqueue 0x%p",
+                 pNode,
+                 pQueue);
 
-    if(node->prev != NULL)
+    if(pNode->pPrev != NULL)
     {
-        node->prev->next = NULL;
-        queue->tail = node->prev;
+        pNode->pPrev->pNext = NULL;
+        pQueue->pTail = pNode->pPrev;
     }
     else
     {
-        queue->head = NULL;
-        queue->tail = NULL;
+        pQueue->pHead = NULL;
+        pQueue->pTail = NULL;
     }
 
-    --queue->size;
+    --pQueue->size;
 
-    node->next = NULL;
-    node->prev = NULL;
-    node->enlisted = FALSE;
+    pNode->pNext = NULL;
+    pNode->pPrev = NULL;
+    pNode->enlisted = FALSE;
 
-    return node;
+    return pNode;
 }
 
-kqueue_node_t* kqueue_find(kqueue_t* queue, void* data)
+kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData)
 {
-    kqueue_node_t* node;
+    kqueue_node_t* pNode;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue try find data 0x%p from kqueue 0x%p", data, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue try find data 0x%p from kqueue 0x%p",
+                 kpData,
+                 kpQueue);
 
-    KQUEUE_ASSERT(queue != NULL,
+    KQUEUE_ASSERT(kpQueue != NULL,
                   "Cannot find in NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
     /* Search for the data */
-    node = queue->head;
-    while(node != NULL && node->data != data)
+    pNode = kpQueue->pHead;
+    while(pNode != NULL && pNode->pData != kpData)
     {
-        node = node->next;
+        pNode = pNode->pNext;
     }
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue found node 0x%p from kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue found node 0x%p from kqueue 0x%p",
+                 pNode,
+                 kpQueue);
 
-    return node;
+    return pNode;
 }
 
-void kqueue_remove(kqueue_t* queue, kqueue_node_t* node, const bool_t panic)
+void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 {
-    kqueue_node_t* cursor;
+    kqueue_node_t* pCursor;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue try renove knode 0x%p from kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue try renove knode 0x%p from kqueue 0x%p",
+                 pNode,
+                 pQueue);
 
-    KQUEUE_ASSERT((node != NULL && queue != NULL),
+    KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot remove with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
     /* Search for node in the queue*/
-    cursor = queue->head;
-    while(cursor != NULL && cursor != node)
+    pCursor = pQueue->pHead;
+    while(pCursor != NULL && pCursor != pNode)
     {
-        cursor = cursor->next;
+        pCursor = pCursor->pNext;
     }
 
-    KQUEUE_ASSERT((cursor != NULL || panic == FALSE),
+    KQUEUE_ASSERT((pCursor != NULL || kPanic == FALSE),
                   "Could not find knode to remove",
                   OS_ERR_INCORRECT_VALUE);
 
     /* Manage link */
-    if(cursor->prev != NULL && cursor->next != NULL)
+    if(pCursor->pPrev != NULL && pCursor->pNext != NULL)
     {
-        cursor->prev->next = cursor->next;
-        cursor->next->prev = cursor->prev;
+        pCursor->pPrev->pNext = pCursor->pNext;
+        pCursor->pNext->pPrev = pCursor->pPrev;
     }
-    else if(cursor->prev == NULL && cursor->next != NULL)
+    else if(pCursor->pPrev == NULL && pCursor->pNext != NULL)
     {
-        queue->head = cursor->next;
-        cursor->next->prev = NULL;
+        pQueue->pHead = pCursor->pNext;
+        pCursor->pNext->pPrev = NULL;
     }
-    else if(cursor->prev != NULL && cursor->next == NULL)
+    else if(pCursor->pPrev != NULL && pCursor->pNext == NULL)
     {
-        queue->tail = cursor->prev;
-        cursor->prev->next = NULL;
+        pQueue->pTail = pCursor->pPrev;
+        pCursor->pPrev->pNext = NULL;
     }
     else
     {
-        queue->head = NULL;
-        queue->tail = NULL;
+        pQueue->pHead = NULL;
+        pQueue->pTail = NULL;
     }
 
-    node->next = NULL;
-    node->prev = NULL;
+    pNode->pNext = NULL;
+    pNode->pPrev = NULL;
 
-    node->enlisted = FALSE;
+    pNode->enlisted = FALSE;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
-                 "KQueue renoved knode 0x%p from kqueue 0x%p", node, queue);
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
+                 "KQUEUE",
+                 "KQueue renoved knode 0x%p from kqueue 0x%p",
+                 pNode, pQueue);
 }
 
 /************************************ EOF *************************************/

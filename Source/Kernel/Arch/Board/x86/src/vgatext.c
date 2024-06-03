@@ -351,6 +351,7 @@ static console_driver_t sVGAConsoleDriver = {
 static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 {
     const uintptr_t* ptrProp;
+    const uint32_t*  uintProp;
     size_t           propLen;
     OS_RETURN_E      retCode;
 
@@ -364,6 +365,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
+#if ARCH_I386
     sDrvCtrl.pFramebuffer    = (uint16_t*)FDTTOCPU32(*ptrProp);
     sDrvCtrl.framebufferSize = (size_t)FDTTOCPU32(*(ptrProp + 1));
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
@@ -371,17 +373,28 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
                  "Framebuffer: 0x%p | Size: 0x%p",
                  sDrvCtrl.pFramebuffer,
                  sDrvCtrl.framebufferSize);
+#elif ARCH_X86_64
+    sDrvCtrl.pFramebuffer    = (uint16_t*)FDTTOCPU64(*ptrProp);
+    sDrvCtrl.framebufferSize = (size_t)FDTTOCPU64(*(ptrProp + 1));
+    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Framebuffer: 0x%p | Size: 0x%p",
+                 sDrvCtrl.pFramebuffer,
+                 sDrvCtrl.framebufferSize);
+#else
+    #error "Invalid architecture"
+#endif
 
     /* Get the VGA CPU communication ports */
-    ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    uintProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*ptrProp);
-    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(ptrProp + 1));
+    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
+    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -390,15 +403,15 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
                  sDrvCtrl.cpuDataPort);
 
     /* Get the resolution */
-    ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
-    if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
+    uintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
+    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the resolution from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.columnCount = (uint8_t)FDTTOCPU32(*ptrProp);
-    sDrvCtrl.lineCount   = (uint8_t)FDTTOCPU32(*(ptrProp + 1));
+    sDrvCtrl.columnCount = (uint8_t)FDTTOCPU32(*uintProp);
+    sDrvCtrl.lineCount   = (uint8_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,

@@ -205,12 +205,12 @@ if __name__ == "__main__":
             # Update test file
             UpdateTestFile(testListFileName, group["group"], group["name"])
 
-            retValue = os.system("make clean > /dev/null")
+            retValue = os.system("make clean")
             if retValue != 0:
                 error += 1
                 continue
 
-            retValue = os.system("make target={} TESTS=TRUE > \"../GeneratedFiles/CompileOutput_{}_{}.txt\" 2>&1".format(target, group["name"], target))
+            retValue = os.system("make target={} TESTS=TRUE".format(target, group["name"], target))
             if retValue != 0:
                 error += 1
                 continue

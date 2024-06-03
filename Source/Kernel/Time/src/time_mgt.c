@@ -153,7 +153,7 @@ static void _time_main_timer_handler(kernel_thread_t* curr_thread)
     ++sys_tick_count;
 
     /* EOI */
-    kernel_interrupt_set_irq_eoi(sys_main_timer.get_irq());
+    kernel_interrupt_set_irq_eoi(sys_main_timer.get_irq()); // TODO: Move this to timer driver, we might not even need get IRQ anymore
 
     if(sys_main_timer.tickManager != NULL)
     {

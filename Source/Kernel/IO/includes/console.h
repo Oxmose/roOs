@@ -269,7 +269,8 @@ typedef struct
      */
     void (*pPutChar)(void* pDriverCtrl, const char kCharacter);
 
-    /** @brief Contains a pointer to the driver controler, set by the driver
+    /**
+     * @brief Contains a pointer to the driver controler, set by the driver
      * at the moment of the initialization of this structure.
      */
     void* pDriverCtrl;

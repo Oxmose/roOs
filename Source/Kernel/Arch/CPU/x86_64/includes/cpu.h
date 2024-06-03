@@ -191,21 +191,21 @@ inline static int32_t _cpuCPUID(const uint32_t kCode, uint32_t regs[4])
 /** @brief Clears interupt bit which results in disabling interrupts. */
 inline static void _cpuClearInterrupt(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_DISABLE_INTERRUPT, 0);
+
     __asm__ __volatile__("cli":::"memory");
 }
 
 /** @brief Sets interrupt bit which results in enabling interupts. */
 inline static void _cpuSetInterrupt(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_ENABLE_INTERRUPT, 0);
+
     __asm__ __volatile__("sti":::"memory");
 }
 
 /** @brief Halts the CPU for lower energy consuption. */
 inline static void _cpuHalt(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HALT, 0);
+
     __asm__ __volatile__ ("hlt":::"memory");
 }
 

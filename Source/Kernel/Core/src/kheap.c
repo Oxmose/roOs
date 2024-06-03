@@ -455,18 +455,6 @@ void kHeapInit(void)
                         (((uintptr_t)pMem + ALIGN - 1) & (~(ALIGN - 1)));
     int8_t*  pMemEnd   = (int8_t*)(((uintptr_t)pMem + size) & (~(ALIGN - 1)));
 
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_INIT_START,
-                       2,
-                       (uintptr_t)pMem & 0xFFFFFFFF,
-                       (uintptr_t)pMem >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_INIT_START,
-                       2,
-                       (uintptr_t)pMem & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
     sMemFree       = 0;
     sKheapInitFree = 0;
     sMemMeta       = 0;
@@ -499,20 +487,6 @@ void kHeapInit(void)
 
     KERNEL_DEBUG(KHEAP_DEBUG_ENABLED, "KHEAP",
                  "Kernel Heap Initialized at 0x%p", pMemStart);
-
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_INIT_END,
-                       3,
-                       (uintptr_t)pMem & 0xFFFFFFFF,
-                       (uintptr_t)pMem >> 32,
-                       sKheapInitFree);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_INIT_END,
-                       3,
-                       (uintptr_t)pMem & 0xFFFFFFFF,
-                       (uintptr_t)0,
-                       sKheapInitFree);
-#endif
 
     TEST_POINT_FUNCTION_CALL(kheap_test, TEST_KHEAP_ENABLED);
 }
@@ -600,22 +574,6 @@ void* kmalloc(size_t size)
 
     EXIT_CRITICAL(intState);
 
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_ALLOC,
-                       4,
-                       (uintptr_t)chunk->pData & 0xFFFFFFFF,
-                       (uintptr_t)chunk->pData >> 32,
-                       size,
-                       sMemFree);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_ALLOC,
-                       4,
-                       (uintptr_t)chunk->pData & 0xFFFFFFFF,
-                       (uintptr_t)0,
-                       size,
-                       sMemFree);
-#endif
-
     return pChunk->pData;
 }
 
@@ -670,20 +628,6 @@ void kfree(void* ptr)
                  "[KHEAP] Kheap freed 0x%p -> %uB",
                  ptr,
                  used);
-
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_FREE,
-                       3,
-                       (uintptr_t)ptr & 0xFFFFFFFF,
-                       (uintptr_t)ptr >> 32,
-                       sMemFree);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_HEAP_FREE,
-                       3,
-                       (uintptr_t)ptr & 0xFFFFFFFF,
-                       (uintptr_t)0,
-                       sMemFree);
-#endif
 
     EXIT_CRITICAL(intState);
 }

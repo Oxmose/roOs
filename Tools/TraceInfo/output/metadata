@@ -17,7 +17,7 @@ trace {
 
 clock {
     name = sys_clock;
-    freq = 3000000000;
+    freq = 500;
     offset_s = 0;
 };
 
@@ -57,31 +57,345 @@ stream {
 /*******************************************************************************
  * Events definition
  ******************************************************************************/
+
+ /********************************* Kickstart */
+
 event {
     id = 1;
-    name = "Kernel Kickstart Start";
+    name = "Kickstart entry";
 };
 
 event {
     id = 2;
-    name = "Kernel Kickstart End";
+    name = "Kickstart exit";
 };
+
+/********************************* X86 PIC */
 
 event {
     id = 3;
-    name = "VGA Init Start";
+    name = "x86 PIC driver attach entry";
 };
 
 event {
     id = 4;
-    name = "VGA Init End";
+    name = "x86 PIC driver attach exit";
     fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-        uint32_t buff_len;
+        uint32_t returnCode;
     };
 };
 
+event {
+    id = 5;
+    name = "x86 PIC driver set IRQ mask entry";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 6;
+    name = "x86 PIC driver set IRQ mask exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 7;
+    name = "x86 PIC driver set IRQ EOI entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 8;
+    name = "x86 PIC driver set IRQ EOI exit";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 9;
+    name = "x86 PIC driver handle spurious entry";
+    fields := struct {
+        uint32_t intNumber;
+    };
+};
+
+event {
+    id = 10;
+    name = "x86 PIC driver handle spurious exit";
+    fields := struct {
+        uint32_t intNumber;
+        uint32_t type;
+    };
+};
+
+event {
+    id = 11;
+    name = "x86 PIC driver get interrupt line entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 12;
+    name = "x86 PIC driver get interrupt line exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t intNumber;
+    };
+};
+
+/********************************* X86 PIT */
+
+event {
+    id = 13;
+    name = "x86 PIT driver attach entry";
+};
+
+event {
+    id = 14;
+    name = "x86 PIT driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 15;
+    name = "x86 PIT driver enable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 16;
+    name = "x86 PIT driver enable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 17 ;
+    name = "x86 PIT driver disable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 18;
+    name = "x86 PIT driver disable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 19;
+    name = "x86 PIT set frequency entry";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 20;
+    name = "x86 PIT set frequency exit";
+    fields := struct {
+        uint32_t frequency;
+        uint32_t newFrequency;
+    };
+};
+
+event {
+    id = 21;
+    name = "x86 PIT get frequency entry";
+};
+
+event {
+    id = 22;
+    name = "x86 PIT get frequency exit";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 23;
+    name = "x86 PIT set handler entry";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+    };
+};
+
+event {
+    id = 24;
+    name = "x86 PIT set handler exit";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 25;
+    name = "x86 PIT remove handler";
+};
+
+event {
+    id = 26;
+    name = "x86 PIT acknowledge";
+};
+
+/********************************* X86 PIT */
+
+event {
+    id = 27;
+    name = "x86 RTC driver attach entry";
+};
+
+event {
+    id = 28;
+    name = "x86 RTC driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 29;
+    name = "x86 RTC driver enable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 30;
+    name = "x86 RTC driver enable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 31 ;
+    name = "x86 RTC driver disable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 32;
+    name = "x86 RTC driver disable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 33;
+    name = "x86 RTC set frequency entry";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 34;
+    name = "x86 RTC set frequency exit";
+    fields := struct {
+        uint32_t frequency;
+        uint32_t newFrequency;
+    };
+};
+
+event {
+    id = 35;
+    name = "x86 RTC get frequency entry";
+};
+
+event {
+    id = 36;
+    name = "x86 RTC get frequency exit";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 37;
+    name = "x86 RTC set handler entry";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+    };
+};
+
+event {
+    id = 38;
+    name = "x86 RTC set handler exit";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 39;
+    name = "x86 RTC remove handler";
+};
+
+event {
+    id = 40;
+    name = "x86 RTC get daytime entry";
+};
+
+event {
+    id = 41;
+    name = "x86 RTC get daytime exit";
+};
+
+event {
+    id = 42;
+    name = "x86 RTC get date entry";
+};
+
+event {
+    id = 43;
+    name = "x86 RTC get date exit";
+};
+
+
+event {
+    id = 44;
+    name = "x86 RTC update time entry";
+};
+
+event {
+    id = 45;
+    name = "x86 RTC update time exit";
+};
+
+event {
+    id = 46;
+    name = "x86 RTC acknowledge";
+};
+/*
 event {
     id = 5;
     name = "CPU Setup GDT Start";
@@ -216,9 +530,6 @@ event {
 event {
     id = 24;
     name = "Kernel Interrupt Init End";
-    fields := struct {
-        uint32_t code;
-    };
 };
 
 event {
@@ -505,14 +816,6 @@ event {
 };
 
 event {
-    id = 59;
-    name = "Kernel PIC Spurious Handler Start";
-    fields := struct {
-        uint32_t int_number;
-    };
-};
-
-event {
     id = 60;
     name = "Kernel PIC Spurious Handler End";
     fields := struct {
@@ -754,5 +1057,65 @@ event {
 };
 
 
+event {
+    id = 93;
+    name = "Kernel Validate Architecture End";
+    fields := struct {
+        xuint32_t tid;
+    };
+};
 
+
+event {
+    id = 94;
+    name = "Kernel Validate Architecture End";
+};
+
+
+event {
+    id = 95;
+    name = "Kernel Validate Architecture End";
+};
+
+
+event {
+    id = 96;
+    name = "Kernel Validate Architecture End";
+    fields := struct {
+        uint32_t  exceptionLine;
+        xuint32_t addr_low;
+        xuint32_t addr_high;
+    };
+};
+
+
+event {
+    id = 97;
+    name = "Kernel Validate Architecture End";
+    fields := struct {
+        uint32_t  exceptionLine;
+        xuint32_t retCode;
+    };
+};
+
+
+event {
+    id = 98;
+    name = "Kernel Validate Architecture End";
+    fields := struct {
+        uint32_t  exceptionLine;
+    };
+};
+
+
+event {
+    id = 99;
+    name = "Kernel Validate Architecture End";
+    fields := struct {
+        uint32_t  exceptionLine;
+        xuint32_t retCode;
+    };
+};
+
+*/
 

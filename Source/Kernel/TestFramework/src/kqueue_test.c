@@ -175,7 +175,7 @@ void kqueue_test(void)
     for(uint8_t i = 0; i < 40; ++i)
     {
         old_size = queue->size;
-        kQueuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->data);
+        kQueuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->pData);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_PUSHPRIOBURST0_ID(i),
                                old_size + 1 == queue->size,
                                old_size + 1,
@@ -199,9 +199,9 @@ void kqueue_test(void)
                                  (uint64_t)(uintptr_t)nodes[i],
                                  TEST_OS_KQUEUE_ENABLED);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_POPBURST0_ID(i * 3 + 2),
-                                (uint32_t)(uintptr_t)nodes[i]->data == sorted[i],
+                                (uint32_t)(uintptr_t)nodes[i]->pData == sorted[i],
                                 (uint32_t)sorted[i],
-                                (uint32_t)(uintptr_t)nodes[i]->data,
+                                (uint32_t)(uintptr_t)nodes[i]->pData,
                                 TEST_OS_KQUEUE_ENABLED);
     }
 
@@ -254,9 +254,9 @@ void kqueue_test(void)
                              (uint64_t)(uintptr_t)find,
                              TEST_OS_KQUEUE_ENABLED);
     TEST_POINT_ASSERT_UINT(TEST_KQUEUE_CREATE_FIND1_ID,
-                           (uint32_t)(uintptr_t)find->data == 9,
+                           (uint32_t)(uintptr_t)find->pData == 9,
                            9,
-                           (uint32_t)(uintptr_t)find->data,
+                           (uint32_t)(uintptr_t)find->pData,
                            TEST_OS_KQUEUE_ENABLED);
 
     /* Find a not present node */
@@ -283,9 +283,9 @@ void kqueue_test(void)
                                  (uint64_t)(uintptr_t)nodes[i],
                                  TEST_OS_KQUEUE_ENABLED);
         TEST_POINT_ASSERT_UINT(TEST_KQUEUE_POPBURST1_ID(i * 3 + 2),
-                                (uint32_t)(uintptr_t)nodes[i]->data == unsorted[i%10],
+                                (uint32_t)(uintptr_t)nodes[i]->pData == unsorted[i%10],
                                 (uint32_t)unsorted[i%10],
-                                (uint32_t)(uintptr_t)nodes[i]->data,
+                                (uint32_t)(uintptr_t)nodes[i]->pData,
                                 TEST_OS_KQUEUE_ENABLED);
     }
 

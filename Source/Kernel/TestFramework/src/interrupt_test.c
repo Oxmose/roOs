@@ -41,7 +41,12 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Master PIC spurious IRQ number. */
+#define PIC_SPURIOUS_IRQ_MASTER 0x07
+/** @brief Slave PIC spurious IRQ number. */
+#define PIC_SPURIOUS_IRQ_SLAVE  0x0F
+
+#define INT_PIC_IRQ_OFFSET 0x30
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -331,7 +336,6 @@ static void test_sw_interupts(void)
     }
 
     interruptRestore(1);
-
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 0));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 2));

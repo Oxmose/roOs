@@ -92,23 +92,7 @@ static console_driver_t sConsoleDriver = {NULL};
 
 OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
 {
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START,
-                       2,
-                       (uintptr_t)pkDriver & 0xFFFFFFFF,
-                       (uintptr_t)pkDriver >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_START,
-                       2,
-                       (uintptr_t)driver,
-                       0);
-#endif
-
     sConsoleDriver = *pkDriver;
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CONSOLE_SET_DRIVER_END,
-                       1,
-                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 

@@ -149,18 +149,6 @@ void kprintfInfo(const char* pFmt, ...);
 void kprintfDebug(const char* pFmt, ...);
 
 /**
- * @brief Prints the desired string to the screen.
- *
- * @details Prints the desired string to the screen. Adds a yello [WARNING] tag
- * at the beggining of the string before printing it. This uses the generic
- * graphic driver to output data.
- *
- * @param[in] pFmt The format string to output.
- * @param[in] ... format's parameters.
- */
-void kprintfWarning(const char* pFmt, ...);
-
-/**
  * @brief Flushes the output buffer.
  *
  * @details The output uses a buffer before sending the data to the output

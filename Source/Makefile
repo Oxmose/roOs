@@ -64,8 +64,6 @@ endif
 
 # Build general modules
 
-
-
 build_kernel:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
 	@echo "\e[1m\e[34m| Building kernel for target $(target)\e[22m\e[39m"
@@ -78,10 +76,6 @@ build_kernel:
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\e[22m\e[39m"
 	@echo "\e[1m\e[34m| Generated kernel for target $(target)\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
-
-# TODO:
-#	@chmod +x $(CONFIG_DIR)/Arch/x86_i386/create_initrd.sh
-#	$(CONFIG_DIR)/Arch/x86_i386/create_initrd.sh $(BUILD_DIR)
 
 clean:
 # Dummy settings

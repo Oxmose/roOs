@@ -315,34 +315,7 @@ driver_t x86VGADriver = {
 };
 
 /************************** Static global variables ***************************/
-
-/** @brief VGA driver controler instance. */
-static vga_controler_t sDrvCtrl = {
-    .lineCount         = 0,
-    .columnCount       = 0,
-    .cpuCommPort       = 0,
-    .cpuDataPort       = 0,
-    .screenScheme      = {.background = BG_BLACK, .foreground = FG_WHITE},
-    .screenCursor      = {.x = 0, .y = 0},
-    .lastPrintedCursor = {.x = 0, .y = 0},
-    .pLastColumns      = NULL,
-    .pFramebuffer      = NULL,
-    .framebufferSize   = 0
-};
-
-/** @brief VGA console driver */
-static console_driver_t sVGAConsoleDriver = {
-    .pClear           = _vgaClearFramebuffer,
-    .pPutCursor       = _vgaPutCursor,
-    .pSaveCursor      = _vgaSaveCursor,
-    .pRestoreCursor   = _vgaResotreCursor,
-    .pScroll          = _vgaScroll,
-    .pSetColorScheme  = _vgaSetScheme,
-    .pSaveColorScheme = _vgaSaveScheme,
-    .pPutString       = _vgaPutString,
-    .pPutChar         = _vgaPutChar,
-    .pDriverCtrl      = (void*)&sDrvCtrl
-};
+/* None */
 
 /*******************************************************************************
  * FUNCTIONS
@@ -350,12 +323,46 @@ static console_driver_t sVGAConsoleDriver = {
 
 static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 {
-    const uintptr_t* ptrProp;
-    const uint32_t*  uintProp;
-    size_t           propLen;
-    OS_RETURN_E      retCode;
+    const uintptr_t*  ptrProp;
+    const uint32_t*   uintProp;
+    size_t            propLen;
+    OS_RETURN_E       retCode;
+    vga_controler_t*  pDrvCtrl;
+    console_driver_t* pConsoleDrv;
+    colorscheme_t     initScheme;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_START, 0);
+
+
+    pDrvCtrl    = NULL;
+    pConsoleDrv = NULL;
+
+    /* Init structures */
+    pDrvCtrl = kmalloc(sizeof(vga_controler_t));
+    if(pDrvCtrl == NULL)
+    {
+        KERNEL_ERROR("Failed to allocate driver controler.\n");
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    memset(pDrvCtrl, 0, sizeof(vga_controler_t));
+
+    pConsoleDrv = kmalloc(sizeof(console_driver_t));
+    if(pConsoleDrv == NULL)
+    {
+        KERNEL_ERROR("Failed to allocate driver instance.\n");
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    pConsoleDrv->pClear           = _vgaClearFramebuffer;
+    pConsoleDrv->pPutCursor       = _vgaPutCursor;
+    pConsoleDrv->pSaveCursor      = _vgaSaveCursor;
+    pConsoleDrv->pRestoreCursor   = _vgaResotreCursor;
+    pConsoleDrv->pScroll          = _vgaScroll;
+    pConsoleDrv->pSetColorScheme  = _vgaSetScheme;
+    pConsoleDrv->pSaveColorScheme = _vgaSaveScheme;
+    pConsoleDrv->pPutString       = _vgaPutString;
+    pConsoleDrv->pPutChar         = _vgaPutChar;
+    pConsoleDrv->pDriverCtrl      = pDrvCtrl;
 
     /* Get the VGA framebuffer address */
     ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_REG_PROP, &propLen);
@@ -366,21 +373,21 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
 #if ARCH_I386
-    sDrvCtrl.pFramebuffer    = (uint16_t*)FDTTOCPU32(*ptrProp);
-    sDrvCtrl.framebufferSize = (size_t)FDTTOCPU32(*(ptrProp + 1));
+    pDrvCtrl->pFramebuffer    = (uint16_t*)FDTTOCPU32(*ptrProp);
+    pDrvCtrl->framebufferSize = (size_t)FDTTOCPU32(*(ptrProp + 1));
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Framebuffer: 0x%p | Size: 0x%p",
-                 sDrvCtrl.pFramebuffer,
-                 sDrvCtrl.framebufferSize);
+                 pDrvCtrl->pFramebuffer,
+                 pDrvCtrl->framebufferSize);
 #elif ARCH_X86_64
-    sDrvCtrl.pFramebuffer    = (uint16_t*)FDTTOCPU64(*ptrProp);
-    sDrvCtrl.framebufferSize = (size_t)FDTTOCPU64(*(ptrProp + 1));
+    pDrvCtrl->pFramebuffer    = (uint16_t*)FDTTOCPU64(*ptrProp);
+    pDrvCtrl->framebufferSize = (size_t)FDTTOCPU64(*(ptrProp + 1));
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Framebuffer: 0x%p | Size: 0x%p",
-                 sDrvCtrl.pFramebuffer,
-                 sDrvCtrl.framebufferSize);
+                 pDrvCtrl->pFramebuffer,
+                 pDrvCtrl->framebufferSize);
 #else
     #error "Invalid architecture"
 #endif
@@ -393,14 +400,14 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
-    sDrvCtrl.cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
+    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
                  "COMM: 0x%x | DATA: 0x%x",
-                 sDrvCtrl.cpuCommPort,
-                 sDrvCtrl.cpuDataPort);
+                 pDrvCtrl->cpuCommPort,
+                 pDrvCtrl->cpuDataPort);
 
     /* Get the resolution */
     uintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
@@ -410,30 +417,30 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.columnCount = (uint8_t)FDTTOCPU32(*uintProp);
-    sDrvCtrl.lineCount   = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->columnCount = (uint8_t)FDTTOCPU32(*uintProp);
+    pDrvCtrl->lineCount   = (uint8_t)FDTTOCPU32(*(uintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Resolution: %dx%d",
-                 sDrvCtrl.columnCount, sDrvCtrl.lineCount);
+                 pDrvCtrl->columnCount, pDrvCtrl->lineCount);
 
     /* Init last columns manager */
-    sDrvCtrl.pLastColumns =
-        (uint8_t*)kmalloc(sDrvCtrl.lineCount * sizeof(uint8_t));
-    if(sDrvCtrl.pLastColumns == NULL)
+    pDrvCtrl->pLastColumns =
+        (uint8_t*)kmalloc(pDrvCtrl->lineCount * sizeof(uint8_t));
+    if(pDrvCtrl->pLastColumns == NULL)
     {
         KERNEL_ERROR("Failed allocate last colums manager.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-    memset(sDrvCtrl.pLastColumns, 0, sDrvCtrl.lineCount * sizeof(uint8_t));
+    memset(pDrvCtrl->pLastColumns, 0, pDrvCtrl->lineCount * sizeof(uint8_t));
 
     /* Clear screen and set as output if needed */
     if(fdtGetProp(pkFdtNode, VGA_FDT_IS_CON_PROP, &propLen) != NULL)
     {
-        _vgaClearFramebuffer(&sDrvCtrl);
-        retCode = consoleSetDriver(&sVGAConsoleDriver);
+        _vgaClearFramebuffer(pDrvCtrl);
+        retCode = consoleSetDriver(pConsoleDrv);
         if(retCode != OS_NO_ERR)
         {
             KERNEL_ERROR("Failed to set VGA driver as console driver.\n");
@@ -441,31 +448,42 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         }
     }
 
+    /* Set initial scheme */
+    initScheme.background = BG_BLACK;
+    initScheme.foreground = FG_WHITE;
+    _vgaSetScheme(pDrvCtrl, &initScheme);
+
     KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA driver initialized");
     retCode = OS_NO_ERR;
 
 ATTACH_END:
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_END, 3,
-                       (uintptr_t)sDrvCtrl.pFramebuffer & 0xFFFFFFFF,
-                       (uintptr_t)sDrvCtrl.pFramebuffer >> 32,
-                       sDrvCtrl.framebufferSize);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_VGA_INIT_END, 3,
-                       (uintptr_t)sDrvCtrl.pFramebuffer & 0xFFFFFFFF,
-                       0,
-                       sDrvCtrl.framebufferSize);
-#endif
+    if(retCode != OS_NO_ERR)
+    {
+        KERNEL_ERROR("Failed to attach VGA driver. Error %d.\n", retCode);
+        if(pDrvCtrl != NULL)
+        {
+            if(pDrvCtrl->pLastColumns != NULL)
+            {
+                kfree(pDrvCtrl->pLastColumns);
+            }
+            kfree(pDrvCtrl);
+        }
+        if(pConsoleDrv != NULL)
+        {
+            kfree(pConsoleDrv);
+        }
+    }
+
     return retCode;
 }
 
 
-inline static void _vgaPrintChar(void* pDriverCtrl,
+inline static void _vgaPrintChar(void*          pDriverCtrl,
                                  const uint32_t kLine,
                                  const uint32_t kColumn,
                                  const char     kCharacter)
 {
-    uint16_t*        screenMem;
+    uint16_t*        pScreenMem;
     vga_controler_t* pCtrl;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
@@ -477,10 +495,10 @@ inline static void _vgaPrintChar(void* pDriverCtrl,
     }
 
     /* Get address to inject */
-    screenMem = GET_FRAME_BUFFER_AT(pCtrl, kLine, kColumn);
+    pScreenMem = GET_FRAME_BUFFER_AT(pCtrl, kLine, kColumn);
 
     /* Inject the character with the current colorscheme */
-    *screenMem = kCharacter |
+    *pScreenMem = kCharacter |
                   ((pCtrl->screenScheme.background << 8) & 0xF000) |
                   ((pCtrl->screenScheme.foreground << 8) & 0x0F00);
 }
@@ -635,7 +653,7 @@ static void _vgaClearFramebuffer(void* pDriverCtrl)
     memset(pCtrl->pFramebuffer, 0, pCtrl->framebufferSize);
 }
 
-static void _vgaPutCursor(void* pDriverCtrl,
+static void _vgaPutCursor(void*          pDriverCtrl,
                           const uint32_t kLine,
                           const uint32_t kColumn)
 {

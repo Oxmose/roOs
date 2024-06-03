@@ -66,6 +66,37 @@
  ******************************************************************************/
 
 /**
+ * @brief Initial placeholder for the IRQ mask driver.
+ *
+ * @param kIrqNumber Unused.
+ * @param enabled Unused.
+ */
+static void _initDriverSetIrqMask(const uint32_t kIrqNumber,
+                                  const bool_t   kEnabled);
+
+/**
+ * @brief Initial placeholder for the IRQ EOI driver.
+ *
+ * @param kIrqNumber Unused.
+ */
+static void _initDriverSetIrqEOI(const uint32_t kIrqNumber);
+
+/**
+ * @brief Initial placeholder for the spurious handler driver.
+ *
+ * @param kIntNumber Unused.
+ */
+static INTERRUPT_TYPE_E _initDriverHandleSpurious(const uint32_t kIntNumber);
+
+/**
+ * @brief Initial placeholder for the get int line driver.
+ *
+ * @param kIrqNumber Unused.
+ */
+static int32_t _initDriverGetIrqIntLine(const uint32_t kIrqNumber);
+
+
+/**
  * @brief Kernel's spurious interrupt handler.
  *
  * @details Spurious interrupt handler. This function should only be
@@ -99,6 +130,31 @@ static uint64_t sSpuriousIntCount;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _initDriverSetIrqMask(const uint32_t kIrqNumber,
+                                  const bool_t   kEnabled)
+{
+    (void)kIrqNumber;
+    (void)kEnabled;
+}
+
+static void _initDriverSetIrqEOI(const uint32_t kIrqNumber)
+{
+    (void)kIrqNumber;
+}
+
+static INTERRUPT_TYPE_E _initDriverHandleSpurious(const uint32_t kIntNumber)
+{
+    (void)kIntNumber;
+    return INTERRUPT_TYPE_REGULAR;
+}
+
+static int32_t _initDriverGetIrqIntLine(const uint32_t kIrqNumber)
+{
+    (void)kIrqNumber;
+    return 0;
+}
+
 static void _spuriousHandler(void)
 {
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
@@ -122,10 +178,7 @@ void interruptMainHandler(void)
     pCurrentThread = schedGetCurrentThread();
     intId          = pCurrentThread->vCpu.intContext.intId;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_HANDLER_START,
-                       2,
-                       intId,
-                       pCurrentThread->tid);
+
 
     /* If interrupts are disabled */
     if(_cpuGetContextIntState(&pCurrentThread->vCpu) == 0 &&
@@ -171,15 +224,11 @@ void interruptMainHandler(void)
     /* Execute the handler */
     handler(pCurrentThread);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_HANDLER_END,
-                       2,
-                       intId,
-                       pCurrentThread->tid);
+
 }
 
 void interruptInit(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_INIT_START, 0);
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Initializing interrupt manager.");
 
@@ -194,27 +243,19 @@ void interruptInit(void)
     /* Init state */
     interruptDisable();
     sSpuriousIntCount = 0;
-    memset(&sInterruptDriver, 0, sizeof(interrupt_driver_t));
+
+    /* Init driver */
+    sInterruptDriver.pGetIrqInterruptLine = _initDriverGetIrqIntLine;
+    sInterruptDriver.pHandleSpurious      = _initDriverHandleSpurious;
+    sInterruptDriver.pSetIrqEOI           = _initDriverSetIrqEOI;
+    sInterruptDriver.pSetIrqMask          = _initDriverSetIrqMask;
 
     TEST_POINT_FUNCTION_CALL(interrupt_test, TEST_INTERRUPT_ENABLED);
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_INIT_END, 0);
 }
 
 OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 {
     uint32_t intState;
-
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_START, 2,
-                       (uintptr_t)driver & 0xFFFFFFFF,
-                       (uintptr_t)driver >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_START, 2,
-                       (uintptr_t)driver & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
 
     if(kpDriver == NULL ||
        kpDriver->pSetIrqEOI == NULL ||
@@ -222,14 +263,23 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
        kpDriver->pHandleSpurious == NULL ||
        kpDriver->pGetIrqInterruptLine == NULL)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_END,
-                           1,
-                           OS_ERR_NULL_POINTER);
+
 
         return OS_ERR_NULL_POINTER;
     }
 
     ENTER_CRITICAL(intState);
+
+    /* We can only set one interrupt manager*/
+    if(sInterruptDriver.pGetIrqInterruptLine != _initDriverGetIrqIntLine)
+    {
+        KERNEL_ERROR("Only one interrupt driver can be registered.\n");
+        PANIC(OS_ERR_UNAUTHORIZED_ACTION,
+              MODULE_NAME,
+              "Only one interrupt driver can be registered.",
+              TRUE);
+    }
+
 
     sInterruptDriver = *kpDriver;
 
@@ -240,7 +290,7 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
                  "Set new interrupt driver at 0x%p",
                  kpDriver);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_SET_DRIVER_END, 1, OS_NO_ERR);
+
 
     return OS_NO_ERR;
 }
@@ -250,37 +300,19 @@ OS_RETURN_E interruptRegister(const uint32_t kInterruptLine,
 {
     uint32_t intState;
 
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_START,
-                       3,
-                       kInterruptLine,
-                       (uintptr_t)handler & 0xFFFFFFFF,
-                       (uintptr_t)handler >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_START,
-                       3,
-                       kInterruptLine,
-                       (uintptr_t)handler & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
     if(kInterruptLine < MIN_INTERRUPT_LINE ||
        kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_END,
-                           2,
-                           kInterruptLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
+        KERNEL_ERROR("Invalid registered interrupt line: %d\n", kInterruptLine);
+
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
     if(handler == NULL)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_END,
-                           2,
-                           kInterruptLine,
-                           OS_ERR_NULL_POINTER);
+        KERNEL_ERROR("NULL registered interrupt handler\n");
+
 
         return OS_ERR_NULL_POINTER;
     }
@@ -290,10 +322,8 @@ OS_RETURN_E interruptRegister(const uint32_t kInterruptLine,
     if(kernelInterruptHandlerTable[kInterruptLine] != NULL)
     {
         EXIT_CRITICAL(intState);
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_END,
-                           2,
-                           kInterruptLine,
-                           OS_ERR_INTERRUPT_ALREADY_REGISTERED);
+        KERNEL_ERROR("Already registered interrupt line: %d\n", kInterruptLine);
+
 
         return OS_ERR_INTERRUPT_ALREADY_REGISTERED;
     }
@@ -306,10 +336,7 @@ OS_RETURN_E interruptRegister(const uint32_t kInterruptLine,
                  kInterruptLine,
                  handler);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REGISTER_END,
-                       2,
-                       kInterruptLine,
-                       OS_NO_ERR);
+
 
     EXIT_CRITICAL(intState);
 
@@ -320,17 +347,13 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
 {
     uint32_t intState;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REMOVE_START,
-                       1,
-                       kInterruptLine);
+
 
     if(kInterruptLine < MIN_INTERRUPT_LINE ||
        kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REMOVE_END,
-                           2,
-                           kInterruptLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
+        KERNEL_ERROR("Invalid removed interrupt line: %d\n", kInterruptLine);
+
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
@@ -341,10 +364,7 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     {
         EXIT_CRITICAL(intState);
 
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REMOVE_END,
-                           2,
-                           kInterruptLine,
-                           OS_ERR_INTERRUPT_NOT_REGISTERED);
+        KERNEL_ERROR("Not registered interrupt line: %d\n", kInterruptLine);
 
         return OS_ERR_INTERRUPT_NOT_REGISTERED;
     }
@@ -354,10 +374,7 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Removed interrupt %u handle", kInterruptLine);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_INTERRUPT_REMOVE_END,
-                       2,
-                       kInterruptLine,
-                       OS_NO_ERR);
+
 
     EXIT_CRITICAL(intState);
 
@@ -370,34 +387,19 @@ OS_RETURN_E interruptIRQRegister(const uint32_t kIrqNumber,
     int32_t     interruptLine;
     OS_RETURN_E retCode;
 
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REGISTER_START,
-                       3,
-                       kIrqNumber,
-                       (uintptr_t)handler & 0xFFFFFFFF,
-                       (uintptr_t)handler >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REGISTER_START,
-                       3,
-                       kIrqNumber,
-                       (uintptr_t)handler & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
     /* Get the interrupt line attached to the IRQ number. */
     interruptLine = sInterruptDriver.pGetIrqInterruptLine(kIrqNumber);
 
     if(interruptLine < 0)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REGISTER_END,
-                           1,
-                           OS_ERR_NO_SUCH_IRQ);
+        KERNEL_ERROR("Invalid IRQ interrupt line: %d\n", kIrqNumber);
+
         return OS_ERR_NO_SUCH_IRQ;
     }
 
     retCode = interruptRegister(interruptLine, handler);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REGISTER_END, 1, retCode);
+
 
     return retCode;
 }
@@ -407,31 +409,29 @@ OS_RETURN_E interruptIRQRemove(const uint32_t kIrqNumber)
     int32_t     interruptLine;
     OS_RETURN_E retCode;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REMOVE_START, 1, kIrqNumber);
+
 
     /* Get the interrupt line attached to the IRQ number. */
     interruptLine = sInterruptDriver.pGetIrqInterruptLine(kIrqNumber);
 
     if(interruptLine < 0)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REMOVE_END,
-                           2,
-                           kIrqNumber,
-                           OS_ERR_NO_SUCH_IRQ);
+        KERNEL_ERROR("Invalid IRQ interrupt line: %d\n", kIrqNumber);
+
 
         return OS_ERR_NO_SUCH_IRQ;
     }
 
     retCode = interruptRemove(interruptLine);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_IRQ_REMOVE_END, 2, kIrqNumber, retCode);
+
 
     return retCode;
 }
 
 void interruptRestore(const uint32_t kPrevState)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RESTORE_INTERRUPT, 1, kPrevState);
+
     if(kPrevState != 0)
     {
         KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Enabled HW INT");
@@ -445,7 +445,7 @@ uint32_t interruptDisable(void)
 
     prevState = _cpuGeIntState();
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_DISABLE_INTERRUPT, 1, prevState);
+
 
     if(prevState == 0)
     {
@@ -461,7 +461,7 @@ uint32_t interruptDisable(void)
 
 void interruptIRQSetMask(const uint32_t kIrqNumber, const uint32_t kEnabled)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_SET_IRQ_MASK, 2, kIrqNumber, kEnabled);
+
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -474,7 +474,7 @@ void interruptIRQSetMask(const uint32_t kIrqNumber, const uint32_t kEnabled)
 
 void interruptIRQSetEOI(const uint32_t kIrqNumber)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_SET_IRQ_EOI, 1, kIrqNumber);
+
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
                  "INTERRUPTS",

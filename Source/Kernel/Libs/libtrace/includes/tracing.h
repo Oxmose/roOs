@@ -54,7 +54,12 @@
  * Metadata are interpreted as uint32_t.
  *
  */
-#define KERNEL_TRACE_EVENT(...) kernelTraceEvent(__VA_ARGS__);
+#define KERNEL_TRACE_EVENT(TRACE_TYPE, EVENT, FIELDCOUNT, ...) {    \
+    if(TRACE_TYPE != 0)                                             \
+    {                                                               \
+        kernelTraceEvent(EVENT, FIELDCOUNT, ##__VA_ARGS__);         \
+    }                                                               \
+}
 
 #else
 

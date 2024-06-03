@@ -150,7 +150,6 @@ static void _walkFdtNodes(const fdt_node_t* pkNode)
                     {
                         KERNEL_SUCCESS("%s attached successfully.\n",
                                        pDriver->pName);
-                        /* TODO: Add to device list*/
                     }
                     else
                     {

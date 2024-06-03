@@ -177,7 +177,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
  * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
  * to disable the IRQ.
  */
-static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
 
 /**
  * @brief Acknowleges an IRQ.
@@ -186,7 +186,7 @@ static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  *
  * @param[in] kIrqNumber The irq number to Acknowlege.
  */
-static void _picpSetIrqEOI(const uint32_t kIrqNumber);
+static void _picSetIrqEOI(const uint32_t kIrqNumber);
 
 /**
  * @brief Checks if the serviced interrupt is a spurious
@@ -202,7 +202,7 @@ static void _picpSetIrqEOI(const uint32_t kIrqNumber);
  * - INTERRUPT_TYPE_SPURIOUS if the current interrupt is a spurious one.
  * - INTERRUPT_TYPE_REGULAR if the current interrupt is a regular one.
  */
-static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber);
+static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber);
 
 /**
  * @brief Returns the interrupt line attached to an IRQ.
@@ -239,9 +239,9 @@ driver_t x86PICDriver = {
 /************************** Static global variables ***************************/
 /** @brief PIC interrupt driver instance. */
 static interrupt_driver_t sPicDriver = {
-    .pSetIrqMask     = _picpSetIrqMask,
-    .pSetIrqEOI      = _picpSetIrqEOI,
-    .pHandleSpurious  = _picpHandleSpurious,
+    .pSetIrqMask          = _picSetIrqMask,
+    .pSetIrqEOI           = _picSetIrqEOI,
+    .pHandleSpurious      = _picHandleSpurious,
     .pGetIrqInterruptLine = _picGetInterruptLine
 };
 
@@ -265,7 +265,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     size_t          propLen;
     OS_RETURN_E     retCode;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_START, 0);
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED, TRACE_X86_PIC_ATTACH_ENTRY, 0);
 
     /* Check for slave */
     if(fdtGetProp(pkFdtNode, PIC_FDT_HASSLAVE_PROP, &propLen) != NULL)
@@ -341,23 +341,27 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
                retCode);
 
 ATTACH_END:
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_INIT_END, 1, (uintptr_t)retCode);
-
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC Initialization end");
+
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_ATTACH_EXIT,
+                       1,
+                       (uint32_t)retCode);
 
     return retCode;
 }
 
-static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
+static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 {
     uint8_t  initMask;
     uint32_t intState;
     uint32_t cascadingNumber;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SET_IRQ_MASK_START,
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_SET_IRQ_MASK_ENTRY,
                        2,
                        kIrqNumber,
-                       kEnabled);
+                       (uint32_t)kEnabled);
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
@@ -445,19 +449,21 @@ static void _picpSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
                  _cpuInB(sDrvCtrl.cpuSlaveDataPort));
     }
 
+    EXIT_CRITICAL(intState);
 
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SET_IRQ_MASK_END,
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_SET_IRQ_MASK_EXIT,
                        2,
                        kIrqNumber,
-                       kEnabled);
-
-    EXIT_CRITICAL(intState);
+                       (uint32_t)kEnabled);
 }
 
-static void _picpSetIrqEOI(const uint32_t kIrqNumber)
+static void _picSetIrqEOI(const uint32_t kIrqNumber)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_START, 1, kIrqNumber);
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_SET_IRQ_EOI_ENTRY,
+                       1,
+                       kIrqNumber);
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
@@ -475,19 +481,25 @@ static void _picpSetIrqEOI(const uint32_t kIrqNumber)
     }
     _cpuOutB(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_EOI_END, 1, kIrqNumber);
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_SET_IRQ_EOI_EXIT,
+                       1,
+                       kIrqNumber);
 
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC IRQ EOI");
 }
 
-static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
+static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
 {
     uint8_t  isrVal;
     uint32_t irqNumber;
 
-    irqNumber = kIntNumber - PIC0_BASE_INTERRUPT_LINE;
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_HANDLE_SPURIOUS_ENTRY,
+                       1,
+                       kIntNumber);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_START, 1, kIntNumber);
+    irqNumber = kIntNumber - PIC0_BASE_INTERRUPT_LINE;
 
     KERNEL_DEBUG(PIC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -497,10 +509,11 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
     /* Check if regular soft interrupt */
     if(irqNumber > PIC_MAX_IRQ_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+        KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                           TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                            2,
                            kIntNumber,
-                           INTERRUPT_TYPE_REGULAR);
+                           (uint32_t)INTERRUPT_TYPE_REGULAR);
         return INTERRUPT_TYPE_REGULAR;
     }
 
@@ -514,10 +527,11 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
         /* This is not a potential spurious irq */
         if(irqNumber != PIC_SPURIOUS_IRQ_SLAVE)
         {
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_REGULAR);
+                               (uint32_t)INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
 
@@ -526,21 +540,23 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
         isrVal = _cpuInB(sDrvCtrl.cpuSlaveCommPort);
         if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_REGULAR);
+                               (uint32_t)INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
         else
         {
             /* Send EOI on master */
-            _picpSetIrqEOI(PIC_CASCADING_IRQ);
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            _picSetIrqEOI(PIC_CASCADING_IRQ);
+
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_SPURIOUS);
-
+                               (uint32_t)INTERRUPT_TYPE_SPURIOUS);
             return INTERRUPT_TYPE_SPURIOUS;
         }
     }
@@ -549,10 +565,11 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
         /* This is not a potential spurious irq */
         if(irqNumber != PIC_SPURIOUS_IRQ_MASTER)
         {
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_REGULAR);
+                               (uint32_t)INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
 
@@ -561,18 +578,20 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
         isrVal = _cpuInB(sDrvCtrl.cpuMasterCommPort);
         if((isrVal & PIC_SPURIOUS_IRQ_MASK) != 0)
         {
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_REGULAR);
+                               (uint32_t)INTERRUPT_TYPE_REGULAR);
             return INTERRUPT_TYPE_REGULAR;
         }
         else
         {
-            KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_SPURIOUS_END,
+            KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                               TRACE_X86_PIC_HANDLE_SPURIOUS_EXIT,
                                2,
                                kIntNumber,
-                               INTERRUPT_TYPE_SPURIOUS);
+                               (uint32_t)INTERRUPT_TYPE_SPURIOUS);
             return INTERRUPT_TYPE_SPURIOUS;
         }
     }
@@ -580,16 +599,27 @@ static INTERRUPT_TYPE_E _picpHandleSpurious(const uint32_t kIntNumber)
 
 static int32_t _picGetInterruptLine(const uint32_t kIrqNumber)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_GET_INT_LINE_ENTRY,
+                       1,
+                       kIrqNumber);
+
     if(kIrqNumber > PIC_MAX_IRQ_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_GET_INT_LINE, 2, kIrqNumber, -1);
+        KERNEL_ERROR("Requested interrupt line for out-of-bounds IRQ %d.\n",
+                     kIrqNumber);
+        KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                           TRACE_X86_PIC_GET_INT_LINE_EXIT,
+                           1,
+                           (uint32_t)-1);
         return -1;
     }
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PIC_GET_INT_LINE,
+    KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
+                       TRACE_X86_PIC_GET_INT_LINE_EXIT,
                        2,
                        kIrqNumber,
-                       kIrqNumber + PIC0_BASE_INTERRUPT_LINE);
+                       (uint32_t)(kIrqNumber + PIC0_BASE_INTERRUPT_LINE));
     return kIrqNumber + PIC0_BASE_INTERRUPT_LINE;
 }
 

@@ -257,6 +257,7 @@ void devtreeTest(void)
                               (uintptr_t)NULL,
                               (uintptr_t)pkNode,
                               TEST_DEVTREE_ENABLED);
+    kprintf("HEREHRERER\n");
 #if 0
     /* TEST GET BY NAME */
     pkNode = fdtGetNodeFromName("NONODE");
@@ -285,7 +286,8 @@ void devtreeTest(void)
                               (uintptr_t)pProp,
                               TEST_DEVTREE_ENABLED);
 #endif
-    pkNode = fdtGetNodeByHandle(3);
+    pkNode = fdtGetNodeByHandle(1);
+
     TEST_POINT_ASSERT_UINT(TEST_DEVTREE_GETHANDLE2,
                            strcmp(pkNode->pName, "interrupt-controller") == 0,
                            0,

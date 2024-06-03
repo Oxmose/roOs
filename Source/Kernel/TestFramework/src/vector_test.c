@@ -192,8 +192,8 @@ void vector_test(void)
                                 err,
                                 TEST_OS_VECTOR_ENABLED);
         TEST_POINT_ASSERT_UDWORD(TEST_VECTOR_GETBURST1_ID(i * 3 + 1),
-                                 (uint64_t)(uintptr_t)data == (uint64_t)(uintptr_t)vector->array[i],
-                                 (uint64_t)(uintptr_t)vector->array[i],
+                                 (uint64_t)(uintptr_t)data == (uint64_t)(uintptr_t)vector->ppArray[i],
+                                 (uint64_t)(uintptr_t)vector->ppArray[i],
                                  (uint64_t)(uintptr_t)data,
                                  TEST_OS_VECTOR_ENABLED);
         TEST_POINT_ASSERT_UDWORD(TEST_VECTOR_GETBURST1_ID(i * 3 + 2),
@@ -285,8 +285,8 @@ void vector_test(void)
                                 err,
                                 TEST_OS_VECTOR_ENABLED);
         TEST_POINT_ASSERT_UDWORD(TEST_VECTOR_SETBURST0_ID(i * 2 + 1),
-                                 (uint64_t)(uintptr_t)i == (uint64_t)(uintptr_t)vector->array[i],
-                                 (uint64_t)(uintptr_t)vector->array[i],
+                                 (uint64_t)(uintptr_t)i == (uint64_t)(uintptr_t)vector->ppArray[i],
+                                 (uint64_t)(uintptr_t)vector->ppArray[i],
                                  (uint64_t)(uintptr_t)i,
                                  TEST_OS_VECTOR_ENABLED);
     }

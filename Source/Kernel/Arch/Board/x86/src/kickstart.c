@@ -118,7 +118,7 @@ void kickstart(void)
     /* Start testing framework */
     TEST_FRAMEWORK_START();
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_START, 0);
+    KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_ENTRY, 0);
 
     interruptDisable();
 
@@ -144,6 +144,10 @@ void kickstart(void)
     exceptionInit();
     KERNEL_SUCCESS("Exception manager initialized\n");
 
+#if TEST_INTERRUPT_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
+
     /* Initialize kernel heap */
     kHeapInit();
     KERNEL_SUCCESS("Kernel heap initialized\n");
@@ -160,9 +164,6 @@ void kickstart(void)
     cpuValidateArchitecture();
     KERNEL_SUCCESS("Architecture validated\n");
 
-#if TEST_INTERRUPT_ENABLED
-    TEST_FRAMEWORK_END();
-#endif
 
     /* Restore interrupts */
     interruptRestore(1);
@@ -176,22 +177,6 @@ void kickstart(void)
     TEST_FRAMEWORK_END();
 #endif
 
-#if 1
-    uint32_t rt = 0;
-
-    while(1)
-    {
-        ++rt;
-        if(rt % 100 == 0)
-        {
-            kprintf(".");
-            kprintfFlush();
-        }
-        _cpuHalt();
-    }
-#endif
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_KICKSTART_END, 0);
-
     TEST_POINT_ASSERT_RCODE(TEST_KICKSTART_END_ID,
                             TRUE,
                             OS_NO_ERR,
@@ -201,6 +186,10 @@ void kickstart(void)
 #if !TEST_PANIC_ENABLED
     TEST_FRAMEWORK_END();
 #endif
+
+    for(volatile uint32_t i = 0; i < 200000000; ++i){}
+
+    KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

@@ -145,14 +145,14 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
     uint64_t curr_time;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_MAIN_TIMER_HANDLER, 0);
+
 
     /* Add a tick count */
     ++sys_tick_count;
 
     if(sys_main_timer.pTickManager != NULL)
     {
-        sys_main_timer.pTickManager();
+        sys_main_timer.pTickManager(sys_main_timer.pDriverCtrl);
     }
 
     if(sSchedRoutine != NULL)
@@ -166,17 +166,17 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
         if(active_wait != 0 && sys_main_timer.pGetTimeNs != NULL)
         {
             /* Use precise time */
-            curr_time = sys_main_timer.pGetTimeNs();
+            curr_time = sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
             if(active_wait <= curr_time)
             {
                 active_wait = 0;
             }
         }
-        else
+        else if(active_wait != 0)
         {
             /* Use ticks */
             if(active_wait <= sys_tick_count * 1000000000 /
-                              sys_main_timer.pGetFrequency())
+                    sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl))
             {
                 active_wait = 0;
             }
@@ -192,12 +192,9 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_RTC_TIMER_HANDLER, 0);
-
-
     if(sys_rtc_timer.pTickManager != NULL)
     {
-        sys_rtc_timer.pTickManager();
+        sys_rtc_timer.pTickManager(sys_rtc_timer.pDriverCtrl);
     }
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
@@ -221,6 +218,7 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
        kpTimer->pTickManager == NULL)
 
     {
+        KERNEL_ERROR("Timer misses mandatory hooks\n");
         return OS_ERR_NULL_POINTER;
     }
 
@@ -230,20 +228,23 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     {
         case MAIN_TIMER:
             sys_main_timer = *kpTimer;
-            retCode = sys_main_timer.pSetHandler(_mainTimerHandler);
+            retCode = sys_main_timer.pSetHandler(kpTimer->pDriverCtrl,
+                                                 _mainTimerHandler);
             break;
         case RTC_TIMER:
             sys_rtc_timer = *kpTimer;
-            retCode = sys_rtc_timer.pSetHandler(_rtcTimerHandler);
+            retCode = sys_rtc_timer.pSetHandler(kpTimer->pDriverCtrl,
+                                                _rtcTimerHandler);
             break;
         default:
             /* TODO: Add other timers */
+            KERNEL_ERROR("Timer type %d not supported\n", kType);
             retCode = OS_ERR_NOT_SUPPORTED;
     }
 
     if(retCode == OS_NO_ERR)
     {
-        kpTimer->pEnable();
+        kpTimer->pEnable(kpTimer->pDriverCtrl);
     }
 
     return retCode;
@@ -258,28 +259,21 @@ uint64_t timeGetUptime(void)
             return 0;
         }
 
-        return sys_tick_count * 1000000000ULL / sys_main_timer.pGetFrequency();
+        return sys_tick_count * 1000000000ULL /
+               sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl);
     }
 
-    return sys_main_timer.pGetTimeNs();
+    return sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
 }
 
 uint64_t timeGetTicks(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_GET_TICK_COUNT,
-                       2,
-                       (uint32_t)sys_tick_count,
-                       (uint32_t)(sys_tick_count >> 32));
-
     return sys_tick_count;
 }
 
 void timeWaitNoScheduler(const uint64_t ns)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_START,
-                       2,
-                       (uint32_t)ns,
-                       (uint32_t)(ns >> 32));
+
 
     if(sSchedRoutine != NULL)
     {
@@ -292,38 +286,25 @@ void timeWaitNoScheduler(const uint64_t ns)
     if(sys_main_timer.pGetTimeNs != NULL)
     {
         /* Use precise time */
-        active_wait = ns + sys_main_timer.pGetTimeNs();
+        active_wait = ns +
+                      sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
     }
     else
     {
         /* Use ticks */
         active_wait = ns + sys_tick_count * 1000000000 /
-                           sys_main_timer.pGetFrequency();
+                      sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl);
     }
     while(active_wait > 0){}
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_WAIT_NOSCHED_END,
-                       2,
-                       (uint32_t)ns,
-                       (uint32_t)(ns >> 32));
+
 }
 
 OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
 {
-#ifdef ARCH_64_BITS
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED,
-                       2,
-                       (uintptr_t)pSchedRoutine & 0xFFFFFFFF,
-                       (uintptr_t)pSchedRoutine >> 32);
-#else
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_TIME_REG_SCHED,
-                       2,
-                       (uintptr_t)pSchedRoutine & 0xFFFFFFFF,
-                       (uintptr_t)0);
-#endif
-
     if(pSchedRoutine == NULL)
     {
+        KERNEL_ERROR("Invalid NULL scheduler routine\n");
         return OS_ERR_NULL_POINTER;
     }
 

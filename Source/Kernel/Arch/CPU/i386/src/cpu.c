@@ -2317,7 +2317,7 @@ static void _setupGDT(void)
 {
     uint32_t i;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_START, 0);
+
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting GDT");
 
     /************************************
@@ -2462,14 +2462,14 @@ static void _setupGDT(void)
 
     KERNEL_SUCCESS("GDT Initialized at 0x%P\n", sGDTPtr.base);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_GDT_END, 2, sGDTPtr.base, 0);
+
 }
 
 static void _setupIDT(void)
 {
     uint32_t i;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_START, 0);
+
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting IDT");
 
     /* Blank the IDT */
@@ -2495,14 +2495,14 @@ static void _setupIDT(void)
 
     KERNEL_SUCCESS("IDT Initialized at 0x%P\n", sIDTPtr.base);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_IDT_END, 2, sIDTPtr.base, 0);
+
 }
 
 static void _setupTSS(void)
 {
     uint32_t i;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_START, 0);
+
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting TSS");
 
     /* Blank the TSS */
@@ -2528,24 +2528,24 @@ static void _setupTSS(void)
 
     KERNEL_SUCCESS("TSS Initialized at 0x%P\n", sTSS);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SET_TSS_END, 2, sTSS, 0);
+
 }
 
 void cpuInit(void)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_START, 0);
+
 
     /* Init the GDT, IDT and TSS */
     _setupGDT();
     _setupIDT();
     _setupTSS();
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_SETUP_END, 0);
+
 }
 
 OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_START, 1, kInterruptLine);
+
     KERNEL_DEBUG(CPU_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Requesting interrupt raise %d",
@@ -2553,10 +2553,9 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 
     if(kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
-                           2,
-                           kInterruptLine,
-                           OS_ERR_UNAUTHORIZED_ACTION);
+        KERNEL_ERROR("Requested an invalid CPU interrupt raise: %d\n",
+                     kInterruptLine);
+
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -3332,10 +3331,7 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
             break;
     }
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_CPU_RAISE_INT_END,
-                       2,
-                       kInterruptLine,
-                       OS_NO_ERR);
+
     return OS_NO_ERR;
 }
 
@@ -3354,7 +3350,7 @@ void cpuValidateArchitecture(void)
     outputBuffIndex = 0;
 #endif
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_VALIDATE_ARCH_START, 0);
+
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU", "Detecting cpu capabilities");
 
@@ -3618,7 +3614,7 @@ void cpuValidateArchitecture(void)
                "CPU does not support SSE2",
                OS_ERR_NOT_SUPPORTED);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_VALIDATE_ARCH_END, 0);
+
 }
 
 /************************************ EOF *************************************/

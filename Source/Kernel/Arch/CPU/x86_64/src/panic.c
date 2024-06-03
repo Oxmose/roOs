@@ -427,7 +427,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     uint32_t minutes;
     uint32_t seconds;
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_START, 1, sPanicCode);
+
 
     interruptDisable();
 
@@ -465,7 +465,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
                   timeGetUptime(),
                   pCurrThread->pName,
                   pCurrThread->tid,
-                  "NO_PROCESS", // TODO: Process name
+                  "UTK_KERNEL", // TODO: Process name
                   0); // TODO: Process ID
 
     kprintf("File: %s at line %d\n", skpPanicFile, sPanicLine);
@@ -485,7 +485,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     consoleSetColorScheme(&consoleScheme);
 
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC_HANDLER_END, 1, sPanicCode);
+
 
     TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
                             TRUE,
@@ -511,7 +511,7 @@ void kernelPanic(const uint32_t kErrorCode,
                  const char*    kpFile,
                  const size_t   kLine)
 {
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_PANIC, 1, errorCode);
+
 
     /* We don't need interrupt anymore */
     interruptDisable();

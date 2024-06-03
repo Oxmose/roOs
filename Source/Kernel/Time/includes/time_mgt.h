@@ -88,9 +88,12 @@ typedef struct
      *
      * @details The function should return the frequency of the timer source.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     *
      * @return The function should return the frequency of the timer source.
      */
-    uint32_t (*pGetFrequency)(void);
+    uint32_t (*pGetFrequency)(void* pDriverCtrl);
 
     /**
      * @brief The function should allow the kernel to set the frequency of a
@@ -99,9 +102,11 @@ typedef struct
      * @details The function should allow the kernel to set the frequency of a
      * timer source. The frequency is defined in Hz.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      * @param[in] kFrequency The frequency to apply to the timer source.
      */
-    void (*pSetFrequency)(const uint32_t kFrequency);
+    void (*pSetFrequency)(void* pDriverCtrl, const uint32_t kFrequency);
 
     /**
      * @brief Returns the time elasped since the last timer's reset in ns.
@@ -109,9 +114,12 @@ typedef struct
      * @details Returns the time elasped since the last timer's reset in ns. The
      * timer can be set with the pSetTimeNs function.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     *
      * @return The time in nanosecond since the last timer reset is returned.
      */
-    uint64_t (*pGetTimeNs)(void);
+    uint64_t (*pGetTimeNs)(void* pDriverCtrl);
 
     /**
      * @brief Sets the time elasped in ns.
@@ -119,41 +127,55 @@ typedef struct
      * @details Sets the time elasped in ns. The timer can be get with the
      * pGetTimeNs function.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      * @param[in] kTimeNS The time in nanoseconds to set.
      */
-    void (*pSetTimeNs)(const uint64_t kTimeNS);
+    void (*pSetTimeNs)(void* pDriverCtrl, const uint64_t kTimeNS);
 
     /**
      * @brief Returns the current date.
      *
      * @details Returns the current date in RTC date format.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     *
      * @returns The current date in in RTC date format
      */
-    date_t (*pGetDate)(void);
+    date_t (*pGetDate)(void* pDriverCtrl);
 
     /**
      * @brief Returns the current daytime.
      *
      * @details Returns the current daytime.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     *
      * @returns The current daytime.
      */
-    time_t (*pGetDaytime)(void);
+    time_t (*pGetDaytime)(void* pDriverCtrl);
 
     /**
      * @brief The function should enable the timer's interrupt.
      *
      * @details The function should enable the timer's interrupt.
+     *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      */
-    void (*pEnable)(void);
+    void (*pEnable)(void* pDriverCtrl);
 
     /**
      * @brief The function should disable the timer's interrupt.
      *
      * @details The function should disable the timer's interrupt.
+     *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      */
-    void (*pDisable)(void);
+    void (*pDisable)(void* pDriverCtrl);
 
     /**
      * @brief The function should set the timer's tick handler.
@@ -161,6 +183,8 @@ typedef struct
      * @details The function should set the timer's tick handler. The handler
      * will be called at each tick received.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      * @param[in] handler The handler of the timer's interrupt.
      *
      * @return The success state or the error code.
@@ -172,12 +196,16 @@ typedef struct
      * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
      *   registered for the timer.
      */
-    OS_RETURN_E (*pSetHandler)(void(*handler)(kernel_thread_t*));
+    OS_RETURN_E (*pSetHandler)(void* pDriverCtrl,
+                               void(*handler)(kernel_thread_t*));
 
     /**
      * @brief The function should remove the timer tick handler.
      *
      * @details The function should remove the timer tick handler.
+     *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
      *
      * @return The success state or the error code.
      * - OS_NO_ERR is returned if no error is encountered.
@@ -186,15 +214,24 @@ typedef struct
      * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the timer line has no
      *   handler attached.
      */
-    OS_RETURN_E (*pRemoveHandler)(void);
+    OS_RETURN_E (*pRemoveHandler)(void* pDriverCtrl);
 
     /** @brief This function can be used to execute an operation in the
      * driver at every tick of the timer.
      *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     *
      * @details This function can be used to execute an operation in the
      * driver at every tick of the timer such as a tick acknowledge.
      */
-    void (*pTickManager)(void);
+    void (*pTickManager)(void* pDriverCtrl);
+
+    /**
+     * @brief Contains a pointer to the driver controler, set by the driver
+     * at the moment of the initialization of this structure.
+     */
+    void* pDriverCtrl;
 } kernel_timer_t;
 
 /*******************************************************************************

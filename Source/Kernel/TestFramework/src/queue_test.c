@@ -258,7 +258,7 @@ void queue_test(void)
     /* Enqueue nodes with prio */
     for(uint8_t i = 0; i < 40; ++i)
     {
-        error = queuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->data);
+        error = queuePushPrio(nodes[i], queue, (uintptr_t)nodes[i]->pData);
         TEST_POINT_ASSERT_RCODE(TEST_QUEUE_PUSHPRIOBURST0_ID(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
@@ -283,9 +283,9 @@ void queue_test(void)
                                  (uint64_t)(uintptr_t)nodes[i],
                                  TEST_OS_QUEUE_ENABLED);
         TEST_POINT_ASSERT_UINT(TEST_QUEUE_POPBURST0_ID(i * 3 + 2),
-                                (uint32_t)(uintptr_t)nodes[i]->data == sorted[i],
+                                (uint32_t)(uintptr_t)nodes[i]->pData == sorted[i],
                                 (uint32_t)sorted[i],
-                                (uint32_t)(uintptr_t)nodes[i]->data,
+                                (uint32_t)(uintptr_t)nodes[i]->pData,
                                 TEST_OS_QUEUE_ENABLED);
 
         error = OS_ERR_NULL_POINTER;
@@ -358,9 +358,9 @@ void queue_test(void)
                              (uint64_t)(uintptr_t)find,
                              TEST_OS_QUEUE_ENABLED);
     TEST_POINT_ASSERT_UINT(TEST_QUEUE_CREATE_FIND2_ID,
-                            (uint32_t)(uintptr_t)find->data == 9,
+                            (uint32_t)(uintptr_t)find->pData == 9,
                             9,
-                            (uint32_t)(uintptr_t)find->data,
+                            (uint32_t)(uintptr_t)find->pData,
                             TEST_OS_QUEUE_ENABLED);
 
     error = OS_ERR_NULL_POINTER;
@@ -395,9 +395,9 @@ void queue_test(void)
                                  (uint64_t)(uintptr_t)nodes[i],
                                  TEST_OS_QUEUE_ENABLED);
         TEST_POINT_ASSERT_UINT(TEST_QUEUE_POPBURST1_ID(i * 3 + 2),
-                                (uint32_t)(uintptr_t)nodes[i]->data == unsorted[i%10],
+                                (uint32_t)(uintptr_t)nodes[i]->pData == unsorted[i%10],
                                 (uint32_t)unsorted[i%10],
-                                (uint32_t)(uintptr_t)nodes[i]->data,
+                                (uint32_t)(uintptr_t)nodes[i]->pData,
                                 TEST_OS_QUEUE_ENABLED);
 
         error = OS_ERR_NULL_POINTER;

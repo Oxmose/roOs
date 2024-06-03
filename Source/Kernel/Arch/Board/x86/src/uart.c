@@ -367,10 +367,10 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     uart_controler_t* pDrvCtrl;
     console_driver_t* pConsoleDrv;
 
+
+
     pDrvCtrl    = NULL;
     pConsoleDrv = NULL;
-
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_START, 0);
 
     /* Init structures */
     pDrvCtrl = kmalloc(sizeof(uart_controler_t));
@@ -387,15 +387,15 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-    pConsoleDrv->pClear           = _uartClear,
-    pConsoleDrv->pPutCursor       = NULL,
-    pConsoleDrv->pSaveCursor      = NULL,
-    pConsoleDrv->pRestoreCursor   = NULL,
-    pConsoleDrv->pScroll          = _uartScroll,
-    pConsoleDrv->pSetColorScheme  = NULL,
-    pConsoleDrv->pSaveColorScheme = NULL,
-    pConsoleDrv->pPutString       = _uartPutString,
-    pConsoleDrv->pPutChar         = _uartPutChar,
+    pConsoleDrv->pClear           = _uartClear;
+    pConsoleDrv->pPutCursor       = NULL;
+    pConsoleDrv->pSaveCursor      = NULL;
+    pConsoleDrv->pRestoreCursor   = NULL;
+    pConsoleDrv->pScroll          = _uartScroll;
+    pConsoleDrv->pSetColorScheme  = NULL;
+    pConsoleDrv->pSaveColorScheme = NULL;
+    pConsoleDrv->pPutString       = _uartPutString;
+    pConsoleDrv->pPutChar         = _uartPutChar;
     pConsoleDrv->pDriverCtrl      = pDrvCtrl;
 
     /* Get the UART CPU communication ports */
@@ -412,6 +412,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     /* Check if we are trying to attach the debug port */
     if(pDrvCtrl->cpuCommPort == SERIAL_DEBUG_PORT)
     {
+        KERNEL_ERROR("Tried to register debug UART as regular UART.\n");
         retCode = OS_ERR_UNAUTHORIZED_ACTION;
         goto ATTACH_END;
     }
@@ -453,6 +454,7 @@ ATTACH_END:
 
     if(retCode != OS_NO_ERR)
     {
+        KERNEL_ERROR("Failed to attach UART driver. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);
@@ -462,7 +464,7 @@ ATTACH_END:
             kfree(pConsoleDrv);
         }
     }
-    KERNEL_TRACE_EVENT(EVENT_KERNEL_UART_INIT_END, 1, (uintptr_t(retCode)));
+
     return retCode;
 }
 
@@ -607,15 +609,13 @@ void uartDebugInit(void)
     /* Init line */
     _uartSetBaudrate(DEBUG_LOG_UART_RATE, SERIAL_DEBUG_PORT);
     _uartSetLine(SERIAL_DATA_LENGTH_8 | SERIAL_STOP_BIT_1,
-                SERIAL_DEBUG_PORT);
+                 SERIAL_DEBUG_PORT);
     _uartSetBuffer(0xC0 |
-                SERIAL_ENABLE_FIFO |
-                SERIAL_CLEAR_RECV_FIFO |
-                SERIAL_CLEAR_SEND_FIFO |
-                SERIAL_FIFO_DEPTH_14,
-                SERIAL_DEBUG_PORT);
-
-
+                   SERIAL_ENABLE_FIFO |
+                   SERIAL_CLEAR_RECV_FIFO |
+                   SERIAL_CLEAR_SEND_FIFO |
+                   SERIAL_FIFO_DEPTH_14,
+                   SERIAL_DEBUG_PORT);
 }
 
 void uartDebugPutString(const char* kpString)

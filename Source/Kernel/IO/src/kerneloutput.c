@@ -561,39 +561,6 @@ void kprintfInfo(const char* kpFmt, ...)
     __builtin_va_end(args);
 }
 
-void kprintfWarning(const char* kpFmt, ...)
-{
-    __builtin_va_list    args;
-    colorscheme_t        buffer;
-    colorscheme_t        newScheme;
-
-    if(kpFmt == NULL)
-    {
-        return;
-    }
-
-    newScheme.foreground = FG_BROWN;
-    newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
-
-    /* No need to test return value */
-    consoleSaveColorScheme(&buffer);
-
-    /* Set REG on BLACK color scheme */
-    consoleSetColorScheme(&newScheme);
-
-    /* Print tag */
-    _tagPrintf("[WARNING] ");
-
-    /* Restore original screen color scheme */
-    consoleSetColorScheme(&buffer);
-
-    /* Printf format string */
-    __builtin_va_start(args, kpFmt);
-    _formater(kpFmt, args);
-    __builtin_va_end(args);
-}
-
 void kprintfDebug(const char* kpFmt, ...)
 {
     __builtin_va_list    args;

@@ -238,7 +238,6 @@ OS_RETURN_E queuePushPrio(queue_node_t*   pNode,
 
     if(pNode == NULL || pQueue == NULL)
     {
-        KERNEL_ERROR("[QUEUE] Enqueue NULL");
         return OS_ERR_NULL_POINTER;
     }
 

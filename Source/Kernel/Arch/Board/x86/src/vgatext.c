@@ -31,6 +31,7 @@
 #include <kerror.h>        /* Kernel error */
 #include <devtree.h>       /* Device tree */
 #include <console.h>       /* Console driver manager */
+#include <critical.h>      /* Kernel locks */
 #include <drivermgr.h>     /* Driver manager service */
 #include <kerneloutput.h>  /* Kernel output manager */
 
@@ -100,6 +101,9 @@ typedef struct
 
     /** @brief Size in bytes of the framebuffer. */
     size_t framebufferSize;
+
+    /** @brief Driver's lock */
+    kernel_spinlock_t lock;
 } vga_controler_t;
 
 
@@ -229,7 +233,7 @@ static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer);
  * @param[in] kpBuffer The cursor buffer containing the new
  * coordinates of the cursor.
  */
-static void _vgaResotreCursor(void* pDriverCtrl, const cursor_t* kpBuffer);
+static void _vgaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer);
 
 /**
  * @brief Scrolls in the desired direction of lines_count lines.
@@ -305,8 +309,11 @@ static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
 /* None */
 
 /************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
 /** @brief VGA driver instance. */
-driver_t x86VGADriver = {
+static driver_t sX86VGADriver = {
     .pName         = "X86 VGA driver",
     .pDescription  = "X86 VGA driver for UTK",
     .pCompatible   = "x86,x86-vga-text",
@@ -314,8 +321,6 @@ driver_t x86VGADriver = {
     .pDriverAttach = _vgaConsoleAttach
 };
 
-/************************** Static global variables ***************************/
-/* None */
 
 /*******************************************************************************
  * FUNCTIONS
@@ -324,14 +329,16 @@ driver_t x86VGADriver = {
 static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 {
     const uintptr_t*  ptrProp;
-    const uint32_t*   uintProp;
+    const uint32_t*   kpUintProp;
     size_t            propLen;
     OS_RETURN_E       retCode;
     vga_controler_t*  pDrvCtrl;
     console_driver_t* pConsoleDrv;
     colorscheme_t     initScheme;
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_ATTACH_ENTRY,
+                       0);
 
     pDrvCtrl    = NULL;
     pConsoleDrv = NULL;
@@ -345,6 +352,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vga_controler_t));
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -356,7 +364,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->pClear           = _vgaClearFramebuffer;
     pConsoleDrv->pPutCursor       = _vgaPutCursor;
     pConsoleDrv->pSaveCursor      = _vgaSaveCursor;
-    pConsoleDrv->pRestoreCursor   = _vgaResotreCursor;
+    pConsoleDrv->pRestoreCursor   = _vgaRestoreCursor;
     pConsoleDrv->pScroll          = _vgaScroll;
     pConsoleDrv->pSetColorScheme  = _vgaSetScheme;
     pConsoleDrv->pSaveColorScheme = _vgaSaveScheme;
@@ -393,15 +401,15 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 #endif
 
     /* Get the VGA CPU communication ports */
-    uintProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -410,15 +418,15 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->cpuDataPort);
 
     /* Get the resolution */
-    uintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the resolution from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->columnCount = (uint8_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->lineCount   = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->columnCount = (uint8_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->lineCount   = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -473,6 +481,11 @@ ATTACH_END:
             kfree(pConsoleDrv);
         }
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_ATTACH_EXIT,
+                       1,
+                       (uint32_t)retCode);
 
     return retCode;
 }
@@ -641,6 +654,8 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 break;
         }
     }
+
+    pCtrl->lastPrintedCursor = pCtrl->screenCursor;
 }
 
 static void _vgaClearFramebuffer(void* pDriverCtrl)
@@ -669,6 +684,8 @@ static void _vgaPutCursor(void*          pDriverCtrl,
         return;
     }
 
+    KERNEL_SPINLOCK_LOCK(pCtrl->lock);
+
     /* Set new cursor position */
     pCtrl->screenCursor.x = kColumn;
     pCtrl->screenCursor.y = kLine;
@@ -683,6 +700,8 @@ static void _vgaPutCursor(void*          pDriverCtrl,
     /* Send high part to the screen */
     _cpuOutB(VGA_CONSOLE_CURSOR_COMM_HIGH, pCtrl->cpuCommPort);
     _cpuOutB((int8_t)((cursorPosition & 0xFF00) >> 8), pCtrl->cpuDataPort);
+
+    KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
@@ -693,13 +712,15 @@ static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
 
     if(pBuffer != NULL)
     {
+        KERNEL_SPINLOCK_LOCK(pCtrl->lock);
         /* Save cursor attributes */
         pBuffer->x = pCtrl->screenCursor.x;
         pBuffer->y = pCtrl->screenCursor.y;
+        KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
     }
 }
 
-static void _vgaResotreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
+static void _vgaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
 {
     vga_controler_t* pCtrl;
 
@@ -733,6 +754,8 @@ static void _vgaScroll(void* pDriverCtrl,
         toScroll = kLines;
     }
 
+    KERNEL_SPINLOCK_LOCK(pCtrl->lock);
+
     /* Select scroll direction */
     if(kDirection == SCROLL_DOWN)
     {
@@ -750,6 +773,7 @@ static void _vgaScroll(void* pDriverCtrl,
             pCtrl->pLastColumns[pCtrl->lineCount - 1] = 0;
         }
         /* Clear last line */
+        KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
         for(i = 0; i < pCtrl->columnCount; ++i)
         {
             _vgaPrintChar(pDriverCtrl, pCtrl->lineCount - 1, i, ' ');
@@ -758,6 +782,7 @@ static void _vgaScroll(void* pDriverCtrl,
 
     /* Replace cursor */
     _vgaPutCursor(pDriverCtrl, pCtrl->lineCount - toScroll, 0);
+    KERNEL_SPINLOCK_LOCK(pCtrl->lock);
 
     if(toScroll <= pCtrl->lastPrintedCursor.y)
     {
@@ -768,6 +793,7 @@ static void _vgaScroll(void* pDriverCtrl,
         pCtrl->lastPrintedCursor.x = 0;
         pCtrl->lastPrintedCursor.y = 0;
     }
+    KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
@@ -776,8 +802,10 @@ static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
+    KERNEL_SPINLOCK_LOCK(pCtrl->lock);
     pCtrl->screenScheme.foreground = kpColorScheme->foreground;
     pCtrl->screenScheme.background = kpColorScheme->background;
+    KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
@@ -788,37 +816,52 @@ static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
 
     if(pBuffer != NULL)
     {
+        KERNEL_SPINLOCK_LOCK(pCtrl->lock);
         /* Save color scheme into buffer */
         pBuffer->foreground = pCtrl->screenScheme.foreground;
         pBuffer->background = pCtrl->screenScheme.background;
+        KERNEL_SPINLOCK_UNLOCK(pCtrl->lock);
     }
 }
 
 static void _vgaPutString(void* pDriverCtrl, const char* kpString)
 {
-    size_t i;
-    size_t stringLen;
+    size_t           i;
+    size_t           stringLen;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_PUT_STRING_ENTRY,
+                       0);
 
     stringLen = strlen(kpString);
 
     /* Output each character of the string */
     for(i = 0; i < stringLen; ++i)
     {
-        _vgaPutChar(pDriverCtrl, kpString[i]);
+        _vgaProcessChar(pDriverCtrl, kpString[i]);
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_PUT_STRING_EXIT,
+                       2,
+                       (uint32_t)((uint64_t)stringLen >> 32),
+                       (uint32_t)(stringLen & 0xFFFFFFFF));
 }
 
 static void _vgaPutChar(void* pDriverCtrl, const char kCharacter)
 {
-    vga_controler_t* pCtrl;
-
-    pCtrl = GET_CONTROLER(pDriverCtrl);
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_PUT_CHAR_ENTRY,
+                       0);
 
     _vgaProcessChar(pDriverCtrl, kCharacter);
-    pCtrl->lastPrintedCursor = pCtrl->screenCursor;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
+                       TRACE_X86_VGA_TEXT_PUT_CHAR_EXIT,
+                       0);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(x86VGADriver);
+DRIVERMGR_REG(sX86VGADriver);
 
 /************************************ EOF *************************************/

@@ -36,7 +36,8 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines a kernel spinlock. */
+typedef volatile uint32_t kernel_spinlock_t;
 
 /*******************************************************************************
  * MACROS
@@ -50,8 +51,12 @@
  * @details Enters a critical section in the kernel. Save interrupt state and
  * disables interrupts.
  */
-#define ENTER_CRITICAL(INT_STATE) {         \
-    INT_STATE = interruptDisable(); \
+#define ENTER_CRITICAL(INT_STATE) {                  \
+    INT_STATE = interruptDisable();                  \
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,        \
+                       TRACE_X86_CPU_ENTER_CRITICAL, \
+                       1,                            \
+                       INT_STATE);                   \
 }
 
 /**
@@ -62,8 +67,12 @@
  * @details Exits a critical section in the kernel. Restore the previous
  * interrupt state.
  */
-#define EXIT_CRITICAL(INT_STATE) {           \
-    interruptRestore(INT_STATE);     \
+#define EXIT_CRITICAL(INT_STATE) {                  \
+    interruptRestore(INT_STATE);                    \
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,       \
+                       TRACE_X86_CPU_EXIT_CRITICAL, \
+                       1,                           \
+                       INT_STATE);                  \
 }
 
 /**
@@ -71,10 +80,14 @@
  *
  * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @param[in, out] lock The lock to lock.
+ * @param[in, out] LOCK The lock to lock.
 */
-#define KERNEL_SPINLOCK_LOCK(LOCK) {    \
-    cpuSpinlockAcquire(&LOCK);           \
+#define KERNEL_SPINLOCK_LOCK(LOCK) {                \
+    cpuSpinlockAcquire(&(LOCK));                    \
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,       \
+                       TRACE_X86_CPU_SPINLOCK_LOCK, \
+                       1,                           \
+                       LOCK);                       \
 }
 
 /**
@@ -82,10 +95,14 @@
  *
  * @details Unlocks a spinlock. This function is safe in kernel mode.
  *
- * @param[out] lock The lock to unlock.
+ * @param[out] LOCK The lock to unlock.
 */
-#define KERNEL_SPINLOCK_UNLOCK(LOCK) {  \
-    cpuSpinlockRelease(&LOCK);         \
+#define KERNEL_SPINLOCK_UNLOCK(LOCK) {                  \
+    cpuSpinlockRelease(&(LOCK));                        \
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,           \
+                       TRACE_X86_CPU_SPINLOCK_UNLOCK,   \
+                       1,                               \
+                       LOCK);                           \
 }
 
 /**
@@ -93,10 +110,10 @@
  *
  * @details Initializes a spinlock. This function is safe in kernel mode.
  *
- * @param[out] lock The lock to initialize.
+ * @param[out] LOCK The lock to initialize.
 */
-#define KERNEL_SPINLOCK_INIT(LOCK) {                        \
-    (volatile uint32_t)LOCK = KERNEL_SPINLOCK_INIT_VALUE;   \
+#define KERNEL_SPINLOCK_INIT(LOCK) {     \
+    LOCK = KERNEL_SPINLOCK_INIT_VALUE;   \
 }
 
 /** @brief Kernel spinlock initializer */

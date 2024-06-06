@@ -13,7 +13,7 @@
  *
  * @details Queue structures. These queues are used as priority queue or regular
  * queues. A queue can virtually store every type of data and is just a wrapper.
- * This queue library is thread safe.
+ * This queue library is not thread safe.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/

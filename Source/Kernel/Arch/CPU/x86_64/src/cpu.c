@@ -2327,6 +2327,7 @@ static void _setupGDT(void)
 {
     uint32_t i;
 
+KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_GDT_ENTRY, 0);
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting GDT");
 
@@ -2540,13 +2541,14 @@ static void _setupGDT(void)
 
     KERNEL_SUCCESS("GDT Initialized at 0x%P\n", sGDTPtr.base);
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_GDT_EXIT, 0);
 }
 
 static void _setupIDT(void)
 {
     uint32_t i;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_IDT_ENTRY, 0);
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting IDT");
 
@@ -2573,13 +2575,14 @@ static void _setupIDT(void)
 
     KERNEL_SUCCESS("IDT Initialized at 0x%P\n", sIDTPtr.base);
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_IDT_EXIT, 0);
 }
 
 static void _setupTSS(void)
 {
     uint32_t i;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_TSS_ENTRY, 0);
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting TSS");
 
@@ -2599,31 +2602,42 @@ static void _setupTSS(void)
 
     KERNEL_SUCCESS("TSS Initialized at 0x%P\n", sTSS);
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_TSS_EXIT, 0);
 }
 
 void cpuInit(void)
 {
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_CPU_ENTRY, 0);
 
     /* Init the GDT, IDT and TSS */
     _setupGDT();
     _setupIDT();
     _setupTSS();
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_SETUP_CPU_EXIT, 0);
 }
 
 OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_RAISE_INT_ENTRY,
+                       1,
+                       kInterruptLine);
 
-    KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME,
-                 "Requesting interrupt raise %d", kInterruptLine);
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Requesting interrupt raise %d",
+                 kInterruptLine);
 
     if(kInterruptLine > MAX_INTERRUPT_LINE)
     {
         KERNEL_ERROR("Requested an invalid CPU interrupt raise: %d\n",
                      kInterruptLine);
+        KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                           TRACE_X86_CPU_RAISE_INT_EXIT,
+                           2,
+                           kInterruptLine,
+                           OS_ERR_UNAUTHORIZED_ACTION);
 
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
@@ -3400,16 +3414,24 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
             break;
     }
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_RAISE_INT_EXIT,
+                       2,
+                       kInterruptLine,
+                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
 void cpuValidateArchitecture(void)
 {
     /* eax, ebx, ecx, edx */
-    volatile int32_t  regs[4];
-    volatile int32_t  regs_ext[4];
-    uint32_t          ret;
+    volatile int32_t regs[4];
+    volatile int32_t regsExt[4];
+    uint32_t         ret;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_VALIDATE_ARCH_ENTRY,
+                       0);
 
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
     uint32_t outputBuffIndex;
@@ -3418,8 +3440,6 @@ void cpuValidateArchitecture(void)
 
     outputBuffIndex = 0;
 #endif
-
-
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU", "Detecting cpu capabilities");
 
@@ -3574,82 +3594,82 @@ void cpuValidateArchitecture(void)
     { CONCAT_STR(outputBuff, outputBuffIndex, "PBE - "); }
 
     /* Check for extended features */
-    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regs_ext);
-    if((uint32_t)regs_ext[0] >= (uint32_t)CPUID_INTELFEATURES)
+    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
+    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_INTELFEATURES)
     {
-        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regs_ext);
+        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
 
-        if((regs_ext[3] & EDX_SYSCALL) == EDX_SYSCALL)
+        if((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL)
         { CONCAT_STR(outputBuff, outputBuffIndex, "SYSCALL - "); }
-        if((regs_ext[3] & EDX_MP) == EDX_MP)
+        if((regsExt[3] & EDX_MP) == EDX_MP)
         { CONCAT_STR(outputBuff, outputBuffIndex, "MP - "); }
-        if((regs_ext[3] & EDX_XD) == EDX_XD)
+        if((regsExt[3] & EDX_XD) == EDX_XD)
         { CONCAT_STR(outputBuff, outputBuffIndex, "XD - "); }
-        if((regs_ext[3] & EDX_MMX_EX) == EDX_MMX_EX)
+        if((regsExt[3] & EDX_MMX_EX) == EDX_MMX_EX)
         { CONCAT_STR(outputBuff, outputBuffIndex, "MMX_EX - "); }
-        if((regs_ext[3] & EDX_FXSR) == EDX_FXSR)
+        if((regsExt[3] & EDX_FXSR) == EDX_FXSR)
         { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR - "); }
-        if((regs_ext[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
+        if((regsExt[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
         { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR_OPT - "); }
-        if((regs_ext[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
+        if((regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
         { CONCAT_STR(outputBuff, outputBuffIndex, "1GB_PAGE - "); }
-        if((regs_ext[3] & EDX_RDTSCP) == EDX_RDTSCP)
+        if((regsExt[3] & EDX_RDTSCP) == EDX_RDTSCP)
         { CONCAT_STR(outputBuff, outputBuffIndex, "RDTSCP - "); }
-        if((regs_ext[3] & EDX_64_BIT) == EDX_64_BIT)
+        if((regsExt[3] & EDX_64_BIT) == EDX_64_BIT)
         { CONCAT_STR(outputBuff, outputBuffIndex, "X64 - "); }
-        if((regs_ext[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
+        if((regsExt[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
         { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW_EX - "); }
-        if((regs_ext[3] & EDX_3DNOW) == EDX_3DNOW)
+        if((regsExt[3] & EDX_3DNOW) == EDX_3DNOW)
         { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW - "); }
-        if((regs_ext[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
+        if((regsExt[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
         { CONCAT_STR(outputBuff, outputBuffIndex, "LAHF_LM - "); }
-        if((regs_ext[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
+        if((regsExt[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
         { CONCAT_STR(outputBuff, outputBuffIndex, "CMP_LEG - "); }
-        if((regs_ext[2] & ECX_SVM) == ECX_SVM)
+        if((regsExt[2] & ECX_SVM) == ECX_SVM)
         { CONCAT_STR(outputBuff, outputBuffIndex, "SVM - "); }
-        if((regs_ext[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
+        if((regsExt[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
         { CONCAT_STR(outputBuff, outputBuffIndex, "EXTAPIC - "); }
-        if((regs_ext[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
+        if((regsExt[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
         { CONCAT_STR(outputBuff, outputBuffIndex, "CR8_LEG - "); }
-        if((regs_ext[2] & ECX_ABM) == ECX_ABM)
+        if((regsExt[2] & ECX_ABM) == ECX_ABM)
         { CONCAT_STR(outputBuff, outputBuffIndex, "ABM - "); }
-        if((regs_ext[2] & ECX_SSE4A) == ECX_SSE4A)
+        if((regsExt[2] & ECX_SSE4A) == ECX_SSE4A)
         { CONCAT_STR(outputBuff, outputBuffIndex, "SSE4A - "); }
-        if((regs_ext[2] & ECX_MISASSE) == ECX_MISASSE)
+        if((regsExt[2] & ECX_MISASSE) == ECX_MISASSE)
         { CONCAT_STR(outputBuff, outputBuffIndex, "MISALIGNED_SSE - "); }
-        if((regs_ext[2] & ECX_PREFETCH) == ECX_PREFETCH)
+        if((regsExt[2] & ECX_PREFETCH) == ECX_PREFETCH)
         { CONCAT_STR(outputBuff, outputBuffIndex, "PREFETCH - "); }
-        if((regs_ext[2] & ECX_OSVW) == ECX_OSVW)
+        if((regsExt[2] & ECX_OSVW) == ECX_OSVW)
         { CONCAT_STR(outputBuff, outputBuffIndex, "OSVW - "); }
-        if((regs_ext[2] & ECX_IBS) == ECX_IBS)
+        if((regsExt[2] & ECX_IBS) == ECX_IBS)
         { CONCAT_STR(outputBuff, outputBuffIndex, "IBS - "); }
-        if((regs_ext[2] & ECX_XOP) == ECX_XOP)
+        if((regsExt[2] & ECX_XOP) == ECX_XOP)
         { CONCAT_STR(outputBuff, outputBuffIndex, "XOP - "); }
-        if((regs_ext[2] & ECX_SKINIT) == ECX_SKINIT)
+        if((regsExt[2] & ECX_SKINIT) == ECX_SKINIT)
         { CONCAT_STR(outputBuff, outputBuffIndex, "SKINIT - "); }
-        if((regs_ext[2] & ECX_WDT) == ECX_WDT)
+        if((regsExt[2] & ECX_WDT) == ECX_WDT)
         { CONCAT_STR(outputBuff, outputBuffIndex, "WDT - "); }
-        if((regs_ext[2] & ECX_LWP) == ECX_LWP)
+        if((regsExt[2] & ECX_LWP) == ECX_LWP)
         { CONCAT_STR(outputBuff, outputBuffIndex, "LWP - "); }
-        if((regs_ext[2] & ECX_FMA4) == ECX_FMA4)
+        if((regsExt[2] & ECX_FMA4) == ECX_FMA4)
         { CONCAT_STR(outputBuff, outputBuffIndex, "FMA4 - "); }
-        if((regs_ext[2] & ECX_TCE) == ECX_TCE)
+        if((regsExt[2] & ECX_TCE) == ECX_TCE)
         { CONCAT_STR(outputBuff, outputBuffIndex, "TCE - "); }
-        if((regs_ext[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
+        if((regsExt[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
         { CONCAT_STR(outputBuff, outputBuffIndex, "NODE_ID_MSR - "); }
-        if((regs_ext[2] & ECX_TBM) == ECX_TBM)
+        if((regsExt[2] & ECX_TBM) == ECX_TBM)
         { CONCAT_STR(outputBuff, outputBuffIndex, "TMB - "); }
-        if((regs_ext[2] & ECX_TOPOEX) == ECX_TOPOEX)
+        if((regsExt[2] & ECX_TOPOEX) == ECX_TOPOEX)
         { CONCAT_STR(outputBuff, outputBuffIndex, "TOPOEX - "); }
-        if((regs_ext[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
+        if((regsExt[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
         { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_CORE - "); }
-        if((regs_ext[2] & ECX_PERF_NB) == ECX_PERF_NB)
+        if((regsExt[2] & ECX_PERF_NB) == ECX_PERF_NB)
         { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_NB - "); }
-        if((regs_ext[2] & ECX_DBX) == ECX_DBX)
+        if((regsExt[2] & ECX_DBX) == ECX_DBX)
         { CONCAT_STR(outputBuff, outputBuffIndex, "DBX - "); }
-        if((regs_ext[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
+        if((regsExt[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
         { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
-        if((regs_ext[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
+        if((regsExt[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
         { CONCAT_STR(outputBuff, outputBuffIndex, "PCX_L2I - "); }
     }
 
@@ -3657,7 +3677,7 @@ void cpuValidateArchitecture(void)
     outputBuff[outputBuffIndex - 1] = 0;
     KERNEL_INFO(outputBuff);
 #else
-    (void)regs_ext;
+    (void)regsExt;
 #endif
 
     /* Validate features */
@@ -3683,7 +3703,9 @@ void cpuValidateArchitecture(void)
                "CPU does not support SSE2",
                OS_ERR_NOT_SUPPORTED);
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_VALIDATE_ARCH_EXIT,
+                       0);
 }
 
 /************************************ EOF *************************************/

@@ -30,6 +30,7 @@
 #include <kerror.h>       /* Kernel error */
 #include <devtree.h>      /* Device tree */
 #include <console.h>      /* Console driver manager */
+#include <critical.h>     /* Kernel locks */
 #include <drivermgr.h>    /* Driver manager service */
 #include <kerneloutput.h> /* Kernel output manager */
 
@@ -204,6 +205,9 @@ typedef struct
 
     /** @brief Baudrate */
     SERIAL_BAUDRATE_E baudrate;
+
+    /** @brief Driver's lock */
+    kernel_spinlock_t lock;
 } uart_controler_t;
 
 /*******************************************************************************
@@ -269,10 +273,13 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
  * port. This call is blocking until the data has been sent to the uart port
  * controler.
  *
+ * @param[in, out] pLock The device lock.
  * @param[in] kPort The desired port to write the data to.
  * @param[in] kData The byte to write to the uart port.
  */
-static inline void _uartWrite(const uint16_t kPort, const uint8_t kData);
+static inline void _uartWrite(kernel_spinlock_t* pLock,
+                              const uint16_t     kPort,
+                              const uint8_t      kData);
 
 /**
  * @brief Write the string given as patameter on the desired port.
@@ -344,8 +351,11 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate);
 /* None */
 
 /************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
 /** @brief UART driver instance. */
-driver_t x86UARTDriver = {
+static driver_t sX86UARTDriver = {
     .pName         = "X86 UART Driver",
     .pDescription  = "X86 UART Driver for UTK",
     .pCompatible   = "x86,x86-generic-serial",
@@ -353,21 +363,18 @@ driver_t x86UARTDriver = {
     .pDriverAttach = _uartAttach
 };
 
-/************************** Static global variables ***************************/
-/* None */
-
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*   uintProp;
+    const uint32_t*   kpUintProp;
     size_t            propLen;
     OS_RETURN_E       retCode;
     uart_controler_t* pDrvCtrl;
     console_driver_t* pConsoleDrv;
 
-
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_ATTACH_ENTRY, 0);
 
     pDrvCtrl    = NULL;
     pConsoleDrv = NULL;
@@ -380,6 +387,9 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
+    memset(pDrvCtrl, 0, sizeof(uart_controler_t));
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
+
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
     {
@@ -399,14 +409,14 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->pDriverCtrl      = pDrvCtrl;
 
     /* Get the UART CPU communication ports */
-    uintProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
 
 #if DEBUG_LOG_UART
     /* Check if we are trying to attach the debug port */
@@ -419,14 +429,14 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 #endif
 
     /* Get the UART CPU baudrate */
-    uintProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the baudrate from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->baudrate = FDTTOCPU32(*uintProp);
+    pDrvCtrl->baudrate = FDTTOCPU32(*kpUintProp);
 
     /* Init line */
     _uartSetBaudrate(_uartGetCanonicalRate(pDrvCtrl->baudrate),
@@ -465,41 +475,66 @@ ATTACH_END:
         }
     }
 
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_ATTACH_EXIT,
+                       1,
+                       (uint32_t)retCode);
+
     return retCode;
 }
 
 
 static inline void _uartSetLine(const uint8_t kAttr, const uint16_t kCom)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SET_LINE,
+                       2,
+                       (uint32_t)kAttr,
+                       (uint32_t)kCom);
     _cpuOutB(kAttr, SERIAL_LINE_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBuffer(const uint8_t kAttr, const uint16_t kCom)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SET_BUFFER,
+                       2,
+                       (uint32_t)kAttr,
+                       (uint32_t)kCom);
     _cpuOutB(kAttr, SERIAL_FIFO_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
                                     const uint16_t kCom)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SET_BAUDRATE,
+                       2,
+                       (uint32_t)kRate,
+                       (uint32_t)kCom);
     _cpuOutB(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(kCom));
     _cpuOutB((kRate >> 8) & 0x00FF, SERIAL_DATA_PORT(kCom));
     _cpuOutB(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
 }
 
-static inline void _uartWrite(const uint16_t kPort, const uint8_t kData)
+static inline void _uartWrite(kernel_spinlock_t* pLock,
+                              uint16_t           kPort,
+                              const uint8_t      kData)
 {
     /* Wait for empty transmit */
+    KERNEL_SPINLOCK_LOCK(*pLock);
     while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
     if(kData == '\n')
     {
         _cpuOutB('\r', kPort);
+        while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
         _cpuOutB('\n', kPort);
     }
     else
     {
         _cpuOutB(kData, kPort);
     }
+    KERNEL_SPINLOCK_UNLOCK(*pLock);
 }
 
 void _uartClear(void* pDrvCtrl)
@@ -509,7 +544,9 @@ void _uartClear(void* pDrvCtrl)
     /* On 80x25 screen, just print 25 line feed. */
     for(i = 0; i < 25; ++i)
     {
-        _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, '\n');
+        _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
+                   GET_CONTROLER(pDrvCtrl)->cpuCommPort,
+                   '\n');
     }
 }
 
@@ -524,7 +561,9 @@ void _uartScroll(void* pDrvCtrl,
         /* Just print lines_count line feed. */
         for(i = 0; i < kLines; ++i)
         {
-            _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, '\n');
+            _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
+                       GET_CONTROLER(pDrvCtrl)->cpuCommPort,
+                       '\n');
         }
     }
 }
@@ -539,13 +578,17 @@ void _uartPutString(void* pDrvCtrl,
 
     for(i = 0; i < stringLen; ++i)
     {
-        _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, kpString[i]);
+        _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
+                   GET_CONTROLER(pDrvCtrl)->cpuCommPort,
+                   kpString[i]);
     }
 }
 
 void _uartPutChar(void* pDrvCtrl, const char kCharacter)
 {
-    _uartWrite(GET_CONTROLER(pDrvCtrl)->cpuCommPort, kCharacter);
+    _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
+               GET_CONTROLER(pDrvCtrl)->cpuCommPort,
+               kCharacter);
 }
 
 static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
@@ -604,6 +647,9 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
 }
 
 #if DEBUG_LOG_UART
+
+static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
+
 void uartDebugInit(void)
 {
     /* Init line */
@@ -627,17 +673,17 @@ void uartDebugPutString(const char* kpString)
 
     for(i = 0; i < stringLen; ++i)
     {
-        _uartWrite(SERIAL_DEBUG_PORT, kpString[i]);
+        _uartWrite(&sLock, SERIAL_DEBUG_PORT, kpString[i]);
     }
 }
 
 void uartDebugPutChar(const char kCharacter)
 {
-    _uartWrite(SERIAL_DEBUG_PORT, kCharacter);
+    _uartWrite(&sLock, SERIAL_DEBUG_PORT, kCharacter);
 }
 #endif
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(x86UARTDriver);
+DRIVERMGR_REG(sX86UARTDriver);
 
 /************************************ EOF *************************************/

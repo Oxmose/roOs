@@ -197,7 +197,14 @@ _kinitPGDir:
     ; First 4MB R/W Present.
     dd 0x00000083
     ; Pages before kernel space.
-    times (KERNEL_START_PAGE_ID - 1) dd 0
+    ; TODO: reenable this
+    ; times (KERNEL_START_PAGE_ID - 1) dd 0
+
+    ; TODO: remove this when paging is available (ACPI mapping)
+    times (KERNEL_START_PAGE_ID - 834) dd 0
+    dd 0x0FC00083
+    times (832) dd 0
+
     ; This page directory entry defines a 4MB page containing the kernel.
     dd 0x00000083
     ; This page directory entry defines a 4MB page containing the kernel.
@@ -206,7 +213,14 @@ _kinitPGDir:
     dd 0x00800083
     ; This page directory entry defines a 4MB page containing the kernel.
     dd 0x00C00083
-    times (1024 - KERNEL_START_PAGE_ID - 4) dd 0  ; Pages after the kernel.
+
+    ; TODO: Reenable this
+    ; times (1024 - KERNEL_START_PAGE_ID - 5) dd 0  ; Pages after the kernel.
+
+    ; TODO: remove this when paging is available (IOAPIC mapping)
+    times (1024 - KERNEL_START_PAGE_ID - 9) dd 0  ; Pages after the kernel.
+    dd 0xFEC00083
+    times (1024 - KERNEL_START_PAGE_ID - 8) dd 0  ; Pages after the kernel.
 
 ; Number of booted CPUs
 _bootedCPUCount:

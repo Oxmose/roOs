@@ -69,14 +69,14 @@
 /** @brief Stores the number of main kernel's timer tick since the
  * initialization of the time manager.
  */
-static uint64_t sys_tick_count = 0;
+static uint64_t sSysTickCount = 0;
 
 /** @brief The kernel's main timer interrupt source.
  *
  *  @details The kernel's main timer interrupt source. If it's function pointers
  * are NULL, the driver is not initialized.
  */
-static kernel_timer_t sys_main_timer = {
+static kernel_timer_t sSysMainTimer = {
     .pGetFrequency  = NULL,
     .pSetFrequency  = NULL,
     .pGetTimeNs     = NULL,
@@ -94,7 +94,25 @@ static kernel_timer_t sys_main_timer = {
  *  @details The kernel's RTC timer interrupt source. If it's function pointers
  * are NULL, the driver is not initialized.
  */
-static kernel_timer_t sys_rtc_timer = {
+static kernel_timer_t sSysRtcTimer = {
+    .pGetFrequency  = NULL,
+    .pSetFrequency  = NULL,
+    .pGetTimeNs     = NULL,
+    .pSetTimeNs     = NULL,
+    .pGetDate       = NULL,
+    .pGetDaytime    = NULL,
+    .pEnable        = NULL,
+    .pDisable       = NULL,
+    .pSetHandler    = NULL,
+    .pRemoveHandler = NULL,
+};
+
+/** @brief The kernel's lifetime timer.
+ *
+ *  @details The kernel's lifetime timer. If it's function pointers
+ * are NULL, the driver is not initialized.
+ */
+static kernel_timer_t sSysLifetimeTimer = {
     .pGetFrequency  = NULL,
     .pSetFrequency  = NULL,
     .pGetTimeNs     = NULL,
@@ -108,7 +126,7 @@ static kernel_timer_t sys_rtc_timer = {
 };
 
 /** @brief Active wait counter per CPU. */
-static volatile uint64_t active_wait = 0;
+static volatile uint64_t sActiveWait = 0;
 
 /** @brief Stores the routine to call the scheduler. */
 void (*sSchedRoutine)(kernel_thread_t*) = NULL;
@@ -143,16 +161,12 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread);
 
 static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
-    uint64_t curr_time;
-
-
-
     /* Add a tick count */
-    ++sys_tick_count;
+    ++sSysTickCount;
 
-    if(sys_main_timer.pTickManager != NULL)
+    if(sSysMainTimer.pTickManager != NULL)
     {
-        sys_main_timer.pTickManager(sys_main_timer.pDriverCtrl);
+        sSysMainTimer.pTickManager(sSysMainTimer.pDriverCtrl);
     }
 
     if(sSchedRoutine != NULL)
@@ -162,23 +176,14 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
     }
     else
     {
-        /* TODO: remove that and use lifetime timer is availabe */
-        if(active_wait != 0 && sys_main_timer.pGetTimeNs != NULL)
-        {
-            /* Use precise time */
-            curr_time = sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
-            if(active_wait <= curr_time)
-            {
-                active_wait = 0;
-            }
-        }
-        else if(active_wait != 0)
+        /* Use coars active wait if not lifetime timer is present */
+        if(sActiveWait != 0)
         {
             /* Use ticks */
-            if(active_wait <= sys_tick_count * 1000000000 /
-                    sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl))
+            if(sActiveWait <= sSysTickCount * 1000000000 /
+                    sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl))
             {
-                active_wait = 0;
+                sActiveWait = 0;
             }
         }
     }
@@ -192,9 +197,9 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
-    if(sys_rtc_timer.pTickManager != NULL)
+    if(sSysRtcTimer.pTickManager != NULL)
     {
-        sys_rtc_timer.pTickManager(sys_rtc_timer.pDriverCtrl);
+        sSysRtcTimer.pTickManager(sSysRtcTimer.pDriverCtrl);
     }
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
@@ -214,8 +219,7 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
        kpTimer->pEnable == NULL ||
        kpTimer->pDisable == NULL ||
        kpTimer->pSetHandler == NULL ||
-       kpTimer->pRemoveHandler == NULL ||
-       kpTimer->pTickManager == NULL)
+       kpTimer->pRemoveHandler == NULL)
 
     {
         KERNEL_ERROR("Timer misses mandatory hooks\n");
@@ -227,14 +231,17 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     switch(kType)
     {
         case MAIN_TIMER:
-            sys_main_timer = *kpTimer;
-            retCode = sys_main_timer.pSetHandler(kpTimer->pDriverCtrl,
+            sSysMainTimer = *kpTimer;
+            retCode = sSysMainTimer.pSetHandler(kpTimer->pDriverCtrl,
                                                  _mainTimerHandler);
             break;
         case RTC_TIMER:
-            sys_rtc_timer = *kpTimer;
-            retCode = sys_rtc_timer.pSetHandler(kpTimer->pDriverCtrl,
+            sSysRtcTimer = *kpTimer;
+            retCode = sSysRtcTimer.pSetHandler(kpTimer->pDriverCtrl,
                                                 _rtcTimerHandler);
+            break;
+        case LIFETIME_TIMER:
+            sSysLifetimeTimer = *kpTimer;
             break;
         default:
             /* TODO: Add other timers */
@@ -252,52 +259,82 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
 
 uint64_t timeGetUptime(void)
 {
-    if(sys_main_timer.pGetTimeNs == NULL)
+    if(sSysLifetimeTimer.pGetTimeNs != NULL)
     {
-        if(sys_main_timer.pGetFrequency == NULL)
-        {
-            return 0;
-        }
+        return sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl);
+    }
+    else if(sSysMainTimer.pGetTimeNs != NULL)
+    {
+        return sSysMainTimer.pGetTimeNs(sSysMainTimer.pDriverCtrl);
+    }
+    else if(sSysMainTimer.pGetFrequency != NULL)
+    {
+        return sSysTickCount * 1000000000ULL /
+               sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
+    }
+    else
+    {
+        return 0;
+    }
+}
 
-        return sys_tick_count * 1000000000ULL /
-               sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl);
+time_t timeGetDayTime(void)
+{
+    time_t time;
+
+    if(sSysRtcTimer.pGetDaytime != NULL)
+    {
+        time = sSysRtcTimer.pGetDaytime(sSysRtcTimer.pDriverCtrl);
+    }
+    else
+    {
+        time.hours   = 0;
+        time.minutes = 0;
+        time.seconds = 0;
     }
 
-    return sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
+    return time;
 }
 
 uint64_t timeGetTicks(void)
 {
-    return sys_tick_count;
+    return sSysTickCount;
 }
 
 void timeWaitNoScheduler(const uint64_t ns)
 {
+    uint64_t currTime;
 
+    sActiveWait = 0;
 
-    if(sSchedRoutine != NULL)
+    if(sSysLifetimeTimer.pGetTimeNs == NULL)
     {
-        return;
-    }
-
-    /* TODO: Use lifetime timer if availabe and wait for count in this function
-     * don't rely on ticks
-     */
-    if(sys_main_timer.pGetTimeNs != NULL)
-    {
-        /* Use precise time */
-        active_wait = ns +
-                      sys_main_timer.pGetTimeNs(sys_main_timer.pDriverCtrl);
+        if(sSysMainTimer.pGetTimeNs != NULL)
+        {
+            /* Use precise main timer time */
+            currTime = sSysMainTimer.pGetTimeNs(sSysMainTimer.pDriverCtrl);
+            while(sSysMainTimer.pGetTimeNs(sSysMainTimer.pDriverCtrl) <
+                  currTime + ns){}
+        }
+        else if(sSysMainTimer.pGetFrequency != NULL)
+        {
+            /* Use ticks */
+            sActiveWait = ns + sSysTickCount * 1000000000 /
+                         sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
+            while(sActiveWait > 0){}
+        }
+        else/* TODO: Check aux and RTC*/
+        {
+            KERNEL_ERROR("Failed to active wait, no time source present.\n");
+        }
     }
     else
     {
-        /* Use ticks */
-        active_wait = ns + sys_tick_count * 1000000000 /
-                      sys_main_timer.pGetFrequency(sys_main_timer.pDriverCtrl);
+        /* Get current time form lifetimer and wait */
+        currTime = sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl);
+        while(sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl) <
+              currTime + ns){}
     }
-    while(active_wait > 0){}
-
-
 }
 
 OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))

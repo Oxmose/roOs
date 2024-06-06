@@ -96,6 +96,9 @@ typedef struct
 
     /** @brief Keeps track on the PIT enabled state. */
     uint32_t disabledNesting;
+
+    /** @brief Driver's lock */
+    kernel_spinlock_t lock;
 } pit_controler_t;
 
 /*******************************************************************************
@@ -119,7 +122,7 @@ typedef struct
     }                                                       \
 }
 
-/** @brief Cast a pointer to a RTC driver controler */
+/** @brief Cast a pointer to a PIT driver controler */
 #define GET_CONTROLER(PTR) ((pit_controler_t*)PTR)
 
 /*******************************************************************************
@@ -253,8 +256,11 @@ static void _pitAckInterrupt(void* pDrvCtrl);
 /* None */
 
 /************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
 /** @brief PIT driver instance. */
-driver_t x86PITDriver = {
+static driver_t sX86PITDriver = {
     .pName         = "X86 PIT Driver",
     .pDescription  = "X86 Programable Interval Timer Driver for UTK",
     .pCompatible   = "x86,x86-pit",
@@ -262,16 +268,13 @@ driver_t x86PITDriver = {
     .pDriverAttach = _pitAttach
 };
 
-/************************** Static global variables ***************************/
-/* None */
-
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*  uintProp;
+    const uint32_t*  kpUintProp;
     size_t           propLen;
     OS_RETURN_E      retCode;
     pit_controler_t* pDrvCtrl;
@@ -291,6 +294,7 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(pit_controler_t));
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -314,14 +318,14 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv->pDriverCtrl    = pDrvCtrl;
 
     /* Get IRQ lines */
-    uintProp = fdtGetProp(pkFdtNode, PIT_FDT_INT_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_INT_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -329,15 +333,15 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->irqNumber);
 
     /* Get communication ports */
-    uintProp = fdtGetProp(pkFdtNode, PIT_FDT_COMM_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_COMM_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -346,14 +350,14 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->cpuDataPort);
 
     /* Get quartz frequency */
-    uintProp = fdtGetProp(pkFdtNode, PIT_FDT_QUARTZ_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_QUARTZ_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->quartzFrequency = FDTTOCPU32(*uintProp);
+    pDrvCtrl->quartzFrequency = FDTTOCPU32(*kpUintProp);
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -361,14 +365,14 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->quartzFrequency);
 
     /* Get selected frequency */
-    uintProp = fdtGetProp(pkFdtNode, PIT_FDT_SELFREQ_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_SELFREQ_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->selectedFrequency = FDTTOCPU32(*uintProp);
+    pDrvCtrl->selectedFrequency = FDTTOCPU32(*kpUintProp);
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -376,15 +380,15 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->selectedFrequency);
 
     /* Get the frequency range */
-    uintProp = fdtGetProp(pkFdtNode, PIT_FDT_FREQRANGE_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_FREQRANGE_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
+        KERNEL_ERROR("Failed to retreive the frequency range from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->frequencyLow  = (uint32_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->frequencyHigh = (uint32_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->frequencyLow  = (uint32_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->frequencyHigh = (uint32_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -466,7 +470,6 @@ static void _pitDummyHandler(kernel_thread_t* pCurrThread)
 
 static void _pitEnable(void* pDrvCtrl)
 {
-    uint32_t         intState;
     pit_controler_t* pPitCtrl;
 
     pPitCtrl = GET_CONTROLER(pDrvCtrl);
@@ -476,7 +479,7 @@ static void _pitEnable(void* pDrvCtrl)
                        1,
                        pPitCtrl->disabledNesting);
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting > 0)
     {
@@ -491,17 +494,16 @@ static void _pitEnable(void* pDrvCtrl)
         interruptIRQSetMask(pPitCtrl->irqNumber, 1);
     }
 
+    KERNEL_SPINLOCK_UNLOCK(pPitCtrl->lock);
+
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_ENABLE_EXIT,
                        1,
                        pPitCtrl->disabledNesting);
-
-    EXIT_CRITICAL(intState);
 }
 
 static void _pitDisable(void* pDrvCtrl)
 {
-    uint32_t         intState;
     pit_controler_t* pPitCtrl;
 
     pPitCtrl = GET_CONTROLER(pDrvCtrl);
@@ -511,7 +513,7 @@ static void _pitDisable(void* pDrvCtrl)
                        1,
                        pPitCtrl->disabledNesting);
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting < UINT32_MAX)
     {
@@ -522,7 +524,7 @@ static void _pitDisable(void* pDrvCtrl)
                  pPitCtrl->disabledNesting);
     interruptIRQSetMask(pPitCtrl->irqNumber, 0);
 
-    EXIT_CRITICAL(intState);
+    KERNEL_SPINLOCK_UNLOCK(pPitCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_DISABLE_EXIT,
@@ -533,7 +535,6 @@ static void _pitDisable(void* pDrvCtrl)
 
 static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
 {
-    uint32_t         intState;
     uint16_t         tickFreq;
     pit_controler_t* pPitCtrl;
 
@@ -556,10 +557,7 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
         return;
     }
 
-    ENTER_CRITICAL(intState);
-
-    /* Disable PIT IRQ */
-    _pitDisable(pDrvCtrl);
+    KERNEL_SPINLOCK_LOCK(pPitCtrl->lock);
 
     pPitCtrl->selectedFrequency = kFreq;
 
@@ -574,10 +572,7 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
                  "New PIT frequency set (%d)",
                  kFreq);
 
-    EXIT_CRITICAL(intState);
-
-    /* Enable PIT IRQ */
-    _pitEnable(pDrvCtrl);
+    KERNEL_SPINLOCK_UNLOCK(pPitCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_FREQUENCY_EXIT,
@@ -608,7 +603,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
                                   void(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E      err;
-    uint32_t         intState;
     pit_controler_t* pPitCtrl;
 
 #ifdef ARCH_32_BITS
@@ -650,14 +644,14 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
     pPitCtrl = GET_CONTROLER(pDrvCtrl);
 
-    ENTER_CRITICAL(intState);
-
     _pitDisable(pDrvCtrl);
+
+    KERNEL_SPINLOCK_LOCK(pPitCtrl->lock);
 
     err = interruptIRQRegister(pPitCtrl->irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        EXIT_CRITICAL(intState);
+        KERNEL_SPINLOCK_UNLOCK(pPitCtrl->lock);
         KERNEL_ERROR("Failed to register PIT irqHandler. Error: %d\n", err);
 
 #ifdef ARCH_32_BITS
@@ -679,12 +673,13 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
         return err;
     }
 
+    KERNEL_SPINLOCK_UNLOCK(pPitCtrl->lock);
+
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,
                  "New PIT handler set 0x%p",
                  pHandler);
 
-    EXIT_CRITICAL(intState);
     _pitEnable(pDrvCtrl);
 
 #ifdef ARCH_32_BITS
@@ -708,7 +703,9 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
 static OS_RETURN_E _pitRemoveHandler(void* pDrvCtrl)
 {
-    KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "Default PIT handler set 0x%p",
+    KERNEL_DEBUG(PIT_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Default PIT handler set 0x%p",
                  _pitDummyHandler);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED, TRACE_X86_PIT_REMOVE_HANDLER, 0);
@@ -727,6 +724,6 @@ static void _pitAckInterrupt(void* pDrvCtrl)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(x86PITDriver);
+DRIVERMGR_REG(sX86PITDriver);
 
 /************************************ EOF *************************************/

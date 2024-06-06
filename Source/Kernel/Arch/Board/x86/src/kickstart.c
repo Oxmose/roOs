@@ -187,7 +187,21 @@ void kickstart(void)
     TEST_FRAMEWORK_END();
 #endif
 
-    for(volatile uint32_t i = 0; i < 200000000; ++i){}
+#if 1
+    uint32_t j;
+    j = 0;
+    while(TRUE)
+    {
+        ++j;
+        if(j % 100 == 0)
+        {
+            j = 0;
+            KERNEL_DEBUG(1, "TIMETEST", ".");
+            kprintfFlush();
+        }
+        _cpuHalt();
+    }
+#endif
 
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 

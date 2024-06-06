@@ -319,6 +319,9 @@ static uint32_t sKheapInitFree;
 /** @brief Quantity of memory used to store meta data in the kernel's heap. */
 static uint32_t sMemMeta;
 
+/** @brief Heap lock */
+static kernel_spinlock_t sLock;
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
@@ -483,6 +486,8 @@ void kHeapInit(void)
     sKheapInitFree = sMemFree;
     sMemMeta = sizeof(mem_chunk_t) * 2 + HEADER_SIZE;
 
+    KERNEL_SPINLOCK_INIT(sLock);
+
     sInit = TRUE;
 
     KERNEL_DEBUG(KHEAP_DEBUG_ENABLED, "KHEAP",
@@ -498,7 +503,13 @@ void* kmalloc(size_t size)
     mem_chunk_t* pChunk2;
     size_t       size2;
     size_t       len;
-    uint32_t     intState;
+
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_MALLOC_ENTRY,
+                       3,
+                       (uint32_t)((uint64_t)size >> 32),
+                       (uint32_t)size,
+                       sMemFree);
 
     KERNEL_DEBUG(KHEAP_DEBUG_ENABLED,
                  "KHEAP",
@@ -509,10 +520,18 @@ void* kmalloc(size_t size)
 
     if(sInit == FALSE || size == 0)
     {
+        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                           TRACE_KHEAP_MALLOC_EXIT,
+                           3,
+                           (uint32_t)((uint64_t)size >> 32),
+                           (uint32_t)size,
+                           NULL,
+                           NULL,
+                           sMemFree);
         return NULL;
     }
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(sLock);
 
     size = (size + ALIGN - 1) & (~(ALIGN - 1));
 
@@ -525,7 +544,7 @@ void* kmalloc(size_t size)
 
     if (n >= NUM_SIZES)
     {
-        EXIT_CRITICAL(intState);
+        KERNEL_SPINLOCK_UNLOCK(sLock);
         return NULL;
     }
 
@@ -534,7 +553,15 @@ void* kmalloc(size_t size)
         ++n;
         if (n >= NUM_SIZES)
         {
-            EXIT_CRITICAL(intState);
+            KERNEL_SPINLOCK_UNLOCK(sLock);
+            KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                               TRACE_KHEAP_MALLOC_EXIT,
+                               5,
+                               (uint32_t)((uint64_t)size >> 32),
+                               (uint32_t)size,
+                               NULL,
+                               NULL,
+                               sMemFree);
             return NULL;
         }
     }
@@ -572,8 +599,28 @@ void* kmalloc(size_t size)
                  sMemFree,
                  sKheapInitFree - sMemFree);
 
-    EXIT_CRITICAL(intState);
+    KERNEL_SPINLOCK_UNLOCK(sLock);
 
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_MALLOC_EXIT,
+                       5,
+                       (uint32_t)((uint64_t)size >> 32),
+                       (uint32_t)size,
+                       0,
+                       (uint32_t)pChunk->pData,
+                       sMemFree);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_MALLOC_EXIT,
+                       5,
+                       (uint32_t)((uint64_t)size >> 32),
+                       (uint32_t)size,
+                       (uint32_t)(pChunk->pData >> 32),
+                       (uint32_t)(pChunk->pData & 0xFFFFFFFF),
+                       sMemFree);
+#endif
     return pChunk->pData;
 }
 
@@ -583,14 +630,46 @@ void kfree(void* ptr)
     mem_chunk_t* pChunk;
     mem_chunk_t* pNext;
     mem_chunk_t* pPrev;
-    uint32_t     intState;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_FREE_ENTRY,
+                       3,
+                       0,
+                       (uint32_t)ptr,
+                       sMemFree);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_FREE_ENTRY,
+                       3,
+                       (uint32_t)(ptr >> 32),
+                       (uint32_t)(ptr & 0xFFFFFFFF),
+                       sMemFree);
+#endif
 
     if(sInit == FALSE || ptr == NULL)
     {
+#ifdef ARCH_32_BITS
+        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                           TRACE_KHEAP_FREE_EXIT,
+                           4,
+                           0,
+                           (uint32_t)ptr,
+                           -1,
+                           sMemFree);
+#else
+        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                           TRACE_KHEAP_FREE_EXIT,
+                           4,
+                           (uint32_t)(ptr >> 32),
+                           (uint32_t)(ptr & 0xFFFFFFFF),
+                           -1,
+                           sMemFree);
+#endif
         return;
     }
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(sLock);
 
     pChunk = (mem_chunk_t*)((int8_t*)ptr - HEADER_SIZE);
     pNext = CONTAINER(mem_chunk_t, all, pChunk->all.pNext);
@@ -629,7 +708,24 @@ void kfree(void* ptr)
                  ptr,
                  used);
 
-    EXIT_CRITICAL(intState);
+    KERNEL_SPINLOCK_UNLOCK(sLock);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_FREE_EXIT,
+                       4,
+                       0,
+                       (uint32_t)ptr,
+                       0,
+                       sMemFree);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_FREE_EXIT,
+                       4,
+                       (uint32_t)(ptr >> 32),
+                       (uint32_t)(ptr & 0xFFFFFFFF),
+                       sMemFree);
+#endif
 }
 
 uint32_t kHeapGetFree(void)

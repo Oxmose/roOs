@@ -21,6 +21,9 @@
         "locale": "c",
         "ratio": "c",
         "tuple": "c",
-        "compare": "c"
+        "compare": "c",
+        "kerror.h": "c",
+        "critical.h": "c",
+        "ioapic.h": "c"
     }
 }

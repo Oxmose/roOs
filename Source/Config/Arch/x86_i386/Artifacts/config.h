@@ -38,11 +38,6 @@
 #define MAX_CPU_COUNT 4
 
 /* Kernel log level */
-#define DEBUG_LOG_LEVEL 3
-#define INFO_LOG_LEVEL  2
-#define ERROR_LOG_LEVEL 1
-#define NONE_LOG_LEVEL  0
-
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
@@ -85,5 +80,10 @@
 #define VGA_DEBUG_ENABLED 0
 #define DTB_DEBUG_ENABLED 0
 #define DEVMGR_DEBUG_ENABLED 0
+#define TSC_DEBUG_ENABLED 0
+#define ACPI_DEBUG_ENABLED 0
+#define IOAPIC_DEBUG_ENABLED 0
+#define LAPIC_DEBUG_ENABLED 0
+#define LAPICT_DEBUG_ENABLED 1
 
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

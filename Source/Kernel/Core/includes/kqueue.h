@@ -15,7 +15,7 @@
  * queue or regular queues. A queue can virtually store every type of data and
  * is just a wrapper.
  *
- * @warning This implementation is not thread safe.
+ * @warning This implementation is thread safe.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
@@ -29,7 +29,7 @@
 
 #include <stddef.h>    /* Standard definitons */
 #include <stdint.h>    /* Generic int types */
-
+#include <critical.h>  /* Kernel locks */
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -68,6 +68,9 @@ typedef struct
 
     /** @brief Current queue's size. */
     size_t size;
+
+    /** @brief Queue's lock */
+    kernel_spinlock_t lock;
 } kqueue_t;
 
 /*******************************************************************************
@@ -183,7 +186,7 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue);
  *
  * @return The function returns a pointer to the node if found, NULL otherwise.
  */
-kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData);
+kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData);
 
 /**
  * @brief Removes a node from a queue.

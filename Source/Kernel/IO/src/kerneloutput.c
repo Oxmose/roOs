@@ -566,6 +566,7 @@ void kprintfDebug(const char* kpFmt, ...)
     __builtin_va_list    args;
     colorscheme_t        buffer;
     colorscheme_t        newScheme;
+    uint64_t             uptime;
 
     if(kpFmt == NULL)
     {
@@ -583,7 +584,12 @@ void kprintfDebug(const char* kpFmt, ...)
     consoleSetColorScheme(&newScheme);
 
     /* Print tag */
-    _tagPrintf("[DEBUG | %lu]", timeGetUptime());
+    uptime = timeGetUptime();
+    _tagPrintf("[DEBUG | %02llu.%03llu.%03llu.%03llu]",
+               uptime / 1000000000,
+               (uptime / 1000000) % 1000,
+               (uptime / 1000) % 1000,
+               uptime % 1000);
 
     /* Restore original screen color scheme */
     consoleSetColorScheme(&buffer);

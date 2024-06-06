@@ -176,6 +176,8 @@ void driverManagerInit(void)
     driver_t*         pDriver;
     uintptr_t         driverTableCursor;
 
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_ENTRY, 0);
+
     /* Display list of registered drivers */
     driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
     pDriver = *(driver_t**)driverTableCursor;
@@ -195,12 +197,114 @@ void driverManagerInit(void)
     kpFdtRootNode = fdtGetRoot();
     if(kpFdtRootNode == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_EXIT, -1);
         KERNEL_ERROR("Failed to get FDT root node in driver manager.\n");
         return;
     }
 
     /* Perform the registration */
     _walkFdtNodes(kpFdtRootNode);
+
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_EXIT, 0);
+}
+
+OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
+                                       void* pData)
+{
+    OS_RETURN_E retCode;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_SETDEVDATA_ENTRY,
+                       4,
+                       0,
+                       (uint32_t)pkFdtNode,
+                       0,
+                       (uint32_t)pData);
+#else
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_SETDEVDATA_ENTRY,
+                       4,
+                       (uint32_t)(pkFdtNode >> 32),
+                       (uint32_t)pkFdtNode,
+                       (uint32_t)(pData >> 32),
+                       (uint32_t)pData);
+#endif
+
+    /* Check parameters */
+    if(pkFdtNode != NULL)
+    {
+        /* Not clean, but this avoids a lot of function calls and
+         * processing.
+         * TODO: Clean this.
+         */
+        ((fdt_node_t*)pkFdtNode)->pDevData = pData;
+        retCode = OS_NO_ERR;
+    }
+    else
+    {
+        retCode = OS_ERR_NULL_POINTER;
+    }
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_SETDEVDATA_EXIT,
+                       5,
+                       0,
+                       (uint32_t)pkFdtNode,
+                       0,
+                       (uint32_t)pData,
+                       retCode);
+#else
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_SETDEVDATA_EXIT,
+                       5,
+                       kHandle,
+                       (uint32_t)(pkFdtNode >> 32),
+                       (uint32_t)pkFdtNode,
+                       (uint32_t)(pData >> 32),
+                       (uint32_t)pData,
+                       retCode);
+#endif
+
+    return retCode;
+}
+
+void* driverManagerGetDeviceData(const uint32_t kHandle)
+{
+    void*             pDevData;
+    const fdt_node_t* kpNode;
+
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_GETDEVDATA_ENTRY,
+                       1,
+                       kHandle);
+
+    /* Get the node and return the device data */
+    pDevData = NULL;
+    kpNode = fdtGetNodeByHandle(kHandle);
+    if(kpNode != NULL)
+    {
+        pDevData = kpNode->pDevData;
+    }
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_GETDEVDATA_EXIT,
+                       3,
+                       kHandle,
+                       0,
+                       (uint32_t)pDevData);
+#else
+    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
+                       TRACE_DRV_MGR_GETDEVDATA_EXIT,
+                       3,
+                       kHandle,
+                       (uint32_t)(pDevData >> 32),
+                       (uint32_t)pDevData);
+#endif
+
+    return pDevData;
 }
 
 /************************************ EOF *************************************/

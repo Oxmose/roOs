@@ -56,7 +56,7 @@ typedef struct fdt_property_t
 typedef struct fdt_node_t
 {
     /** @brief Node name */
-    char*   pName;
+    char* pName;
 
     /** @brief Node address cells */
     uint8_t addrCells;
@@ -75,6 +75,9 @@ typedef struct fdt_node_t
 
     /** @brief First child node */
     struct fdt_node_t* pFirstChildNode;
+
+    /** @brief Device data associated to the node */
+    void* pDevData;
 } fdt_node_t;
 
 /*******************************************************************************

@@ -15,7 +15,7 @@
  * queue or regular queues. A queue can virtually store every type of data and
  * is just a wrapper.
  *
- * @warning This implementation is not thread safe.
+ * @warning This implementation is thread safe.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
@@ -104,6 +104,20 @@ kqueue_node_t* kQueueCreateNode(void* pData)
 {
     kqueue_node_t* pNewNode;
 
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_CREATE_NODE_ENTRY,
+                       2,
+                       0,
+                       (uint32_t)pData);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_CREATE_NODE_ENTRY,
+                       2,
+                       (uint32_t)(pData >> 32),
+                       (uint32_t)pData);
+#endif
+
     /* Create new node */
     pNewNode = kmalloc(sizeof(kqueue_node_t));
     KQUEUE_ASSERT(pNewNode != NULL,
@@ -115,11 +129,44 @@ kqueue_node_t* kQueueCreateNode(void* pData)
     memset(pNewNode, 0, sizeof(kqueue_node_t));
     pNewNode->pData = pData;
 
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_CREATE_NODE_EXIT,
+                       4,
+                       0,
+                       (uint32_t)pData,
+                       0,
+                       (uint32_t)pNewNode);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_CREATE_NODE_EXIT,
+                       4,
+                       (uint32_t)(pData >> 32),
+                       (uint32_t)pData,
+                       (uint32_t)(pNewNode >> 32),
+                       (uint32_t)pNewNode);
+#endif
+
     return pNewNode;
 }
 
 void kQueueDestroyNode(kqueue_node_t** ppNode)
 {
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_DESTROY_NODE,
+                       2,
+                       0,
+                       (uint32_t)ppNode);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_DESTROY_NODE,
+                       2,
+                       (uint32_t)(ppNode >> 32),
+                       (uint32_t)ppNode);
+#endif
+
     KQUEUE_ASSERT((ppNode != NULL && *ppNode != NULL),
                   "Tried to delete a NULL node",
                   OS_ERR_NULL_POINTER);
@@ -136,6 +183,10 @@ kqueue_t* kQueueCreate(void)
 {
     kqueue_t* pNewQueue;
 
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_CREATE_ENTRY,
+                       0);
+
     /* Create new node */
     pNewQueue = kmalloc(sizeof(kqueue_t));
     KQUEUE_ASSERT(pNewQueue != NULL,
@@ -144,12 +195,42 @@ kqueue_t* kQueueCreate(void)
 
     /* Init the structure */
     memset(pNewQueue, 0, sizeof(kqueue_t));
+    KERNEL_SPINLOCK_INIT(pNewQueue->lock);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_CREATE_EXIT,
+                       2,
+                       0,
+                       (uint32_t)pNewQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_CREATE_EXIT,
+                       2,
+                       (uint32_t)(pNewQueue >> 32),
+                       (uint32_t)pNewQueue);
+#endif
 
     return pNewQueue;
 }
 
 void kQueueDestroy(kqueue_t** ppQueue)
 {
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_DESTROY,
+                       2,
+                       0,
+                       (uint32_t)ppQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_DESTROY,
+                       2,
+                       (uint32_t)(ppQueue >> 32),
+                       (uint32_t)ppQueue);
+#endif
+
     KQUEUE_ASSERT((ppQueue != NULL && *ppQueue != NULL),
                   "Tried to delete a NULL queue",
                   OS_ERR_NULL_POINTER);
@@ -164,6 +245,25 @@ void kQueueDestroy(kqueue_t** ppQueue)
 
 void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 {
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
+                       4,
+                       0,
+                       (uint32_t)pNode,
+                       0,
+                       (uint32_t)pQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
+                       4,
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue);
+#endif
+
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
                  "KQueue try push knode 0x%p in kqueue 0x%p",
@@ -173,6 +273,8 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
     KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
+
+    KERNEL_SPINLOCK_LOCK(pQueue->lock);
 
     /* If this queue is empty */
     if(pQueue->pHead == NULL)
@@ -195,17 +297,37 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
     ++pQueue->size;
     pNode->enlisted = TRUE;
 
+
     KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
                    pNode->pNext == NULL ||
                    pNode->pPrev == NULL),
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
+    KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
                  "KQueue pushed knode 0x%p in kqueue 0x%p",
                  pNode,
                  pQueue);
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_EXIT,
+                       4,
+                       0,
+                       (uint32_t)pNode,
+                       0,
+                       (uint32_t)pQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_EXIT,
+                       4,
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue);
+#endif
 }
 
 
@@ -214,6 +336,26 @@ void kQueuePushPrio(kqueue_node_t* pNode,
                     const uint32_t kPriority)
 {
     kqueue_node_t* pCursor;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
+                       5,
+                       0,
+                       (uint32_t)pNode,
+                       0,
+                       (uint32_t)pQueue,
+                       kPriority);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
+                       5,
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue,
+                       kPriority);
+#endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
@@ -224,6 +366,8 @@ void kQueuePushPrio(kqueue_node_t* pNode,
     KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
+
+    KERNEL_SPINLOCK_LOCK(pQueue->lock);
 
     pNode->priority = kPriority;
 
@@ -277,13 +421,49 @@ void kQueuePushPrio(kqueue_node_t* pNode,
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
+    KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
                  "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_EXIT,
+                       5,
+                       0,
+                       (uint32_t)pNode,
+                       0,
+                       (uint32_t)pQueue,
+                       kPriority);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_EXIT,
+                       5,
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue,
+                       kPriority);
+#endif
 }
 
 kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 {
     kqueue_node_t* pNode;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_POP_ENTRY,
+                       2,
+                       0,
+                       (uint32_t)pQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_POP_ENTRY,
+                       2,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue);
+#endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
@@ -294,9 +474,30 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
                   "Cannot pop NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
+    KERNEL_SPINLOCK_LOCK(pQueue->lock);
+
     /* If this queue is empty */
     if(pQueue->pHead == NULL)
     {
+        KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
+#ifdef ARCH_32_BITS
+        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                           TRACE_KQUEUE_QUEUE_POP_EXIT,
+                           4,
+                           NULL,
+                           NULL,
+                           0,
+                           (uint32_t)pQueue);
+#else
+        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                           TRACE_KQUEUE_QUEUE_POP_EXIT,
+                           4,
+                           NULL,
+                           NULL,
+                           (uint32_t)(pQueue >> 32),
+                           (uint32_t)pQueue);
+#endif
         return NULL;
     }
 
@@ -326,25 +527,65 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
     pNode->pPrev = NULL;
     pNode->enlisted = FALSE;
 
+    KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_POP_EXIT,
+                       4,
+                       0,
+                       (uint32_t)pNode,
+                       0,
+                       (uint32_t)pQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_POP_EXIT,
+                       4,
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue);
+#endif
+
     return pNode;
 }
 
-kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData)
+kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 {
     kqueue_node_t* pNode;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_FIND_ENTRY,
+                       4,
+                       0,
+                       (uint32_t)kpData,
+                       0,
+                       (uint32_t)pQueue);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_FIND_ENTRY,
+                       4,
+                       (uint32_t)(kpData >> 32),
+                       (uint32_t)kpData,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue);
+#endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
                  "KQueue try find data 0x%p from kqueue 0x%p",
                  kpData,
-                 kpQueue);
+                 pQueue);
 
-    KQUEUE_ASSERT(kpQueue != NULL,
+    KQUEUE_ASSERT(pQueue != NULL,
                   "Cannot find in NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
+    KERNEL_SPINLOCK_LOCK(pQueue->lock);
+
     /* Search for the data */
-    pNode = kpQueue->pHead;
+    pNode = pQueue->pHead;
     while(pNode != NULL && pNode->pData != kpData)
     {
         pNode = pNode->pNext;
@@ -354,7 +595,31 @@ kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData)
                  "KQUEUE",
                  "KQueue found node 0x%p from kqueue 0x%p",
                  pNode,
-                 kpQueue);
+                 pQueue);
+
+    KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_FIND_EXIT,
+                       6,
+                       0,
+                       (uint32_t)kpData,
+                       0,
+                       (uint32_t)pQueue,
+                       0,
+                       (uint32_t)pNode);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_FIND_EXIT,
+                       6,
+                       (uint32_t)(kpData >> 32),
+                       (uint32_t)kpData,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode);
+#endif
 
     return pNode;
 }
@@ -362,6 +627,24 @@ kqueue_node_t* kQueueFind(const kqueue_t* kpQueue, const void* kpData)
 void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 {
     kqueue_node_t* pCursor;
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
+                       4,
+                       0,
+                       (uint32_t)pQueue,
+                       0,
+                       (uint32_t)pNode);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
+                       4,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode);
+#endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
@@ -373,6 +656,8 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
                   "Cannot remove with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
+    KERNEL_SPINLOCK_LOCK(pQueue->lock);
+
     /* Search for node in the queue*/
     pCursor = pQueue->pHead;
     while(pCursor != NULL && pCursor != pNode)
@@ -383,6 +668,31 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
     KQUEUE_ASSERT((pCursor != NULL || kPanic == FALSE),
                   "Could not find knode to remove",
                   OS_ERR_INCORRECT_VALUE);
+
+    if(pCursor == NULL)
+    {
+        KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+#ifdef ARCH_32_BITS
+        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                           TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
+                           5,
+                           0,
+                           (uint32_t)pQueue,
+                           0,
+                           (uint32_t)pNode,
+                           1);
+#else
+        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                           TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
+                           5,
+                           (uint32_t)(pQueue >> 32),
+                           (uint32_t)pQueue
+                           (uint32_t)(pNode >> 32),
+                           (uint32_t)pNode,
+                           1);
+#endif
+        return;
+    }
 
     /* Manage link */
     if(pCursor->pPrev != NULL && pCursor->pNext != NULL)
@@ -411,10 +721,32 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     pNode->enlisted = FALSE;
 
+    KERNEL_SPINLOCK_UNLOCK(pQueue->lock);
+
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  "KQUEUE",
                  "KQueue renoved knode 0x%p from kqueue 0x%p",
                  pNode, pQueue);
+
+#ifdef ARCH_32_BITS
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
+                       5,
+                       0,
+                       (uint32_t)pQueue,
+                       0,
+                       (uint32_t)pNode,
+                       0);
+#else
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
+                       5,
+                       (uint32_t)(pQueue >> 32),
+                       (uint32_t)pQueue
+                       (uint32_t)(pNode >> 32),
+                       (uint32_t)pNode,
+                       0);
+#endif
 }
 
 /************************************ EOF *************************************/

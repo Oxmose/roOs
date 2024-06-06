@@ -32,7 +32,14 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Kernel log level: debug */
+#define DEBUG_LOG_LEVEL 3
+/** @brief Kernel log level: info */
+#define INFO_LOG_LEVEL 2
+/** @brief Kernel log level: error */
+#define ERROR_LOG_LEVEL 1
+/** @brief Kernel log level: nonde */
+#define NONE_LOG_LEVEL 0
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

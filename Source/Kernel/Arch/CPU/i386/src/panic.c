@@ -412,22 +412,21 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     cursor_t      consoleCursor;
 
     uint32_t cpuId;
-
-    uint32_t time;
-    uint32_t hours;
-    uint32_t minutes;
-    uint32_t seconds;
-
-
+    time_t   currTime;
+    uint64_t uptime;
 
     interruptDisable();
 
-    time    = 0; // TODO: Get RTC time.
-    hours   = time / 3600;
-    minutes = (time / 60) % 60;
-    seconds = time % 60;
 
     cpuId = 0; // TODO: Get CPU id
+
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_KERNEL_PANIC_HANDLER,
+                       3,
+                       cpuId,
+                       pCurrThread->vCpu.intContext.intId,
+                       sPanicCode);
 
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_CYAN;
@@ -445,19 +444,25 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     _printCpuState(&pCurrThread->vCpu);
     _printCpuFlags(&pCurrThread->vCpu);
 
+    uptime = timeGetUptime();
+    currTime = timeGetDayTime();
     kprintf("\n--------------------------------- INFORMATION ------------"
                     "----------------------\n");
-    kprintf("Core ID: %u | Time: %02u:%02u:%02u [%llu]\n"
-                  "Thread: %s (%u) | Process: %s (%u)\n",
-                  cpuId,
-                  hours,
-                  minutes,
-                  seconds,
-                  timeGetUptime(),
-                  pCurrThread->pName,
-                  pCurrThread->tid,
-                  "UTK_KERNEL", // TODO: Process name
-                  0); // TODO: Process ID
+    kprintf("Core ID: %u | Time: %02u:%02u:%02u | "
+            "Core uptime: [%llu.%llu.%llu.%llu]\n"
+            "Thread: %s (%u) | Process: %s (%u)\n",
+            cpuId,
+            currTime.hours,
+            currTime.minutes,
+            currTime.seconds,
+            uptime / 1000000000,
+            (uptime / 1000000) % 1000,
+            (uptime / 1000) % 1000,
+            uptime % 1000,
+            pCurrThread->pName,
+            pCurrThread->tid,
+            "UTK_KERNEL", // TODO: Process name
+            0); // TODO: Process ID
 
     kprintf("File: %s at line %d\n", skpPanicFile, sPanicLine);
 
@@ -516,6 +521,11 @@ void kernelPanic(const uint32_t kErrorCode,
 
     /* Call the panic formater */
     cpuRaiseInterrupt(PANIC_INT_LINE);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_KERNEL_PANIC,
+                       1,
+                       kErrorCode);
 
     /* We should never get here, but just in case */
     while(1)

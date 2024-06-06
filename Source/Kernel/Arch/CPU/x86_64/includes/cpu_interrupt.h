@@ -45,7 +45,10 @@
 #define MAX_EXCEPTION_LINE 0x1F
 
 /** @brief Defines the panic interrupt line. */
-#define PANIC_INT_LINE 0x2A
+#define PANIC_INT_LINE 0x20
+
+/** @brief Defines the spurious interrupt line */
+#define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

@@ -91,6 +91,7 @@ extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 /** @brief Trace buffer sCursor */
 static size_t sCursor;
 
+/** @brief Tracing lock */
 static volatile uint32_t sTraceLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 /** @brief Tells if the tracing was sEnabled. */
@@ -104,6 +105,9 @@ static size_t sTraceBufferSize = (size_t)&_KERNEL_TRACE_BUFFER_SIZE;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+/* Imported from platform */
+extern uint64_t tracingTimerGetTick(void);
 
 static void _kernelTraceInit(void)
 {
@@ -128,7 +132,9 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
     uint32_t          i;
     uint64_t          timestamp;
 
-    KERNEL_SPINLOCK_LOCK(sTraceLock);
+    timestamp = tracingTimerGetTick();
+
+    cpuSpinlockAcquire(&sTraceLock);
 
     /* Init the tracing feature is needed */
     if(sEnabled == FALSE)
@@ -147,9 +153,6 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
 
     /* Write the event */
     spTraceBuffer[sCursor++] = (uint32_t)kEvent;
-
-    /* Write the timestamp */
-    timestamp = timeGetTicks(); // TODO: Use actual time getter
     spTraceBuffer[sCursor++] = (uint32_t)timestamp;
     spTraceBuffer[sCursor++] = (uint32_t)(timestamp >> 32);
 
@@ -161,7 +164,7 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
 
     __builtin_va_end(args);
 
-    KERNEL_SPINLOCK_UNLOCK(sTraceLock);
+        cpuSpinlockRelease(&sTraceLock);
 }
 
 #endif /* #ifdef _TRACING_ENABLED */

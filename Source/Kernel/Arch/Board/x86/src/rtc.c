@@ -126,6 +126,9 @@ typedef struct
 
     /** @brief Keeps track on the RTC enabled state. */
     uint32_t disabledNesting;
+
+    /** @brief Driver's lock */
+    kernel_spinlock_t lock;
 } rtc_controler_t;
 
 /*******************************************************************************
@@ -327,8 +330,11 @@ static void _rtcAckowledgeInt(void* pDrvCtrl);
 /* None */
 
 /************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
 /** @brief RTC driver instance. */
-driver_t x86RTCDriver = {
+static driver_t sX86RTCDriver = {
     .pName         = "X86 RTC Driver",
     .pDescription  = "X86 Real Time Clock Driver for UTK",
     .pCompatible   = "x86,x86-rtc",
@@ -336,16 +342,13 @@ driver_t x86RTCDriver = {
     .pDriverAttach = _rtcAttach
 };
 
-/************************** Static global variables ***************************/
-/* None */
-
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*  uintProp;
+    const uint32_t*  kpUintProp;
     size_t           propLen;
     OS_RETURN_E      retCode;
     int8_t           prevOred;
@@ -367,6 +370,7 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(rtc_controler_t));
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -390,14 +394,14 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv->pDriverCtrl    = pDrvCtrl;
 
     /* Get IRQ lines */
-    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -405,15 +409,15 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->irqNumber);
 
     /* Get communication ports */
-    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
         KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -422,14 +426,14 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->cpuDataPort);
 
     /* Get quartz frequency */
-    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->quartzFrequency = FDTTOCPU32(*uintProp);
+    pDrvCtrl->quartzFrequency = FDTTOCPU32(*kpUintProp);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -437,14 +441,14 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->quartzFrequency);
 
     /* Get selected frequency */
-    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->selectedFrequency = FDTTOCPU32(*uintProp);
+    pDrvCtrl->selectedFrequency = FDTTOCPU32(*kpUintProp);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -452,15 +456,15 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
                  pDrvCtrl->selectedFrequency);
 
     /* Get the frequency range */
-    uintProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+    kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
+        KERNEL_ERROR("Failed to retreive the frequency range from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->frequencyLow  = (uint32_t)FDTTOCPU32(*uintProp);
-    pDrvCtrl->frequencyHigh = (uint32_t)FDTTOCPU32(*(uintProp + 1));
+    pDrvCtrl->frequencyLow  = (uint32_t)FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->frequencyHigh = (uint32_t)FDTTOCPU32(*(kpUintProp + 1));
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -558,7 +562,6 @@ static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
 
 static void _rtcEnable(void* pDrvCtrl)
 {
-    uint32_t         intState;
     rtc_controler_t* pRtcCtrl;
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
@@ -568,7 +571,7 @@ static void _rtcEnable(void* pDrvCtrl)
                        1,
                        pRtcCtrl->disabledNesting);
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting > 0)
     {
@@ -585,17 +588,16 @@ static void _rtcEnable(void* pDrvCtrl)
         interruptIRQSetMask(pRtcCtrl->irqNumber, 1);
     }
 
+    KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
+
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_ENABLE_EXIT,
                        1,
                        pRtcCtrl->disabledNesting);
-
-    EXIT_CRITICAL(intState);
 }
 
 static void _rtcDisable(void* pDrvCtrl)
 {
-    uint32_t         intState;
     rtc_controler_t* pRtcCtrl;
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
@@ -605,7 +607,7 @@ static void _rtcDisable(void* pDrvCtrl)
                        1,
                        pRtcCtrl->disabledNesting);
 
-    ENTER_CRITICAL(intState);
+    KERNEL_SPINLOCK_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting < UINT32_MAX)
     {
@@ -618,7 +620,7 @@ static void _rtcDisable(void* pDrvCtrl)
                  pRtcCtrl->disabledNesting);
     interruptIRQSetMask(pRtcCtrl->irqNumber, 0);
 
-    EXIT_CRITICAL(intState);
+    KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_DISABLE_EXIT,
@@ -630,7 +632,6 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
 {
     uint32_t         prevRate;
     uint32_t         rate;
-    uint32_t         intState;
     rtc_controler_t* pRtcCtrl;
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
@@ -711,10 +712,7 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
         rate = 3;
     }
 
-    ENTER_CRITICAL(intState);
-
-    /* Disable RTC IRQ */
-    _rtcDisable(pDrvCtrl);
+    KERNEL_SPINLOCK_LOCK(pRtcCtrl->lock);
 
     /* Set clock frequency */
      /* Init CMOS IRQ8 rate */
@@ -725,16 +723,14 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
 
     pRtcCtrl->selectedFrequency = (pRtcCtrl->quartzFrequency >> (rate - 1));
 
+    KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
+
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
                  "New RTC rate set (%d: %dHz)",
                  rate,
                  pRtcCtrl->selectedFrequency);
 
-    /* Enable RTC IRQ */
-    _rtcEnable(pDrvCtrl);
-
-    EXIT_CRITICAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_SET_FREQUENCY_EXIT,
@@ -765,7 +761,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
                                   void(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E      err;
-    uint32_t         intState;
     rtc_controler_t* pRtcCtrl;
 
 #ifdef ARCH_32_BITS
@@ -807,14 +802,15 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
 
-    ENTER_CRITICAL(intState);
 
     _rtcDisable(pDrvCtrl);
+
+    KERNEL_SPINLOCK_LOCK(pRtcCtrl->lock);
 
     err = interruptIRQRegister(pRtcCtrl->irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        EXIT_CRITICAL(intState);
+        KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
         KERNEL_ERROR("Failed to register RTC irqHandler. Error: %d\n", err);
 
 #ifdef ARCH_32_BITS
@@ -836,10 +832,10 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
         return err;
     }
 
+    KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
+
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "New RTC handler set (0x%p)",
                  pHandler);
-
-    EXIT_CRITICAL(intState);
 
     _rtcEnable(pDrvCtrl);
 
@@ -922,6 +918,8 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
     commPort = pRtcCtrl->cpuCommPort;
     dataPort = pRtcCtrl->cpuDataPort;
 
+    KERNEL_SPINLOCK_LOCK(pRtcCtrl->lock);
+
     /* Select CMOS seconds register and read */
     _cpuOutB(CMOS_SECONDS_REGISTER, commPort);
     pTime->seconds = _cpuInB(dataPort);
@@ -999,6 +997,8 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
                        4)
                        + 1) % 7 + 1;
 
+    KERNEL_SPINLOCK_UNLOCK(pRtcCtrl->lock);
+
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_UPDATETIME_EXIT,
                        0);
@@ -1023,6 +1023,6 @@ static void _rtcAckowledgeInt(void* pDrvCtrl)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(x86RTCDriver);
+DRIVERMGR_REG(sX86RTCDriver);
 
 /************************************ EOF *************************************/

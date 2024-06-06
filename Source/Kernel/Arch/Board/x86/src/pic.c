@@ -49,9 +49,11 @@
 /** @brief FDT property for chaining  */
 #define PIC_FDT_HASSLAVE_PROP "is-chained"
 /** @brief FDT property for interrupt offset */
-#define PIC_FDT_INTOFF_PROP   "int-offset"
+#define PIC_FDT_INTOFF_PROP "int-offset"
 /** @brief FDT property for comm ports */
-#define PIC_FDT_COMM_PROP     "comm"
+#define PIC_FDT_COMM_PROP "comm"
+/** @brief FDT property for is-interrupt-driver */
+#define PIC_FDT_IS_INT_DRIVER_PROP "interrupt-controller"
 
 /** @brief PIC End of Interrupt command. */
 #define PIC_EOI 0x20
@@ -226,8 +228,11 @@ static int32_t _picGetInterruptLine(const uint32_t kIrqNumber);
 /* None */
 
 /************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
 /** @brief PIC driver instance. */
-driver_t x86PICDriver = {
+static driver_t sX86PICDriver = {
     .pName         = "X86 PIC Driver",
     .pDescription  = "X86 Programable Interrupt Controler Driver for UTK",
     .pCompatible   = "x86,x86-pic",
@@ -235,8 +240,6 @@ driver_t x86PICDriver = {
     .pDriverAttach = _picAttach
 };
 
-
-/************************** Static global variables ***************************/
 /** @brief PIC interrupt driver instance. */
 static interrupt_driver_t sPicDriver = {
     .pSetIrqMask          = _picSetIrqMask,
@@ -261,7 +264,7 @@ static pic_controler_t sDrvCtrl = {
 
 static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t* uintProp;
+    const uint32_t* kpUintProp;
     size_t          propLen;
     OS_RETURN_E     retCode;
 
@@ -274,41 +277,41 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Get IRQ offset */
-    uintProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
-    if(uintProp == NULL || propLen != sizeof(uint32_t))
+    kpUintProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
+    if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
         KERNEL_ERROR("Failed to retreive the PIC IRQ offset from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    sDrvCtrl.intOffset = (uint8_t)FDTTOCPU32(*uintProp);
+    sDrvCtrl.intOffset = (uint8_t)FDTTOCPU32(*kpUintProp);
 
 
     /* Get the com ports */
-    uintProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
+    kpUintProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
     if(sDrvCtrl.hasSlave == TRUE)
     {
-        if(uintProp == NULL || propLen != sizeof(uint32_t) * 4)
+        if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 4)
         {
             KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }
-        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*uintProp);
-        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(uintProp + 1));
-        sDrvCtrl.cpuSlaveCommPort  = (uint8_t)FDTTOCPU32(*(uintProp + 2));
-        sDrvCtrl.cpuSlaveDataPort  = (uint8_t)FDTTOCPU32(*(uintProp + 3));
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*kpUintProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
+        sDrvCtrl.cpuSlaveCommPort  = (uint8_t)FDTTOCPU32(*(kpUintProp + 2));
+        sDrvCtrl.cpuSlaveDataPort  = (uint8_t)FDTTOCPU32(*(kpUintProp + 3));
     }
     else
     {
-        if(uintProp == NULL || propLen != sizeof(uint32_t) * 2)
+        if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
         {
             KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }
-        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*uintProp);
-        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(uintProp + 1));
+        sDrvCtrl.cpuMasterCommPort = (uint8_t)FDTTOCPU32(*kpUintProp);
+        sDrvCtrl.cpuMasterDataPort = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
     }
 
     /* Initialize the master, remap IRQs */
@@ -328,17 +331,22 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
         _cpuOutB(PIC1_BASE_INTERRUPT_LINE, sDrvCtrl.cpuSlaveDataPort);
         _cpuOutB(0x2,  sDrvCtrl.cpuSlaveDataPort);
         _cpuOutB(PIC_ICW4_8086,  sDrvCtrl.cpuSlaveDataPort);
-        /* Set EOI for */
+        /* Set EOI */
         _cpuOutB(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
         /* Disable all IRQs */
         _cpuOutB(0xFF, sDrvCtrl.cpuSlaveDataPort);
     }
 
-    /* Register as interrupt controler */
-    retCode = interruptSetDriver(&sPicDriver);
-    PIC_ASSERT(retCode == OS_NO_ERR,
-               "Could register PIC in interrupt manager",
-               retCode);
+    /* Register if needed */
+    if(fdtGetProp(pkFdtNode, PIC_FDT_IS_INT_DRIVER_PROP, &propLen) != NULL)
+    {
+        /* Register as interrupt controler */
+        retCode = interruptSetDriver(&sPicDriver);
+        PIC_ASSERT(retCode == OS_NO_ERR,
+                "Could register PIC in interrupt manager",
+                retCode);
+    }
+
 
 ATTACH_END:
     KERNEL_DEBUG(PIC_DEBUG_ENABLED, MODULE_NAME, "PIC Initialization end");
@@ -460,10 +468,14 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 
 static void _picSetIrqEOI(const uint32_t kIrqNumber)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_EOI_ENTRY,
                        1,
                        kIrqNumber);
+
+    ENTER_CRITICAL(intState);
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
@@ -480,6 +492,8 @@ static void _picSetIrqEOI(const uint32_t kIrqNumber)
         _cpuOutB(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
     }
     _cpuOutB(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
+
+    EXIT_CRITICAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_EOI_EXIT,
@@ -624,6 +638,6 @@ static int32_t _picGetInterruptLine(const uint32_t kIrqNumber)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(x86PICDriver);
+DRIVERMGR_REG(sX86PICDriver);
 
 /************************************ EOF *************************************/

@@ -284,6 +284,15 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
 uint64_t timeGetUptime(void);
 
 /**
+ * @brief Returns the current daytime from RTC.
+ *
+ * @details Return the current daytime from RTC.
+ *
+ * @return The current daytime from RTC.
+ */
+time_t timeGetDayTime(void);
+
+/**
  * @brief Returns the number of system's ticks since the system started.
  *
  * @details Returns the number of system's ticks since the system started.

@@ -56,11 +56,11 @@ typedef struct
      * is detected and is compatible with the driver's compatible string.
      * It should initialize the driver and / or device.
      *
-     * @param[in] pNode The FDT node that matches the driver's compatible.
+     * @param[in] pkFdtNode The FDT node that matches the driver's compatible.
      *
      * @return The functon should return the error state of the driver.
      */
-    OS_RETURN_E (*pDriverAttach)(const fdt_node_t* pNode);
+    OS_RETURN_E (*pDriverAttach)(const fdt_node_t* pkFdtNode);
 } driver_t;
 
 /*******************************************************************************
@@ -103,6 +103,35 @@ typedef struct
  * In case of hard error, a panic is raised.
  */
 void driverManagerInit(void);
+
+/**
+ * @brief Registers the device data of a node.
+ *
+ * @details Registers the device data of a node. The data can be any structure
+ * or information that the driver corresponding to the phandle has defined.
+ * If a data was already associated, it is overriden.
+ *
+ * @param[in] pkFdtNode The FDT pHandle node to associate the data with.
+ * @param[in] pData The data to associate.
+ *
+ * @return The success or error status is returned.
+ */
+OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
+                                       void* pData);
+
+/**
+ * @brief Returns the device data of a given phandle.
+ *
+ * @details Returns the device data of a given phandle. The data can
+ * be any structure or information that the driver corresponding to the phandle
+ * has defined. If nothing was defined, NULL is returned.
+ *
+ * @param[in] kHandle The FDT pHandle of the device controller to get.
+ *
+ * @return A pointer to the device controller is returned. NULL is returned if
+ * no data was defined.
+ */
+void* driverManagerGetDeviceData(const uint32_t kHandle);
 
 #endif /* #ifndef __CORE_DRIVERMGR_H_ */
 

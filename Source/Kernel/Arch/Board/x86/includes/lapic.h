@@ -1,60 +1,64 @@
 /*******************************************************************************
- * @file cpu_interrupt.h
+ * @file lapic.h
+ *
+ * @see lapic.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 31/03/2023
+ * @date 06/06/2024
  *
  * @version 2.0
  *
- * @brief i386 interrupt manager.
+ * @brief Local APIC (Advanced programmable interrupt controler) driver.
  *
- * @details i386 interrupt manager. Stores the interrupt settings such as the
- * interrupt lines.
+ * @details Local APIC (Advanced programmable interrupt controler) driver.
+ * Manages x86 IRQs from the IO-APIC. IPI (inter processor interrupt) are also
+ * possible thanks to the driver.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __I386_INTERRUPT_
-#define __I386_INTERRUPT_
+#ifndef __X86_LAPIC_H_
+#define __X86_LAPIC_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-/* None */
-
+#include <stdint.h> /* Standard int definition */
+#include <stddef.h> /* Standard definitions */
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Number of entries in the kernel's IDT. */
-#define IDT_ENTRY_COUNT 256
-
-/** @brief Minimal customizable accepted interrupt line. */
-#define MIN_INTERRUPT_LINE 0x20
-/** @brief Maximal customizable accepted interrupt line. */
-#define MAX_INTERRUPT_LINE (IDT_ENTRY_COUNT - 1)
-
-/** @brief Defines the number of possible interrupt on the i386 processor. */
-#define INT_ENTRY_COUNT IDT_ENTRY_COUNT
-
-/** @brief Minimal customizable accepted exception line. */
-#define MIN_EXCEPTION_LINE 0x0
-/** @brief Maximal customizable accepted exception line. */
-#define MAX_EXCEPTION_LINE 0x1F
-
-/** @brief Defines the panic interrupt line. */
-#define PANIC_INT_LINE 0x20
-
-/** @brief Defines the spurious interrupt line */
-#define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
+/* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief x86 LAPIC driver. */
+typedef struct
+{
+    /**
+     * @brief Sets END OF INTERRUPT for the current CPU Local APIC.
+     *
+     * @details Sets END OF INTERRUPT for the current CPU Local APIC.
+     *
+     * @param[in] kInterruptLine The interrupt line for which the EOI should be
+     * set.
+     */
+    void (*pSetIrqEOI)(const uint32_t kInterruptLine);
+
+    /**
+     * @brief Returns the base address of the local APIC.
+     *
+     * @details Returns the base address of the local APIC.
+     *
+     * @return The base address of the LAPIC is returned.
+     */
+    uintptr_t (*pGetBaseAddress)(void);
+} lapic_driver_t;
 
 /*******************************************************************************
  * MACROS
@@ -81,6 +85,6 @@
 
 /* None */
 
-#endif /* #ifndef __I386_INTERRUPT_ */
+#endif /* #ifndef __X86_LAPIC_H_ */
 
 /************************************ EOF *************************************/

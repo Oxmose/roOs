@@ -1,22 +1,24 @@
 /*******************************************************************************
- * @file cpu_interrupt.h
+ * @file tsc.h
+ *
+ * @see tsc.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 31/03/2023
+ * @date 04/06/2024
  *
- * @version 2.0
+ * @version 1.0
  *
- * @brief i386 interrupt manager.
+ * @brief TSC (Timestamp Counter) driver.
  *
- * @details i386 interrupt manager. Stores the interrupt settings such as the
- * interrupt lines.
+ * @details TSC (Timestamp Counter) driver. Used as the tick timer
+ * source in the kernel. This driver provides basic access to the TSC.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __I386_INTERRUPT_
-#define __I386_INTERRUPT_
+#ifndef __X86_TSC_H_
+#define __X86_TSC_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -28,27 +30,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Number of entries in the kernel's IDT. */
-#define IDT_ENTRY_COUNT 256
-
-/** @brief Minimal customizable accepted interrupt line. */
-#define MIN_INTERRUPT_LINE 0x20
-/** @brief Maximal customizable accepted interrupt line. */
-#define MAX_INTERRUPT_LINE (IDT_ENTRY_COUNT - 1)
-
-/** @brief Defines the number of possible interrupt on the i386 processor. */
-#define INT_ENTRY_COUNT IDT_ENTRY_COUNT
-
-/** @brief Minimal customizable accepted exception line. */
-#define MIN_EXCEPTION_LINE 0x0
-/** @brief Maximal customizable accepted exception line. */
-#define MAX_EXCEPTION_LINE 0x1F
-
-/** @brief Defines the panic interrupt line. */
-#define PANIC_INT_LINE 0x20
-
-/** @brief Defines the spurious interrupt line */
-#define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
+/* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -79,8 +61,17 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/* None */
-
-#endif /* #ifndef __I386_INTERRUPT_ */
+#ifdef _TRACING_ENABLED
+/**
+ * @brief Hook for tracing timestamp.
+ *
+ * @details Hook for tracing timestamp. This hook must be defined by the
+ * platform to get tracing timestamp.
+ *
+ * @return The uptime in ticks.
+*/
+uint64_t tracingTimerGetTick(void);
+#endif
+#endif /* #ifndef __X86_TSC_H_ */
 
 /************************************ EOF *************************************/

@@ -1,0 +1,732 @@
+\hypertarget{i386_2src_2panic_8c}{}\doxysection{Source/\+Kernel/\+Arch/\+CPU/i386/src/panic.c File Reference}
+\label{i386_2src_2panic_8c}\index{Source/Kernel/Arch/CPU/i386/src/panic.c@{Source/Kernel/Arch/CPU/i386/src/panic.c}}
+{\ttfamily \#include $<$cpu\+\_\+interrupt.\+h$>$}\newline
+{\ttfamily \#include $<$vgatext.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$ctrl\+\_\+block.\+h$>$}\newline
+{\ttfamily \#include $<$interrupts.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$panic.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+Include dependency graph for panic.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{i386_2src_2panic_8c_a647baf16e513951803eafe79572fc94b}{STACK\+\_\+\+TRACE\+\_\+\+SIZE}}~6
+\begin{DoxyCompactList}\small\item\em Defines the stack trace size. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b}{\+\_\+print\+\_\+panic\+\_\+header}} (const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$vcpu)
+\begin{DoxyCompactList}\small\item\em Prints the kernel panic screen header. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452}{\+\_\+print\+\_\+cpu\+\_\+state}} (const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$vcpu)
+\begin{DoxyCompactList}\small\item\em Prints the CPU state at the moment of the panic. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be}{\+\_\+print\+\_\+cpu\+\_\+flags}} (const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$vcpu)
+\begin{DoxyCompactList}\small\item\em Prints the CPU flags at the moment of the panic. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601}{\+\_\+print\+\_\+stack\+\_\+trace}} (void)
+\begin{DoxyCompactList}\small\item\em Prints the stack frame rewind at the moment of the panic. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{i386_2src_2panic_8c_ab321ec2a0169f75f3384243e99f32c94}{panic\+\_\+handler}} (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$curr\+\_\+thread)
+\begin{DoxyCompactList}\small\item\em Displays the kernel panic screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{i386_2src_2panic_8c_a771d793f7a936d42a5b552047f69b41b}{kernel\+\_\+panic}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} error\+\_\+code, const char $\ast$module, const char $\ast$msg, const char $\ast$file, const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} line)
+\begin{DoxyCompactList}\small\item\em Causes a kernel panic. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}{panic\+\_\+code}} = 0
+\begin{DoxyCompactList}\small\item\em Stores the current kernel panic error code. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{i386_2src_2panic_8c_a90d9e268809ea28fb36de9666f2427fc}{panic\+\_\+line}}
+\begin{DoxyCompactList}\small\item\em Stores the line at which the kernel panic was called. \end{DoxyCompactList}\item 
+static const char $\ast$ \mbox{\hyperlink{i386_2src_2panic_8c_a2a5f2e15f36949e38b115ff0f9e205f7}{panic\+\_\+file}}
+\begin{DoxyCompactList}\small\item\em Stores the file from which the panic was called. \end{DoxyCompactList}\item 
+static const char $\ast$ \mbox{\hyperlink{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}{panic\+\_\+module}}
+\begin{DoxyCompactList}\small\item\em Stores the module related to the panic. \end{DoxyCompactList}\item 
+static const char $\ast$ \mbox{\hyperlink{i386_2src_2panic_8c_ae2ca7e62014381738bc8625256e21a02}{panic\+\_\+msg}}
+\begin{DoxyCompactList}\small\item\em Stores the message related to the panic. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a647baf16e513951803eafe79572fc94b}\label{i386_2src_2panic_8c_a647baf16e513951803eafe79572fc94b}} 
+\index{panic.c@{panic.c}!STACK\_TRACE\_SIZE@{STACK\_TRACE\_SIZE}}
+\index{STACK\_TRACE\_SIZE@{STACK\_TRACE\_SIZE}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{STACK\_TRACE\_SIZE}{STACK\_TRACE\_SIZE}}
+{\footnotesize\ttfamily \#define STACK\+\_\+\+TRACE\+\_\+\+SIZE~6}
+
+
+
+Defines the stack trace size. 
+
+
+
+Definition at line 51 of file panic.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be}\label{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be}} 
+\index{panic.c@{panic.c}!\_print\_cpu\_flags@{\_print\_cpu\_flags}}
+\index{\_print\_cpu\_flags@{\_print\_cpu\_flags}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{\_print\_cpu\_flags()}{\_print\_cpu\_flags()}}
+{\footnotesize\ttfamily static void \+\_\+print\+\_\+cpu\+\_\+flags (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$}]{vcpu }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints the CPU flags at the moment of the panic. 
+
+Prints the CPU flags at the moment of the panic. The flags are pretty printed for better reading.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vcpu} & The pointer to the VCPU state at the moment of the panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 270 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{271 \{}
+\DoxyCodeLine{272     \textcolor{keyword}{const} \mbox{\hyperlink{structint__context__t}{int\_context\_t}}* int\_state;}
+\DoxyCodeLine{273 }
+\DoxyCodeLine{274     int\_state = \&vcpu-\/>\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}};}
+\DoxyCodeLine{275 }
+\DoxyCodeLine{276     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} cf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x1);}
+\DoxyCodeLine{277     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} pf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x4) >> 2;}
+\DoxyCodeLine{278     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} af\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x10) >> 4;}
+\DoxyCodeLine{279     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} zf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x40) >> 6;}
+\DoxyCodeLine{280     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} sf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x80) >> 7;}
+\DoxyCodeLine{281     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} tf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x100) >> 8;}
+\DoxyCodeLine{282     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} if\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x200) >> 9;}
+\DoxyCodeLine{283     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} df\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x400) >> 10;}
+\DoxyCodeLine{284     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} of\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x800) >> 11;}
+\DoxyCodeLine{285     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} nf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x4000) >> 14;}
+\DoxyCodeLine{286     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} rf\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x10000) >> 16;}
+\DoxyCodeLine{287     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} vm\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x20000) >> 17;}
+\DoxyCodeLine{288     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} ac\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x40000) >> 18;}
+\DoxyCodeLine{289     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} id\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x200000) >> 21;}
+\DoxyCodeLine{290     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} iopl0\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x1000) >> 12;}
+\DoxyCodeLine{291     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} iopl1\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x2000) >> 13;}
+\DoxyCodeLine{292     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} vif\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x8000) >> 19;}
+\DoxyCodeLine{293     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} vip\_f = (int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}} \& 0x100000) >> 20;}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}EFLAGS: 0x\%p | "{}}, int\_state-\/>\mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}});}
+\DoxyCodeLine{296 }
+\DoxyCodeLine{297     \textcolor{keywordflow}{if}(cf\_f != 0)}
+\DoxyCodeLine{298     \{}
+\DoxyCodeLine{299         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}CF "{}});}
+\DoxyCodeLine{300     \}}
+\DoxyCodeLine{301     \textcolor{keywordflow}{if}(pf\_f != 0)}
+\DoxyCodeLine{302     \{}
+\DoxyCodeLine{303         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}PF "{}});}
+\DoxyCodeLine{304     \}}
+\DoxyCodeLine{305     \textcolor{keywordflow}{if}(af\_f != 0)}
+\DoxyCodeLine{306     \{}
+\DoxyCodeLine{307         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}AF "{}});}
+\DoxyCodeLine{308     \}}
+\DoxyCodeLine{309     \textcolor{keywordflow}{if}(zf\_f != 0)}
+\DoxyCodeLine{310     \{}
+\DoxyCodeLine{311         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}ZF "{}});}
+\DoxyCodeLine{312     \}}
+\DoxyCodeLine{313     \textcolor{keywordflow}{if}(sf\_f != 0)}
+\DoxyCodeLine{314     \{}
+\DoxyCodeLine{315         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}SF "{}});}
+\DoxyCodeLine{316     \}}
+\DoxyCodeLine{317     \textcolor{keywordflow}{if}(tf\_f != 0)}
+\DoxyCodeLine{318     \{}
+\DoxyCodeLine{319         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}TF "{}});}
+\DoxyCodeLine{320     \}}
+\DoxyCodeLine{321     \textcolor{keywordflow}{if}(if\_f != 0)}
+\DoxyCodeLine{322     \{}
+\DoxyCodeLine{323         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}IF "{}});}
+\DoxyCodeLine{324     \}}
+\DoxyCodeLine{325     \textcolor{keywordflow}{if}(df\_f != 0)}
+\DoxyCodeLine{326     \{}
+\DoxyCodeLine{327         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}DF "{}});}
+\DoxyCodeLine{328     \}}
+\DoxyCodeLine{329     \textcolor{keywordflow}{if}(of\_f != 0)}
+\DoxyCodeLine{330     \{}
+\DoxyCodeLine{331         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}OF "{}});}
+\DoxyCodeLine{332     \}}
+\DoxyCodeLine{333     \textcolor{keywordflow}{if}(nf\_f != 0)}
+\DoxyCodeLine{334     \{}
+\DoxyCodeLine{335         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}NT "{}});}
+\DoxyCodeLine{336     \}}
+\DoxyCodeLine{337     \textcolor{keywordflow}{if}(rf\_f != 0)}
+\DoxyCodeLine{338     \{}
+\DoxyCodeLine{339         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}RF "{}});}
+\DoxyCodeLine{340     \}}
+\DoxyCodeLine{341     \textcolor{keywordflow}{if}(vm\_f != 0)}
+\DoxyCodeLine{342     \{}
+\DoxyCodeLine{343         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}VM "{}});}
+\DoxyCodeLine{344     \}}
+\DoxyCodeLine{345     \textcolor{keywordflow}{if}(ac\_f != 0)}
+\DoxyCodeLine{346     \{}
+\DoxyCodeLine{347         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}AC "{}});}
+\DoxyCodeLine{348     \}}
+\DoxyCodeLine{349     \textcolor{keywordflow}{if}(vif\_f != 0)}
+\DoxyCodeLine{350     \{}
+\DoxyCodeLine{351         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}VF "{}});}
+\DoxyCodeLine{352     \}}
+\DoxyCodeLine{353     \textcolor{keywordflow}{if}(vip\_f != 0)}
+\DoxyCodeLine{354     \{}
+\DoxyCodeLine{355         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}VP "{}});}
+\DoxyCodeLine{356     \}}
+\DoxyCodeLine{357     \textcolor{keywordflow}{if}(id\_f != 0)}
+\DoxyCodeLine{358     \{}
+\DoxyCodeLine{359         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}ID "{}});}
+\DoxyCodeLine{360     \}}
+\DoxyCodeLine{361     \textcolor{keywordflow}{if}((iopl0\_f | iopl1\_f) != 0)}
+\DoxyCodeLine{362     \{}
+\DoxyCodeLine{363         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}IO: \%d "{}}, (iopl0\_f | iopl1\_f << 1));}
+\DoxyCodeLine{364     \}}
+\DoxyCodeLine{365     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{366 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452}\label{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452}} 
+\index{panic.c@{panic.c}!\_print\_cpu\_state@{\_print\_cpu\_state}}
+\index{\_print\_cpu\_state@{\_print\_cpu\_state}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{\_print\_cpu\_state()}{\_print\_cpu\_state()}}
+{\footnotesize\ttfamily static void \+\_\+print\+\_\+cpu\+\_\+state (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$}]{vcpu }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints the CPU state at the moment of the panic. 
+
+Prints the CPU state at the moment of the panic. All CPU registers are dumped.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vcpu} & The pointer to the VCPU state at the moment of the panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 225 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{226 \{}
+\DoxyCodeLine{227     \textcolor{keyword}{const} \mbox{\hyperlink{structcpu__state__t}{cpu\_state\_t}}*   cpu\_state;}
+\DoxyCodeLine{228     \textcolor{keyword}{const} \mbox{\hyperlink{structint__context__t}{int\_context\_t}}* int\_state;}
+\DoxyCodeLine{229 }
+\DoxyCodeLine{230     int\_state = \&vcpu-\/>\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}};}
+\DoxyCodeLine{231     cpu\_state = \&vcpu-\/>\mbox{\hyperlink{structvirtual__cpu__t_a301886dccaf453062e3c273fc0fee754}{vcpu}};}
+\DoxyCodeLine{232 }
+\DoxyCodeLine{233     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} CR0;}
+\DoxyCodeLine{234     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} CR2;}
+\DoxyCodeLine{235     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} CR3;}
+\DoxyCodeLine{236     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} CR4;}
+\DoxyCodeLine{237 }
+\DoxyCodeLine{238     \_\_asm\_\_ \_\_volatile\_\_ (}
+\DoxyCodeLine{239         \textcolor{stringliteral}{"{}mov \%\%cr0, \%\%eax\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{240         \textcolor{stringliteral}{"{}mov \%\%eax, \%0\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{241         \textcolor{stringliteral}{"{}mov \%\%cr2, \%\%eax\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{242         \textcolor{stringliteral}{"{}mov \%\%eax, \%1\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{243         \textcolor{stringliteral}{"{}mov \%\%cr3, \%\%eax\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{244         \textcolor{stringliteral}{"{}mov \%\%eax, \%2\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{245         \textcolor{stringliteral}{"{}mov \%\%cr4, \%\%eax\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{246         \textcolor{stringliteral}{"{}mov \%\%eax, \%3\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{247     : \textcolor{stringliteral}{"{}=m"{}} (CR0), \textcolor{stringliteral}{"{}=m"{}} (CR2), \textcolor{stringliteral}{"{}=m"{}} (CR3), \textcolor{stringliteral}{"{}=m"{}} (CR4)}
+\DoxyCodeLine{248     : \textcolor{comment}{/* no input */}}
+\DoxyCodeLine{249     : \textcolor{stringliteral}{"{}\%eax"{}}}
+\DoxyCodeLine{250     );}
+\DoxyCodeLine{251 }
+\DoxyCodeLine{252     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}EAX: 0x\%p | EBX: 0x\%p | ECX: 0x\%p | EDX: "{}}}
+\DoxyCodeLine{253                     \textcolor{stringliteral}{"{}0x\%p  \(\backslash\)n"{}}, cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a93d929ad1fc57af9d4f1793c361fb4f2}{eax}}, cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_ae7c1e3339e4dead200cab41010e9127c}{ebx}},}
+\DoxyCodeLine{254                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_af2b16bef95c844028dd145264d1d3875}{ecx}},  cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_ae6db045cebe7b4cf979120dccdee0d01}{edx}});}
+\DoxyCodeLine{255     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}ESI: 0x\%p | EDI: 0x\%p | EBP: 0x\%p | ESP: "{}}}
+\DoxyCodeLine{256                     \textcolor{stringliteral}{"{}0x\%p  \(\backslash\)n"{}}, cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_ada78e3124de6adf5a5d212f9ebc4bbe0}{esi}}, cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a36ffab8d34c6c411a7e5205ddb95eaf9}{edi}},}
+\DoxyCodeLine{257                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_aaba2ad0ff8ba480934feabfdab02b1e7}{ebp}}, cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a7534a179bc9cc0ef26f0468e0959ee5c}{esp}});}
+\DoxyCodeLine{258     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}CR0: 0x\%p | CR2: 0x\%p | CR3: 0x\%p | CR4: "{}}}
+\DoxyCodeLine{259                     \textcolor{stringliteral}{"{}0x\%p  \(\backslash\)n"{}}, CR0, CR2, CR3, CR4);}
+\DoxyCodeLine{260     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}CS: 0x\%04X | DS: 0x\%04X | SS: 0x\%04X | ES: 0x\%04X | "{}}}
+\DoxyCodeLine{261                   \textcolor{stringliteral}{"{}FS: 0x\%04X | GS: 0x\%04X\(\backslash\)n"{}},}
+\DoxyCodeLine{262                     int\_state-\/>\mbox{\hyperlink{structint__context__t_a8519dc239502dfcbac171b3128dc7054}{cs}} \& 0xFFFF,}
+\DoxyCodeLine{263                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a6fe20edd854a1a653ae71ccf541a6b8b}{ds}} \& 0xFFFF,}
+\DoxyCodeLine{264                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a3c59346dd338708c94ca75cf21b78195}{ss}} \& 0xFFFF,}
+\DoxyCodeLine{265                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a0dacdc927bbcc6457b629ad88119cdc2}{es}} \& 0xFFFF ,}
+\DoxyCodeLine{266                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a2ffb5cf275c124e8f8ff30e1d4449f80}{fs}} \& 0xFFFF ,}
+\DoxyCodeLine{267                     cpu\_state-\/>\mbox{\hyperlink{structcpu__state__t_a85904ecbf7b717abe738645b4ff2f4ff}{gs}} \& 0xFFFF);}
+\DoxyCodeLine{268 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b}\label{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b}} 
+\index{panic.c@{panic.c}!\_print\_panic\_header@{\_print\_panic\_header}}
+\index{\_print\_panic\_header@{\_print\_panic\_header}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{\_print\_panic\_header()}{\_print\_panic\_header()}}
+{\footnotesize\ttfamily static void \+\_\+print\+\_\+panic\+\_\+header (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$}]{vcpu }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints the kernel panic screen header. 
+
+Prints the kernel panic screen header. The header contains the title, the interrupt number, the error code and the error string that caused the panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vcpu} & The pointer to the VCPU state at the moment of the panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 137 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{138 \{}
+\DoxyCodeLine{139     \textcolor{keyword}{const} \mbox{\hyperlink{structint__context__t}{int\_context\_t}}* int\_state;}
+\DoxyCodeLine{140 }
+\DoxyCodeLine{141     int\_state = \&vcpu-\/>\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}};}
+\DoxyCodeLine{142 }
+\DoxyCodeLine{143     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#    KERNEL PANIC    \#\#\#\#\#\#\#\#\#\#"{}}}
+\DoxyCodeLine{144                     \textcolor{stringliteral}{"{}\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\(\backslash\)n"{}});}
+\DoxyCodeLine{145     \textcolor{keywordflow}{switch}(int\_state-\/>\mbox{\hyperlink{structint__context__t_a3368558e1a109ce19d039561903f5f41}{int\_id}})}
+\DoxyCodeLine{146     \{}
+\DoxyCodeLine{147         \textcolor{keywordflow}{case} 0:}
+\DoxyCodeLine{148             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Division by zero                        "{}});}
+\DoxyCodeLine{149             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{150         \textcolor{keywordflow}{case} 1:}
+\DoxyCodeLine{151             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Single-\/step interrupt                   "{}});}
+\DoxyCodeLine{152             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{153         \textcolor{keywordflow}{case} 2:}
+\DoxyCodeLine{154             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Non maskable interrupt                  "{}});}
+\DoxyCodeLine{155             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{156         \textcolor{keywordflow}{case} 3:}
+\DoxyCodeLine{157             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Breakpoint                              "{}});}
+\DoxyCodeLine{158             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{159         \textcolor{keywordflow}{case} 4:}
+\DoxyCodeLine{160             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Overflow                                "{}});}
+\DoxyCodeLine{161             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{162         \textcolor{keywordflow}{case} 5:}
+\DoxyCodeLine{163             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Bounds                                  "{}});}
+\DoxyCodeLine{164             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{165         \textcolor{keywordflow}{case} 6:}
+\DoxyCodeLine{166             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Invalid Opcode                          "{}});}
+\DoxyCodeLine{167             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{168         \textcolor{keywordflow}{case} 7:}
+\DoxyCodeLine{169             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Coprocessor not available               "{}});}
+\DoxyCodeLine{170             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{171         \textcolor{keywordflow}{case} 8:}
+\DoxyCodeLine{172             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Double fault                            "{}});}
+\DoxyCodeLine{173             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{174         \textcolor{keywordflow}{case} 9:}
+\DoxyCodeLine{175             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Coprocessor Segment Overrun             "{}});}
+\DoxyCodeLine{176             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{177         \textcolor{keywordflow}{case} 10:}
+\DoxyCodeLine{178             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Invalid Task State Segment              "{}});}
+\DoxyCodeLine{179             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{180         \textcolor{keywordflow}{case} 11:}
+\DoxyCodeLine{181             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Segment not present                     "{}});}
+\DoxyCodeLine{182             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{183         \textcolor{keywordflow}{case} 12:}
+\DoxyCodeLine{184             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Stack Fault                             "{}});}
+\DoxyCodeLine{185             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{186         \textcolor{keywordflow}{case} 13:}
+\DoxyCodeLine{187             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}General protection fault                "{}});}
+\DoxyCodeLine{188             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{189         \textcolor{keywordflow}{case} 14:}
+\DoxyCodeLine{190             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Page fault                              "{}});}
+\DoxyCodeLine{191             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{192         \textcolor{keywordflow}{case} 16:}
+\DoxyCodeLine{193             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Math Fault                              "{}});}
+\DoxyCodeLine{194             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{195         \textcolor{keywordflow}{case} 17:}
+\DoxyCodeLine{196             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Alignment Check                         "{}});}
+\DoxyCodeLine{197             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{198         \textcolor{keywordflow}{case} 18:}
+\DoxyCodeLine{199             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Machine Check                           "{}});}
+\DoxyCodeLine{200             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{201         \textcolor{keywordflow}{case} 19:}
+\DoxyCodeLine{202             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}SIMD Floating-\/Point Exception           "{}});}
+\DoxyCodeLine{203             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{204         \textcolor{keywordflow}{case} 20:}
+\DoxyCodeLine{205             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Virtualization Exception                "{}});}
+\DoxyCodeLine{206             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{207         \textcolor{keywordflow}{case} 21:}
+\DoxyCodeLine{208             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Control Protection Exception            "{}});}
+\DoxyCodeLine{209             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{210         \textcolor{keywordflow}{case} \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\_INT\_LINE}}:}
+\DoxyCodeLine{211             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Panic generated by the kernel           "{}});}
+\DoxyCodeLine{212             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{213         \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{214             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Unknown reason                          "{}});}
+\DoxyCodeLine{215     \}}
+\DoxyCodeLine{216 }
+\DoxyCodeLine{217     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}          INT ID: 0x\%02X                 \(\backslash\)n"{}},}
+\DoxyCodeLine{218                   int\_state-\/>\mbox{\hyperlink{structint__context__t_a3368558e1a109ce19d039561903f5f41}{int\_id}});}
+\DoxyCodeLine{219     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Instruction [EIP]: 0x\%p                     Error code: "{}}}
+\DoxyCodeLine{220                     \textcolor{stringliteral}{"{}0x\%X       \(\backslash\)n"{}}, int\_state-\/>\mbox{\hyperlink{structint__context__t_a1588906901fc3015e0865574669a56a6}{eip}}, int\_state-\/>\mbox{\hyperlink{structint__context__t_abf2d7e54e9bb8675882ab068a0885e37}{error\_code}});}
+\DoxyCodeLine{221     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}                                                            "{}}}
+\DoxyCodeLine{222                     \textcolor{stringliteral}{"{}                   \(\backslash\)n"{}});}
+\DoxyCodeLine{223 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601}\label{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601}} 
+\index{panic.c@{panic.c}!\_print\_stack\_trace@{\_print\_stack\_trace}}
+\index{\_print\_stack\_trace@{\_print\_stack\_trace}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{\_print\_stack\_trace()}{\_print\_stack\_trace()}}
+{\footnotesize\ttfamily static void \+\_\+print\+\_\+stack\+\_\+trace (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints the stack frame rewind at the moment of the panic. 
+
+Prints the stack frame rewind at the moment of the panic. The frames will be unwinded and the symbols printed based on the information passed by multiboot at initialization time. 
+
+Definition at line 368 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{369 \{}
+\DoxyCodeLine{370     \textcolor{keywordtype}{size\_t}        i;}
+\DoxyCodeLine{371     uintptr\_t*    call\_addr;}
+\DoxyCodeLine{372     uintptr\_t*    last\_ebp;}
+\DoxyCodeLine{373     \textcolor{keywordtype}{char}*         symbol;}
+\DoxyCodeLine{374 }
+\DoxyCodeLine{375     \textcolor{comment}{/* Get ebp */}}
+\DoxyCodeLine{376     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}mov \%\%ebp, \%0\(\backslash\)n\(\backslash\)t"{}} : \textcolor{stringliteral}{"{}=m"{}} (last\_ebp));}
+\DoxyCodeLine{377 }
+\DoxyCodeLine{378     \textcolor{comment}{/* Get the return address */}}
+\DoxyCodeLine{379     call\_addr = *(uintptr\_t**)(last\_ebp + 1);}
+\DoxyCodeLine{380     \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{i386_2src_2panic_8c_a647baf16e513951803eafe79572fc94b}{STACK\_TRACE\_SIZE}} \&\& call\_addr != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}; ++i)}
+\DoxyCodeLine{381     \{}
+\DoxyCodeLine{382         \textcolor{comment}{/* Get the associated symbol */}}
+\DoxyCodeLine{383         symbol = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{384 }
+\DoxyCodeLine{385         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}[\%u] 0x\%p in \%s"{}}, i, call\_addr,}
+\DoxyCodeLine{386                       symbol == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ? \textcolor{stringliteral}{"{}[NO\_SYMBOL]"{}} : symbol);}
+\DoxyCodeLine{387         \textcolor{keywordflow}{if}(i \% 2 == 0)}
+\DoxyCodeLine{388         \{}
+\DoxyCodeLine{389             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{} | "{}});}
+\DoxyCodeLine{390         \}}
+\DoxyCodeLine{391         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{392         \{}
+\DoxyCodeLine{393             \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{394         \}}
+\DoxyCodeLine{395 }
+\DoxyCodeLine{396         last\_ebp  = (uintptr\_t*)*last\_ebp;}
+\DoxyCodeLine{397         call\_addr = *(uintptr\_t**)(last\_ebp + 1);}
+\DoxyCodeLine{398     \}}
+\DoxyCodeLine{399 }
+\DoxyCodeLine{400 }
+\DoxyCodeLine{401 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a771d793f7a936d42a5b552047f69b41b}\label{i386_2src_2panic_8c_a771d793f7a936d42a5b552047f69b41b}} 
+\index{panic.c@{panic.c}!kernel\_panic@{kernel\_panic}}
+\index{kernel\_panic@{kernel\_panic}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_panic()}{kernel\_panic()}}
+{\footnotesize\ttfamily void kernel\+\_\+panic (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{error\+\_\+code,  }\item[{const char $\ast$}]{module,  }\item[{const char $\ast$}]{msg,  }\item[{const char $\ast$}]{file,  }\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{line }\end{DoxyParamCaption})}
+
+
+
+Causes a kernel panic. 
+
+Causes a kernel panic. This will raise an interrupt to generate the panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em error\+\_\+code} & The error code to display on the kernel panic\textquotesingle{}s screen. \\
+\hline
+\mbox{\texttt{ in}}  & {\em module} & The module that generated the panic. Can be empty when not relevant. \\
+\hline
+\mbox{\texttt{ in}}  & {\em msg} & The message to display in the kernel\textquotesingle{}s panig screen. \\
+\hline
+\mbox{\texttt{ in}}  & {\em file} & The name of the source file where the panic was called. \\
+\hline
+\mbox{\texttt{ in}}  & {\em line} & The line at which the panic was called. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 489 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{494 \{}
+\DoxyCodeLine{495     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PANIC, 1, error\_code);}
+\DoxyCodeLine{496 }
+\DoxyCodeLine{497     \textcolor{comment}{/* We don't need interrupt anymore */}}
+\DoxyCodeLine{498     \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{499 }
+\DoxyCodeLine{500     \textcolor{comment}{/* Set the parameters */}}
+\DoxyCodeLine{501     \mbox{\hyperlink{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}{panic\_code}}   = error\_code;}
+\DoxyCodeLine{502     \mbox{\hyperlink{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}{panic\_module}} = module;}
+\DoxyCodeLine{503     \mbox{\hyperlink{i386_2src_2panic_8c_ae2ca7e62014381738bc8625256e21a02}{panic\_msg}}    = msg;}
+\DoxyCodeLine{504     \mbox{\hyperlink{i386_2src_2panic_8c_a2a5f2e15f36949e38b115ff0f9e205f7}{panic\_file}}   = file;}
+\DoxyCodeLine{505     \mbox{\hyperlink{i386_2src_2panic_8c_a90d9e268809ea28fb36de9666f2427fc}{panic\_line}}   = line;}
+\DoxyCodeLine{506 }
+\DoxyCodeLine{507     \textcolor{comment}{/* Call the panic formater */}}
+\DoxyCodeLine{508     \mbox{\hyperlink{i386_2includes_2cpu_8h_aa751f1c664d608c1d380a37096ebc075}{cpu\_raise\_interrupt}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\_INT\_LINE}});}
+\DoxyCodeLine{509 }
+\DoxyCodeLine{510     \textcolor{comment}{/* We should never get here, but just in case */}}
+\DoxyCodeLine{511     \textcolor{keywordflow}{while}(1)}
+\DoxyCodeLine{512     \{}
+\DoxyCodeLine{513         \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{514         \mbox{\hyperlink{i386_2includes_2cpu_8h_aeaa9cd4a11653c17fd552b187237b7be}{\_cpu\_hlt}}();}
+\DoxyCodeLine{515     \}}
+\DoxyCodeLine{516 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{i386_2src_2panic_8c_ab321ec2a0169f75f3384243e99f32c94}\label{i386_2src_2panic_8c_ab321ec2a0169f75f3384243e99f32c94}} 
+\index{panic.c@{panic.c}!panic\_handler@{panic\_handler}}
+\index{panic\_handler@{panic\_handler}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_handler()}{panic\_handler()}}
+{\footnotesize\ttfamily void panic\+\_\+handler (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$}]{curr\+\_\+thread }\end{DoxyParamCaption})}
+
+
+
+Displays the kernel panic screen. 
+
+Displays the kernel panic screen. This screen dumps the CPU registers and the stack state before the panic occured.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em curr\+\_\+thread} & The thread that generated the panic\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+Panic should never be called, it must only be used as an interrupt handler. 
+\end{DoxyWarning}
+
+
+Definition at line 403 of file panic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{404 \{}
+\DoxyCodeLine{405     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}} panic\_scheme;}
+\DoxyCodeLine{406     \mbox{\hyperlink{structcursor__t}{cursor\_t}}      panic\_cursor;}
+\DoxyCodeLine{407 }
+\DoxyCodeLine{408     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} cpu\_id;}
+\DoxyCodeLine{409 }
+\DoxyCodeLine{410     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} time;}
+\DoxyCodeLine{411     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} hours;}
+\DoxyCodeLine{412     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} minutes;}
+\DoxyCodeLine{413     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} seconds;}
+\DoxyCodeLine{414 }
+\DoxyCodeLine{415     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PANIC\_HANDLER\_START, 1, \mbox{\hyperlink{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}{panic\_code}});}
+\DoxyCodeLine{416 }
+\DoxyCodeLine{417     \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{418 }
+\DoxyCodeLine{419     time    = 0;}
+\DoxyCodeLine{420     hours   = time / 3600;}
+\DoxyCodeLine{421     minutes = (time / 60) \% 60;}
+\DoxyCodeLine{422     seconds = time \% 60;}
+\DoxyCodeLine{423 }
+\DoxyCodeLine{424     cpu\_id = 0;}
+\DoxyCodeLine{425 }
+\DoxyCodeLine{426     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{427     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{vgatext_8h_afb40e6e076755308612ed6e18a34dbeb}{FG\_CYAN}};}
+\DoxyCodeLine{428     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{429 }
+\DoxyCodeLine{430     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&panic\_scheme);}
+\DoxyCodeLine{431 }
+\DoxyCodeLine{432     \textcolor{comment}{/* Clear screen */}}
+\DoxyCodeLine{433     \mbox{\hyperlink{console_8h_a8f3bc8da8a4eae21bd40e7a5a75a370c}{console\_clear\_screen}}();}
+\DoxyCodeLine{434     panic\_cursor.\mbox{\hyperlink{structcursor__t_aae8a40a17c0be29c1f06ca6b4f9e2235}{x}} = 0;}
+\DoxyCodeLine{435     panic\_cursor.\mbox{\hyperlink{structcursor__t_a9c02f93c9698e4486878867c4f265c48}{y}} = 0;}
+\DoxyCodeLine{436     \mbox{\hyperlink{console_8h_a9ed9711d5768bb19d44f89b29eea689b}{console\_restore\_cursor}}(\&panic\_cursor);}
+\DoxyCodeLine{437 }
+\DoxyCodeLine{438     \mbox{\hyperlink{i386_2src_2panic_8c_ab00138639a7e159deb78741bf3d0765b}{\_print\_panic\_header}}(\&curr\_thread-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}});}
+\DoxyCodeLine{439     \mbox{\hyperlink{i386_2src_2panic_8c_a54bc2b2f87ac018168e327ce1b129452}{\_print\_cpu\_state}}(\&curr\_thread-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}});}
+\DoxyCodeLine{440     \mbox{\hyperlink{i386_2src_2panic_8c_a3544fc73a316b09198dbeb96485127be}{\_print\_cpu\_flags}}(\&curr\_thread-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}});}
+\DoxyCodeLine{441 }
+\DoxyCodeLine{442     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}\(\backslash\)n-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/ INFORMATION -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/"{}}}
+\DoxyCodeLine{443                     \textcolor{stringliteral}{"{}-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\(\backslash\)n"{}});}
+\DoxyCodeLine{444     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}Core ID: \%u | Time: \%02u:\%02u:\%02u [\%llu]\(\backslash\)n"{}}}
+\DoxyCodeLine{445                   \textcolor{stringliteral}{"{}Thread: \%s (\%u) | Process: \%s (\%u)\(\backslash\)n"{}}, cpu\_id,}
+\DoxyCodeLine{446                   hours, minutes, seconds, \mbox{\hyperlink{time__mgt_8h_afe409bc6f9cb0cca020d9b10c507f02e}{time\_get\_current\_uptime}}(),}
+\DoxyCodeLine{447                   curr\_thread-\/>\mbox{\hyperlink{structkernel__thread__t_aa11f805a3ff4ebdb8de0b019c61d62f5}{name}},}
+\DoxyCodeLine{448                   curr\_thread-\/>\mbox{\hyperlink{structkernel__thread__t_a50eaf778d1569b701389e0794bbd39d3}{tid}},}
+\DoxyCodeLine{449                   \textcolor{stringliteral}{"{}NO\_PROCESS"{}},}
+\DoxyCodeLine{450                   0);}
+\DoxyCodeLine{451 }
+\DoxyCodeLine{452     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}File: \%s at line \%d\(\backslash\)n"{}}, \mbox{\hyperlink{i386_2src_2panic_8c_a2a5f2e15f36949e38b115ff0f9e205f7}{panic\_file}}, \mbox{\hyperlink{i386_2src_2panic_8c_a90d9e268809ea28fb36de9666f2427fc}{panic\_line}});}
+\DoxyCodeLine{453 }
+\DoxyCodeLine{454     \textcolor{keywordflow}{if}(\mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(\mbox{\hyperlink{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}{panic\_module}}) != 0)}
+\DoxyCodeLine{455     \{}
+\DoxyCodeLine{456         \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}[\%s] | "{}}, \mbox{\hyperlink{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}{panic\_module}});}
+\DoxyCodeLine{457     \}}
+\DoxyCodeLine{458     \mbox{\hyperlink{kernel__output_8h_a55516ac44e090adb730dd682f4d8ae7b}{kernel\_printf}}(\textcolor{stringliteral}{"{}\%s (\%d)\(\backslash\)n\(\backslash\)n"{}}, \mbox{\hyperlink{i386_2src_2panic_8c_ae2ca7e62014381738bc8625256e21a02}{panic\_msg}}, \mbox{\hyperlink{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}{panic\_code}});}
+\DoxyCodeLine{459 }
+\DoxyCodeLine{460     \mbox{\hyperlink{i386_2src_2panic_8c_a0c8ccefb521475eb52fc70814f514601}{\_print\_stack\_trace}}();}
+\DoxyCodeLine{461 }
+\DoxyCodeLine{462     \textcolor{comment}{/* Hide cursor */}}
+\DoxyCodeLine{463     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{vgatext_8h_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{464     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{vgatext_8h_a9b32d0a26f9909c5b63ccd474f56420e}{FG\_BLACK}};}
+\DoxyCodeLine{465     panic\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{466 }
+\DoxyCodeLine{467     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&panic\_scheme);}
+\DoxyCodeLine{468 }
+\DoxyCodeLine{469     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PANIC\_HANDLER\_END, 1, \mbox{\hyperlink{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}{panic\_code}});}
+\DoxyCodeLine{470 }
+\DoxyCodeLine{471     \mbox{\hyperlink{test__framework_8h_afefc92896df9b7e4eb68249ec65266ba}{TEST\_POINT\_ASSERT\_RCODE}}(\mbox{\hyperlink{test__list_8h_a417e0131b35a3349f2f7d05b04f5c471}{TEST\_PANIC\_SUCCESS\_ID}},}
+\DoxyCodeLine{472                             \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}},}
+\DoxyCodeLine{473                             \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{474                             \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{475                             \mbox{\hyperlink{test__list_8h_a0e0588f1e92e8db8f871b978f4edeaac}{TEST\_PANIC\_ENABLED}});}
+\DoxyCodeLine{476 }
+\DoxyCodeLine{477 \textcolor{preprocessor}{\#if TEST\_PANIC\_ENABLED}}
+\DoxyCodeLine{478     \mbox{\hyperlink{test__framework_8h_a71eb896539093d3903fc43f4ebb989bc}{TEST\_FRAMEWORK\_END}}();}
+\DoxyCodeLine{479 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{480 }
+\DoxyCodeLine{481     \textcolor{comment}{/* We will never return from interrupt */}}
+\DoxyCodeLine{482     \textcolor{keywordflow}{while}(1)}
+\DoxyCodeLine{483     \{}
+\DoxyCodeLine{484         \mbox{\hyperlink{interrupts_8h_a60fda4653e213441ab9a78d3e4e6d091}{kernel\_interrupt\_disable}}();}
+\DoxyCodeLine{485         \mbox{\hyperlink{i386_2includes_2cpu_8h_aeaa9cd4a11653c17fd552b187237b7be}{\_cpu\_hlt}}();}
+\DoxyCodeLine{486     \}}
+\DoxyCodeLine{487 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}\label{i386_2src_2panic_8c_a29f5ef07bbd2751cd760edbafa88c31f}} 
+\index{panic.c@{panic.c}!panic\_code@{panic\_code}}
+\index{panic\_code@{panic\_code}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_code}{panic\_code}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} panic\+\_\+code = 0\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the current kernel panic error code. 
+
+
+
+Definition at line 75 of file panic.\+c.
+
+\mbox{\Hypertarget{i386_2src_2panic_8c_a2a5f2e15f36949e38b115ff0f9e205f7}\label{i386_2src_2panic_8c_a2a5f2e15f36949e38b115ff0f9e205f7}} 
+\index{panic.c@{panic.c}!panic\_file@{panic\_file}}
+\index{panic\_file@{panic\_file}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_file}{panic\_file}}
+{\footnotesize\ttfamily const char$\ast$ panic\+\_\+file\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the file from which the panic was called. 
+
+
+
+Definition at line 81 of file panic.\+c.
+
+\mbox{\Hypertarget{i386_2src_2panic_8c_a90d9e268809ea28fb36de9666f2427fc}\label{i386_2src_2panic_8c_a90d9e268809ea28fb36de9666f2427fc}} 
+\index{panic.c@{panic.c}!panic\_line@{panic\_line}}
+\index{panic\_line@{panic\_line}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_line}{panic\_line}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} panic\+\_\+line\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the line at which the kernel panic was called. 
+
+
+
+Definition at line 78 of file panic.\+c.
+
+\mbox{\Hypertarget{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}\label{i386_2src_2panic_8c_af6a43fd3650cc6bcf39e3b60d249b2d8}} 
+\index{panic.c@{panic.c}!panic\_module@{panic\_module}}
+\index{panic\_module@{panic\_module}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_module}{panic\_module}}
+{\footnotesize\ttfamily const char$\ast$ panic\+\_\+module\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the module related to the panic. 
+
+
+
+Definition at line 84 of file panic.\+c.
+
+\mbox{\Hypertarget{i386_2src_2panic_8c_ae2ca7e62014381738bc8625256e21a02}\label{i386_2src_2panic_8c_ae2ca7e62014381738bc8625256e21a02}} 
+\index{panic.c@{panic.c}!panic\_msg@{panic\_msg}}
+\index{panic\_msg@{panic\_msg}!panic.c@{panic.c}}
+\doxysubsubsection{\texorpdfstring{panic\_msg}{panic\_msg}}
+{\footnotesize\ttfamily const char$\ast$ panic\+\_\+msg\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the message related to the panic. 
+
+
+
+Definition at line 87 of file panic.\+c.
+

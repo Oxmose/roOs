@@ -27,9 +27,9 @@ init:
 	@mkdir -p $(BUILD_DIR)
 
 ifeq ($(target), x86_i386)
-	$(CONFIG_DIR)/Arch/x86_i386/init_build.sh
+	$(CONFIG_DIR)/arch/x86_i386/init_build.sh
 else ifeq ($(target), x86_64)
-	$(CONFIG_DIR)/Arch/x86_64/init_build.sh
+	$(CONFIG_DIR)/arch/x86_64/init_build.sh
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
 	@echo "Available targets: $(TARGET_LIST)\n"
@@ -39,12 +39,18 @@ endif
 build_modules:
 ifeq ($(target), x86_i386)
 # Build the architecture module
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386
 else ifeq ($(target), x86_64)
 # Build the architecture module
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
 	@echo "Available targets: $(TARGET_LIST)\n"
@@ -53,12 +59,10 @@ endif
 
 ifeq ($(TESTS), TRUE)
 	# Build the tests module
-	@make -C $(SOURCE_DIR)/TestFramework target=$(target)
+	@make -C $(SOURCE_DIR)/test_framework target=$(target)
 endif
 
 # Build general modules
-	@make -C $(SOURCE_DIR)/Libs
-	@make -C $(SOURCE_DIR)/IO
 
 build_kernel:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
@@ -73,10 +77,6 @@ build_kernel:
 	@echo "\e[1m\e[34m| Generated kernel for target $(target)\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
-# TODO:
-#	@chmod +x $(CONFIG_DIR)/Arch/x86_i386/create_initrd.sh
-#	$(CONFIG_DIR)/Arch/x86_i386/create_initrd.sh $(BUILD_DIR)
-
 clean:
 # Dummy settings
 	@mkdir -p Kernel/ARTIFACTS
@@ -84,24 +84,36 @@ clean:
 
 # Clean the architecture module
 ifeq ($(target), x86_i386)
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
 else ifeq ($(target), x86_64)
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
 else
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/Arch target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/Core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
 endif
 
 # Clean modules
-	@make clean -C $(SOURCE_DIR)/Libs
-	@make clean -C $(SOURCE_DIR)/IO
-	@make clean -C $(SOURCE_DIR)/TestFramework
+	@make clean -C $(SOURCE_DIR)/test_framework
 
 # Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)
+
 
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
 	@echo "\e[1m\e[34m| Cleaned kernel \e[22m\e[39m"
@@ -110,10 +122,10 @@ endif
 	@rm -rf Kernel/ARTIFACTS
 
 run:
-	@make run -f $(CONFIG_DIR)/Arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)
+	@make run -f $(CONFIG_DIR)/arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)
 
 debug:
-	@make debug -f $(CONFIG_DIR)/Arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)
+	@make debug -f $(CONFIG_DIR)/arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)
 
 qemu-test-mode:
-	@make qemu-test-mode -f $(CONFIG_DIR)/Arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)
+	@make qemu-test-mode -f $(CONFIG_DIR)/arch/$(target)/makerun.mk BUILD_DIR=$(BUILD_DIR) KERNEL=$(KERNEL)

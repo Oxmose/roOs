@@ -46,7 +46,8 @@ sudo apt install g++ \
                 libpulse-dev \
                 libpulse0 \
                 grub-pc-bin \
-                ninja-build
+                ninja-build \
+                device-tree-compiler
 
 which gcc-12
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 60

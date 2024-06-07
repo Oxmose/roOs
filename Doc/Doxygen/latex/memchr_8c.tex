@@ -1,0 +1,62 @@
+\hypertarget{memchr_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memchr.c File Reference}
+\label{memchr_8c}\index{Source/Kernel/Libs/libc/src/memchr.c@{Source/Kernel/Libs/libc/src/memchr.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memchr.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{memchr_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memchr_8c_a16d6b0bd660cc3f9910924c6b6f4af8e}{memchr}} (const void $\ast$s, int c, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\begin{DoxyCompactList}\small\item\em Finds the first occurrence of ch (after conversion to unsigned char as if by ch) in the initial count characters (each interpreted as unsigned char) of the object pointed to by ptr. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memchr_8c_a16d6b0bd660cc3f9910924c6b6f4af8e}\label{memchr_8c_a16d6b0bd660cc3f9910924c6b6f4af8e}} 
+\index{memchr.c@{memchr.c}!memchr@{memchr}}
+\index{memchr@{memchr}!memchr.c@{memchr.c}}
+\doxysubsubsection{\texorpdfstring{memchr()}{memchr()}}
+{\footnotesize\ttfamily void$\ast$ memchr (\begin{DoxyParamCaption}\item[{const void $\ast$}]{ptr,  }\item[{int}]{ch,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{count }\end{DoxyParamCaption})}
+
+
+
+Finds the first occurrence of ch (after conversion to unsigned char as if by ch) in the initial count characters (each interpreted as unsigned char) of the object pointed to by ptr. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ptr} & Pointer to the object to be examined \\
+\hline
+{\em ch} & Character to search for \\
+\hline
+{\em count} & Max number of characters to examine\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Pointer to the location of the character, or a null pointer if no such character is found. 
+\end{DoxyReturn}
+
+
+Definition at line 73 of file memchr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *sp = s;}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{78         \textcolor{keywordflow}{if} (*sp == (\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char})c)}
+\DoxyCodeLine{79             \textcolor{keywordflow}{return} (\textcolor{keywordtype}{void} *)sp;}
+\DoxyCodeLine{80         sp++;}
+\DoxyCodeLine{81     \}}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{84 \}}
+
+\end{DoxyCode}

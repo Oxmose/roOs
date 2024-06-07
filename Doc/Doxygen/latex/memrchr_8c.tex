@@ -1,0 +1,46 @@
+\hypertarget{memrchr_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memrchr.c File Reference}
+\label{memrchr_8c}\index{Source/Kernel/Libs/libc/src/memrchr.c@{Source/Kernel/Libs/libc/src/memrchr.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memrchr.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=265pt]{memrchr_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memrchr_8c_a45623070e5e0b7008d44600a283ea2ee}{memrchr}} (const void $\ast$s, int c, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memrchr_8c_a45623070e5e0b7008d44600a283ea2ee}\label{memrchr_8c_a45623070e5e0b7008d44600a283ea2ee}} 
+\index{memrchr.c@{memrchr.c}!memrchr@{memrchr}}
+\index{memrchr@{memrchr}!memrchr.c@{memrchr.c}}
+\doxysubsubsection{\texorpdfstring{memrchr()}{memrchr()}}
+{\footnotesize\ttfamily void$\ast$ memrchr (\begin{DoxyParamCaption}\item[{const void $\ast$}]{s,  }\item[{int}]{c,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memrchr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *sp = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)s + n -\/ 1;}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{78         \textcolor{keywordflow}{if} (*sp == (\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char})c)}
+\DoxyCodeLine{79             \textcolor{keywordflow}{return} (\textcolor{keywordtype}{void} *)sp;}
+\DoxyCodeLine{80         sp-\/-\/;}
+\DoxyCodeLine{81     \}}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{84 \}}
+
+\end{DoxyCode}

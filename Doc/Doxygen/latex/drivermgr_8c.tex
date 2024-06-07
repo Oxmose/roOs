@@ -1,0 +1,263 @@
+\hypertarget{drivermgr_8c}{}\doxysection{Source/\+Kernel/\+Core/src/drivermgr.c File Reference}
+\label{drivermgr_8c}\index{Source/Kernel/Core/src/drivermgr.c@{Source/Kernel/Core/src/drivermgr.c}}
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$devtree.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$drivermgr.\+h$>$}\newline
+Include dependency graph for drivermgr.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}DRIVER\+\_\+\+MGR\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{drivermgr_8c_a9cbc58494e058962d78aaac0b2854c73}{COMPATIBLE\+\_\+\+PROP\+\_\+\+NAME}}~\char`\"{}compatible\char`\"{}
+\begin{DoxyCompactList}\small\item\em Compatible property name in FDT. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{drivermgr_8c_a6468ebb6752879c81fcd3d94d2df59a6}{DRVMGR\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Assert macro used by the driver manager to ensure correctness of execution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}{walk\+Fdt\+Nodes}} (const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$pk\+Node)
+\item 
+void \mbox{\hyperlink{drivermgr_8c_a4e47288c2e421d14dcd7546d34c9da23}{driver\+Manager\+Init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the driver manager. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+uintptr\+\_\+t \mbox{\hyperlink{drivermgr_8c_a784841b35f1d99932993087f27eda539}{\+\_\+\+START\+\_\+\+DRV\+\_\+\+TABLE\+\_\+\+ADDR}}
+\begin{DoxyCompactList}\small\item\em Start of the registered kernel drivers table. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{drivermgr_8c_a9cbc58494e058962d78aaac0b2854c73}\label{drivermgr_8c_a9cbc58494e058962d78aaac0b2854c73}} 
+\index{drivermgr.c@{drivermgr.c}!COMPATIBLE\_PROP\_NAME@{COMPATIBLE\_PROP\_NAME}}
+\index{COMPATIBLE\_PROP\_NAME@{COMPATIBLE\_PROP\_NAME}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{COMPATIBLE\_PROP\_NAME}{COMPATIBLE\_PROP\_NAME}}
+{\footnotesize\ttfamily \#define COMPATIBLE\+\_\+\+PROP\+\_\+\+NAME~\char`\"{}compatible\char`\"{}}
+
+
+
+Compatible property name in FDT. 
+
+
+
+Definition at line 44 of file drivermgr.\+c.
+
+\mbox{\Hypertarget{drivermgr_8c_a6468ebb6752879c81fcd3d94d2df59a6}\label{drivermgr_8c_a6468ebb6752879c81fcd3d94d2df59a6}} 
+\index{drivermgr.c@{drivermgr.c}!DRVMGR\_ASSERT@{DRVMGR\_ASSERT}}
+\index{DRVMGR\_ASSERT@{DRVMGR\_ASSERT}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{DRVMGR\_ASSERT}{DRVMGR\_ASSERT}}
+{\footnotesize\ttfamily \#define DRVMGR\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                   \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \mbox{\hyperlink{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});               \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Assert macro used by the driver manager to ensure correctness of execution. 
+
+Assert macro used by the driver manager to ensure correctness of execution. Due to the critical nature of the driver manager, any error generates a kernel panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition that should be true. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to display in case of kernel panic. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code to use in case of kernel panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 68 of file drivermgr.\+c.
+
+\mbox{\Hypertarget{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{drivermgr.c@{drivermgr.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}DRIVER\+\_\+\+MGR\char`\"{}}
+
+
+
+Current module name. 
+
+
+
+Definition at line 41 of file drivermgr.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{drivermgr_8c_a4e47288c2e421d14dcd7546d34c9da23}\label{drivermgr_8c_a4e47288c2e421d14dcd7546d34c9da23}} 
+\index{drivermgr.c@{drivermgr.c}!driverManagerInit@{driverManagerInit}}
+\index{driverManagerInit@{driverManagerInit}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{driverManagerInit()}{driverManagerInit()}}
+{\footnotesize\ttfamily void driver\+Manager\+Init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the driver manager. 
+
+Initializes the driver manager. This function will walk the FDT and try to probe the registered drivers to initialize them and attach them. In case of hard error, a panic is raised. 
+
+Definition at line 167 of file drivermgr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{168 \{}
+\DoxyCodeLine{169     \textcolor{keyword}{const} \mbox{\hyperlink{structfdt__node__t}{fdt\_node\_t}}* pFdtRootNode;}
+\DoxyCodeLine{170 }
+\DoxyCodeLine{171     \textcolor{comment}{/* Get the FDT root node and walk it to register drivers */}}
+\DoxyCodeLine{172     pFdtRootNode = \mbox{\hyperlink{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946}{fdtGetRoot}}();}
+\DoxyCodeLine{173     \textcolor{keywordflow}{if}(pFdtRootNode == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{174     \{}
+\DoxyCodeLine{175         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to get FDT root node in driver manager.\(\backslash\)n"{}});}
+\DoxyCodeLine{176         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{177     \}}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179     \textcolor{comment}{/* Perform the registration */}}
+\DoxyCodeLine{180     \mbox{\hyperlink{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}{walkFdtNodes}}(pFdtRootNode);}
+\DoxyCodeLine{181 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8c_a4e47288c2e421d14dcd7546d34c9da23_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{drivermgr_8c_a4e47288c2e421d14dcd7546d34c9da23_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}\label{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}} 
+\index{drivermgr.c@{drivermgr.c}!walkFdtNodes@{walkFdtNodes}}
+\index{walkFdtNodes@{walkFdtNodes}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{walkFdtNodes()}{walkFdtNodes()}}
+{\footnotesize\ttfamily static void walk\+Fdt\+Nodes (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfdt__node__t}{fdt\+\_\+node\+\_\+t}} $\ast$}]{pk\+Node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line 99 of file drivermgr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{100 \{}
+\DoxyCodeLine{101     \textcolor{keyword}{const} \textcolor{keywordtype}{char}* pCompatible;}
+\DoxyCodeLine{102     \mbox{\hyperlink{structdriver__t}{driver\_t}}*   pDriver;}
+\DoxyCodeLine{103     uintptr\_t   driverTableCursor;}
+\DoxyCodeLine{104     \textcolor{keywordtype}{size\_t}      propLen;}
+\DoxyCodeLine{105     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} retCode;}
+\DoxyCodeLine{106 }
+\DoxyCodeLine{107     \textcolor{keywordflow}{if}(pkNode == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{108     \{}
+\DoxyCodeLine{109         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{110     \}}
+\DoxyCodeLine{111 }
+\DoxyCodeLine{112     \textcolor{comment}{/* Get the node compatible */}}
+\DoxyCodeLine{113     pCompatible = \mbox{\hyperlink{devtree_8h_ae95d88224e0d3f7d31ecc9c4eeda4efa}{fdtGetProp}}(pkNode, \mbox{\hyperlink{drivermgr_8c_a9cbc58494e058962d78aaac0b2854c73}{COMPATIBLE\_PROP\_NAME}}, \&propLen);}
+\DoxyCodeLine{114     \textcolor{keywordflow}{if}(pCompatible != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& propLen > 0)}
+\DoxyCodeLine{115     \{}
+\DoxyCodeLine{116         \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_ab0b3fa53d800e79374666a75b0151e6d}{DEVMGR\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{117                      \mbox{\hyperlink{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{118                      \textcolor{stringliteral}{"{}Detected \%s"{}},}
+\DoxyCodeLine{119                      pCompatible);}
+\DoxyCodeLine{120 }
+\DoxyCodeLine{121         \textcolor{comment}{/* Get the head of the registered drivers section */}}
+\DoxyCodeLine{122         driverTableCursor = (uintptr\_t)\&\mbox{\hyperlink{drivermgr_8c_a784841b35f1d99932993087f27eda539}{\_START\_DRV\_TABLE\_ADDR}};}
+\DoxyCodeLine{123         pDriver = *(\mbox{\hyperlink{structdriver__t}{driver\_t}}**)driverTableCursor;}
+\DoxyCodeLine{124 }
+\DoxyCodeLine{125         \textcolor{comment}{/* Compare with the list of registered drivers */}}
+\DoxyCodeLine{126         \textcolor{keywordflow}{while}(pDriver != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{127         \{}
+\DoxyCodeLine{128             \textcolor{keywordflow}{if}(\mbox{\hyperlink{string_8h_a21e4788b4a0ae39b11aa32e9a1079f98}{strcmp}}(pDriver-\/>\mbox{\hyperlink{structdriver__t_a5b604c9105c98bd2cffc43cbca9d7d81}{pCompatible}}, pCompatible) == 0)}
+\DoxyCodeLine{129             \{}
+\DoxyCodeLine{130                 retCode = pDriver-\/>\mbox{\hyperlink{structdriver__t_aa49da27904dce4ccbb4b8fef2052d725}{pDriverAttach}}(pkNode);}
+\DoxyCodeLine{131                 \textcolor{keywordflow}{if}(retCode != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{132                 \{}
+\DoxyCodeLine{133                     \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to attach driver \%s. Error \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{134                                  pDriver-\/>\mbox{\hyperlink{structdriver__t_aacfbfedec08cb990c5c754b5e233bee5}{pName}},}
+\DoxyCodeLine{135                                  retCode);}
+\DoxyCodeLine{136                 \}}
+\DoxyCodeLine{137                 \textcolor{keywordflow}{else}}
+\DoxyCodeLine{138                 \{}
+\DoxyCodeLine{139                     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_ab0b3fa53d800e79374666a75b0151e6d}{DEVMGR\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{140                                  \mbox{\hyperlink{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{141                                  \textcolor{stringliteral}{"{}\%s attached successfully."{}},}
+\DoxyCodeLine{142                                  pDriver-\/>\mbox{\hyperlink{structdriver__t_aacfbfedec08cb990c5c754b5e233bee5}{pName}},}
+\DoxyCodeLine{143                                  pCompatible);}
+\DoxyCodeLine{144                 \}}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{146                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{147             \}}
+\DoxyCodeLine{148             \textcolor{keywordflow}{else}}
+\DoxyCodeLine{149             \{}
+\DoxyCodeLine{150                 \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_ab0b3fa53d800e79374666a75b0151e6d}{DEVMGR\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{151                              \mbox{\hyperlink{drivermgr_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{152                              \textcolor{stringliteral}{"{}\%s not compatible with \%s."{}},}
+\DoxyCodeLine{153                              pDriver-\/>\mbox{\hyperlink{structdriver__t_a5b604c9105c98bd2cffc43cbca9d7d81}{pCompatible}},}
+\DoxyCodeLine{154                              pCompatible);}
+\DoxyCodeLine{155             \}}
+\DoxyCodeLine{156             driverTableCursor += \textcolor{keyword}{sizeof}(uintptr\_t);}
+\DoxyCodeLine{157             pDriver = *(\mbox{\hyperlink{structdriver__t}{driver\_t}}**)driverTableCursor;}
+\DoxyCodeLine{158         \}}
+\DoxyCodeLine{159 }
+\DoxyCodeLine{160     \}}
+\DoxyCodeLine{161 }
+\DoxyCodeLine{162     \textcolor{comment}{/* Got to next nodes */}}
+\DoxyCodeLine{163     \mbox{\hyperlink{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}{walkFdtNodes}}(\mbox{\hyperlink{devtree_8h_abfda38375b7b0105f23ce8e6b2a21cf5}{fdtGetChild}}(pkNode));}
+\DoxyCodeLine{164     \mbox{\hyperlink{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}{walkFdtNodes}}(\mbox{\hyperlink{devtree_8h_a1587a2bdc9f5079d725da65ca6b8d1ea}{fdtGetNextNode}}(pkNode));}
+\DoxyCodeLine{165 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{drivermgr_8c_a784841b35f1d99932993087f27eda539}\label{drivermgr_8c_a784841b35f1d99932993087f27eda539}} 
+\index{drivermgr.c@{drivermgr.c}!\_START\_DRV\_TABLE\_ADDR@{\_START\_DRV\_TABLE\_ADDR}}
+\index{\_START\_DRV\_TABLE\_ADDR@{\_START\_DRV\_TABLE\_ADDR}!drivermgr.c@{drivermgr.c}}
+\doxysubsubsection{\texorpdfstring{\_START\_DRV\_TABLE\_ADDR}{\_START\_DRV\_TABLE\_ADDR}}
+{\footnotesize\ttfamily uintptr\+\_\+t \+\_\+\+START\+\_\+\+DRV\+\_\+\+TABLE\+\_\+\+ADDR\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+Start of the registered kernel drivers table. 
+

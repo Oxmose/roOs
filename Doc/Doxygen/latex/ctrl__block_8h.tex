@@ -1,0 +1,266 @@
+\hypertarget{ctrl__block_8h}{}\doxysection{Source/\+Kernel/\+Core/includes/ctrl\+\_\+block.h File Reference}
+\label{ctrl__block_8h}\index{Source/Kernel/Core/includes/ctrl\_block.h@{Source/Kernel/Core/includes/ctrl\_block.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+Include dependency graph for ctrl\+\_\+block.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=199pt]{ctrl__block_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{ctrl__block_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em This is the representation of the thread for the kernel. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{ctrl__block_8h_af51bb7cddf1f125f0eaa29bef1e1ba48}{THREAD\+\_\+\+NAME\+\_\+\+MAX\+\_\+\+LENGTH}}~32
+\begin{DoxyCompactList}\small\item\em Maximal thead\textquotesingle{}s name length. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7d}{THREAD\+\_\+\+STATE\+\_\+E}} \{ \newline
+\mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da6dff8b555ffb582bb3d30a240c9b83e3}{THREAD\+\_\+\+STATE\+\_\+\+RUNNING}}
+, \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da327b504fcea41a280d9c9d25a530321d}{THREAD\+\_\+\+STATE\+\_\+\+READY}}
+, \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7daf046355e271ac44085d94c7e63748892}{THREAD\+\_\+\+STATE\+\_\+\+SLEEPING}}
+, \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dab098058d9fe7a9d8d5d2c0eeb8163988}{THREAD\+\_\+\+STATE\+\_\+\+ZOMBIE}}
+, \newline
+\mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da596052135cc28ed28e2a902aee15b117}{THREAD\+\_\+\+STATE\+\_\+\+JOINING}}
+, \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dac754775b8c91b7fa7de29fd8eb731bbf}{THREAD\+\_\+\+STATE\+\_\+\+WAITING}}
+ \}
+\begin{DoxyCompactList}\small\item\em Thread\textquotesingle{}s scheduling state. \end{DoxyCompactList}\item 
+enum \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205c}{THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+E}} \{ \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205ca64c28161ce0e1f1f118e8326132229ac}{THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+\+RESOURCE}}
+, \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205caea79201f86e52510feab2b389d3ecc6c}{THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+\+IO}}
+ \}
+\begin{DoxyCompactList}\small\item\em Thread waiting types. \end{DoxyCompactList}\item 
+enum \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3}{THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+E}} \{ \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3ab245cf132d46bcc243f6691cbcd164e2}{THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+\+RETURNED}}
+, \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3a6f74ce6464dd373ea6a910f01315a526}{THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+\+KILLED}}
+ \}
+\begin{DoxyCompactList}\small\item\em Defines the possitble return state of a thread. \end{DoxyCompactList}\item 
+enum \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beaf}{THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+E}} \{ \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafa59ddabfe0ebeeedc4b905f898cf800c4}{THREAD\+\_\+\+TERMINATE\+\_\+\+CORRECTLY}}
+, \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafaf32c3a3b8e7d15c4cf64cee29507a894}{THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+\+DIV\+\_\+\+BY\+\_\+\+ZERO}}
+, \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafafe657b61b1a7884f84e6560ca0e7d8c6}{THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+\+PANIC}}
+ \}
+\begin{DoxyCompactList}\small\item\em Thread\textquotesingle{}s abnomarl exit cause. \end{DoxyCompactList}\item 
+enum \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454a}{THREAD\+\_\+\+TYPE\+\_\+E}} \{ \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aace50aa69dd7177e90a1eb68bb73bc8e0}{THREAD\+\_\+\+TYPE\+\_\+\+KERNEL}}
+, \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aa9df5d55adfebce13b9ad4f9aa62edbe2}{THREAD\+\_\+\+TYPE\+\_\+\+USER}}
+ \}
+\begin{DoxyCompactList}\small\item\em Define the thread\textquotesingle{}s types in the kernel. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{ctrl__block_8h_af51bb7cddf1f125f0eaa29bef1e1ba48}\label{ctrl__block_8h_af51bb7cddf1f125f0eaa29bef1e1ba48}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_NAME\_MAX\_LENGTH@{THREAD\_NAME\_MAX\_LENGTH}}
+\index{THREAD\_NAME\_MAX\_LENGTH@{THREAD\_NAME\_MAX\_LENGTH}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_NAME\_MAX\_LENGTH}{THREAD\_NAME\_MAX\_LENGTH}}
+{\footnotesize\ttfamily \#define THREAD\+\_\+\+NAME\+\_\+\+MAX\+\_\+\+LENGTH~32}
+
+
+
+Maximal thead\textquotesingle{}s name length. 
+
+
+
+Definition at line 34 of file ctrl\+\_\+block.\+h.
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3}\label{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_RETURN\_STATE\_E@{THREAD\_RETURN\_STATE\_E}}
+\index{THREAD\_RETURN\_STATE\_E@{THREAD\_RETURN\_STATE\_E}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_RETURN\_STATE\_E}{THREAD\_RETURN\_STATE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3}{THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+E}}}
+
+
+
+Defines the possitble return state of a thread. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_RETURN\_STATE\_RETURNED@{THREAD\_RETURN\_STATE\_RETURNED}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_RETURN\_STATE\_RETURNED@{THREAD\_RETURN\_STATE\_RETURNED}}}\mbox{\Hypertarget{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3ab245cf132d46bcc243f6691cbcd164e2}\label{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3ab245cf132d46bcc243f6691cbcd164e2}} 
+THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+\+RETURNED&The thread returned normally. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_RETURN\_STATE\_KILLED@{THREAD\_RETURN\_STATE\_KILLED}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_RETURN\_STATE\_KILLED@{THREAD\_RETURN\_STATE\_KILLED}}}\mbox{\Hypertarget{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3a6f74ce6464dd373ea6a910f01315a526}\label{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3a6f74ce6464dd373ea6a910f01315a526}} 
+THREAD\+\_\+\+RETURN\+\_\+\+STATE\+\_\+\+KILLED&The thread was killed before exiting normally. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 67 of file ctrl\+\_\+block.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{68 \{}
+\DoxyCodeLine{70     \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3ab245cf132d46bcc243f6691cbcd164e2}{THREAD\_RETURN\_STATE\_RETURNED}},}
+\DoxyCodeLine{72     \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3a6f74ce6464dd373ea6a910f01315a526}{THREAD\_RETURN\_STATE\_KILLED}},}
+\DoxyCodeLine{73 \} \mbox{\hyperlink{ctrl__block_8h_a6dacaddf4e2dd1182d8e387861ab6db3}{THREAD\_RETURN\_STATE\_E}};}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7d}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7d}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_E@{THREAD\_STATE\_E}}
+\index{THREAD\_STATE\_E@{THREAD\_STATE\_E}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_STATE\_E}{THREAD\_STATE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7d}{THREAD\+\_\+\+STATE\+\_\+E}}}
+
+
+
+Thread\textquotesingle{}s scheduling state. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_RUNNING@{THREAD\_STATE\_RUNNING}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_RUNNING@{THREAD\_STATE\_RUNNING}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da6dff8b555ffb582bb3d30a240c9b83e3}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da6dff8b555ffb582bb3d30a240c9b83e3}} 
+THREAD\+\_\+\+STATE\+\_\+\+RUNNING&Thread\textquotesingle{}s scheduling state\+: running. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_READY@{THREAD\_STATE\_READY}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_READY@{THREAD\_STATE\_READY}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da327b504fcea41a280d9c9d25a530321d}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da327b504fcea41a280d9c9d25a530321d}} 
+THREAD\+\_\+\+STATE\+\_\+\+READY&Thread\textquotesingle{}s scheduling state\+: running to be elected. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_SLEEPING@{THREAD\_STATE\_SLEEPING}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_SLEEPING@{THREAD\_STATE\_SLEEPING}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7daf046355e271ac44085d94c7e63748892}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7daf046355e271ac44085d94c7e63748892}} 
+THREAD\+\_\+\+STATE\+\_\+\+SLEEPING&Thread\textquotesingle{}s scheduling state\+: sleeping. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_ZOMBIE@{THREAD\_STATE\_ZOMBIE}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_ZOMBIE@{THREAD\_STATE\_ZOMBIE}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dab098058d9fe7a9d8d5d2c0eeb8163988}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dab098058d9fe7a9d8d5d2c0eeb8163988}} 
+THREAD\+\_\+\+STATE\+\_\+\+ZOMBIE&Thread\textquotesingle{}s scheduling state\+: zombie. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_JOINING@{THREAD\_STATE\_JOINING}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_JOINING@{THREAD\_STATE\_JOINING}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da596052135cc28ed28e2a902aee15b117}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da596052135cc28ed28e2a902aee15b117}} 
+THREAD\+\_\+\+STATE\+\_\+\+JOINING&Thread\textquotesingle{}s scheduling state\+: joining. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_STATE\_WAITING@{THREAD\_STATE\_WAITING}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_STATE\_WAITING@{THREAD\_STATE\_WAITING}}}\mbox{\Hypertarget{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dac754775b8c91b7fa7de29fd8eb731bbf}\label{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dac754775b8c91b7fa7de29fd8eb731bbf}} 
+THREAD\+\_\+\+STATE\+\_\+\+WAITING&Thread\textquotesingle{}s scheduling state\+: waiting. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 41 of file ctrl\+\_\+block.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{42 \{}
+\DoxyCodeLine{44     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da6dff8b555ffb582bb3d30a240c9b83e3}{THREAD\_STATE\_RUNNING}},}
+\DoxyCodeLine{46     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da327b504fcea41a280d9c9d25a530321d}{THREAD\_STATE\_READY}},}
+\DoxyCodeLine{48     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7daf046355e271ac44085d94c7e63748892}{THREAD\_STATE\_SLEEPING}},}
+\DoxyCodeLine{50     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dab098058d9fe7a9d8d5d2c0eeb8163988}{THREAD\_STATE\_ZOMBIE}},}
+\DoxyCodeLine{52     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7da596052135cc28ed28e2a902aee15b117}{THREAD\_STATE\_JOINING}},}
+\DoxyCodeLine{54     \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7dac754775b8c91b7fa7de29fd8eb731bbf}{THREAD\_STATE\_WAITING}},}
+\DoxyCodeLine{55 \} \mbox{\hyperlink{ctrl__block_8h_a067e09e45d06aabf9145a89440c62e7d}{THREAD\_STATE\_E}};}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beaf}\label{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beaf}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TERMINATE\_CAUSE\_E@{THREAD\_TERMINATE\_CAUSE\_E}}
+\index{THREAD\_TERMINATE\_CAUSE\_E@{THREAD\_TERMINATE\_CAUSE\_E}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_TERMINATE\_CAUSE\_E}{THREAD\_TERMINATE\_CAUSE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beaf}{THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+E}}}
+
+
+
+Thread\textquotesingle{}s abnomarl exit cause. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_TERMINATE\_CORRECTLY@{THREAD\_TERMINATE\_CORRECTLY}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TERMINATE\_CORRECTLY@{THREAD\_TERMINATE\_CORRECTLY}}}\mbox{\Hypertarget{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafa59ddabfe0ebeeedc4b905f898cf800c4}\label{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafa59ddabfe0ebeeedc4b905f898cf800c4}} 
+THREAD\+\_\+\+TERMINATE\+\_\+\+CORRECTLY&The thread returned normally. ~\newline
+ \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_TERMINATE\_CAUSE\_DIV\_BY\_ZERO@{THREAD\_TERMINATE\_CAUSE\_DIV\_BY\_ZERO}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TERMINATE\_CAUSE\_DIV\_BY\_ZERO@{THREAD\_TERMINATE\_CAUSE\_DIV\_BY\_ZERO}}}\mbox{\Hypertarget{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafaf32c3a3b8e7d15c4cf64cee29507a894}\label{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafaf32c3a3b8e7d15c4cf64cee29507a894}} 
+THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+\+DIV\+\_\+\+BY\+\_\+\+ZERO&The thread was killed because of a division by zero. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_TERMINATE\_CAUSE\_PANIC@{THREAD\_TERMINATE\_CAUSE\_PANIC}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TERMINATE\_CAUSE\_PANIC@{THREAD\_TERMINATE\_CAUSE\_PANIC}}}\mbox{\Hypertarget{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafafe657b61b1a7884f84e6560ca0e7d8c6}\label{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafafe657b61b1a7884f84e6560ca0e7d8c6}} 
+THREAD\+\_\+\+TERMINATE\+\_\+\+CAUSE\+\_\+\+PANIC&The thread was killed by a panic condition. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 76 of file ctrl\+\_\+block.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{77 \{}
+\DoxyCodeLine{79     \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafa59ddabfe0ebeeedc4b905f898cf800c4}{THREAD\_TERMINATE\_CORRECTLY}},}
+\DoxyCodeLine{81     \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafaf32c3a3b8e7d15c4cf64cee29507a894}{THREAD\_TERMINATE\_CAUSE\_DIV\_BY\_ZERO}},}
+\DoxyCodeLine{83     \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beafafe657b61b1a7884f84e6560ca0e7d8c6}{THREAD\_TERMINATE\_CAUSE\_PANIC}}}
+\DoxyCodeLine{84 \} \mbox{\hyperlink{ctrl__block_8h_aec9cf18a0deb8d05b5a84e2e6fa2beaf}{THREAD\_TERMINATE\_CAUSE\_E}};}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{ctrl__block_8h_a0dd095300e7f5241807ec726b997454a}\label{ctrl__block_8h_a0dd095300e7f5241807ec726b997454a}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TYPE\_E@{THREAD\_TYPE\_E}}
+\index{THREAD\_TYPE\_E@{THREAD\_TYPE\_E}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_TYPE\_E}{THREAD\_TYPE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454a}{THREAD\+\_\+\+TYPE\+\_\+E}}}
+
+
+
+Define the thread\textquotesingle{}s types in the kernel. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_TYPE\_KERNEL@{THREAD\_TYPE\_KERNEL}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TYPE\_KERNEL@{THREAD\_TYPE\_KERNEL}}}\mbox{\Hypertarget{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aace50aa69dd7177e90a1eb68bb73bc8e0}\label{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aace50aa69dd7177e90a1eb68bb73bc8e0}} 
+THREAD\+\_\+\+TYPE\+\_\+\+KERNEL&Kernel thread type, create by and for the kernel. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_TYPE\_USER@{THREAD\_TYPE\_USER}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_TYPE\_USER@{THREAD\_TYPE\_USER}}}\mbox{\Hypertarget{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aa9df5d55adfebce13b9ad4f9aa62edbe2}\label{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aa9df5d55adfebce13b9ad4f9aa62edbe2}} 
+THREAD\+\_\+\+TYPE\+\_\+\+USER&User thread type, created by the kernel for the user. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 89 of file ctrl\+\_\+block.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{90 \{}
+\DoxyCodeLine{92     \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aace50aa69dd7177e90a1eb68bb73bc8e0}{THREAD\_TYPE\_KERNEL}},}
+\DoxyCodeLine{94     \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454aa9df5d55adfebce13b9ad4f9aa62edbe2}{THREAD\_TYPE\_USER}}}
+\DoxyCodeLine{95 \} \mbox{\hyperlink{ctrl__block_8h_a0dd095300e7f5241807ec726b997454a}{THREAD\_TYPE\_E}};}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{ctrl__block_8h_a3ea47eb3444804563188d66e081d205c}\label{ctrl__block_8h_a3ea47eb3444804563188d66e081d205c}} 
+\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_WAIT\_TYPE\_E@{THREAD\_WAIT\_TYPE\_E}}
+\index{THREAD\_WAIT\_TYPE\_E@{THREAD\_WAIT\_TYPE\_E}!ctrl\_block.h@{ctrl\_block.h}}
+\doxysubsubsection{\texorpdfstring{THREAD\_WAIT\_TYPE\_E}{THREAD\_WAIT\_TYPE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205c}{THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+E}}}
+
+
+
+Thread waiting types. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_WAIT\_TYPE\_RESOURCE@{THREAD\_WAIT\_TYPE\_RESOURCE}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_WAIT\_TYPE\_RESOURCE@{THREAD\_WAIT\_TYPE\_RESOURCE}}}\mbox{\Hypertarget{ctrl__block_8h_a3ea47eb3444804563188d66e081d205ca64c28161ce0e1f1f118e8326132229ac}\label{ctrl__block_8h_a3ea47eb3444804563188d66e081d205ca64c28161ce0e1f1f118e8326132229ac}} 
+THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+\+RESOURCE&The thread is waiting to acquire a resource (e.\+g mutex, sem). \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{THREAD\_WAIT\_TYPE\_IO@{THREAD\_WAIT\_TYPE\_IO}!ctrl\_block.h@{ctrl\_block.h}}\index{ctrl\_block.h@{ctrl\_block.h}!THREAD\_WAIT\_TYPE\_IO@{THREAD\_WAIT\_TYPE\_IO}}}\mbox{\Hypertarget{ctrl__block_8h_a3ea47eb3444804563188d66e081d205caea79201f86e52510feab2b389d3ecc6c}\label{ctrl__block_8h_a3ea47eb3444804563188d66e081d205caea79201f86e52510feab2b389d3ecc6c}} 
+THREAD\+\_\+\+WAIT\+\_\+\+TYPE\+\_\+\+IO&The thread is waiting to acquire an IO entry. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 58 of file ctrl\+\_\+block.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{59 \{}
+\DoxyCodeLine{61     \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205ca64c28161ce0e1f1f118e8326132229ac}{THREAD\_WAIT\_TYPE\_RESOURCE}},}
+\DoxyCodeLine{63     \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205caea79201f86e52510feab2b389d3ecc6c}{THREAD\_WAIT\_TYPE\_IO}}}
+\DoxyCodeLine{64 \} \mbox{\hyperlink{ctrl__block_8h_a3ea47eb3444804563188d66e081d205c}{THREAD\_WAIT\_TYPE\_E}};}
+
+\end{DoxyCode}

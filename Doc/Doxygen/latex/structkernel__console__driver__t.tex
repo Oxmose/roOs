@@ -1,0 +1,240 @@
+\hypertarget{structkernel__console__driver__t}{}\doxysection{kernel\+\_\+console\+\_\+driver\+\_\+t Struct Reference}
+\label{structkernel__console__driver__t}\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+
+
+The kernel\textquotesingle{}s console driver abstraction.  
+
+
+
+
+{\ttfamily \#include $<$console.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_a2792aa87bb7b0d208a580bbb43b17436}{clear\+\_\+screen}} )(void)
+\begin{DoxyCompactList}\small\item\em Clears the screen, the background color is set to black. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_a4befbb4084e5dcd38054c6b5622dea31}{put\+\_\+cursor\+\_\+at}} )(const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} line, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} column)
+\begin{DoxyCompactList}\small\item\em Places the cursor to the coordinates given as parameters. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_ada120ac912b57f192258ffe5518c04da}{save\+\_\+cursor}} )(\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Saves the cursor attributes in the buffer given as paramter. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_a9acc247487b0c04ea3a5e2e26ff162a0}{restore\+\_\+cursor}} )(const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Restores the cursor attributes from the buffer given as parameter. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_ac596d94b0d4fd4f9e50f476bf5a0c86d}{scroll}} )(const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} lines\+\_\+count)
+\begin{DoxyCompactList}\small\item\em Scrolls in the desired direction of lines\+\_\+count lines. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_aa7776c7d5f3d2b7becfaadae321a5ac2}{set\+\_\+color\+\_\+scheme}} )(const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$color\+\_\+scheme)
+\begin{DoxyCompactList}\small\item\em Sets the color scheme of the screen. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_a503870d87957c33246f800d897e64068}{save\+\_\+color\+\_\+scheme}} )(\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$buffer)
+\begin{DoxyCompactList}\small\item\em Saves the color scheme in the buffer given as parameter. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_a8cba84173146c2d00e2d07c77afa9776}{put\+\_\+string}} )(const char $\ast$str)
+\begin{DoxyCompactList}\small\item\em Put a string to screen. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structkernel__console__driver__t_acf31db4f43ebc7672a74cb8dcb8efdc6}{put\+\_\+char}} )(const char character)
+\begin{DoxyCompactList}\small\item\em Put a character to screen. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+The kernel\textquotesingle{}s console driver abstraction. 
+
+Definition at line 87 of file console.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structkernel__console__driver__t_a2792aa87bb7b0d208a580bbb43b17436}\label{structkernel__console__driver__t_a2792aa87bb7b0d208a580bbb43b17436}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!clear\_screen@{clear\_screen}}
+\index{clear\_screen@{clear\_screen}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{clear\_screen}{clear\_screen}}
+{\footnotesize\ttfamily void($\ast$ clear\+\_\+screen) (void)}
+
+
+
+Clears the screen, the background color is set to black. 
+
+
+
+Definition at line 92 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_acf31db4f43ebc7672a74cb8dcb8efdc6}\label{structkernel__console__driver__t_acf31db4f43ebc7672a74cb8dcb8efdc6}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!put\_char@{put\_char}}
+\index{put\_char@{put\_char}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{put\_char}{put\_char}}
+{\footnotesize\ttfamily void($\ast$ put\+\_\+char) (const char character)}
+
+
+
+Put a character to screen. 
+
+­
+
+The function will display the character given as parameter to the screen using the selected driver.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em character} & The char to display on the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 180 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_a4befbb4084e5dcd38054c6b5622dea31}\label{structkernel__console__driver__t_a4befbb4084e5dcd38054c6b5622dea31}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!put\_cursor\_at@{put\_cursor\_at}}
+\index{put\_cursor\_at@{put\_cursor\_at}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{put\_cursor\_at}{put\_cursor\_at}}
+{\footnotesize\ttfamily void($\ast$ put\+\_\+cursor\+\_\+at) (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} line, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} column)}
+
+
+
+Places the cursor to the coordinates given as parameters. 
+
+The function places the screen cursor at the desired coordinates based on the line and column parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em line} & The line index where to place the cursor. \\
+\hline
+\mbox{\texttt{ in}}  & {\em column} & The column index where to place the cursor. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 103 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_a8cba84173146c2d00e2d07c77afa9776}\label{structkernel__console__driver__t_a8cba84173146c2d00e2d07c77afa9776}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!put\_string@{put\_string}}
+\index{put\_string@{put\_string}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{put\_string}{put\_string}}
+{\footnotesize\ttfamily void($\ast$ put\+\_\+string) (const char $\ast$str)}
+
+
+
+Put a string to screen. 
+
+­
+
+The function will display the string given as parameter to the screen using the selected driver.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em str} & The string to display on the screen.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+string must be NULL terminated. 
+\end{DoxyWarning}
+
+
+Definition at line 170 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_a9acc247487b0c04ea3a5e2e26ff162a0}\label{structkernel__console__driver__t_a9acc247487b0c04ea3a5e2e26ff162a0}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!restore\_cursor@{restore\_cursor}}
+\index{restore\_cursor@{restore\_cursor}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{restore\_cursor}{restore\_cursor}}
+{\footnotesize\ttfamily void($\ast$ restore\+\_\+cursor) (const \mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)}
+
+
+
+Restores the cursor attributes from the buffer given as parameter. 
+
+The function will restores the cursor attributes from the buffer given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em buffer} & The buffer containing the cursor\textquotesingle{}s attributes. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 124 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_a503870d87957c33246f800d897e64068}\label{structkernel__console__driver__t_a503870d87957c33246f800d897e64068}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!save\_color\_scheme@{save\_color\_scheme}}
+\index{save\_color\_scheme@{save\_color\_scheme}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{save\_color\_scheme}{save\_color\_scheme}}
+{\footnotesize\ttfamily void($\ast$ save\+\_\+color\+\_\+scheme) (\mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$buffer)}
+
+
+
+Saves the color scheme in the buffer given as parameter. 
+
+Fills the buffer given as parameter with the current screen\textquotesingle{}s color scheme value.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em buffer} & The buffer that will receive the current color scheme used by the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 158 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_ada120ac912b57f192258ffe5518c04da}\label{structkernel__console__driver__t_ada120ac912b57f192258ffe5518c04da}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!save\_cursor@{save\_cursor}}
+\index{save\_cursor@{save\_cursor}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{save\_cursor}{save\_cursor}}
+{\footnotesize\ttfamily void($\ast$ save\+\_\+cursor) (\mbox{\hyperlink{structcursor__t}{cursor\+\_\+t}} $\ast$buffer)}
+
+
+
+Saves the cursor attributes in the buffer given as paramter. 
+
+Fills the buffer given s parameter with the current value of the cursor.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em buffer} & The cursor buffer in which the current cursor position is going to be saved. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 114 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_ac596d94b0d4fd4f9e50f476bf5a0c86d}\label{structkernel__console__driver__t_ac596d94b0d4fd4f9e50f476bf5a0c86d}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!scroll@{scroll}}
+\index{scroll@{scroll}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{scroll}{scroll}}
+{\footnotesize\ttfamily void($\ast$ scroll) (const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} lines\+\_\+count)}
+
+
+
+Scrolls in the desired direction of lines\+\_\+count lines. 
+
+The function will use the driver to scroll of lines\+\_\+count line in the desired direction.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em direction} & The direction to which the screen should be scrolled. \\
+\hline
+\mbox{\texttt{ in}}  & {\em lines\+\_\+count} & The number of lines to scroll. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 136 of file console.\+h.
+
+\mbox{\Hypertarget{structkernel__console__driver__t_aa7776c7d5f3d2b7becfaadae321a5ac2}\label{structkernel__console__driver__t_aa7776c7d5f3d2b7becfaadae321a5ac2}} 
+\index{kernel\_console\_driver\_t@{kernel\_console\_driver\_t}!set\_color\_scheme@{set\_color\_scheme}}
+\index{set\_color\_scheme@{set\_color\_scheme}!kernel\_console\_driver\_t@{kernel\_console\_driver\_t}}
+\doxysubsubsection{\texorpdfstring{set\_color\_scheme}{set\_color\_scheme}}
+{\footnotesize\ttfamily void($\ast$ set\+\_\+color\+\_\+scheme) (const \mbox{\hyperlink{structcolorscheme__t}{colorscheme\+\_\+t}} $\ast$color\+\_\+scheme)}
+
+
+
+Sets the color scheme of the screen. 
+
+Replaces the curent color scheme used t output data with the new one given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em color\+\_\+scheme} & The new color scheme to apply to the screen. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 147 of file console.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+IO/includes/\mbox{\hyperlink{console_8h}{console.\+h}}\end{DoxyCompactItemize}

@@ -1,0 +1,48 @@
+\hypertarget{memswap_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memswap.c File Reference}
+\label{memswap_8c}\index{Source/Kernel/Libs/libc/src/memswap.c@{Source/Kernel/Libs/libc/src/memswap.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memswap.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=269pt]{memswap_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{memswap_8c_ac2294003e975f24e74c877eae1ac07e0}{memswap}} (void $\ast$m1, void $\ast$m2, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memswap_8c_ac2294003e975f24e74c877eae1ac07e0}\label{memswap_8c_ac2294003e975f24e74c877eae1ac07e0}} 
+\index{memswap.c@{memswap.c}!memswap@{memswap}}
+\index{memswap@{memswap}!memswap.c@{memswap.c}}
+\doxysubsubsection{\texorpdfstring{memswap()}{memswap()}}
+{\footnotesize\ttfamily void memswap (\begin{DoxyParamCaption}\item[{void $\ast$}]{m1,  }\item[{void $\ast$}]{m2,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memswap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{char} *p = m1;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{char} *q = m2;}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78     \textcolor{keywordflow}{while} (n-\/-\/) \{}
+\DoxyCodeLine{79         \textcolor{keywordtype}{char} tmp = *p;}
+\DoxyCodeLine{80         *p = *q;}
+\DoxyCodeLine{81         *q = tmp;}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83         p++;}
+\DoxyCodeLine{84         q++;}
+\DoxyCodeLine{85     \}}
+\DoxyCodeLine{86 \}}
+
+\end{DoxyCode}

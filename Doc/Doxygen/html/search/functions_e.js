@@ -1,0 +1,9 @@
+var searchData=
+[
+  ['time_5fget_5fcurrent_5fuptime_2662',['time_get_current_uptime',['../time__mgt_8h.html#afe409bc6f9cb0cca020d9b10c507f02e',1,'time_get_current_uptime(void):&#160;time_mgt.c'],['../time__mgt_8c.html#afe409bc6f9cb0cca020d9b10c507f02e',1,'time_get_current_uptime(void):&#160;time_mgt.c']]],
+  ['time_5fget_5ftick_5fcount_2663',['time_get_tick_count',['../time__mgt_8h.html#aa157b1913c95e0e028a8ed76802ca145',1,'time_get_tick_count(void):&#160;time_mgt.c'],['../time__mgt_8c.html#aa157b1913c95e0e028a8ed76802ca145',1,'time_get_tick_count(void):&#160;time_mgt.c']]],
+  ['time_5finit_2664',['time_init',['../time__mgt_8h.html#aaf9529f5524bee8b592d398036613af8',1,'time_init(const kernel_timer_t *sys_timer, const kernel_timer_t *rtc_timer):&#160;time_mgt.c'],['../time__mgt_8c.html#a72c40b8fff1056ea2734a7ef578a4f63',1,'time_init(const kernel_timer_t *main_timer, const kernel_timer_t *rtc_timer):&#160;time_mgt.c']]],
+  ['time_5fregister_5frtc_5fmanager_2665',['time_register_rtc_manager',['../time__mgt_8h.html#a61b9d5bf4b49fac93643ab0ee02bbccd',1,'time_register_rtc_manager(void(*rtc_manager)(void)):&#160;time_mgt.c'],['../time__mgt_8c.html#a61b9d5bf4b49fac93643ab0ee02bbccd',1,'time_register_rtc_manager(void(*rtc_manager)(void)):&#160;time_mgt.c']]],
+  ['time_5fregister_5fscheduler_2666',['time_register_scheduler',['../time__mgt_8h.html#a945a623ee70ed374e56b628ed6b9f7dc',1,'time_register_scheduler(void(*scheduler_call)(kernel_thread_t *)):&#160;time_mgt.c'],['../time__mgt_8c.html#a945a623ee70ed374e56b628ed6b9f7dc',1,'time_register_scheduler(void(*scheduler_call)(kernel_thread_t *)):&#160;time_mgt.c']]],
+  ['time_5fwait_5fno_5fsched_2667',['time_wait_no_sched',['../time__mgt_8h.html#aa47f159ce8e7bdb7ed6678e3b9d76172',1,'time_wait_no_sched(const uint64_t ns):&#160;time_mgt.c'],['../time__mgt_8c.html#aa47f159ce8e7bdb7ed6678e3b9d76172',1,'time_wait_no_sched(const uint64_t ns):&#160;time_mgt.c']]]
+];

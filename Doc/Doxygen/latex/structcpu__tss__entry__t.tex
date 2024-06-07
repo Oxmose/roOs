@@ -1,0 +1,457 @@
+\hypertarget{structcpu__tss__entry__t}{}\doxysection{cpu\+\_\+tss\+\_\+entry\+\_\+t Struct Reference}
+\label{structcpu__tss__entry__t}\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+
+
+CPU TSS abstraction structure. This is the representation the kernel has of an intel\textquotesingle{}s TSS entry.  
+
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a162f247adf800620ad2b69b1e9ea07f4}{prev\+\_\+tss}}
+\begin{DoxyCompactList}\small\item\em Not used\+: previous TSS selector. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_ab8a56bd35e5f4765a5f6736fdd829a2f}{esp0}}
+\begin{DoxyCompactList}\small\item\em ESP for RING0 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a7874b70fa3a93da1588513500cbdf1a8}{ss0}}
+\begin{DoxyCompactList}\small\item\em SS for RING0 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a92a8ac30e06c41b14fe2eb5f69f9ade6}{esp1}}
+\begin{DoxyCompactList}\small\item\em ESP for RING1 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a954b751e620c509ef5538e6cd434ea4e}{ss1}}
+\begin{DoxyCompactList}\small\item\em SS for RING1 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a17c64abe1958f7f481d0fbef826ad21f}{esp2}}
+\begin{DoxyCompactList}\small\item\em ESP for RING2 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_ac96ed21da44a3e051bf3cd7d4f186c1e}{ss2}}
+\begin{DoxyCompactList}\small\item\em SS for RING2 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_aa9166a91c5e8b2b51b0a9677f9ba56a0}{cr3}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context CR3 value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a1588906901fc3015e0865574669a56a6}{eip}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EIP value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EFLAGS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a93d929ad1fc57af9d4f1793c361fb4f2}{eax}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EAX value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_af2b16bef95c844028dd145264d1d3875}{ecx}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context ECX value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_ae6db045cebe7b4cf979120dccdee0d01}{edx}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EDX value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_ae7c1e3339e4dead200cab41010e9127c}{ebx}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EBX value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a7534a179bc9cc0ef26f0468e0959ee5c}{esp}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context ESP value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_aaba2ad0ff8ba480934feabfdab02b1e7}{ebp}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EBP value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_ada78e3124de6adf5a5d212f9ebc4bbe0}{esi}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context ESI value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a36ffab8d34c6c411a7e5205ddb95eaf9}{edi}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context EDI value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a0dacdc927bbcc6457b629ad88119cdc2}{es}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context ES value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a8519dc239502dfcbac171b3128dc7054}{cs}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context CS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a3c59346dd338708c94ca75cf21b78195}{ss}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context SS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a6fe20edd854a1a653ae71ccf541a6b8b}{ds}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context DS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a2ffb5cf275c124e8f8ff30e1d4449f80}{fs}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context FS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a85904ecbf7b717abe738645b4ff2f4ff}{gs}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context GS value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_aa12b05931ab0b08974e1e8bf627c8790}{ldt}}
+\begin{DoxyCompactList}\small\item\em Not used\+: task\textquotesingle{}s context LDT value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_a5a6ed8c04a3db86066924b1a1bf4dad3}{reserved}}
+\begin{DoxyCompactList}\small\item\em Not used\+: reserved. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{structcpu__tss__entry__t_aa1e0bbc09ee0c9741324f810edee3ba8}{iomap\+\_\+base}}
+\begin{DoxyCompactList}\small\item\em Not used\+: IO Priviledges map. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+CPU TSS abstraction structure. This is the representation the kernel has of an intel\textquotesingle{}s TSS entry. 
+
+Definition at line 514 of file cpu.\+c.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structcpu__tss__entry__t_aa9166a91c5e8b2b51b0a9677f9ba56a0}\label{structcpu__tss__entry__t_aa9166a91c5e8b2b51b0a9677f9ba56a0}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!cr3@{cr3}}
+\index{cr3@{cr3}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{cr3}{cr3}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} cr3}
+
+
+
+Not used\+: task\textquotesingle{}s context CR3 value. 
+
+
+
+Definition at line 531 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a8519dc239502dfcbac171b3128dc7054}\label{structcpu__tss__entry__t_a8519dc239502dfcbac171b3128dc7054}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!cs@{cs}}
+\index{cs@{cs}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{cs}{cs}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} cs}
+
+
+
+Not used\+: task\textquotesingle{}s context CS value. 
+
+
+
+Definition at line 555 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a6fe20edd854a1a653ae71ccf541a6b8b}\label{structcpu__tss__entry__t_a6fe20edd854a1a653ae71ccf541a6b8b}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ds@{ds}}
+\index{ds@{ds}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ds}{ds}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ds}
+
+
+
+Not used\+: task\textquotesingle{}s context DS value. 
+
+
+
+Definition at line 559 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a93d929ad1fc57af9d4f1793c361fb4f2}\label{structcpu__tss__entry__t_a93d929ad1fc57af9d4f1793c361fb4f2}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!eax@{eax}}
+\index{eax@{eax}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{eax}{eax}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} eax}
+
+
+
+Not used\+: task\textquotesingle{}s context EAX value. 
+
+
+
+Definition at line 537 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_aaba2ad0ff8ba480934feabfdab02b1e7}\label{structcpu__tss__entry__t_aaba2ad0ff8ba480934feabfdab02b1e7}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ebp@{ebp}}
+\index{ebp@{ebp}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ebp}{ebp}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ebp}
+
+
+
+Not used\+: task\textquotesingle{}s context EBP value. 
+
+
+
+Definition at line 547 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_ae7c1e3339e4dead200cab41010e9127c}\label{structcpu__tss__entry__t_ae7c1e3339e4dead200cab41010e9127c}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ebx@{ebx}}
+\index{ebx@{ebx}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ebx}{ebx}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ebx}
+
+
+
+Not used\+: task\textquotesingle{}s context EBX value. 
+
+
+
+Definition at line 543 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_af2b16bef95c844028dd145264d1d3875}\label{structcpu__tss__entry__t_af2b16bef95c844028dd145264d1d3875}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ecx@{ecx}}
+\index{ecx@{ecx}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ecx}{ecx}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ecx}
+
+
+
+Not used\+: task\textquotesingle{}s context ECX value. 
+
+
+
+Definition at line 539 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a36ffab8d34c6c411a7e5205ddb95eaf9}\label{structcpu__tss__entry__t_a36ffab8d34c6c411a7e5205ddb95eaf9}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!edi@{edi}}
+\index{edi@{edi}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{edi}{edi}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} edi}
+
+
+
+Not used\+: task\textquotesingle{}s context EDI value. 
+
+
+
+Definition at line 551 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_ae6db045cebe7b4cf979120dccdee0d01}\label{structcpu__tss__entry__t_ae6db045cebe7b4cf979120dccdee0d01}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!edx@{edx}}
+\index{edx@{edx}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{edx}{edx}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} edx}
+
+
+
+Not used\+: task\textquotesingle{}s context EDX value. 
+
+
+
+Definition at line 541 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_aeedfc39703ec8e0a1f052a832e74acd3}\label{structcpu__tss__entry__t_aeedfc39703ec8e0a1f052a832e74acd3}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!eflags@{eflags}}
+\index{eflags@{eflags}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{eflags}{eflags}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} eflags}
+
+
+
+Not used\+: task\textquotesingle{}s context EFLAGS value. 
+
+
+
+Definition at line 535 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a1588906901fc3015e0865574669a56a6}\label{structcpu__tss__entry__t_a1588906901fc3015e0865574669a56a6}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!eip@{eip}}
+\index{eip@{eip}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{eip}{eip}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} eip}
+
+
+
+Not used\+: task\textquotesingle{}s context EIP value. 
+
+
+
+Definition at line 533 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a0dacdc927bbcc6457b629ad88119cdc2}\label{structcpu__tss__entry__t_a0dacdc927bbcc6457b629ad88119cdc2}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!es@{es}}
+\index{es@{es}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{es}{es}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} es}
+
+
+
+Not used\+: task\textquotesingle{}s context ES value. 
+
+
+
+Definition at line 553 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_ada78e3124de6adf5a5d212f9ebc4bbe0}\label{structcpu__tss__entry__t_ada78e3124de6adf5a5d212f9ebc4bbe0}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!esi@{esi}}
+\index{esi@{esi}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{esi}{esi}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} esi}
+
+
+
+Not used\+: task\textquotesingle{}s context ESI value. 
+
+
+
+Definition at line 549 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a7534a179bc9cc0ef26f0468e0959ee5c}\label{structcpu__tss__entry__t_a7534a179bc9cc0ef26f0468e0959ee5c}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!esp@{esp}}
+\index{esp@{esp}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{esp}{esp}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} esp}
+
+
+
+Not used\+: task\textquotesingle{}s context ESP value. 
+
+
+
+Definition at line 545 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_ab8a56bd35e5f4765a5f6736fdd829a2f}\label{structcpu__tss__entry__t_ab8a56bd35e5f4765a5f6736fdd829a2f}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!esp0@{esp0}}
+\index{esp0@{esp0}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{esp0}{esp0}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} esp0}
+
+
+
+ESP for RING0 value. 
+
+
+
+Definition at line 519 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a92a8ac30e06c41b14fe2eb5f69f9ade6}\label{structcpu__tss__entry__t_a92a8ac30e06c41b14fe2eb5f69f9ade6}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!esp1@{esp1}}
+\index{esp1@{esp1}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{esp1}{esp1}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} esp1}
+
+
+
+ESP for RING1 value. 
+
+
+
+Definition at line 523 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a17c64abe1958f7f481d0fbef826ad21f}\label{structcpu__tss__entry__t_a17c64abe1958f7f481d0fbef826ad21f}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!esp2@{esp2}}
+\index{esp2@{esp2}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{esp2}{esp2}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} esp2}
+
+
+
+ESP for RING2 value. 
+
+
+
+Definition at line 527 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a2ffb5cf275c124e8f8ff30e1d4449f80}\label{structcpu__tss__entry__t_a2ffb5cf275c124e8f8ff30e1d4449f80}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!fs@{fs}}
+\index{fs@{fs}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{fs}{fs}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} fs}
+
+
+
+Not used\+: task\textquotesingle{}s context FS value. 
+
+
+
+Definition at line 561 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a85904ecbf7b717abe738645b4ff2f4ff}\label{structcpu__tss__entry__t_a85904ecbf7b717abe738645b4ff2f4ff}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!gs@{gs}}
+\index{gs@{gs}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{gs}{gs}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} gs}
+
+
+
+Not used\+: task\textquotesingle{}s context GS value. 
+
+
+
+Definition at line 563 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_aa1e0bbc09ee0c9741324f810edee3ba8}\label{structcpu__tss__entry__t_aa1e0bbc09ee0c9741324f810edee3ba8}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!iomap\_base@{iomap\_base}}
+\index{iomap\_base@{iomap\_base}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{iomap\_base}{iomap\_base}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} iomap\+\_\+base}
+
+
+
+Not used\+: IO Priviledges map. 
+
+
+
+Definition at line 569 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_aa12b05931ab0b08974e1e8bf627c8790}\label{structcpu__tss__entry__t_aa12b05931ab0b08974e1e8bf627c8790}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ldt@{ldt}}
+\index{ldt@{ldt}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ldt}{ldt}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ldt}
+
+
+
+Not used\+: task\textquotesingle{}s context LDT value. 
+
+
+
+Definition at line 565 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a162f247adf800620ad2b69b1e9ea07f4}\label{structcpu__tss__entry__t_a162f247adf800620ad2b69b1e9ea07f4}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!prev\_tss@{prev\_tss}}
+\index{prev\_tss@{prev\_tss}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{prev\_tss}{prev\_tss}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} prev\+\_\+tss}
+
+
+
+Not used\+: previous TSS selector. 
+
+
+
+Definition at line 517 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a5a6ed8c04a3db86066924b1a1bf4dad3}\label{structcpu__tss__entry__t_a5a6ed8c04a3db86066924b1a1bf4dad3}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!reserved@{reserved}}
+\index{reserved@{reserved}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{reserved}{reserved}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} reserved}
+
+
+
+Not used\+: reserved. 
+
+
+
+Definition at line 567 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a3c59346dd338708c94ca75cf21b78195}\label{structcpu__tss__entry__t_a3c59346dd338708c94ca75cf21b78195}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ss@{ss}}
+\index{ss@{ss}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ss}{ss}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ss}
+
+
+
+Not used\+: task\textquotesingle{}s context SS value. 
+
+
+
+Definition at line 557 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a7874b70fa3a93da1588513500cbdf1a8}\label{structcpu__tss__entry__t_a7874b70fa3a93da1588513500cbdf1a8}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ss0@{ss0}}
+\index{ss0@{ss0}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ss0}{ss0}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ss0}
+
+
+
+SS for RING0 value. 
+
+
+
+Definition at line 521 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_a954b751e620c509ef5538e6cd434ea4e}\label{structcpu__tss__entry__t_a954b751e620c509ef5538e6cd434ea4e}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ss1@{ss1}}
+\index{ss1@{ss1}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ss1}{ss1}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ss1}
+
+
+
+SS for RING1 value. 
+
+
+
+Definition at line 525 of file cpu.\+c.
+
+\mbox{\Hypertarget{structcpu__tss__entry__t_ac96ed21da44a3e051bf3cd7d4f186c1e}\label{structcpu__tss__entry__t_ac96ed21da44a3e051bf3cd7d4f186c1e}} 
+\index{cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}!ss2@{ss2}}
+\index{ss2@{ss2}!cpu\_tss\_entry\_t@{cpu\_tss\_entry\_t}}
+\doxysubsubsection{\texorpdfstring{ss2}{ss2}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ss2}
+
+
+
+SS for RING2 value. 
+
+
+
+Definition at line 529 of file cpu.\+c.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Arch/\+CPU/i386/src/\mbox{\hyperlink{i386_2src_2cpu_8c}{cpu.\+c}}\end{DoxyCompactItemize}

@@ -1,0 +1,1471 @@
+\hypertarget{uart_8c}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/src/uart.c File Reference}
+\label{uart_8c}\index{Source/Kernel/Arch/Board/x86/src/uart.c@{Source/Kernel/Arch/Board/x86/src/uart.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$critical.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$uart.\+h$>$}\newline
+Include dependency graph for uart.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}X86 UART\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\+\_\+\+COM1\+\_\+\+BASE}}~0x3\+F8
+\begin{DoxyCompactList}\small\item\em Serial COM1 base port ID. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\+\_\+\+COM2\+\_\+\+BASE}}~0x2\+F8
+\begin{DoxyCompactList}\small\item\em Serial COM2 base port ID. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}{SERIAL\+\_\+\+COM3\+\_\+\+BASE}}~0x3\+E8
+\begin{DoxyCompactList}\small\item\em Serial COM3 base port ID. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}{SERIAL\+\_\+\+COM4\+\_\+\+BASE}}~0x2\+E8
+\begin{DoxyCompactList}\small\item\em Serial COM4 base port ID. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a00dbb3ab1c59e14699be9393693e2248}{COM1}}~\mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\+\_\+\+COM1\+\_\+\+BASE}}
+\begin{DoxyCompactList}\small\item\em Redefinition of serial COM1 base port ID for ease of use. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a435e02f194c24c9b0e00d7cd27a1704e}{COM2}}~\mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\+\_\+\+COM2\+\_\+\+BASE}}
+\begin{DoxyCompactList}\small\item\em Redefinition of serial COM2 base port ID for ease of use. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_abbed02672431595364c5dd35809303a6}{COM3}}~\mbox{\hyperlink{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}{SERIAL\+\_\+\+COM3\+\_\+\+BASE}}
+\begin{DoxyCompactList}\small\item\em Redefinition of serial COM3 base port ID for ease of use. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a595cabb01568ba641574d24546d99c6b}{COM4}}~\mbox{\hyperlink{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}{SERIAL\+\_\+\+COM4\+\_\+\+BASE}}
+\begin{DoxyCompactList}\small\item\em Redefinition of serial COM4 base port ID for ease of use. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\+\_\+\+OUTPUT\+\_\+\+PORT}}~\mbox{\hyperlink{uart_8c_a00dbb3ab1c59e14699be9393693e2248}{COM1}}
+\begin{DoxyCompactList}\small\item\em Defines the port that is used to print data. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a4bd0c20da37480ffee47598349e9e0fe}{SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+5}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial data length flag\+: 5 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ad4edc01bd90ce73ee711cd3919428b22}{SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+6}}~0x01
+\begin{DoxyCompactList}\small\item\em Serial data length flag\+: 6 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a34e3930664271c4bda7b9eb1675b9cd0}{SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+7}}~0x02
+\begin{DoxyCompactList}\small\item\em Serial data length flag\+: 7 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ab7d8c6b3660b431109c909755e457c26}{SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+8}}~0x03
+\begin{DoxyCompactList}\small\item\em Serial data length flag\+: 8 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a1e1822ba21f5e720c09e1712576413f4}{SERIAL\+\_\+\+STOP\+\_\+\+BIT\+\_\+1}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial parity bit flag\+: 1 bit. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ac743d7fbebfa22ae199ae7885afea07c}{SERIAL\+\_\+\+STOP\+\_\+\+BIT\+\_\+2}}~0x04
+\begin{DoxyCompactList}\small\item\em Serial parity bit flag\+: 2 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ad3af92391cfd2670eb782a60c7f923a6}{SERIAL\+\_\+\+PARITY\+\_\+\+NONE}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial parity bit settings flag\+: none. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_aa1baeda93fe64b888113824d02471d0f}{SERIAL\+\_\+\+PARITY\+\_\+\+ODD}}~0x01
+\begin{DoxyCompactList}\small\item\em Serial parity bit settings flag\+: odd. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ab1469484b1ad5e39561c21b5a590eaf6}{SERIAL\+\_\+\+PARITY\+\_\+\+EVEN}}~0x03
+\begin{DoxyCompactList}\small\item\em Serial parity bit settings flag\+: even. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a4b3897d63a1a6d5ced0feff0d3ce3460}{SERIAL\+\_\+\+PARITY\+\_\+\+MARK}}~0x05
+\begin{DoxyCompactList}\small\item\em Serial parity bit settings flag\+: mark. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ad5ab869b9c6d8c3dfaefe9c913d55ce7}{SERIAL\+\_\+\+PARITY\+\_\+\+SPACE}}~0x07
+\begin{DoxyCompactList}\small\item\em Serial parity bit settings flag\+: space. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a8f5a71c87dac509b1ef7e52c3c56cf98}{SERIAL\+\_\+\+BREAK\+\_\+\+CTRL\+\_\+\+ENABLED}}~0x40
+\begin{DoxyCompactList}\small\item\em Serial break control flag enabled. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_afb9ca3f7eecfdcf16088b917d2d8003a}{SERIAL\+\_\+\+BREAK\+\_\+\+CTRL\+\_\+\+DISABLED}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial break control flag disabled. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a873382b43e1973a22b6ce75f02c6a182}{SERIAL\+\_\+\+DLAB\+\_\+\+ENABLED}}~0x80
+\begin{DoxyCompactList}\small\item\em Serial dlab flag enabled. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_af3725655502b7f6f733daed938982c41}{SERIAL\+\_\+\+DLAB\+\_\+\+DISABLED}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial dlab flag disabled. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_ac9e29bed47741802d3a895b7d43e3962}{SERIAL\+\_\+\+ENABLE\+\_\+\+FIFO}}~0x01
+\begin{DoxyCompactList}\small\item\em Serial fifo enable flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a2a60628f88ee6bc4c4259f29a0bd770d}{SERIAL\+\_\+\+CLEAR\+\_\+\+RECV\+\_\+\+FIFO}}~0x02
+\begin{DoxyCompactList}\small\item\em Serial fifo clear receive flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_af80ebedb3b15dbd522485b6b69530721}{SERIAL\+\_\+\+CLEAR\+\_\+\+SEND\+\_\+\+FIFO}}~0x04
+\begin{DoxyCompactList}\small\item\em Serial fifo clear send flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a73de4996e9764e8c5d2db9e20132d34d}{SERIAL\+\_\+\+DMA\+\_\+\+ACCESSED\+\_\+\+FIFO}}~0x08
+\begin{DoxyCompactList}\small\item\em Serial DMA accessed fifo flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a7018e1e74723032a45448e320dd89936}{SERIAL\+\_\+\+FIFO\+\_\+\+DEPTH\+\_\+14}}~0x00
+\begin{DoxyCompactList}\small\item\em Serial fifo depth flag\+: 14 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a4dde9b9b638a98af4035c66bfb5dfebc}{SERIAL\+\_\+\+FIFO\+\_\+\+DEPTH\+\_\+64}}~0x10
+\begin{DoxyCompactList}\small\item\em Serial fifo depth flag\+: 64 bits. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a8351903aa481452402cad5df0a8aa26b}{SERIAL\+\_\+\+DATA\+\_\+\+PORT}}(port)~(port)
+\begin{DoxyCompactList}\small\item\em Computes the data port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\+\_\+\+DATA\+\_\+\+PORT\+\_\+2}}(port)~(port + 1)
+\begin{DoxyCompactList}\small\item\em Computes the aux data port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a5ec9e2db08925548507011ff925b9144}{SERIAL\+\_\+\+FIFO\+\_\+\+COMMAND\+\_\+\+PORT}}(port)~(port + 2)
+\begin{DoxyCompactList}\small\item\em Computes the fifo command port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a2c43926d233806ee5e61a65d918db34d}{SERIAL\+\_\+\+LINE\+\_\+\+COMMAND\+\_\+\+PORT}}(port)~(port + 3)
+\begin{DoxyCompactList}\small\item\em Computes the line command port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_a0945f52a518604a02f87e33a10a59df7}{SERIAL\+\_\+\+MODEM\+\_\+\+COMMAND\+\_\+\+PORT}}(port)~(port + 4)
+\begin{DoxyCompactList}\small\item\em Computes the modem command port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}{SERIAL\+\_\+\+LINE\+\_\+\+STATUS\+\_\+\+PORT}}(port)~(port + 5)
+\begin{DoxyCompactList}\small\item\em Computes the line status port for the serial port which base port ID is given as parameter. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}{SERIAL\+\_\+\+BAUDRATE\+\_\+E}} \{ \newline
+\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa649a1229bb2eb57d0be8a80fe824aae9}{BAURDATE\+\_\+50}} = 2304
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0d159d9a1aa934e978497e70fc598160}{BAUDRATE\+\_\+75}} = 1536
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faad67725e89462654dd5f687cdd776092}{BAUDRATE\+\_\+150}} = 768
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa1dfed302a249d5d472d9a39aa11afdcd}{BAUDRATE\+\_\+300}} = 384
+, \newline
+\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa32ec63c5760f2d9ddc1d90c1d3d84f75}{BAUDRATE\+\_\+600}} = 192
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fac3b902a0c54578ee8e732d61ca330415}{BAUDRATE\+\_\+1200}} = 96
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7bdd6696316e62c77c3edd447cf5854}{BAUDRATE\+\_\+1800}} = 64
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faf75b6bf10bafe82b79c9afd065eb48d9}{BAUDRATE\+\_\+2400}} = 48
+, \newline
+\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fabeff4d0442f2d2e14dcfaf6cc28306af}{BAUDRATE\+\_\+4800}} = 24
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa33a90321f934176874fce95787023c77}{BAUDRATE\+\_\+7200}} = 16
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa269fd588c1f05f78ec00345ee464690c}{BAUDRATE\+\_\+9600}} = 12
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7b08eb1b83834871da8caed89634914}{BAUDRATE\+\_\+14400}} = 8
+, \newline
+\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0a793a8d7b4c0c7b3667a20750ba6dcd}{BAUDRATE\+\_\+19200}} = 6
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fab6992595f5799026f56f62688d3d928b}{BAUDRATE\+\_\+38400}} = 3
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa9f210b73ceb88265b53e278af7c62ee9}{BAUDRATE\+\_\+57600}} = 2
+, \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}{BAUDRATE\+\_\+115200}} = 1
+ \}
+\begin{DoxyCompactList}\small\item\em Serial baudrate enumation. Enumerates all the supported baudrates. The value of the enumeration is the transmission rate divider. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{uart_8c_ad93f2889448039719ac493691f4af6e3}{\+\_\+set\+\_\+line}} (const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} attr, const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} com)
+\begin{DoxyCompactList}\small\item\em Sets line parameters for the desired port. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{uart_8c_a27adedb5a1378a7d12e083f805b22543}{\+\_\+set\+\_\+buffer}} (const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} attr, const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} com)
+\begin{DoxyCompactList}\small\item\em Sets buffer parameters for the desired port. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1}{\+\_\+set\+\_\+baudrate}} (\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}{SERIAL\+\_\+\+BAUDRATE\+\_\+E}} rate, const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} com)
+\begin{DoxyCompactList}\small\item\em Sets the port\textquotesingle{}s baudrate. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\+\_\+uart\+\_\+write}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} port, const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} data)
+\begin{DoxyCompactList}\small\item\em Writes the data given as patameter on the desired port. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8c_a0c0ca72359ddf28dcd15900dfba19343}{uart\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the uart driver structures and hardware. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8c_a78501d1b2ed8ddf3b64df0394809fa95}{uart\+\_\+clear\+\_\+screen}} (void)
+\begin{DoxyCompactList}\small\item\em Clears the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8c_a06f97feee6f014ed63518f7d90ef22ad}{uart\+\_\+scroll}} (const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}} direction, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} lines\+\_\+count)
+\begin{DoxyCompactList}\small\item\em Scrolls the screen downn. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{uart_8c_a58f7b6ef9b4e43d05d53758b91d9ae58}{uart\+\_\+read}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Reads a byte from the uart port given as parameter. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8c_a99bf7343080342666bd756f9bf43e57b}{uart\+\_\+put\+\_\+string}} (const char $\ast$string)
+\begin{DoxyCompactList}\small\item\em Write the string given as patameter on the debug port. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d}{uart\+\_\+put\+\_\+char}} (const char character)
+\begin{DoxyCompactList}\small\item\em Write the character given as patameter on the debug port. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5}{uart\+\_\+received}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Tells if the data on the uart port are ready to be read. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} $\ast$ \mbox{\hyperlink{uart_8c_ab15d3cac777266e01b336b56ea841442}{uart\+\_\+get\+\_\+driver}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the UART graphic driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} \mbox{\hyperlink{uart_8c_a6e287c3ecf1c1048b39754aa904a7ade}{uart\+\_\+text\+\_\+driver}}
+\begin{DoxyCompactList}\small\item\em Serial text driver instance. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\+\_\+lock}} = \mbox{\hyperlink{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT\+\_\+\+VALUE}}
+\begin{DoxyCompactList}\small\item\em Concurrency lock for the uart driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{uart_8c_a00dbb3ab1c59e14699be9393693e2248}\label{uart_8c_a00dbb3ab1c59e14699be9393693e2248}} 
+\index{uart.c@{uart.c}!COM1@{COM1}}
+\index{COM1@{COM1}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{COM1}{COM1}}
+{\footnotesize\ttfamily \#define COM1~\mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\+\_\+\+COM1\+\_\+\+BASE}}}
+
+
+
+Redefinition of serial COM1 base port ID for ease of use. 
+
+
+
+Definition at line 57 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a435e02f194c24c9b0e00d7cd27a1704e}\label{uart_8c_a435e02f194c24c9b0e00d7cd27a1704e}} 
+\index{uart.c@{uart.c}!COM2@{COM2}}
+\index{COM2@{COM2}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{COM2}{COM2}}
+{\footnotesize\ttfamily \#define COM2~\mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\+\_\+\+COM2\+\_\+\+BASE}}}
+
+
+
+Redefinition of serial COM2 base port ID for ease of use. 
+
+
+
+Definition at line 59 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_abbed02672431595364c5dd35809303a6}\label{uart_8c_abbed02672431595364c5dd35809303a6}} 
+\index{uart.c@{uart.c}!COM3@{COM3}}
+\index{COM3@{COM3}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{COM3}{COM3}}
+{\footnotesize\ttfamily \#define COM3~\mbox{\hyperlink{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}{SERIAL\+\_\+\+COM3\+\_\+\+BASE}}}
+
+
+
+Redefinition of serial COM3 base port ID for ease of use. 
+
+
+
+Definition at line 61 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a595cabb01568ba641574d24546d99c6b}\label{uart_8c_a595cabb01568ba641574d24546d99c6b}} 
+\index{uart.c@{uart.c}!COM4@{COM4}}
+\index{COM4@{COM4}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{COM4}{COM4}}
+{\footnotesize\ttfamily \#define COM4~\mbox{\hyperlink{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}{SERIAL\+\_\+\+COM4\+\_\+\+BASE}}}
+
+
+
+Redefinition of serial COM4 base port ID for ease of use. 
+
+
+
+Definition at line 63 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{uart.c@{uart.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}X86 UART\char`\"{}}
+
+
+
+Current module name. 
+
+
+
+Definition at line 45 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_afb9ca3f7eecfdcf16088b917d2d8003a}\label{uart_8c_afb9ca3f7eecfdcf16088b917d2d8003a}} 
+\index{uart.c@{uart.c}!SERIAL\_BREAK\_CTRL\_DISABLED@{SERIAL\_BREAK\_CTRL\_DISABLED}}
+\index{SERIAL\_BREAK\_CTRL\_DISABLED@{SERIAL\_BREAK\_CTRL\_DISABLED}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_BREAK\_CTRL\_DISABLED}{SERIAL\_BREAK\_CTRL\_DISABLED}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+BREAK\+\_\+\+CTRL\+\_\+\+DISABLED~0x00}
+
+
+
+Serial break control flag disabled. 
+
+
+
+Definition at line 96 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a8f5a71c87dac509b1ef7e52c3c56cf98}\label{uart_8c_a8f5a71c87dac509b1ef7e52c3c56cf98}} 
+\index{uart.c@{uart.c}!SERIAL\_BREAK\_CTRL\_ENABLED@{SERIAL\_BREAK\_CTRL\_ENABLED}}
+\index{SERIAL\_BREAK\_CTRL\_ENABLED@{SERIAL\_BREAK\_CTRL\_ENABLED}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_BREAK\_CTRL\_ENABLED}{SERIAL\_BREAK\_CTRL\_ENABLED}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+BREAK\+\_\+\+CTRL\+\_\+\+ENABLED~0x40}
+
+
+
+Serial break control flag enabled. 
+
+
+
+Definition at line 94 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a2a60628f88ee6bc4c4259f29a0bd770d}\label{uart_8c_a2a60628f88ee6bc4c4259f29a0bd770d}} 
+\index{uart.c@{uart.c}!SERIAL\_CLEAR\_RECV\_FIFO@{SERIAL\_CLEAR\_RECV\_FIFO}}
+\index{SERIAL\_CLEAR\_RECV\_FIFO@{SERIAL\_CLEAR\_RECV\_FIFO}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_CLEAR\_RECV\_FIFO}{SERIAL\_CLEAR\_RECV\_FIFO}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+CLEAR\+\_\+\+RECV\+\_\+\+FIFO~0x02}
+
+
+
+Serial fifo clear receive flag. 
+
+
+
+Definition at line 106 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_af80ebedb3b15dbd522485b6b69530721}\label{uart_8c_af80ebedb3b15dbd522485b6b69530721}} 
+\index{uart.c@{uart.c}!SERIAL\_CLEAR\_SEND\_FIFO@{SERIAL\_CLEAR\_SEND\_FIFO}}
+\index{SERIAL\_CLEAR\_SEND\_FIFO@{SERIAL\_CLEAR\_SEND\_FIFO}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_CLEAR\_SEND\_FIFO}{SERIAL\_CLEAR\_SEND\_FIFO}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+CLEAR\+\_\+\+SEND\+\_\+\+FIFO~0x04}
+
+
+
+Serial fifo clear send flag. 
+
+
+
+Definition at line 108 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a34365e17c472073dfba3681bb38054f3}\label{uart_8c_a34365e17c472073dfba3681bb38054f3}} 
+\index{uart.c@{uart.c}!SERIAL\_COM1\_BASE@{SERIAL\_COM1\_BASE}}
+\index{SERIAL\_COM1\_BASE@{SERIAL\_COM1\_BASE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_COM1\_BASE}{SERIAL\_COM1\_BASE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+COM1\+\_\+\+BASE~0x3\+F8}
+
+
+
+Serial COM1 base port ID. 
+
+
+
+Definition at line 48 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}\label{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}} 
+\index{uart.c@{uart.c}!SERIAL\_COM2\_BASE@{SERIAL\_COM2\_BASE}}
+\index{SERIAL\_COM2\_BASE@{SERIAL\_COM2\_BASE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_COM2\_BASE}{SERIAL\_COM2\_BASE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+COM2\+\_\+\+BASE~0x2\+F8}
+
+
+
+Serial COM2 base port ID. 
+
+
+
+Definition at line 50 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}\label{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}} 
+\index{uart.c@{uart.c}!SERIAL\_COM3\_BASE@{SERIAL\_COM3\_BASE}}
+\index{SERIAL\_COM3\_BASE@{SERIAL\_COM3\_BASE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_COM3\_BASE}{SERIAL\_COM3\_BASE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+COM3\+\_\+\+BASE~0x3\+E8}
+
+
+
+Serial COM3 base port ID. 
+
+
+
+Definition at line 52 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}\label{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}} 
+\index{uart.c@{uart.c}!SERIAL\_COM4\_BASE@{SERIAL\_COM4\_BASE}}
+\index{SERIAL\_COM4\_BASE@{SERIAL\_COM4\_BASE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_COM4\_BASE}{SERIAL\_COM4\_BASE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+COM4\+\_\+\+BASE~0x2\+E8}
+
+
+
+Serial COM4 base port ID. 
+
+
+
+Definition at line 54 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a4bd0c20da37480ffee47598349e9e0fe}\label{uart_8c_a4bd0c20da37480ffee47598349e9e0fe}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_LENGTH\_5@{SERIAL\_DATA\_LENGTH\_5}}
+\index{SERIAL\_DATA\_LENGTH\_5@{SERIAL\_DATA\_LENGTH\_5}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_LENGTH\_5}{SERIAL\_DATA\_LENGTH\_5}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+5~0x00}
+
+
+
+Serial data length flag\+: 5 bits. 
+
+
+
+Definition at line 69 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ad4edc01bd90ce73ee711cd3919428b22}\label{uart_8c_ad4edc01bd90ce73ee711cd3919428b22}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_LENGTH\_6@{SERIAL\_DATA\_LENGTH\_6}}
+\index{SERIAL\_DATA\_LENGTH\_6@{SERIAL\_DATA\_LENGTH\_6}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_LENGTH\_6}{SERIAL\_DATA\_LENGTH\_6}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+6~0x01}
+
+
+
+Serial data length flag\+: 6 bits. 
+
+
+
+Definition at line 71 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a34e3930664271c4bda7b9eb1675b9cd0}\label{uart_8c_a34e3930664271c4bda7b9eb1675b9cd0}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_LENGTH\_7@{SERIAL\_DATA\_LENGTH\_7}}
+\index{SERIAL\_DATA\_LENGTH\_7@{SERIAL\_DATA\_LENGTH\_7}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_LENGTH\_7}{SERIAL\_DATA\_LENGTH\_7}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+7~0x02}
+
+
+
+Serial data length flag\+: 7 bits. 
+
+
+
+Definition at line 73 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ab7d8c6b3660b431109c909755e457c26}\label{uart_8c_ab7d8c6b3660b431109c909755e457c26}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_LENGTH\_8@{SERIAL\_DATA\_LENGTH\_8}}
+\index{SERIAL\_DATA\_LENGTH\_8@{SERIAL\_DATA\_LENGTH\_8}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_LENGTH\_8}{SERIAL\_DATA\_LENGTH\_8}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+LENGTH\+\_\+8~0x03}
+
+
+
+Serial data length flag\+: 8 bits. 
+
+
+
+Definition at line 75 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a8351903aa481452402cad5df0a8aa26b}\label{uart_8c_a8351903aa481452402cad5df0a8aa26b}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_PORT@{SERIAL\_DATA\_PORT}}
+\index{SERIAL\_DATA\_PORT@{SERIAL\_DATA\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_PORT}{SERIAL\_DATA\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+PORT(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port)}
+
+
+
+Computes the data port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 123 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a8d60baa849072d23cd603ae759305324}\label{uart_8c_a8d60baa849072d23cd603ae759305324}} 
+\index{uart.c@{uart.c}!SERIAL\_DATA\_PORT\_2@{SERIAL\_DATA\_PORT\_2}}
+\index{SERIAL\_DATA\_PORT\_2@{SERIAL\_DATA\_PORT\_2}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DATA\_PORT\_2}{SERIAL\_DATA\_PORT\_2}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DATA\+\_\+\+PORT\+\_\+2(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port + 1)}
+
+
+
+Computes the aux data port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 130 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_af3725655502b7f6f733daed938982c41}\label{uart_8c_af3725655502b7f6f733daed938982c41}} 
+\index{uart.c@{uart.c}!SERIAL\_DLAB\_DISABLED@{SERIAL\_DLAB\_DISABLED}}
+\index{SERIAL\_DLAB\_DISABLED@{SERIAL\_DLAB\_DISABLED}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DLAB\_DISABLED}{SERIAL\_DLAB\_DISABLED}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DLAB\+\_\+\+DISABLED~0x00}
+
+
+
+Serial dlab flag disabled. 
+
+
+
+Definition at line 101 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a873382b43e1973a22b6ce75f02c6a182}\label{uart_8c_a873382b43e1973a22b6ce75f02c6a182}} 
+\index{uart.c@{uart.c}!SERIAL\_DLAB\_ENABLED@{SERIAL\_DLAB\_ENABLED}}
+\index{SERIAL\_DLAB\_ENABLED@{SERIAL\_DLAB\_ENABLED}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DLAB\_ENABLED}{SERIAL\_DLAB\_ENABLED}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DLAB\+\_\+\+ENABLED~0x80}
+
+
+
+Serial dlab flag enabled. 
+
+
+
+Definition at line 99 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a73de4996e9764e8c5d2db9e20132d34d}\label{uart_8c_a73de4996e9764e8c5d2db9e20132d34d}} 
+\index{uart.c@{uart.c}!SERIAL\_DMA\_ACCESSED\_FIFO@{SERIAL\_DMA\_ACCESSED\_FIFO}}
+\index{SERIAL\_DMA\_ACCESSED\_FIFO@{SERIAL\_DMA\_ACCESSED\_FIFO}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_DMA\_ACCESSED\_FIFO}{SERIAL\_DMA\_ACCESSED\_FIFO}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+DMA\+\_\+\+ACCESSED\+\_\+\+FIFO~0x08}
+
+
+
+Serial DMA accessed fifo flag. 
+
+
+
+Definition at line 110 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ac9e29bed47741802d3a895b7d43e3962}\label{uart_8c_ac9e29bed47741802d3a895b7d43e3962}} 
+\index{uart.c@{uart.c}!SERIAL\_ENABLE\_FIFO@{SERIAL\_ENABLE\_FIFO}}
+\index{SERIAL\_ENABLE\_FIFO@{SERIAL\_ENABLE\_FIFO}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_ENABLE\_FIFO}{SERIAL\_ENABLE\_FIFO}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+ENABLE\+\_\+\+FIFO~0x01}
+
+
+
+Serial fifo enable flag. 
+
+
+
+Definition at line 104 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a5ec9e2db08925548507011ff925b9144}\label{uart_8c_a5ec9e2db08925548507011ff925b9144}} 
+\index{uart.c@{uart.c}!SERIAL\_FIFO\_COMMAND\_PORT@{SERIAL\_FIFO\_COMMAND\_PORT}}
+\index{SERIAL\_FIFO\_COMMAND\_PORT@{SERIAL\_FIFO\_COMMAND\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_FIFO\_COMMAND\_PORT}{SERIAL\_FIFO\_COMMAND\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+FIFO\+\_\+\+COMMAND\+\_\+\+PORT(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port + 2)}
+
+
+
+Computes the fifo command port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 137 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a7018e1e74723032a45448e320dd89936}\label{uart_8c_a7018e1e74723032a45448e320dd89936}} 
+\index{uart.c@{uart.c}!SERIAL\_FIFO\_DEPTH\_14@{SERIAL\_FIFO\_DEPTH\_14}}
+\index{SERIAL\_FIFO\_DEPTH\_14@{SERIAL\_FIFO\_DEPTH\_14}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_FIFO\_DEPTH\_14}{SERIAL\_FIFO\_DEPTH\_14}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+FIFO\+\_\+\+DEPTH\+\_\+14~0x00}
+
+
+
+Serial fifo depth flag\+: 14 bits. 
+
+
+
+Definition at line 113 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a4dde9b9b638a98af4035c66bfb5dfebc}\label{uart_8c_a4dde9b9b638a98af4035c66bfb5dfebc}} 
+\index{uart.c@{uart.c}!SERIAL\_FIFO\_DEPTH\_64@{SERIAL\_FIFO\_DEPTH\_64}}
+\index{SERIAL\_FIFO\_DEPTH\_64@{SERIAL\_FIFO\_DEPTH\_64}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_FIFO\_DEPTH\_64}{SERIAL\_FIFO\_DEPTH\_64}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+FIFO\+\_\+\+DEPTH\+\_\+64~0x10}
+
+
+
+Serial fifo depth flag\+: 64 bits. 
+
+
+
+Definition at line 115 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a2c43926d233806ee5e61a65d918db34d}\label{uart_8c_a2c43926d233806ee5e61a65d918db34d}} 
+\index{uart.c@{uart.c}!SERIAL\_LINE\_COMMAND\_PORT@{SERIAL\_LINE\_COMMAND\_PORT}}
+\index{SERIAL\_LINE\_COMMAND\_PORT@{SERIAL\_LINE\_COMMAND\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_LINE\_COMMAND\_PORT}{SERIAL\_LINE\_COMMAND\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+LINE\+\_\+\+COMMAND\+\_\+\+PORT(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port + 3)}
+
+
+
+Computes the line command port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 144 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}\label{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}} 
+\index{uart.c@{uart.c}!SERIAL\_LINE\_STATUS\_PORT@{SERIAL\_LINE\_STATUS\_PORT}}
+\index{SERIAL\_LINE\_STATUS\_PORT@{SERIAL\_LINE\_STATUS\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_LINE\_STATUS\_PORT}{SERIAL\_LINE\_STATUS\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+LINE\+\_\+\+STATUS\+\_\+\+PORT(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port + 5)}
+
+
+
+Computes the line status port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 158 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a0945f52a518604a02f87e33a10a59df7}\label{uart_8c_a0945f52a518604a02f87e33a10a59df7}} 
+\index{uart.c@{uart.c}!SERIAL\_MODEM\_COMMAND\_PORT@{SERIAL\_MODEM\_COMMAND\_PORT}}
+\index{SERIAL\_MODEM\_COMMAND\_PORT@{SERIAL\_MODEM\_COMMAND\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_MODEM\_COMMAND\_PORT}{SERIAL\_MODEM\_COMMAND\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+MODEM\+\_\+\+COMMAND\+\_\+\+PORT(\begin{DoxyParamCaption}\item[{}]{port }\end{DoxyParamCaption})~(port + 4)}
+
+
+
+Computes the modem command port for the serial port which base port ID is given as parameter. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The base port ID of the serial port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 151 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}\label{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}} 
+\index{uart.c@{uart.c}!SERIAL\_OUTPUT\_PORT@{SERIAL\_OUTPUT\_PORT}}
+\index{SERIAL\_OUTPUT\_PORT@{SERIAL\_OUTPUT\_PORT}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_OUTPUT\_PORT}{SERIAL\_OUTPUT\_PORT}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+OUTPUT\+\_\+\+PORT~\mbox{\hyperlink{uart_8c_a00dbb3ab1c59e14699be9393693e2248}{COM1}}}
+
+
+
+Defines the port that is used to print data. 
+
+
+
+Definition at line 66 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ab1469484b1ad5e39561c21b5a590eaf6}\label{uart_8c_ab1469484b1ad5e39561c21b5a590eaf6}} 
+\index{uart.c@{uart.c}!SERIAL\_PARITY\_EVEN@{SERIAL\_PARITY\_EVEN}}
+\index{SERIAL\_PARITY\_EVEN@{SERIAL\_PARITY\_EVEN}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_PARITY\_EVEN}{SERIAL\_PARITY\_EVEN}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+PARITY\+\_\+\+EVEN~0x03}
+
+
+
+Serial parity bit settings flag\+: even. 
+
+
+
+Definition at line 87 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a4b3897d63a1a6d5ced0feff0d3ce3460}\label{uart_8c_a4b3897d63a1a6d5ced0feff0d3ce3460}} 
+\index{uart.c@{uart.c}!SERIAL\_PARITY\_MARK@{SERIAL\_PARITY\_MARK}}
+\index{SERIAL\_PARITY\_MARK@{SERIAL\_PARITY\_MARK}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_PARITY\_MARK}{SERIAL\_PARITY\_MARK}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+PARITY\+\_\+\+MARK~0x05}
+
+
+
+Serial parity bit settings flag\+: mark. 
+
+
+
+Definition at line 89 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ad3af92391cfd2670eb782a60c7f923a6}\label{uart_8c_ad3af92391cfd2670eb782a60c7f923a6}} 
+\index{uart.c@{uart.c}!SERIAL\_PARITY\_NONE@{SERIAL\_PARITY\_NONE}}
+\index{SERIAL\_PARITY\_NONE@{SERIAL\_PARITY\_NONE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_PARITY\_NONE}{SERIAL\_PARITY\_NONE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+PARITY\+\_\+\+NONE~0x00}
+
+
+
+Serial parity bit settings flag\+: none. 
+
+
+
+Definition at line 83 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_aa1baeda93fe64b888113824d02471d0f}\label{uart_8c_aa1baeda93fe64b888113824d02471d0f}} 
+\index{uart.c@{uart.c}!SERIAL\_PARITY\_ODD@{SERIAL\_PARITY\_ODD}}
+\index{SERIAL\_PARITY\_ODD@{SERIAL\_PARITY\_ODD}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_PARITY\_ODD}{SERIAL\_PARITY\_ODD}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+PARITY\+\_\+\+ODD~0x01}
+
+
+
+Serial parity bit settings flag\+: odd. 
+
+
+
+Definition at line 85 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ad5ab869b9c6d8c3dfaefe9c913d55ce7}\label{uart_8c_ad5ab869b9c6d8c3dfaefe9c913d55ce7}} 
+\index{uart.c@{uart.c}!SERIAL\_PARITY\_SPACE@{SERIAL\_PARITY\_SPACE}}
+\index{SERIAL\_PARITY\_SPACE@{SERIAL\_PARITY\_SPACE}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_PARITY\_SPACE}{SERIAL\_PARITY\_SPACE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+PARITY\+\_\+\+SPACE~0x07}
+
+
+
+Serial parity bit settings flag\+: space. 
+
+
+
+Definition at line 91 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a1e1822ba21f5e720c09e1712576413f4}\label{uart_8c_a1e1822ba21f5e720c09e1712576413f4}} 
+\index{uart.c@{uart.c}!SERIAL\_STOP\_BIT\_1@{SERIAL\_STOP\_BIT\_1}}
+\index{SERIAL\_STOP\_BIT\_1@{SERIAL\_STOP\_BIT\_1}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_STOP\_BIT\_1}{SERIAL\_STOP\_BIT\_1}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+STOP\+\_\+\+BIT\+\_\+1~0x00}
+
+
+
+Serial parity bit flag\+: 1 bit. 
+
+
+
+Definition at line 78 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_ac743d7fbebfa22ae199ae7885afea07c}\label{uart_8c_ac743d7fbebfa22ae199ae7885afea07c}} 
+\index{uart.c@{uart.c}!SERIAL\_STOP\_BIT\_2@{SERIAL\_STOP\_BIT\_2}}
+\index{SERIAL\_STOP\_BIT\_2@{SERIAL\_STOP\_BIT\_2}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_STOP\_BIT\_2}{SERIAL\_STOP\_BIT\_2}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+\+STOP\+\_\+\+BIT\+\_\+2~0x04}
+
+
+
+Serial parity bit flag\+: 2 bits. 
+
+
+
+Definition at line 80 of file uart.\+c.
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}} 
+\index{uart.c@{uart.c}!SERIAL\_BAUDRATE\_E@{SERIAL\_BAUDRATE\_E}}
+\index{SERIAL\_BAUDRATE\_E@{SERIAL\_BAUDRATE\_E}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_BAUDRATE\_E}{SERIAL\_BAUDRATE\_E}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}{SERIAL\+\_\+\+BAUDRATE\+\_\+E}}}
+
+
+
+Serial baudrate enumation. Enumerates all the supported baudrates. The value of the enumeration is the transmission rate divider. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAURDATE\_50@{BAURDATE\_50}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAURDATE\_50@{BAURDATE\_50}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa649a1229bb2eb57d0be8a80fe824aae9}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa649a1229bb2eb57d0be8a80fe824aae9}} 
+BAURDATE\+\_\+50&Baudrate 50Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_75@{BAUDRATE\_75}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_75@{BAUDRATE\_75}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0d159d9a1aa934e978497e70fc598160}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0d159d9a1aa934e978497e70fc598160}} 
+BAUDRATE\+\_\+75&Baudrate 75Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_150@{BAUDRATE\_150}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_150@{BAUDRATE\_150}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faad67725e89462654dd5f687cdd776092}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faad67725e89462654dd5f687cdd776092}} 
+BAUDRATE\+\_\+150&Baudrate 150Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_300@{BAUDRATE\_300}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_300@{BAUDRATE\_300}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa1dfed302a249d5d472d9a39aa11afdcd}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa1dfed302a249d5d472d9a39aa11afdcd}} 
+BAUDRATE\+\_\+300&Baudrate 300Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_600@{BAUDRATE\_600}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_600@{BAUDRATE\_600}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa32ec63c5760f2d9ddc1d90c1d3d84f75}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa32ec63c5760f2d9ddc1d90c1d3d84f75}} 
+BAUDRATE\+\_\+600&Baudrate 600Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_1200@{BAUDRATE\_1200}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_1200@{BAUDRATE\_1200}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fac3b902a0c54578ee8e732d61ca330415}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fac3b902a0c54578ee8e732d61ca330415}} 
+BAUDRATE\+\_\+1200&Baudrate 1200Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_1800@{BAUDRATE\_1800}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_1800@{BAUDRATE\_1800}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7bdd6696316e62c77c3edd447cf5854}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7bdd6696316e62c77c3edd447cf5854}} 
+BAUDRATE\+\_\+1800&Baudrate 1800Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_2400@{BAUDRATE\_2400}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_2400@{BAUDRATE\_2400}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faf75b6bf10bafe82b79c9afd065eb48d9}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faf75b6bf10bafe82b79c9afd065eb48d9}} 
+BAUDRATE\+\_\+2400&Baudrate 2400Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_4800@{BAUDRATE\_4800}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_4800@{BAUDRATE\_4800}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fabeff4d0442f2d2e14dcfaf6cc28306af}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fabeff4d0442f2d2e14dcfaf6cc28306af}} 
+BAUDRATE\+\_\+4800&Baudrate 4800Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_7200@{BAUDRATE\_7200}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_7200@{BAUDRATE\_7200}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa33a90321f934176874fce95787023c77}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa33a90321f934176874fce95787023c77}} 
+BAUDRATE\+\_\+7200&Baudrate 7200Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_9600@{BAUDRATE\_9600}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_9600@{BAUDRATE\_9600}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa269fd588c1f05f78ec00345ee464690c}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa269fd588c1f05f78ec00345ee464690c}} 
+BAUDRATE\+\_\+9600&Baudrate 9600Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_14400@{BAUDRATE\_14400}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_14400@{BAUDRATE\_14400}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7b08eb1b83834871da8caed89634914}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7b08eb1b83834871da8caed89634914}} 
+BAUDRATE\+\_\+14400&Baudrate 14400Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_19200@{BAUDRATE\_19200}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_19200@{BAUDRATE\_19200}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0a793a8d7b4c0c7b3667a20750ba6dcd}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0a793a8d7b4c0c7b3667a20750ba6dcd}} 
+BAUDRATE\+\_\+19200&Baudrate 19200Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_38400@{BAUDRATE\_38400}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_38400@{BAUDRATE\_38400}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fab6992595f5799026f56f62688d3d928b}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fab6992595f5799026f56f62688d3d928b}} 
+BAUDRATE\+\_\+38400&Baudrate 38400Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_57600@{BAUDRATE\_57600}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_57600@{BAUDRATE\_57600}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa9f210b73ceb88265b53e278af7c62ee9}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa9f210b73ceb88265b53e278af7c62ee9}} 
+BAUDRATE\+\_\+57600&Baudrate 57600Bd. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BAUDRATE\_115200@{BAUDRATE\_115200}!uart.c@{uart.c}}\index{uart.c@{uart.c}!BAUDRATE\_115200@{BAUDRATE\_115200}}}\mbox{\Hypertarget{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}\label{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}} 
+BAUDRATE\+\_\+115200&Baudrate 115200Bd. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 167 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{168 \{}
+\DoxyCodeLine{170     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa649a1229bb2eb57d0be8a80fe824aae9}{BAURDATE\_50}}     = 2304,}
+\DoxyCodeLine{172     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0d159d9a1aa934e978497e70fc598160}{BAUDRATE\_75}}     = 1536,}
+\DoxyCodeLine{174     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faad67725e89462654dd5f687cdd776092}{BAUDRATE\_150}}    = 768,}
+\DoxyCodeLine{176     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa1dfed302a249d5d472d9a39aa11afdcd}{BAUDRATE\_300}}    = 384,}
+\DoxyCodeLine{178     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa32ec63c5760f2d9ddc1d90c1d3d84f75}{BAUDRATE\_600}}    = 192,}
+\DoxyCodeLine{180     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fac3b902a0c54578ee8e732d61ca330415}{BAUDRATE\_1200}}   = 96,}
+\DoxyCodeLine{182     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7bdd6696316e62c77c3edd447cf5854}{BAUDRATE\_1800}}   = 64,}
+\DoxyCodeLine{184     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842faf75b6bf10bafe82b79c9afd065eb48d9}{BAUDRATE\_2400}}   = 48,}
+\DoxyCodeLine{186     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fabeff4d0442f2d2e14dcfaf6cc28306af}{BAUDRATE\_4800}}   = 24,}
+\DoxyCodeLine{188     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa33a90321f934176874fce95787023c77}{BAUDRATE\_7200}}   = 16,}
+\DoxyCodeLine{190     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa269fd588c1f05f78ec00345ee464690c}{BAUDRATE\_9600}}   = 12,}
+\DoxyCodeLine{192     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fad7b08eb1b83834871da8caed89634914}{BAUDRATE\_14400}}  = 8,}
+\DoxyCodeLine{194     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa0a793a8d7b4c0c7b3667a20750ba6dcd}{BAUDRATE\_19200}}  = 6,}
+\DoxyCodeLine{196     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fab6992595f5799026f56f62688d3d928b}{BAUDRATE\_38400}}  = 3,}
+\DoxyCodeLine{198     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa9f210b73ceb88265b53e278af7c62ee9}{BAUDRATE\_57600}}  = 2,}
+\DoxyCodeLine{200     \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}{BAUDRATE\_115200}} = 1,}
+\DoxyCodeLine{201 \} \mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}{SERIAL\_BAUDRATE\_E}};}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1}\label{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1}} 
+\index{uart.c@{uart.c}!\_set\_baudrate@{\_set\_baudrate}}
+\index{\_set\_baudrate@{\_set\_baudrate}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{\_set\_baudrate()}{\_set\_baudrate()}}
+{\footnotesize\ttfamily static void \+\_\+set\+\_\+baudrate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842f}{SERIAL\+\_\+\+BAUDRATE\+\_\+E}}}]{rate,  }\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{com }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Sets the port\textquotesingle{}s baudrate. 
+
+Sets the port\textquotesingle{}s baudrate.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em rate} & The desired baudrate for the port. \\
+\hline
+\mbox{\texttt{ in}}  & {\em com} & The port to set. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 310 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{311 \{}
+\DoxyCodeLine{312     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{uart_8c_a873382b43e1973a22b6ce75f02c6a182}{SERIAL\_DLAB\_ENABLED}}, \mbox{\hyperlink{uart_8c_a2c43926d233806ee5e61a65d918db34d}{SERIAL\_LINE\_COMMAND\_PORT}}(com));}
+\DoxyCodeLine{313     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}((rate >> 8) \& 0x00FF, \mbox{\hyperlink{uart_8c_a8351903aa481452402cad5df0a8aa26b}{SERIAL\_DATA\_PORT}}(com));}
+\DoxyCodeLine{314     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(rate \& 0x00FF, \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\_DATA\_PORT\_2}}(com));}
+\DoxyCodeLine{315 }
+\DoxyCodeLine{316     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\_DEBUG\_ENABLED}}, \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{317                  \textcolor{stringliteral}{"{}Set baud rate of port 0x\%04x to \%u"{}},}
+\DoxyCodeLine{318                  com, rate);}
+\DoxyCodeLine{319 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=268pt]{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a27adedb5a1378a7d12e083f805b22543}\label{uart_8c_a27adedb5a1378a7d12e083f805b22543}} 
+\index{uart.c@{uart.c}!\_set\_buffer@{\_set\_buffer}}
+\index{\_set\_buffer@{\_set\_buffer}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{\_set\_buffer()}{\_set\_buffer()}}
+{\footnotesize\ttfamily static void \+\_\+set\+\_\+buffer (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{attr,  }\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{com }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Sets buffer parameters for the desired port. 
+
+Sets buffer parameters for the desired port.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em attr} & The settings for the port\textquotesingle{}s buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em com} & The port to set.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+OS\+\_\+\+NO\+\_\+\+ERR on success, no other value is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 301 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{302 \{}
+\DoxyCodeLine{303     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(attr, \mbox{\hyperlink{uart_8c_a5ec9e2db08925548507011ff925b9144}{SERIAL\_FIFO\_COMMAND\_PORT}}(com));}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\_DEBUG\_ENABLED}}, \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{306                  \textcolor{stringliteral}{"{}Set buffer attributes of port 0x\%04x to \%u"{}},}
+\DoxyCodeLine{307                  com, attr);}
+\DoxyCodeLine{308 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{uart_8c_a27adedb5a1378a7d12e083f805b22543_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=339pt]{uart_8c_a27adedb5a1378a7d12e083f805b22543_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_ad93f2889448039719ac493691f4af6e3}\label{uart_8c_ad93f2889448039719ac493691f4af6e3}} 
+\index{uart.c@{uart.c}!\_set\_line@{\_set\_line}}
+\index{\_set\_line@{\_set\_line}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{\_set\_line()}{\_set\_line()}}
+{\footnotesize\ttfamily static void \+\_\+set\+\_\+line (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{attr,  }\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{com }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Sets line parameters for the desired port. 
+
+Sets line parameters for the desired port.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em attr} & The settings for the port\textquotesingle{}s line. \\
+\hline
+\mbox{\texttt{ in}}  & {\em com} & The port to set. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 292 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{293 \{}
+\DoxyCodeLine{294     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(attr, \mbox{\hyperlink{uart_8c_a2c43926d233806ee5e61a65d918db34d}{SERIAL\_LINE\_COMMAND\_PORT}}(com));}
+\DoxyCodeLine{295 }
+\DoxyCodeLine{296     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\_DEBUG\_ENABLED}}, \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{297                  \textcolor{stringliteral}{"{}Set line attributes of port 0x\%04x to \%u"{}},}
+\DoxyCodeLine{298                  com, attr);}
+\DoxyCodeLine{299 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=242pt]{uart_8c_ad93f2889448039719ac493691f4af6e3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=328pt]{uart_8c_ad93f2889448039719ac493691f4af6e3_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}\label{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}} 
+\index{uart.c@{uart.c}!\_uart\_write@{\_uart\_write}}
+\index{\_uart\_write@{\_uart\_write}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{\_uart\_write()}{\_uart\_write()}}
+{\footnotesize\ttfamily static void \+\_\+uart\+\_\+write (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{port,  }\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{data }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Writes the data given as patameter on the desired port. 
+
+The function will output the data given as parameter on the selected port. This call is blocking until the data has been sent to the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The desired port to write the data to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The byte to write to the uart port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 321 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{322 \{}
+\DoxyCodeLine{323     \textcolor{comment}{/* Wait for empty transmit */}}
+\DoxyCodeLine{324     \mbox{\hyperlink{i386_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}{KERNEL\_SPINLOCK\_LOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{325     \textcolor{keywordflow}{while}((\mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}{SERIAL\_LINE\_STATUS\_PORT}}(port)) \& 0x20) == 0)\{\}}
+\DoxyCodeLine{326     \textcolor{keywordflow}{if}(data == \textcolor{charliteral}{'\(\backslash\)n'})}
+\DoxyCodeLine{327     \{}
+\DoxyCodeLine{328         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\textcolor{charliteral}{'\(\backslash\)r'}, port);}
+\DoxyCodeLine{329         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\textcolor{charliteral}{'\(\backslash\)n'}, port);}
+\DoxyCodeLine{330     \}}
+\DoxyCodeLine{331     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{332     \{}
+\DoxyCodeLine{333         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(data, port);}
+\DoxyCodeLine{334     \}}
+\DoxyCodeLine{335     \mbox{\hyperlink{i386_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}{KERNEL\_SPINLOCK\_UNLOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{336 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a78501d1b2ed8ddf3b64df0394809fa95}\label{uart_8c_a78501d1b2ed8ddf3b64df0394809fa95}} 
+\index{uart.c@{uart.c}!uart\_clear\_screen@{uart\_clear\_screen}}
+\index{uart\_clear\_screen@{uart\_clear\_screen}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_clear\_screen()}{uart\_clear\_screen()}}
+{\footnotesize\ttfamily void uart\+\_\+clear\+\_\+screen (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Clears the screen. 
+
+On 80x25 uart screen, this function will print 80 line feeds and thus, clear the screen. 
+
+Definition at line 398 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{399 \{}
+\DoxyCodeLine{400     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} i;}
+\DoxyCodeLine{401 }
+\DoxyCodeLine{402     \textcolor{comment}{/* On 80x25 screen, just print 25 line feed. */}}
+\DoxyCodeLine{403     \textcolor{keywordflow}{for}(i = 0; i < 25; ++i)}
+\DoxyCodeLine{404     \{}
+\DoxyCodeLine{405         \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{charliteral}{'\(\backslash\)n'});}
+\DoxyCodeLine{406     \}}
+\DoxyCodeLine{407 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a78501d1b2ed8ddf3b64df0394809fa95_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_ab15d3cac777266e01b336b56ea841442}\label{uart_8c_ab15d3cac777266e01b336b56ea841442}} 
+\index{uart.c@{uart.c}!uart\_get\_driver@{uart\_get\_driver}}
+\index{uart\_get\_driver@{uart\_get\_driver}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_get\_driver()}{uart\_get\_driver()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}}$\ast$ uart\+\_\+get\+\_\+driver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the UART graphic driver. 
+
+Returns a constant handle to the UART graphic driver.
+
+\begin{DoxyReturn}{Returns}
+A constant handle to the UART graphic driver is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 465 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{466 \{}
+\DoxyCodeLine{467     \textcolor{keywordflow}{return} \&\mbox{\hyperlink{uart_8c_a6e287c3ecf1c1048b39754aa904a7ade}{uart\_text\_driver}};}
+\DoxyCodeLine{468 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=266pt]{uart_8c_ab15d3cac777266e01b336b56ea841442_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a0c0ca72359ddf28dcd15900dfba19343}\label{uart_8c_a0c0ca72359ddf28dcd15900dfba19343}} 
+\index{uart.c@{uart.c}!uart\_init@{uart\_init}}
+\index{uart\_init@{uart\_init}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_init()}{uart\_init()}}
+{\footnotesize\ttfamily void uart\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the uart driver structures and hardware. 
+
+Initializes all the uart communication ports supported by the driver and ennables the interrupt related to the uart hardware. 
+
+Definition at line 339 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{340 \{}
+\DoxyCodeLine{341     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} i;}
+\DoxyCodeLine{342 }
+\DoxyCodeLine{343     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_UART\_INIT\_START, 0);}
+\DoxyCodeLine{344 }
+\DoxyCodeLine{345     \textcolor{comment}{/* Init all comm ports */}}
+\DoxyCodeLine{346     \textcolor{keywordflow}{for}(i = 0; i < 4; ++i)}
+\DoxyCodeLine{347     \{}
+\DoxyCodeLine{348         \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  attr;}
+\DoxyCodeLine{349         \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} com;}
+\DoxyCodeLine{350 }
+\DoxyCodeLine{351         \textcolor{keywordflow}{if}(i == 0)}
+\DoxyCodeLine{352         \{}
+\DoxyCodeLine{353             com = \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}};}
+\DoxyCodeLine{354         \}}
+\DoxyCodeLine{355         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 1)}
+\DoxyCodeLine{356         \{}
+\DoxyCodeLine{357             com = \mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\_COM2\_BASE}};}
+\DoxyCodeLine{358         \}}
+\DoxyCodeLine{359         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 2)}
+\DoxyCodeLine{360         \{}
+\DoxyCodeLine{361             com = \mbox{\hyperlink{uart_8c_aa468a88b2acccde9bbf5e401f5d88eaf}{SERIAL\_COM3\_BASE}};}
+\DoxyCodeLine{362         \}}
+\DoxyCodeLine{363         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(i == 3)}
+\DoxyCodeLine{364         \{}
+\DoxyCodeLine{365             com = \mbox{\hyperlink{uart_8c_acebbaec5ade4a12ee12ff0587a86ed94}{SERIAL\_COM4\_BASE}};}
+\DoxyCodeLine{366         \}}
+\DoxyCodeLine{367         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{368         \{}
+\DoxyCodeLine{369             com = \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}};}
+\DoxyCodeLine{370         \}}
+\DoxyCodeLine{371 }
+\DoxyCodeLine{372         attr = \mbox{\hyperlink{uart_8c_ab7d8c6b3660b431109c909755e457c26}{SERIAL\_DATA\_LENGTH\_8}} | \mbox{\hyperlink{uart_8c_a1e1822ba21f5e720c09e1712576413f4}{SERIAL\_STOP\_BIT\_1}};}
+\DoxyCodeLine{373 }
+\DoxyCodeLine{374         \textcolor{comment}{/* Enable interrupt on recv for COM1 and COM2 */}}
+\DoxyCodeLine{375         \textcolor{keywordflow}{if}(com == \mbox{\hyperlink{uart_8c_a34365e17c472073dfba3681bb38054f3}{SERIAL\_COM1\_BASE}} || com == \mbox{\hyperlink{uart_8c_a1c2c6ce60cb9ef295cd0272b59196f82}{SERIAL\_COM2\_BASE}})}
+\DoxyCodeLine{376         \{}
+\DoxyCodeLine{377             \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x01, \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\_DATA\_PORT\_2}}(com));}
+\DoxyCodeLine{378         \}}
+\DoxyCodeLine{379         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{380         \{}
+\DoxyCodeLine{381             \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x00, \mbox{\hyperlink{uart_8c_a8d60baa849072d23cd603ae759305324}{SERIAL\_DATA\_PORT\_2}}(com));}
+\DoxyCodeLine{382         \}}
+\DoxyCodeLine{383 }
+\DoxyCodeLine{384         \textcolor{comment}{/* Init line */}}
+\DoxyCodeLine{385         \mbox{\hyperlink{uart_8c_ab27fb7ed76ef2558aa9141e6df6640d1}{\_set\_baudrate}}(\mbox{\hyperlink{uart_8c_a34f7428f2e4db04bbab3e38bbb45842fa6e697dd0f979fbfd5ab8e8fc9518a5c8}{BAUDRATE\_115200}}, com);}
+\DoxyCodeLine{386         \mbox{\hyperlink{uart_8c_ad93f2889448039719ac493691f4af6e3}{\_set\_line}}(attr, com);}
+\DoxyCodeLine{387         \mbox{\hyperlink{uart_8c_a27adedb5a1378a7d12e083f805b22543}{\_set\_buffer}}(0xC0 | \mbox{\hyperlink{uart_8c_ac9e29bed47741802d3a895b7d43e3962}{SERIAL\_ENABLE\_FIFO}} | \mbox{\hyperlink{uart_8c_a2a60628f88ee6bc4c4259f29a0bd770d}{SERIAL\_CLEAR\_RECV\_FIFO}} |}
+\DoxyCodeLine{388                     \mbox{\hyperlink{uart_8c_af80ebedb3b15dbd522485b6b69530721}{SERIAL\_CLEAR\_SEND\_FIFO}} | \mbox{\hyperlink{uart_8c_a7018e1e74723032a45448e320dd89936}{SERIAL\_FIFO\_DEPTH\_14}}, com);}
+\DoxyCodeLine{389 }
+\DoxyCodeLine{390         \textcolor{comment}{/* Enable interrupt */}}
+\DoxyCodeLine{391         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x0B, \mbox{\hyperlink{uart_8c_a0945f52a518604a02f87e33a10a59df7}{SERIAL\_MODEM\_COMMAND\_PORT}}(com));}
+\DoxyCodeLine{392     \}}
+\DoxyCodeLine{393 }
+\DoxyCodeLine{394     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_UART\_INIT\_END, 0);}
+\DoxyCodeLine{395     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a1e5c4ffc9edc982d143d596fe5de7d85}{SERIAL\_DEBUG\_ENABLED}}, \mbox{\hyperlink{uart_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}UART Initialized"{}});}
+\DoxyCodeLine{396 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a0c0ca72359ddf28dcd15900dfba19343_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=232pt]{uart_8c_a0c0ca72359ddf28dcd15900dfba19343_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d}\label{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d}} 
+\index{uart.c@{uart.c}!uart\_put\_char@{uart\_put\_char}}
+\index{uart\_put\_char@{uart\_put\_char}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_put\_char()}{uart\_put\_char()}}
+{\footnotesize\ttfamily void uart\+\_\+put\+\_\+char (\begin{DoxyParamCaption}\item[{const char}]{character }\end{DoxyParamCaption})}
+
+
+
+Write the character given as patameter on the debug port. 
+
+The function will output the character given as parameter on the debug port. This call is blocking until the data has been sent to the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em character} & The character to write to the uart port. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 450 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{451 \{}
+\DoxyCodeLine{452     \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, character);}
+\DoxyCodeLine{453 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a99bf7343080342666bd756f9bf43e57b}\label{uart_8c_a99bf7343080342666bd756f9bf43e57b}} 
+\index{uart.c@{uart.c}!uart\_put\_string@{uart\_put\_string}}
+\index{uart\_put\_string@{uart\_put\_string}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_put\_string()}{uart\_put\_string()}}
+{\footnotesize\ttfamily void uart\+\_\+put\+\_\+string (\begin{DoxyParamCaption}\item[{const char $\ast$}]{string }\end{DoxyParamCaption})}
+
+
+
+Write the string given as patameter on the debug port. 
+
+The function will output the data given as parameter on the debug port. This call is blocking until the data has been sent to the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em string} & The string to write to the uart port.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+string must be NULL terminated. 
+\end{DoxyWarning}
+
+
+Definition at line 441 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{442 \{}
+\DoxyCodeLine{443     \textcolor{keywordtype}{size\_t} i;}
+\DoxyCodeLine{444     \textcolor{keywordflow}{for}(i = 0; i < \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(\textcolor{keywordtype}{string}); ++i)}
+\DoxyCodeLine{445     \{}
+\DoxyCodeLine{446         \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{keywordtype}{string}[i]);}
+\DoxyCodeLine{447     \}}
+\DoxyCodeLine{448 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a99bf7343080342666bd756f9bf43e57b_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a58f7b6ef9b4e43d05d53758b91d9ae58}\label{uart_8c_a58f7b6ef9b4e43d05d53758b91d9ae58}} 
+\index{uart.c@{uart.c}!uart\_read@{uart\_read}}
+\index{uart\_read@{uart\_read}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_read()}{uart\_read()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} uart\+\_\+read (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{port }\end{DoxyParamCaption})}
+
+
+
+Reads a byte from the uart port given as parameter. 
+
+The function will read the input data on the selected port. This call is blocking until the data has been received by the uart port controler.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The port on which the data should be read.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The byte that has been read on the uart port. 
+\end{DoxyReturn}
+
+
+Definition at line 424 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{425 \{}
+\DoxyCodeLine{426     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  val;}
+\DoxyCodeLine{427 }
+\DoxyCodeLine{428     \textcolor{comment}{/* Wait for data to be received */}}
+\DoxyCodeLine{429     \mbox{\hyperlink{i386_2includes_2critical_8h_afc18a2eb9d5b2afb44672643979d1b7b}{KERNEL\_SPINLOCK\_LOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{430 }
+\DoxyCodeLine{431     \textcolor{keywordflow}{while}(\mbox{\hyperlink{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5}{uart\_received}}(port) == 0)\{\}}
+\DoxyCodeLine{432 }
+\DoxyCodeLine{433     \textcolor{comment}{/* Read available data on port */}}
+\DoxyCodeLine{434     val = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{uart_8c_a8351903aa481452402cad5df0a8aa26b}{SERIAL\_DATA\_PORT}}(port));}
+\DoxyCodeLine{435 }
+\DoxyCodeLine{436     \mbox{\hyperlink{i386_2includes_2critical_8h_a798aa26dc1e0955043891f3fd05ae09d}{KERNEL\_SPINLOCK\_UNLOCK}}(\mbox{\hyperlink{uart_8c_a6c69075306338c5ec690885f06841bf6}{uart\_lock}});}
+\DoxyCodeLine{437 }
+\DoxyCodeLine{438     \textcolor{keywordflow}{return} val;}
+\DoxyCodeLine{439 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a58f7b6ef9b4e43d05d53758b91d9ae58_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5}\label{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5}} 
+\index{uart.c@{uart.c}!uart\_received@{uart\_received}}
+\index{uart\_received@{uart\_received}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_received()}{uart\_received()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} uart\+\_\+received (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{port }\end{DoxyParamCaption})}
+
+
+
+Tells if the data on the uart port are ready to be read. 
+
+The function will returns 1 if a data was received by the uart port referenced by the port given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The uart port on which the test should be executed.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE is returned if data can be read from the port. FALSE is returned otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 455 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{456 \{}
+\DoxyCodeLine{457     \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\_t}}   ret;}
+\DoxyCodeLine{458 }
+\DoxyCodeLine{459     \textcolor{comment}{/* Read on LINE status port */}}
+\DoxyCodeLine{460     ret = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{uart_8c_af50c4f78311a57efbc1cfa3c694b1e77}{SERIAL\_LINE\_STATUS\_PORT}}(port)) \& 0x01;}
+\DoxyCodeLine{461 }
+\DoxyCodeLine{462     \textcolor{keywordflow}{return} ret;}
+\DoxyCodeLine{463 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=258pt]{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=262pt]{uart_8c_a9c7bbcd9f20468c6ce7cfb05f954f0b5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{uart_8c_a06f97feee6f014ed63518f7d90ef22ad}\label{uart_8c_a06f97feee6f014ed63518f7d90ef22ad}} 
+\index{uart.c@{uart.c}!uart\_scroll@{uart\_scroll}}
+\index{uart\_scroll@{uart\_scroll}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_scroll()}{uart\_scroll()}}
+{\footnotesize\ttfamily void uart\+\_\+scroll (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0}{SCROLL\+\_\+\+DIRECTION\+\_\+E}}}]{direction,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{lines\+\_\+count }\end{DoxyParamCaption})}
+
+
+
+Scrolls the screen downn. 
+
+Scrolls the screen by printing lines feed to the uart. This function can only be called with parameter direction to SCROLL\+\_\+\+DOWN. Otherwise, this function has no effect.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em direction} & Should always be SCROLL\+\_\+\+DOWN.\\
+\hline
+\mbox{\texttt{ in}}  & {\em lines\+\_\+count} & The amount of lines to scroll down. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 409 of file uart.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{411 \{}
+\DoxyCodeLine{412     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} i;}
+\DoxyCodeLine{413 }
+\DoxyCodeLine{414     \textcolor{keywordflow}{if}(direction == \mbox{\hyperlink{console_8h_a231275c56ad6d89801f3399e93c185d0a9d522bb191bf21bcaace5569ec49475d}{SCROLL\_DOWN}})}
+\DoxyCodeLine{415     \{}
+\DoxyCodeLine{416         \textcolor{comment}{/* Just print lines\_count line feed. */}}
+\DoxyCodeLine{417         \textcolor{keywordflow}{for}(i = 0; i < lines\_count; ++i)}
+\DoxyCodeLine{418         \{}
+\DoxyCodeLine{419             \mbox{\hyperlink{uart_8c_a2770f3ec334410d2a0e4e9cd22405c7f}{\_uart\_write}}(\mbox{\hyperlink{uart_8c_a15e96ed0b7a1a56e593f838c424e1635}{SERIAL\_OUTPUT\_PORT}}, \textcolor{charliteral}{'\(\backslash\)n'});}
+\DoxyCodeLine{420         \}}
+\DoxyCodeLine{421     \}}
+\DoxyCodeLine{422 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{uart_8c_a06f97feee6f014ed63518f7d90ef22ad_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{uart_8c_a6c69075306338c5ec690885f06841bf6}\label{uart_8c_a6c69075306338c5ec690885f06841bf6}} 
+\index{uart.c@{uart.c}!uart\_lock@{uart\_lock}}
+\index{uart\_lock@{uart\_lock}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_lock}{uart\_lock}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} uart\+\_\+lock = \mbox{\hyperlink{x86__64_2includes_2critical_8h_ac7b5bae0ac6bf9643c96307b6443349e}{KERNEL\+\_\+\+SPINLOCK\+\_\+\+INIT\+\_\+\+VALUE}}\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Concurrency lock for the uart driver. 
+
+
+
+Definition at line 238 of file uart.\+c.
+
+\mbox{\Hypertarget{uart_8c_a6e287c3ecf1c1048b39754aa904a7ade}\label{uart_8c_a6e287c3ecf1c1048b39754aa904a7ade}} 
+\index{uart.c@{uart.c}!uart\_text\_driver@{uart\_text\_driver}}
+\index{uart\_text\_driver@{uart\_text\_driver}!uart.c@{uart.c}}
+\doxysubsubsection{\texorpdfstring{uart\_text\_driver}{uart\_text\_driver}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__console__driver__t}{kernel\+\_\+console\+\_\+driver\+\_\+t}} uart\+\_\+text\+\_\+driver\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{    .clear\_screen           = \mbox{\hyperlink{uart_8c_a78501d1b2ed8ddf3b64df0394809fa95}{uart\_clear\_screen}},}
+\DoxyCodeLine{    .put\_cursor\_at          = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .save\_cursor            = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .restore\_cursor         = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .scroll                 = \mbox{\hyperlink{uart_8c_a06f97feee6f014ed63518f7d90ef22ad}{uart\_scroll}},}
+\DoxyCodeLine{    .set\_color\_scheme       = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .save\_color\_scheme      = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .put\_string             = \mbox{\hyperlink{uart_8c_a99bf7343080342666bd756f9bf43e57b}{uart\_put\_string}},}
+\DoxyCodeLine{    .put\_char               = \mbox{\hyperlink{uart_8c_a8cabbb5557ab59792c7d3b94bab8f44d}{uart\_put\_char}},}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Serial text driver instance. 
+
+
+
+Definition at line 224 of file uart.\+c.
+

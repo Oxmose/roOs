@@ -1,0 +1,86 @@
+\hypertarget{udivmoddi4_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/udivmoddi4.c File Reference}
+\label{udivmoddi4_8c}\index{Source/Kernel/Libs/libc/src/udivmoddi4.c@{Source/Kernel/Libs/libc/src/udivmoddi4.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+Include dependency graph for udivmoddi4.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=259pt]{udivmoddi4_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{udivmoddi4_8c_ab0687486cd7a7f90c78a8e95664a8d2a}{\+\_\+\+\_\+udivmoddi4}} (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} num, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} den, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} $\ast$rem\+\_\+p)
+\begin{DoxyCompactList}\small\item\em This function returns the quotient of the unsigned division of num and den. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{udivmoddi4_8c_ab0687486cd7a7f90c78a8e95664a8d2a}\label{udivmoddi4_8c_ab0687486cd7a7f90c78a8e95664a8d2a}} 
+\index{udivmoddi4.c@{udivmoddi4.c}!\_\_udivmoddi4@{\_\_udivmoddi4}}
+\index{\_\_udivmoddi4@{\_\_udivmoddi4}!udivmoddi4.c@{udivmoddi4.c}}
+\doxysubsubsection{\texorpdfstring{\_\_udivmoddi4()}{\_\_udivmoddi4()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+\+\_\+udivmoddi4 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{num,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{den,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} $\ast$}]{rem\+\_\+p }\end{DoxyParamCaption})}
+
+
+
+This function returns the quotient of the unsigned division of num and den. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em num} & The numerator. \\
+\hline
+\mbox{\texttt{ in}}  & {\em den} & The denominator. \\
+\hline
+\mbox{\texttt{ out}}  & {\em rem\+\_\+p} & The reminder buffer.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The quotient of the unsigned division of num and den is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 83 of file udivmoddi4.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{84 \{}
+\DoxyCodeLine{85     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} quot = 0;}
+\DoxyCodeLine{86     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} qbit = 1;}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88     \textcolor{keywordflow}{if}(den == 0)}
+\DoxyCodeLine{89     \{}
+\DoxyCodeLine{90         \textcolor{comment}{/* Force divide by 0 */}}
+\DoxyCodeLine{91         \textcolor{keywordflow}{return} 1 / ((unsigned)den);}
+\DoxyCodeLine{92     \}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94     \textcolor{comment}{/* Left-\/justify denominator and count shift */}}
+\DoxyCodeLine{95     \textcolor{keywordflow}{while}((\mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\_t}})den >= 0)}
+\DoxyCodeLine{96     \{}
+\DoxyCodeLine{97         den <<= 1;}
+\DoxyCodeLine{98         qbit <<= 1;}
+\DoxyCodeLine{99     \}}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{101     \textcolor{keywordflow}{while}(qbit)}
+\DoxyCodeLine{102     \{}
+\DoxyCodeLine{103         \textcolor{keywordflow}{if}(den <= num)}
+\DoxyCodeLine{104         \{}
+\DoxyCodeLine{105             num -\/= den;}
+\DoxyCodeLine{106             quot += qbit;}
+\DoxyCodeLine{107         \}}
+\DoxyCodeLine{108         den >>= 1;}
+\DoxyCodeLine{109         qbit >>= 1;}
+\DoxyCodeLine{110     \}}
+\DoxyCodeLine{111 }
+\DoxyCodeLine{112     \textcolor{keywordflow}{if}(rem\_p)}
+\DoxyCodeLine{113     \{}
+\DoxyCodeLine{114         *rem\_p = num;}
+\DoxyCodeLine{115     \}}
+\DoxyCodeLine{116 }
+\DoxyCodeLine{117     \textcolor{keywordflow}{return} quot;}
+\DoxyCodeLine{118 \}}
+
+\end{DoxyCode}

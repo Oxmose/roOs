@@ -1,0 +1,394 @@
+\hypertarget{exceptions_8c}{}\doxysection{Source/\+Kernel/\+Core/src/exceptions.c File Reference}
+\label{exceptions_8c}\index{Source/Kernel/Core/src/exceptions.c@{Source/Kernel/Core/src/exceptions.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$cpu\+\_\+interrupt.\+h$>$}\newline
+{\ttfamily \#include $<$panic.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$critical.\+h$>$}\newline
+{\ttfamily \#include $<$scheduler.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+{\ttfamily \#include $<$exceptions.\+h$>$}\newline
+Include dependency graph for exceptions.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{exceptions_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{exceptions_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}EXCEPTIONS\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module\textquotesingle{}s name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{exceptions_8c_a14aa943f22c6a307f7470100b74514de}{EXC\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Assert macro used by the exception manager to ensure correctness of execution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{exceptions_8c_ab921cec722d4a24c214d66f319be9b4e}{\+\_\+div\+\_\+by\+\_\+zero\+\_\+handler}} (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$\mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\+\_\+thread}})
+\begin{DoxyCompactList}\small\item\em Handle a division by zero exception. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{exceptions_8c_a7d532784036e4df9ccf9569e5b5f2cdb}{kernel\+\_\+exception\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the exception manager. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{exceptions_8c_ad0304a6d576884639fa6a7e01ef70bc6}{kernel\+\_\+exception\+\_\+register\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} exception\+\_\+line, \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}} handler)
+\begin{DoxyCompactList}\small\item\em Registers a new exception handler for the desired exception line. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{exceptions_8c_a84ef6cadbaf90be7c12b6ea41de55a63}{kernel\+\_\+exception\+\_\+remove\+\_\+handler}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} exception\+\_\+line)
+\begin{DoxyCompactList}\small\item\em Unregisters a new exception handler for the desired exception line. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}} \mbox{\hyperlink{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\+\_\+interrupt\+\_\+handlers}} \mbox{[}\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}{INT\+\_\+\+ENTRY\+\_\+\+COUNT}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Stores the handlers for each exception, defined in \mbox{\hyperlink{exceptions_8h}{exceptions.\+h}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{exceptions_8c_a14aa943f22c6a307f7470100b74514de}\label{exceptions_8c_a14aa943f22c6a307f7470100b74514de}} 
+\index{exceptions.c@{exceptions.c}!EXC\_ASSERT@{EXC\_ASSERT}}
+\index{EXC\_ASSERT@{EXC\_ASSERT}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{EXC\_ASSERT}{EXC\_ASSERT}}
+{\footnotesize\ttfamily \#define EXC\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                      \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \mbox{\hyperlink{exceptions_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});               \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Assert macro used by the exception manager to ensure correctness of execution. 
+
+Assert macro used by the exception manager to ensure correctness of execution. Due to the critical nature of the exception manager, any error generates a kernel panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition that should be true. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to display in case of kernel panic. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code to use in case of kernel panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 75 of file exceptions.\+c.
+
+\mbox{\Hypertarget{exceptions_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{exceptions_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{exceptions.c@{exceptions.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}EXCEPTIONS\char`\"{}}
+
+
+
+Current module\textquotesingle{}s name. 
+
+
+
+Definition at line 51 of file exceptions.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{exceptions_8c_ab921cec722d4a24c214d66f319be9b4e}\label{exceptions_8c_ab921cec722d4a24c214d66f319be9b4e}} 
+\index{exceptions.c@{exceptions.c}!\_div\_by\_zero\_handler@{\_div\_by\_zero\_handler}}
+\index{\_div\_by\_zero\_handler@{\_div\_by\_zero\_handler}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{\_div\_by\_zero\_handler()}{\_div\_by\_zero\_handler()}}
+{\footnotesize\ttfamily static void \+\_\+div\+\_\+by\+\_\+zero\+\_\+handler (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$}]{current\+\_\+thread }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Handle a division by zero exception. 
+
+Handles a divide by zero exception raised by the cpu. The thread will just be killed.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \mbox{[}in-\/out\mbox{]}} & current\+\_\+thread The current thread at the moment of the division by zero. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 115 of file exceptions.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{116 \{}
+\DoxyCodeLine{117     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_id;}
+\DoxyCodeLine{118 }
+\DoxyCodeLine{119     int\_id = \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a92235045272df93064f1f507b15d88a4}{v\_cpu}}.\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}}.\mbox{\hyperlink{structint__context__t_a3368558e1a109ce19d039561903f5f41}{int\_id}};}
+\DoxyCodeLine{120 }
+\DoxyCodeLine{121     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_DIV\_BY\_ZERO, 1, \mbox{\hyperlink{scheduler_8c_af3d9423ef885ff1c4907c1e8cd2639a3}{current\_thread}}-\/>\mbox{\hyperlink{structkernel__thread__t_a50eaf778d1569b701389e0794bbd39d3}{tid}});}
+\DoxyCodeLine{122 }
+\DoxyCodeLine{123     \textcolor{comment}{/* If the exception line is not the divide by zero exception */}}
+\DoxyCodeLine{124     \mbox{\hyperlink{exceptions_8c_a14aa943f22c6a307f7470100b74514de}{EXC\_ASSERT}}(int\_id != \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ae2771aa37ad5a6df615c271565a9e9de}{DIV\_BY\_ZERO\_LINE}},}
+\DoxyCodeLine{125                \textcolor{stringliteral}{"{}Divide by zero invocated with wrong exception line."{}},}
+\DoxyCodeLine{126                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}});}
+\DoxyCodeLine{127 }
+\DoxyCodeLine{128     \textcolor{comment}{/* TODO: Kill the process */}}
+\DoxyCodeLine{129     \mbox{\hyperlink{i386_2includes_2panic_8h_a408d04d869410941ef4a33c54b355c4b}{PANIC}}(\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}}, \mbox{\hyperlink{exceptions_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Div by zero in kernel"{}}, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});}
+\DoxyCodeLine{130 }
+\DoxyCodeLine{131 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{exceptions_8c_ab921cec722d4a24c214d66f319be9b4e_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{exceptions_8c_a7d532784036e4df9ccf9569e5b5f2cdb}\label{exceptions_8c_a7d532784036e4df9ccf9569e5b5f2cdb}} 
+\index{exceptions.c@{exceptions.c}!kernel\_exception\_init@{kernel\_exception\_init}}
+\index{kernel\_exception\_init@{kernel\_exception\_init}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_exception\_init()}{kernel\_exception\_init()}}
+{\footnotesize\ttfamily void kernel\+\_\+exception\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the exception manager. 
+
+Blanks the handlers memory and initialize the first 32 exceptions to catch exceptions. 
+
+Definition at line 133 of file exceptions.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{134 \{}
+\DoxyCodeLine{135     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{136 }
+\DoxyCodeLine{137     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_INIT\_START, 0);}
+\DoxyCodeLine{138 }
+\DoxyCodeLine{139     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af2730336ef2d92f9f1089542f0e1de11}{EXCEPTIONS\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}EXCEPTIONS"{}},}
+\DoxyCodeLine{140                  \textcolor{stringliteral}{"{}Initializing exception manager."{}});}
+\DoxyCodeLine{141 }
+\DoxyCodeLine{142     err = \mbox{\hyperlink{exceptions_8c_ad0304a6d576884639fa6a7e01ef70bc6}{kernel\_exception\_register\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ae2771aa37ad5a6df615c271565a9e9de}{DIV\_BY\_ZERO\_LINE}},}
+\DoxyCodeLine{143                                             \mbox{\hyperlink{exceptions_8c_ab921cec722d4a24c214d66f319be9b4e}{\_div\_by\_zero\_handler}});}
+\DoxyCodeLine{144     \mbox{\hyperlink{exceptions_8c_a14aa943f22c6a307f7470100b74514de}{EXC\_ASSERT}}(err == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}},}
+\DoxyCodeLine{145                \textcolor{stringliteral}{"{}Could not initialize exception manager."{}},}
+\DoxyCodeLine{146                err);}
+\DoxyCodeLine{147 }
+\DoxyCodeLine{148     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_abb26d23cbffd4216ccd9857dca56c7cd}{exception\_test}}, \mbox{\hyperlink{test__list_8h_ac3bb4c72b9d0fea9fe8b98b00c2fc2c2}{TEST\_EXCEPTION\_ENABLED}});}
+\DoxyCodeLine{149 }
+\DoxyCodeLine{150     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_INIT\_END, 0);}
+\DoxyCodeLine{151 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{exceptions_8c_a7d532784036e4df9ccf9569e5b5f2cdb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=296pt]{exceptions_8c_a7d532784036e4df9ccf9569e5b5f2cdb_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{exceptions_8c_ad0304a6d576884639fa6a7e01ef70bc6}\label{exceptions_8c_ad0304a6d576884639fa6a7e01ef70bc6}} 
+\index{exceptions.c@{exceptions.c}!kernel\_exception\_register\_handler@{kernel\_exception\_register\_handler}}
+\index{kernel\_exception\_register\_handler@{kernel\_exception\_register\_handler}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_exception\_register\_handler()}{kernel\_exception\_register\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+exception\+\_\+register\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{exception\+\_\+line,  }\item[{\mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}}}]{handler }\end{DoxyParamCaption})}
+
+
+
+Registers a new exception handler for the desired exception line. 
+
+Registers a custom exception handler to be executed. The exception line must be greater or equal to the minimal authorized custom exception line and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em exception\+\_\+line} & The exception line to attach the handler to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em handler} & The handler for the desired exception.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the desired exception line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the pointer to the handler is NULL.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+ALREADY\+\_\+\+REGISTERED is returned if a handler is already registered for this exception line. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 153 of file exceptions.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{155 \{}
+\DoxyCodeLine{156     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{157 }
+\DoxyCodeLine{158 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{159     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_START, 3,}
+\DoxyCodeLine{160                        exception\_line,}
+\DoxyCodeLine{161                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{162                        (uintptr\_t)handler >> 32);}
+\DoxyCodeLine{163 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{164     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_START, 3,}
+\DoxyCodeLine{165                        exception\_line,}
+\DoxyCodeLine{166                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{167                        (uintptr\_t)0);}
+\DoxyCodeLine{168 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{169 }
+\DoxyCodeLine{170     \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}})exception\_line < \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a53288d4fa0188dba0c32e1d3b9c0d7ed}{MIN\_EXCEPTION\_LINE}} ||}
+\DoxyCodeLine{171        exception\_line > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a651271d7fcc56ee5562acca2878d9984}{MAX\_EXCEPTION\_LINE}})}
+\DoxyCodeLine{172     \{}
+\DoxyCodeLine{173         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_END, 2,}
+\DoxyCodeLine{174                            exception\_line,}
+\DoxyCodeLine{175                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}});}
+\DoxyCodeLine{176 }
+\DoxyCodeLine{177         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}};}
+\DoxyCodeLine{178     \}}
+\DoxyCodeLine{179 }
+\DoxyCodeLine{180     \textcolor{keywordflow}{if}(handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{181     \{}
+\DoxyCodeLine{182         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_END, 2,}
+\DoxyCodeLine{183                            exception\_line,}
+\DoxyCodeLine{184                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{185 }
+\DoxyCodeLine{186         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{187     \}}
+\DoxyCodeLine{188 }
+\DoxyCodeLine{189     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{190 }
+\DoxyCodeLine{191     \textcolor{keywordflow}{if}(\mbox{\hyperlink{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[exception\_line] != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{192     \{}
+\DoxyCodeLine{193         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{194         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_END, 2,}
+\DoxyCodeLine{195                            exception\_line,}
+\DoxyCodeLine{196                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a79b3a233dd01b2244bcc0b97084598e2}{OS\_ERR\_INTERRUPT\_ALREADY\_REGISTERED}});}
+\DoxyCodeLine{197 }
+\DoxyCodeLine{198         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a79b3a233dd01b2244bcc0b97084598e2}{OS\_ERR\_INTERRUPT\_ALREADY\_REGISTERED}};}
+\DoxyCodeLine{199     \}}
+\DoxyCodeLine{200 }
+\DoxyCodeLine{201     \mbox{\hyperlink{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[exception\_line] = handler;}
+\DoxyCodeLine{202 }
+\DoxyCodeLine{203     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af2730336ef2d92f9f1089542f0e1de11}{EXCEPTIONS\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}EXCEPTIONS"{}},}
+\DoxyCodeLine{204                  \textcolor{stringliteral}{"{}Added exception \%u handler at 0x\%p"{}}, exception\_line, handler);}
+\DoxyCodeLine{205 }
+\DoxyCodeLine{206     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REGISTER\_END, 2,}
+\DoxyCodeLine{207                        exception\_line,}
+\DoxyCodeLine{208                        \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{211     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{212 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{exceptions_8c_ad0304a6d576884639fa6a7e01ef70bc6_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{exceptions_8c_a84ef6cadbaf90be7c12b6ea41de55a63}\label{exceptions_8c_a84ef6cadbaf90be7c12b6ea41de55a63}} 
+\index{exceptions.c@{exceptions.c}!kernel\_exception\_remove\_handler@{kernel\_exception\_remove\_handler}}
+\index{kernel\_exception\_remove\_handler@{kernel\_exception\_remove\_handler}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_exception\_remove\_handler()}{kernel\_exception\_remove\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} kernel\+\_\+exception\+\_\+remove\+\_\+handler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{exception\+\_\+line }\end{DoxyParamCaption})}
+
+
+
+Unregisters a new exception handler for the desired exception line. 
+
+Unregisters a custom exception handler to be executed. The exception line must be greater or equal to the minimal authorized custom exception line and less than the maximal one.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em exception\+\_\+line} & The exception line to deattach the handler from.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the desired exception line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the exception line has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 214 of file exceptions.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{215 \{}
+\DoxyCodeLine{216     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{217 }
+\DoxyCodeLine{218     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REMOVE\_START, 1,}
+\DoxyCodeLine{219                        exception\_line);}
+\DoxyCodeLine{220 }
+\DoxyCodeLine{221     \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}})exception\_line < \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a53288d4fa0188dba0c32e1d3b9c0d7ed}{MIN\_EXCEPTION\_LINE}} ||}
+\DoxyCodeLine{222        exception\_line > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a651271d7fcc56ee5562acca2878d9984}{MAX\_EXCEPTION\_LINE}})}
+\DoxyCodeLine{223     \{}
+\DoxyCodeLine{224         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REMOVE\_END, 2,}
+\DoxyCodeLine{225                            exception\_line,}
+\DoxyCodeLine{226                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}});}
+\DoxyCodeLine{227 }
+\DoxyCodeLine{228         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078}{OR\_ERR\_UNAUTHORIZED\_INTERRUPT\_LINE}};}
+\DoxyCodeLine{229     \}}
+\DoxyCodeLine{230 }
+\DoxyCodeLine{231     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{232 }
+\DoxyCodeLine{233     \textcolor{keywordflow}{if}(\mbox{\hyperlink{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[exception\_line] == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{234     \{}
+\DoxyCodeLine{235         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{236         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REMOVE\_END, 2,}
+\DoxyCodeLine{237                            exception\_line,}
+\DoxyCodeLine{238                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aed3ac95521556e0ab713bff93f8d7666}{OS\_ERR\_INTERRUPT\_NOT\_REGISTERED}});}
+\DoxyCodeLine{239 }
+\DoxyCodeLine{240         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aed3ac95521556e0ab713bff93f8d7666}{OS\_ERR\_INTERRUPT\_NOT\_REGISTERED}};}
+\DoxyCodeLine{241     \}}
+\DoxyCodeLine{242 }
+\DoxyCodeLine{243     \mbox{\hyperlink{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}{kernel\_interrupt\_handlers}}[exception\_line] = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{244 }
+\DoxyCodeLine{245     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af2730336ef2d92f9f1089542f0e1de11}{EXCEPTIONS\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}EXCEPTIONS"{}},}
+\DoxyCodeLine{246                  \textcolor{stringliteral}{"{}Removed exception \%u handle"{}}, exception\_line);}
+\DoxyCodeLine{247 }
+\DoxyCodeLine{248     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_EXCEPTION\_REMOVE\_END, 2,}
+\DoxyCodeLine{249                        exception\_line,}
+\DoxyCodeLine{250                        \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{251 }
+\DoxyCodeLine{252     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{253 }
+\DoxyCodeLine{254     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{255 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}\label{exceptions_8c_ace41b44f2f6f438a21c860f6c990b693}} 
+\index{exceptions.c@{exceptions.c}!kernel\_interrupt\_handlers@{kernel\_interrupt\_handlers}}
+\index{kernel\_interrupt\_handlers@{kernel\_interrupt\_handlers}!exceptions.c@{exceptions.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_interrupt\_handlers}{kernel\_interrupt\_handlers}}
+{\footnotesize\ttfamily \mbox{\hyperlink{interrupts_8h_a57b88811dcd4046edffebe04d91301ff}{custom\+\_\+handler\+\_\+t}} kernel\+\_\+interrupt\+\_\+handlers\mbox{[}\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}{INT\+\_\+\+ENTRY\+\_\+\+COUNT}}\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+Stores the handlers for each exception, defined in \mbox{\hyperlink{exceptions_8h}{exceptions.\+h}}. 
+
+Stores the handlers for each exception, defined in \mbox{\hyperlink{exceptions_8h}{exceptions.\+h}}. 
+
+Definition at line 75 of file interrupts.\+c.
+

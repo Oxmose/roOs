@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['id_2820',['id',['../structphandle__t.html#abaabdc509cdaba7df9f56c6c76f3ae19',1,'phandle_t']]],
+  ['init_2821',['init',['../kheap_8c.html#ada161ed38a9174ff5b3a4f10b10fd238',1,'kheap.c']]],
+  ['int_5fcontext_2822',['int_context',['../structvirtual__cpu__t.html#aeb1dd1bf30ae614465a4221717e3972a',1,'virtual_cpu_t']]],
+  ['int_5fid_2823',['int_id',['../structint__context__t.html#a3368558e1a109ce19d039561903f5f41',1,'int_context_t::int_id()'],['../structint__context__t.html#a02e903330a08c23e5acd08adaf605045',1,'int_context_t::int_id()']]],
+  ['int_5fstack_2824',['int_stack',['../structkernel__thread__t.html#a5df979d8d0c815cdb40e3bcd3c4c4295',1,'kernel_thread_t']]],
+  ['int_5fstack_5fsize_2825',['int_stack_size',['../structkernel__thread__t.html#ac8b0cb35610c73b7142aa1f75ecc8db2',1,'kernel_thread_t']]],
+  ['interrupt_5fdriver_2826',['interrupt_driver',['../interrupts_8c.html#a6787b7d5f66ce6401b8ca0aae66ee2ef',1,'interrupts.c']]],
+  ['iomap_5fbase_2827',['iomap_base',['../structcpu__tss__entry.html#aa1e0bbc09ee0c9741324f810edee3ba8',1,'cpu_tss_entry::iomap_base()'],['../structcpu__tss__entry__t.html#aa1e0bbc09ee0c9741324f810edee3ba8',1,'cpu_tss_entry_t::iomap_base()']]],
+  ['is_5fused_2828',['is_used',['../structuhashtable__entry__t.html#a97bb7a73f339f51bd597d5942b4e1628',1,'uhashtable_entry_t']]],
+  ['ist_2829',['ist',['../structcpu__idt__entry.html#a254d5bd1552992f9c17e038f363987ec',1,'cpu_idt_entry']]],
+  ['ist1_2830',['ist1',['../structcpu__tss__entry.html#a715597b286f1f3911516ff33f7daed1d',1,'cpu_tss_entry']]],
+  ['ist2_2831',['ist2',['../structcpu__tss__entry.html#a0cad174ca03880e2ef66877fa7452908',1,'cpu_tss_entry']]],
+  ['ist3_2832',['ist3',['../structcpu__tss__entry.html#adfffc52e9460241dab25a95518f110f1',1,'cpu_tss_entry']]],
+  ['ist4_2833',['ist4',['../structcpu__tss__entry.html#aa9913c81119fe2e85184295729bb919f',1,'cpu_tss_entry']]],
+  ['ist5_2834',['ist5',['../structcpu__tss__entry.html#ad44d2330d19aca0011f83bd384e17ffb',1,'cpu_tss_entry']]],
+  ['ist6_2835',['ist6',['../structcpu__tss__entry.html#a50ceffaaa84b8c9e483ab22a3e446a25',1,'cpu_tss_entry']]],
+  ['ist7_2836',['ist7',['../structcpu__tss__entry.html#a92d8554e63dfe173bb1cdc79e6105b77',1,'cpu_tss_entry']]]
+];

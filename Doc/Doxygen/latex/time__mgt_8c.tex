@@ -1,0 +1,718 @@
+\hypertarget{time__mgt_8c}{}\doxysection{Source/\+Kernel/\+Time/src/time\+\_\+mgt.c File Reference}
+\label{time__mgt_8c}\index{Source/Kernel/Time/src/time\_mgt.c@{Source/Kernel/Time/src/time\_mgt.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$interrupts.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+Include dependency graph for time\+\_\+mgt.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}TIME MGT\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module name. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86}{\+\_\+time\+\_\+main\+\_\+timer\+\_\+handler}} (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$curr\+\_\+thread)
+\begin{DoxyCompactList}\small\item\em The kernel\textquotesingle{}s main timer interrupt handler. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{time__mgt_8c_aec9de6a0ce157565ee3360d333147033}{\+\_\+time\+\_\+rtc\+\_\+timer\+\_\+handler}} (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$curr\+\_\+thread)
+\begin{DoxyCompactList}\small\item\em The kernel\textquotesingle{}s RTC timer interrupt handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{time__mgt_8c_a72c40b8fff1056ea2734a7ef578a4f63}{time\+\_\+init}} (const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$main\+\_\+timer, const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$rtc\+\_\+timer)
+\begin{DoxyCompactList}\small\item\em Initializes the time manager. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_afe409bc6f9cb0cca020d9b10c507f02e}{time\+\_\+get\+\_\+current\+\_\+uptime}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the current uptime. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_aa157b1913c95e0e028a8ed76802ca145}{time\+\_\+get\+\_\+tick\+\_\+count}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the number of system\textquotesingle{}s ticks since the system started. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{time__mgt_8c_aa47f159ce8e7bdb7ed6678e3b9d76172}{time\+\_\+wait\+\_\+no\+\_\+sched}} (const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} ns)
+\begin{DoxyCompactList}\small\item\em Performs a wait for ms nanoseconds. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{time__mgt_8c_a945a623ee70ed374e56b628ed6b9f7dc}{time\+\_\+register\+\_\+scheduler}} (void($\ast$scheduler\+\_\+call)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$))
+\begin{DoxyCompactList}\small\item\em Registers the function to call the system\textquotesingle{}s scheduler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{time__mgt_8c_a61b9d5bf4b49fac93643ab0ee02bbccd}{time\+\_\+register\+\_\+rtc\+\_\+manager}} (void($\ast$rtc\+\_\+manager)(void))
+\begin{DoxyCompactList}\small\item\em Registers the function to call the RTC manager. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\+\_\+tick\+\_\+count}}
+\begin{DoxyCompactList}\small\item\em Stores the number of main kernel\textquotesingle{}s timer tick since the initialization of the time manager. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\+\_\+main\+\_\+timer}}
+\begin{DoxyCompactList}\small\item\em The kernel\textquotesingle{}s main timer interrupt source. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\+\_\+rtc\+\_\+timer}}
+\begin{DoxyCompactList}\small\item\em The kernel\textquotesingle{}s RTC timer interrupt source. \end{DoxyCompactList}\item 
+static volatile \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\+\_\+wait}}
+\begin{DoxyCompactList}\small\item\em Active wait counter per CPU. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}{schedule\+\_\+routine}} )(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$) = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}
+\begin{DoxyCompactList}\small\item\em Stores the routine to call the scheduler. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}{rtc\+\_\+int\+\_\+manager}} )(void) = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}
+\begin{DoxyCompactList}\small\item\em RTC interrupt manager. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{time\_mgt.c@{time\_mgt.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}TIME MGT\char`\"{}}
+
+
+
+Current module name. 
+
+
+
+Definition at line 44 of file time\+\_\+mgt.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86}\label{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86}} 
+\index{time\_mgt.c@{time\_mgt.c}!\_time\_main\_timer\_handler@{\_time\_main\_timer\_handler}}
+\index{\_time\_main\_timer\_handler@{\_time\_main\_timer\_handler}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{\_time\_main\_timer\_handler()}{\_time\_main\_timer\_handler()}}
+{\footnotesize\ttfamily static void \+\_\+time\+\_\+main\+\_\+timer\+\_\+handler (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$}]{curr\+\_\+thread }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+The kernel\textquotesingle{}s main timer interrupt handler. 
+
+The kernel\textquotesingle{}s main timer interrupt handler. This must be connected to the main timer of the system.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em curr\+\_\+thread} & Current thread at the moment of the interrupt. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 145 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{146 \{}
+\DoxyCodeLine{147     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} curr\_time;}
+\DoxyCodeLine{148 }
+\DoxyCodeLine{149     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_MAIN\_TIMER\_HANDLER, 0);}
+\DoxyCodeLine{150 }
+\DoxyCodeLine{151     \textcolor{comment}{/* Add a tick count */}}
+\DoxyCodeLine{152     ++\mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}};}
+\DoxyCodeLine{153 }
+\DoxyCodeLine{154     \textcolor{comment}{/* EOI */}}
+\DoxyCodeLine{155     \mbox{\hyperlink{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3}{kernel\_interrupt\_set\_irq\_eoi}}(\mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a311706f61cd50a499437e70c62d83bee}{get\_irq}}());}
+\DoxyCodeLine{156 }
+\DoxyCodeLine{157     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}{schedule\_routine}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{158     \{}
+\DoxyCodeLine{159         \textcolor{comment}{/* We might never come back from here */}}
+\DoxyCodeLine{160         \mbox{\hyperlink{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}{schedule\_routine}}(curr\_thread);}
+\DoxyCodeLine{161     \}}
+\DoxyCodeLine{162     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{163     \{}
+\DoxyCodeLine{164         \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}} != 0)}
+\DoxyCodeLine{165         \{}
+\DoxyCodeLine{166             curr\_time = \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}{get\_time\_ns}}();}
+\DoxyCodeLine{167             \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}} <= curr\_time)}
+\DoxyCodeLine{168             \{}
+\DoxyCodeLine{169                 \mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}} = 0;}
+\DoxyCodeLine{170             \}}
+\DoxyCodeLine{171         \}}
+\DoxyCodeLine{172     \}}
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{175                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{176                  \textcolor{stringliteral}{"{}Time manager main handler"{}});}
+\DoxyCodeLine{177 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{time__mgt_8c_aec9de6a0ce157565ee3360d333147033}\label{time__mgt_8c_aec9de6a0ce157565ee3360d333147033}} 
+\index{time\_mgt.c@{time\_mgt.c}!\_time\_rtc\_timer\_handler@{\_time\_rtc\_timer\_handler}}
+\index{\_time\_rtc\_timer\_handler@{\_time\_rtc\_timer\_handler}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{\_time\_rtc\_timer\_handler()}{\_time\_rtc\_timer\_handler()}}
+{\footnotesize\ttfamily static void \+\_\+time\+\_\+rtc\+\_\+timer\+\_\+handler (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$}]{curr\+\_\+thread }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+The kernel\textquotesingle{}s RTC timer interrupt handler. 
+
+The kernel\textquotesingle{}s RTC timer interrupt handler. This must be connected to the RTC timer of the system.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em curr\+\_\+thread} & Current thread at the moment of the interrupt. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 179 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{180 \{}
+\DoxyCodeLine{181     (void)curr\_thread;}
+\DoxyCodeLine{182 }
+\DoxyCodeLine{183     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_RTC\_TIMER\_HANDLER, 0);}
+\DoxyCodeLine{184 }
+\DoxyCodeLine{185     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}{rtc\_int\_manager}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{186     \{}
+\DoxyCodeLine{187         \mbox{\hyperlink{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}{rtc\_int\_manager}}();}
+\DoxyCodeLine{188     \}}
+\DoxyCodeLine{189 }
+\DoxyCodeLine{190     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{191                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{192                  \textcolor{stringliteral}{"{}Time manager RTC handler"{}});}
+\DoxyCodeLine{193 }
+\DoxyCodeLine{194     \textcolor{comment}{/* EOI */}}
+\DoxyCodeLine{195     \mbox{\hyperlink{interrupts_8h_ac6f6186f6d894f59979a8afbd844bba3}{kernel\_interrupt\_set\_irq\_eoi}}(\mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a311706f61cd50a499437e70c62d83bee}{get\_irq}}());}
+\DoxyCodeLine{196 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_aec9de6a0ce157565ee3360d333147033_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_aec9de6a0ce157565ee3360d333147033_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{time__mgt_8c_afe409bc6f9cb0cca020d9b10c507f02e}\label{time__mgt_8c_afe409bc6f9cb0cca020d9b10c507f02e}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_get\_current\_uptime@{time\_get\_current\_uptime}}
+\index{time\_get\_current\_uptime@{time\_get\_current\_uptime}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_get\_current\_uptime()}{time\_get\_current\_uptime()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} time\+\_\+get\+\_\+current\+\_\+uptime (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the current uptime. 
+
+Return the current uptime of the system in ns.
+
+\begin{DoxyReturn}{Returns}
+The current uptime in ns. 
+\end{DoxyReturn}
+
+
+Definition at line 302 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{303 \{}
+\DoxyCodeLine{304     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}{get\_time\_ns}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{305     \{}
+\DoxyCodeLine{306         \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_afa55b60b206da841562e9639fd5a72ba}{get\_frequency}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{307         \{}
+\DoxyCodeLine{308             \textcolor{keywordflow}{return} 0;}
+\DoxyCodeLine{309         \}}
+\DoxyCodeLine{310 }
+\DoxyCodeLine{311         \textcolor{keywordflow}{return} \mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}} * 1000000000ULL / \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_afa55b60b206da841562e9639fd5a72ba}{get\_frequency}}();}
+\DoxyCodeLine{312     \}}
+\DoxyCodeLine{313 }
+\DoxyCodeLine{314     \textcolor{keywordflow}{return} \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a1d8c49ce36a788deb7e110924deba871}{get\_time\_ns}}();}
+\DoxyCodeLine{315 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_afe409bc6f9cb0cca020d9b10c507f02e_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{time__mgt_8c_aa157b1913c95e0e028a8ed76802ca145}\label{time__mgt_8c_aa157b1913c95e0e028a8ed76802ca145}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_get\_tick\_count@{time\_get\_tick\_count}}
+\index{time\_get\_tick\_count@{time\_get\_tick\_count}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_get\_tick\_count()}{time\_get\_tick\_count()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} time\+\_\+get\+\_\+tick\+\_\+count (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the number of system\textquotesingle{}s ticks since the system started. 
+
+Returns the number of system\textquotesingle{}s ticks since the system started.
+
+\begin{DoxyReturn}{Returns}
+The number of system\textquotesingle{}s ticks since the system started. 
+\end{DoxyReturn}
+
+
+Definition at line 317 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{318 \{}
+\DoxyCodeLine{319     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_GET\_TICK\_COUNT, 2,}
+\DoxyCodeLine{320                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})\mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}},}
+\DoxyCodeLine{321                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})(\mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}} >> 32));}
+\DoxyCodeLine{322 }
+\DoxyCodeLine{323     \textcolor{keywordflow}{return} \mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}};}
+\DoxyCodeLine{324 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{time__mgt_8c_a72c40b8fff1056ea2734a7ef578a4f63}\label{time__mgt_8c_a72c40b8fff1056ea2734a7ef578a4f63}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_init@{time\_init}}
+\index{time\_init@{time\_init}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_init()}{time\_init()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} time\+\_\+init (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$}]{sys\+\_\+timer,  }\item[{const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$}]{rtc\+\_\+timer }\end{DoxyParamCaption})}
+
+
+
+Initializes the time manager. 
+
+Initializes the kernel\textquotesingle{}s time manager. Set the basic time structures and interrupts. The rtc and aux timer drivers can be set to NULL but the main driver has to be fully set.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em sys\+\_\+timer} & The system\textquotesingle{}s main timer driver. \\
+\hline
+\mbox{\texttt{ in}}  & {\em rtc\+\_\+timer} & The RTC timer driver.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+All the interrupt managers and timer sources drivers must be initialized before using this function.
+\end{DoxyWarning}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER if the main timer driver is NULL or has NULL function pointers. This value is also returned is the RTC or AUX driver is not NULL but contains NULL function pointers.
+\item OS\+\_\+\+ERR\+\_\+\+NO\+\_\+\+SUCH\+\_\+\+IRQ\+\_\+\+LINE is returned if the IRQ number of the kernel timers sources are not supported.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the interrupt lines of the kernel timers sources are not supported. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 198 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{200 \{}
+\DoxyCodeLine{201     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{202 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{203     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INIT\_TIME\_MGT\_START, 4,}
+\DoxyCodeLine{204                        (uintptr\_t)main\_timer \& 0xFFFFFFFF,}
+\DoxyCodeLine{205                        (uintptr\_t)main\_timer >> 32,}
+\DoxyCodeLine{206                        (uintptr\_t)rtc\_timer \& 0xFFFFFFFF,}
+\DoxyCodeLine{207                        (uintptr\_t)rtc\_timer >> 32);}
+\DoxyCodeLine{208 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{209     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INIT\_TIME\_MGT\_START, 4,}
+\DoxyCodeLine{210                        (uintptr\_t)main\_timer \& 0xFFFFFFFF,}
+\DoxyCodeLine{211                        (uintptr\_t)0,}
+\DoxyCodeLine{212                        (uintptr\_t)rtc\_timer \& 0xFFFFFFFF,}
+\DoxyCodeLine{213                        (uintptr\_t)0);}
+\DoxyCodeLine{214 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{215 }
+\DoxyCodeLine{216     \textcolor{comment}{/* Check the main timer integrity */}}
+\DoxyCodeLine{217     \textcolor{keywordflow}{if}(main\_timer == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{218        main\_timer-\/>get\_frequency == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{219        main\_timer-\/>set\_frequency == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{220        main\_timer-\/>enable == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{221        main\_timer-\/>disable == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{222        main\_timer-\/>set\_handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{223        main\_timer-\/>remove\_handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{224        main\_timer-\/>get\_irq == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{225 }
+\DoxyCodeLine{226     \{}
+\DoxyCodeLine{227         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{228     \}}
+\DoxyCodeLine{229     \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}} = *main\_timer;}
+\DoxyCodeLine{230 }
+\DoxyCodeLine{231     \textcolor{comment}{/* Check the rtc timer integrity */}}
+\DoxyCodeLine{232     \textcolor{keywordflow}{if}(rtc\_timer != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{233     \{}
+\DoxyCodeLine{234         \textcolor{keywordflow}{if}(rtc\_timer-\/>get\_frequency != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{235            rtc\_timer-\/>set\_frequency != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{236            rtc\_timer-\/>enable != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{237            rtc\_timer-\/>disable != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{238            rtc\_timer-\/>set\_handler != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{239            rtc\_timer-\/>remove\_handler != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\&}
+\DoxyCodeLine{240            rtc\_timer-\/>get\_irq != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{241         \{}
+\DoxyCodeLine{242             \mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}} = *rtc\_timer;}
+\DoxyCodeLine{243         \}}
+\DoxyCodeLine{244         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{245         \{}
+\DoxyCodeLine{246             \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{247         \}}
+\DoxyCodeLine{248     \}}
+\DoxyCodeLine{249 }
+\DoxyCodeLine{250     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{251                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{252                  \textcolor{stringliteral}{"{}Time manager Initialization"{}});}
+\DoxyCodeLine{253 }
+\DoxyCodeLine{254     \textcolor{comment}{/* Init the system's values */}}
+\DoxyCodeLine{255     \mbox{\hyperlink{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}{sys\_tick\_count}} = 0;}
+\DoxyCodeLine{256     \mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}}    = 0;}
+\DoxyCodeLine{257 }
+\DoxyCodeLine{258     \textcolor{comment}{/* Sets all the possible timer interrutps */}}
+\DoxyCodeLine{259     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a4401019fba9f88fafc38b715b93cd0bf}{set\_time\_ns}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{260     \{}
+\DoxyCodeLine{261         \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a4401019fba9f88fafc38b715b93cd0bf}{set\_time\_ns}}(0);}
+\DoxyCodeLine{262     \}}
+\DoxyCodeLine{263     \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}{set\_frequency}}(\mbox{\hyperlink{config_8h_a46f3125cc05ea27d4880116f4a0a8744}{KERNEL\_MAIN\_TIMER\_FREQ}});}
+\DoxyCodeLine{264 }
+\DoxyCodeLine{265     err = \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a3bd7494c8b959d5a3f0bc72af8b1c19b}{set\_handler}}(\mbox{\hyperlink{time__mgt_8c_ab7d6a0fbc02fedb43eb4b98f75ab5c86}{\_time\_main\_timer\_handler}});}
+\DoxyCodeLine{266     \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{267     \{}
+\DoxyCodeLine{268         \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{269     \}}
+\DoxyCodeLine{270 }
+\DoxyCodeLine{271     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{272                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{273                  \textcolor{stringliteral}{"{}Initialized main timer"{}});}
+\DoxyCodeLine{274 }
+\DoxyCodeLine{275     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}{set\_frequency}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{276     \{}
+\DoxyCodeLine{277         \mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}{set\_frequency}}(\mbox{\hyperlink{config_8h_aba1cad844ee443b46e15899ba48fe271}{KERNEL\_RTC\_TIMER\_FREQ}});}
+\DoxyCodeLine{278 }
+\DoxyCodeLine{279         err = \mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a3bd7494c8b959d5a3f0bc72af8b1c19b}{set\_handler}}(\mbox{\hyperlink{time__mgt_8c_aec9de6a0ce157565ee3360d333147033}{\_time\_rtc\_timer\_handler}});}
+\DoxyCodeLine{280         \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{281         \{}
+\DoxyCodeLine{282             \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{283         \}}
+\DoxyCodeLine{284     \}}
+\DoxyCodeLine{285 }
+\DoxyCodeLine{286     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{287                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{288                  \textcolor{stringliteral}{"{}Initialized RTC timer"{}});}
+\DoxyCodeLine{289 }
+\DoxyCodeLine{290     \textcolor{comment}{/* Enables all the possible timers */}}
+\DoxyCodeLine{291     \mbox{\hyperlink{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}{sys\_main\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a1642c82ad61ded45b6a55d568274bc10}{enable}}();}
+\DoxyCodeLine{292     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a57bbd4342e5c1bd4760a5c41dd18ce22}{set\_frequency}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{293     \{}
+\DoxyCodeLine{294         \mbox{\hyperlink{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}{sys\_rtc\_timer}}.\mbox{\hyperlink{structkernel__timer__t_a1642c82ad61ded45b6a55d568274bc10}{enable}}();}
+\DoxyCodeLine{295     \}}
+\DoxyCodeLine{296 }
+\DoxyCodeLine{297     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_INIT\_TIME\_MGT\_END, 0);}
+\DoxyCodeLine{298 }
+\DoxyCodeLine{299     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{300 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_a72c40b8fff1056ea2734a7ef578a4f63_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=235pt]{time__mgt_8c_a72c40b8fff1056ea2734a7ef578a4f63_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{time__mgt_8c_a61b9d5bf4b49fac93643ab0ee02bbccd}\label{time__mgt_8c_a61b9d5bf4b49fac93643ab0ee02bbccd}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_register\_rtc\_manager@{time\_register\_rtc\_manager}}
+\index{time\_register\_rtc\_manager@{time\_register\_rtc\_manager}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_register\_rtc\_manager()}{time\_register\_rtc\_manager()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} time\+\_\+register\+\_\+rtc\+\_\+manager (\begin{DoxyParamCaption}\item[{void($\ast$)(void)}]{rtc\+\_\+manager }\end{DoxyParamCaption})}
+
+
+
+Registers the function to call the RTC manager. 
+
+Registers the function to call the RTC manager. This function will be called at each tick of the RTC timer.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em rtc\+\_\+manager} & The rtc manager routine to call every RTC tick.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER if the scheduler routine pointer is NULL. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 371 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{372 \{}
+\DoxyCodeLine{373 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{374     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_REG\_RTC\_MGT, 2,}
+\DoxyCodeLine{375                        (uintptr\_t)rtc\_manager \& 0xFFFFFFF,}
+\DoxyCodeLine{376                        (uintptr\_t)rtc\_manager >> 32);}
+\DoxyCodeLine{377 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{378     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_REG\_RTC\_MGT, 2,}
+\DoxyCodeLine{379                        (uintptr\_t)rtc\_manager \& 0xFFFFFFF,}
+\DoxyCodeLine{380                        (uintptr\_t)0);}
+\DoxyCodeLine{381 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{382 }
+\DoxyCodeLine{383     \textcolor{keywordflow}{if}(rtc\_manager == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{384     \{}
+\DoxyCodeLine{385         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{386     \}}
+\DoxyCodeLine{387 }
+\DoxyCodeLine{388     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{389                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{390                  \textcolor{stringliteral}{"{}Registered RTC routine at 0x\%p"{}}, rtc\_manager);}
+\DoxyCodeLine{391 }
+\DoxyCodeLine{392     \mbox{\hyperlink{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}{rtc\_int\_manager}} = rtc\_manager;}
+\DoxyCodeLine{393 }
+\DoxyCodeLine{394     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{395 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{time__mgt_8c_a61b9d5bf4b49fac93643ab0ee02bbccd_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{time__mgt_8c_a945a623ee70ed374e56b628ed6b9f7dc}\label{time__mgt_8c_a945a623ee70ed374e56b628ed6b9f7dc}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_register\_scheduler@{time\_register\_scheduler}}
+\index{time\_register\_scheduler@{time\_register\_scheduler}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_register\_scheduler()}{time\_register\_scheduler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} time\+\_\+register\+\_\+scheduler (\begin{DoxyParamCaption}\item[{void($\ast$)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$)}]{scheduler\+\_\+call }\end{DoxyParamCaption})}
+
+
+
+Registers the function to call the system\textquotesingle{}s scheduler. 
+
+Registers the function to call the system\textquotesingle{}s scheduler. This function will be called at each tick of the main timer.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em scheduler\+\_\+call} & The scheduling routine to call every tick.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER if the scheduler routine pointer is NULL. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 344 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{345 \{}
+\DoxyCodeLine{346 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{347     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_REG\_SCHED, 2,}
+\DoxyCodeLine{348                        (uintptr\_t)scheduler\_call \& 0xFFFFFFFF,}
+\DoxyCodeLine{349                        (uintptr\_t)scheduler\_call >> 32);}
+\DoxyCodeLine{350 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{351     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_REG\_SCHED, 2,}
+\DoxyCodeLine{352                        (uintptr\_t)scheduler\_call \& 0xFFFFFFFF,}
+\DoxyCodeLine{353                        (uintptr\_t)0);}
+\DoxyCodeLine{354 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{355 }
+\DoxyCodeLine{356     \textcolor{keywordflow}{if}(scheduler\_call == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{357     \{}
+\DoxyCodeLine{358         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{359     \}}
+\DoxyCodeLine{360 }
+\DoxyCodeLine{361 }
+\DoxyCodeLine{362     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a479e37962e8b24b96a6b3a88ddeffc71}{TIME\_MGT\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{363                  \mbox{\hyperlink{time__mgt_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{364                  \textcolor{stringliteral}{"{}Registered scheduler routine at 0x\%p"{}}, scheduler\_call);}
+\DoxyCodeLine{365 }
+\DoxyCodeLine{366     \mbox{\hyperlink{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}{schedule\_routine}} = scheduler\_call;}
+\DoxyCodeLine{367 }
+\DoxyCodeLine{368     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{369 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{time__mgt_8c_aa47f159ce8e7bdb7ed6678e3b9d76172}\label{time__mgt_8c_aa47f159ce8e7bdb7ed6678e3b9d76172}} 
+\index{time\_mgt.c@{time\_mgt.c}!time\_wait\_no\_sched@{time\_wait\_no\_sched}}
+\index{time\_wait\_no\_sched@{time\_wait\_no\_sched}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{time\_wait\_no\_sched()}{time\_wait\_no\_sched()}}
+{\footnotesize\ttfamily void time\+\_\+wait\+\_\+no\+\_\+sched (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{ns }\end{DoxyParamCaption})}
+
+
+
+Performs a wait for ms nanoseconds. 
+
+Performs a wait for ms nanoseconds based on the kernel\textquotesingle{}s main timer.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em ns} & The time to wait in nanoseconds.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+This function must only be called before the scheduler is initialized. Otherwise the function will immediatly return. 
+\end{DoxyWarning}
+
+
+Definition at line 326 of file time\+\_\+mgt.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{327 \{}
+\DoxyCodeLine{328     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_WAIT\_NOSCHED\_START, 2,}
+\DoxyCodeLine{329                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})ns,}
+\DoxyCodeLine{330                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})(ns >> 32));}
+\DoxyCodeLine{331 }
+\DoxyCodeLine{332     \textcolor{keywordflow}{if}(\mbox{\hyperlink{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}{schedule\_routine}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{333     \{}
+\DoxyCodeLine{334         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{335     \}}
+\DoxyCodeLine{336     \mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}} = ns;}
+\DoxyCodeLine{337     \textcolor{keywordflow}{while}(\mbox{\hyperlink{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}{active\_wait}} > 0)\{\}}
+\DoxyCodeLine{338 }
+\DoxyCodeLine{339     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_TIME\_WAIT\_NOSCHED\_END, 2,}
+\DoxyCodeLine{340                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})ns,}
+\DoxyCodeLine{341                        (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})(ns >> 32));}
+\DoxyCodeLine{342 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}\label{time__mgt_8c_a9f0cde210aef708f2d76688cbea7a36f}} 
+\index{time\_mgt.c@{time\_mgt.c}!active\_wait@{active\_wait}}
+\index{active\_wait@{active\_wait}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{active\_wait}{active\_wait}}
+{\footnotesize\ttfamily volatile \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} active\+\_\+wait\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Active wait counter per CPU. 
+
+
+
+Definition at line 109 of file time\+\_\+mgt.\+c.
+
+\mbox{\Hypertarget{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}\label{time__mgt_8c_abe2dd32d5f666a94bd1d1c10551099c0}} 
+\index{time\_mgt.c@{time\_mgt.c}!rtc\_int\_manager@{rtc\_int\_manager}}
+\index{rtc\_int\_manager@{rtc\_int\_manager}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{rtc\_int\_manager}{rtc\_int\_manager}}
+{\footnotesize\ttfamily void($\ast$ rtc\+\_\+int\+\_\+manager) (void) (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption}) = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}}
+
+
+
+RTC interrupt manager. 
+
+
+
+Definition at line 115 of file time\+\_\+mgt.\+c.
+
+\mbox{\Hypertarget{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}\label{time__mgt_8c_a28b7c521e7f93ebefc7dd9622dc5a38c}} 
+\index{time\_mgt.c@{time\_mgt.c}!schedule\_routine@{schedule\_routine}}
+\index{schedule\_routine@{schedule\_routine}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{schedule\_routine}{schedule\_routine}}
+{\footnotesize\ttfamily void($\ast$ schedule\+\_\+routine) (\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$) (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$}]{ }\end{DoxyParamCaption}) = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}}
+
+
+
+Stores the routine to call the scheduler. 
+
+
+
+Definition at line 112 of file time\+\_\+mgt.\+c.
+
+\mbox{\Hypertarget{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}\label{time__mgt_8c_afc008d843f654d7245e4284e1941e16f}} 
+\index{time\_mgt.c@{time\_mgt.c}!sys\_main\_timer@{sys\_main\_timer}}
+\index{sys\_main\_timer@{sys\_main\_timer}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{sys\_main\_timer}{sys\_main\_timer}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} sys\+\_\+main\+\_\+timer\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .get\_frequency  = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_frequency  = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .get\_time\_ns    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_time\_ns    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .enable         = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .disable        = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_handler    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .remove\_handler = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .get\_irq        = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The kernel\textquotesingle{}s main timer interrupt source. 
+
+The kernel\textquotesingle{}s main timer interrupt source. If it\textquotesingle{}s function pointers are NULL, the driver is not initialized. 
+
+Definition at line 79 of file time\+\_\+mgt.\+c.
+
+\mbox{\Hypertarget{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}\label{time__mgt_8c_a7eaf53f665cf4fd9bf6b29156be82f8e}} 
+\index{time\_mgt.c@{time\_mgt.c}!sys\_rtc\_timer@{sys\_rtc\_timer}}
+\index{sys\_rtc\_timer@{sys\_rtc\_timer}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{sys\_rtc\_timer}{sys\_rtc\_timer}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} sys\+\_\+rtc\+\_\+timer\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .get\_frequency  = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_frequency  = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .get\_time\_ns    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_time\_ns    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .enable         = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .disable        = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .set\_handler    = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .remove\_handler = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{    .get\_irq        = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The kernel\textquotesingle{}s RTC timer interrupt source. 
+
+The kernel\textquotesingle{}s RTC timer interrupt source. If it\textquotesingle{}s function pointers are NULL, the driver is not initialized. 
+
+Definition at line 96 of file time\+\_\+mgt.\+c.
+
+\mbox{\Hypertarget{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}\label{time__mgt_8c_a3dacdc653bc8307efbbf4ef68a5959d6}} 
+\index{time\_mgt.c@{time\_mgt.c}!sys\_tick\_count@{sys\_tick\_count}}
+\index{sys\_tick\_count@{sys\_tick\_count}!time\_mgt.c@{time\_mgt.c}}
+\doxysubsubsection{\texorpdfstring{sys\_tick\_count}{sys\_tick\_count}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} sys\+\_\+tick\+\_\+count\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Stores the number of main kernel\textquotesingle{}s timer tick since the initialization of the time manager. 
+
+
+
+Definition at line 72 of file time\+\_\+mgt.\+c.
+

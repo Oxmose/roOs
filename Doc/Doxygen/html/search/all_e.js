@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['off_5fhig_1129',['off_hig',['../structcpu__idt__entry.html#a9a5cbd33e7500385ce46f0bccac3cb0d',1,'cpu_idt_entry']]],
+  ['off_5flow_1130',['off_low',['../structcpu__idt__entry.html#afde91f7a403adbad94683d9e58314967',1,'cpu_idt_entry']]],
+  ['off_5fmid_1131',['off_mid',['../structcpu__idt__entry.html#a13b9c0285fbcb839aababcb15f632b79',1,'cpu_idt_entry']]],
+  ['offmemrsvmap_1132',['offMemRsvMap',['../structfdt__header__t.html#accca8d0f612cafe0d2c8e98c1189f946',1,'fdt_header_t']]],
+  ['offset_1133',['offset',['../structmultiboot__tag__apm.html#a116d755a89c59dc9804df6eba928166c',1,'multiboot_tag_apm']]],
+  ['offstrings_1134',['offStrings',['../structfdt__header__t.html#ada47ebde7a84ffb6305cf9507c339475',1,'fdt_header_t']]],
+  ['offstructs_1135',['offStructs',['../structfdt__header__t.html#a777764d7c22ac1abd369f3a7007940a0',1,'fdt_header_t']]],
+  ['or_5ferr_5funauthorized_5finterrupt_5fline_1136',['OR_ERR_UNAUTHORIZED_INTERRUPT_LINE',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a0f08746ffbde4a6a024ce8e90052b078',1,'kerror.h']]],
+  ['os_5ferr_5fincorrect_5fvalue_1137',['OS_ERR_INCORRECT_VALUE',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5',1,'kerror.h']]],
+  ['os_5ferr_5finterrupt_5falready_5fregistered_1138',['OS_ERR_INTERRUPT_ALREADY_REGISTERED',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a79b3a233dd01b2244bcc0b97084598e2',1,'kerror.h']]],
+  ['os_5ferr_5finterrupt_5fnot_5fregistered_1139',['OS_ERR_INTERRUPT_NOT_REGISTERED',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0aed3ac95521556e0ab713bff93f8d7666',1,'kerror.h']]],
+  ['os_5ferr_5fmapping_5falready_5fexists_1140',['OS_ERR_MAPPING_ALREADY_EXISTS',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a2b73eb2b5faddab381e7b4948780c8cb',1,'kerror.h']]],
+  ['os_5ferr_5fno_5fmore_5fmemory_1141',['OS_ERR_NO_MORE_MEMORY',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385',1,'kerror.h']]],
+  ['os_5ferr_5fno_5fsuch_5firq_1142',['OS_ERR_NO_SUCH_IRQ',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde',1,'kerror.h']]],
+  ['os_5ferr_5fnot_5fsupported_1143',['OS_ERR_NOT_SUPPORTED',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275',1,'kerror.h']]],
+  ['os_5ferr_5fnull_5fpointer_1144',['OS_ERR_NULL_POINTER',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e',1,'kerror.h']]],
+  ['os_5ferr_5fout_5fof_5fbound_1145',['OS_ERR_OUT_OF_BOUND',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a37e386f706cd916849e401ce3d1a1e87',1,'kerror.h']]],
+  ['os_5ferr_5funauthorized_5faction_1146',['OS_ERR_UNAUTHORIZED_ACTION',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a',1,'kerror.h']]],
+  ['os_5fno_5ferr_1147',['OS_NO_ERR',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186',1,'kerror.h']]],
+  ['os_5freturn_5fe_1148',['OS_RETURN_E',['../kerror_8h.html#a51557cb52bbb9ee9d55aab5b9b16c3d0',1,'kerror.h']]],
+  ['output_5ft_1149',['output_t',['../structoutput__t.html',1,'']]]
+];

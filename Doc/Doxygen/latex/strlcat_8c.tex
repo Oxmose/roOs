@@ -1,0 +1,66 @@
+\hypertarget{strlcat_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strlcat.c File Reference}
+\label{strlcat_8c}\index{Source/Kernel/Libs/libc/src/strlcat.c@{Source/Kernel/Libs/libc/src/strlcat.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strlcat.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strlcat_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{strlcat_8c_a08a3fda60543c77e368c74b10f3d9799}{strlcat}} (char $\ast$dst, const char $\ast$src, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} size)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strlcat_8c_a08a3fda60543c77e368c74b10f3d9799}\label{strlcat_8c_a08a3fda60543c77e368c74b10f3d9799}} 
+\index{strlcat.c@{strlcat.c}!strlcat@{strlcat}}
+\index{strlcat@{strlcat}!strlcat.c@{strlcat.c}}
+\doxysubsubsection{\texorpdfstring{strlcat()}{strlcat()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} strlcat (\begin{DoxyParamCaption}\item[{char $\ast$}]{dst,  }\item[{const char $\ast$}]{src,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strlcat.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{size\_t} bytes = 0;}
+\DoxyCodeLine{76     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{77     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *p = src;}
+\DoxyCodeLine{78     \textcolor{keywordtype}{char} ch;}
+\DoxyCodeLine{79 }
+\DoxyCodeLine{80     \textcolor{keywordflow}{while} (bytes < size \&\& *q) \{}
+\DoxyCodeLine{81         q++;}
+\DoxyCodeLine{82         bytes++;}
+\DoxyCodeLine{83     \}}
+\DoxyCodeLine{84     \textcolor{keywordflow}{if} (bytes == size)}
+\DoxyCodeLine{85         \textcolor{keywordflow}{return} (bytes + \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(src));}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     \textcolor{keywordflow}{while} ((ch = *p++)) \{}
+\DoxyCodeLine{88         \textcolor{keywordflow}{if} (bytes + 1 < size)}
+\DoxyCodeLine{89             *q++ = ch;}
+\DoxyCodeLine{90 }
+\DoxyCodeLine{91         bytes++;}
+\DoxyCodeLine{92     \}}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94     *q = \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{95     \textcolor{keywordflow}{return} bytes;}
+\DoxyCodeLine{96 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=207pt]{strlcat_8c_a08a3fda60543c77e368c74b10f3d9799_cgraph}
+\end{center}
+\end{figure}

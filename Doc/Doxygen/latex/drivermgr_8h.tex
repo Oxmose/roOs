@@ -1,0 +1,116 @@
+\hypertarget{drivermgr_8h}{}\doxysection{Source/\+Kernel/\+Core/includes/drivermgr.h File Reference}
+\label{drivermgr_8h}\index{Source/Kernel/Core/includes/drivermgr.h@{Source/Kernel/Core/includes/drivermgr.h}}
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+{\ttfamily \#include $<$devtree.\+h$>$}\newline
+Include dependency graph for drivermgr.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{drivermgr_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structdriver__t}{driver\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines the generic definition for a driver used in the kernel. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{drivermgr_8h_a1cfb94bc8314aac22e9cbb8d0082859a}{DRIVERMGR\+\_\+\+REG}}(DRIVER)
+\begin{DoxyCompactList}\small\item\em Registers a new driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23}{driver\+Manager\+Init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the driver manager. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{drivermgr_8h_a1cfb94bc8314aac22e9cbb8d0082859a}\label{drivermgr_8h_a1cfb94bc8314aac22e9cbb8d0082859a}} 
+\index{drivermgr.h@{drivermgr.h}!DRIVERMGR\_REG@{DRIVERMGR\_REG}}
+\index{DRIVERMGR\_REG@{DRIVERMGR\_REG}!drivermgr.h@{drivermgr.h}}
+\doxysubsubsection{\texorpdfstring{DRIVERMGR\_REG}{DRIVERMGR\_REG}}
+{\footnotesize\ttfamily \#define DRIVERMGR\+\_\+\+REG(\begin{DoxyParamCaption}\item[{}]{DRIVER }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \mbox{\hyperlink{structdriver__t}{driver\_t}}* DRVENT\_\#\#DRIVER \_\_attribute\_\_ ((section (\textcolor{stringliteral}{"{}.utk\_driver\_tbl"{}}))) = \(\backslash\)}
+\DoxyCodeLine{        \&DRIVER;}
+
+\end{DoxyCode}
+
+
+Registers a new driver. 
+
+Registers a new driver in the kernel\textquotesingle{}s driver table.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em \mbox{\hyperlink{structdriver__t}{driver\+\_\+t}}} & DRIVER The driver to add to the driver table \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 62 of file drivermgr.\+h.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23}\label{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23}} 
+\index{drivermgr.h@{drivermgr.h}!driverManagerInit@{driverManagerInit}}
+\index{driverManagerInit@{driverManagerInit}!drivermgr.h@{drivermgr.h}}
+\doxysubsubsection{\texorpdfstring{driverManagerInit()}{driverManagerInit()}}
+{\footnotesize\ttfamily void driver\+Manager\+Init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the driver manager. 
+
+Initializes the driver manager. This function will walk the FDT and try to probe the registered drivers to initialize them and attach them. In case of hard error, a panic is raised. 
+
+Definition at line 167 of file drivermgr.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{168 \{}
+\DoxyCodeLine{169     \textcolor{keyword}{const} \mbox{\hyperlink{structfdt__node__t}{fdt\_node\_t}}* pFdtRootNode;}
+\DoxyCodeLine{170 }
+\DoxyCodeLine{171     \textcolor{comment}{/* Get the FDT root node and walk it to register drivers */}}
+\DoxyCodeLine{172     pFdtRootNode = \mbox{\hyperlink{devtree_8h_a2b15a2bebb9eb7e4459890b8abd10946}{fdtGetRoot}}();}
+\DoxyCodeLine{173     \textcolor{keywordflow}{if}(pFdtRootNode == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{174     \{}
+\DoxyCodeLine{175         \mbox{\hyperlink{kernel__output_8h_a8806abc9f60658cfa34e270d4203666f}{KERNEL\_ERROR}}(\textcolor{stringliteral}{"{}Failed to get FDT root node in driver manager.\(\backslash\)n"{}});}
+\DoxyCodeLine{176         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{177     \}}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179     \textcolor{comment}{/* Perform the registration */}}
+\DoxyCodeLine{180     \mbox{\hyperlink{drivermgr_8c_af9c2f11fd03eda2fd7c1299f7d323a44}{walkFdtNodes}}(pFdtRootNode);}
+\DoxyCodeLine{181 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{drivermgr_8h_a4e47288c2e421d14dcd7546d34c9da23_icgraph}
+\end{center}
+\end{figure}

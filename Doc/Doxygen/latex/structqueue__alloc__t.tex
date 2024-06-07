@@ -1,0 +1,74 @@
+\hypertarget{structqueue__alloc__t}{}\doxysection{queue\+\_\+alloc\+\_\+t Struct Reference}
+\label{structqueue__alloc__t}\index{queue\_alloc\_t@{queue\_alloc\_t}}
+
+
+Queue allocator structure.  
+
+
+
+
+{\ttfamily \#include $<$queue.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$($\ast$ \mbox{\hyperlink{structqueue__alloc__t_acb71a462e38a2826c1430838cf94556c}{malloc}} )(\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} alloc\+\_\+size)
+\begin{DoxyCompactList}\small\item\em The memory allocation function used by the allocator. \end{DoxyCompactList}\item 
+void($\ast$ \mbox{\hyperlink{structqueue__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}{free}} )(void $\ast$ptr)
+\begin{DoxyCompactList}\small\item\em The memory free function used by the allocator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Queue allocator structure. 
+
+Definition at line 43 of file queue.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structqueue__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}\label{structqueue__alloc__t_a7ffa51abb1dd8bc3fe4627cb1d2405c5}} 
+\index{queue\_alloc\_t@{queue\_alloc\_t}!free@{free}}
+\index{free@{free}!queue\_alloc\_t@{queue\_alloc\_t}}
+\doxysubsubsection{\texorpdfstring{free}{free}}
+{\footnotesize\ttfamily void($\ast$ free) (void $\ast$ptr)}
+
+
+
+The memory free function used by the allocator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em ptr} & The start address of the memory to free. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 60 of file queue.\+h.
+
+\mbox{\Hypertarget{structqueue__alloc__t_acb71a462e38a2826c1430838cf94556c}\label{structqueue__alloc__t_acb71a462e38a2826c1430838cf94556c}} 
+\index{queue\_alloc\_t@{queue\_alloc\_t}!malloc@{malloc}}
+\index{malloc@{malloc}!queue\_alloc\_t@{queue\_alloc\_t}}
+\doxysubsubsection{\texorpdfstring{malloc}{malloc}}
+{\footnotesize\ttfamily void$\ast$($\ast$ malloc) (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} alloc\+\_\+size)}
+
+
+
+The memory allocation function used by the allocator. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em alloc\+\_\+size} & The size in bytes to be allocated.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the allocated memory is returned. NULL is returned if no memory was allocated. 
+\end{DoxyReturn}
+
+
+Definition at line 53 of file queue.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Libs/libapi/includes/\mbox{\hyperlink{queue_8h}{queue.\+h}}\end{DoxyCompactItemize}

@@ -6,6 +6,24 @@
         "type_traits": "c",
         "cpu_interrupt.h": "c",
         "panic.h": "c",
-        "kernel_output.h": "c"
+        "kerneloutput.h": "c",
+        "time_mgt.h": "c",
+        "test_framework.h": "c",
+        "devtree.h": "c",
+        "vgatext.h": "c",
+        "config.h": "c",
+        "stdint.h": "c",
+        "ctrl_block.h": "c",
+        "__bit_reference": "c",
+        "bitset": "c",
+        "__memory": "c",
+        "limits": "c",
+        "locale": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "compare": "c",
+        "kerror.h": "c",
+        "critical.h": "c",
+        "ioapic.h": "c"
     }
 }

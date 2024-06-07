@@ -1,0 +1,544 @@
+\hypertarget{div64_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/div64.c File Reference}
+\label{div64_8c}\index{Source/Kernel/Libs/libc/src/div64.c@{Source/Kernel/Libs/libc/src/div64.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+Include dependency graph for div64.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=263pt]{div64_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+union \mbox{\hyperlink{unionuu}{uu}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}}~((int)1 $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})    /$\ast$ \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} base $\ast$/
+\item 
+\#define \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(a,  b)~(((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(a) $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}}) $\vert$ (b))
+\item 
+\#define \mbox{\hyperlink{div64_8c_ac998ea02fbd821fc123d60445ce76f38}{UINT\+\_\+\+MAX}}~\mbox{\hyperlink{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\+\_\+\+MAX}}
+\item 
+\#define \mbox{\hyperlink{div64_8c_a689b119da994dece91d44b5aeac643ed}{USHRT\+\_\+\+MAX}}~\mbox{\hyperlink{stdint_8h_a3ea490c9b3617d4479bd80ef93cd5602}{UINT16\+\_\+\+MAX}}
+\item 
+\#define \mbox{\hyperlink{div64_8c_a7eaac45d4115e3143a8775abb93c2eed}{\+\_\+\+QUAD\+\_\+\+HIGHWORD}}~1
+\item 
+\#define \mbox{\hyperlink{div64_8c_aba97a56cb953e7c610c1877249774951}{\+\_\+\+QUAD\+\_\+\+LOWWORD}}~0
+\item 
+\#define \mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}~\mbox{\hyperlink{div64_8c_a7eaac45d4115e3143a8775abb93c2eed}{\+\_\+\+QUAD\+\_\+\+HIGHWORD}}
+\item 
+\#define \mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}~\mbox{\hyperlink{div64_8c_aba97a56cb953e7c610c1877249774951}{\+\_\+\+QUAD\+\_\+\+LOWWORD}}
+\item 
+\#define \mbox{\hyperlink{div64_8c_a187c867e08bb456f8d07eb512e4a93e0}{QUAD\+\_\+\+BITS}}~(sizeof(\mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}}) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+)
+\item 
+\#define \mbox{\hyperlink{div64_8c_aa5622509f213f84fa22674f8f6aed801}{INT\+\_\+\+BITS}}~(sizeof(int) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+)
+\item 
+\#define \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}}~(sizeof(int) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+ / 2)
+\item 
+\#define \mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(x)~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) $>$$>$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})
+\item 
+\#define \mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(x)~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) \& (((int)1 $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}}) -\/ 1))
+\item 
+\#define \mbox{\hyperlink{div64_8c_a01a040cea26408490b42eb0f2e7b037c}{LHUP}}(x)~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})
+\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}}
+\item 
+typedef unsigned int \mbox{\hyperlink{div64_8c_ae5dd834a3b3be98f894d9cb5918840ef}{qshift\+\_\+t}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{div64_8c_aea6800ab9b5200308567fc450c54ff7b}{shl}} (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} $\ast$p, int len, int sh)
+\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{div64_8c_a522378bb0dbde8e751dc3fbf8469f667}{\+\_\+\+\_\+qdivrem}} (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} uq, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} vq, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} $\ast$arq)
+\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{div64_8c_a8ea8b568c5b3f59fcb6dcf681c536d51}{\+\_\+\+\_\+umoddi3}} (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} a, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} b)
+\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{div64_8c_a7914ecfb23bde61853417c539cda2ed9}{\+\_\+\+\_\+udivdi3}} (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} a, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} b)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{div64_8c_a7eaac45d4115e3143a8775abb93c2eed}\label{div64_8c_a7eaac45d4115e3143a8775abb93c2eed}} 
+\index{div64.c@{div64.c}!\_QUAD\_HIGHWORD@{\_QUAD\_HIGHWORD}}
+\index{\_QUAD\_HIGHWORD@{\_QUAD\_HIGHWORD}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{\_QUAD\_HIGHWORD}{\_QUAD\_HIGHWORD}}
+{\footnotesize\ttfamily \#define \+\_\+\+QUAD\+\_\+\+HIGHWORD~1}
+
+
+
+Definition at line 67 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_aba97a56cb953e7c610c1877249774951}\label{div64_8c_aba97a56cb953e7c610c1877249774951}} 
+\index{div64.c@{div64.c}!\_QUAD\_LOWWORD@{\_QUAD\_LOWWORD}}
+\index{\_QUAD\_LOWWORD@{\_QUAD\_LOWWORD}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{\_QUAD\_LOWWORD}{\_QUAD\_LOWWORD}}
+{\footnotesize\ttfamily \#define \+\_\+\+QUAD\+\_\+\+LOWWORD~0}
+
+
+
+Definition at line 68 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a111da81ae5883147168bbb8366377b10}\label{div64_8c_a111da81ae5883147168bbb8366377b10}} 
+\index{div64.c@{div64.c}!B@{B}}
+\index{B@{B}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{B}{B}}
+{\footnotesize\ttfamily \#define B~((int)1 $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})    /$\ast$ \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} base $\ast$/}
+
+
+
+Definition at line 38 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a152dd91c3a7a672cde53646a9cb62594}\label{div64_8c_a152dd91c3a7a672cde53646a9cb62594}} 
+\index{div64.c@{div64.c}!COMBINE@{COMBINE}}
+\index{COMBINE@{COMBINE}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{COMBINE}{COMBINE}}
+{\footnotesize\ttfamily \#define COMBINE(\begin{DoxyParamCaption}\item[{}]{a,  }\item[{}]{b }\end{DoxyParamCaption})~(((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(a) $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}}) $\vert$ (b))}
+
+
+
+Definition at line 41 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_abec92cc72a096640b821b8cd56a02495}\label{div64_8c_abec92cc72a096640b821b8cd56a02495}} 
+\index{div64.c@{div64.c}!H@{H}}
+\index{H@{H}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{H}{H}}
+{\footnotesize\ttfamily \#define H~\mbox{\hyperlink{div64_8c_a7eaac45d4115e3143a8775abb93c2eed}{\+\_\+\+QUAD\+\_\+\+HIGHWORD}}}
+
+
+
+Definition at line 69 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a652f8dfd5ad718480293127346c8110f}\label{div64_8c_a652f8dfd5ad718480293127346c8110f}} 
+\index{div64.c@{div64.c}!HALF\_BITS@{HALF\_BITS}}
+\index{HALF\_BITS@{HALF\_BITS}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{HALF\_BITS}{HALF\_BITS}}
+{\footnotesize\ttfamily \#define HALF\+\_\+\+BITS~(sizeof(int) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+ / 2)}
+
+
+
+Definition at line 80 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}\label{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}} 
+\index{div64.c@{div64.c}!HHALF@{HHALF}}
+\index{HHALF@{HHALF}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{HHALF}{HHALF}}
+{\footnotesize\ttfamily \#define HHALF(\begin{DoxyParamCaption}\item[{}]{x }\end{DoxyParamCaption})~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) $>$$>$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})}
+
+
+
+Definition at line 92 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_aa5622509f213f84fa22674f8f6aed801}\label{div64_8c_aa5622509f213f84fa22674f8f6aed801}} 
+\index{div64.c@{div64.c}!INT\_BITS@{INT\_BITS}}
+\index{INT\_BITS@{INT\_BITS}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{INT\_BITS}{INT\_BITS}}
+{\footnotesize\ttfamily \#define INT\+\_\+\+BITS~(sizeof(int) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+)}
+
+
+
+Definition at line 79 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}\label{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}} 
+\index{div64.c@{div64.c}!L@{L}}
+\index{L@{L}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{L}{L}}
+{\footnotesize\ttfamily \#define L~\mbox{\hyperlink{div64_8c_aba97a56cb953e7c610c1877249774951}{\+\_\+\+QUAD\+\_\+\+LOWWORD}}}
+
+
+
+Definition at line 70 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_adf04943239a977f38017d6bbf53a4b36}\label{div64_8c_adf04943239a977f38017d6bbf53a4b36}} 
+\index{div64.c@{div64.c}!LHALF@{LHALF}}
+\index{LHALF@{LHALF}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{LHALF}{LHALF}}
+{\footnotesize\ttfamily \#define LHALF(\begin{DoxyParamCaption}\item[{}]{x }\end{DoxyParamCaption})~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) \& (((int)1 $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}}) -\/ 1))}
+
+
+
+Definition at line 93 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a01a040cea26408490b42eb0f2e7b037c}\label{div64_8c_a01a040cea26408490b42eb0f2e7b037c}} 
+\index{div64.c@{div64.c}!LHUP@{LHUP}}
+\index{LHUP@{LHUP}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{LHUP}{LHUP}}
+{\footnotesize\ttfamily \#define LHUP(\begin{DoxyParamCaption}\item[{}]{x }\end{DoxyParamCaption})~((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}})(x) $<$$<$ \mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\+\_\+\+BITS}})}
+
+
+
+Definition at line 94 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a187c867e08bb456f8d07eb512e4a93e0}\label{div64_8c_a187c867e08bb456f8d07eb512e4a93e0}} 
+\index{div64.c@{div64.c}!QUAD\_BITS@{QUAD\_BITS}}
+\index{QUAD\_BITS@{QUAD\_BITS}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{QUAD\_BITS}{QUAD\_BITS}}
+{\footnotesize\ttfamily \#define QUAD\+\_\+\+BITS~(sizeof(\mbox{\hyperlink{stdint_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\+\_\+t}}) $\ast$ \+\_\+\+\_\+\+CHAR\+\_\+\+BIT\+\_\+\+\_\+)}
+
+
+
+Definition at line 78 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_ac998ea02fbd821fc123d60445ce76f38}\label{div64_8c_ac998ea02fbd821fc123d60445ce76f38}} 
+\index{div64.c@{div64.c}!UINT\_MAX@{UINT\_MAX}}
+\index{UINT\_MAX@{UINT\_MAX}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{UINT\_MAX}{UINT\_MAX}}
+{\footnotesize\ttfamily \#define UINT\+\_\+\+MAX~\mbox{\hyperlink{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\+\_\+\+MAX}}}
+
+
+
+Definition at line 43 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_a689b119da994dece91d44b5aeac643ed}\label{div64_8c_a689b119da994dece91d44b5aeac643ed}} 
+\index{div64.c@{div64.c}!USHRT\_MAX@{USHRT\_MAX}}
+\index{USHRT\_MAX@{USHRT\_MAX}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{USHRT\_MAX}{USHRT\_MAX}}
+{\footnotesize\ttfamily \#define USHRT\+\_\+\+MAX~\mbox{\hyperlink{stdint_8h_a3ea490c9b3617d4479bd80ef93cd5602}{UINT16\+\_\+\+MAX}}}
+
+
+
+Definition at line 44 of file div64.\+c.
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}\label{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}} 
+\index{div64.c@{div64.c}!digit@{digit}}
+\index{digit@{digit}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{digit}{digit}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}}}
+
+
+
+Definition at line 50 of file div64.\+c.
+
+\mbox{\Hypertarget{div64_8c_ae5dd834a3b3be98f894d9cb5918840ef}\label{div64_8c_ae5dd834a3b3be98f894d9cb5918840ef}} 
+\index{div64.c@{div64.c}!qshift\_t@{qshift\_t}}
+\index{qshift\_t@{qshift\_t}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{qshift\_t}{qshift\_t}}
+{\footnotesize\ttfamily typedef unsigned int \mbox{\hyperlink{div64_8c_ae5dd834a3b3be98f894d9cb5918840ef}{qshift\+\_\+t}}}
+
+
+
+Definition at line 96 of file div64.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{div64_8c_a522378bb0dbde8e751dc3fbf8469f667}\label{div64_8c_a522378bb0dbde8e751dc3fbf8469f667}} 
+\index{div64.c@{div64.c}!\_\_qdivrem@{\_\_qdivrem}}
+\index{\_\_qdivrem@{\_\_qdivrem}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{\_\_qdivrem()}{\_\_qdivrem()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+\+\_\+qdivrem (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{uq,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{vq,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} $\ast$}]{arq }\end{DoxyParamCaption})}
+
+
+
+Definition at line 115 of file div64.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{116 \{}
+\DoxyCodeLine{117     \textcolor{keyword}{union }\mbox{\hyperlink{unionuu}{uu}} tmp;}
+\DoxyCodeLine{118     \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} *u, *v, *\mbox{\hyperlink{unionuu_ad74fa85f9b6a88306daa9ebe976ef8b2}{q}};}
+\DoxyCodeLine{119     \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} v1, v2;}
+\DoxyCodeLine{120     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} qhat, rhat, t;}
+\DoxyCodeLine{121     \textcolor{keywordtype}{int} m, n, d, j, i;}
+\DoxyCodeLine{122     \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} uspace[5], vspace[5], qspace[5];}
+\DoxyCodeLine{123 }
+\DoxyCodeLine{124     \textcolor{comment}{/*}}
+\DoxyCodeLine{125 \textcolor{comment}{     * Take care of special cases: divide by zero, and u < v.}}
+\DoxyCodeLine{126 \textcolor{comment}{     */}}
+\DoxyCodeLine{127     \textcolor{keywordflow}{if} (vq == 0) \{}
+\DoxyCodeLine{128         \textcolor{comment}{/* divide by zero. */}}
+\DoxyCodeLine{129         \textcolor{comment}{//static volatile const unsigned int zero = 0;}}
+\DoxyCodeLine{130 }
+\DoxyCodeLine{131         \textcolor{comment}{//tmp.ul[H] = tmp.ul[L] = 1 / zero;}}
+\DoxyCodeLine{132         \textcolor{keywordflow}{if} (arq)}
+\DoxyCodeLine{133             *arq = \mbox{\hyperlink{unionuu_a6aa9e040abadf07b22eb1fc7f12e88af}{uq}};}
+\DoxyCodeLine{134         tmp.q = 0;}
+\DoxyCodeLine{135         \textcolor{keywordflow}{return} (tmp.q);}
+\DoxyCodeLine{136     \}}
+\DoxyCodeLine{137     \textcolor{keywordflow}{if} (\mbox{\hyperlink{unionuu_a6aa9e040abadf07b22eb1fc7f12e88af}{uq}} < vq) \{}
+\DoxyCodeLine{138         \textcolor{keywordflow}{if} (arq)}
+\DoxyCodeLine{139             *arq = \mbox{\hyperlink{unionuu_a6aa9e040abadf07b22eb1fc7f12e88af}{uq}};}
+\DoxyCodeLine{140         \textcolor{keywordflow}{return} (0);}
+\DoxyCodeLine{141     \}}
+\DoxyCodeLine{142     u = \&uspace[0];}
+\DoxyCodeLine{143     v = \&vspace[0];}
+\DoxyCodeLine{144     \mbox{\hyperlink{unionuu_ad74fa85f9b6a88306daa9ebe976ef8b2}{q}} = \&qspace[0];}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{146     \textcolor{comment}{/*}}
+\DoxyCodeLine{147 \textcolor{comment}{     * Break dividend and divisor into digits in base B, then}}
+\DoxyCodeLine{148 \textcolor{comment}{     * count leading zeros to determine m and n.  When done, we}}
+\DoxyCodeLine{149 \textcolor{comment}{     * will have:}}
+\DoxyCodeLine{150 \textcolor{comment}{     *    u = (u[1]u[2]...u[m+n]) sub B}}
+\DoxyCodeLine{151 \textcolor{comment}{     *    v = (v[1]v[2]...v[n]) sub B}}
+\DoxyCodeLine{152 \textcolor{comment}{     *    v[1] != 0}}
+\DoxyCodeLine{153 \textcolor{comment}{     *    1 < n <= 4 (if n = 1, we use a different division algorithm)}}
+\DoxyCodeLine{154 \textcolor{comment}{     *    m >= 0 (otherwise u < v, which we already checked)}}
+\DoxyCodeLine{155 \textcolor{comment}{     *    m + n = 4}}
+\DoxyCodeLine{156 \textcolor{comment}{     * and thus}}
+\DoxyCodeLine{157 \textcolor{comment}{     *    m = 4 -\/ n <= 2}}
+\DoxyCodeLine{158 \textcolor{comment}{     */}}
+\DoxyCodeLine{159     tmp.uq = \mbox{\hyperlink{unionuu_a6aa9e040abadf07b22eb1fc7f12e88af}{uq}};}
+\DoxyCodeLine{160     u[0] = 0;}
+\DoxyCodeLine{161     u[1] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}]);}
+\DoxyCodeLine{162     u[2] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}]);}
+\DoxyCodeLine{163     u[3] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}]);}
+\DoxyCodeLine{164     u[4] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}]);}
+\DoxyCodeLine{165     tmp.uq = vq;}
+\DoxyCodeLine{166     v[1] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}]);}
+\DoxyCodeLine{167     v[2] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}]);}
+\DoxyCodeLine{168     v[3] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}]);}
+\DoxyCodeLine{169     v[4] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}]);}
+\DoxyCodeLine{170     \textcolor{keywordflow}{for} (n = 4; v[1] == 0; v++) \{}
+\DoxyCodeLine{171         \textcolor{keywordflow}{if} (-\/-\/n == 1) \{}
+\DoxyCodeLine{172             \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} rbj;    \textcolor{comment}{/* r*B+u[j] (not root boy jim) */}}
+\DoxyCodeLine{173             \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} q1, q2, q3, q4;}
+\DoxyCodeLine{174 }
+\DoxyCodeLine{175             \textcolor{comment}{/*}}
+\DoxyCodeLine{176 \textcolor{comment}{             * Change of plan, per exercise 16.}}
+\DoxyCodeLine{177 \textcolor{comment}{             *    r = 0;}}
+\DoxyCodeLine{178 \textcolor{comment}{             *    for j = 1..4:}}
+\DoxyCodeLine{179 \textcolor{comment}{             *        q[j] = floor((r*B + u[j]) / v),}}
+\DoxyCodeLine{180 \textcolor{comment}{             *        r = (r*B + u[j]) \% v;}}
+\DoxyCodeLine{181 \textcolor{comment}{             * We unroll this completely here.}}
+\DoxyCodeLine{182 \textcolor{comment}{             */}}
+\DoxyCodeLine{183             t = v[2];    \textcolor{comment}{/* nonzero, by definition */}}
+\DoxyCodeLine{184             q1 = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(u[1] / t);}
+\DoxyCodeLine{185             rbj = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(u[1] \% t, u[2]);}
+\DoxyCodeLine{186             q2 = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(rbj / t);}
+\DoxyCodeLine{187             rbj = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(rbj \% t, u[3]);}
+\DoxyCodeLine{188             q3 = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(rbj / t);}
+\DoxyCodeLine{189             rbj = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(rbj \% t, u[4]);}
+\DoxyCodeLine{190             q4 = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(rbj / t);}
+\DoxyCodeLine{191             \textcolor{keywordflow}{if} (arq)}
+\DoxyCodeLine{192                 *arq = rbj \% t;}
+\DoxyCodeLine{193             tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(q1, q2);}
+\DoxyCodeLine{194             tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(q3, q4);}
+\DoxyCodeLine{195             \textcolor{keywordflow}{return} (tmp.q);}
+\DoxyCodeLine{196         \}}
+\DoxyCodeLine{197     \}}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199     \textcolor{comment}{/*}}
+\DoxyCodeLine{200 \textcolor{comment}{     * By adjusting q once we determine m, we can guarantee that}}
+\DoxyCodeLine{201 \textcolor{comment}{     * there is a complete four-\/digit quotient at \&qspace[1] when}}
+\DoxyCodeLine{202 \textcolor{comment}{     * we finally stop.}}
+\DoxyCodeLine{203 \textcolor{comment}{     */}}
+\DoxyCodeLine{204     \textcolor{keywordflow}{for} (m = 4 -\/ n; u[1] == 0; u++)}
+\DoxyCodeLine{205         m-\/-\/;}
+\DoxyCodeLine{206     \textcolor{keywordflow}{for} (i = 4 -\/ m; -\/-\/i >= 0;)}
+\DoxyCodeLine{207         \mbox{\hyperlink{unionuu_ad74fa85f9b6a88306daa9ebe976ef8b2}{q}}[i] = 0;}
+\DoxyCodeLine{208     \mbox{\hyperlink{unionuu_ad74fa85f9b6a88306daa9ebe976ef8b2}{q}} += 4 -\/ m;}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210     \textcolor{comment}{/*}}
+\DoxyCodeLine{211 \textcolor{comment}{     * Here we run Program D, translated from MIX to C and acquiring}}
+\DoxyCodeLine{212 \textcolor{comment}{     * a few minor changes.}}
+\DoxyCodeLine{213 \textcolor{comment}{     *}}
+\DoxyCodeLine{214 \textcolor{comment}{     * D1: choose multiplier 1 << d to ensure v[1] >= B/2.}}
+\DoxyCodeLine{215 \textcolor{comment}{     */}}
+\DoxyCodeLine{216     d = 0;}
+\DoxyCodeLine{217     \textcolor{keywordflow}{for} (t = v[1]; t < \mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}} / 2; t <<= 1)}
+\DoxyCodeLine{218         d++;}
+\DoxyCodeLine{219     \textcolor{keywordflow}{if} (d > 0) \{}
+\DoxyCodeLine{220         \mbox{\hyperlink{div64_8c_aea6800ab9b5200308567fc450c54ff7b}{shl}}(\&u[0], m + n, d);        \textcolor{comment}{/* u <<= d */}}
+\DoxyCodeLine{221         \mbox{\hyperlink{div64_8c_aea6800ab9b5200308567fc450c54ff7b}{shl}}(\&v[1], n -\/ 1, d);        \textcolor{comment}{/* v <<= d */}}
+\DoxyCodeLine{222     \}}
+\DoxyCodeLine{223     \textcolor{comment}{/*}}
+\DoxyCodeLine{224 \textcolor{comment}{     * D2: j = 0.}}
+\DoxyCodeLine{225 \textcolor{comment}{     */}}
+\DoxyCodeLine{226     j = 0;}
+\DoxyCodeLine{227     v1 = v[1];    \textcolor{comment}{/* for D3 -\/-\/ note that v[1..n] are constant */}}
+\DoxyCodeLine{228     v2 = v[2];    \textcolor{comment}{/* for D3 */}}
+\DoxyCodeLine{229     \textcolor{keywordflow}{do} \{}
+\DoxyCodeLine{230         \mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} uj0, uj1, uj2;}
+\DoxyCodeLine{231 }
+\DoxyCodeLine{232         \textcolor{comment}{/*}}
+\DoxyCodeLine{233 \textcolor{comment}{         * D3: Calculate qhat (\(\backslash\)\string^q, in TeX notation).}}
+\DoxyCodeLine{234 \textcolor{comment}{         * Let qhat = min((u[j]*B + u[j+1])/v[1], B-\/1), and}}
+\DoxyCodeLine{235 \textcolor{comment}{         * let rhat = (u[j]*B + u[j+1]) mod v[1].}}
+\DoxyCodeLine{236 \textcolor{comment}{         * While rhat < B and v[2]*qhat > rhat*B+u[j+2],}}
+\DoxyCodeLine{237 \textcolor{comment}{         * decrement qhat and increase rhat correspondingly.}}
+\DoxyCodeLine{238 \textcolor{comment}{         * Note that if rhat >= B, v[2]*qhat < rhat*B.}}
+\DoxyCodeLine{239 \textcolor{comment}{         */}}
+\DoxyCodeLine{240         uj0 = u[j + 0];    \textcolor{comment}{/* for D3 only -\/-\/ note that u[j+...] change */}}
+\DoxyCodeLine{241         uj1 = u[j + 1];    \textcolor{comment}{/* for D3 only */}}
+\DoxyCodeLine{242         uj2 = u[j + 2];    \textcolor{comment}{/* for D3 only */}}
+\DoxyCodeLine{243         \textcolor{keywordflow}{if} (uj0 == v1) \{}
+\DoxyCodeLine{244             qhat = \mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}};}
+\DoxyCodeLine{245             rhat = uj1;}
+\DoxyCodeLine{246             \textcolor{keywordflow}{goto} qhat\_too\_big;}
+\DoxyCodeLine{247         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{248             \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} nn = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(uj0, uj1);}
+\DoxyCodeLine{249             qhat = nn / v1;}
+\DoxyCodeLine{250             rhat = nn \% v1;}
+\DoxyCodeLine{251         \}}
+\DoxyCodeLine{252         \textcolor{keywordflow}{while} (v2 * qhat > \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(rhat, uj2)) \{}
+\DoxyCodeLine{253     qhat\_too\_big:}
+\DoxyCodeLine{254             qhat-\/-\/;}
+\DoxyCodeLine{255             \textcolor{keywordflow}{if} ((rhat += v1) >= \mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}})}
+\DoxyCodeLine{256                 \textcolor{keywordflow}{break};}
+\DoxyCodeLine{257         \}}
+\DoxyCodeLine{258         \textcolor{comment}{/*}}
+\DoxyCodeLine{259 \textcolor{comment}{         * D4: Multiply and subtract.}}
+\DoxyCodeLine{260 \textcolor{comment}{         * The variable `t' holds any borrows across the loop.}}
+\DoxyCodeLine{261 \textcolor{comment}{         * We split this up so that we do not require v[0] = 0,}}
+\DoxyCodeLine{262 \textcolor{comment}{         * and to eliminate a final special case.}}
+\DoxyCodeLine{263 \textcolor{comment}{         */}}
+\DoxyCodeLine{264         \textcolor{keywordflow}{for} (t = 0, i = n; i > 0; i-\/-\/) \{}
+\DoxyCodeLine{265             t = u[i + j] -\/ v[i] * qhat -\/ t;}
+\DoxyCodeLine{266             u[i + j] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(t);}
+\DoxyCodeLine{267             t = (\mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}} -\/ \mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(t)) \& (\mbox{\hyperlink{div64_8c_a111da81ae5883147168bbb8366377b10}{B}} -\/ 1);}
+\DoxyCodeLine{268         \}}
+\DoxyCodeLine{269         t = u[j] -\/ t;}
+\DoxyCodeLine{270         u[j] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(t);}
+\DoxyCodeLine{271         \textcolor{comment}{/*}}
+\DoxyCodeLine{272 \textcolor{comment}{         * D5: test remainder.}}
+\DoxyCodeLine{273 \textcolor{comment}{         * There is a borrow if and only if HHALF(t) is nonzero;}}
+\DoxyCodeLine{274 \textcolor{comment}{         * in that (rare) case, qhat was too large (by exactly 1).}}
+\DoxyCodeLine{275 \textcolor{comment}{         * Fix it by adding v[1..n] to u[j..j+n].}}
+\DoxyCodeLine{276 \textcolor{comment}{         */}}
+\DoxyCodeLine{277         \textcolor{keywordflow}{if} (\mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(t)) \{}
+\DoxyCodeLine{278             qhat-\/-\/;}
+\DoxyCodeLine{279             \textcolor{keywordflow}{for} (t = 0, i = n; i > 0; i-\/-\/) \{ \textcolor{comment}{/* D6: add back. */}}
+\DoxyCodeLine{280                 t += u[i + j] + v[i];}
+\DoxyCodeLine{281                 u[i + j] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(t);}
+\DoxyCodeLine{282                 t = \mbox{\hyperlink{div64_8c_a92c7de42051862b2d44e2f0ccd9ca475}{HHALF}}(t);}
+\DoxyCodeLine{283             \}}
+\DoxyCodeLine{284             u[j] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}(u[j] + t);}
+\DoxyCodeLine{285         \}}
+\DoxyCodeLine{286         \mbox{\hyperlink{unionuu_ad74fa85f9b6a88306daa9ebe976ef8b2}{q}}[j] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})qhat;}
+\DoxyCodeLine{287     \}\textcolor{keywordflow}{while} (++j <= m);        \textcolor{comment}{/* D7: loop on j. */}}
+\DoxyCodeLine{288 }
+\DoxyCodeLine{289     \textcolor{comment}{/*}}
+\DoxyCodeLine{290 \textcolor{comment}{     * If caller wants the remainder, we have to calculate it as}}
+\DoxyCodeLine{291 \textcolor{comment}{     * u[m..m+n] >> d (this is at most n digits and thus fits in}}
+\DoxyCodeLine{292 \textcolor{comment}{     * u[m+1..m+n], but we may need more source digits).}}
+\DoxyCodeLine{293 \textcolor{comment}{     */}}
+\DoxyCodeLine{294     \textcolor{keywordflow}{if} (arq) \{}
+\DoxyCodeLine{295         \textcolor{keywordflow}{if} (d) \{}
+\DoxyCodeLine{296             \textcolor{keywordflow}{for} (i = m + n; i > m; -\/-\/i)}
+\DoxyCodeLine{297                 u[i] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})u[i] >> d) |}
+\DoxyCodeLine{298                     \mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})u[i -\/ 1] << (\mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\_BITS}} -\/ d)));}
+\DoxyCodeLine{299             u[i] = 0;}
+\DoxyCodeLine{300         \}}
+\DoxyCodeLine{301         tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(uspace[1], uspace[2]);}
+\DoxyCodeLine{302         tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(uspace[3], uspace[4]);}
+\DoxyCodeLine{303         *arq = tmp.q;}
+\DoxyCodeLine{304     \}}
+\DoxyCodeLine{305 }
+\DoxyCodeLine{306     tmp.ul[\mbox{\hyperlink{div64_8c_abec92cc72a096640b821b8cd56a02495}{H}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(qspace[1], qspace[2]);}
+\DoxyCodeLine{307     tmp.ul[\mbox{\hyperlink{div64_8c_aa73214aa5f2f94f63d90bb4e3d99fe53}{L}}] = \mbox{\hyperlink{div64_8c_a152dd91c3a7a672cde53646a9cb62594}{COMBINE}}(qspace[3], qspace[4]);}
+\DoxyCodeLine{308     \textcolor{keywordflow}{return} (tmp.q);}
+\DoxyCodeLine{309 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=215pt]{div64_8c_a522378bb0dbde8e751dc3fbf8469f667_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=254pt]{div64_8c_a522378bb0dbde8e751dc3fbf8469f667_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{div64_8c_a7914ecfb23bde61853417c539cda2ed9}\label{div64_8c_a7914ecfb23bde61853417c539cda2ed9}} 
+\index{div64.c@{div64.c}!\_\_udivdi3@{\_\_udivdi3}}
+\index{\_\_udivdi3@{\_\_udivdi3}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{\_\_udivdi3()}{\_\_udivdi3()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+\+\_\+udivdi3 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{a,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{b }\end{DoxyParamCaption})}
+
+
+
+Definition at line 337 of file div64.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{338 \{}
+\DoxyCodeLine{339 }
+\DoxyCodeLine{340     \textcolor{keywordflow}{return} (\mbox{\hyperlink{div64_8c_a522378bb0dbde8e751dc3fbf8469f667}{\_\_qdivrem}}(a, b, (\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} *)0));}
+\DoxyCodeLine{341 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=314pt]{div64_8c_a7914ecfb23bde61853417c539cda2ed9_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{div64_8c_a8ea8b568c5b3f59fcb6dcf681c536d51}\label{div64_8c_a8ea8b568c5b3f59fcb6dcf681c536d51}} 
+\index{div64.c@{div64.c}!\_\_umoddi3@{\_\_umoddi3}}
+\index{\_\_umoddi3@{\_\_umoddi3}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{\_\_umoddi3()}{\_\_umoddi3()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+\+\_\+umoddi3 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{a,  }\item[{\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{b }\end{DoxyParamCaption})}
+
+
+
+Definition at line 328 of file div64.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{329 \{}
+\DoxyCodeLine{330     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} r;}
+\DoxyCodeLine{331 }
+\DoxyCodeLine{332     (void)\mbox{\hyperlink{div64_8c_a522378bb0dbde8e751dc3fbf8469f667}{\_\_qdivrem}}(a, b, \&r);}
+\DoxyCodeLine{333     \textcolor{keywordflow}{return} (r);}
+\DoxyCodeLine{334 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=321pt]{div64_8c_a8ea8b568c5b3f59fcb6dcf681c536d51_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{div64_8c_aea6800ab9b5200308567fc450c54ff7b}\label{div64_8c_aea6800ab9b5200308567fc450c54ff7b}} 
+\index{div64.c@{div64.c}!shl@{shl}}
+\index{shl@{shl}!div64.c@{div64.c}}
+\doxysubsubsection{\texorpdfstring{shl()}{shl()}}
+{\footnotesize\ttfamily static void shl (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}} $\ast$}]{p,  }\item[{int}]{len,  }\item[{int}]{sh }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line 317 of file div64.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{318 \{}
+\DoxyCodeLine{319     \textcolor{keywordtype}{int} i;}
+\DoxyCodeLine{320 }
+\DoxyCodeLine{321     \textcolor{keywordflow}{for} (i = 0; i < len; i++)}
+\DoxyCodeLine{322         p[i] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})p[i] << sh) |}
+\DoxyCodeLine{323             ((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})p[i + 1] >> (\mbox{\hyperlink{div64_8c_a652f8dfd5ad718480293127346c8110f}{HALF\_BITS}} -\/ sh)));}
+\DoxyCodeLine{324     p[i] = (\mbox{\hyperlink{div64_8c_aa9aa9d8b5ae9ace345dc4e68ba8e058c}{digit}})(\mbox{\hyperlink{div64_8c_adf04943239a977f38017d6bbf53a4b36}{LHALF}}((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})p[i] << sh));}
+\DoxyCodeLine{325 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=321pt]{div64_8c_aea6800ab9b5200308567fc450c54ff7b_icgraph}
+\end{center}
+\end{figure}

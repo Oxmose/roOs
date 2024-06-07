@@ -1,0 +1,189 @@
+\hypertarget{structint__context__t}{}\doxysection{int\+\_\+context\+\_\+t Struct Reference}
+\label{structint__context__t}\index{int\_context\_t@{int\_context\_t}}
+
+
+Holds the interrupt context.  
+
+
+
+
+{\ttfamily \#include $<$cpu.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structint__context__t_a3368558e1a109ce19d039561903f5f41}{int\+\_\+id}}
+\begin{DoxyCompactList}\small\item\em Interrupt\textquotesingle{}s index. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structint__context__t_abf2d7e54e9bb8675882ab068a0885e37}{error\+\_\+code}}
+\begin{DoxyCompactList}\small\item\em Interrupt\textquotesingle{}s error code. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structint__context__t_a1588906901fc3015e0865574669a56a6}{eip}}
+\begin{DoxyCompactList}\small\item\em EIP of the faulting instruction. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structint__context__t_a8519dc239502dfcbac171b3128dc7054}{cs}}
+\begin{DoxyCompactList}\small\item\em CS before the interrupt. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}{eflags}}
+\begin{DoxyCompactList}\small\item\em EFLAGS before the interrupt. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{structint__context__t_a02e903330a08c23e5acd08adaf605045}{int\+\_\+id}}
+\begin{DoxyCompactList}\small\item\em Interrupt\textquotesingle{}s index. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{structint__context__t_aa22cd6caed49b7b115b13d77a3990bb0}{error\+\_\+code}}
+\begin{DoxyCompactList}\small\item\em Interrupt\textquotesingle{}s error code. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{structint__context__t_a90e28f434559f0582a69699dc4dbc286}{rip}}
+\begin{DoxyCompactList}\small\item\em RIP of the faulting instruction. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{structint__context__t_aea3e8b50ef91f54dad11c01a77675324}{cs}}
+\begin{DoxyCompactList}\small\item\em CS before the interrupt. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{structint__context__t_ac67e007ae346a1499c5a276869bfd1bb}{rflags}}
+\begin{DoxyCompactList}\small\item\em RFLAGS before the interrupt. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Holds the interrupt context. 
+
+Definition at line 77 of file cpu.\+h.
+
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structint__context__t_a8519dc239502dfcbac171b3128dc7054}\label{structint__context__t_a8519dc239502dfcbac171b3128dc7054}} 
+\index{int\_context\_t@{int\_context\_t}!cs@{cs}}
+\index{cs@{cs}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{cs}{cs}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} cs}
+
+
+
+CS before the interrupt. 
+
+
+
+Definition at line 86 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_aea3e8b50ef91f54dad11c01a77675324}\label{structint__context__t_aea3e8b50ef91f54dad11c01a77675324}} 
+\index{int\_context\_t@{int\_context\_t}!cs@{cs}}
+\index{cs@{cs}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{cs}{cs}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} cs}
+
+
+
+CS before the interrupt. 
+
+
+
+Definition at line 103 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}\label{structint__context__t_aeedfc39703ec8e0a1f052a832e74acd3}} 
+\index{int\_context\_t@{int\_context\_t}!eflags@{eflags}}
+\index{eflags@{eflags}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{eflags}{eflags}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} eflags}
+
+
+
+EFLAGS before the interrupt. 
+
+
+
+Definition at line 88 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_a1588906901fc3015e0865574669a56a6}\label{structint__context__t_a1588906901fc3015e0865574669a56a6}} 
+\index{int\_context\_t@{int\_context\_t}!eip@{eip}}
+\index{eip@{eip}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{eip}{eip}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} eip}
+
+
+
+EIP of the faulting instruction. 
+
+
+
+Definition at line 84 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_abf2d7e54e9bb8675882ab068a0885e37}\label{structint__context__t_abf2d7e54e9bb8675882ab068a0885e37}} 
+\index{int\_context\_t@{int\_context\_t}!error\_code@{error\_code}}
+\index{error\_code@{error\_code}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{error\_code}{error\_code}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} error\+\_\+code}
+
+
+
+Interrupt\textquotesingle{}s error code. 
+
+
+
+Definition at line 82 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_aa22cd6caed49b7b115b13d77a3990bb0}\label{structint__context__t_aa22cd6caed49b7b115b13d77a3990bb0}} 
+\index{int\_context\_t@{int\_context\_t}!error\_code@{error\_code}}
+\index{error\_code@{error\_code}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{error\_code}{error\_code}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} error\+\_\+code}
+
+
+
+Interrupt\textquotesingle{}s error code. 
+
+
+
+Definition at line 99 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_a3368558e1a109ce19d039561903f5f41}\label{structint__context__t_a3368558e1a109ce19d039561903f5f41}} 
+\index{int\_context\_t@{int\_context\_t}!int\_id@{int\_id}}
+\index{int\_id@{int\_id}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{int\_id}{int\_id}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} int\+\_\+id}
+
+
+
+Interrupt\textquotesingle{}s index. 
+
+
+
+Definition at line 80 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_a02e903330a08c23e5acd08adaf605045}\label{structint__context__t_a02e903330a08c23e5acd08adaf605045}} 
+\index{int\_context\_t@{int\_context\_t}!int\_id@{int\_id}}
+\index{int\_id@{int\_id}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{int\_id}{int\_id}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} int\+\_\+id}
+
+
+
+Interrupt\textquotesingle{}s index. 
+
+
+
+Definition at line 97 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_ac67e007ae346a1499c5a276869bfd1bb}\label{structint__context__t_ac67e007ae346a1499c5a276869bfd1bb}} 
+\index{int\_context\_t@{int\_context\_t}!rflags@{rflags}}
+\index{rflags@{rflags}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{rflags}{rflags}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} rflags}
+
+
+
+RFLAGS before the interrupt. 
+
+
+
+Definition at line 105 of file cpu.\+h.
+
+\mbox{\Hypertarget{structint__context__t_a90e28f434559f0582a69699dc4dbc286}\label{structint__context__t_a90e28f434559f0582a69699dc4dbc286}} 
+\index{int\_context\_t@{int\_context\_t}!rip@{rip}}
+\index{rip@{rip}!int\_context\_t@{int\_context\_t}}
+\doxysubsubsection{\texorpdfstring{rip}{rip}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} rip}
+
+
+
+RIP of the faulting instruction. 
+
+
+
+Definition at line 101 of file cpu.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Source/\+Kernel/\+Arch/\+CPU/i386/includes/\mbox{\hyperlink{i386_2includes_2cpu_8h}{cpu.\+h}}\end{DoxyCompactItemize}

@@ -1,0 +1,265 @@
+\hypertarget{mmio_8h}{}\doxysection{Source/\+Kernel/\+IO/includes/mmio.h File Reference}
+\label{mmio_8h}\index{Source/Kernel/IO/includes/mmio.h@{Source/Kernel/IO/includes/mmio.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+Include dependency graph for mmio.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{mmio_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{mmio_8h_a370bf8ea79da533adf73a3e91836b67e}{\+\_\+mapped\+\_\+io\+\_\+write\+\_\+8}} (void $\ast$volatile addr, const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} value)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO byte write access. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{mmio_8h_afb86fde762fd5e72d49522c9c530b8db}{\+\_\+mapped\+\_\+io\+\_\+write\+\_\+16}} (void $\ast$volatile addr, const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} value)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO half word write access. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{mmio_8h_ae37bd083545d4de91a1721629a0ee018}{\+\_\+mapped\+\_\+io\+\_\+write\+\_\+32}} (void $\ast$volatile addr, const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} value)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO word write access. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{mmio_8h_a2266e3137e7590bad9fd3a628d361f90}{\+\_\+mapped\+\_\+io\+\_\+write\+\_\+64}} (void $\ast$volatile addr, const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} value)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO double word write access. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{mmio_8h_ac206c3597a94e95a2d4c61c2363a253f}{\+\_\+mapped\+\_\+io\+\_\+read\+\_\+8}} (const volatile void $\ast$addr)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO byte read access. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{mmio_8h_a353ae62c4ff5552ad0b1783c4763e8c6}{\+\_\+mapped\+\_\+io\+\_\+read\+\_\+16}} (const volatile void $\ast$addr)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO half word read access. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{mmio_8h_ae14e5a7d3b22f9d5b682506f3ee2a957}{\+\_\+mapped\+\_\+io\+\_\+read\+\_\+32}} (const volatile void $\ast$addr)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO word read access. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{mmio_8h_ad05a8f1744eaa20a52c6bac541d68112}{\+\_\+mapped\+\_\+io\+\_\+read\+\_\+64}} (const volatile void $\ast$addr)
+\begin{DoxyCompactList}\small\item\em Memory mapped IO double word read access. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{mmio_8h_a353ae62c4ff5552ad0b1783c4763e8c6}\label{mmio_8h_a353ae62c4ff5552ad0b1783c4763e8c6}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_read\_16@{\_mapped\_io\_read\_16}}
+\index{\_mapped\_io\_read\_16@{\_mapped\_io\_read\_16}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_read\_16()}{\_mapped\_io\_read\_16()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \+\_\+mapped\+\_\+io\+\_\+read\+\_\+16 (\begin{DoxyParamCaption}\item[{const volatile void $\ast$}]{addr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO half word read access. 
+
+Memory mapped IOs half word read access. Avoids compilers to reorganize memory access, instead of doing \+: value = $\ast$addr, do mapped\+\_\+io\+\_\+read(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 151 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{152 \{}
+\DoxyCodeLine{153     \textcolor{keywordflow}{return} *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}*)(addr);}
+\DoxyCodeLine{154 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_ae14e5a7d3b22f9d5b682506f3ee2a957}\label{mmio_8h_ae14e5a7d3b22f9d5b682506f3ee2a957}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_read\_32@{\_mapped\_io\_read\_32}}
+\index{\_mapped\_io\_read\_32@{\_mapped\_io\_read\_32}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_read\_32()}{\_mapped\_io\_read\_32()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+mapped\+\_\+io\+\_\+read\+\_\+32 (\begin{DoxyParamCaption}\item[{const volatile void $\ast$}]{addr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO word read access. 
+
+Memory mapped IOs word read access. Avoids compilers to reorganize memory access, instead of doing \+: value = $\ast$addr, do mapped\+\_\+io\+\_\+read(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 165 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{166 \{}
+\DoxyCodeLine{167     \textcolor{keywordflow}{return} *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)(addr);}
+\DoxyCodeLine{168 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_ad05a8f1744eaa20a52c6bac541d68112}\label{mmio_8h_ad05a8f1744eaa20a52c6bac541d68112}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_read\_64@{\_mapped\_io\_read\_64}}
+\index{\_mapped\_io\_read\_64@{\_mapped\_io\_read\_64}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_read\_64()}{\_mapped\_io\_read\_64()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+mapped\+\_\+io\+\_\+read\+\_\+64 (\begin{DoxyParamCaption}\item[{const volatile void $\ast$}]{addr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO double word read access. 
+
+Memory mapped IOs double word read access. Avoids compilers to reorganize memory access, instead of doing \+: value = $\ast$addr, do mapped\+\_\+io\+\_\+read(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 179 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{180 \{}
+\DoxyCodeLine{181     \textcolor{keywordflow}{return} *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}*)(addr);}
+\DoxyCodeLine{182 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_ac206c3597a94e95a2d4c61c2363a253f}\label{mmio_8h_ac206c3597a94e95a2d4c61c2363a253f}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_read\_8@{\_mapped\_io\_read\_8}}
+\index{\_mapped\_io\_read\_8@{\_mapped\_io\_read\_8}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_read\_8()}{\_mapped\_io\_read\_8()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \+\_\+mapped\+\_\+io\+\_\+read\+\_\+8 (\begin{DoxyParamCaption}\item[{const volatile void $\ast$}]{addr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO byte read access. 
+
+Memory mapped IOs byte read access. Avoids compilers to reorganize memory access, instead of doing \+: value = $\ast$addr, do mapped\+\_\+io\+\_\+read(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 137 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{138 \{}
+\DoxyCodeLine{139     \textcolor{keywordflow}{return} *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)(addr);}
+\DoxyCodeLine{140 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_afb86fde762fd5e72d49522c9c530b8db}\label{mmio_8h_afb86fde762fd5e72d49522c9c530b8db}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_write\_16@{\_mapped\_io\_write\_16}}
+\index{\_mapped\_io\_write\_16@{\_mapped\_io\_write\_16}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_write\_16()}{\_mapped\_io\_write\_16()}}
+{\footnotesize\ttfamily static void \+\_\+mapped\+\_\+io\+\_\+write\+\_\+16 (\begin{DoxyParamCaption}\item[{void $\ast$volatile}]{addr,  }\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO half word write access. 
+
+Memory mapped IOs half word write access. Avoids compilers to reorganize memory access, instead of doing \+: $\ast$addr = value, do mapped\+\_\+io\+\_\+write(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to write. \\
+\hline
+\mbox{\texttt{ in}}  & {\em value} & The value to write to the IO. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 90 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{92 \{}
+\DoxyCodeLine{93     *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}*)(addr) = value;}
+\DoxyCodeLine{94 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_ae37bd083545d4de91a1721629a0ee018}\label{mmio_8h_ae37bd083545d4de91a1721629a0ee018}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_write\_32@{\_mapped\_io\_write\_32}}
+\index{\_mapped\_io\_write\_32@{\_mapped\_io\_write\_32}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_write\_32()}{\_mapped\_io\_write\_32()}}
+{\footnotesize\ttfamily static void \+\_\+mapped\+\_\+io\+\_\+write\+\_\+32 (\begin{DoxyParamCaption}\item[{void $\ast$volatile}]{addr,  }\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO word write access. 
+
+Memory mapped IOs word write access. Avoids compilers to reorganize memory access, instead of doing \+: $\ast$addr = value, do mapped\+\_\+io\+\_\+write(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to write. \\
+\hline
+\mbox{\texttt{ in}}  & {\em value} & The value to write to the IO. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 106 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{108 \{}
+\DoxyCodeLine{109     *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)(addr) = value;}
+\DoxyCodeLine{110 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_a2266e3137e7590bad9fd3a628d361f90}\label{mmio_8h_a2266e3137e7590bad9fd3a628d361f90}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_write\_64@{\_mapped\_io\_write\_64}}
+\index{\_mapped\_io\_write\_64@{\_mapped\_io\_write\_64}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_write\_64()}{\_mapped\_io\_write\_64()}}
+{\footnotesize\ttfamily static void \+\_\+mapped\+\_\+io\+\_\+write\+\_\+64 (\begin{DoxyParamCaption}\item[{void $\ast$volatile}]{addr,  }\item[{const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO double word write access. 
+
+Memory mapped IOs double word write access. Avoids compilers to reorganize memory access, instead of doing \+: $\ast$addr = value, do mapped\+\_\+io\+\_\+write(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to write. \\
+\hline
+\mbox{\texttt{ in}}  & {\em value} & The value to write to the IO. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 122 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{124 \{}
+\DoxyCodeLine{125     *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}*)(addr) = value;}
+\DoxyCodeLine{126 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{mmio_8h_a370bf8ea79da533adf73a3e91836b67e}\label{mmio_8h_a370bf8ea79da533adf73a3e91836b67e}} 
+\index{mmio.h@{mmio.h}!\_mapped\_io\_write\_8@{\_mapped\_io\_write\_8}}
+\index{\_mapped\_io\_write\_8@{\_mapped\_io\_write\_8}!mmio.h@{mmio.h}}
+\doxysubsubsection{\texorpdfstring{\_mapped\_io\_write\_8()}{\_mapped\_io\_write\_8()}}
+{\footnotesize\ttfamily static void \+\_\+mapped\+\_\+io\+\_\+write\+\_\+8 (\begin{DoxyParamCaption}\item[{void $\ast$volatile}]{addr,  }\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Memory mapped IO byte write access. 
+
+Memory mapped IOs byte write access. Avoids compilers to reorganize memory access, instead of doing \+: $\ast$addr = value, do mapped\+\_\+io\+\_\+write(addr, value) to avoid instruction reorganization.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em addr} & The address of the IO to write. \\
+\hline
+\mbox{\texttt{ in}}  & {\em value} & The value to write to the IO. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 74 of file mmio.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{76 \{}
+\DoxyCodeLine{77     *(\textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)(addr) = value;}
+\DoxyCodeLine{78 \}}
+
+\end{DoxyCode}

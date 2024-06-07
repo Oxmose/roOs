@@ -1,0 +1,89 @@
+\hypertarget{memmem_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/memmem.c File Reference}
+\label{memmem_8c}\index{Source/Kernel/Libs/libc/src/memmem.c@{Source/Kernel/Libs/libc/src/memmem.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for memmem.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=269pt]{memmem_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{memmem_8c_a17f8ea308c456dd4b8877a1113cfeda1}{memmem}} (const void $\ast$haystack, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n, const void $\ast$needle, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} m)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{memmem_8c_a17f8ea308c456dd4b8877a1113cfeda1}\label{memmem_8c_a17f8ea308c456dd4b8877a1113cfeda1}} 
+\index{memmem.c@{memmem.c}!memmem@{memmem}}
+\index{memmem@{memmem}!memmem.c@{memmem.c}}
+\doxysubsubsection{\texorpdfstring{memmem()}{memmem()}}
+{\footnotesize\ttfamily void$\ast$ memmem (\begin{DoxyParamCaption}\item[{const void $\ast$}]{haystack,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n,  }\item[{const void $\ast$}]{needle,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{m }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file memmem.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *y = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)haystack;}
+\DoxyCodeLine{76     \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *x = (\textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *)needle;}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78     \textcolor{keywordflow}{if} (m > n || !m || !n)}
+\DoxyCodeLine{79         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81     \textcolor{keywordflow}{if} (1 != m) \{}
+\DoxyCodeLine{82         \textcolor{keywordtype}{size\_t} j, k, l;}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84         \textcolor{keywordflow}{if} (x[0] == x[1]) \{}
+\DoxyCodeLine{85             k = 2;}
+\DoxyCodeLine{86             l = 1;}
+\DoxyCodeLine{87         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{88             k = 1;}
+\DoxyCodeLine{89             l = 2;}
+\DoxyCodeLine{90         \}}
+\DoxyCodeLine{91 }
+\DoxyCodeLine{92         j = 0;}
+\DoxyCodeLine{93         \textcolor{keywordflow}{while} (j <= n -\/ m) \{}
+\DoxyCodeLine{94             \textcolor{keywordflow}{if} (x[1] != y[j + 1]) \{}
+\DoxyCodeLine{95                 j += k;}
+\DoxyCodeLine{96             \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{97                 \textcolor{keywordflow}{if} (!\mbox{\hyperlink{string_8h_a0849c52baadd8269575bc57e2273d862}{memcmp}}(x + 2, y + j + 2, m -\/ 2)}
+\DoxyCodeLine{98                     \&\& x[0] == y[j])}
+\DoxyCodeLine{99                     \textcolor{keywordflow}{return} (\textcolor{keywordtype}{void} *)\&y[j];}
+\DoxyCodeLine{100                 j += l;}
+\DoxyCodeLine{101             \}}
+\DoxyCodeLine{102         \}}
+\DoxyCodeLine{103     \} \textcolor{keywordflow}{else}}
+\DoxyCodeLine{104         \textcolor{keywordflow}{do} \{}
+\DoxyCodeLine{105             \textcolor{keywordflow}{if} (*y == *x)}
+\DoxyCodeLine{106                 \textcolor{keywordflow}{return} (\textcolor{keywordtype}{void} *)y;}
+\DoxyCodeLine{107             y++;}
+\DoxyCodeLine{108         \}\textcolor{keywordflow}{while} (-\/-\/n);}
+\DoxyCodeLine{109 }
+\DoxyCodeLine{110     \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{111 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=247pt]{memmem_8c_a17f8ea308c456dd4b8877a1113cfeda1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{memmem_8c_a17f8ea308c456dd4b8877a1113cfeda1_icgraph}
+\end{center}
+\end{figure}

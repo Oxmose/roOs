@@ -1,0 +1,1518 @@
+\hypertarget{kernel__output_8c}{}\doxysection{Source/\+Kernel/\+IO/src/kernel\+\_\+output.c File Reference}
+\label{kernel__output_8c}\index{Source/Kernel/IO/src/kernel\_output.c@{Source/Kernel/IO/src/kernel\_output.c}}
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$console.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+Include dependency graph for kernel\+\_\+output.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structoutput__t}{output\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Output descriptor, used to define the handlers that manage outputs. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\+\_\+\+BLACK}}~0x00
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: black. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a9afd14c731aa8c62d9471913c1b23b9f}{BG\+\_\+\+BLUE}}~0x10
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_ac351fb4567ed6655a5b39769cc5dfd04}{BG\+\_\+\+GREEN}}~0x20
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a21ef237e1c4d69656729da4b34c31d8b}{BG\+\_\+\+CYAN}}~0x30
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_ac317d04c219b630f9c36b0241d9d4be7}{BG\+\_\+\+RED}}~0x40
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_ac08aa3f07e012f1b0edafa632d5300ba}{BG\+\_\+\+MAGENTA}}~0x50
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_af0157c2ce04475a02bdcf45fe3e44a92}{BG\+\_\+\+BROWN}}~0x60
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: brown. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a00213e74d04ed4d76a1339db5c26c70c}{BG\+\_\+\+GREY}}~0x70
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a01f446ce59cd9e70fb6bc16b20bc5350}{BG\+\_\+\+DARKGREY}}~0x80
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: dark grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a33397d5747fe9c2226f99478f17e9460}{BG\+\_\+\+BRIGHTBLUE}}~0x90
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a5a6b2c6a82a458acd6bc3f3d0a03e715}{BG\+\_\+\+BRIGHTGREEN}}~0x\+A0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a8f2c8dd03ac9198f30e40d14f8815069}{BG\+\_\+\+BRIGHTCYAN}}~0x\+B0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a7b78f0791621cae1bfe50d99075ddafa}{BG\+\_\+\+BRIGHTRED}}~0x\+C0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a1203ef2a5889b64e43d62efa8e52f890}{BG\+\_\+\+BRIGHTMAGENTA}}~0x\+D0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: bright magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_ab31fe3e74b1137650d30ede5c9b86218}{BG\+\_\+\+YELLOW}}~0x\+E0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: yellow. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a6beded3f171517df3902c52f79f6fea2}{BG\+\_\+\+WHITE}}~0x\+F0
+\begin{DoxyCompactList}\small\item\em VGA background color definition\+: white. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a9b32d0a26f9909c5b63ccd474f56420e}{FG\+\_\+\+BLACK}}~0x00
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: black. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a4e411f6bd6ac8d6c2bd23d866c097e91}{FG\+\_\+\+BLUE}}~0x01
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a0af1e03653ace4d21aebf3b2e03a6535}{FG\+\_\+\+GREEN}}~0x02
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_afb40e6e076755308612ed6e18a34dbeb}{FG\+\_\+\+CYAN}}~0x03
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a1dc5215d084174df6f00a9267cec2f17}{FG\+\_\+\+RED}}~0x04
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}{FG\+\_\+\+MAGENTA}}~0x05
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a7f5f0a051433665586340a4c5db46a0e}{FG\+\_\+\+BROWN}}~0x06
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: brown. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a5142f80dfa88eb9adc9d8acda8c492dd}{FG\+\_\+\+GREY}}~0x07
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a8e6ce3f2ce3e349ab09059a1de79f80f}{FG\+\_\+\+DARKGREY}}~0x08
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: dark grey. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a90e6477ae36af5a2b7a0d2035a69a96d}{FG\+\_\+\+BRIGHTBLUE}}~0x09
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright blue. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a2a3ef747fd07aa65ccbbe7b93e170d85}{FG\+\_\+\+BRIGHTGREEN}}~0x0A
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright green. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a2e66d2e78e23a9dfe8b00f00a9e34d93}{FG\+\_\+\+BRIGHTCYAN}}~0x0B
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright cyan. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a757d422eda569f40648fdb43eec745e8}{FG\+\_\+\+BRIGHTRED}}~0x0C
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright red. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}{FG\+\_\+\+BRIGHTMAGENTA}}~0x0D
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: bright magenta. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a266aa539aa271da1b1f711d2413b1bfa}{FG\+\_\+\+YELLOW}}~0x0E
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: yellow. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a7fbb956b9e769a1020c2eff1f6743857}{FG\+\_\+\+WHITE}}~0x0F
+\begin{DoxyCompactList}\small\item\em VGA foreground color definition\+: white. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}{PAD\+\_\+\+SEQ}}
+\begin{DoxyCompactList}\small\item\em Adds a padding sequence before a formated input. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\+\_\+\+SEQ\+\_\+\+VAL}}(val,  args,  length\+\_\+mod)
+\begin{DoxyCompactList}\small\item\em Get a sequence value argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{kernel__output_8c_a217000cec8258423a1259f19011e8fbd}{\+\_\+toupper}} (char $\ast$string)
+\begin{DoxyCompactList}\small\item\em Converts a string to upper case characters. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a}{\+\_\+tolower}} (char $\ast$string)
+\begin{DoxyCompactList}\small\item\em Converts a string to upper case characters. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653}{\+\_\+formater}} (const char $\ast$str, \+\_\+\+\_\+builtin\+\_\+va\+\_\+list args, \mbox{\hyperlink{structoutput__t}{output\+\_\+t}} used\+\_\+output)
+\begin{DoxyCompactList}\small\item\em Prints a formated string. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\+\_\+kprint\+\_\+fmt}} (const char $\ast$str, \+\_\+\+\_\+builtin\+\_\+va\+\_\+list args)
+\begin{DoxyCompactList}\small\item\em Prints a formated string. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\+\_\+tag\+\_\+printf}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the tag for kernel output functions. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_a55516ac44e090adb730dd682f4d8ae7b}{kernel\+\_\+printf}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints a formated string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_ae21908dcff90a9e3b6c6674aad9dd4bd}{kernel\+\_\+error}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the desired string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_ada9153bf02cabf49bf9831e2425f5308}{kernel\+\_\+success}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the desired string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_ad62b51b67332a06c80d3013cb1efed0d}{kernel\+\_\+info}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the desired string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_ad5e12eb682ba5c64576bd080625977e1}{kernel\+\_\+warning}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the desired string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_abd40dbd84fff119a9a4385da8360441e}{kernel\+\_\+debug}} (const char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Prints the desired string to the screen. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kernel__output_8c_ae9363952bbb60281d5b9069b485fb7a7}{kernel\+\_\+doprint}} (const char $\ast$str, \+\_\+\+\_\+builtin\+\_\+va\+\_\+list args)
+\begin{DoxyCompactList}\small\item\em Prints a string to the screen attached to the arguments list. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{structoutput__t}{output\+\_\+t}} \mbox{\hyperlink{kernel__output_8c_a112bb9d50cf1d7daa8a3edc9edaa329f}{current\+\_\+output}}
+\begin{DoxyCompactList}\small\item\em Stores the current output type. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}\label{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BLACK@{BG\_BLACK}}
+\index{BG\_BLACK@{BG\_BLACK}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BLACK}{BG\_BLACK}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BLACK~0x00}
+
+
+
+VGA background color definition\+: black. 
+
+
+
+Definition at line 43 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a9afd14c731aa8c62d9471913c1b23b9f}\label{kernel__output_8c_a9afd14c731aa8c62d9471913c1b23b9f}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BLUE@{BG\_BLUE}}
+\index{BG\_BLUE@{BG\_BLUE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BLUE}{BG\_BLUE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BLUE~0x10}
+
+
+
+VGA background color definition\+: blue. 
+
+
+
+Definition at line 45 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a33397d5747fe9c2226f99478f17e9460}\label{kernel__output_8c_a33397d5747fe9c2226f99478f17e9460}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BRIGHTBLUE@{BG\_BRIGHTBLUE}}
+\index{BG\_BRIGHTBLUE@{BG\_BRIGHTBLUE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTBLUE}{BG\_BRIGHTBLUE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTBLUE~0x90}
+
+
+
+VGA background color definition\+: bright blue. 
+
+
+
+Definition at line 61 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a8f2c8dd03ac9198f30e40d14f8815069}\label{kernel__output_8c_a8f2c8dd03ac9198f30e40d14f8815069}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BRIGHTCYAN@{BG\_BRIGHTCYAN}}
+\index{BG\_BRIGHTCYAN@{BG\_BRIGHTCYAN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTCYAN}{BG\_BRIGHTCYAN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTCYAN~0x\+B0}
+
+
+
+VGA background color definition\+: bright cyan. 
+
+
+
+Definition at line 65 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a5a6b2c6a82a458acd6bc3f3d0a03e715}\label{kernel__output_8c_a5a6b2c6a82a458acd6bc3f3d0a03e715}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BRIGHTGREEN@{BG\_BRIGHTGREEN}}
+\index{BG\_BRIGHTGREEN@{BG\_BRIGHTGREEN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTGREEN}{BG\_BRIGHTGREEN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTGREEN~0x\+A0}
+
+
+
+VGA background color definition\+: bright green. 
+
+
+
+Definition at line 63 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a1203ef2a5889b64e43d62efa8e52f890}\label{kernel__output_8c_a1203ef2a5889b64e43d62efa8e52f890}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BRIGHTMAGENTA@{BG\_BRIGHTMAGENTA}}
+\index{BG\_BRIGHTMAGENTA@{BG\_BRIGHTMAGENTA}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTMAGENTA}{BG\_BRIGHTMAGENTA}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTMAGENTA~0x\+D0}
+
+
+
+VGA background color definition\+: bright magenta. 
+
+
+
+Definition at line 69 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a7b78f0791621cae1bfe50d99075ddafa}\label{kernel__output_8c_a7b78f0791621cae1bfe50d99075ddafa}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BRIGHTRED@{BG\_BRIGHTRED}}
+\index{BG\_BRIGHTRED@{BG\_BRIGHTRED}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BRIGHTRED}{BG\_BRIGHTRED}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BRIGHTRED~0x\+C0}
+
+
+
+VGA background color definition\+: bright red. 
+
+
+
+Definition at line 67 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_af0157c2ce04475a02bdcf45fe3e44a92}\label{kernel__output_8c_af0157c2ce04475a02bdcf45fe3e44a92}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_BROWN@{BG\_BROWN}}
+\index{BG\_BROWN@{BG\_BROWN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_BROWN}{BG\_BROWN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+BROWN~0x60}
+
+
+
+VGA background color definition\+: brown. 
+
+
+
+Definition at line 55 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a21ef237e1c4d69656729da4b34c31d8b}\label{kernel__output_8c_a21ef237e1c4d69656729da4b34c31d8b}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_CYAN@{BG\_CYAN}}
+\index{BG\_CYAN@{BG\_CYAN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_CYAN}{BG\_CYAN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+CYAN~0x30}
+
+
+
+VGA background color definition\+: cyan. 
+
+
+
+Definition at line 49 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a01f446ce59cd9e70fb6bc16b20bc5350}\label{kernel__output_8c_a01f446ce59cd9e70fb6bc16b20bc5350}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_DARKGREY@{BG\_DARKGREY}}
+\index{BG\_DARKGREY@{BG\_DARKGREY}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_DARKGREY}{BG\_DARKGREY}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+DARKGREY~0x80}
+
+
+
+VGA background color definition\+: dark grey. 
+
+
+
+Definition at line 59 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_ac351fb4567ed6655a5b39769cc5dfd04}\label{kernel__output_8c_ac351fb4567ed6655a5b39769cc5dfd04}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_GREEN@{BG\_GREEN}}
+\index{BG\_GREEN@{BG\_GREEN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_GREEN}{BG\_GREEN}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+GREEN~0x20}
+
+
+
+VGA background color definition\+: green. 
+
+
+
+Definition at line 47 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a00213e74d04ed4d76a1339db5c26c70c}\label{kernel__output_8c_a00213e74d04ed4d76a1339db5c26c70c}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_GREY@{BG\_GREY}}
+\index{BG\_GREY@{BG\_GREY}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_GREY}{BG\_GREY}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+GREY~0x70}
+
+
+
+VGA background color definition\+: grey. 
+
+
+
+Definition at line 57 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_ac08aa3f07e012f1b0edafa632d5300ba}\label{kernel__output_8c_ac08aa3f07e012f1b0edafa632d5300ba}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_MAGENTA@{BG\_MAGENTA}}
+\index{BG\_MAGENTA@{BG\_MAGENTA}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_MAGENTA}{BG\_MAGENTA}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+MAGENTA~0x50}
+
+
+
+VGA background color definition\+: magenta. 
+
+
+
+Definition at line 53 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_ac317d04c219b630f9c36b0241d9d4be7}\label{kernel__output_8c_ac317d04c219b630f9c36b0241d9d4be7}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_RED@{BG\_RED}}
+\index{BG\_RED@{BG\_RED}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_RED}{BG\_RED}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+RED~0x40}
+
+
+
+VGA background color definition\+: red. 
+
+
+
+Definition at line 51 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a6beded3f171517df3902c52f79f6fea2}\label{kernel__output_8c_a6beded3f171517df3902c52f79f6fea2}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_WHITE@{BG\_WHITE}}
+\index{BG\_WHITE@{BG\_WHITE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_WHITE}{BG\_WHITE}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+WHITE~0x\+F0}
+
+
+
+VGA background color definition\+: white. 
+
+
+
+Definition at line 73 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_ab31fe3e74b1137650d30ede5c9b86218}\label{kernel__output_8c_ab31fe3e74b1137650d30ede5c9b86218}} 
+\index{kernel\_output.c@{kernel\_output.c}!BG\_YELLOW@{BG\_YELLOW}}
+\index{BG\_YELLOW@{BG\_YELLOW}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{BG\_YELLOW}{BG\_YELLOW}}
+{\footnotesize\ttfamily \#define BG\+\_\+\+YELLOW~0x\+E0}
+
+
+
+VGA background color definition\+: yellow. 
+
+
+
+Definition at line 71 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a9b32d0a26f9909c5b63ccd474f56420e}\label{kernel__output_8c_a9b32d0a26f9909c5b63ccd474f56420e}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BLACK@{FG\_BLACK}}
+\index{FG\_BLACK@{FG\_BLACK}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BLACK}{FG\_BLACK}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BLACK~0x00}
+
+
+
+VGA foreground color definition\+: black. 
+
+
+
+Definition at line 76 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a4e411f6bd6ac8d6c2bd23d866c097e91}\label{kernel__output_8c_a4e411f6bd6ac8d6c2bd23d866c097e91}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BLUE@{FG\_BLUE}}
+\index{FG\_BLUE@{FG\_BLUE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BLUE}{FG\_BLUE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BLUE~0x01}
+
+
+
+VGA foreground color definition\+: blue. 
+
+
+
+Definition at line 78 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a90e6477ae36af5a2b7a0d2035a69a96d}\label{kernel__output_8c_a90e6477ae36af5a2b7a0d2035a69a96d}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BRIGHTBLUE@{FG\_BRIGHTBLUE}}
+\index{FG\_BRIGHTBLUE@{FG\_BRIGHTBLUE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTBLUE}{FG\_BRIGHTBLUE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTBLUE~0x09}
+
+
+
+VGA foreground color definition\+: bright blue. 
+
+
+
+Definition at line 94 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a2e66d2e78e23a9dfe8b00f00a9e34d93}\label{kernel__output_8c_a2e66d2e78e23a9dfe8b00f00a9e34d93}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BRIGHTCYAN@{FG\_BRIGHTCYAN}}
+\index{FG\_BRIGHTCYAN@{FG\_BRIGHTCYAN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTCYAN}{FG\_BRIGHTCYAN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTCYAN~0x0B}
+
+
+
+VGA foreground color definition\+: bright cyan. 
+
+
+
+Definition at line 98 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a2a3ef747fd07aa65ccbbe7b93e170d85}\label{kernel__output_8c_a2a3ef747fd07aa65ccbbe7b93e170d85}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BRIGHTGREEN@{FG\_BRIGHTGREEN}}
+\index{FG\_BRIGHTGREEN@{FG\_BRIGHTGREEN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTGREEN}{FG\_BRIGHTGREEN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTGREEN~0x0A}
+
+
+
+VGA foreground color definition\+: bright green. 
+
+
+
+Definition at line 96 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}\label{kernel__output_8c_a2b6ad4bee5d0fc64d8d8abd8f1d39bd8}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BRIGHTMAGENTA@{FG\_BRIGHTMAGENTA}}
+\index{FG\_BRIGHTMAGENTA@{FG\_BRIGHTMAGENTA}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTMAGENTA}{FG\_BRIGHTMAGENTA}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTMAGENTA~0x0D}
+
+
+
+VGA foreground color definition\+: bright magenta. 
+
+
+
+Definition at line 102 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a757d422eda569f40648fdb43eec745e8}\label{kernel__output_8c_a757d422eda569f40648fdb43eec745e8}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BRIGHTRED@{FG\_BRIGHTRED}}
+\index{FG\_BRIGHTRED@{FG\_BRIGHTRED}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BRIGHTRED}{FG\_BRIGHTRED}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BRIGHTRED~0x0C}
+
+
+
+VGA foreground color definition\+: bright red. 
+
+
+
+Definition at line 100 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a7f5f0a051433665586340a4c5db46a0e}\label{kernel__output_8c_a7f5f0a051433665586340a4c5db46a0e}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_BROWN@{FG\_BROWN}}
+\index{FG\_BROWN@{FG\_BROWN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_BROWN}{FG\_BROWN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+BROWN~0x06}
+
+
+
+VGA foreground color definition\+: brown. 
+
+
+
+Definition at line 88 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_afb40e6e076755308612ed6e18a34dbeb}\label{kernel__output_8c_afb40e6e076755308612ed6e18a34dbeb}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_CYAN@{FG\_CYAN}}
+\index{FG\_CYAN@{FG\_CYAN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_CYAN}{FG\_CYAN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+CYAN~0x03}
+
+
+
+VGA foreground color definition\+: cyan. 
+
+
+
+Definition at line 82 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a8e6ce3f2ce3e349ab09059a1de79f80f}\label{kernel__output_8c_a8e6ce3f2ce3e349ab09059a1de79f80f}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_DARKGREY@{FG\_DARKGREY}}
+\index{FG\_DARKGREY@{FG\_DARKGREY}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_DARKGREY}{FG\_DARKGREY}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+DARKGREY~0x08}
+
+
+
+VGA foreground color definition\+: dark grey. 
+
+
+
+Definition at line 92 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a0af1e03653ace4d21aebf3b2e03a6535}\label{kernel__output_8c_a0af1e03653ace4d21aebf3b2e03a6535}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_GREEN@{FG\_GREEN}}
+\index{FG\_GREEN@{FG\_GREEN}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_GREEN}{FG\_GREEN}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+GREEN~0x02}
+
+
+
+VGA foreground color definition\+: green. 
+
+
+
+Definition at line 80 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a5142f80dfa88eb9adc9d8acda8c492dd}\label{kernel__output_8c_a5142f80dfa88eb9adc9d8acda8c492dd}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_GREY@{FG\_GREY}}
+\index{FG\_GREY@{FG\_GREY}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_GREY}{FG\_GREY}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+GREY~0x07}
+
+
+
+VGA foreground color definition\+: grey. 
+
+
+
+Definition at line 90 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}\label{kernel__output_8c_aacf8f7d7b2a3f4ba0d0a131fcd1f1933}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_MAGENTA@{FG\_MAGENTA}}
+\index{FG\_MAGENTA@{FG\_MAGENTA}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_MAGENTA}{FG\_MAGENTA}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+MAGENTA~0x05}
+
+
+
+VGA foreground color definition\+: magenta. 
+
+
+
+Definition at line 86 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a1dc5215d084174df6f00a9267cec2f17}\label{kernel__output_8c_a1dc5215d084174df6f00a9267cec2f17}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_RED@{FG\_RED}}
+\index{FG\_RED@{FG\_RED}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_RED}{FG\_RED}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+RED~0x04}
+
+
+
+VGA foreground color definition\+: red. 
+
+
+
+Definition at line 84 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a7fbb956b9e769a1020c2eff1f6743857}\label{kernel__output_8c_a7fbb956b9e769a1020c2eff1f6743857}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_WHITE@{FG\_WHITE}}
+\index{FG\_WHITE@{FG\_WHITE}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_WHITE}{FG\_WHITE}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+WHITE~0x0F}
+
+
+
+VGA foreground color definition\+: white. 
+
+
+
+Definition at line 106 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a266aa539aa271da1b1f711d2413b1bfa}\label{kernel__output_8c_a266aa539aa271da1b1f711d2413b1bfa}} 
+\index{kernel\_output.c@{kernel\_output.c}!FG\_YELLOW@{FG\_YELLOW}}
+\index{FG\_YELLOW@{FG\_YELLOW}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{FG\_YELLOW}{FG\_YELLOW}}
+{\footnotesize\ttfamily \#define FG\+\_\+\+YELLOW~0x0E}
+
+
+
+VGA foreground color definition\+: yellow. 
+
+
+
+Definition at line 104 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}\label{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}} 
+\index{kernel\_output.c@{kernel\_output.c}!GET\_SEQ\_VAL@{GET\_SEQ\_VAL}}
+\index{GET\_SEQ\_VAL@{GET\_SEQ\_VAL}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{GET\_SEQ\_VAL}{GET\_SEQ\_VAL}}
+{\footnotesize\ttfamily \#define GET\+\_\+\+SEQ\+\_\+\+VAL(\begin{DoxyParamCaption}\item[{}]{val,  }\item[{}]{args,  }\item[{}]{length\+\_\+mod }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{                                                              \(\backslash\)}
+\DoxyCodeLine{                                                               \(\backslash\)}
+\DoxyCodeLine{    \textcolor{comment}{/* Harmonize length */}                                     \(\backslash\)}
+\DoxyCodeLine{    if(length\_mod > 8)                                         \(\backslash\)}
+\DoxyCodeLine{    \{                                                          \(\backslash\)}
+\DoxyCodeLine{        length\_mod = 8;                                        \(\backslash\)}
+\DoxyCodeLine{    \}                                                          \(\backslash\)}
+\DoxyCodeLine{                                                               \(\backslash\)}
+\DoxyCodeLine{    switch(length\_mod)                                         \(\backslash\)}
+\DoxyCodeLine{    \{                                                          \(\backslash\)}
+\DoxyCodeLine{        case 1:                                                \(\backslash\)}
+\DoxyCodeLine{            val = (\_\_builtin\_va\_arg(args, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}) \& 0xFF);   \(\backslash\)}
+\DoxyCodeLine{            break;                                             \(\backslash\)}
+\DoxyCodeLine{        case 2:                                                \(\backslash\)}
+\DoxyCodeLine{            val = (\_\_builtin\_va\_arg(args, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}) \& 0xFFFF); \(\backslash\)}
+\DoxyCodeLine{            break;                                             \(\backslash\)}
+\DoxyCodeLine{        case 4:                                                \(\backslash\)}
+\DoxyCodeLine{            val = \_\_builtin\_va\_arg(args, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}});            \(\backslash\)}
+\DoxyCodeLine{            break;                                             \(\backslash\)}
+\DoxyCodeLine{        case 8:                                                \(\backslash\)}
+\DoxyCodeLine{            val = \_\_builtin\_va\_arg(args, \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}});            \(\backslash\)}
+\DoxyCodeLine{            break;                                             \(\backslash\)}
+\DoxyCodeLine{        default:                                               \(\backslash\)}
+\DoxyCodeLine{           val = \_\_builtin\_va\_arg(args, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}});             \(\backslash\)}
+\DoxyCodeLine{    \}                                                          \(\backslash\)}
+\DoxyCodeLine{                                                               \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Get a sequence value argument. 
+
+
+
+Definition at line 143 of file kernel\+\_\+output.\+c.
+
+\mbox{\Hypertarget{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}\label{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}} 
+\index{kernel\_output.c@{kernel\_output.c}!PAD\_SEQ@{PAD\_SEQ}}
+\index{PAD\_SEQ@{PAD\_SEQ}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{PAD\_SEQ}{PAD\_SEQ}}
+{\footnotesize\ttfamily \#define PAD\+\_\+\+SEQ}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{                                       \(\backslash\)}
+\DoxyCodeLine{    str\_size = \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(tmp\_seq);         \(\backslash\)}
+\DoxyCodeLine{                                        \(\backslash\)}
+\DoxyCodeLine{    while(padding\_mod > str\_size)       \(\backslash\)}
+\DoxyCodeLine{    \{                                   \(\backslash\)}
+\DoxyCodeLine{        used\_output.putc(pad\_char\_mod); \(\backslash\)}
+\DoxyCodeLine{        -\/-\/padding\_mod;                  \(\backslash\)}
+\DoxyCodeLine{    \}                                   \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Adds a padding sequence before a formated input. 
+
+
+
+Definition at line 129 of file kernel\+\_\+output.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653}\label{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653}} 
+\index{kernel\_output.c@{kernel\_output.c}!\_formater@{\_formater}}
+\index{\_formater@{\_formater}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{\_formater()}{\_formater()}}
+{\footnotesize\ttfamily static void \+\_\+formater (\begin{DoxyParamCaption}\item[{const char $\ast$}]{str,  }\item[{\+\_\+\+\_\+builtin\+\_\+va\+\_\+list}]{args,  }\item[{\mbox{\hyperlink{structoutput__t}{output\+\_\+t}}}]{used\+\_\+output }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints a formated string. 
+
+Prints a formated string to the output and managing the formated string arguments.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em str} & The formated string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em args} & The arguments to use with the formated string. \\
+\hline
+\mbox{\texttt{ in}}  & {\em used\+\_\+output} & The output to use. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 280 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{283 \{}
+\DoxyCodeLine{284     \textcolor{keywordtype}{size\_t}   pos;}
+\DoxyCodeLine{285     \textcolor{keywordtype}{size\_t}   str\_length;}
+\DoxyCodeLine{286     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} seq\_val;}
+\DoxyCodeLine{287     \textcolor{keywordtype}{size\_t}   str\_size;}
+\DoxyCodeLine{288 }
+\DoxyCodeLine{289 }
+\DoxyCodeLine{290     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  modifier;}
+\DoxyCodeLine{291 }
+\DoxyCodeLine{292     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  length\_mod;}
+\DoxyCodeLine{293     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  padding\_mod;}
+\DoxyCodeLine{294     \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\_t}}   upper\_mod;}
+\DoxyCodeLine{295     \textcolor{keywordtype}{char}     pad\_char\_mod;}
+\DoxyCodeLine{296 }
+\DoxyCodeLine{297     \textcolor{keywordtype}{char} tmp\_seq[128];}
+\DoxyCodeLine{298 }
+\DoxyCodeLine{299     \textcolor{keywordtype}{char}* args\_value;}
+\DoxyCodeLine{300 }
+\DoxyCodeLine{301     modifier     = 0;}
+\DoxyCodeLine{302     length\_mod   = 4;}
+\DoxyCodeLine{303     padding\_mod  = 0;}
+\DoxyCodeLine{304     upper\_mod    = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{305     pad\_char\_mod = \textcolor{charliteral}{' '};}
+\DoxyCodeLine{306     str\_length   = \mbox{\hyperlink{string_8h_a219836f542ce53545052bed5353820ca}{strlen}}(str);}
+\DoxyCodeLine{307 }
+\DoxyCodeLine{308     \textcolor{keywordflow}{for}(pos = 0; pos < str\_length; ++pos)}
+\DoxyCodeLine{309     \{}
+\DoxyCodeLine{310         \textcolor{keywordflow}{if}(str[pos] == \textcolor{charliteral}{'\%'})}
+\DoxyCodeLine{311         \{}
+\DoxyCodeLine{312             \textcolor{comment}{/* If we encouter this character in a modifier sequence, it was}}
+\DoxyCodeLine{313 \textcolor{comment}{             * just an escape one.}}
+\DoxyCodeLine{314 \textcolor{comment}{             */}}
+\DoxyCodeLine{315             modifier = !modifier;}
+\DoxyCodeLine{316             \textcolor{keywordflow}{if}(modifier)}
+\DoxyCodeLine{317             \{}
+\DoxyCodeLine{318                 \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{319             \}}
+\DoxyCodeLine{320             \textcolor{keywordflow}{else}}
+\DoxyCodeLine{321             \{}
+\DoxyCodeLine{322                 used\_output.\mbox{\hyperlink{structoutput__t_a9ee64a6259c86ada2375b2911bfa76e5}{putc}}(str[pos]);}
+\DoxyCodeLine{323             \}}
+\DoxyCodeLine{324         \}}
+\DoxyCodeLine{325         \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(modifier)}
+\DoxyCodeLine{326         \{}
+\DoxyCodeLine{327             \textcolor{keywordflow}{switch}(str[pos])}
+\DoxyCodeLine{328             \{}
+\DoxyCodeLine{329                 \textcolor{comment}{/* Length mods */}}
+\DoxyCodeLine{330                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'h'}:}
+\DoxyCodeLine{331                     length\_mod /= 2;}
+\DoxyCodeLine{332                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{333                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'l'}:}
+\DoxyCodeLine{334                     length\_mod *= 2;}
+\DoxyCodeLine{335                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{336 }
+\DoxyCodeLine{337                 \textcolor{comment}{/* Specifier mods */}}
+\DoxyCodeLine{338                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'s'}:}
+\DoxyCodeLine{339                     args\_value = \_\_builtin\_va\_arg(args, \textcolor{keywordtype}{char}*);}
+\DoxyCodeLine{340                     used\_output.\mbox{\hyperlink{structoutput__t_a60e36e1ad2fded317fc7c07264039a2c}{puts}}(args\_value);}
+\DoxyCodeLine{341                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{342                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'d'}:}
+\DoxyCodeLine{343                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'i'}:}
+\DoxyCodeLine{344                     \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\_SEQ\_VAL}}(seq\_val, args, length\_mod);}
+\DoxyCodeLine{345                     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(tmp\_seq, 0, \textcolor{keyword}{sizeof}(tmp\_seq));}
+\DoxyCodeLine{346                     \mbox{\hyperlink{stdlib_8h_ac5ac2cc826ae4ef085b4762031b8b645}{itoa}}(seq\_val, tmp\_seq, 10);}
+\DoxyCodeLine{347                     \mbox{\hyperlink{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}{PAD\_SEQ}}}
+\DoxyCodeLine{348                     used\_output.\mbox{\hyperlink{structoutput__t_a60e36e1ad2fded317fc7c07264039a2c}{puts}}(tmp\_seq);}
+\DoxyCodeLine{349                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{350                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'u'}:}
+\DoxyCodeLine{351                     \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\_SEQ\_VAL}}(seq\_val, args, length\_mod);}
+\DoxyCodeLine{352                     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(tmp\_seq, 0, \textcolor{keyword}{sizeof}(tmp\_seq));}
+\DoxyCodeLine{353                     \mbox{\hyperlink{stdlib_8h_a3761e5ef3ca3546a842194be4dd70a31}{uitoa}}(seq\_val, tmp\_seq, 10);}
+\DoxyCodeLine{354                     \mbox{\hyperlink{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}{PAD\_SEQ}}}
+\DoxyCodeLine{355                     used\_output.\mbox{\hyperlink{structoutput__t_a60e36e1ad2fded317fc7c07264039a2c}{puts}}(tmp\_seq);}
+\DoxyCodeLine{356                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{357                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'X'}:}
+\DoxyCodeLine{358                     upper\_mod = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{359                     \_\_attribute\_\_ ((fallthrough));}
+\DoxyCodeLine{360                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'x'}:}
+\DoxyCodeLine{361                     \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\_SEQ\_VAL}}(seq\_val, args, length\_mod);}
+\DoxyCodeLine{362                     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(tmp\_seq, 0, \textcolor{keyword}{sizeof}(tmp\_seq));}
+\DoxyCodeLine{363                     \mbox{\hyperlink{stdlib_8h_a3761e5ef3ca3546a842194be4dd70a31}{uitoa}}(seq\_val, tmp\_seq, 16);}
+\DoxyCodeLine{364                     \mbox{\hyperlink{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}{PAD\_SEQ}}}
+\DoxyCodeLine{365                     \textcolor{keywordflow}{if}(upper\_mod == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{366                     \{}
+\DoxyCodeLine{367                         \mbox{\hyperlink{kernel__output_8c_a217000cec8258423a1259f19011e8fbd}{\_toupper}}(tmp\_seq);}
+\DoxyCodeLine{368                     \}}
+\DoxyCodeLine{369                     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{370                     \{}
+\DoxyCodeLine{371                         \mbox{\hyperlink{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a}{\_tolower}}(tmp\_seq);}
+\DoxyCodeLine{372                     \}}
+\DoxyCodeLine{373                     used\_output.\mbox{\hyperlink{structoutput__t_a60e36e1ad2fded317fc7c07264039a2c}{puts}}(tmp\_seq);}
+\DoxyCodeLine{374                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{375                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'P'}:}
+\DoxyCodeLine{376                     upper\_mod = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{377                     \_\_attribute\_\_ ((fallthrough));}
+\DoxyCodeLine{378                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'p'}:}
+\DoxyCodeLine{379                     padding\_mod  = 2 * \textcolor{keyword}{sizeof}(uintptr\_t);}
+\DoxyCodeLine{380                     pad\_char\_mod = \textcolor{charliteral}{'0'};}
+\DoxyCodeLine{381                     length\_mod = \textcolor{keyword}{sizeof}(uintptr\_t);}
+\DoxyCodeLine{382                     \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\_SEQ\_VAL}}(seq\_val, args, length\_mod);}
+\DoxyCodeLine{383                     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(tmp\_seq, 0, \textcolor{keyword}{sizeof}(tmp\_seq));}
+\DoxyCodeLine{384                     \mbox{\hyperlink{stdlib_8h_a3761e5ef3ca3546a842194be4dd70a31}{uitoa}}(seq\_val, tmp\_seq, 16);}
+\DoxyCodeLine{385                     \mbox{\hyperlink{kernel__output_8c_a0835dfcef5c62c05a91d52e752aaeaac}{PAD\_SEQ}}}
+\DoxyCodeLine{386                     \textcolor{keywordflow}{if}(upper\_mod == \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}})}
+\DoxyCodeLine{387                     \{}
+\DoxyCodeLine{388                         \mbox{\hyperlink{kernel__output_8c_a217000cec8258423a1259f19011e8fbd}{\_toupper}}(tmp\_seq);}
+\DoxyCodeLine{389                     \}}
+\DoxyCodeLine{390                     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{391                     \{}
+\DoxyCodeLine{392                         \mbox{\hyperlink{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a}{\_tolower}}(tmp\_seq);}
+\DoxyCodeLine{393                     \}}
+\DoxyCodeLine{394                     used\_output.\mbox{\hyperlink{structoutput__t_a60e36e1ad2fded317fc7c07264039a2c}{puts}}(tmp\_seq);}
+\DoxyCodeLine{395                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{396                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'c'}:}
+\DoxyCodeLine{397                     length\_mod = \textcolor{keyword}{sizeof}(char);}
+\DoxyCodeLine{398                     \mbox{\hyperlink{kernel__output_8c_ac53d86d62220e4b4baacb47444c0ee4b}{GET\_SEQ\_VAL}}(tmp\_seq[0], args, length\_mod);}
+\DoxyCodeLine{399                     used\_output.\mbox{\hyperlink{structoutput__t_a9ee64a6259c86ada2375b2911bfa76e5}{putc}}(tmp\_seq[0]);}
+\DoxyCodeLine{400                     \textcolor{keywordflow}{break};}
+\DoxyCodeLine{401 }
+\DoxyCodeLine{402                 \textcolor{comment}{/* Padding mods */}}
+\DoxyCodeLine{403                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'0'}:}
+\DoxyCodeLine{404                     \textcolor{keywordflow}{if}(padding\_mod == 0)}
+\DoxyCodeLine{405                     \{}
+\DoxyCodeLine{406                         pad\_char\_mod = \textcolor{charliteral}{'0'};}
+\DoxyCodeLine{407                     \}}
+\DoxyCodeLine{408                     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{409                     \{}
+\DoxyCodeLine{410                         padding\_mod *= 10;}
+\DoxyCodeLine{411                     \}}
+\DoxyCodeLine{412                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{413                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'1'}:}
+\DoxyCodeLine{414                     padding\_mod = padding\_mod * 10 + 1;}
+\DoxyCodeLine{415                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{416                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'2'}:}
+\DoxyCodeLine{417                     padding\_mod = padding\_mod * 10 + 2;}
+\DoxyCodeLine{418                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{419                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'3'}:}
+\DoxyCodeLine{420                     padding\_mod = padding\_mod * 10 + 3;}
+\DoxyCodeLine{421                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{422                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'4'}:}
+\DoxyCodeLine{423                     padding\_mod = padding\_mod * 10 + 4;}
+\DoxyCodeLine{424                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{425                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'5'}:}
+\DoxyCodeLine{426                     padding\_mod = padding\_mod * 10 + 5;}
+\DoxyCodeLine{427                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{428                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'6'}:}
+\DoxyCodeLine{429                     padding\_mod = padding\_mod * 10 + 6;}
+\DoxyCodeLine{430                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{431                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'7'}:}
+\DoxyCodeLine{432                     padding\_mod = padding\_mod * 10 + 7;}
+\DoxyCodeLine{433                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{434                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'8'}:}
+\DoxyCodeLine{435                     padding\_mod = padding\_mod * 10 + 8;}
+\DoxyCodeLine{436                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{437                 \textcolor{keywordflow}{case} \textcolor{charliteral}{'9'}:}
+\DoxyCodeLine{438                     padding\_mod = padding\_mod * 10 + 9;}
+\DoxyCodeLine{439                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{440                 \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{441                     \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{442             \}}
+\DoxyCodeLine{443         \}}
+\DoxyCodeLine{444         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{445         \{}
+\DoxyCodeLine{446             used\_output.\mbox{\hyperlink{structoutput__t_a9ee64a6259c86ada2375b2911bfa76e5}{putc}}(str[pos]);}
+\DoxyCodeLine{447         \}}
+\DoxyCodeLine{448 }
+\DoxyCodeLine{449         \textcolor{comment}{/* Reinit mods */}}
+\DoxyCodeLine{450         length\_mod   = 4;}
+\DoxyCodeLine{451         padding\_mod  = 0;}
+\DoxyCodeLine{452         upper\_mod    = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{453         pad\_char\_mod = \textcolor{charliteral}{' '};}
+\DoxyCodeLine{454         modifier     = 0;}
+\DoxyCodeLine{455 }
+\DoxyCodeLine{456     \}}
+\DoxyCodeLine{457 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=317pt]{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}\label{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}} 
+\index{kernel\_output.c@{kernel\_output.c}!\_kprint\_fmt@{\_kprint\_fmt}}
+\index{\_kprint\_fmt@{\_kprint\_fmt}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{\_kprint\_fmt()}{\_kprint\_fmt()}}
+{\footnotesize\ttfamily static void \+\_\+kprint\+\_\+fmt (\begin{DoxyParamCaption}\item[{const char $\ast$}]{str,  }\item[{\+\_\+\+\_\+builtin\+\_\+va\+\_\+list}]{args }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints a formated string. 
+
+Prints a formated string to the output and managing the formated string arguments.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em str} & The formated string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em args} & The arguments to use with the formated string. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 459 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{460 \{}
+\DoxyCodeLine{461     \mbox{\hyperlink{kernel__output_8c_a1e8f0f6d51fd364afb27cee00e156653}{\_formater}}(str, args, \mbox{\hyperlink{kernel__output_8c_a112bb9d50cf1d7daa8a3edc9edaa329f}{current\_output}});}
+\DoxyCodeLine{462 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}\label{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}} 
+\index{kernel\_output.c@{kernel\_output.c}!\_tag\_printf@{\_tag\_printf}}
+\index{\_tag\_printf@{\_tag\_printf}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{\_tag\_printf()}{\_tag\_printf()}}
+{\footnotesize\ttfamily static void \+\_\+tag\+\_\+printf (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Prints the tag for kernel output functions. 
+
+Prints the tag for kernel output functions.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The formated string to print. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & The associated arguments to the formated string. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 464 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{465 \{}
+\DoxyCodeLine{466     \_\_builtin\_va\_list args;}
+\DoxyCodeLine{467 }
+\DoxyCodeLine{468     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{469     \{}
+\DoxyCodeLine{470         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{471     \}}
+\DoxyCodeLine{472     \textcolor{comment}{/* Prtinf format string */}}
+\DoxyCodeLine{473     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{474     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{475     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{476 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=276pt]{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a}\label{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a}} 
+\index{kernel\_output.c@{kernel\_output.c}!\_tolower@{\_tolower}}
+\index{\_tolower@{\_tolower}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{\_tolower()}{\_tolower()}}
+{\footnotesize\ttfamily static void \+\_\+tolower (\begin{DoxyParamCaption}\item[{char $\ast$}]{string }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Converts a string to upper case characters. 
+
+Transforms all uppercase character of a NULL terminated string to lowercase characters.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em string} & The string to tranform. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 266 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{267 \{}
+\DoxyCodeLine{268     \textcolor{comment}{/* For each character of the string */}}
+\DoxyCodeLine{269     \textcolor{keywordflow}{while}(*\textcolor{keywordtype}{string} != 0)}
+\DoxyCodeLine{270     \{}
+\DoxyCodeLine{271         \textcolor{comment}{/* If the character is uppercase, makes it lowercase */}}
+\DoxyCodeLine{272         \textcolor{keywordflow}{if}(*\textcolor{keywordtype}{string} > 64 \&\& *\textcolor{keywordtype}{string} < 91)}
+\DoxyCodeLine{273         \{}
+\DoxyCodeLine{274             *\textcolor{keywordtype}{string} = *\textcolor{keywordtype}{string} + 32;}
+\DoxyCodeLine{275         \}}
+\DoxyCodeLine{276         ++string;}
+\DoxyCodeLine{277     \}}
+\DoxyCodeLine{278 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a971c1c43b64302780ddb544d7f430a3a_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_a217000cec8258423a1259f19011e8fbd}\label{kernel__output_8c_a217000cec8258423a1259f19011e8fbd}} 
+\index{kernel\_output.c@{kernel\_output.c}!\_toupper@{\_toupper}}
+\index{\_toupper@{\_toupper}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{\_toupper()}{\_toupper()}}
+{\footnotesize\ttfamily static void \+\_\+toupper (\begin{DoxyParamCaption}\item[{char $\ast$}]{string }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Converts a string to upper case characters. 
+
+Transforms all lowercase character of a NULL terminated string to uppercase characters.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em string} & The string to tranform. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 252 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{253 \{}
+\DoxyCodeLine{254     \textcolor{comment}{/* For each character of the string */}}
+\DoxyCodeLine{255     \textcolor{keywordflow}{while}(*\textcolor{keywordtype}{string} != 0)}
+\DoxyCodeLine{256     \{}
+\DoxyCodeLine{257         \textcolor{comment}{/* If the character is lowercase, makes it uppercase */}}
+\DoxyCodeLine{258         \textcolor{keywordflow}{if}(*\textcolor{keywordtype}{string} > 96 \&\& *\textcolor{keywordtype}{string} < 123)}
+\DoxyCodeLine{259         \{}
+\DoxyCodeLine{260             *\textcolor{keywordtype}{string} = *\textcolor{keywordtype}{string} -\/ 32;}
+\DoxyCodeLine{261         \}}
+\DoxyCodeLine{262         ++string;}
+\DoxyCodeLine{263     \}}
+\DoxyCodeLine{264 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a217000cec8258423a1259f19011e8fbd_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_abd40dbd84fff119a9a4385da8360441e}\label{kernel__output_8c_abd40dbd84fff119a9a4385da8360441e}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_debug@{kernel\_debug}}
+\index{kernel\_debug@{kernel\_debug}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_debug()}{kernel\_debug()}}
+{\footnotesize\ttfamily void kernel\+\_\+debug (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints the desired string to the screen. 
+
+Prints the desired string to the screen. Adds a yellow \mbox{[}DEBUG\mbox{]} tag at the beggining of the string before printing it. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 625 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{626 \{}
+\DoxyCodeLine{627     \_\_builtin\_va\_list    args;}
+\DoxyCodeLine{628     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        buffer;}
+\DoxyCodeLine{629     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        new\_scheme;}
+\DoxyCodeLine{630 }
+\DoxyCodeLine{631     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{632     \{}
+\DoxyCodeLine{633         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{634     \}}
+\DoxyCodeLine{635 }
+\DoxyCodeLine{636     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{kernel__output_8c_a266aa539aa271da1b1f711d2413b1bfa}{FG\_YELLOW}};}
+\DoxyCodeLine{637     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{638     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{639 }
+\DoxyCodeLine{640     \textcolor{comment}{/* No need to test return value */}}
+\DoxyCodeLine{641     \mbox{\hyperlink{console_8h_a771e623508d58ebc6a78a8adfc7bfce1}{console\_save\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{642 }
+\DoxyCodeLine{643     \textcolor{comment}{/* Set REG on BLACK color scheme */}}
+\DoxyCodeLine{644     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&new\_scheme);}
+\DoxyCodeLine{645 }
+\DoxyCodeLine{646     \textcolor{comment}{/* Print tag */}}
+\DoxyCodeLine{647     \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\_tag\_printf}}(\textcolor{stringliteral}{"{}[DEBUG | \%lu]"{}}, \mbox{\hyperlink{time__mgt_8h_afe409bc6f9cb0cca020d9b10c507f02e}{time\_get\_current\_uptime}}());}
+\DoxyCodeLine{648 }
+\DoxyCodeLine{649     \textcolor{comment}{/* Restore original screen color scheme */}}
+\DoxyCodeLine{650     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{651 }
+\DoxyCodeLine{652     \textcolor{comment}{/* Printf format string */}}
+\DoxyCodeLine{653     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{654     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{655     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{656 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_abd40dbd84fff119a9a4385da8360441e_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_ae9363952bbb60281d5b9069b485fb7a7}\label{kernel__output_8c_ae9363952bbb60281d5b9069b485fb7a7}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_doprint@{kernel\_doprint}}
+\index{kernel\_doprint@{kernel\_doprint}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_doprint()}{kernel\_doprint()}}
+{\footnotesize\ttfamily void kernel\+\_\+doprint (\begin{DoxyParamCaption}\item[{const char $\ast$}]{str,  }\item[{\+\_\+\+\_\+builtin\+\_\+va\+\_\+list}]{args }\end{DoxyParamCaption})}
+
+
+
+Prints a string to the screen attached to the arguments list. 
+
+Prints the desired string to the screen with the argument list given as parameter, this is conveniently be used by printf.
+
+\begin{DoxyWarning}{Warning}
+This function should only be called when the kernel is fully initialized.
+\end{DoxyWarning}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em str} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em args} & The arguments list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 658 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{659 \{}
+\DoxyCodeLine{660     \textcolor{keywordflow}{if}(str == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{661     \{}
+\DoxyCodeLine{662         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{663     \}}
+\DoxyCodeLine{664 }
+\DoxyCodeLine{665     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(str, args);}
+\DoxyCodeLine{666 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_ae9363952bbb60281d5b9069b485fb7a7_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_ae21908dcff90a9e3b6c6674aad9dd4bd}\label{kernel__output_8c_ae21908dcff90a9e3b6c6674aad9dd4bd}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_error@{kernel\_error}}
+\index{kernel\_error@{kernel\_error}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_error()}{kernel\_error()}}
+{\footnotesize\ttfamily void kernel\+\_\+error (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints the desired string to the screen. 
+
+Prints the desired string to the screen. Adds a red \mbox{[}ERROR\mbox{]} tag at the beggining of the string before printing it. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 493 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{494 \{}
+\DoxyCodeLine{495     \_\_builtin\_va\_list args;}
+\DoxyCodeLine{496     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}     buffer;}
+\DoxyCodeLine{497     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}     new\_scheme;}
+\DoxyCodeLine{498 }
+\DoxyCodeLine{499     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{500     \{}
+\DoxyCodeLine{501         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{502     \}}
+\DoxyCodeLine{503 }
+\DoxyCodeLine{504     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{kernel__output_8c_a1dc5215d084174df6f00a9267cec2f17}{FG\_RED}};}
+\DoxyCodeLine{505     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{506     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{507 }
+\DoxyCodeLine{508     \textcolor{comment}{/* No need to test return value */}}
+\DoxyCodeLine{509     \mbox{\hyperlink{console_8h_a771e623508d58ebc6a78a8adfc7bfce1}{console\_save\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{510 }
+\DoxyCodeLine{511     \textcolor{comment}{/* Set REG on BLACK color scheme */}}
+\DoxyCodeLine{512     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&new\_scheme);}
+\DoxyCodeLine{513 }
+\DoxyCodeLine{514     \textcolor{comment}{/* Print tag */}}
+\DoxyCodeLine{515     \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\_tag\_printf}}(\textcolor{stringliteral}{"{}[ERROR] "{}});}
+\DoxyCodeLine{516 }
+\DoxyCodeLine{517     \textcolor{comment}{/* Restore original screen color scheme */}}
+\DoxyCodeLine{518     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{519 }
+\DoxyCodeLine{520     \textcolor{comment}{/* Printf format string */}}
+\DoxyCodeLine{521     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{522     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{523     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{524 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_ae21908dcff90a9e3b6c6674aad9dd4bd_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_ad62b51b67332a06c80d3013cb1efed0d}\label{kernel__output_8c_ad62b51b67332a06c80d3013cb1efed0d}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_info@{kernel\_info}}
+\index{kernel\_info@{kernel\_info}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_info()}{kernel\_info()}}
+{\footnotesize\ttfamily void kernel\+\_\+info (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints the desired string to the screen. 
+
+Prints the desired string to the screen. Adds a cyan \mbox{[}INFO\mbox{]} tag at the beggining of the string before printing it. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 559 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{560 \{}
+\DoxyCodeLine{561     \_\_builtin\_va\_list    args;}
+\DoxyCodeLine{562     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        buffer;}
+\DoxyCodeLine{563     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        new\_scheme;}
+\DoxyCodeLine{564 }
+\DoxyCodeLine{565     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{566     \{}
+\DoxyCodeLine{567         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{568     \}}
+\DoxyCodeLine{569 }
+\DoxyCodeLine{570     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{kernel__output_8c_afb40e6e076755308612ed6e18a34dbeb}{FG\_CYAN}};}
+\DoxyCodeLine{571     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{572     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{573 }
+\DoxyCodeLine{574     \textcolor{comment}{/* No need to test return value */}}
+\DoxyCodeLine{575     \mbox{\hyperlink{console_8h_a771e623508d58ebc6a78a8adfc7bfce1}{console\_save\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{576 }
+\DoxyCodeLine{577     \textcolor{comment}{/* Set REG on BLACK color scheme */}}
+\DoxyCodeLine{578     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&new\_scheme);}
+\DoxyCodeLine{579 }
+\DoxyCodeLine{580     \textcolor{comment}{/* Print tag */}}
+\DoxyCodeLine{581     \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\_tag\_printf}}(\textcolor{stringliteral}{"{}[INFO] "{}});}
+\DoxyCodeLine{582 }
+\DoxyCodeLine{583     \textcolor{comment}{/* Restore original screen color scheme */}}
+\DoxyCodeLine{584     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{585 }
+\DoxyCodeLine{586     \textcolor{comment}{/* Printf format string */}}
+\DoxyCodeLine{587     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{588     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{589     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{590 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_ad62b51b67332a06c80d3013cb1efed0d_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_a55516ac44e090adb730dd682f4d8ae7b}\label{kernel__output_8c_a55516ac44e090adb730dd682f4d8ae7b}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_printf@{kernel\_printf}}
+\index{kernel\_printf@{kernel\_printf}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_printf()}{kernel\_printf()}}
+{\footnotesize\ttfamily void kernel\+\_\+printf (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints a formated string to the screen. 
+
+Prints the desired string to the screen. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 478 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{479 \{}
+\DoxyCodeLine{480     \_\_builtin\_va\_list args;}
+\DoxyCodeLine{481 }
+\DoxyCodeLine{482     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{483     \{}
+\DoxyCodeLine{484         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{485     \}}
+\DoxyCodeLine{486 }
+\DoxyCodeLine{487     \textcolor{comment}{/* Prtinf format string */}}
+\DoxyCodeLine{488     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{489     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{490     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{491 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a55516ac44e090adb730dd682f4d8ae7b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_a55516ac44e090adb730dd682f4d8ae7b_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_ada9153bf02cabf49bf9831e2425f5308}\label{kernel__output_8c_ada9153bf02cabf49bf9831e2425f5308}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_success@{kernel\_success}}
+\index{kernel\_success@{kernel\_success}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_success()}{kernel\_success()}}
+{\footnotesize\ttfamily void kernel\+\_\+success (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints the desired string to the screen. 
+
+Prints the desired string to the screen. Adds a green \mbox{[}OK\mbox{]} tag at the beggining of the string before printing it. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 526 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{527 \{}
+\DoxyCodeLine{528     \_\_builtin\_va\_list    args;}
+\DoxyCodeLine{529     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        buffer;}
+\DoxyCodeLine{530     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        new\_scheme;}
+\DoxyCodeLine{531 }
+\DoxyCodeLine{532     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{533     \{}
+\DoxyCodeLine{534         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{535     \}}
+\DoxyCodeLine{536 }
+\DoxyCodeLine{537     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{kernel__output_8c_a0af1e03653ace4d21aebf3b2e03a6535}{FG\_GREEN}};}
+\DoxyCodeLine{538     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{539     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{540 }
+\DoxyCodeLine{541     \textcolor{comment}{/* No need to test return value */}}
+\DoxyCodeLine{542     \mbox{\hyperlink{console_8h_a771e623508d58ebc6a78a8adfc7bfce1}{console\_save\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{543 }
+\DoxyCodeLine{544     \textcolor{comment}{/* Set REG on BLACK color scheme */}}
+\DoxyCodeLine{545     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&new\_scheme);}
+\DoxyCodeLine{546 }
+\DoxyCodeLine{547     \textcolor{comment}{/* Print tag */}}
+\DoxyCodeLine{548     \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\_tag\_printf}}(\textcolor{stringliteral}{"{}[OK] "{}});}
+\DoxyCodeLine{549 }
+\DoxyCodeLine{550     \textcolor{comment}{/* Restore original screen color scheme */}}
+\DoxyCodeLine{551     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{552 }
+\DoxyCodeLine{553     \textcolor{comment}{/* Printf format string */}}
+\DoxyCodeLine{554     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{555     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{556     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{557 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_ada9153bf02cabf49bf9831e2425f5308_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kernel__output_8c_ad5e12eb682ba5c64576bd080625977e1}\label{kernel__output_8c_ad5e12eb682ba5c64576bd080625977e1}} 
+\index{kernel\_output.c@{kernel\_output.c}!kernel\_warning@{kernel\_warning}}
+\index{kernel\_warning@{kernel\_warning}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{kernel\_warning()}{kernel\_warning()}}
+{\footnotesize\ttfamily void kernel\+\_\+warning (\begin{DoxyParamCaption}\item[{const char $\ast$}]{fmt,  }\item[{}]{... }\end{DoxyParamCaption})}
+
+
+
+Prints the desired string to the screen. 
+
+Prints the desired string to the screen. Adds a yello \mbox{[}WARNING\mbox{]} tag at the beggining of the string before printing it. This uses the generic graphic driver to output data.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fmt} & The format string to output. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ...} & format\textquotesingle{}s parameters. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 592 of file kernel\+\_\+output.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{593 \{}
+\DoxyCodeLine{594     \_\_builtin\_va\_list    args;}
+\DoxyCodeLine{595     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        buffer;}
+\DoxyCodeLine{596     \mbox{\hyperlink{structcolorscheme__t}{colorscheme\_t}}        new\_scheme;}
+\DoxyCodeLine{597 }
+\DoxyCodeLine{598     \textcolor{keywordflow}{if}(fmt == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{599     \{}
+\DoxyCodeLine{600         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{601     \}}
+\DoxyCodeLine{602 }
+\DoxyCodeLine{603     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a3312c532e19dc8d306df9fbc67900189}{foreground}} = \mbox{\hyperlink{kernel__output_8c_a7f5f0a051433665586340a4c5db46a0e}{FG\_BROWN}};}
+\DoxyCodeLine{604     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a936176d8851b704dbdd0bb8d1e6bb43b}{background}} = \mbox{\hyperlink{kernel__output_8c_a0e5ebbe291d95cf1b8f1661252722fe0}{BG\_BLACK}};}
+\DoxyCodeLine{605     new\_scheme.\mbox{\hyperlink{structcolorscheme__t_a902f6ec2d4b2d82bd6762c822f6b7762}{vga\_color}}  = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{606 }
+\DoxyCodeLine{607     \textcolor{comment}{/* No need to test return value */}}
+\DoxyCodeLine{608     \mbox{\hyperlink{console_8h_a771e623508d58ebc6a78a8adfc7bfce1}{console\_save\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{609 }
+\DoxyCodeLine{610     \textcolor{comment}{/* Set REG on BLACK color scheme */}}
+\DoxyCodeLine{611     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&new\_scheme);}
+\DoxyCodeLine{612 }
+\DoxyCodeLine{613     \textcolor{comment}{/* Print tag */}}
+\DoxyCodeLine{614     \mbox{\hyperlink{kernel__output_8c_a28d4d75f187829e35efd239fb9376fd5}{\_tag\_printf}}(\textcolor{stringliteral}{"{}[WARNING] "{}});}
+\DoxyCodeLine{615 }
+\DoxyCodeLine{616     \textcolor{comment}{/* Restore original screen color scheme */}}
+\DoxyCodeLine{617     \mbox{\hyperlink{console_8h_ae81cd129d634049e6a9a02f1ecd043b9}{console\_set\_color\_scheme}}(\&buffer);}
+\DoxyCodeLine{618 }
+\DoxyCodeLine{619     \textcolor{comment}{/* Printf format string */}}
+\DoxyCodeLine{620     \_\_builtin\_va\_start(args, fmt);}
+\DoxyCodeLine{621     \mbox{\hyperlink{kernel__output_8c_a28c26a39c2578588cbba5479ced06e9f}{\_kprint\_fmt}}(fmt, args);}
+\DoxyCodeLine{622     \_\_builtin\_va\_end(args);}
+\DoxyCodeLine{623 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kernel__output_8c_ad5e12eb682ba5c64576bd080625977e1_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{kernel__output_8c_a112bb9d50cf1d7daa8a3edc9edaa329f}\label{kernel__output_8c_a112bb9d50cf1d7daa8a3edc9edaa329f}} 
+\index{kernel\_output.c@{kernel\_output.c}!current\_output@{current\_output}}
+\index{current\_output@{current\_output}!kernel\_output.c@{kernel\_output.c}}
+\doxysubsubsection{\texorpdfstring{current\_output}{current\_output}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structoutput__t}{output\+\_\+t}} current\+\_\+output\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .putc = \mbox{\hyperlink{console_8h_ac1c5e03c31342081196283f1243619b3}{console\_put\_char}},}
+\DoxyCodeLine{    .puts = \mbox{\hyperlink{console_8h_a37b803e95784aaf50af3426977aabaaf}{console\_put\_string}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Stores the current output type. 
+
+
+
+Definition at line 184 of file kernel\+\_\+output.\+c.
+

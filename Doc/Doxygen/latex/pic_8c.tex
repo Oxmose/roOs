@@ -1,0 +1,976 @@
+\hypertarget{pic_8c}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/src/pic.c File Reference}
+\label{pic_8c}\index{Source/Kernel/Arch/Board/x86/src/pic.c@{Source/Kernel/Arch/Board/x86/src/pic.c}}
+{\ttfamily \#include $<$cpu\+\_\+interrupt.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$cpu.\+h$>$}\newline
+{\ttfamily \#include $<$interrupts.\+h$>$}\newline
+{\ttfamily \#include $<$panic.\+h$>$}\newline
+{\ttfamily \#include $<$critical.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$pic.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+Include dependency graph for pic.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pic_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\+\_\+\+MASTER\+\_\+\+COMM\+\_\+\+PORT}}~0x20
+\begin{DoxyCompactList}\small\item\em Master PIC CPU command port. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\+\_\+\+MASTER\+\_\+\+DATA\+\_\+\+PORT}}~0x21
+\begin{DoxyCompactList}\small\item\em Master PIC CPU data port. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\+\_\+\+SLAVE\+\_\+\+COMM\+\_\+\+PORT}}~0x\+A0
+\begin{DoxyCompactList}\small\item\em Slave PIC CPU command port. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\+\_\+\+SLAVE\+\_\+\+DATA\+\_\+\+PORT}}~0x\+A1
+\begin{DoxyCompactList}\small\item\em Slave PIC CPU data port. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}{PIC\+\_\+\+EOI}}~0x20
+\begin{DoxyCompactList}\small\item\em PIC End of Interrupt command. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_ac3d0c587424c506be7ba946356bef6d4}{PIC\+\_\+\+ICW1\+\_\+\+ICW4}}~0x01
+\begin{DoxyCompactList}\small\item\em PIC ICW4 needed flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a1637ae26bd645304af0f39037047cbdb}{PIC\+\_\+\+ICW1\+\_\+\+SINGLE}}~0x02
+\begin{DoxyCompactList}\small\item\em PIC single mode flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a79deb0212a6d71d597bb12e5b748745e}{PIC\+\_\+\+ICW1\+\_\+\+INTERVAL4}}~0x04
+\begin{DoxyCompactList}\small\item\em PIC call address interval 4 flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a3b8d37e3fb0096ac4d5c5c7b3004c215}{PIC\+\_\+\+ICW1\+\_\+\+LEVEL}}~0x08
+\begin{DoxyCompactList}\small\item\em PIC trigger level flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a0507b285f8c659aec288f30b8b40a90e}{PIC\+\_\+\+ICW1\+\_\+\+INIT}}~0x10
+\begin{DoxyCompactList}\small\item\em PIC initialization flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a023268ad835736064fd809aa5690e7c1}{PIC\+\_\+\+ICW4\+\_\+8086}}~0x01
+\begin{DoxyCompactList}\small\item\em PIC 8086/88 (MCS-\/80/85) mode flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_ae35d683d79619565f36309f813035865}{PIC\+\_\+\+ICW4\+\_\+\+AUTO}}~0x02
+\begin{DoxyCompactList}\small\item\em PIC auto (normal) EOI flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a63ae54d975412e1ff65f3a3e3a2e93c1}{PIC\+\_\+\+ICW4\+\_\+\+BUF\+\_\+\+SLAVE}}~0x08
+\begin{DoxyCompactList}\small\item\em PIC buffered mode/slave flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a924f179cd4df8759196a609245d1ed09}{PIC\+\_\+\+ICW4\+\_\+\+BUF\+\_\+\+MASTER}}~0x0C
+\begin{DoxyCompactList}\small\item\em PIC buffered mode/master flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_aee13e46fdf90f6470c42fb43ab0a23b1}{PIC\+\_\+\+ICW4\+\_\+\+SFNM}}~0x10
+\begin{DoxyCompactList}\small\item\em PIC special fully nested (not) flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_ad32509788feeff9f03f167df6024ff4f}{PIC\+\_\+\+READ\+\_\+\+ISR}}~0x0B
+\begin{DoxyCompactList}\small\item\em Read ISR command value. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a627585635927a103f04654e2942ff669}{PIC0\+\_\+\+BASE\+\_\+\+INTERRUPT\+\_\+\+LINE}}~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET}}
+\begin{DoxyCompactList}\small\item\em Master PIC Base interrupt line for the lowest IRQ. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_afa8a999b6edc63963f1bfee6b58658d1}{PIC1\+\_\+\+BASE\+\_\+\+INTERRUPT\+\_\+\+LINE}}~(\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET}} + 8)
+\begin{DoxyCompactList}\small\item\em Slave PIC Base interrupt line for the lowest IRQ. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}{PIC\+\_\+\+CASCADING\+\_\+\+IRQ}}~2
+\begin{DoxyCompactList}\small\item\em PIC\textquotesingle{}s cascading IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a55e312092abf3e328e8a14dfde12b98d}{PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASK}}~0x80
+\begin{DoxyCompactList}\small\item\em The PIC spurious irq mask. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a51f8d242a37371878769cb00aa165c69}{PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASTER}}~0x07
+\begin{DoxyCompactList}\small\item\em Master PIC spurious IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a39238effd9b0c9c624903ec59c903e17}{PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+SLAVE}}~0x0F
+\begin{DoxyCompactList}\small\item\em Slave PIC spurious IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\+\_\+\+NAME}}~\char`\"{}X86 PIC\char`\"{}
+\begin{DoxyCompactList}\small\item\em Current module name. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{pic_8c_a0c3a863b0a2c522e9d3b4c3344dbe50f}{PIC\+\_\+\+ASSERT}}(COND,  MSG,  ERROR)
+\begin{DoxyCompactList}\small\item\em Assert macro used by the PIC to ensure correctness of execution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{pic_8c_afc70164c232cee70941b16e3f2ca029a}{pic\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the PIC. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pic_8c_a00dbcd7ae4581fd0f863c85c689d4431}{pic\+\_\+set\+\_\+irq\+\_\+mask}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number, const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} enabled)
+\begin{DoxyCompactList}\small\item\em Sets the IRQ mask for the desired IRQ number. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f}{pic\+\_\+set\+\_\+irq\+\_\+eoi}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Acknowleges an IRQ. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}} \mbox{\hyperlink{pic_8c_a78479c55baae446d6d1f3bf72eb0c408}{pic\+\_\+handle\+\_\+spurious\+\_\+irq}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} int\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Checks if the serviced interrupt is a spurious interrupt. The function also handles the spurious interrupt. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pic_8c_a6eaf3be6b606619a9bc3f06c9bd7c12a}{pic\+\_\+disable}} (void)
+\begin{DoxyCompactList}\small\item\em Disables the PIC. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} \mbox{\hyperlink{pic_8c_a603b3c2b1daff17a5479b91ed949c7fc}{pic\+\_\+get\+\_\+irq\+\_\+int\+\_\+line}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} irq\+\_\+number)
+\begin{DoxyCompactList}\small\item\em Returns the interrupt line attached to an IRQ. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}} $\ast$ \mbox{\hyperlink{pic_8c_a3449e4be2378914b7c14b1b185681006}{pic\+\_\+get\+\_\+driver}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the PIC interrupt driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}} \mbox{\hyperlink{pic_8c_acb54cd8b2543c0540f5153296c4ce284}{pic\+\_\+driver}}
+\begin{DoxyCompactList}\small\item\em PIC driver instance. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}\label{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}} 
+\index{pic.c@{pic.c}!MODULE\_NAME@{MODULE\_NAME}}
+\index{MODULE\_NAME@{MODULE\_NAME}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{MODULE\_NAME}{MODULE\_NAME}}
+{\footnotesize\ttfamily \#define MODULE\+\_\+\+NAME~\char`\"{}X86 PIC\char`\"{}}
+
+
+
+Current module name. 
+
+
+
+Definition at line 100 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a627585635927a103f04654e2942ff669}\label{pic_8c_a627585635927a103f04654e2942ff669}} 
+\index{pic.c@{pic.c}!PIC0\_BASE\_INTERRUPT\_LINE@{PIC0\_BASE\_INTERRUPT\_LINE}}
+\index{PIC0\_BASE\_INTERRUPT\_LINE@{PIC0\_BASE\_INTERRUPT\_LINE}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC0\_BASE\_INTERRUPT\_LINE}{PIC0\_BASE\_INTERRUPT\_LINE}}
+{\footnotesize\ttfamily \#define PIC0\+\_\+\+BASE\+\_\+\+INTERRUPT\+\_\+\+LINE~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET}}}
+
+
+
+Master PIC Base interrupt line for the lowest IRQ. 
+
+
+
+Definition at line 84 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_afa8a999b6edc63963f1bfee6b58658d1}\label{pic_8c_afa8a999b6edc63963f1bfee6b58658d1}} 
+\index{pic.c@{pic.c}!PIC1\_BASE\_INTERRUPT\_LINE@{PIC1\_BASE\_INTERRUPT\_LINE}}
+\index{PIC1\_BASE\_INTERRUPT\_LINE@{PIC1\_BASE\_INTERRUPT\_LINE}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC1\_BASE\_INTERRUPT\_LINE}{PIC1\_BASE\_INTERRUPT\_LINE}}
+{\footnotesize\ttfamily \#define PIC1\+\_\+\+BASE\+\_\+\+INTERRUPT\+\_\+\+LINE~(\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET}} + 8)}
+
+
+
+Slave PIC Base interrupt line for the lowest IRQ. 
+
+
+
+Definition at line 86 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a0c3a863b0a2c522e9d3b4c3344dbe50f}\label{pic_8c_a0c3a863b0a2c522e9d3b4c3344dbe50f}} 
+\index{pic.c@{pic.c}!PIC\_ASSERT@{PIC\_ASSERT}}
+\index{PIC\_ASSERT@{PIC\_ASSERT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ASSERT}{PIC\_ASSERT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ASSERT(\begin{DoxyParamCaption}\item[{}]{COND,  }\item[{}]{MSG,  }\item[{}]{ERROR }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \{                      \(\backslash\)}
+\DoxyCodeLine{    if((COND) == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})                                     \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        PANIC(ERROR, \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, MSG, \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}});               \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Assert macro used by the PIC to ensure correctness of execution. 
+
+Assert macro used by the PIC to ensure correctness of execution. Due to the critical nature of the PIC, any error generates a kernel panic.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em COND} & The condition that should be true. \\
+\hline
+\mbox{\texttt{ in}}  & {\em MSG} & The message to display in case of kernel panic. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ERROR} & The error code to use in case of kernel panic. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 122 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}\label{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}} 
+\index{pic.c@{pic.c}!PIC\_CASCADING\_IRQ@{PIC\_CASCADING\_IRQ}}
+\index{PIC\_CASCADING\_IRQ@{PIC\_CASCADING\_IRQ}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_CASCADING\_IRQ}{PIC\_CASCADING\_IRQ}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+CASCADING\+\_\+\+IRQ~2}
+
+
+
+PIC\textquotesingle{}s cascading IRQ number. 
+
+
+
+Definition at line 89 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}\label{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}} 
+\index{pic.c@{pic.c}!PIC\_EOI@{PIC\_EOI}}
+\index{PIC\_EOI@{PIC\_EOI}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_EOI}{PIC\_EOI}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+EOI~0x20}
+
+
+
+PIC End of Interrupt command. 
+
+
+
+Definition at line 56 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_ac3d0c587424c506be7ba946356bef6d4}\label{pic_8c_ac3d0c587424c506be7ba946356bef6d4}} 
+\index{pic.c@{pic.c}!PIC\_ICW1\_ICW4@{PIC\_ICW1\_ICW4}}
+\index{PIC\_ICW1\_ICW4@{PIC\_ICW1\_ICW4}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW1\_ICW4}{PIC\_ICW1\_ICW4}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW1\+\_\+\+ICW4~0x01}
+
+
+
+PIC ICW4 needed flag. 
+
+
+
+Definition at line 59 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a0507b285f8c659aec288f30b8b40a90e}\label{pic_8c_a0507b285f8c659aec288f30b8b40a90e}} 
+\index{pic.c@{pic.c}!PIC\_ICW1\_INIT@{PIC\_ICW1\_INIT}}
+\index{PIC\_ICW1\_INIT@{PIC\_ICW1\_INIT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW1\_INIT}{PIC\_ICW1\_INIT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW1\+\_\+\+INIT~0x10}
+
+
+
+PIC initialization flag. 
+
+
+
+Definition at line 67 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a79deb0212a6d71d597bb12e5b748745e}\label{pic_8c_a79deb0212a6d71d597bb12e5b748745e}} 
+\index{pic.c@{pic.c}!PIC\_ICW1\_INTERVAL4@{PIC\_ICW1\_INTERVAL4}}
+\index{PIC\_ICW1\_INTERVAL4@{PIC\_ICW1\_INTERVAL4}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW1\_INTERVAL4}{PIC\_ICW1\_INTERVAL4}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW1\+\_\+\+INTERVAL4~0x04}
+
+
+
+PIC call address interval 4 flag. 
+
+
+
+Definition at line 63 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a3b8d37e3fb0096ac4d5c5c7b3004c215}\label{pic_8c_a3b8d37e3fb0096ac4d5c5c7b3004c215}} 
+\index{pic.c@{pic.c}!PIC\_ICW1\_LEVEL@{PIC\_ICW1\_LEVEL}}
+\index{PIC\_ICW1\_LEVEL@{PIC\_ICW1\_LEVEL}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW1\_LEVEL}{PIC\_ICW1\_LEVEL}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW1\+\_\+\+LEVEL~0x08}
+
+
+
+PIC trigger level flag. 
+
+
+
+Definition at line 65 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a1637ae26bd645304af0f39037047cbdb}\label{pic_8c_a1637ae26bd645304af0f39037047cbdb}} 
+\index{pic.c@{pic.c}!PIC\_ICW1\_SINGLE@{PIC\_ICW1\_SINGLE}}
+\index{PIC\_ICW1\_SINGLE@{PIC\_ICW1\_SINGLE}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW1\_SINGLE}{PIC\_ICW1\_SINGLE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW1\+\_\+\+SINGLE~0x02}
+
+
+
+PIC single mode flag. 
+
+
+
+Definition at line 61 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a023268ad835736064fd809aa5690e7c1}\label{pic_8c_a023268ad835736064fd809aa5690e7c1}} 
+\index{pic.c@{pic.c}!PIC\_ICW4\_8086@{PIC\_ICW4\_8086}}
+\index{PIC\_ICW4\_8086@{PIC\_ICW4\_8086}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW4\_8086}{PIC\_ICW4\_8086}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW4\+\_\+8086~0x01}
+
+
+
+PIC 8086/88 (MCS-\/80/85) mode flag. 
+
+
+
+Definition at line 70 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_ae35d683d79619565f36309f813035865}\label{pic_8c_ae35d683d79619565f36309f813035865}} 
+\index{pic.c@{pic.c}!PIC\_ICW4\_AUTO@{PIC\_ICW4\_AUTO}}
+\index{PIC\_ICW4\_AUTO@{PIC\_ICW4\_AUTO}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW4\_AUTO}{PIC\_ICW4\_AUTO}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW4\+\_\+\+AUTO~0x02}
+
+
+
+PIC auto (normal) EOI flag. 
+
+
+
+Definition at line 72 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a924f179cd4df8759196a609245d1ed09}\label{pic_8c_a924f179cd4df8759196a609245d1ed09}} 
+\index{pic.c@{pic.c}!PIC\_ICW4\_BUF\_MASTER@{PIC\_ICW4\_BUF\_MASTER}}
+\index{PIC\_ICW4\_BUF\_MASTER@{PIC\_ICW4\_BUF\_MASTER}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW4\_BUF\_MASTER}{PIC\_ICW4\_BUF\_MASTER}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW4\+\_\+\+BUF\+\_\+\+MASTER~0x0C}
+
+
+
+PIC buffered mode/master flag. 
+
+
+
+Definition at line 76 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a63ae54d975412e1ff65f3a3e3a2e93c1}\label{pic_8c_a63ae54d975412e1ff65f3a3e3a2e93c1}} 
+\index{pic.c@{pic.c}!PIC\_ICW4\_BUF\_SLAVE@{PIC\_ICW4\_BUF\_SLAVE}}
+\index{PIC\_ICW4\_BUF\_SLAVE@{PIC\_ICW4\_BUF\_SLAVE}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW4\_BUF\_SLAVE}{PIC\_ICW4\_BUF\_SLAVE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW4\+\_\+\+BUF\+\_\+\+SLAVE~0x08}
+
+
+
+PIC buffered mode/slave flag. 
+
+
+
+Definition at line 74 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_aee13e46fdf90f6470c42fb43ab0a23b1}\label{pic_8c_aee13e46fdf90f6470c42fb43ab0a23b1}} 
+\index{pic.c@{pic.c}!PIC\_ICW4\_SFNM@{PIC\_ICW4\_SFNM}}
+\index{PIC\_ICW4\_SFNM@{PIC\_ICW4\_SFNM}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_ICW4\_SFNM}{PIC\_ICW4\_SFNM}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+ICW4\+\_\+\+SFNM~0x10}
+
+
+
+PIC special fully nested (not) flag. 
+
+
+
+Definition at line 78 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}\label{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}} 
+\index{pic.c@{pic.c}!PIC\_MASTER\_COMM\_PORT@{PIC\_MASTER\_COMM\_PORT}}
+\index{PIC\_MASTER\_COMM\_PORT@{PIC\_MASTER\_COMM\_PORT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_MASTER\_COMM\_PORT}{PIC\_MASTER\_COMM\_PORT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+MASTER\+\_\+\+COMM\+\_\+\+PORT~0x20}
+
+
+
+Master PIC CPU command port. 
+
+
+
+Definition at line 47 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a8179277f4025c29c563a3edc321816a6}\label{pic_8c_a8179277f4025c29c563a3edc321816a6}} 
+\index{pic.c@{pic.c}!PIC\_MASTER\_DATA\_PORT@{PIC\_MASTER\_DATA\_PORT}}
+\index{PIC\_MASTER\_DATA\_PORT@{PIC\_MASTER\_DATA\_PORT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_MASTER\_DATA\_PORT}{PIC\_MASTER\_DATA\_PORT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+MASTER\+\_\+\+DATA\+\_\+\+PORT~0x21}
+
+
+
+Master PIC CPU data port. 
+
+
+
+Definition at line 49 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_ad32509788feeff9f03f167df6024ff4f}\label{pic_8c_ad32509788feeff9f03f167df6024ff4f}} 
+\index{pic.c@{pic.c}!PIC\_READ\_ISR@{PIC\_READ\_ISR}}
+\index{PIC\_READ\_ISR@{PIC\_READ\_ISR}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_READ\_ISR}{PIC\_READ\_ISR}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+READ\+\_\+\+ISR~0x0B}
+
+
+
+Read ISR command value. 
+
+
+
+Definition at line 81 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_aa9db936582dc26667587224bdb825fa7}\label{pic_8c_aa9db936582dc26667587224bdb825fa7}} 
+\index{pic.c@{pic.c}!PIC\_SLAVE\_COMM\_PORT@{PIC\_SLAVE\_COMM\_PORT}}
+\index{PIC\_SLAVE\_COMM\_PORT@{PIC\_SLAVE\_COMM\_PORT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_SLAVE\_COMM\_PORT}{PIC\_SLAVE\_COMM\_PORT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SLAVE\+\_\+\+COMM\+\_\+\+PORT~0x\+A0}
+
+
+
+Slave PIC CPU command port. 
+
+
+
+Definition at line 51 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a0e46b4a2b292be65e80959befc32e258}\label{pic_8c_a0e46b4a2b292be65e80959befc32e258}} 
+\index{pic.c@{pic.c}!PIC\_SLAVE\_DATA\_PORT@{PIC\_SLAVE\_DATA\_PORT}}
+\index{PIC\_SLAVE\_DATA\_PORT@{PIC\_SLAVE\_DATA\_PORT}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_SLAVE\_DATA\_PORT}{PIC\_SLAVE\_DATA\_PORT}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SLAVE\+\_\+\+DATA\+\_\+\+PORT~0x\+A1}
+
+
+
+Slave PIC CPU data port. 
+
+
+
+Definition at line 53 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a55e312092abf3e328e8a14dfde12b98d}\label{pic_8c_a55e312092abf3e328e8a14dfde12b98d}} 
+\index{pic.c@{pic.c}!PIC\_SPURIOUS\_IRQ\_MASK@{PIC\_SPURIOUS\_IRQ\_MASK}}
+\index{PIC\_SPURIOUS\_IRQ\_MASK@{PIC\_SPURIOUS\_IRQ\_MASK}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_SPURIOUS\_IRQ\_MASK}{PIC\_SPURIOUS\_IRQ\_MASK}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASK~0x80}
+
+
+
+The PIC spurious irq mask. 
+
+
+
+Definition at line 92 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a51f8d242a37371878769cb00aa165c69}\label{pic_8c_a51f8d242a37371878769cb00aa165c69}} 
+\index{pic.c@{pic.c}!PIC\_SPURIOUS\_IRQ\_MASTER@{PIC\_SPURIOUS\_IRQ\_MASTER}}
+\index{PIC\_SPURIOUS\_IRQ\_MASTER@{PIC\_SPURIOUS\_IRQ\_MASTER}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_SPURIOUS\_IRQ\_MASTER}{PIC\_SPURIOUS\_IRQ\_MASTER}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASTER~0x07}
+
+
+
+Master PIC spurious IRQ number. 
+
+
+
+Definition at line 95 of file pic.\+c.
+
+\mbox{\Hypertarget{pic_8c_a39238effd9b0c9c624903ec59c903e17}\label{pic_8c_a39238effd9b0c9c624903ec59c903e17}} 
+\index{pic.c@{pic.c}!PIC\_SPURIOUS\_IRQ\_SLAVE@{PIC\_SPURIOUS\_IRQ\_SLAVE}}
+\index{PIC\_SPURIOUS\_IRQ\_SLAVE@{PIC\_SPURIOUS\_IRQ\_SLAVE}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{PIC\_SPURIOUS\_IRQ\_SLAVE}{PIC\_SPURIOUS\_IRQ\_SLAVE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+SLAVE~0x0F}
+
+
+
+Slave PIC spurious IRQ number. 
+
+
+
+Definition at line 97 of file pic.\+c.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{pic_8c_a6eaf3be6b606619a9bc3f06c9bd7c12a}\label{pic_8c_a6eaf3be6b606619a9bc3f06c9bd7c12a}} 
+\index{pic.c@{pic.c}!pic\_disable@{pic\_disable}}
+\index{pic\_disable@{pic\_disable}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_disable()}{pic\_disable()}}
+{\footnotesize\ttfamily void pic\+\_\+disable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Disables the PIC. 
+
+Disables the PIC by masking all interrupts. 
+
+Definition at line 397 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{398 \{}
+\DoxyCodeLine{399     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{400 }
+\DoxyCodeLine{401     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{402 }
+\DoxyCodeLine{403     \textcolor{comment}{/* Disable all IRQs */}}
+\DoxyCodeLine{404     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0xFF, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{405     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0xFF, \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{406 }
+\DoxyCodeLine{407     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}PIC Disabled"{}});}
+\DoxyCodeLine{408 }
+\DoxyCodeLine{409     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_DISABLE, 0);}
+\DoxyCodeLine{410 }
+\DoxyCodeLine{411     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{412 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{pic_8c_a6eaf3be6b606619a9bc3f06c9bd7c12a_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pic_8c_a3449e4be2378914b7c14b1b185681006}\label{pic_8c_a3449e4be2378914b7c14b1b185681006}} 
+\index{pic.c@{pic.c}!pic\_get\_driver@{pic\_get\_driver}}
+\index{pic\_get\_driver@{pic\_get\_driver}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_get\_driver()}{pic\_get\_driver()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}}$\ast$ pic\+\_\+get\+\_\+driver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the PIC interrupt driver. 
+
+Returns a constant handle to the PIC interrupt driver.
+
+\begin{DoxyReturn}{Returns}
+A constant handle to the PIC interrupt driver is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 430 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{431 \{}
+\DoxyCodeLine{432     \textcolor{keywordflow}{return} \&\mbox{\hyperlink{pic_8c_acb54cd8b2543c0540f5153296c4ce284}{pic\_driver}};}
+\DoxyCodeLine{433 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=261pt]{pic_8c_a3449e4be2378914b7c14b1b185681006_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pic_8c_a603b3c2b1daff17a5479b91ed949c7fc}\label{pic_8c_a603b3c2b1daff17a5479b91ed949c7fc}} 
+\index{pic.c@{pic.c}!pic\_get\_irq\_int\_line@{pic\_get\_irq\_int\_line}}
+\index{pic\_get\_irq\_int\_line@{pic\_get\_irq\_int\_line}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_get\_irq\_int\_line()}{pic\_get\_irq\_int\_line()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} pic\+\_\+get\+\_\+irq\+\_\+int\+\_\+line (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number }\end{DoxyParamCaption})}
+
+
+
+Returns the interrupt line attached to an IRQ. 
+
+Returns the interrupt line attached to an IRQ. -\/1 is returned if the IRQ number is not supported by the driver.
+
+\begin{DoxyReturn}{Returns}
+The interrupt line attached to an IRQ. -\/1 is returned if the IRQ number is not supported by the driver. 
+\end{DoxyReturn}
+
+
+Definition at line 414 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{415 \{}
+\DoxyCodeLine{416 }
+\DoxyCodeLine{417     \textcolor{keywordflow}{if}(irq\_number > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}{PIC\_MAX\_IRQ\_LINE}})}
+\DoxyCodeLine{418     \{}
+\DoxyCodeLine{419         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_GET\_INT\_LINE, 2, irq\_number, -\/1);}
+\DoxyCodeLine{420         \textcolor{keywordflow}{return} -\/1;}
+\DoxyCodeLine{421     \}}
+\DoxyCodeLine{422 }
+\DoxyCodeLine{423     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_GET\_INT\_LINE,}
+\DoxyCodeLine{424                        2,}
+\DoxyCodeLine{425                        irq\_number,}
+\DoxyCodeLine{426                        irq\_number + \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\_PIC\_IRQ\_OFFSET}});}
+\DoxyCodeLine{427     \textcolor{keywordflow}{return} irq\_number + \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\_PIC\_IRQ\_OFFSET}};}
+\DoxyCodeLine{428 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{pic_8c_a78479c55baae446d6d1f3bf72eb0c408}\label{pic_8c_a78479c55baae446d6d1f3bf72eb0c408}} 
+\index{pic.c@{pic.c}!pic\_handle\_spurious\_irq@{pic\_handle\_spurious\_irq}}
+\index{pic\_handle\_spurious\_irq@{pic\_handle\_spurious\_irq}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_handle\_spurious\_irq()}{pic\_handle\_spurious\_irq()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145}{INTERRUPT\+\_\+\+TYPE\+\_\+E}} pic\+\_\+handle\+\_\+spurious\+\_\+irq (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{int\+\_\+number }\end{DoxyParamCaption})}
+
+
+
+Checks if the serviced interrupt is a spurious interrupt. The function also handles the spurious interrupt. 
+
+Checks if the serviced interrupt is a spurious interrupt. The function also handles the spurious interrupt.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em int\+\_\+number} & The interrupt number of the interrupt to test.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The function will return the interrupt type.
+\begin{DoxyItemize}
+\item INTERRUPT\+\_\+\+TYPE\+\_\+\+SPURIOUS if the current interrupt is a spurious one.
+\item INTERRUPT\+\_\+\+TYPE\+\_\+\+REGULAR if the current interrupt is a regular one. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 303 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{304 \{}
+\DoxyCodeLine{305     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  isr\_val;}
+\DoxyCodeLine{306     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} irq\_number;}
+\DoxyCodeLine{307 }
+\DoxyCodeLine{308     irq\_number = int\_number -\/ \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\_PIC\_IRQ\_OFFSET}};}
+\DoxyCodeLine{309 }
+\DoxyCodeLine{310     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_START, 1, int\_number);}
+\DoxyCodeLine{311 }
+\DoxyCodeLine{312     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{313                  \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{314                  \textcolor{stringliteral}{"{}Spurious handling \%d"{}},}
+\DoxyCodeLine{315                  irq\_number);}
+\DoxyCodeLine{316 }
+\DoxyCodeLine{317     \textcolor{comment}{/* Check if regular soft interrupt */}}
+\DoxyCodeLine{318     \textcolor{keywordflow}{if}(irq\_number > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}{PIC\_MAX\_IRQ\_LINE}})}
+\DoxyCodeLine{319     \{}
+\DoxyCodeLine{320         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{321                            2,}
+\DoxyCodeLine{322                            int\_number,}
+\DoxyCodeLine{323                            \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}});}
+\DoxyCodeLine{324         \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}};}
+\DoxyCodeLine{325     \}}
+\DoxyCodeLine{326 }
+\DoxyCodeLine{327     \textcolor{comment}{/* Check the PIC type */}}
+\DoxyCodeLine{328     \textcolor{keywordflow}{if}(irq\_number > 7)}
+\DoxyCodeLine{329     \{}
+\DoxyCodeLine{330         \textcolor{comment}{/* This is not a potential spurious irq */}}
+\DoxyCodeLine{331         \textcolor{keywordflow}{if}(irq\_number != \mbox{\hyperlink{pic_8c_a39238effd9b0c9c624903ec59c903e17}{PIC\_SPURIOUS\_IRQ\_SLAVE}})}
+\DoxyCodeLine{332         \{}
+\DoxyCodeLine{333             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{334                                2,}
+\DoxyCodeLine{335                                int\_number,}
+\DoxyCodeLine{336                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}});}
+\DoxyCodeLine{337             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}};}
+\DoxyCodeLine{338         \}}
+\DoxyCodeLine{339 }
+\DoxyCodeLine{340         \textcolor{comment}{/* Read the ISR mask */}}
+\DoxyCodeLine{341         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_ad32509788feeff9f03f167df6024ff4f}{PIC\_READ\_ISR}}, \mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\_SLAVE\_COMM\_PORT}});}
+\DoxyCodeLine{342         isr\_val = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\_SLAVE\_COMM\_PORT}});}
+\DoxyCodeLine{343         \textcolor{keywordflow}{if}((isr\_val \& \mbox{\hyperlink{pic_8c_a55e312092abf3e328e8a14dfde12b98d}{PIC\_SPURIOUS\_IRQ\_MASK}}) != 0)}
+\DoxyCodeLine{344         \{}
+\DoxyCodeLine{345             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{346                                2,}
+\DoxyCodeLine{347                                int\_number,}
+\DoxyCodeLine{348                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}});}
+\DoxyCodeLine{349             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}};}
+\DoxyCodeLine{350         \}}
+\DoxyCodeLine{351         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{352         \{}
+\DoxyCodeLine{353             \textcolor{comment}{/* Send EOI on master */}}
+\DoxyCodeLine{354             \mbox{\hyperlink{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f}{pic\_set\_irq\_eoi}}(\mbox{\hyperlink{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}{PIC\_CASCADING\_IRQ}});}
+\DoxyCodeLine{355             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{356                                2,}
+\DoxyCodeLine{357                                int\_number,}
+\DoxyCodeLine{358                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}});}
+\DoxyCodeLine{359 }
+\DoxyCodeLine{360             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}};}
+\DoxyCodeLine{361         \}}
+\DoxyCodeLine{362     \}}
+\DoxyCodeLine{363     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{364     \{}
+\DoxyCodeLine{365         \textcolor{comment}{/* This is not a potential spurious irq */}}
+\DoxyCodeLine{366         \textcolor{keywordflow}{if}(irq\_number != \mbox{\hyperlink{pic_8c_a51f8d242a37371878769cb00aa165c69}{PIC\_SPURIOUS\_IRQ\_MASTER}})}
+\DoxyCodeLine{367         \{}
+\DoxyCodeLine{368             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{369                                2,}
+\DoxyCodeLine{370                                int\_number,}
+\DoxyCodeLine{371                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}});}
+\DoxyCodeLine{372             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}};}
+\DoxyCodeLine{373         \}}
+\DoxyCodeLine{374 }
+\DoxyCodeLine{375         \textcolor{comment}{/* Read the ISR mask */}}
+\DoxyCodeLine{376         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_ad32509788feeff9f03f167df6024ff4f}{PIC\_READ\_ISR}}, \mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\_MASTER\_COMM\_PORT}});}
+\DoxyCodeLine{377         isr\_val = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\_MASTER\_COMM\_PORT}});}
+\DoxyCodeLine{378         \textcolor{keywordflow}{if}((isr\_val \& \mbox{\hyperlink{pic_8c_a55e312092abf3e328e8a14dfde12b98d}{PIC\_SPURIOUS\_IRQ\_MASK}}) != 0)}
+\DoxyCodeLine{379         \{}
+\DoxyCodeLine{380             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{381                                2,}
+\DoxyCodeLine{382                                int\_number,}
+\DoxyCodeLine{383                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}});}
+\DoxyCodeLine{384             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145a24adb79ac5652af865fb1c561b798f22}{INTERRUPT\_TYPE\_REGULAR}};}
+\DoxyCodeLine{385         \}}
+\DoxyCodeLine{386         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{387         \{}
+\DoxyCodeLine{388             \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SPURIOUS\_END,}
+\DoxyCodeLine{389                                2,}
+\DoxyCodeLine{390                                int\_number,}
+\DoxyCodeLine{391                                \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}});}
+\DoxyCodeLine{392             \textcolor{keywordflow}{return} \mbox{\hyperlink{interrupts_8h_a03ac0810a58bc02f22efd9d000809145acb322e51cba15af66999800a16c76ffb}{INTERRUPT\_TYPE\_SPURIOUS}};}
+\DoxyCodeLine{393         \}}
+\DoxyCodeLine{394     \}}
+\DoxyCodeLine{395 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pic_8c_a78479c55baae446d6d1f3bf72eb0c408_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pic_8c_afc70164c232cee70941b16e3f2ca029a}\label{pic_8c_afc70164c232cee70941b16e3f2ca029a}} 
+\index{pic.c@{pic.c}!pic\_init@{pic\_init}}
+\index{pic\_init@{pic\_init}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_init()}{pic\_init()}}
+{\footnotesize\ttfamily void pic\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the PIC. 
+
+Initializes the PIC by remapping the IRQ interrupts. Disable all IRQ by reseting the IRQs mask. 
+
+Definition at line 158 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{159 \{}
+\DoxyCodeLine{160     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_INIT\_START, 0);}
+\DoxyCodeLine{161 }
+\DoxyCodeLine{162     \textcolor{comment}{/* Initialize the master, remap IRQs */}}
+\DoxyCodeLine{163     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_ac3d0c587424c506be7ba946356bef6d4}{PIC\_ICW1\_ICW4}} | \mbox{\hyperlink{pic_8c_a0507b285f8c659aec288f30b8b40a90e}{PIC\_ICW1\_INIT}}, \mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\_MASTER\_COMM\_PORT}});}
+\DoxyCodeLine{164     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a627585635927a103f04654e2942ff669}{PIC0\_BASE\_INTERRUPT\_LINE}}, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{165     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x4,  \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{166     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a023268ad835736064fd809aa5690e7c1}{PIC\_ICW4\_8086}},  \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{167 }
+\DoxyCodeLine{168     \textcolor{comment}{/* Initialize the slave, remap IRQs */}}
+\DoxyCodeLine{169     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_ac3d0c587424c506be7ba946356bef6d4}{PIC\_ICW1\_ICW4}} | \mbox{\hyperlink{pic_8c_a0507b285f8c659aec288f30b8b40a90e}{PIC\_ICW1\_INIT}}, \mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\_SLAVE\_COMM\_PORT}});}
+\DoxyCodeLine{170     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_afa8a999b6edc63963f1bfee6b58658d1}{PIC1\_BASE\_INTERRUPT\_LINE}}, \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{171     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0x2,  \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{172     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a023268ad835736064fd809aa5690e7c1}{PIC\_ICW4\_8086}},  \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{173 }
+\DoxyCodeLine{174     \textcolor{comment}{/* Set EOI for both PICs. */}}
+\DoxyCodeLine{175     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}{PIC\_EOI}}, \mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\_MASTER\_COMM\_PORT}});}
+\DoxyCodeLine{176     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}{PIC\_EOI}}, \mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\_SLAVE\_COMM\_PORT}});}
+\DoxyCodeLine{177 }
+\DoxyCodeLine{178     \textcolor{comment}{/* Disable all IRQs */}}
+\DoxyCodeLine{179     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0xFF, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{180     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(0xFF, \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{181 }
+\DoxyCodeLine{182     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_INIT\_END, 0);}
+\DoxyCodeLine{183 }
+\DoxyCodeLine{184     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}PIC Initialization end"{}});}
+\DoxyCodeLine{185 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=234pt]{pic_8c_afc70164c232cee70941b16e3f2ca029a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=227pt]{pic_8c_afc70164c232cee70941b16e3f2ca029a_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f}\label{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f}} 
+\index{pic.c@{pic.c}!pic\_set\_irq\_eoi@{pic\_set\_irq\_eoi}}
+\index{pic\_set\_irq\_eoi@{pic\_set\_irq\_eoi}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_set\_irq\_eoi()}{pic\_set\_irq\_eoi()}}
+{\footnotesize\ttfamily void pic\+\_\+set\+\_\+irq\+\_\+eoi (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number }\end{DoxyParamCaption})}
+
+
+
+Acknowleges an IRQ. 
+
+Acknowlege an IRQ by setting the End Of Interrupt bit for this IRQ.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The irq number to Acknowlege. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 283 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{284 \{}
+\DoxyCodeLine{285     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_EOI\_START, 1, irq\_number);}
+\DoxyCodeLine{286 }
+\DoxyCodeLine{287     \mbox{\hyperlink{pic_8c_a0c3a863b0a2c522e9d3b4c3344dbe50f}{PIC\_ASSERT}}(irq\_number <= \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}{PIC\_MAX\_IRQ\_LINE}},}
+\DoxyCodeLine{288                \textcolor{stringliteral}{"{}Could not find PIC IRQ"{}},}
+\DoxyCodeLine{289                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}});}
+\DoxyCodeLine{290 }
+\DoxyCodeLine{291     \textcolor{comment}{/* End of interrupt signal */}}
+\DoxyCodeLine{292     \textcolor{keywordflow}{if}(irq\_number > 7)}
+\DoxyCodeLine{293     \{}
+\DoxyCodeLine{294         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}{PIC\_EOI}}, \mbox{\hyperlink{pic_8c_aa9db936582dc26667587224bdb825fa7}{PIC\_SLAVE\_COMM\_PORT}});}
+\DoxyCodeLine{295     \}}
+\DoxyCodeLine{296     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pic_8c_a170d8eebdb48c16cfcd60cbd46760cb2}{PIC\_EOI}}, \mbox{\hyperlink{pic_8c_ab27bfeb0f8d8a97c55fbf1974bbb761a}{PIC\_MASTER\_COMM\_PORT}});}
+\DoxyCodeLine{297 }
+\DoxyCodeLine{298     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_EOI\_END, 1, irq\_number);}
+\DoxyCodeLine{299 }
+\DoxyCodeLine{300     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}PIC IRQ EOI"{}});}
+\DoxyCodeLine{301 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=271pt]{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=339pt]{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pic_8c_a00dbcd7ae4581fd0f863c85c689d4431}\label{pic_8c_a00dbcd7ae4581fd0f863c85c689d4431}} 
+\index{pic.c@{pic.c}!pic\_set\_irq\_mask@{pic\_set\_irq\_mask}}
+\index{pic\_set\_irq\_mask@{pic\_set\_irq\_mask}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_set\_irq\_mask()}{pic\_set\_irq\_mask()}}
+{\footnotesize\ttfamily void pic\+\_\+set\+\_\+irq\+\_\+mask (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{irq\+\_\+number,  }\item[{const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}}}]{enabled }\end{DoxyParamCaption})}
+
+
+
+Sets the IRQ mask for the desired IRQ number. 
+
+Sets the IRQ mask for the IRQ number given as parameter.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em irq\+\_\+number} & The irq number to enable/disable. \\
+\hline
+\mbox{\texttt{ in}}  & {\em enabled} & Must be set to TRUE to enable the IRQ or FALSE to disable the IRQ. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 187 of file pic.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{188 \{}
+\DoxyCodeLine{189     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}  init\_mask;}
+\DoxyCodeLine{190     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{191     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} cascading\_number;}
+\DoxyCodeLine{192 }
+\DoxyCodeLine{193     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SET\_IRQ\_MASK\_START,}
+\DoxyCodeLine{194                        2,}
+\DoxyCodeLine{195                        irq\_number,}
+\DoxyCodeLine{196                        enabled);}
+\DoxyCodeLine{197 }
+\DoxyCodeLine{198     \mbox{\hyperlink{pic_8c_a0c3a863b0a2c522e9d3b4c3344dbe50f}{PIC\_ASSERT}}(irq\_number <= \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}{PIC\_MAX\_IRQ\_LINE}},}
+\DoxyCodeLine{199                \textcolor{stringliteral}{"{}Could not find PIC IRQ"{}},}
+\DoxyCodeLine{200                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0ab23bcf4f4b99ffe7022aee464ec41fde}{OS\_ERR\_NO\_SUCH\_IRQ}});}
+\DoxyCodeLine{201 }
+\DoxyCodeLine{202     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{203 }
+\DoxyCodeLine{204     \textcolor{comment}{/* Manage master PIC */}}
+\DoxyCodeLine{205     \textcolor{keywordflow}{if}(irq\_number < 8)}
+\DoxyCodeLine{206     \{}
+\DoxyCodeLine{207         \textcolor{comment}{/* Retrieve initial mask */}}
+\DoxyCodeLine{208         init\_mask = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210         \textcolor{comment}{/* Set new mask value */}}
+\DoxyCodeLine{211         \textcolor{keywordflow}{if}(enabled == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})}
+\DoxyCodeLine{212         \{}
+\DoxyCodeLine{213             init\_mask |= 1 << irq\_number;}
+\DoxyCodeLine{214         \}}
+\DoxyCodeLine{215         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{216         \{}
+\DoxyCodeLine{217             init\_mask \&= \string~(1 << irq\_number);}
+\DoxyCodeLine{218         \}}
+\DoxyCodeLine{219 }
+\DoxyCodeLine{220         \textcolor{comment}{/* Set new mask */}}
+\DoxyCodeLine{221         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(init\_mask, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{222     \}}
+\DoxyCodeLine{223 }
+\DoxyCodeLine{224     \textcolor{comment}{/* Manage slave PIC. WARNING, cascading will be enabled */}}
+\DoxyCodeLine{225     \textcolor{keywordflow}{if}(irq\_number > 7)}
+\DoxyCodeLine{226     \{}
+\DoxyCodeLine{227         \textcolor{comment}{/* Set new IRQ number */}}
+\DoxyCodeLine{228         cascading\_number = irq\_number -\/ 8;}
+\DoxyCodeLine{229 }
+\DoxyCodeLine{230         \textcolor{comment}{/* Retrieve initial mask */}}
+\DoxyCodeLine{231         init\_mask = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{232 }
+\DoxyCodeLine{233         \textcolor{comment}{/* Set new mask value */}}
+\DoxyCodeLine{234         init\_mask \&= \string~(1 << \mbox{\hyperlink{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}{PIC\_CASCADING\_IRQ}});}
+\DoxyCodeLine{235 }
+\DoxyCodeLine{236         \textcolor{comment}{/* Set new mask */}}
+\DoxyCodeLine{237         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(init\_mask, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{238 }
+\DoxyCodeLine{239         \textcolor{comment}{/* Retrieve initial mask */}}
+\DoxyCodeLine{240         init\_mask = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{242         \textcolor{comment}{/* Set new mask value */}}
+\DoxyCodeLine{243         \textcolor{keywordflow}{if}(enabled == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})}
+\DoxyCodeLine{244         \{}
+\DoxyCodeLine{245             init\_mask |= 1 << cascading\_number;}
+\DoxyCodeLine{246         \}}
+\DoxyCodeLine{247         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{248         \{}
+\DoxyCodeLine{249             init\_mask \&= \string~(1 << cascading\_number);}
+\DoxyCodeLine{250         \}}
+\DoxyCodeLine{251 }
+\DoxyCodeLine{252         \textcolor{comment}{/* Set new mask */}}
+\DoxyCodeLine{253         \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(init\_mask, \mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}});}
+\DoxyCodeLine{254 }
+\DoxyCodeLine{255         \textcolor{comment}{/* If all is masked then disable cascading */}}
+\DoxyCodeLine{256         \textcolor{keywordflow}{if}(init\_mask == 0xFF)}
+\DoxyCodeLine{257         \{}
+\DoxyCodeLine{258             \textcolor{comment}{/* Retrieve initial mask */}}
+\DoxyCodeLine{259             init\_mask = \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{260 }
+\DoxyCodeLine{261             \textcolor{comment}{/* Set new mask value */}}
+\DoxyCodeLine{262             init\_mask  |= 1 << \mbox{\hyperlink{pic_8c_ac0cd83d77c06c4696b912d9c3b1df643}{PIC\_CASCADING\_IRQ}};}
+\DoxyCodeLine{263 }
+\DoxyCodeLine{264             \textcolor{comment}{/* Set new mask */}}
+\DoxyCodeLine{265             \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(init\_mask, \mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}});}
+\DoxyCodeLine{266         \}}
+\DoxyCodeLine{267     \}}
+\DoxyCodeLine{268 }
+\DoxyCodeLine{269     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_af0933de1a0e451463dc2b11551b6493d}{PIC\_DEBUG\_ENABLED}},}
+\DoxyCodeLine{270                  \mbox{\hyperlink{pic_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{271                  \textcolor{stringliteral}{"{}New PIC Mask M: 0x\%02x S: 0x\%02x"{}},}
+\DoxyCodeLine{272                  \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a8179277f4025c29c563a3edc321816a6}{PIC\_MASTER\_DATA\_PORT}}),}
+\DoxyCodeLine{273                  \mbox{\hyperlink{i386_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\_cpu\_inb}}(\mbox{\hyperlink{pic_8c_a0e46b4a2b292be65e80959befc32e258}{PIC\_SLAVE\_DATA\_PORT}}));}
+\DoxyCodeLine{274 }
+\DoxyCodeLine{275     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIC\_SET\_IRQ\_MASK\_END,}
+\DoxyCodeLine{276                        2,}
+\DoxyCodeLine{277                        irq\_number,}
+\DoxyCodeLine{278                        enabled);}
+\DoxyCodeLine{279 }
+\DoxyCodeLine{280     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{281 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=283pt]{pic_8c_a00dbcd7ae4581fd0f863c85c689d4431_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{pic_8c_acb54cd8b2543c0540f5153296c4ce284}\label{pic_8c_acb54cd8b2543c0540f5153296c4ce284}} 
+\index{pic.c@{pic.c}!pic\_driver@{pic\_driver}}
+\index{pic\_driver@{pic\_driver}!pic.c@{pic.c}}
+\doxysubsubsection{\texorpdfstring{pic\_driver}{pic\_driver}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structinterrupt__driver__t}{interrupt\+\_\+driver\+\_\+t}} pic\+\_\+driver\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= \{}
+\DoxyCodeLine{    .driver\_set\_irq\_mask     = \mbox{\hyperlink{pic_8c_a00dbcd7ae4581fd0f863c85c689d4431}{pic\_set\_irq\_mask}},}
+\DoxyCodeLine{    .driver\_set\_irq\_eoi      = \mbox{\hyperlink{pic_8c_a1d43162c06fd01e236d02e5c1e6c2c4f}{pic\_set\_irq\_eoi}},}
+\DoxyCodeLine{    .driver\_handle\_spurious  = \mbox{\hyperlink{pic_8c_a78479c55baae446d6d1f3bf72eb0c408}{pic\_handle\_spurious\_irq}},}
+\DoxyCodeLine{    .driver\_get\_irq\_int\_line = \mbox{\hyperlink{pic_8c_a603b3c2b1daff17a5479b91ed949c7fc}{pic\_get\_irq\_int\_line}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+PIC driver instance. 
+
+
+
+Definition at line 141 of file pic.\+c.
+

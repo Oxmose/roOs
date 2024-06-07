@@ -1,0 +1,424 @@
+\hypertarget{i386_2includes_2cpu__interrupt_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+CPU/i386/includes/cpu\+\_\+interrupt.h File Reference}
+\label{i386_2includes_2cpu__interrupt_8h}\index{Source/Kernel/Arch/CPU/i386/includes/cpu\_interrupt.h@{Source/Kernel/Arch/CPU/i386/includes/cpu\_interrupt.h}}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}{IDT\+\_\+\+ENTRY\+\_\+\+COUNT}}~256
+\begin{DoxyCompactList}\small\item\em Number of entries in the kernel\textquotesingle{}s IDT. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}{MIN\+\_\+\+INTERRUPT\+\_\+\+LINE}}~0x20
+\begin{DoxyCompactList}\small\item\em Minimal customizable accepted interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\+\_\+\+INTERRUPT\+\_\+\+LINE}}~(\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}{IDT\+\_\+\+ENTRY\+\_\+\+COUNT}} -\/ 1)
+\begin{DoxyCompactList}\small\item\em Maximal customizable accepted interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}{INT\+\_\+\+ENTRY\+\_\+\+COUNT}}~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}{IDT\+\_\+\+ENTRY\+\_\+\+COUNT}}
+\begin{DoxyCompactList}\small\item\em Defines the number of possible interrupt on the i386 processor. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a53288d4fa0188dba0c32e1d3b9c0d7ed}{MIN\+\_\+\+EXCEPTION\+\_\+\+LINE}}~0x0
+\begin{DoxyCompactList}\small\item\em Minimal customizable accepted exception line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a651271d7fcc56ee5562acca2878d9984}{MAX\+\_\+\+EXCEPTION\+\_\+\+LINE}}~0x1F
+\begin{DoxyCompactList}\small\item\em Maximal customizable accepted exception line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a51f8d242a37371878769cb00aa165c69}{PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASTER}}~0x07
+\begin{DoxyCompactList}\small\item\em Master PIC spurious IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a39238effd9b0c9c624903ec59c903e17}{PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+SLAVE}}~0x0F
+\begin{DoxyCompactList}\small\item\em Slave PIC spurious IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}{INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET}}~0x30
+\begin{DoxyCompactList}\small\item\em Offset of the first line of an IRQ interrupt from PIC. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ad12181a991cf60d5404885165952d613}{INT\+\_\+\+IOAPIC\+\_\+\+IRQ\+\_\+\+OFFSET}}~0x40
+\begin{DoxyCompactList}\small\item\em Offset of the first line of an IRQ interrupt from IO-\/\+APIC. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a4c80e2b907ba9b849cfcb089da500408}{PIC\+\_\+\+MIN\+\_\+\+IRQ\+\_\+\+LINE}}~0
+\begin{DoxyCompactList}\small\item\em PIC\textquotesingle{}s minimal IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}{PIC\+\_\+\+MAX\+\_\+\+IRQ\+\_\+\+LINE}}~15
+\begin{DoxyCompactList}\small\item\em PIC\textquotesingle{}s maximal IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\+\_\+\+IRQ\+\_\+\+LINE}}~0
+\begin{DoxyCompactList}\small\item\em PIT IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1862e728098ddeac91aaacf6420fc2e7}{KBD\+\_\+\+IRQ\+\_\+\+LINE}}~1
+\begin{DoxyCompactList}\small\item\em Keyboard IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a786d923a5a889f42631942cb9e2330c9}{SERIAL\+\_\+2\+\_\+4\+\_\+\+IRQ\+\_\+\+LINE}}~3
+\begin{DoxyCompactList}\small\item\em Serial COM2-\/4 IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ab043b3ede30bfd03c04ed2a5971c30a2}{SERIAL\+\_\+1\+\_\+3\+\_\+\+IRQ\+\_\+\+LINE}}~4
+\begin{DoxyCompactList}\small\item\em Serial COM1-\/3 IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}{RTC\+\_\+\+IRQ\+\_\+\+LINE}}~8
+\begin{DoxyCompactList}\small\item\em RTC IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_af10b9efcb908230838524558bb05588a}{MOUSE\+\_\+\+IRQ\+\_\+\+LINE}}~12
+\begin{DoxyCompactList}\small\item\em Mouse IRQ number. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ae2771aa37ad5a6df615c271565a9e9de}{DIV\+\_\+\+BY\+\_\+\+ZERO\+\_\+\+LINE}}~0x00
+\begin{DoxyCompactList}\small\item\em Divide by zero exception line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_ae0619be3c83c09e4a39cc078f8640ced}{DEVICE\+\_\+\+NOT\+\_\+\+FOUND\+\_\+\+LINE}}~0x07
+\begin{DoxyCompactList}\small\item\em Device not found exception line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_af1c1d84d016b9cf17672818e14923905}{PAGE\+\_\+\+FAULT\+\_\+\+LINE}}~0x0E
+\begin{DoxyCompactList}\small\item\em Page fault exception line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a320e182cf1289c149450d96a7ff1b513}{LAPIC\+\_\+\+TIMER\+\_\+\+INTERRUPT\+\_\+\+LINE}}~0x20
+\begin{DoxyCompactList}\small\item\em LAPIC Timer interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a500495e3a345d964f20bfd91256092f5}{SCHEDULER\+\_\+\+SW\+\_\+\+INT\+\_\+\+LINE}}~0x21
+\begin{DoxyCompactList}\small\item\em Scheduler software interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}{PANIC\+\_\+\+INT\+\_\+\+LINE}}~0x2A
+\begin{DoxyCompactList}\small\item\em Defines the panic interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_acd7e0ac80969342f23122f8e9696d9cc}{SYSCALL\+\_\+\+INT\+\_\+\+LINE}}~0x30
+\begin{DoxyCompactList}\small\item\em Defines the sys call interrupt line. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a369a8fe6ebdc9e16974466e07f230dca}{LAPIC\+\_\+\+SPURIOUS\+\_\+\+INT\+\_\+\+LINE}}~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\+\_\+\+INTERRUPT\+\_\+\+LINE}}
+\begin{DoxyCompactList}\small\item\em LAPIC spurious interrupt vector. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ae0619be3c83c09e4a39cc078f8640ced}\label{i386_2includes_2cpu__interrupt_8h_ae0619be3c83c09e4a39cc078f8640ced}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!DEVICE\_NOT\_FOUND\_LINE@{DEVICE\_NOT\_FOUND\_LINE}}
+\index{DEVICE\_NOT\_FOUND\_LINE@{DEVICE\_NOT\_FOUND\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{DEVICE\_NOT\_FOUND\_LINE}{DEVICE\_NOT\_FOUND\_LINE}}
+{\footnotesize\ttfamily \#define DEVICE\+\_\+\+NOT\+\_\+\+FOUND\+\_\+\+LINE~0x07}
+
+
+
+Device not found exception line. 
+
+
+
+Definition at line 78 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ae2771aa37ad5a6df615c271565a9e9de}\label{i386_2includes_2cpu__interrupt_8h_ae2771aa37ad5a6df615c271565a9e9de}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!DIV\_BY\_ZERO\_LINE@{DIV\_BY\_ZERO\_LINE}}
+\index{DIV\_BY\_ZERO\_LINE@{DIV\_BY\_ZERO\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{DIV\_BY\_ZERO\_LINE}{DIV\_BY\_ZERO\_LINE}}
+{\footnotesize\ttfamily \#define DIV\+\_\+\+BY\+\_\+\+ZERO\+\_\+\+LINE~0x00}
+
+
+
+Divide by zero exception line. 
+
+
+
+Definition at line 76 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}\label{i386_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!IDT\_ENTRY\_COUNT@{IDT\_ENTRY\_COUNT}}
+\index{IDT\_ENTRY\_COUNT@{IDT\_ENTRY\_COUNT}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{IDT\_ENTRY\_COUNT}{IDT\_ENTRY\_COUNT}}
+{\footnotesize\ttfamily \#define IDT\+\_\+\+ENTRY\+\_\+\+COUNT~256}
+
+
+
+Number of entries in the kernel\textquotesingle{}s IDT. 
+
+
+
+Definition at line 32 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}\label{i386_2includes_2cpu__interrupt_8h_ac18397cc284e384016e62c00f2d49107}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!INT\_ENTRY\_COUNT@{INT\_ENTRY\_COUNT}}
+\index{INT\_ENTRY\_COUNT@{INT\_ENTRY\_COUNT}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{INT\_ENTRY\_COUNT}{INT\_ENTRY\_COUNT}}
+{\footnotesize\ttfamily \#define INT\+\_\+\+ENTRY\+\_\+\+COUNT~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}{IDT\+\_\+\+ENTRY\+\_\+\+COUNT}}}
+
+
+
+Defines the number of possible interrupt on the i386 processor. 
+
+
+
+Definition at line 40 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ad12181a991cf60d5404885165952d613}\label{i386_2includes_2cpu__interrupt_8h_ad12181a991cf60d5404885165952d613}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!INT\_IOAPIC\_IRQ\_OFFSET@{INT\_IOAPIC\_IRQ\_OFFSET}}
+\index{INT\_IOAPIC\_IRQ\_OFFSET@{INT\_IOAPIC\_IRQ\_OFFSET}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{INT\_IOAPIC\_IRQ\_OFFSET}{INT\_IOAPIC\_IRQ\_OFFSET}}
+{\footnotesize\ttfamily \#define INT\+\_\+\+IOAPIC\+\_\+\+IRQ\+\_\+\+OFFSET~0x40}
+
+
+
+Offset of the first line of an IRQ interrupt from IO-\/\+APIC. 
+
+
+
+Definition at line 55 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}\label{i386_2includes_2cpu__interrupt_8h_aafa6d23abc1c4c8992b802e090d4020c}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!INT\_PIC\_IRQ\_OFFSET@{INT\_PIC\_IRQ\_OFFSET}}
+\index{INT\_PIC\_IRQ\_OFFSET@{INT\_PIC\_IRQ\_OFFSET}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{INT\_PIC\_IRQ\_OFFSET}{INT\_PIC\_IRQ\_OFFSET}}
+{\footnotesize\ttfamily \#define INT\+\_\+\+PIC\+\_\+\+IRQ\+\_\+\+OFFSET~0x30}
+
+
+
+Offset of the first line of an IRQ interrupt from PIC. 
+
+
+
+Definition at line 53 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a1862e728098ddeac91aaacf6420fc2e7}\label{i386_2includes_2cpu__interrupt_8h_a1862e728098ddeac91aaacf6420fc2e7}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!KBD\_IRQ\_LINE@{KBD\_IRQ\_LINE}}
+\index{KBD\_IRQ\_LINE@{KBD\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{KBD\_IRQ\_LINE}{KBD\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define KBD\+\_\+\+IRQ\+\_\+\+LINE~1}
+
+
+
+Keyboard IRQ number. 
+
+
+
+Definition at line 65 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a369a8fe6ebdc9e16974466e07f230dca}\label{i386_2includes_2cpu__interrupt_8h_a369a8fe6ebdc9e16974466e07f230dca}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!LAPIC\_SPURIOUS\_INT\_LINE@{LAPIC\_SPURIOUS\_INT\_LINE}}
+\index{LAPIC\_SPURIOUS\_INT\_LINE@{LAPIC\_SPURIOUS\_INT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{LAPIC\_SPURIOUS\_INT\_LINE}{LAPIC\_SPURIOUS\_INT\_LINE}}
+{\footnotesize\ttfamily \#define LAPIC\+\_\+\+SPURIOUS\+\_\+\+INT\+\_\+\+LINE~\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\+\_\+\+INTERRUPT\+\_\+\+LINE}}}
+
+
+
+LAPIC spurious interrupt vector. 
+
+
+
+Definition at line 91 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a320e182cf1289c149450d96a7ff1b513}\label{i386_2includes_2cpu__interrupt_8h_a320e182cf1289c149450d96a7ff1b513}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!LAPIC\_TIMER\_INTERRUPT\_LINE@{LAPIC\_TIMER\_INTERRUPT\_LINE}}
+\index{LAPIC\_TIMER\_INTERRUPT\_LINE@{LAPIC\_TIMER\_INTERRUPT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{LAPIC\_TIMER\_INTERRUPT\_LINE}{LAPIC\_TIMER\_INTERRUPT\_LINE}}
+{\footnotesize\ttfamily \#define LAPIC\+\_\+\+TIMER\+\_\+\+INTERRUPT\+\_\+\+LINE~0x20}
+
+
+
+LAPIC Timer interrupt line. 
+
+
+
+Definition at line 82 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a651271d7fcc56ee5562acca2878d9984}\label{i386_2includes_2cpu__interrupt_8h_a651271d7fcc56ee5562acca2878d9984}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!MAX\_EXCEPTION\_LINE@{MAX\_EXCEPTION\_LINE}}
+\index{MAX\_EXCEPTION\_LINE@{MAX\_EXCEPTION\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{MAX\_EXCEPTION\_LINE}{MAX\_EXCEPTION\_LINE}}
+{\footnotesize\ttfamily \#define MAX\+\_\+\+EXCEPTION\+\_\+\+LINE~0x1F}
+
+
+
+Maximal customizable accepted exception line. 
+
+
+
+Definition at line 45 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}\label{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!MAX\_INTERRUPT\_LINE@{MAX\_INTERRUPT\_LINE}}
+\index{MAX\_INTERRUPT\_LINE@{MAX\_INTERRUPT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{MAX\_INTERRUPT\_LINE}{MAX\_INTERRUPT\_LINE}}
+{\footnotesize\ttfamily \#define MAX\+\_\+\+INTERRUPT\+\_\+\+LINE~(\mbox{\hyperlink{x86__64_2includes_2cpu__interrupt_8h_ac5ba6506506314600fc35d49780e0072}{IDT\+\_\+\+ENTRY\+\_\+\+COUNT}} -\/ 1)}
+
+
+
+Maximal customizable accepted interrupt line. 
+
+
+
+Definition at line 37 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a53288d4fa0188dba0c32e1d3b9c0d7ed}\label{i386_2includes_2cpu__interrupt_8h_a53288d4fa0188dba0c32e1d3b9c0d7ed}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!MIN\_EXCEPTION\_LINE@{MIN\_EXCEPTION\_LINE}}
+\index{MIN\_EXCEPTION\_LINE@{MIN\_EXCEPTION\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{MIN\_EXCEPTION\_LINE}{MIN\_EXCEPTION\_LINE}}
+{\footnotesize\ttfamily \#define MIN\+\_\+\+EXCEPTION\+\_\+\+LINE~0x0}
+
+
+
+Minimal customizable accepted exception line. 
+
+
+
+Definition at line 43 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}\label{i386_2includes_2cpu__interrupt_8h_aee75914180ff203cff9e6ecf303e2960}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!MIN\_INTERRUPT\_LINE@{MIN\_INTERRUPT\_LINE}}
+\index{MIN\_INTERRUPT\_LINE@{MIN\_INTERRUPT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{MIN\_INTERRUPT\_LINE}{MIN\_INTERRUPT\_LINE}}
+{\footnotesize\ttfamily \#define MIN\+\_\+\+INTERRUPT\+\_\+\+LINE~0x20}
+
+
+
+Minimal customizable accepted interrupt line. 
+
+
+
+Definition at line 35 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_af10b9efcb908230838524558bb05588a}\label{i386_2includes_2cpu__interrupt_8h_af10b9efcb908230838524558bb05588a}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!MOUSE\_IRQ\_LINE@{MOUSE\_IRQ\_LINE}}
+\index{MOUSE\_IRQ\_LINE@{MOUSE\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{MOUSE\_IRQ\_LINE}{MOUSE\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define MOUSE\+\_\+\+IRQ\+\_\+\+LINE~12}
+
+
+
+Mouse IRQ number. 
+
+
+
+Definition at line 73 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_af1c1d84d016b9cf17672818e14923905}\label{i386_2includes_2cpu__interrupt_8h_af1c1d84d016b9cf17672818e14923905}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PAGE\_FAULT\_LINE@{PAGE\_FAULT\_LINE}}
+\index{PAGE\_FAULT\_LINE@{PAGE\_FAULT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PAGE\_FAULT\_LINE}{PAGE\_FAULT\_LINE}}
+{\footnotesize\ttfamily \#define PAGE\+\_\+\+FAULT\+\_\+\+LINE~0x0E}
+
+
+
+Page fault exception line. 
+
+
+
+Definition at line 80 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}\label{i386_2includes_2cpu__interrupt_8h_a1df8885be5f40bed6cd9a2664642d368}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PANIC\_INT\_LINE@{PANIC\_INT\_LINE}}
+\index{PANIC\_INT\_LINE@{PANIC\_INT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PANIC\_INT\_LINE}{PANIC\_INT\_LINE}}
+{\footnotesize\ttfamily \#define PANIC\+\_\+\+INT\+\_\+\+LINE~0x2A}
+
+
+
+Defines the panic interrupt line. 
+
+
+
+Definition at line 86 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}\label{i386_2includes_2cpu__interrupt_8h_ab73bb12126056db85ed8e029dbd3d820}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PIC\_MAX\_IRQ\_LINE@{PIC\_MAX\_IRQ\_LINE}}
+\index{PIC\_MAX\_IRQ\_LINE@{PIC\_MAX\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PIC\_MAX\_IRQ\_LINE}{PIC\_MAX\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+MAX\+\_\+\+IRQ\+\_\+\+LINE~15}
+
+
+
+PIC\textquotesingle{}s maximal IRQ number. 
+
+
+
+Definition at line 60 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a4c80e2b907ba9b849cfcb089da500408}\label{i386_2includes_2cpu__interrupt_8h_a4c80e2b907ba9b849cfcb089da500408}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PIC\_MIN\_IRQ\_LINE@{PIC\_MIN\_IRQ\_LINE}}
+\index{PIC\_MIN\_IRQ\_LINE@{PIC\_MIN\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PIC\_MIN\_IRQ\_LINE}{PIC\_MIN\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+MIN\+\_\+\+IRQ\+\_\+\+LINE~0}
+
+
+
+PIC\textquotesingle{}s minimal IRQ number. 
+
+
+
+Definition at line 58 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a51f8d242a37371878769cb00aa165c69}\label{i386_2includes_2cpu__interrupt_8h_a51f8d242a37371878769cb00aa165c69}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PIC\_SPURIOUS\_IRQ\_MASTER@{PIC\_SPURIOUS\_IRQ\_MASTER}}
+\index{PIC\_SPURIOUS\_IRQ\_MASTER@{PIC\_SPURIOUS\_IRQ\_MASTER}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PIC\_SPURIOUS\_IRQ\_MASTER}{PIC\_SPURIOUS\_IRQ\_MASTER}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+MASTER~0x07}
+
+
+
+Master PIC spurious IRQ number. 
+
+
+
+Definition at line 48 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a39238effd9b0c9c624903ec59c903e17}\label{i386_2includes_2cpu__interrupt_8h_a39238effd9b0c9c624903ec59c903e17}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PIC\_SPURIOUS\_IRQ\_SLAVE@{PIC\_SPURIOUS\_IRQ\_SLAVE}}
+\index{PIC\_SPURIOUS\_IRQ\_SLAVE@{PIC\_SPURIOUS\_IRQ\_SLAVE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PIC\_SPURIOUS\_IRQ\_SLAVE}{PIC\_SPURIOUS\_IRQ\_SLAVE}}
+{\footnotesize\ttfamily \#define PIC\+\_\+\+SPURIOUS\+\_\+\+IRQ\+\_\+\+SLAVE~0x0F}
+
+
+
+Slave PIC spurious IRQ number. 
+
+
+
+Definition at line 50 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}\label{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!PIT\_IRQ\_LINE@{PIT\_IRQ\_LINE}}
+\index{PIT\_IRQ\_LINE@{PIT\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{PIT\_IRQ\_LINE}{PIT\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define PIT\+\_\+\+IRQ\+\_\+\+LINE~0}
+
+
+
+PIT IRQ number. 
+
+
+
+Definition at line 63 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}\label{i386_2includes_2cpu__interrupt_8h_a7f6b0bbf4271dd31625f92ec8314808c}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!RTC\_IRQ\_LINE@{RTC\_IRQ\_LINE}}
+\index{RTC\_IRQ\_LINE@{RTC\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{RTC\_IRQ\_LINE}{RTC\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define RTC\+\_\+\+IRQ\+\_\+\+LINE~8}
+
+
+
+RTC IRQ number. 
+
+
+
+Definition at line 71 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a500495e3a345d964f20bfd91256092f5}\label{i386_2includes_2cpu__interrupt_8h_a500495e3a345d964f20bfd91256092f5}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!SCHEDULER\_SW\_INT\_LINE@{SCHEDULER\_SW\_INT\_LINE}}
+\index{SCHEDULER\_SW\_INT\_LINE@{SCHEDULER\_SW\_INT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{SCHEDULER\_SW\_INT\_LINE}{SCHEDULER\_SW\_INT\_LINE}}
+{\footnotesize\ttfamily \#define SCHEDULER\+\_\+\+SW\+\_\+\+INT\+\_\+\+LINE~0x21}
+
+
+
+Scheduler software interrupt line. 
+
+
+
+Definition at line 84 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_ab043b3ede30bfd03c04ed2a5971c30a2}\label{i386_2includes_2cpu__interrupt_8h_ab043b3ede30bfd03c04ed2a5971c30a2}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!SERIAL\_1\_3\_IRQ\_LINE@{SERIAL\_1\_3\_IRQ\_LINE}}
+\index{SERIAL\_1\_3\_IRQ\_LINE@{SERIAL\_1\_3\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_1\_3\_IRQ\_LINE}{SERIAL\_1\_3\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+1\+\_\+3\+\_\+\+IRQ\+\_\+\+LINE~4}
+
+
+
+Serial COM1-\/3 IRQ number. 
+
+
+
+Definition at line 69 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_a786d923a5a889f42631942cb9e2330c9}\label{i386_2includes_2cpu__interrupt_8h_a786d923a5a889f42631942cb9e2330c9}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!SERIAL\_2\_4\_IRQ\_LINE@{SERIAL\_2\_4\_IRQ\_LINE}}
+\index{SERIAL\_2\_4\_IRQ\_LINE@{SERIAL\_2\_4\_IRQ\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{SERIAL\_2\_4\_IRQ\_LINE}{SERIAL\_2\_4\_IRQ\_LINE}}
+{\footnotesize\ttfamily \#define SERIAL\+\_\+2\+\_\+4\+\_\+\+IRQ\+\_\+\+LINE~3}
+
+
+
+Serial COM2-\/4 IRQ number. 
+
+
+
+Definition at line 67 of file cpu\+\_\+interrupt.\+h.
+
+\mbox{\Hypertarget{i386_2includes_2cpu__interrupt_8h_acd7e0ac80969342f23122f8e9696d9cc}\label{i386_2includes_2cpu__interrupt_8h_acd7e0ac80969342f23122f8e9696d9cc}} 
+\index{cpu\_interrupt.h@{cpu\_interrupt.h}!SYSCALL\_INT\_LINE@{SYSCALL\_INT\_LINE}}
+\index{SYSCALL\_INT\_LINE@{SYSCALL\_INT\_LINE}!cpu\_interrupt.h@{cpu\_interrupt.h}}
+\doxysubsubsection{\texorpdfstring{SYSCALL\_INT\_LINE}{SYSCALL\_INT\_LINE}}
+{\footnotesize\ttfamily \#define SYSCALL\+\_\+\+INT\+\_\+\+LINE~0x30}
+
+
+
+Defines the sys call interrupt line. 
+
+
+
+Definition at line 88 of file cpu\+\_\+interrupt.\+h.
+

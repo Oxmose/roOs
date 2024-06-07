@@ -1,0 +1,46 @@
+\hypertarget{strnlen_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strnlen.c File Reference}
+\label{strnlen_8c}\index{Source/Kernel/Libs/libc/src/strnlen.c@{Source/Kernel/Libs/libc/src/strnlen.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strnlen.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strnlen_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} \mbox{\hyperlink{strnlen_8c_afc92d2231e45d19988c7894aa2a07f0c}{strnlen}} (const char $\ast$s, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} maxlen)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strnlen_8c_afc92d2231e45d19988c7894aa2a07f0c}\label{strnlen_8c_afc92d2231e45d19988c7894aa2a07f0c}} 
+\index{strnlen.c@{strnlen.c}!strnlen@{strnlen}}
+\index{strnlen@{strnlen}!strnlen.c@{strnlen.c}}
+\doxysubsubsection{\texorpdfstring{strnlen()}{strnlen()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} strnlen (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{maxlen }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strnlen.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *ss = s;}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{comment}{/* Important: the maxlen test must precede the reference through ss;}}
+\DoxyCodeLine{78 \textcolor{comment}{       since the byte beyond the maximum may segfault */}}
+\DoxyCodeLine{79     \textcolor{keywordflow}{while} ((maxlen > 0) \&\& *ss) \{}
+\DoxyCodeLine{80         ss++;}
+\DoxyCodeLine{81         maxlen-\/-\/;}
+\DoxyCodeLine{82     \}}
+\DoxyCodeLine{83     \textcolor{keywordflow}{return} ss -\/ s;}
+\DoxyCodeLine{84 \}}
+
+\end{DoxyCode}

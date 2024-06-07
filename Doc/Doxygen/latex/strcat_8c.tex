@@ -1,0 +1,46 @@
+\hypertarget{strcat_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strcat.c File Reference}
+\label{strcat_8c}\index{Source/Kernel/Libs/libc/src/strcat.c@{Source/Kernel/Libs/libc/src/strcat.c}}
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strcat.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{strcat_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strcat_8c_a34faed0b162387a0d9f7e706a9b9e5fa}{strcat}} (char $\ast$dst, const char $\ast$src)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strcat_8c_a34faed0b162387a0d9f7e706a9b9e5fa}\label{strcat_8c_a34faed0b162387a0d9f7e706a9b9e5fa}} 
+\index{strcat.c@{strcat.c}!strcat@{strcat}}
+\index{strcat@{strcat}!strcat.c@{strcat.c}}
+\doxysubsubsection{\texorpdfstring{strcat()}{strcat()}}
+{\footnotesize\ttfamily char$\ast$ strcat (\begin{DoxyParamCaption}\item[{char $\ast$}]{dst,  }\item[{const char $\ast$}]{src }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strcat.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \mbox{\hyperlink{string_8h_a55e123beb3d7f96e25e024a13582d987}{strcpy}}(\mbox{\hyperlink{string_8h_adf46aa8f2e08cfb505868bbfc88b5fd4}{strchr}}(dst, \textcolor{charliteral}{'\(\backslash\)0'}), src);}
+\DoxyCodeLine{76     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{77 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=207pt]{strcat_8c_a34faed0b162387a0d9f7e706a9b9e5fa_cgraph}
+\end{center}
+\end{figure}

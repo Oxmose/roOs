@@ -1,0 +1,525 @@
+\hypertarget{pit_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+Board/x86/includes/pit.h File Reference}
+\label{pit_8h}\index{Source/Kernel/Arch/Board/x86/includes/pit.h@{Source/Kernel/Arch/Board/x86/includes/pit.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$time\+\_\+mgt.\+h$>$}\newline
+{\ttfamily \#include $<$ctrl\+\_\+block.\+h$>$}\newline
+Include dependency graph for pit.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{pit_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=348pt]{pit_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{pit_8h_ab156f98c4b1a20da35946eacfb4a6851}{pit\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the PIT settings and interrupt management. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pit_8h_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\+\_\+enable}} (void)
+\begin{DoxyCompactList}\small\item\em Enables PIT ticks. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pit_8h_a5f16c848962cb402399d71ad5fe05efd}{pit\+\_\+disable}} (void)
+\begin{DoxyCompactList}\small\item\em Disables PIT ticks. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{pit_8h_ad112a1cd84a1fe8bf3eb0c194db9c166}{pit\+\_\+set\+\_\+frequency}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} freq)
+\begin{DoxyCompactList}\small\item\em Sets the PIT\textquotesingle{}s tick frequency. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{pit_8h_aa2f4d752b4e4286f5685ab9b0d895985}{pit\+\_\+get\+\_\+frequency}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the PIT tick frequency in Hz. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{pit_8h_a35250f00a86b688d05abbbe4d75ffa51}{pit\+\_\+set\+\_\+handler}} (void($\ast$handler)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$))
+\begin{DoxyCompactList}\small\item\em Sets the PIT tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{pit_8h_ac6f0a4c2ea9dfe2bacfc17e9ed5a61cb}{pit\+\_\+remove\+\_\+handler}} (void)
+\begin{DoxyCompactList}\small\item\em Removes the PIT tick handler. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{pit_8h_a0da6a07359d27a37c8c6aebeab630a21}{pit\+\_\+get\+\_\+irq}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the PIT IRQ number. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}} $\ast$ \mbox{\hyperlink{pit_8h_ad7b3a99d50be1750573eeca8f03d12f8}{pit\+\_\+get\+\_\+driver}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the PIT driver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{pit_8h_a5f16c848962cb402399d71ad5fe05efd}\label{pit_8h_a5f16c848962cb402399d71ad5fe05efd}} 
+\index{pit.h@{pit.h}!pit\_disable@{pit\_disable}}
+\index{pit\_disable@{pit\_disable}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_disable()}{pit\_disable()}}
+{\footnotesize\ttfamily void pit\+\_\+disable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Disables PIT ticks. 
+
+Disables PIT ticks by setting the PIT\textquotesingle{}s IRQ mask. 
+
+Definition at line 202 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{203 \{}
+\DoxyCodeLine{204     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{205 }
+\DoxyCodeLine{206     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_DISABLE\_START, 1, \mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{207 }
+\DoxyCodeLine{208     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210     \textcolor{keywordflow}{if}(\mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} < \mbox{\hyperlink{stdint_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}})}
+\DoxyCodeLine{211     \{}
+\DoxyCodeLine{212         ++\mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}};}
+\DoxyCodeLine{213     \}}
+\DoxyCodeLine{214 }
+\DoxyCodeLine{215     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Disable (nesting \%d)"{}},}
+\DoxyCodeLine{216                  \mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{217     \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\_interrupt\_set\_irq\_mask}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}}, 0);}
+\DoxyCodeLine{218 }
+\DoxyCodeLine{219     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_DISABLE\_END, 1, \mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{220 }
+\DoxyCodeLine{221     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{222 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{pit_8h_a5f16c848962cb402399d71ad5fe05efd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_a5f16c848962cb402399d71ad5fe05efd_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_aa127c3c5a7bfc4615036f28ec36d0c03}\label{pit_8h_aa127c3c5a7bfc4615036f28ec36d0c03}} 
+\index{pit.h@{pit.h}!pit\_enable@{pit\_enable}}
+\index{pit\_enable@{pit\_enable}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_enable()}{pit\_enable()}}
+{\footnotesize\ttfamily void pit\+\_\+enable (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Enables PIT ticks. 
+
+Enables PIT ticks by clearing the PIT\textquotesingle{}s IRQ mask. 
+
+Definition at line 176 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{177 \{}
+\DoxyCodeLine{178     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{179 }
+\DoxyCodeLine{180     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_ENABLE\_START, 0);}
+\DoxyCodeLine{181 }
+\DoxyCodeLine{182     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{183 }
+\DoxyCodeLine{184     \textcolor{keywordflow}{if}(\mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} > 0)}
+\DoxyCodeLine{185     \{}
+\DoxyCodeLine{186         -\/-\/\mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}};}
+\DoxyCodeLine{187     \}}
+\DoxyCodeLine{188 }
+\DoxyCodeLine{189     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Enable (nesting \%d)"{}},}
+\DoxyCodeLine{190                  \mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}});}
+\DoxyCodeLine{191 }
+\DoxyCodeLine{192     \textcolor{keywordflow}{if}(\mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} == 0)}
+\DoxyCodeLine{193     \{}
+\DoxyCodeLine{194         \mbox{\hyperlink{interrupts_8h_a6be0c99c1b8495c8bf07b06c6a07ca82}{kernel\_interrupt\_set\_irq\_mask}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}}, 1);}
+\DoxyCodeLine{195     \}}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_ENABLE\_END, 0);}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{200 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{pit_8h_aa127c3c5a7bfc4615036f28ec36d0c03_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_aa127c3c5a7bfc4615036f28ec36d0c03_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_ad7b3a99d50be1750573eeca8f03d12f8}\label{pit_8h_ad7b3a99d50be1750573eeca8f03d12f8}} 
+\index{pit.h@{pit.h}!pit\_get\_driver@{pit\_get\_driver}}
+\index{pit\_get\_driver@{pit\_get\_driver}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_get\_driver()}{pit\_get\_driver()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structkernel__timer__t}{kernel\+\_\+timer\+\_\+t}}$\ast$ pit\+\_\+get\+\_\+driver (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the PIT driver. 
+
+Returns a constant handle to the PIT driver.
+
+\begin{DoxyReturn}{Returns}
+A constant handle to the PIT driver is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 333 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{334 \{}
+\DoxyCodeLine{335     \textcolor{keywordflow}{return} \&\mbox{\hyperlink{pit_8c_aa167e0f73ead0828945d6e142d133740}{pit\_driver}};}
+\DoxyCodeLine{336 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=259pt]{pit_8h_ad7b3a99d50be1750573eeca8f03d12f8_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_aa2f4d752b4e4286f5685ab9b0d895985}\label{pit_8h_aa2f4d752b4e4286f5685ab9b0d895985}} 
+\index{pit.h@{pit.h}!pit\_get\_frequency@{pit\_get\_frequency}}
+\index{pit\_get\_frequency@{pit\_get\_frequency}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_get\_frequency()}{pit\_get\_frequency()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} pit\+\_\+get\+\_\+frequency (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the PIT tick frequency in Hz. 
+
+Returns the PIT tick frequency in Hz.
+
+\begin{DoxyReturn}{Returns}
+The PIT tick frequency in Hz. 
+\end{DoxyReturn}
+
+
+Definition at line 257 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{258 \{}
+\DoxyCodeLine{259     \textcolor{keywordflow}{return} \mbox{\hyperlink{pit_8c_a5973e7102782a9936a5e0d1417863675}{tick\_freq}};}
+\DoxyCodeLine{260 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{pit_8h_a0da6a07359d27a37c8c6aebeab630a21}\label{pit_8h_a0da6a07359d27a37c8c6aebeab630a21}} 
+\index{pit.h@{pit.h}!pit\_get\_irq@{pit\_get\_irq}}
+\index{pit\_get\_irq@{pit\_get\_irq}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_get\_irq()}{pit\_get\_irq()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} pit\+\_\+get\+\_\+irq (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the PIT IRQ number. 
+
+Returns the PIT IRQ number.
+
+\begin{DoxyReturn}{Returns}
+The PIT IRQ number. 
+\end{DoxyReturn}
+
+
+Definition at line 328 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{329 \{}
+\DoxyCodeLine{330     \textcolor{keywordflow}{return} \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}};}
+\DoxyCodeLine{331 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{pit_8h_ab156f98c4b1a20da35946eacfb4a6851}\label{pit_8h_ab156f98c4b1a20da35946eacfb4a6851}} 
+\index{pit.h@{pit.h}!pit\_init@{pit\_init}}
+\index{pit\_init@{pit\_init}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_init()}{pit\_init()}}
+{\footnotesize\ttfamily void pit\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the PIT settings and interrupt management. 
+
+Initializes PIT settings, sets the PIT interrupt manager and enables interrupts for the PIT. 
+
+Definition at line 152 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{153 \{}
+\DoxyCodeLine{154     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{155 }
+\DoxyCodeLine{156     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_INIT\_START, 0);}
+\DoxyCodeLine{157 }
+\DoxyCodeLine{158     \textcolor{comment}{/* Init system times */}}
+\DoxyCodeLine{159     \mbox{\hyperlink{pit_8c_add904a4dc1ad867700289998b2758fea}{disabled\_nesting}} = 1;}
+\DoxyCodeLine{160 }
+\DoxyCodeLine{161     \textcolor{comment}{/* Set PIT frequency */}}
+\DoxyCodeLine{162     \mbox{\hyperlink{pit_8c_ad112a1cd84a1fe8bf3eb0c194db9c166}{pit\_set\_frequency}}(\mbox{\hyperlink{pit_8c_a3bdce891eb3bc0784686b6cc7a5650cf}{PIT\_INIT\_FREQ}});}
+\DoxyCodeLine{163 }
+\DoxyCodeLine{164     \textcolor{comment}{/* Set PIT interrupt handler */}}
+\DoxyCodeLine{165     err = \mbox{\hyperlink{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}{kernel\_interrupt\_register\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}}, \mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{166     \mbox{\hyperlink{pit_8c_a784e77030bc8dff5f6d4a6e65769d355}{PIT\_ASSERT}}(err == \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}}, \textcolor{stringliteral}{"{}Could not set PIT handler"{}}, err);}
+\DoxyCodeLine{167 }
+\DoxyCodeLine{168     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}PIT Initialization end"{}});}
+\DoxyCodeLine{169 }
+\DoxyCodeLine{170     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_INIT\_END, 1, \mbox{\hyperlink{pit_8c_a3bdce891eb3bc0784686b6cc7a5650cf}{PIT\_INIT\_FREQ}});}
+\DoxyCodeLine{171 }
+\DoxyCodeLine{172     \textcolor{comment}{/* Enable PIT IRQ */}}
+\DoxyCodeLine{173     \mbox{\hyperlink{pit_8c_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\_enable}}();}
+\DoxyCodeLine{174 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_ab156f98c4b1a20da35946eacfb4a6851_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=225pt]{pit_8h_ab156f98c4b1a20da35946eacfb4a6851_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_ac6f0a4c2ea9dfe2bacfc17e9ed5a61cb}\label{pit_8h_ac6f0a4c2ea9dfe2bacfc17e9ed5a61cb}} 
+\index{pit.h@{pit.h}!pit\_remove\_handler@{pit\_remove\_handler}}
+\index{pit\_remove\_handler@{pit\_remove\_handler}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_remove\_handler()}{pit\_remove\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} pit\+\_\+remove\+\_\+handler (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Removes the PIT tick handler. 
+
+Removes the PIT tick handler.
+
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the PIT interrupt line is not allowed.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+NOT\+\_\+\+REGISTERED is returned if the PIT line has no handler attached. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 311 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{312 \{}
+\DoxyCodeLine{313     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}Default PIT handler set 0x\%p"{}},}
+\DoxyCodeLine{314                  \mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{315 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{316     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_REMOVE\_HANDLER, 2,}
+\DoxyCodeLine{317                        (uintptr\_t)\mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{318                        (uintptr\_t)\mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} >> 32);}
+\DoxyCodeLine{319 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{320     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_REMOVE\_HANDLER, 2,}
+\DoxyCodeLine{321                        (uintptr\_t)\mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{322                        (uintptr\_t)0);}
+\DoxyCodeLine{323 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{324 }
+\DoxyCodeLine{325     \textcolor{keywordflow}{return} \mbox{\hyperlink{pit_8c_a35250f00a86b688d05abbbe4d75ffa51}{pit\_set\_handler}}(\mbox{\hyperlink{pit_8c_a151fe6a77a783f7967639cfaa3decd46}{\_dummy\_handler}});}
+\DoxyCodeLine{326 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_ac6f0a4c2ea9dfe2bacfc17e9ed5a61cb_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_ad112a1cd84a1fe8bf3eb0c194db9c166}\label{pit_8h_ad112a1cd84a1fe8bf3eb0c194db9c166}} 
+\index{pit.h@{pit.h}!pit\_set\_frequency@{pit\_set\_frequency}}
+\index{pit\_set\_frequency@{pit\_set\_frequency}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_set\_frequency()}{pit\_set\_frequency()}}
+{\footnotesize\ttfamily void pit\+\_\+set\+\_\+frequency (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{freq }\end{DoxyParamCaption})}
+
+
+
+Sets the PIT\textquotesingle{}s tick frequency. 
+
+Sets the PIT\textquotesingle{}s tick frequency. The value must be between 20Hz and 8000Hz.
+
+\begin{DoxyWarning}{Warning}
+The value must be between 20Hz and 8000Hz
+\end{DoxyWarning}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em freq} & The new frequency to be set to the PIT. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 224 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{225 \{}
+\DoxyCodeLine{226     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} int\_state;}
+\DoxyCodeLine{227 }
+\DoxyCodeLine{228     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_SET\_FREQ\_START, 1, freq);}
+\DoxyCodeLine{229 }
+\DoxyCodeLine{230     \mbox{\hyperlink{pit_8c_a784e77030bc8dff5f6d4a6e65769d355}{PIT\_ASSERT}}((freq >= \mbox{\hyperlink{pit_8c_ae24b137b98fe8ad9c5b61dfdc87510cb}{PIT\_MIN\_FREQ}} \&\& freq <= \mbox{\hyperlink{pit_8c_a5b28569facb36d493929de6f747acf7d}{PIT\_MAX\_FREQ}}),}
+\DoxyCodeLine{231                \textcolor{stringliteral}{"{}PIT timer frequency out of bound"{}},}
+\DoxyCodeLine{232                 \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}});}
+\DoxyCodeLine{233 }
+\DoxyCodeLine{234     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{235 }
+\DoxyCodeLine{236     \textcolor{comment}{/* Disable PIT IRQ */}}
+\DoxyCodeLine{237     \mbox{\hyperlink{pit_8c_a5f16c848962cb402399d71ad5fe05efd}{pit\_disable}}();}
+\DoxyCodeLine{238 }
+\DoxyCodeLine{239     \mbox{\hyperlink{pit_8c_a5973e7102782a9936a5e0d1417863675}{tick\_freq}}  = freq;}
+\DoxyCodeLine{240 }
+\DoxyCodeLine{241     \textcolor{comment}{/* Set clock frequency */}}
+\DoxyCodeLine{242     \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}} \mbox{\hyperlink{pit_8c_a5973e7102782a9936a5e0d1417863675}{tick\_freq}} = (\mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}})((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})\mbox{\hyperlink{pit_8c_acaf489fa0f630ffc95ba55f041a6c724}{PIT\_QUARTZ\_FREQ}} / freq);}
+\DoxyCodeLine{243     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pit_8c_abb287e90e2eac5b69d1d9a2f9035f0ad}{PIT\_COMM\_SET\_FREQ}}, \mbox{\hyperlink{pit_8c_afe5a5fc5960ba59ddbbe0162ed6b1596}{PIT\_COMM\_PORT}});}
+\DoxyCodeLine{244     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pit_8c_a5973e7102782a9936a5e0d1417863675}{tick\_freq}} \& 0x00FF, \mbox{\hyperlink{pit_8c_aff4bd236dd65ecc73d882ce1fd4ac060}{PIT\_DATA\_PORT}});}
+\DoxyCodeLine{245     \mbox{\hyperlink{i386_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\_cpu\_outb}}(\mbox{\hyperlink{pit_8c_a5973e7102782a9936a5e0d1417863675}{tick\_freq}} >> 8, \mbox{\hyperlink{pit_8c_aff4bd236dd65ecc73d882ce1fd4ac060}{PIT\_DATA\_PORT}});}
+\DoxyCodeLine{246 }
+\DoxyCodeLine{247     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}New PIT frequency set (\%d)"{}}, freq);}
+\DoxyCodeLine{248 }
+\DoxyCodeLine{249     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{250 }
+\DoxyCodeLine{251     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_SET\_FREQ\_END, 1, freq);}
+\DoxyCodeLine{252 }
+\DoxyCodeLine{253     \textcolor{comment}{/* Enable PIT IRQ */}}
+\DoxyCodeLine{254     \mbox{\hyperlink{pit_8c_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\_enable}}();}
+\DoxyCodeLine{255 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_ad112a1cd84a1fe8bf3eb0c194db9c166_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_ad112a1cd84a1fe8bf3eb0c194db9c166_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{pit_8h_a35250f00a86b688d05abbbe4d75ffa51}\label{pit_8h_a35250f00a86b688d05abbbe4d75ffa51}} 
+\index{pit.h@{pit.h}!pit\_set\_handler@{pit\_set\_handler}}
+\index{pit\_set\_handler@{pit\_set\_handler}!pit.h@{pit.h}}
+\doxysubsubsection{\texorpdfstring{pit\_set\_handler()}{pit\_set\_handler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} pit\+\_\+set\+\_\+handler (\begin{DoxyParamCaption}\item[{void($\ast$)(\mbox{\hyperlink{structkernel__thread__t}{kernel\+\_\+thread\+\_\+t}} $\ast$)}]{handler }\end{DoxyParamCaption})}
+
+
+
+Sets the PIT tick handler. 
+
+Sets the PIT tick handler. This function will be called at each PIT tick received.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em handler} & The handler of the PIT interrupt.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The success state or the error code.
+\begin{DoxyItemize}
+\item OS\+\_\+\+NO\+\_\+\+ERR is returned if no error is encountered.
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the handler is NULL.
+\begin{DoxyItemize}
+\item OR\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+INTERRUPT\+\_\+\+LINE is returned if the PIT interrupt line is not allowed.
+\end{DoxyItemize}
+\item OS\+\_\+\+ERR\+\_\+\+NULL\+\_\+\+POINTER is returned if the pointer to the handler is NULL.
+\item OS\+\_\+\+ERR\+\_\+\+INTERRUPT\+\_\+\+ALREADY\+\_\+\+REGISTERED is returned if a handler is already registered for the PIT. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 262 of file pit.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{263 \{}
+\DoxyCodeLine{264     \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\_RETURN\_E}} err;}
+\DoxyCodeLine{265     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}    int\_state;}
+\DoxyCodeLine{266 }
+\DoxyCodeLine{267 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{268     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_SET\_HANDLER, 2,}
+\DoxyCodeLine{269                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{270                        (uintptr\_t)handler >> 32);}
+\DoxyCodeLine{271 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{272     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_PIT\_SET\_HANDLER, 2,}
+\DoxyCodeLine{273                        (uintptr\_t)handler \& 0xFFFFFFFF,}
+\DoxyCodeLine{274                        (uintptr\_t)0);}
+\DoxyCodeLine{275 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{276 }
+\DoxyCodeLine{277     \textcolor{keywordflow}{if}(handler == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{278     \{}
+\DoxyCodeLine{279         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}};}
+\DoxyCodeLine{280     \}}
+\DoxyCodeLine{281 }
+\DoxyCodeLine{282     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{283 }
+\DoxyCodeLine{284     \mbox{\hyperlink{pit_8c_a5f16c848962cb402399d71ad5fe05efd}{pit\_disable}}();}
+\DoxyCodeLine{285 }
+\DoxyCodeLine{286     \textcolor{comment}{/* Remove the current handler */}}
+\DoxyCodeLine{287     err = \mbox{\hyperlink{interrupts_8h_ab0cde2c8ff981ac10d92927ebf59b03f}{kernel\_interrupt\_remove\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}});}
+\DoxyCodeLine{288     \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{289     \{}
+\DoxyCodeLine{290         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{291         \mbox{\hyperlink{pit_8c_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\_enable}}();}
+\DoxyCodeLine{292         \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{293     \}}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295     err = \mbox{\hyperlink{interrupts_8h_a01f74a7b6b60e74c32bf4443217c2a99}{kernel\_interrupt\_register\_irq\_handler}}(\mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_a534ee48dd8d5bc1d3776c2a6332bf334}{PIT\_IRQ\_LINE}}, handler);}
+\DoxyCodeLine{296     \textcolor{keywordflow}{if}(err != \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}})}
+\DoxyCodeLine{297     \{}
+\DoxyCodeLine{298         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{299         \mbox{\hyperlink{pit_8c_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\_enable}}();}
+\DoxyCodeLine{300         \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{301     \}}
+\DoxyCodeLine{302 }
+\DoxyCodeLine{303     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a5785c50f36462aae594bbbc547016985}{PIT\_DEBUG\_ENABLED}}, \mbox{\hyperlink{pit_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}}, \textcolor{stringliteral}{"{}New PIT handler set 0x\%p"{}}, handler);}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{306     \mbox{\hyperlink{pit_8c_aa127c3c5a7bfc4615036f28ec36d0c03}{pit\_enable}}();}
+\DoxyCodeLine{307 }
+\DoxyCodeLine{308     \textcolor{keywordflow}{return} err;}
+\DoxyCodeLine{309 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pit_8h_a35250f00a86b688d05abbbe4d75ffa51_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{pit_8h_a35250f00a86b688d05abbbe4d75ffa51_icgraph}
+\end{center}
+\end{figure}

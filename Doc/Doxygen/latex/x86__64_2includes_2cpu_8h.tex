@@ -1,0 +1,1779 @@
+\hypertarget{x86__64_2includes_2cpu_8h}{}\doxysection{Source/\+Kernel/\+Arch/\+CPU/x86\+\_\+64/includes/cpu.h File Reference}
+\label{x86__64_2includes_2cpu_8h}\index{Source/Kernel/Arch/CPU/x86\_64/includes/cpu.h@{Source/Kernel/Arch/CPU/x86\_64/includes/cpu.h}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$kerror.\+h$>$}\newline
+Include dependency graph for cpu.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=255pt]{x86__64_2includes_2cpu_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=231pt]{x86__64_2includes_2cpu_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structcpu__state__t}{cpu\+\_\+state\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Holds the CPU register values. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structint__context__t}{int\+\_\+context\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Holds the interrupt context. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Defines the virtual CPU context for the i386 CPU. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a654cc6ea7572a402ddd20f456dfb6567}{CPU\+\_\+\+RFLAGS\+\_\+\+IF}}~0x000000200
+\begin{DoxyCompactList}\small\item\em CPU flags interrupt enabled flag. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a6c64181e213bc02fa4646bd7e398cc19}{CPU\+\_\+\+RFLAGS\+\_\+\+IF\+\_\+\+SHIFT}}~9
+\begin{DoxyCompactList}\small\item\em CPU flags interrupt enabled bit shift. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a8a5140cc9130d141c41394721c59c3cc}{\+\_\+cpu\+\_\+get\+\_\+cpuid\+\_\+max}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} ext)
+\begin{DoxyCompactList}\small\item\em Returns the highest support CPUID feature request ID. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}{\+\_\+cpu\+\_\+cpuid}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} code, \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} regs\mbox{[}4\mbox{]})
+\begin{DoxyCompactList}\small\item\em Returns the CPUID data for a requested leaf. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a401d19612dec3ea51665475ac63b5560}{\+\_\+cpu\+\_\+clear\+\_\+interrupt}} (void)
+\begin{DoxyCompactList}\small\item\em Clears interupt bit which results in disabling interrupts. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a40381bd8509969b5750967d8b44ab96f}{\+\_\+cpu\+\_\+set\+\_\+interrupt}} (void)
+\begin{DoxyCompactList}\small\item\em Sets interrupt bit which results in enabling interupts. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_aeaa9cd4a11653c17fd552b187237b7be}{\+\_\+cpu\+\_\+hlt}} (void)
+\begin{DoxyCompactList}\small\item\em Halts the CPU for lower energy consuption. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_ae92198b5d33d8a52b332ac3f46c91bad}{\+\_\+cpu\+\_\+save\+\_\+flags}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the current CPU flags. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_af8a7819b3ee5bc6253c371ceaaf89f54}{\+\_\+cpu\+\_\+restore\+\_\+flags}} (const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} flags)
+\begin{DoxyCompactList}\small\item\em Restores CPU flags. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}{\+\_\+cpu\+\_\+outb}} (const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} value, const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Writes byte on port. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_aefddf85887db434ae549ae550737863c}{\+\_\+cpu\+\_\+outw}} (const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} value, const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Writes word on port. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a459247d1744af248b85ba807056de223}{\+\_\+cpu\+\_\+outl}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} value, const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Writes long on port. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}{\+\_\+cpu\+\_\+inb}} (const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Reads byte on port. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_ab561e6d35309bdba35f908280d6b2429}{\+\_\+cpu\+\_\+inw}} (const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Reads word on port. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a8dea527af55292a1d93909b1cd75d852}{\+\_\+cpu\+\_\+inl}} (const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} port)
+\begin{DoxyCompactList}\small\item\em Reads long on port. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_af0b3905f4ab50827b5c2beb13db781a6}{\+\_\+cpu\+\_\+rdtsc}} (void)
+\begin{DoxyCompactList}\small\item\em Reads the TSC value of the CPU. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_ab388a90d72ed7ceb4141e53c1c170476}{\+\_\+cpu\+\_\+get\+\_\+saved\+\_\+interrupt\+\_\+state}} (const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$vcpu)
+\begin{DoxyCompactList}\small\item\em Returns the saved interrupt state. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_ab897f1916ae72cb93264cb5a900d9557}{\+\_\+cpu\+\_\+get\+\_\+interrupt\+\_\+state}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the CPU current interrupt state. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a560ad8614ae03841a10b489f4370bc51}{cpu\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the CPU. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} \mbox{\hyperlink{x86__64_2includes_2cpu_8h_aa751f1c664d608c1d380a37096ebc075}{cpu\+\_\+raise\+\_\+interrupt}} (const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} interrupt\+\_\+line)
+\begin{DoxyCompactList}\small\item\em Raises CPU interrupt. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a226d3ffd0bd73a0b2f318f3408fdd652}{validate\+\_\+architecture}} (void)
+\begin{DoxyCompactList}\small\item\em Checks the architecture\textquotesingle{}s feature and requirements for UTK. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a654cc6ea7572a402ddd20f456dfb6567}\label{x86__64_2includes_2cpu_8h_a654cc6ea7572a402ddd20f456dfb6567}} 
+\index{cpu.h@{cpu.h}!CPU\_RFLAGS\_IF@{CPU\_RFLAGS\_IF}}
+\index{CPU\_RFLAGS\_IF@{CPU\_RFLAGS\_IF}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{CPU\_RFLAGS\_IF}{CPU\_RFLAGS\_IF}}
+{\footnotesize\ttfamily \#define CPU\+\_\+\+RFLAGS\+\_\+\+IF~0x000000200}
+
+
+
+CPU flags interrupt enabled flag. 
+
+
+
+Definition at line 36 of file cpu.\+h.
+
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a6c64181e213bc02fa4646bd7e398cc19}\label{x86__64_2includes_2cpu_8h_a6c64181e213bc02fa4646bd7e398cc19}} 
+\index{cpu.h@{cpu.h}!CPU\_RFLAGS\_IF\_SHIFT@{CPU\_RFLAGS\_IF\_SHIFT}}
+\index{CPU\_RFLAGS\_IF\_SHIFT@{CPU\_RFLAGS\_IF\_SHIFT}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{CPU\_RFLAGS\_IF\_SHIFT}{CPU\_RFLAGS\_IF\_SHIFT}}
+{\footnotesize\ttfamily \#define CPU\+\_\+\+RFLAGS\+\_\+\+IF\+\_\+\+SHIFT~9}
+
+
+
+CPU flags interrupt enabled bit shift. 
+
+
+
+Definition at line 38 of file cpu.\+h.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a401d19612dec3ea51665475ac63b5560}\label{x86__64_2includes_2cpu_8h_a401d19612dec3ea51665475ac63b5560}} 
+\index{cpu.h@{cpu.h}!\_cpu\_clear\_interrupt@{\_cpu\_clear\_interrupt}}
+\index{\_cpu\_clear\_interrupt@{\_cpu\_clear\_interrupt}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_clear\_interrupt()}{\_cpu\_clear\_interrupt()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+clear\+\_\+interrupt (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Clears interupt bit which results in disabling interrupts. 
+
+
+
+Definition at line 194 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{195 \{}
+\DoxyCodeLine{196     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_DISABLE\_INTERRUPT, 0);}
+\DoxyCodeLine{197     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}cli"{}}:::\textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{198 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}\label{x86__64_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}} 
+\index{cpu.h@{cpu.h}!\_cpu\_cpuid@{\_cpu\_cpuid}}
+\index{\_cpu\_cpuid@{\_cpu\_cpuid}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_cpuid()}{\_cpu\_cpuid()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} \+\_\+cpu\+\_\+cpuid (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{code,  }\item[{\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{regs\mbox{[}4\mbox{]} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the CPUID data for a requested leaf. 
+
+Returns CPUID data for requested CPUID leaf, as found in returned eax, ebx, ecx and edx registers. The function checks if CPUID is supported and returns 1 for valid CPUID information or 0 for unsupported CPUID leaf. All pointers are required to be non-\/null.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em code} & The opperation code for the CPUID instruction. \\
+\hline
+\mbox{\texttt{ out}}  & {\em regs} & The register used to store the CPUID instruction return. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 in case of succes, 0 otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 179 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{180 \{}
+\DoxyCodeLine{181     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} ext = code \& 0x80000000;}
+\DoxyCodeLine{182     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} maxlevel = \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a8a5140cc9130d141c41394721c59c3cc}{\_cpu\_get\_cpuid\_max}}(ext);}
+\DoxyCodeLine{183 }
+\DoxyCodeLine{184     \textcolor{keywordflow}{if} (maxlevel == 0 || maxlevel < code)}
+\DoxyCodeLine{185     \{}
+\DoxyCodeLine{186         \textcolor{keywordflow}{return} 0;}
+\DoxyCodeLine{187     \}}
+\DoxyCodeLine{188     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}cpuid"{}}:\textcolor{stringliteral}{"{}=a"{}}(*regs),\textcolor{stringliteral}{"{}=b"{}}(*(regs+1)),}
+\DoxyCodeLine{189                          \textcolor{stringliteral}{"{}=c"{}}(*(regs+2)),\textcolor{stringliteral}{"{}=d"{}}(*(regs+3)):\textcolor{stringliteral}{"{}a"{}}(code));}
+\DoxyCodeLine{190     \textcolor{keywordflow}{return} 1;}
+\DoxyCodeLine{191 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=306pt]{x86__64_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a8a5140cc9130d141c41394721c59c3cc}\label{x86__64_2includes_2cpu_8h_a8a5140cc9130d141c41394721c59c3cc}} 
+\index{cpu.h@{cpu.h}!\_cpu\_get\_cpuid\_max@{\_cpu\_get\_cpuid\_max}}
+\index{\_cpu\_get\_cpuid\_max@{\_cpu\_get\_cpuid\_max}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_get\_cpuid\_max()}{\_cpu\_get\_cpuid\_max()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+cpu\+\_\+get\+\_\+cpuid\+\_\+max (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{ext }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the highest support CPUID feature request ID. 
+
+Returns the highest supported input value for CPUID instruction. ext canbe either 0x0 or 0x80000000 to return highest supported value for basic or extended CPUID information. Function returns 0 if CPUID is not supported or whatever CPUID returns in eax register. If sig pointer is non-\/null, then first four bytes of the SIG (as found in ebx register) are returned in location pointed by sig.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em ext} & The opperation code for the CPUID instruction. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The highest supported input value for CPUID instruction. 
+\end{DoxyReturn}
+
+
+Definition at line 156 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{157 \{}
+\DoxyCodeLine{158     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} regs[4];}
+\DoxyCodeLine{159 }
+\DoxyCodeLine{160     \textcolor{comment}{/* Host supports CPUID. Return highest supported CPUID input value. */}}
+\DoxyCodeLine{161     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}cpuid"{}}:\textcolor{stringliteral}{"{}=a"{}}(*regs),\textcolor{stringliteral}{"{}=b"{}}(*(regs+1)),}
+\DoxyCodeLine{162                          \textcolor{stringliteral}{"{}=c"{}}(*(regs+2)),\textcolor{stringliteral}{"{}=d"{}}(*(regs+3)):\textcolor{stringliteral}{"{}a"{}}(ext));}
+\DoxyCodeLine{163 }
+\DoxyCodeLine{164     \textcolor{keywordflow}{return} regs[0];}
+\DoxyCodeLine{165 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=306pt]{x86__64_2includes_2cpu_8h_a8a5140cc9130d141c41394721c59c3cc_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_ab897f1916ae72cb93264cb5a900d9557}\label{x86__64_2includes_2cpu_8h_ab897f1916ae72cb93264cb5a900d9557}} 
+\index{cpu.h@{cpu.h}!\_cpu\_get\_interrupt\_state@{\_cpu\_get\_interrupt\_state}}
+\index{\_cpu\_get\_interrupt\_state@{\_cpu\_get\_interrupt\_state}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_get\_interrupt\_state()}{\_cpu\_get\_interrupt\_state()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+cpu\+\_\+get\+\_\+interrupt\+\_\+state (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the CPU current interrupt state. 
+
+Returns the current CPU eflags interrupt enable value.
+
+\begin{DoxyReturn}{Returns}
+The CPU current interrupt state\+: 1 if enabled, 0 otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 364 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{365 \{}
+\DoxyCodeLine{366     \textcolor{keywordflow}{return} ((\mbox{\hyperlink{x86__64_2includes_2cpu_8h_ae92198b5d33d8a52b332ac3f46c91bad}{\_cpu\_save\_flags}}() \& \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a654cc6ea7572a402ddd20f456dfb6567}{CPU\_RFLAGS\_IF}}) != 0);}
+\DoxyCodeLine{367 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{x86__64_2includes_2cpu_8h_ab897f1916ae72cb93264cb5a900d9557_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_ab388a90d72ed7ceb4141e53c1c170476}\label{x86__64_2includes_2cpu_8h_ab388a90d72ed7ceb4141e53c1c170476}} 
+\index{cpu.h@{cpu.h}!\_cpu\_get\_saved\_interrupt\_state@{\_cpu\_get\_saved\_interrupt\_state}}
+\index{\_cpu\_get\_saved\_interrupt\_state@{\_cpu\_get\_saved\_interrupt\_state}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_get\_saved\_interrupt\_state()}{\_cpu\_get\_saved\_interrupt\_state()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+cpu\+\_\+get\+\_\+saved\+\_\+interrupt\+\_\+state (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structvirtual__cpu__t}{virtual\+\_\+cpu\+\_\+t}} $\ast$}]{vcpu }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the saved interrupt state. 
+
+Returns the saved interrupt state based on the stack state.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vcpu} & The current thread\textquotesingle{}s virtual CPU.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The current savec interrupt state\+: 1 if enabled, 0 otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 351 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{353 \{}
+\DoxyCodeLine{354     \textcolor{keywordflow}{return} vcpu-\/>\mbox{\hyperlink{structvirtual__cpu__t_aeb1dd1bf30ae614465a4221717e3972a}{int\_context}}.\mbox{\hyperlink{structint__context__t_ac67e007ae346a1499c5a276869bfd1bb}{rflags}} \& \mbox{\hyperlink{x86__64_2includes_2cpu_8h_a654cc6ea7572a402ddd20f456dfb6567}{CPU\_RFLAGS\_IF}};}
+\DoxyCodeLine{355 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_aeaa9cd4a11653c17fd552b187237b7be}\label{x86__64_2includes_2cpu_8h_aeaa9cd4a11653c17fd552b187237b7be}} 
+\index{cpu.h@{cpu.h}!\_cpu\_hlt@{\_cpu\_hlt}}
+\index{\_cpu\_hlt@{\_cpu\_hlt}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_hlt()}{\_cpu\_hlt()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+hlt (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Halts the CPU for lower energy consuption. 
+
+
+
+Definition at line 208 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{209 \{}
+\DoxyCodeLine{210     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HALT, 0);}
+\DoxyCodeLine{211     \_\_asm\_\_ \_\_volatile\_\_ (\textcolor{stringliteral}{"{}hlt"{}}:::\textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{212 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}\label{x86__64_2includes_2cpu_8h_ab68a8993c94988006c9c293ea0b34a7d}} 
+\index{cpu.h@{cpu.h}!\_cpu\_inb@{\_cpu\_inb}}
+\index{\_cpu\_inb@{\_cpu\_inb}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_inb()}{\_cpu\_inb()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \+\_\+cpu\+\_\+inb (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Reads byte on port. 
+
+\begin{DoxyReturn}{Returns}
+The value read from the port.
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 290 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{291 \{}
+\DoxyCodeLine{292     \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}} rega;}
+\DoxyCodeLine{293     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}inb \%1,\%0"{}} : \textcolor{stringliteral}{"{}=a"{}} (rega) : \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{294     \textcolor{keywordflow}{return} rega;}
+\DoxyCodeLine{295 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a8dea527af55292a1d93909b1cd75d852}\label{x86__64_2includes_2cpu_8h_a8dea527af55292a1d93909b1cd75d852}} 
+\index{cpu.h@{cpu.h}!\_cpu\_inl@{\_cpu\_inl}}
+\index{\_cpu\_inl@{\_cpu\_inl}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_inl()}{\_cpu\_inl()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+cpu\+\_\+inl (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Reads long on port. 
+
+\begin{DoxyReturn}{Returns}
+The value read from the port.
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 318 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{319 \{}
+\DoxyCodeLine{320     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} rega;}
+\DoxyCodeLine{321     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}inl \%1,\%0"{}} : \textcolor{stringliteral}{"{}=a"{}} (rega) : \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{322     \textcolor{keywordflow}{return} rega;}
+\DoxyCodeLine{323 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_ab561e6d35309bdba35f908280d6b2429}\label{x86__64_2includes_2cpu_8h_ab561e6d35309bdba35f908280d6b2429}} 
+\index{cpu.h@{cpu.h}!\_cpu\_inw@{\_cpu\_inw}}
+\index{\_cpu\_inw@{\_cpu\_inw}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_inw()}{\_cpu\_inw()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}} \+\_\+cpu\+\_\+inw (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Reads word on port. 
+
+\begin{DoxyReturn}{Returns}
+The value read from the port.
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be read. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 304 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{305 \{}
+\DoxyCodeLine{306     \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}} rega;}
+\DoxyCodeLine{307     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}inw \%1,\%0"{}} : \textcolor{stringliteral}{"{}=a"{}} (rega) : \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{308     \textcolor{keywordflow}{return} rega;}
+\DoxyCodeLine{309 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}\label{x86__64_2includes_2cpu_8h_a2ef47a109d3008dc259d058f4fd85a34}} 
+\index{cpu.h@{cpu.h}!\_cpu\_outb@{\_cpu\_outb}}
+\index{\_cpu\_outb@{\_cpu\_outb}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_outb()}{\_cpu\_outb()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+outb (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}}}]{value,  }\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Writes byte on port. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The value to send to the port. \\
+\hline
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be written. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 256 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{257 \{}
+\DoxyCodeLine{258     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}outb \%0, \%1"{}} : : \textcolor{stringliteral}{"{}a"{}} (value), \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{259 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a459247d1744af248b85ba807056de223}\label{x86__64_2includes_2cpu_8h_a459247d1744af248b85ba807056de223}} 
+\index{cpu.h@{cpu.h}!\_cpu\_outl@{\_cpu\_outl}}
+\index{\_cpu\_outl@{\_cpu\_outl}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_outl()}{\_cpu\_outl()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+outl (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{value,  }\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Writes long on port. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The value to send to the port. \\
+\hline
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be written. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 278 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{279 \{}
+\DoxyCodeLine{280     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}outl \%0, \%1"{}} : : \textcolor{stringliteral}{"{}a"{}} (value), \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{281 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_aefddf85887db434ae549ae550737863c}\label{x86__64_2includes_2cpu_8h_aefddf85887db434ae549ae550737863c}} 
+\index{cpu.h@{cpu.h}!\_cpu\_outw@{\_cpu\_outw}}
+\index{\_cpu\_outw@{\_cpu\_outw}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_outw()}{\_cpu\_outw()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+outw (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{value,  }\item[{const \mbox{\hyperlink{stdint_8h_a273cf69d639a59973b6019625df33e30}{uint16\+\_\+t}}}]{port }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Writes word on port. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The value to send to the port. \\
+\hline
+\mbox{\texttt{ in}}  & {\em port} & The port to which the value has to be written. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 267 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{268 \{}
+\DoxyCodeLine{269     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}outw \%0, \%1"{}} : : \textcolor{stringliteral}{"{}a"{}} (value), \textcolor{stringliteral}{"{}Nd"{}} (port));}
+\DoxyCodeLine{270 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_af0b3905f4ab50827b5c2beb13db781a6}\label{x86__64_2includes_2cpu_8h_af0b3905f4ab50827b5c2beb13db781a6}} 
+\index{cpu.h@{cpu.h}!\_cpu\_rdtsc@{\_cpu\_rdtsc}}
+\index{\_cpu\_rdtsc@{\_cpu\_rdtsc}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_rdtsc()}{\_cpu\_rdtsc()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+cpu\+\_\+rdtsc (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Reads the TSC value of the CPU. 
+
+Reads the current value of the CPU\textquotesingle{}s time-\/stamp counter and store into EDX\+:EAX. The time-\/stamp counter contains the amount of clock ticks that have elapsed since the last CPU reset. The value is stored in a 64-\/bit MSR and is incremented after each clock cycle.
+
+\begin{DoxyReturn}{Returns}
+The CPU\textquotesingle{}s TSC time stamp. 
+\end{DoxyReturn}
+
+
+Definition at line 335 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{336 \{}
+\DoxyCodeLine{337     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} ret;}
+\DoxyCodeLine{338     \_\_asm\_\_ \_\_volatile\_\_ ( \textcolor{stringliteral}{"{}rdtsc"{}} : \textcolor{stringliteral}{"{}=A"{}}(ret) );}
+\DoxyCodeLine{339     \textcolor{keywordflow}{return} ret;}
+\DoxyCodeLine{340 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_af8a7819b3ee5bc6253c371ceaaf89f54}\label{x86__64_2includes_2cpu_8h_af8a7819b3ee5bc6253c371ceaaf89f54}} 
+\index{cpu.h@{cpu.h}!\_cpu\_restore\_flags@{\_cpu\_restore\_flags}}
+\index{\_cpu\_restore\_flags@{\_cpu\_restore\_flags}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_restore\_flags()}{\_cpu\_restore\_flags()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+restore\+\_\+flags (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{flags }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Restores CPU flags. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em flags} & The flags to be restored. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 239 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{240 \{}
+\DoxyCodeLine{241     \_\_asm\_\_ \_\_volatile\_\_(}
+\DoxyCodeLine{242         \textcolor{stringliteral}{"{}push    \%0\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{243         \textcolor{stringliteral}{"{}popfq\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{244         :}
+\DoxyCodeLine{245         : \textcolor{stringliteral}{"{}g"{}} (flags)}
+\DoxyCodeLine{246         : \textcolor{stringliteral}{"{}memory"{}}}
+\DoxyCodeLine{247     );}
+\DoxyCodeLine{248 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_ae92198b5d33d8a52b332ac3f46c91bad}\label{x86__64_2includes_2cpu_8h_ae92198b5d33d8a52b332ac3f46c91bad}} 
+\index{cpu.h@{cpu.h}!\_cpu\_save\_flags@{\_cpu\_save\_flags}}
+\index{\_cpu\_save\_flags@{\_cpu\_save\_flags}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_save\_flags()}{\_cpu\_save\_flags()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \+\_\+cpu\+\_\+save\+\_\+flags (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the current CPU flags. 
+
+\begin{DoxyReturn}{Returns}
+The current CPU flags. 
+\end{DoxyReturn}
+
+
+Definition at line 219 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{220 \{}
+\DoxyCodeLine{221     \mbox{\hyperlink{stdint_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}} flags;}
+\DoxyCodeLine{222 }
+\DoxyCodeLine{223     \_\_asm\_\_ \_\_volatile\_\_(}
+\DoxyCodeLine{224         \textcolor{stringliteral}{"{}pushfq\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{225         \textcolor{stringliteral}{"{}pop    \%0\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{226         : \textcolor{stringliteral}{"{}=g"{}} (flags)}
+\DoxyCodeLine{227         :}
+\DoxyCodeLine{228         : \textcolor{stringliteral}{"{}memory"{}}}
+\DoxyCodeLine{229     );}
+\DoxyCodeLine{230 }
+\DoxyCodeLine{231     \textcolor{keywordflow}{return} flags;}
+\DoxyCodeLine{232 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{x86__64_2includes_2cpu_8h_ae92198b5d33d8a52b332ac3f46c91bad_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a40381bd8509969b5750967d8b44ab96f}\label{x86__64_2includes_2cpu_8h_a40381bd8509969b5750967d8b44ab96f}} 
+\index{cpu.h@{cpu.h}!\_cpu\_set\_interrupt@{\_cpu\_set\_interrupt}}
+\index{\_cpu\_set\_interrupt@{\_cpu\_set\_interrupt}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{\_cpu\_set\_interrupt()}{\_cpu\_set\_interrupt()}}
+{\footnotesize\ttfamily static void \+\_\+cpu\+\_\+set\+\_\+interrupt (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Sets interrupt bit which results in enabling interupts. 
+
+
+
+Definition at line 201 of file cpu.\+h.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{202 \{}
+\DoxyCodeLine{203     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_ENABLE\_INTERRUPT, 0);}
+\DoxyCodeLine{204     \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}sti"{}}:::\textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{205 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a560ad8614ae03841a10b489f4370bc51}\label{x86__64_2includes_2cpu_8h_a560ad8614ae03841a10b489f4370bc51}} 
+\index{cpu.h@{cpu.h}!cpu\_init@{cpu\_init}}
+\index{cpu\_init@{cpu\_init}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{cpu\_init()}{cpu\_init()}}
+{\footnotesize\ttfamily void cpu\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the CPU. 
+
+Initializes the CPU registers and relevant structures. 
+
+Definition at line 2514 of file cpu.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{2515 \{}
+\DoxyCodeLine{2516     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_SETUP\_START, 0);}
+\DoxyCodeLine{2517 }
+\DoxyCodeLine{2518     \textcolor{comment}{/* Init the GDT, IDT and TSS */}}
+\DoxyCodeLine{2519     \mbox{\hyperlink{i386_2src_2cpu_8c_aca3341859b2c17973ecd308e4b1d35c6}{\_cpu\_setup\_gdt}}();}
+\DoxyCodeLine{2520     \mbox{\hyperlink{i386_2src_2cpu_8c_a38cc43d6a7cffc71e7987df450c3bb42}{\_cpu\_setup\_idt}}();}
+\DoxyCodeLine{2521     \mbox{\hyperlink{i386_2src_2cpu_8c_a3dbb07b804717c2bb1628c56821582eb}{\_cpu\_setup\_tss}}();}
+\DoxyCodeLine{2522 }
+\DoxyCodeLine{2523     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_SETUP\_END, 0);}
+\DoxyCodeLine{2524 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{x86__64_2includes_2cpu_8h_a560ad8614ae03841a10b489f4370bc51_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_aa751f1c664d608c1d380a37096ebc075}\label{x86__64_2includes_2cpu_8h_aa751f1c664d608c1d380a37096ebc075}} 
+\index{cpu.h@{cpu.h}!cpu\_raise\_interrupt@{cpu\_raise\_interrupt}}
+\index{cpu\_raise\_interrupt@{cpu\_raise\_interrupt}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{cpu\_raise\_interrupt()}{cpu\_raise\_interrupt()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0}{OS\+\_\+\+RETURN\+\_\+E}} cpu\+\_\+raise\+\_\+interrupt (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{interrupt\+\_\+line }\end{DoxyParamCaption})}
+
+
+
+Raises CPU interrupt. 
+
+Raises a software CPU interrupt on the desired line.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em interrupt\+\_\+line} & The line on which the interrupt should be raised.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+OS\+\_\+\+NO\+\_\+\+ERR shoudl be return in case of success.
+\begin{DoxyItemize}
+\item OS\+\_\+\+ERR\+\_\+\+UNAUTHORIZED\+\_\+\+ACTION Is returned if the interrupt line is not correct. 
+\end{DoxyItemize}
+\end{DoxyReturn}
+
+
+Definition at line 2526 of file cpu.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{2527 \{}
+\DoxyCodeLine{2528     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_RAISE\_INT\_START, 1, interrupt\_line);}
+\DoxyCodeLine{2529     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a839a4259ecdfe945c85c3f26e966f892}{CPU\_DEBUG\_ENABLED}}, \mbox{\hyperlink{i386_2src_2cpu_8c_a14ded244c47bbba850a8a4be6d16c7e3}{MODULE\_NAME}},}
+\DoxyCodeLine{2530                  \textcolor{stringliteral}{"{}Requesting interrupt raise \%d"{}}, interrupt\_line);}
+\DoxyCodeLine{2531 }
+\DoxyCodeLine{2532     \textcolor{keywordflow}{if}(interrupt\_line > \mbox{\hyperlink{i386_2includes_2cpu__interrupt_8h_aba5f096e5e5b08db75e0aedbb19b5d57}{MAX\_INTERRUPT\_LINE}})}
+\DoxyCodeLine{2533     \{}
+\DoxyCodeLine{2534         \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_RAISE\_INT\_END, 2,}
+\DoxyCodeLine{2535                            interrupt\_line,}
+\DoxyCodeLine{2536                            \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a}{OS\_ERR\_UNAUTHORIZED\_ACTION}});}
+\DoxyCodeLine{2537         \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a}{OS\_ERR\_UNAUTHORIZED\_ACTION}};}
+\DoxyCodeLine{2538     \}}
+\DoxyCodeLine{2539 }
+\DoxyCodeLine{2540     \textcolor{keywordflow}{switch}(interrupt\_line)}
+\DoxyCodeLine{2541     \{}
+\DoxyCodeLine{2542         \textcolor{keywordflow}{case} 0:}
+\DoxyCodeLine{2543             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (0));}
+\DoxyCodeLine{2544             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2545         \textcolor{keywordflow}{case} 1:}
+\DoxyCodeLine{2546             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (1));}
+\DoxyCodeLine{2547             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2548         \textcolor{keywordflow}{case} 2:}
+\DoxyCodeLine{2549             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (2));}
+\DoxyCodeLine{2550             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2551         \textcolor{keywordflow}{case} 3:}
+\DoxyCodeLine{2552             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (3));}
+\DoxyCodeLine{2553             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2554         \textcolor{keywordflow}{case} 4:}
+\DoxyCodeLine{2555             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (4));}
+\DoxyCodeLine{2556             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2557         \textcolor{keywordflow}{case} 5:}
+\DoxyCodeLine{2558             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (5));}
+\DoxyCodeLine{2559             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2560         \textcolor{keywordflow}{case} 6:}
+\DoxyCodeLine{2561             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (6));}
+\DoxyCodeLine{2562             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2563         \textcolor{keywordflow}{case} 7:}
+\DoxyCodeLine{2564             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (7));}
+\DoxyCodeLine{2565             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2566         \textcolor{keywordflow}{case} 8:}
+\DoxyCodeLine{2567             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (8));}
+\DoxyCodeLine{2568             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2569         \textcolor{keywordflow}{case} 9:}
+\DoxyCodeLine{2570             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (9));}
+\DoxyCodeLine{2571             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2572         \textcolor{keywordflow}{case} 10:}
+\DoxyCodeLine{2573             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (10));}
+\DoxyCodeLine{2574             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2575         \textcolor{keywordflow}{case} 11:}
+\DoxyCodeLine{2576             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (11));}
+\DoxyCodeLine{2577             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2578         \textcolor{keywordflow}{case} 12:}
+\DoxyCodeLine{2579             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (12));}
+\DoxyCodeLine{2580             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2581         \textcolor{keywordflow}{case} 13:}
+\DoxyCodeLine{2582             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (13));}
+\DoxyCodeLine{2583             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2584         \textcolor{keywordflow}{case} 14:}
+\DoxyCodeLine{2585             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (14));}
+\DoxyCodeLine{2586             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2587         \textcolor{keywordflow}{case} 15:}
+\DoxyCodeLine{2588             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (15));}
+\DoxyCodeLine{2589             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2590         \textcolor{keywordflow}{case} 16:}
+\DoxyCodeLine{2591             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (16));}
+\DoxyCodeLine{2592             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2593         \textcolor{keywordflow}{case} 17:}
+\DoxyCodeLine{2594             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (17));}
+\DoxyCodeLine{2595             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2596         \textcolor{keywordflow}{case} 18:}
+\DoxyCodeLine{2597             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (18));}
+\DoxyCodeLine{2598             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2599         \textcolor{keywordflow}{case} 19:}
+\DoxyCodeLine{2600             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (19));}
+\DoxyCodeLine{2601             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2602         \textcolor{keywordflow}{case} 20:}
+\DoxyCodeLine{2603             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (20));}
+\DoxyCodeLine{2604             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2605         \textcolor{keywordflow}{case} 21:}
+\DoxyCodeLine{2606             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (21));}
+\DoxyCodeLine{2607             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2608         \textcolor{keywordflow}{case} 22:}
+\DoxyCodeLine{2609             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (22));}
+\DoxyCodeLine{2610             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2611         \textcolor{keywordflow}{case} 23:}
+\DoxyCodeLine{2612             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (23));}
+\DoxyCodeLine{2613             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2614         \textcolor{keywordflow}{case} 24:}
+\DoxyCodeLine{2615             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (24));}
+\DoxyCodeLine{2616             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2617         \textcolor{keywordflow}{case} 25:}
+\DoxyCodeLine{2618             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (25));}
+\DoxyCodeLine{2619             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2620         \textcolor{keywordflow}{case} 26:}
+\DoxyCodeLine{2621             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (26));}
+\DoxyCodeLine{2622             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2623         \textcolor{keywordflow}{case} 27:}
+\DoxyCodeLine{2624             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (27));}
+\DoxyCodeLine{2625             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2626         \textcolor{keywordflow}{case} 28:}
+\DoxyCodeLine{2627             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (28));}
+\DoxyCodeLine{2628             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2629         \textcolor{keywordflow}{case} 29:}
+\DoxyCodeLine{2630             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (29));}
+\DoxyCodeLine{2631             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2632         \textcolor{keywordflow}{case} 30:}
+\DoxyCodeLine{2633             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (30));}
+\DoxyCodeLine{2634             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2635         \textcolor{keywordflow}{case} 31:}
+\DoxyCodeLine{2636             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (31));}
+\DoxyCodeLine{2637             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2638         \textcolor{keywordflow}{case} 32:}
+\DoxyCodeLine{2639             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (32));}
+\DoxyCodeLine{2640             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2641         \textcolor{keywordflow}{case} 33:}
+\DoxyCodeLine{2642             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (33));}
+\DoxyCodeLine{2643             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2644         \textcolor{keywordflow}{case} 34:}
+\DoxyCodeLine{2645             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (34));}
+\DoxyCodeLine{2646             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2647         \textcolor{keywordflow}{case} 35:}
+\DoxyCodeLine{2648             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (35));}
+\DoxyCodeLine{2649             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2650         \textcolor{keywordflow}{case} 36:}
+\DoxyCodeLine{2651             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (36));}
+\DoxyCodeLine{2652             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2653         \textcolor{keywordflow}{case} 37:}
+\DoxyCodeLine{2654             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (37));}
+\DoxyCodeLine{2655             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2656         \textcolor{keywordflow}{case} 38:}
+\DoxyCodeLine{2657             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (38));}
+\DoxyCodeLine{2658             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2659         \textcolor{keywordflow}{case} 39:}
+\DoxyCodeLine{2660             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (39));}
+\DoxyCodeLine{2661             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2662         \textcolor{keywordflow}{case} 40:}
+\DoxyCodeLine{2663             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (40));}
+\DoxyCodeLine{2664             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2665         \textcolor{keywordflow}{case} 41:}
+\DoxyCodeLine{2666             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (41));}
+\DoxyCodeLine{2667             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2668         \textcolor{keywordflow}{case} 42:}
+\DoxyCodeLine{2669             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (42));}
+\DoxyCodeLine{2670             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2671         \textcolor{keywordflow}{case} 43:}
+\DoxyCodeLine{2672             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (43));}
+\DoxyCodeLine{2673             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2674         \textcolor{keywordflow}{case} 44:}
+\DoxyCodeLine{2675             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (44));}
+\DoxyCodeLine{2676             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2677         \textcolor{keywordflow}{case} 45:}
+\DoxyCodeLine{2678             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (45));}
+\DoxyCodeLine{2679             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2680         \textcolor{keywordflow}{case} 46:}
+\DoxyCodeLine{2681             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (46));}
+\DoxyCodeLine{2682             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2683         \textcolor{keywordflow}{case} 47:}
+\DoxyCodeLine{2684             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (47));}
+\DoxyCodeLine{2685             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2686         \textcolor{keywordflow}{case} 48:}
+\DoxyCodeLine{2687             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (48));}
+\DoxyCodeLine{2688             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2689         \textcolor{keywordflow}{case} 49:}
+\DoxyCodeLine{2690             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (49));}
+\DoxyCodeLine{2691             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2692         \textcolor{keywordflow}{case} 50:}
+\DoxyCodeLine{2693             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (50));}
+\DoxyCodeLine{2694             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2695         \textcolor{keywordflow}{case} 51:}
+\DoxyCodeLine{2696             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (51));}
+\DoxyCodeLine{2697             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2698         \textcolor{keywordflow}{case} 52:}
+\DoxyCodeLine{2699             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (52));}
+\DoxyCodeLine{2700             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2701         \textcolor{keywordflow}{case} 53:}
+\DoxyCodeLine{2702             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (53));}
+\DoxyCodeLine{2703             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2704         \textcolor{keywordflow}{case} 54:}
+\DoxyCodeLine{2705             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (54));}
+\DoxyCodeLine{2706             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2707         \textcolor{keywordflow}{case} 55:}
+\DoxyCodeLine{2708             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (55));}
+\DoxyCodeLine{2709             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2710         \textcolor{keywordflow}{case} 56:}
+\DoxyCodeLine{2711             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (56));}
+\DoxyCodeLine{2712             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2713         \textcolor{keywordflow}{case} 57:}
+\DoxyCodeLine{2714             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (57));}
+\DoxyCodeLine{2715             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2716         \textcolor{keywordflow}{case} 58:}
+\DoxyCodeLine{2717             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (58));}
+\DoxyCodeLine{2718             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2719         \textcolor{keywordflow}{case} 59:}
+\DoxyCodeLine{2720             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (59));}
+\DoxyCodeLine{2721             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2722         \textcolor{keywordflow}{case} 60:}
+\DoxyCodeLine{2723             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (60));}
+\DoxyCodeLine{2724             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2725         \textcolor{keywordflow}{case} 61:}
+\DoxyCodeLine{2726             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (61));}
+\DoxyCodeLine{2727             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2728         \textcolor{keywordflow}{case} 62:}
+\DoxyCodeLine{2729             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (62));}
+\DoxyCodeLine{2730             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2731         \textcolor{keywordflow}{case} 63:}
+\DoxyCodeLine{2732             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (63));}
+\DoxyCodeLine{2733             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2734         \textcolor{keywordflow}{case} 64:}
+\DoxyCodeLine{2735             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (64));}
+\DoxyCodeLine{2736             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2737         \textcolor{keywordflow}{case} 65:}
+\DoxyCodeLine{2738             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (65));}
+\DoxyCodeLine{2739             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2740         \textcolor{keywordflow}{case} 66:}
+\DoxyCodeLine{2741             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (66));}
+\DoxyCodeLine{2742             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2743         \textcolor{keywordflow}{case} 67:}
+\DoxyCodeLine{2744             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (67));}
+\DoxyCodeLine{2745             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2746         \textcolor{keywordflow}{case} 68:}
+\DoxyCodeLine{2747             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (68));}
+\DoxyCodeLine{2748             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2749         \textcolor{keywordflow}{case} 69:}
+\DoxyCodeLine{2750             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (69));}
+\DoxyCodeLine{2751             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2752         \textcolor{keywordflow}{case} 70:}
+\DoxyCodeLine{2753             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (70));}
+\DoxyCodeLine{2754             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2755         \textcolor{keywordflow}{case} 71:}
+\DoxyCodeLine{2756             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (71));}
+\DoxyCodeLine{2757             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2758         \textcolor{keywordflow}{case} 72:}
+\DoxyCodeLine{2759             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (72));}
+\DoxyCodeLine{2760             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2761         \textcolor{keywordflow}{case} 73:}
+\DoxyCodeLine{2762             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (73));}
+\DoxyCodeLine{2763             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2764         \textcolor{keywordflow}{case} 74:}
+\DoxyCodeLine{2765             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (74));}
+\DoxyCodeLine{2766             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2767         \textcolor{keywordflow}{case} 75:}
+\DoxyCodeLine{2768             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (75));}
+\DoxyCodeLine{2769             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2770         \textcolor{keywordflow}{case} 76:}
+\DoxyCodeLine{2771             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (76));}
+\DoxyCodeLine{2772             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2773         \textcolor{keywordflow}{case} 77:}
+\DoxyCodeLine{2774             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (77));}
+\DoxyCodeLine{2775             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2776         \textcolor{keywordflow}{case} 78:}
+\DoxyCodeLine{2777             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (78));}
+\DoxyCodeLine{2778             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2779         \textcolor{keywordflow}{case} 79:}
+\DoxyCodeLine{2780             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (79));}
+\DoxyCodeLine{2781             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2782         \textcolor{keywordflow}{case} 80:}
+\DoxyCodeLine{2783             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (80));}
+\DoxyCodeLine{2784             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2785         \textcolor{keywordflow}{case} 81:}
+\DoxyCodeLine{2786             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (81));}
+\DoxyCodeLine{2787             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2788         \textcolor{keywordflow}{case} 82:}
+\DoxyCodeLine{2789             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (82));}
+\DoxyCodeLine{2790             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2791         \textcolor{keywordflow}{case} 83:}
+\DoxyCodeLine{2792             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (83));}
+\DoxyCodeLine{2793             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2794         \textcolor{keywordflow}{case} 84:}
+\DoxyCodeLine{2795             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (84));}
+\DoxyCodeLine{2796             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2797         \textcolor{keywordflow}{case} 85:}
+\DoxyCodeLine{2798             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (85));}
+\DoxyCodeLine{2799             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2800         \textcolor{keywordflow}{case} 86:}
+\DoxyCodeLine{2801             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (86));}
+\DoxyCodeLine{2802             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2803         \textcolor{keywordflow}{case} 87:}
+\DoxyCodeLine{2804             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (87));}
+\DoxyCodeLine{2805             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2806         \textcolor{keywordflow}{case} 88:}
+\DoxyCodeLine{2807             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (88));}
+\DoxyCodeLine{2808             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2809         \textcolor{keywordflow}{case} 89:}
+\DoxyCodeLine{2810             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (89));}
+\DoxyCodeLine{2811             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2812         \textcolor{keywordflow}{case} 90:}
+\DoxyCodeLine{2813             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (90));}
+\DoxyCodeLine{2814             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2815         \textcolor{keywordflow}{case} 91:}
+\DoxyCodeLine{2816             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (91));}
+\DoxyCodeLine{2817             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2818         \textcolor{keywordflow}{case} 92:}
+\DoxyCodeLine{2819             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (92));}
+\DoxyCodeLine{2820             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2821         \textcolor{keywordflow}{case} 93:}
+\DoxyCodeLine{2822             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (93));}
+\DoxyCodeLine{2823             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2824         \textcolor{keywordflow}{case} 94:}
+\DoxyCodeLine{2825             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (94));}
+\DoxyCodeLine{2826             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2827         \textcolor{keywordflow}{case} 95:}
+\DoxyCodeLine{2828             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (95));}
+\DoxyCodeLine{2829             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2830         \textcolor{keywordflow}{case} 96:}
+\DoxyCodeLine{2831             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (96));}
+\DoxyCodeLine{2832             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2833         \textcolor{keywordflow}{case} 97:}
+\DoxyCodeLine{2834             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (97));}
+\DoxyCodeLine{2835             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2836         \textcolor{keywordflow}{case} 98:}
+\DoxyCodeLine{2837             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (98));}
+\DoxyCodeLine{2838             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2839         \textcolor{keywordflow}{case} 99:}
+\DoxyCodeLine{2840             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (99));}
+\DoxyCodeLine{2841             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2842         \textcolor{keywordflow}{case} 100:}
+\DoxyCodeLine{2843             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (100));}
+\DoxyCodeLine{2844             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2845         \textcolor{keywordflow}{case} 101:}
+\DoxyCodeLine{2846             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (101));}
+\DoxyCodeLine{2847             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2848         \textcolor{keywordflow}{case} 102:}
+\DoxyCodeLine{2849             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (102));}
+\DoxyCodeLine{2850             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2851         \textcolor{keywordflow}{case} 103:}
+\DoxyCodeLine{2852             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (103));}
+\DoxyCodeLine{2853             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2854         \textcolor{keywordflow}{case} 104:}
+\DoxyCodeLine{2855             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (104));}
+\DoxyCodeLine{2856             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2857         \textcolor{keywordflow}{case} 105:}
+\DoxyCodeLine{2858             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (105));}
+\DoxyCodeLine{2859             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2860         \textcolor{keywordflow}{case} 106:}
+\DoxyCodeLine{2861             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (106));}
+\DoxyCodeLine{2862             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2863         \textcolor{keywordflow}{case} 107:}
+\DoxyCodeLine{2864             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (107));}
+\DoxyCodeLine{2865             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2866         \textcolor{keywordflow}{case} 108:}
+\DoxyCodeLine{2867             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (108));}
+\DoxyCodeLine{2868             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2869         \textcolor{keywordflow}{case} 109:}
+\DoxyCodeLine{2870             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (109));}
+\DoxyCodeLine{2871             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2872         \textcolor{keywordflow}{case} 110:}
+\DoxyCodeLine{2873             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (110));}
+\DoxyCodeLine{2874             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2875         \textcolor{keywordflow}{case} 111:}
+\DoxyCodeLine{2876             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (111));}
+\DoxyCodeLine{2877             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2878         \textcolor{keywordflow}{case} 112:}
+\DoxyCodeLine{2879             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (112));}
+\DoxyCodeLine{2880             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2881         \textcolor{keywordflow}{case} 113:}
+\DoxyCodeLine{2882             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (113));}
+\DoxyCodeLine{2883             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2884         \textcolor{keywordflow}{case} 114:}
+\DoxyCodeLine{2885             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (114));}
+\DoxyCodeLine{2886             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2887         \textcolor{keywordflow}{case} 115:}
+\DoxyCodeLine{2888             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (115));}
+\DoxyCodeLine{2889             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2890         \textcolor{keywordflow}{case} 116:}
+\DoxyCodeLine{2891             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (116));}
+\DoxyCodeLine{2892             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2893         \textcolor{keywordflow}{case} 117:}
+\DoxyCodeLine{2894             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (117));}
+\DoxyCodeLine{2895             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2896         \textcolor{keywordflow}{case} 118:}
+\DoxyCodeLine{2897             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (118));}
+\DoxyCodeLine{2898             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2899         \textcolor{keywordflow}{case} 119:}
+\DoxyCodeLine{2900             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (119));}
+\DoxyCodeLine{2901             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2902         \textcolor{keywordflow}{case} 120:}
+\DoxyCodeLine{2903             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (120));}
+\DoxyCodeLine{2904             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2905         \textcolor{keywordflow}{case} 121:}
+\DoxyCodeLine{2906             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (121));}
+\DoxyCodeLine{2907             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2908         \textcolor{keywordflow}{case} 122:}
+\DoxyCodeLine{2909             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (122));}
+\DoxyCodeLine{2910             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2911         \textcolor{keywordflow}{case} 123:}
+\DoxyCodeLine{2912             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (123));}
+\DoxyCodeLine{2913             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2914         \textcolor{keywordflow}{case} 124:}
+\DoxyCodeLine{2915             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (124));}
+\DoxyCodeLine{2916             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2917         \textcolor{keywordflow}{case} 125:}
+\DoxyCodeLine{2918             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (125));}
+\DoxyCodeLine{2919             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2920         \textcolor{keywordflow}{case} 126:}
+\DoxyCodeLine{2921             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (126));}
+\DoxyCodeLine{2922             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2923         \textcolor{keywordflow}{case} 127:}
+\DoxyCodeLine{2924             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (127));}
+\DoxyCodeLine{2925             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2926         \textcolor{keywordflow}{case} 128:}
+\DoxyCodeLine{2927             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (128));}
+\DoxyCodeLine{2928             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2929         \textcolor{keywordflow}{case} 129:}
+\DoxyCodeLine{2930             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (129));}
+\DoxyCodeLine{2931             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2932         \textcolor{keywordflow}{case} 130:}
+\DoxyCodeLine{2933             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (130));}
+\DoxyCodeLine{2934             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2935         \textcolor{keywordflow}{case} 131:}
+\DoxyCodeLine{2936             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (131));}
+\DoxyCodeLine{2937             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2938         \textcolor{keywordflow}{case} 132:}
+\DoxyCodeLine{2939             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (132));}
+\DoxyCodeLine{2940             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2941         \textcolor{keywordflow}{case} 133:}
+\DoxyCodeLine{2942             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (133));}
+\DoxyCodeLine{2943             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2944         \textcolor{keywordflow}{case} 134:}
+\DoxyCodeLine{2945             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (134));}
+\DoxyCodeLine{2946             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2947         \textcolor{keywordflow}{case} 135:}
+\DoxyCodeLine{2948             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (135));}
+\DoxyCodeLine{2949             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2950         \textcolor{keywordflow}{case} 136:}
+\DoxyCodeLine{2951             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (136));}
+\DoxyCodeLine{2952             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2953         \textcolor{keywordflow}{case} 137:}
+\DoxyCodeLine{2954             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (137));}
+\DoxyCodeLine{2955             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2956         \textcolor{keywordflow}{case} 138:}
+\DoxyCodeLine{2957             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (138));}
+\DoxyCodeLine{2958             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2959         \textcolor{keywordflow}{case} 139:}
+\DoxyCodeLine{2960             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (139));}
+\DoxyCodeLine{2961             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2962         \textcolor{keywordflow}{case} 140:}
+\DoxyCodeLine{2963             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (140));}
+\DoxyCodeLine{2964             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2965         \textcolor{keywordflow}{case} 141:}
+\DoxyCodeLine{2966             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (141));}
+\DoxyCodeLine{2967             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2968         \textcolor{keywordflow}{case} 142:}
+\DoxyCodeLine{2969             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (142));}
+\DoxyCodeLine{2970             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2971         \textcolor{keywordflow}{case} 143:}
+\DoxyCodeLine{2972             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (143));}
+\DoxyCodeLine{2973             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2974         \textcolor{keywordflow}{case} 144:}
+\DoxyCodeLine{2975             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (144));}
+\DoxyCodeLine{2976             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2977         \textcolor{keywordflow}{case} 145:}
+\DoxyCodeLine{2978             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (145));}
+\DoxyCodeLine{2979             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2980         \textcolor{keywordflow}{case} 146:}
+\DoxyCodeLine{2981             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (146));}
+\DoxyCodeLine{2982             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2983         \textcolor{keywordflow}{case} 147:}
+\DoxyCodeLine{2984             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (147));}
+\DoxyCodeLine{2985             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2986         \textcolor{keywordflow}{case} 148:}
+\DoxyCodeLine{2987             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (148));}
+\DoxyCodeLine{2988             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2989         \textcolor{keywordflow}{case} 149:}
+\DoxyCodeLine{2990             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (149));}
+\DoxyCodeLine{2991             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2992         \textcolor{keywordflow}{case} 150:}
+\DoxyCodeLine{2993             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (150));}
+\DoxyCodeLine{2994             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2995         \textcolor{keywordflow}{case} 151:}
+\DoxyCodeLine{2996             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (151));}
+\DoxyCodeLine{2997             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{2998         \textcolor{keywordflow}{case} 152:}
+\DoxyCodeLine{2999             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (152));}
+\DoxyCodeLine{3000             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3001         \textcolor{keywordflow}{case} 153:}
+\DoxyCodeLine{3002             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (153));}
+\DoxyCodeLine{3003             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3004         \textcolor{keywordflow}{case} 154:}
+\DoxyCodeLine{3005             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (154));}
+\DoxyCodeLine{3006             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3007         \textcolor{keywordflow}{case} 155:}
+\DoxyCodeLine{3008             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (155));}
+\DoxyCodeLine{3009             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3010         \textcolor{keywordflow}{case} 156:}
+\DoxyCodeLine{3011             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (156));}
+\DoxyCodeLine{3012             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3013         \textcolor{keywordflow}{case} 157:}
+\DoxyCodeLine{3014             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (157));}
+\DoxyCodeLine{3015             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3016         \textcolor{keywordflow}{case} 158:}
+\DoxyCodeLine{3017             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (158));}
+\DoxyCodeLine{3018             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3019         \textcolor{keywordflow}{case} 159:}
+\DoxyCodeLine{3020             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (159));}
+\DoxyCodeLine{3021             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3022         \textcolor{keywordflow}{case} 160:}
+\DoxyCodeLine{3023             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (160));}
+\DoxyCodeLine{3024             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3025         \textcolor{keywordflow}{case} 161:}
+\DoxyCodeLine{3026             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (161));}
+\DoxyCodeLine{3027             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3028         \textcolor{keywordflow}{case} 162:}
+\DoxyCodeLine{3029             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (162));}
+\DoxyCodeLine{3030             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3031         \textcolor{keywordflow}{case} 163:}
+\DoxyCodeLine{3032             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (163));}
+\DoxyCodeLine{3033             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3034         \textcolor{keywordflow}{case} 164:}
+\DoxyCodeLine{3035             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (164));}
+\DoxyCodeLine{3036             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3037         \textcolor{keywordflow}{case} 165:}
+\DoxyCodeLine{3038             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (165));}
+\DoxyCodeLine{3039             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3040         \textcolor{keywordflow}{case} 166:}
+\DoxyCodeLine{3041             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (166));}
+\DoxyCodeLine{3042             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3043         \textcolor{keywordflow}{case} 167:}
+\DoxyCodeLine{3044             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (167));}
+\DoxyCodeLine{3045             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3046         \textcolor{keywordflow}{case} 168:}
+\DoxyCodeLine{3047             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (168));}
+\DoxyCodeLine{3048             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3049         \textcolor{keywordflow}{case} 169:}
+\DoxyCodeLine{3050             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (169));}
+\DoxyCodeLine{3051             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3052         \textcolor{keywordflow}{case} 170:}
+\DoxyCodeLine{3053             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (170));}
+\DoxyCodeLine{3054             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3055         \textcolor{keywordflow}{case} 171:}
+\DoxyCodeLine{3056             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (171));}
+\DoxyCodeLine{3057             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3058         \textcolor{keywordflow}{case} 172:}
+\DoxyCodeLine{3059             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (172));}
+\DoxyCodeLine{3060             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3061         \textcolor{keywordflow}{case} 173:}
+\DoxyCodeLine{3062             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (173));}
+\DoxyCodeLine{3063             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3064         \textcolor{keywordflow}{case} 174:}
+\DoxyCodeLine{3065             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (174));}
+\DoxyCodeLine{3066             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3067         \textcolor{keywordflow}{case} 175:}
+\DoxyCodeLine{3068             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (175));}
+\DoxyCodeLine{3069             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3070         \textcolor{keywordflow}{case} 176:}
+\DoxyCodeLine{3071             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (176));}
+\DoxyCodeLine{3072             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3073         \textcolor{keywordflow}{case} 177:}
+\DoxyCodeLine{3074             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (177));}
+\DoxyCodeLine{3075             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3076         \textcolor{keywordflow}{case} 178:}
+\DoxyCodeLine{3077             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (178));}
+\DoxyCodeLine{3078             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3079         \textcolor{keywordflow}{case} 179:}
+\DoxyCodeLine{3080             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (179));}
+\DoxyCodeLine{3081             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3082         \textcolor{keywordflow}{case} 180:}
+\DoxyCodeLine{3083             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (180));}
+\DoxyCodeLine{3084             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3085         \textcolor{keywordflow}{case} 181:}
+\DoxyCodeLine{3086             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (181));}
+\DoxyCodeLine{3087             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3088         \textcolor{keywordflow}{case} 182:}
+\DoxyCodeLine{3089             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (182));}
+\DoxyCodeLine{3090             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3091         \textcolor{keywordflow}{case} 183:}
+\DoxyCodeLine{3092             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (183));}
+\DoxyCodeLine{3093             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3094         \textcolor{keywordflow}{case} 184:}
+\DoxyCodeLine{3095             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (184));}
+\DoxyCodeLine{3096             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3097         \textcolor{keywordflow}{case} 185:}
+\DoxyCodeLine{3098             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (185));}
+\DoxyCodeLine{3099             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3100         \textcolor{keywordflow}{case} 186:}
+\DoxyCodeLine{3101             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (186));}
+\DoxyCodeLine{3102             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3103         \textcolor{keywordflow}{case} 187:}
+\DoxyCodeLine{3104             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (187));}
+\DoxyCodeLine{3105             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3106         \textcolor{keywordflow}{case} 188:}
+\DoxyCodeLine{3107             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (188));}
+\DoxyCodeLine{3108             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3109         \textcolor{keywordflow}{case} 189:}
+\DoxyCodeLine{3110             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (189));}
+\DoxyCodeLine{3111             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3112         \textcolor{keywordflow}{case} 190:}
+\DoxyCodeLine{3113             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (190));}
+\DoxyCodeLine{3114             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3115         \textcolor{keywordflow}{case} 191:}
+\DoxyCodeLine{3116             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (191));}
+\DoxyCodeLine{3117             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3118         \textcolor{keywordflow}{case} 192:}
+\DoxyCodeLine{3119             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (192));}
+\DoxyCodeLine{3120             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3121         \textcolor{keywordflow}{case} 193:}
+\DoxyCodeLine{3122             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (193));}
+\DoxyCodeLine{3123             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3124         \textcolor{keywordflow}{case} 194:}
+\DoxyCodeLine{3125             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (194));}
+\DoxyCodeLine{3126             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3127         \textcolor{keywordflow}{case} 195:}
+\DoxyCodeLine{3128             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (195));}
+\DoxyCodeLine{3129             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3130         \textcolor{keywordflow}{case} 196:}
+\DoxyCodeLine{3131             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (196));}
+\DoxyCodeLine{3132             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3133         \textcolor{keywordflow}{case} 197:}
+\DoxyCodeLine{3134             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (197));}
+\DoxyCodeLine{3135             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3136         \textcolor{keywordflow}{case} 198:}
+\DoxyCodeLine{3137             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (198));}
+\DoxyCodeLine{3138             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3139         \textcolor{keywordflow}{case} 199:}
+\DoxyCodeLine{3140             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (199));}
+\DoxyCodeLine{3141             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3142         \textcolor{keywordflow}{case} 200:}
+\DoxyCodeLine{3143             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (200));}
+\DoxyCodeLine{3144             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3145         \textcolor{keywordflow}{case} 201:}
+\DoxyCodeLine{3146             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (201));}
+\DoxyCodeLine{3147             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3148         \textcolor{keywordflow}{case} 202:}
+\DoxyCodeLine{3149             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (202));}
+\DoxyCodeLine{3150             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3151         \textcolor{keywordflow}{case} 203:}
+\DoxyCodeLine{3152             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (203));}
+\DoxyCodeLine{3153             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3154         \textcolor{keywordflow}{case} 204:}
+\DoxyCodeLine{3155             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (204));}
+\DoxyCodeLine{3156             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3157         \textcolor{keywordflow}{case} 205:}
+\DoxyCodeLine{3158             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (205));}
+\DoxyCodeLine{3159             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3160         \textcolor{keywordflow}{case} 206:}
+\DoxyCodeLine{3161             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (206));}
+\DoxyCodeLine{3162             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3163         \textcolor{keywordflow}{case} 207:}
+\DoxyCodeLine{3164             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (207));}
+\DoxyCodeLine{3165             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3166         \textcolor{keywordflow}{case} 208:}
+\DoxyCodeLine{3167             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (208));}
+\DoxyCodeLine{3168             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3169         \textcolor{keywordflow}{case} 209:}
+\DoxyCodeLine{3170             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (209));}
+\DoxyCodeLine{3171             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3172         \textcolor{keywordflow}{case} 210:}
+\DoxyCodeLine{3173             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (210));}
+\DoxyCodeLine{3174             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3175         \textcolor{keywordflow}{case} 211:}
+\DoxyCodeLine{3176             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (211));}
+\DoxyCodeLine{3177             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3178         \textcolor{keywordflow}{case} 212:}
+\DoxyCodeLine{3179             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (212));}
+\DoxyCodeLine{3180             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3181         \textcolor{keywordflow}{case} 213:}
+\DoxyCodeLine{3182             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (213));}
+\DoxyCodeLine{3183             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3184         \textcolor{keywordflow}{case} 214:}
+\DoxyCodeLine{3185             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (214));}
+\DoxyCodeLine{3186             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3187         \textcolor{keywordflow}{case} 215:}
+\DoxyCodeLine{3188             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (215));}
+\DoxyCodeLine{3189             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3190         \textcolor{keywordflow}{case} 216:}
+\DoxyCodeLine{3191             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (216));}
+\DoxyCodeLine{3192             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3193         \textcolor{keywordflow}{case} 217:}
+\DoxyCodeLine{3194             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (217));}
+\DoxyCodeLine{3195             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3196         \textcolor{keywordflow}{case} 218:}
+\DoxyCodeLine{3197             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (218));}
+\DoxyCodeLine{3198             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3199         \textcolor{keywordflow}{case} 219:}
+\DoxyCodeLine{3200             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (219));}
+\DoxyCodeLine{3201             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3202         \textcolor{keywordflow}{case} 220:}
+\DoxyCodeLine{3203             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (220));}
+\DoxyCodeLine{3204             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3205         \textcolor{keywordflow}{case} 221:}
+\DoxyCodeLine{3206             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (221));}
+\DoxyCodeLine{3207             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3208         \textcolor{keywordflow}{case} 222:}
+\DoxyCodeLine{3209             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (222));}
+\DoxyCodeLine{3210             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3211         \textcolor{keywordflow}{case} 223:}
+\DoxyCodeLine{3212             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (223));}
+\DoxyCodeLine{3213             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3214         \textcolor{keywordflow}{case} 224:}
+\DoxyCodeLine{3215             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (224));}
+\DoxyCodeLine{3216             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3217         \textcolor{keywordflow}{case} 225:}
+\DoxyCodeLine{3218             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (225));}
+\DoxyCodeLine{3219             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3220         \textcolor{keywordflow}{case} 226:}
+\DoxyCodeLine{3221             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (226));}
+\DoxyCodeLine{3222             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3223         \textcolor{keywordflow}{case} 227:}
+\DoxyCodeLine{3224             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (227));}
+\DoxyCodeLine{3225             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3226         \textcolor{keywordflow}{case} 228:}
+\DoxyCodeLine{3227             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (228));}
+\DoxyCodeLine{3228             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3229         \textcolor{keywordflow}{case} 229:}
+\DoxyCodeLine{3230             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (229));}
+\DoxyCodeLine{3231             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3232         \textcolor{keywordflow}{case} 230:}
+\DoxyCodeLine{3233             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (230));}
+\DoxyCodeLine{3234             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3235         \textcolor{keywordflow}{case} 231:}
+\DoxyCodeLine{3236             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (231));}
+\DoxyCodeLine{3237             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3238         \textcolor{keywordflow}{case} 232:}
+\DoxyCodeLine{3239             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (232));}
+\DoxyCodeLine{3240             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3241         \textcolor{keywordflow}{case} 233:}
+\DoxyCodeLine{3242             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (233));}
+\DoxyCodeLine{3243             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3244         \textcolor{keywordflow}{case} 234:}
+\DoxyCodeLine{3245             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (234));}
+\DoxyCodeLine{3246             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3247         \textcolor{keywordflow}{case} 235:}
+\DoxyCodeLine{3248             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (235));}
+\DoxyCodeLine{3249             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3250         \textcolor{keywordflow}{case} 236:}
+\DoxyCodeLine{3251             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (236));}
+\DoxyCodeLine{3252             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3253         \textcolor{keywordflow}{case} 237:}
+\DoxyCodeLine{3254             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (237));}
+\DoxyCodeLine{3255             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3256         \textcolor{keywordflow}{case} 238:}
+\DoxyCodeLine{3257             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (238));}
+\DoxyCodeLine{3258             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3259         \textcolor{keywordflow}{case} 239:}
+\DoxyCodeLine{3260             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (239));}
+\DoxyCodeLine{3261             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3262         \textcolor{keywordflow}{case} 240:}
+\DoxyCodeLine{3263             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (240));}
+\DoxyCodeLine{3264             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3265         \textcolor{keywordflow}{case} 241:}
+\DoxyCodeLine{3266             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (241));}
+\DoxyCodeLine{3267             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3268         \textcolor{keywordflow}{case} 242:}
+\DoxyCodeLine{3269             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (242));}
+\DoxyCodeLine{3270             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3271         \textcolor{keywordflow}{case} 243:}
+\DoxyCodeLine{3272             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (243));}
+\DoxyCodeLine{3273             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3274         \textcolor{keywordflow}{case} 244:}
+\DoxyCodeLine{3275             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (244));}
+\DoxyCodeLine{3276             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3277         \textcolor{keywordflow}{case} 245:}
+\DoxyCodeLine{3278             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (245));}
+\DoxyCodeLine{3279             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3280         \textcolor{keywordflow}{case} 246:}
+\DoxyCodeLine{3281             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (246));}
+\DoxyCodeLine{3282             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3283         \textcolor{keywordflow}{case} 247:}
+\DoxyCodeLine{3284             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (247));}
+\DoxyCodeLine{3285             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3286         \textcolor{keywordflow}{case} 248:}
+\DoxyCodeLine{3287             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (248));}
+\DoxyCodeLine{3288             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3289         \textcolor{keywordflow}{case} 249:}
+\DoxyCodeLine{3290             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (249));}
+\DoxyCodeLine{3291             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3292         \textcolor{keywordflow}{case} 250:}
+\DoxyCodeLine{3293             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (250));}
+\DoxyCodeLine{3294             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3295         \textcolor{keywordflow}{case} 251:}
+\DoxyCodeLine{3296             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (251));}
+\DoxyCodeLine{3297             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3298         \textcolor{keywordflow}{case} 252:}
+\DoxyCodeLine{3299             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (252));}
+\DoxyCodeLine{3300             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3301         \textcolor{keywordflow}{case} 253:}
+\DoxyCodeLine{3302             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (253));}
+\DoxyCodeLine{3303             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3304         \textcolor{keywordflow}{case} 254:}
+\DoxyCodeLine{3305             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (254));}
+\DoxyCodeLine{3306             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3307         \textcolor{keywordflow}{case} 255:}
+\DoxyCodeLine{3308             \_\_asm\_\_ \_\_volatile\_\_(\textcolor{stringliteral}{"{}int \%0"{}} :: \textcolor{stringliteral}{"{}i"{}} (255));}
+\DoxyCodeLine{3309             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{3310     \}}
+\DoxyCodeLine{3311 }
+\DoxyCodeLine{3312     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_CPU\_RAISE\_INT\_END, 2,}
+\DoxyCodeLine{3313                        interrupt\_line, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}});}
+\DoxyCodeLine{3314     \textcolor{keywordflow}{return} \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a188fd154c7a72b48eaeac6b03930c186}{OS\_NO\_ERR}};}
+\DoxyCodeLine{3315 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{x86__64_2includes_2cpu_8h_a226d3ffd0bd73a0b2f318f3408fdd652}\label{x86__64_2includes_2cpu_8h_a226d3ffd0bd73a0b2f318f3408fdd652}} 
+\index{cpu.h@{cpu.h}!validate\_architecture@{validate\_architecture}}
+\index{validate\_architecture@{validate\_architecture}!cpu.h@{cpu.h}}
+\doxysubsubsection{\texorpdfstring{validate\_architecture()}{validate\_architecture()}}
+{\footnotesize\ttfamily void validate\+\_\+architecture (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Checks the architecture\textquotesingle{}s feature and requirements for UTK. 
+
+Checks the architecture\textquotesingle{}s feature and requirements for UTK. If a requirement is not met, a kernel panic is raised. 
+
+Definition at line 3317 of file cpu.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{3318 \{}
+\DoxyCodeLine{3319     \textcolor{comment}{/* eax, ebx, ecx, edx */}}
+\DoxyCodeLine{3320     \textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}}  regs[4];}
+\DoxyCodeLine{3321     \textcolor{keyword}{volatile} \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}}  regs\_ext[4];}
+\DoxyCodeLine{3322     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}          ret;}
+\DoxyCodeLine{3323 }
+\DoxyCodeLine{3324 \textcolor{preprocessor}{\#if KERNEL\_LOG\_LEVEL >= INFO\_LOG\_LEVEL }}
+\DoxyCodeLine{3325     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} output\_buff\_index;}
+\DoxyCodeLine{3326     \textcolor{keywordtype}{char}     output\_buff[512];}
+\DoxyCodeLine{3327     \textcolor{keywordtype}{char}     vendor\_str[26] = \textcolor{stringliteral}{"{}CPU Vendor:             \(\backslash\)n\(\backslash\)0"{}};}
+\DoxyCodeLine{3328 }
+\DoxyCodeLine{3329     output\_buff\_index = 0;}
+\DoxyCodeLine{3330 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{3331 }
+\DoxyCodeLine{3332     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_VALIDATE\_ARCH\_START, 0);}
+\DoxyCodeLine{3333 }
+\DoxyCodeLine{3334     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a839a4259ecdfe945c85c3f26e966f892}{CPU\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}CPU"{}}, \textcolor{stringliteral}{"{}Detecting cpu capabilities"{}});}
+\DoxyCodeLine{3335 }
+\DoxyCodeLine{3336     ret = \mbox{\hyperlink{i386_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}{\_cpu\_cpuid}}(\mbox{\hyperlink{i386_2src_2cpu_8c_a488e635b70949c3a871802bc06cd32aa}{CPUID\_GETVENDORSTRING}}, (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)regs);}
+\DoxyCodeLine{3337 }
+\DoxyCodeLine{3338     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}(ret != 0,}
+\DoxyCodeLine{3339                \textcolor{stringliteral}{"{}CPU does not support CPUID"{}},}
+\DoxyCodeLine{3340                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3341 }
+\DoxyCodeLine{3342     \textcolor{comment}{/* Check if CPUID return more that one available function */}}
+\DoxyCodeLine{3343 }
+\DoxyCodeLine{3344 \textcolor{preprocessor}{\#if KERNEL\_LOG\_LEVEL >= INFO\_LOG\_LEVEL }}
+\DoxyCodeLine{3345     \textcolor{keywordflow}{for}(\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} j = 0; j < 4; ++j)}
+\DoxyCodeLine{3346     \{}
+\DoxyCodeLine{3347         vendor\_str[12 + j] = (char)((regs[1] >> (j * 8)) \& 0xFF);}
+\DoxyCodeLine{3348     \}}
+\DoxyCodeLine{3349     \textcolor{keywordflow}{for}(\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} j = 0; j < 4; ++j)}
+\DoxyCodeLine{3350     \{}
+\DoxyCodeLine{3351         vendor\_str[16 + j] = (char)((regs[3] >> (j * 8)) \& 0xFF);}
+\DoxyCodeLine{3352     \}}
+\DoxyCodeLine{3353     \textcolor{keywordflow}{for}(\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}} j = 0; j < 4; ++j)}
+\DoxyCodeLine{3354     \{}
+\DoxyCodeLine{3355         vendor\_str[20 + j] = (char)((regs[2] >> (j * 8)) \& 0xFF);}
+\DoxyCodeLine{3356     \}}
+\DoxyCodeLine{3357 }
+\DoxyCodeLine{3358     \mbox{\hyperlink{kernel__output_8h_a08a2838165fe9beb1f1ec1e41648ccab}{KERNEL\_INFO}}(vendor\_str);}
+\DoxyCodeLine{3359 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{3360 }
+\DoxyCodeLine{3361     \textcolor{comment}{/* Get CPUID features */}}
+\DoxyCodeLine{3362     \mbox{\hyperlink{i386_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}{\_cpu\_cpuid}}(\mbox{\hyperlink{i386_2src_2cpu_8c_a16d268ca8ae1c52522b46a0b7d6ed2e1}{CPUID\_GETFEATURES}}, (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)regs);}
+\DoxyCodeLine{3363 }
+\DoxyCodeLine{3364 \textcolor{preprocessor}{\#if KERNEL\_LOG\_LEVEL >= INFO\_LOG\_LEVEL }}
+\DoxyCodeLine{3365     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(output\_buff, 0, 512 * \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char}));}
+\DoxyCodeLine{3366     \mbox{\hyperlink{string_8h_abde7e7bf2ba3e1567f130fe7d8481319}{strncpy}}(output\_buff, \textcolor{stringliteral}{"{}CPU Features: "{}}, 14);}
+\DoxyCodeLine{3367     output\_buff\_index = 14;}
+\DoxyCodeLine{3368 }
+\DoxyCodeLine{3369     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aea40363130ccd9d4c7e89aa737f73928}{ECX\_SSE3}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aea40363130ccd9d4c7e89aa737f73928}{ECX\_SSE3}})}
+\DoxyCodeLine{3370     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE3 -\/ "{}}); \}}
+\DoxyCodeLine{3371     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a88006299e38c976b1eb1576f5f0508fe}{ECX\_PCLMULQDQ}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a88006299e38c976b1eb1576f5f0508fe}{ECX\_PCLMULQDQ}})}
+\DoxyCodeLine{3372     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PCLMULQDQ -\/ "{}}); \}}
+\DoxyCodeLine{3373     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a2f0e06cb94d0e0c3f2bab3f8c6d1863f}{ECX\_DTES64}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a2f0e06cb94d0e0c3f2bab3f8c6d1863f}{ECX\_DTES64}})}
+\DoxyCodeLine{3374     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DTES64 -\/ "{}}); \}}
+\DoxyCodeLine{3375     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a27146cfe684acf96c9817eff2d1d1027}{ECX\_MONITOR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a27146cfe684acf96c9817eff2d1d1027}{ECX\_MONITOR}})}
+\DoxyCodeLine{3376     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MONITOR -\/ "{}}); \}}
+\DoxyCodeLine{3377     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a99e3f2da1d8254e07b318ac9e707af19}{ECX\_DS\_CPL}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a99e3f2da1d8254e07b318ac9e707af19}{ECX\_DS\_CPL}})}
+\DoxyCodeLine{3378     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DS\_CPL -\/ "{}}); \}}
+\DoxyCodeLine{3379     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aed75bfda2658ce0abde52516068e8dec}{ECX\_VMX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aed75bfda2658ce0abde52516068e8dec}{ECX\_VMX}})}
+\DoxyCodeLine{3380     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}VMX -\/ "{}}); \}}
+\DoxyCodeLine{3381     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_afcb5019b5501e71a85eb19e50dc6937d}{ECX\_SMX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_afcb5019b5501e71a85eb19e50dc6937d}{ECX\_SMX}})}
+\DoxyCodeLine{3382     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SMX -\/ "{}}); \}}
+\DoxyCodeLine{3383     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a867c000609c5cab333cfe7fdec00da2d}{ECX\_EST}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a867c000609c5cab333cfe7fdec00da2d}{ECX\_EST}})}
+\DoxyCodeLine{3384     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}EST -\/ "{}}); \}}
+\DoxyCodeLine{3385     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ade524e9bdbe9bcbc9e5891520fd90bc8}{ECX\_TM2}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ade524e9bdbe9bcbc9e5891520fd90bc8}{ECX\_TM2}})}
+\DoxyCodeLine{3386     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TM2 -\/ "{}}); \}}
+\DoxyCodeLine{3387     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_adead9f0882ae71eaa184683013c29c09}{ECX\_SSSE3}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_adead9f0882ae71eaa184683013c29c09}{ECX\_SSSE3}})}
+\DoxyCodeLine{3388     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSSE3 -\/ "{}}); \}}
+\DoxyCodeLine{3389     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a7ce8b2a030b99c9b238d494aa758edb4}{ECX\_CNXT\_ID}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a7ce8b2a030b99c9b238d494aa758edb4}{ECX\_CNXT\_ID}})}
+\DoxyCodeLine{3390     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CNXT\_ID -\/ "{}}); \}}
+\DoxyCodeLine{3391     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac8670a3a65aa96e663591d9f277eaccd}{ECX\_FMA}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac8670a3a65aa96e663591d9f277eaccd}{ECX\_FMA}})}
+\DoxyCodeLine{3392     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FMA -\/ "{}}); \}}
+\DoxyCodeLine{3393     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a773e7f78a4a9bb86e99a27501c79f6fc}{ECX\_CX16}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a773e7f78a4a9bb86e99a27501c79f6fc}{ECX\_CX16}})}
+\DoxyCodeLine{3394     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CX16 -\/ "{}}); \}}
+\DoxyCodeLine{3395     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aa907c0beedeb79202076709d4bb09cac}{ECX\_XTPR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aa907c0beedeb79202076709d4bb09cac}{ECX\_XTPR}})}
+\DoxyCodeLine{3396     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}XTPR -\/ "{}}); \}}
+\DoxyCodeLine{3397     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aa87a6cf2cf7e0b63b2630873e46894db}{ECX\_PDCM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aa87a6cf2cf7e0b63b2630873e46894db}{ECX\_PDCM}})}
+\DoxyCodeLine{3398     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PDCM -\/ "{}}); \}}
+\DoxyCodeLine{3399     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a947bf94a2d4a994827fd10caeb2527e3}{ECX\_PCID}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a947bf94a2d4a994827fd10caeb2527e3}{ECX\_PCID}})}
+\DoxyCodeLine{3400     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PCID -\/ "{}}); \}}
+\DoxyCodeLine{3401     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aade9b84e1aa8231731065de50a865bb4}{ECX\_DCA}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aade9b84e1aa8231731065de50a865bb4}{ECX\_DCA}})}
+\DoxyCodeLine{3402     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DCA -\/ "{}}); \}}
+\DoxyCodeLine{3403     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a910c539f21ccd254628ade665ddfb1ab}{ECX\_SSE41}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a910c539f21ccd254628ade665ddfb1ab}{ECX\_SSE41}})}
+\DoxyCodeLine{3404     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE41 -\/ "{}}); \}}
+\DoxyCodeLine{3405     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a10db7841963e9f64b870ea960e27cd51}{ECX\_SSE42}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a10db7841963e9f64b870ea960e27cd51}{ECX\_SSE42}})}
+\DoxyCodeLine{3406     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE42 -\/ "{}}); \}}
+\DoxyCodeLine{3407     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8c5ff002801115c449bf38cd4abad370}{ECX\_X2APIC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8c5ff002801115c449bf38cd4abad370}{ECX\_X2APIC}})}
+\DoxyCodeLine{3408     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}X2APIC -\/ "{}}); \}}
+\DoxyCodeLine{3409     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a673d46b999e2039c8eab155deba2795b}{ECX\_MOVBE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a673d46b999e2039c8eab155deba2795b}{ECX\_MOVBE}})}
+\DoxyCodeLine{3410     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MOVBE -\/ "{}}); \}}
+\DoxyCodeLine{3411     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a9fa42d78070f22e934f5f3008c5aa49f}{ECX\_POPCNT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a9fa42d78070f22e934f5f3008c5aa49f}{ECX\_POPCNT}})}
+\DoxyCodeLine{3412     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}POPCNT -\/ "{}}); \}}
+\DoxyCodeLine{3413     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_abea85010fe030520df7caa50eb1713b0}{ECX\_TSC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_abea85010fe030520df7caa50eb1713b0}{ECX\_TSC}})}
+\DoxyCodeLine{3414     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TSC -\/ "{}}); \}}
+\DoxyCodeLine{3415     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a392a5490e1de75744ac9e15b2b1e2f10}{ECX\_AESNI}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a392a5490e1de75744ac9e15b2b1e2f10}{ECX\_AESNI}})}
+\DoxyCodeLine{3416     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}AESNI -\/ "{}}); \}}
+\DoxyCodeLine{3417     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac8bb9abac5611dd05d00482be7c9e808}{ECX\_XSAVE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac8bb9abac5611dd05d00482be7c9e808}{ECX\_XSAVE}})}
+\DoxyCodeLine{3418     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}XSAVE -\/ "{}}); \}}
+\DoxyCodeLine{3419     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_abb62a3cd9d14bbad65660cb66fd42d81}{ECX\_OSXSAVE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_abb62a3cd9d14bbad65660cb66fd42d81}{ECX\_OSXSAVE}})}
+\DoxyCodeLine{3420     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}OSXSAVE -\/ "{}}); \}}
+\DoxyCodeLine{3421     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a9dd4cf8905dae4fd3e5a8fbeec714a78}{ECX\_AVX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a9dd4cf8905dae4fd3e5a8fbeec714a78}{ECX\_AVX}})}
+\DoxyCodeLine{3422     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}AVX -\/ "{}}); \}}
+\DoxyCodeLine{3423     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a493b67200dada6ff6748e64fc59b51ea}{ECX\_F16C}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a493b67200dada6ff6748e64fc59b51ea}{ECX\_F16C}})}
+\DoxyCodeLine{3424     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}F16C -\/ "{}}); \}}
+\DoxyCodeLine{3425     \textcolor{keywordflow}{if}((regs[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a43ed2edda144fb065a33af72cb74708d}{ECX\_RDRAND}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a43ed2edda144fb065a33af72cb74708d}{ECX\_RDRAND}})}
+\DoxyCodeLine{3426     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}RDRAND -\/ "{}}); \}}
+\DoxyCodeLine{3427     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8b0ef1551723fe0271392495d155f9ed}{EDX\_FPU}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8b0ef1551723fe0271392495d155f9ed}{EDX\_FPU}})}
+\DoxyCodeLine{3428     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FPU -\/ "{}}); \}}
+\DoxyCodeLine{3429     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ae09b05a6f9ea9cd8491705aa5a24a6fa}{EDX\_VME}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ae09b05a6f9ea9cd8491705aa5a24a6fa}{EDX\_VME}})}
+\DoxyCodeLine{3430     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}VME -\/ "{}}); \}}
+\DoxyCodeLine{3431     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a3ffb4c68958b1a27682f3e86cb8756dc}{EDX\_DE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a3ffb4c68958b1a27682f3e86cb8756dc}{EDX\_DE}})}
+\DoxyCodeLine{3432     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DE -\/ "{}}); \}}
+\DoxyCodeLine{3433     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a788411e5452e502dc20fcacdf4799ccb}{EDX\_PSE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a788411e5452e502dc20fcacdf4799ccb}{EDX\_PSE}})}
+\DoxyCodeLine{3434     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PSE -\/ "{}}); \}}
+\DoxyCodeLine{3435     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ab6ab73c8dc4cf7f6d6b24800d7991f3a}{EDX\_TSC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ab6ab73c8dc4cf7f6d6b24800d7991f3a}{EDX\_TSC}})}
+\DoxyCodeLine{3436     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TSC -\/ "{}}); \}}
+\DoxyCodeLine{3437     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aea31f6d48e27d721488c9237dc82a8ec}{EDX\_MSR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aea31f6d48e27d721488c9237dc82a8ec}{EDX\_MSR}})}
+\DoxyCodeLine{3438     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MSR -\/ "{}}); \}}
+\DoxyCodeLine{3439     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aeef18667596f1d5f295ba641b84aea16}{EDX\_PAE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aeef18667596f1d5f295ba641b84aea16}{EDX\_PAE}})}
+\DoxyCodeLine{3440     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PAE -\/ "{}}); \}}
+\DoxyCodeLine{3441     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ab3ec694ce4542e0458eaaf2769b44537}{EDX\_MCE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ab3ec694ce4542e0458eaaf2769b44537}{EDX\_MCE}})}
+\DoxyCodeLine{3442     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MCE -\/ "{}}); \}}
+\DoxyCodeLine{3443     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aad35b13967c9a0ab20179509fcd19ae1}{EDX\_CX8}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aad35b13967c9a0ab20179509fcd19ae1}{EDX\_CX8}})}
+\DoxyCodeLine{3444     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CX8 -\/ "{}}); \}}
+\DoxyCodeLine{3445     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ad8410aec38ee96c662f35fba3c5ef16b}{EDX\_APIC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ad8410aec38ee96c662f35fba3c5ef16b}{EDX\_APIC}})}
+\DoxyCodeLine{3446     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}APIC -\/ "{}}); \}}
+\DoxyCodeLine{3447     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a540c4fc3352a42253fe3c942f118306e}{EDX\_SEP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a540c4fc3352a42253fe3c942f118306e}{EDX\_SEP}})}
+\DoxyCodeLine{3448     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SEP -\/ "{}}); \}}
+\DoxyCodeLine{3449     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a5b0e55fb245f2e2de587822d934d71d5}{EDX\_MTRR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a5b0e55fb245f2e2de587822d934d71d5}{EDX\_MTRR}})}
+\DoxyCodeLine{3450     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MTRR -\/ "{}}); \}}
+\DoxyCodeLine{3451     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a73d42efffc1c0de0fc011d5a8c905e84}{EDX\_PGE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a73d42efffc1c0de0fc011d5a8c905e84}{EDX\_PGE}})}
+\DoxyCodeLine{3452     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PGE -\/ "{}}); \}}
+\DoxyCodeLine{3453     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a2c09c3f6eefb2a1ebea5a9d504b48ae2}{EDX\_MCA}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a2c09c3f6eefb2a1ebea5a9d504b48ae2}{EDX\_MCA}})}
+\DoxyCodeLine{3454     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MCA -\/ "{}}); \}}
+\DoxyCodeLine{3455     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a12c3d2ed0a9654f54765a9e7460da598}{EDX\_CMOV}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a12c3d2ed0a9654f54765a9e7460da598}{EDX\_CMOV}})}
+\DoxyCodeLine{3456     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CMOV -\/ "{}}); \}}
+\DoxyCodeLine{3457     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac5144147c0a6a325b093e7085f65bceb}{EDX\_PAT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac5144147c0a6a325b093e7085f65bceb}{EDX\_PAT}})}
+\DoxyCodeLine{3458     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PAT -\/ "{}}); \}}
+\DoxyCodeLine{3459     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a95daa6db40e5e4ead4580d776415f239}{EDX\_PSE36}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a95daa6db40e5e4ead4580d776415f239}{EDX\_PSE36}})}
+\DoxyCodeLine{3460     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PSE36 -\/ "{}}); \}}
+\DoxyCodeLine{3461     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a2cad8344c1fde4647d3296482da57a1a}{EDX\_PSN}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a2cad8344c1fde4647d3296482da57a1a}{EDX\_PSN}})}
+\DoxyCodeLine{3462     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PSN -\/ "{}}); \}}
+\DoxyCodeLine{3463     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a6273a34177b8c2eb9f5c77a15d1bd42f}{EDX\_CLFLUSH}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a6273a34177b8c2eb9f5c77a15d1bd42f}{EDX\_CLFLUSH}})}
+\DoxyCodeLine{3464     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CLFLUSH -\/ "{}}); \}}
+\DoxyCodeLine{3465     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a4a6797d78f8ff5e2faed04e3fdd49d66}{EDX\_DS}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a4a6797d78f8ff5e2faed04e3fdd49d66}{EDX\_DS}})}
+\DoxyCodeLine{3466     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DS -\/ "{}}); \}}
+\DoxyCodeLine{3467     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a5e42f48d8327853ac9946239b5078f19}{EDX\_ACPI}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a5e42f48d8327853ac9946239b5078f19}{EDX\_ACPI}})}
+\DoxyCodeLine{3468     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}ACPI -\/ "{}}); \}}
+\DoxyCodeLine{3469     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a3a3ef54ca6bc42f3e4815c5c10b66e41}{EDX\_MMX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a3a3ef54ca6bc42f3e4815c5c10b66e41}{EDX\_MMX}})}
+\DoxyCodeLine{3470     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MMX -\/ "{}}); \}}
+\DoxyCodeLine{3471     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}})}
+\DoxyCodeLine{3472     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FXSR -\/ "{}}); \}}
+\DoxyCodeLine{3473     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a1556ce3fb2d89acf7980d369f7ab7d89}{EDX\_SSE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a1556ce3fb2d89acf7980d369f7ab7d89}{EDX\_SSE}})}
+\DoxyCodeLine{3474     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE -\/ "{}}); \}}
+\DoxyCodeLine{3475     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a2c4a6c8eacee56abaf7f7010ae619a4b}{EDX\_SSE2}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a2c4a6c8eacee56abaf7f7010ae619a4b}{EDX\_SSE2}})}
+\DoxyCodeLine{3476     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE2 -\/ "{}}); \}}
+\DoxyCodeLine{3477     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_adfaf379e276c5129dda2cab7e70846ef}{EDX\_SS}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_adfaf379e276c5129dda2cab7e70846ef}{EDX\_SS}})}
+\DoxyCodeLine{3478     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SS -\/ "{}}); \}}
+\DoxyCodeLine{3479     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a36c3ca3dc06f341d7b115d20e0764eb2}{EDX\_HTT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a36c3ca3dc06f341d7b115d20e0764eb2}{EDX\_HTT}})}
+\DoxyCodeLine{3480     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}HTT -\/ "{}}); \}}
+\DoxyCodeLine{3481     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a89de2f3104e154abe2d289115ef60826}{EDX\_TM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a89de2f3104e154abe2d289115ef60826}{EDX\_TM}})}
+\DoxyCodeLine{3482     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TM -\/ "{}}); \}}
+\DoxyCodeLine{3483     \textcolor{keywordflow}{if}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ab25d114021d91efd3861dd1edab22b00}{EDX\_PBE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ab25d114021d91efd3861dd1edab22b00}{EDX\_PBE}})}
+\DoxyCodeLine{3484     \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PBE -\/ "{}}); \}}
+\DoxyCodeLine{3485 }
+\DoxyCodeLine{3486     \textcolor{comment}{/* Check for extended features */}}
+\DoxyCodeLine{3487     \mbox{\hyperlink{i386_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}{\_cpu\_cpuid}}(\mbox{\hyperlink{i386_2src_2cpu_8c_ab9350815e3a1a25336a295b16bc645a6}{CPUID\_INTELEXTENDED\_AVAILABLE}}, (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)regs\_ext);}
+\DoxyCodeLine{3488     \textcolor{keywordflow}{if}((\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})regs\_ext[0] >= (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})\mbox{\hyperlink{i386_2src_2cpu_8c_af7dbe270eb49534d54d2a002bdba82f8}{CPUID\_INTELFEATURES}})}
+\DoxyCodeLine{3489     \{}
+\DoxyCodeLine{3490         \mbox{\hyperlink{i386_2includes_2cpu_8h_a778401c5a46d7aed9552daa4a4ef591f}{\_cpu\_cpuid}}(\mbox{\hyperlink{i386_2src_2cpu_8c_af7dbe270eb49534d54d2a002bdba82f8}{CPUID\_INTELFEATURES}}, (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}*)regs\_ext);}
+\DoxyCodeLine{3491 }
+\DoxyCodeLine{3492         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a818a32e2d1996dd7c79ae06d3aa4c6b6}{EDX\_SYSCALL}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a818a32e2d1996dd7c79ae06d3aa4c6b6}{EDX\_SYSCALL}})}
+\DoxyCodeLine{3493         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SYSCALL -\/ "{}}); \}}
+\DoxyCodeLine{3494         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac67fcad41aa64234f4334e88f4969b80}{EDX\_MP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac67fcad41aa64234f4334e88f4969b80}{EDX\_MP}})}
+\DoxyCodeLine{3495         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MP -\/ "{}}); \}}
+\DoxyCodeLine{3496         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a6f8e81fc64a30bc76f7b477629d130cf}{EDX\_XD}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a6f8e81fc64a30bc76f7b477629d130cf}{EDX\_XD}})}
+\DoxyCodeLine{3497         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}XD -\/ "{}}); \}}
+\DoxyCodeLine{3498         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a37965cbef81b0839cca627550f3e915a}{EDX\_MMX\_EX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a37965cbef81b0839cca627550f3e915a}{EDX\_MMX\_EX}})}
+\DoxyCodeLine{3499         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MMX\_EX -\/ "{}}); \}}
+\DoxyCodeLine{3500         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}})}
+\DoxyCodeLine{3501         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FXSR -\/ "{}}); \}}
+\DoxyCodeLine{3502         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a86d4a58038067bae396c64c68721f180}{EDX\_FXSR\_OPT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a86d4a58038067bae396c64c68721f180}{EDX\_FXSR\_OPT}})}
+\DoxyCodeLine{3503         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FXSR\_OPT -\/ "{}}); \}}
+\DoxyCodeLine{3504         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ade94ed02d5475ab6008229944b594dd0}{EDX\_1GB\_PAGE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ade94ed02d5475ab6008229944b594dd0}{EDX\_1GB\_PAGE}})}
+\DoxyCodeLine{3505         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}1GB\_PAGE -\/ "{}}); \}}
+\DoxyCodeLine{3506         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a0cb3f8b38750485ac9715dcfbc407b9b}{EDX\_RDTSCP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a0cb3f8b38750485ac9715dcfbc407b9b}{EDX\_RDTSCP}})}
+\DoxyCodeLine{3507         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}RDTSCP -\/ "{}}); \}}
+\DoxyCodeLine{3508         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a6fad8a7de471fcd3e77bdecdff29985b}{EDX\_64\_BIT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a6fad8a7de471fcd3e77bdecdff29985b}{EDX\_64\_BIT}})}
+\DoxyCodeLine{3509         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}X64 -\/ "{}}); \}}
+\DoxyCodeLine{3510         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aa740ebf87f3be11e1cce78672a279e04}{EDX\_3DNOW\_EX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aa740ebf87f3be11e1cce78672a279e04}{EDX\_3DNOW\_EX}})}
+\DoxyCodeLine{3511         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}3DNOW\_EX -\/ "{}}); \}}
+\DoxyCodeLine{3512         \textcolor{keywordflow}{if}((regs\_ext[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac88d2bc3afe53843e177f2d77e914c9f}{EDX\_3DNOW}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac88d2bc3afe53843e177f2d77e914c9f}{EDX\_3DNOW}})}
+\DoxyCodeLine{3513         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}3DNOW -\/ "{}}); \}}
+\DoxyCodeLine{3514         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_afd78513cdfb8208f03af6d1966a5868c}{ECX\_LAHF\_LM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_afd78513cdfb8208f03af6d1966a5868c}{ECX\_LAHF\_LM}})}
+\DoxyCodeLine{3515         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}LAHF\_LM -\/ "{}}); \}}
+\DoxyCodeLine{3516         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a64d0f0380321c1bd8404fc6eb00d6f4b}{ECX\_CMP\_LEG}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a64d0f0380321c1bd8404fc6eb00d6f4b}{ECX\_CMP\_LEG}})}
+\DoxyCodeLine{3517         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CMP\_LEG -\/ "{}}); \}}
+\DoxyCodeLine{3518         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aa64685097d9313701e3ea9315c883fa1}{ECX\_SVM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aa64685097d9313701e3ea9315c883fa1}{ECX\_SVM}})}
+\DoxyCodeLine{3519         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SVM -\/ "{}}); \}}
+\DoxyCodeLine{3520         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aad7afa23878cf3fb18e3a29cf4124bef}{ECX\_EXTAPIC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aad7afa23878cf3fb18e3a29cf4124bef}{ECX\_EXTAPIC}})}
+\DoxyCodeLine{3521         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}EXTAPIC -\/ "{}}); \}}
+\DoxyCodeLine{3522         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_afe20e0bff9821f88121b6ecec6629659}{ECX\_CR8\_LEG}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_afe20e0bff9821f88121b6ecec6629659}{ECX\_CR8\_LEG}})}
+\DoxyCodeLine{3523         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}CR8\_LEG -\/ "{}}); \}}
+\DoxyCodeLine{3524         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ae112cb26aa6e69501f90fcbb6d431aed}{ECX\_ABM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ae112cb26aa6e69501f90fcbb6d431aed}{ECX\_ABM}})}
+\DoxyCodeLine{3525         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}ABM -\/ "{}}); \}}
+\DoxyCodeLine{3526         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ae7c287071ff137da9c1152c2d47a2a31}{ECX\_SSE4A}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ae7c287071ff137da9c1152c2d47a2a31}{ECX\_SSE4A}})}
+\DoxyCodeLine{3527         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SSE4A -\/ "{}}); \}}
+\DoxyCodeLine{3528         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_afe1d94d9dd25f0fee610e6d7970a7656}{ECX\_MISASSE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_afe1d94d9dd25f0fee610e6d7970a7656}{ECX\_MISASSE}})}
+\DoxyCodeLine{3529         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}MISALIGNED\_SSE -\/ "{}}); \}}
+\DoxyCodeLine{3530         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac88914d67b400d2917986302dca76f15}{ECX\_PREFETCH}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac88914d67b400d2917986302dca76f15}{ECX\_PREFETCH}})}
+\DoxyCodeLine{3531         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PREFETCH -\/ "{}}); \}}
+\DoxyCodeLine{3532         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a0682948e99dfc7ac16c1be343f050dfb}{ECX\_OSVW}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a0682948e99dfc7ac16c1be343f050dfb}{ECX\_OSVW}})}
+\DoxyCodeLine{3533         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}OSVW -\/ "{}}); \}}
+\DoxyCodeLine{3534         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aec3f6bb666b0a59863dde12aba9d2cbb}{ECX\_IBS}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aec3f6bb666b0a59863dde12aba9d2cbb}{ECX\_IBS}})}
+\DoxyCodeLine{3535         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}IBS -\/ "{}}); \}}
+\DoxyCodeLine{3536         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_affbd63acb3a4e62e3a5d3bfefafc3acd}{ECX\_XOP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_affbd63acb3a4e62e3a5d3bfefafc3acd}{ECX\_XOP}})}
+\DoxyCodeLine{3537         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}XOP -\/ "{}}); \}}
+\DoxyCodeLine{3538         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ac80f45a29445fe52f7f56ab17d0a6e05}{ECX\_SKINIT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ac80f45a29445fe52f7f56ab17d0a6e05}{ECX\_SKINIT}})}
+\DoxyCodeLine{3539         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}SKINIT -\/ "{}}); \}}
+\DoxyCodeLine{3540         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a110448e0f526d5d87a62901eb08fd2e5}{ECX\_WDT}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a110448e0f526d5d87a62901eb08fd2e5}{ECX\_WDT}})}
+\DoxyCodeLine{3541         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}WDT -\/ "{}}); \}}
+\DoxyCodeLine{3542         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a59166c54bc0d83ba62ff288997e98c2c}{ECX\_LWP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a59166c54bc0d83ba62ff288997e98c2c}{ECX\_LWP}})}
+\DoxyCodeLine{3543         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}LWP -\/ "{}}); \}}
+\DoxyCodeLine{3544         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ab98bea9dde0e743d99d08e6a9a1b2077}{ECX\_FMA4}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ab98bea9dde0e743d99d08e6a9a1b2077}{ECX\_FMA4}})}
+\DoxyCodeLine{3545         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}FMA4 -\/ "{}}); \}}
+\DoxyCodeLine{3546         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a260666eada63753955ccba433dc821de}{ECX\_TCE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a260666eada63753955ccba433dc821de}{ECX\_TCE}})}
+\DoxyCodeLine{3547         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TCE -\/ "{}}); \}}
+\DoxyCodeLine{3548         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a90a14d2461c11d0e6fcbda00bb1d316f}{ECX\_NODEIDMSR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a90a14d2461c11d0e6fcbda00bb1d316f}{ECX\_NODEIDMSR}})}
+\DoxyCodeLine{3549         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}NODE\_ID\_MSR -\/ "{}}); \}}
+\DoxyCodeLine{3550         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_abab0367bb80c194328b334dd8f586dff}{ECX\_TBM}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_abab0367bb80c194328b334dd8f586dff}{ECX\_TBM}})}
+\DoxyCodeLine{3551         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TMB -\/ "{}}); \}}
+\DoxyCodeLine{3552         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aa8393fbfd1b0fec5c608aea0d2fbd7a0}{ECX\_TOPOEX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aa8393fbfd1b0fec5c608aea0d2fbd7a0}{ECX\_TOPOEX}})}
+\DoxyCodeLine{3553         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TOPOEX -\/ "{}}); \}}
+\DoxyCodeLine{3554         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ae20ed5e0901e8ea672ebdcdc211b36e2}{ECX\_PERF\_CORE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ae20ed5e0901e8ea672ebdcdc211b36e2}{ECX\_PERF\_CORE}})}
+\DoxyCodeLine{3555         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PERF\_CORE -\/ "{}}); \}}
+\DoxyCodeLine{3556         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_afce5fefc432c2bca3bfef484b9b88c62}{ECX\_PERF\_NB}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_afce5fefc432c2bca3bfef484b9b88c62}{ECX\_PERF\_NB}})}
+\DoxyCodeLine{3557         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PERF\_NB -\/ "{}}); \}}
+\DoxyCodeLine{3558         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a78e09f4feac654e6d81ea4bf44030ea7}{ECX\_DBX}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a78e09f4feac654e6d81ea4bf44030ea7}{ECX\_DBX}})}
+\DoxyCodeLine{3559         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}DBX -\/ "{}}); \}}
+\DoxyCodeLine{3560         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_aef2a68ea07c5eddf14ec82a0d9297aaf}{ECX\_PERF\_TSC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_aef2a68ea07c5eddf14ec82a0d9297aaf}{ECX\_PERF\_TSC}})}
+\DoxyCodeLine{3561         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}TSC -\/ "{}}); \}}
+\DoxyCodeLine{3562         \textcolor{keywordflow}{if}((regs\_ext[2] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a19196c54d382f2f222af82f2e9340837}{ECX\_PCX\_L2I}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a19196c54d382f2f222af82f2e9340837}{ECX\_PCX\_L2I}})}
+\DoxyCodeLine{3563         \{ \mbox{\hyperlink{i386_2src_2cpu_8c_a20e1a1f3f52cc3a8ef8d9d76b2216d18}{CONCAT\_STR}}(output\_buff, output\_buff\_index, \textcolor{stringliteral}{"{}PCX\_L2I -\/ "{}}); \}}
+\DoxyCodeLine{3564     \}}
+\DoxyCodeLine{3565 }
+\DoxyCodeLine{3566     output\_buff[output\_buff\_index -\/ 2] = \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{3567     output\_buff[output\_buff\_index -\/ 1] = 0;}
+\DoxyCodeLine{3568     \mbox{\hyperlink{kernel__output_8h_a08a2838165fe9beb1f1ec1e41648ccab}{KERNEL\_INFO}}(output\_buff);}
+\DoxyCodeLine{3569 \textcolor{preprocessor}{\#else }}
+\DoxyCodeLine{3570     (void)regs\_ext;}
+\DoxyCodeLine{3571 \textcolor{preprocessor}{\#endif }}
+\DoxyCodeLine{3572 }
+\DoxyCodeLine{3573     \textcolor{comment}{/* Validate features */}}
+\DoxyCodeLine{3574     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a540c4fc3352a42253fe3c942f118306e}{EDX\_SEP}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a540c4fc3352a42253fe3c942f118306e}{EDX\_SEP}},}
+\DoxyCodeLine{3575                \textcolor{stringliteral}{"{}CPU does not support SYSENTER"{}},}
+\DoxyCodeLine{3576                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3577     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8b0ef1551723fe0271392495d155f9ed}{EDX\_FPU}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8b0ef1551723fe0271392495d155f9ed}{EDX\_FPU}},}
+\DoxyCodeLine{3578                \textcolor{stringliteral}{"{}CPU does not support FPU"{}},}
+\DoxyCodeLine{3579                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3580     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ab6ab73c8dc4cf7f6d6b24800d7991f3a}{EDX\_TSC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ab6ab73c8dc4cf7f6d6b24800d7991f3a}{EDX\_TSC}},}
+\DoxyCodeLine{3581                \textcolor{stringliteral}{"{}CPU does not support TSC"{}},}
+\DoxyCodeLine{3582                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3583     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_ad8410aec38ee96c662f35fba3c5ef16b}{EDX\_APIC}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_ad8410aec38ee96c662f35fba3c5ef16b}{EDX\_APIC}},}
+\DoxyCodeLine{3584                \textcolor{stringliteral}{"{}CPU does not support APIC"{}},}
+\DoxyCodeLine{3585                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3586     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a8153a684e9964ae00247a4ca5fd2a22e}{EDX\_FXSR}},}
+\DoxyCodeLine{3587                \textcolor{stringliteral}{"{}CPU does not support FX instructions"{}},}
+\DoxyCodeLine{3588                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3589     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a1556ce3fb2d89acf7980d369f7ab7d89}{EDX\_SSE}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a1556ce3fb2d89acf7980d369f7ab7d89}{EDX\_SSE}},}
+\DoxyCodeLine{3590                \textcolor{stringliteral}{"{}CPU does not support SSE"{}},}
+\DoxyCodeLine{3591                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3592     \mbox{\hyperlink{i386_2src_2cpu_8c_ac6dc48072530ac72a9cbf6485259a210}{CPU\_ASSERT}}((regs[3] \& \mbox{\hyperlink{i386_2src_2cpu_8c_a2c4a6c8eacee56abaf7f7010ae619a4b}{EDX\_SSE2}}) == \mbox{\hyperlink{i386_2src_2cpu_8c_a2c4a6c8eacee56abaf7f7010ae619a4b}{EDX\_SSE2}},}
+\DoxyCodeLine{3593                \textcolor{stringliteral}{"{}CPU does not support SSE2"{}},}
+\DoxyCodeLine{3594                \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0af34805d4cac0b0b395690b9c4e67b275}{OS\_ERR\_NOT\_SUPPORTED}});}
+\DoxyCodeLine{3595 }
+\DoxyCodeLine{3596     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_VALIDATE\_ARCH\_END, 0);}
+\DoxyCodeLine{3597 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{x86__64_2includes_2cpu_8h_a226d3ffd0bd73a0b2f318f3408fdd652_cgraph}
+\end{center}
+\end{figure}

@@ -1,0 +1,611 @@
+\hypertarget{kqueue_8h}{}\doxysection{Source/\+Kernel/\+Core/includes/kqueue.h File Reference}
+\label{kqueue_8h}\index{Source/Kernel/Core/includes/kqueue.h@{Source/Kernel/Core/includes/kqueue.h}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+Include dependency graph for kqueue.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=262pt]{kqueue_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=189pt]{kqueue_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}}
+\begin{DoxyCompactList}\small\item\em Queue node structure. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Queue structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}} \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Queue node structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{kqueue_8h_aa6eb0751346f9589b7ef6c2bd338d422}{kqueue\+\_\+create\+\_\+node}} (void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Creates a new queue node. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kqueue_8h_adb79dcf108f575715ac616ded8045aed}{kqueue\+\_\+delete\+\_\+node}} (\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$$\ast$node)
+\begin{DoxyCompactList}\small\item\em Deletes a queue node. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$ \mbox{\hyperlink{kqueue_8h_a1043b432fda620e37b0f915142cdc75c}{kqueue\+\_\+create\+\_\+queue}} (void)
+\begin{DoxyCompactList}\small\item\em Creates an empty queue ready to be used. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kqueue_8h_ada3593181a150730b46ae63f781329f9}{kqueue\+\_\+delete\+\_\+queue}} (\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$$\ast$queue)
+\begin{DoxyCompactList}\small\item\em Deletes a previously created queue. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kqueue_8h_a27b2b0809ad35ba4dfa56ba30cc370a8}{kqueue\+\_\+push}} (\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$node, \mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$queue)
+\begin{DoxyCompactList}\small\item\em Enlists a node in the queue. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kqueue_8h_a2e54996aee515531bc1cb48efaa668ca}{kqueue\+\_\+push\+\_\+prio}} (\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$node, \mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$queue, const uintptr\+\_\+t priority)
+\begin{DoxyCompactList}\small\item\em Enlists a node in the queue. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{kqueue_8h_ad74bd712320e37f73fea5231f201bc93}{kqueue\+\_\+pop}} (\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$queue)
+\begin{DoxyCompactList}\small\item\em Removes a node from a queue. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$ \mbox{\hyperlink{kqueue_8h_a553289d748b611edc07c25874c7cef2a}{kqueue\+\_\+find}} (\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$queue, void $\ast$data)
+\begin{DoxyCompactList}\small\item\em Finds a node containing the data given as parameter in the queue. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kqueue_8h_aa3704a543f000073b484939004ee8eb8}{kqueue\+\_\+remove}} (\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$queue, \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$node, const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} panic)
+\begin{DoxyCompactList}\small\item\em Removes a node from a queue. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{kqueue_8h_a1145be1d357749d29fc82a9010b54259}\label{kqueue_8h_a1145be1d357749d29fc82a9010b54259}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_node\_t@{kqueue\_node\_t}}
+\index{kqueue\_node\_t@{kqueue\_node\_t}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_node\_t}{kqueue\_node\_t}}
+{\footnotesize\ttfamily typedef struct \mbox{\hyperlink{structkqueue__node}{kqueue\+\_\+node}} \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}}}
+
+
+
+Queue node structure. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{kqueue_8h_aa6eb0751346f9589b7ef6c2bd338d422}\label{kqueue_8h_aa6eb0751346f9589b7ef6c2bd338d422}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_create\_node@{kqueue\_create\_node}}
+\index{kqueue\_create\_node@{kqueue\_create\_node}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_create\_node()}{kqueue\_create\_node()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}}$\ast$ kqueue\+\_\+create\+\_\+node (\begin{DoxyParamCaption}\item[{void $\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Creates a new queue node. 
+
+Creates a node ready to be inserted in a queue. The data can be modified later by accessing the data field of the node structure.
+
+\begin{DoxyWarning}{Warning}
+A node should be only used in one queue at most.
+\end{DoxyWarning}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em data} & The pointer to the data to carry in the node.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The node pointer is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 103 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{104 \{}
+\DoxyCodeLine{105     \mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}* new\_node;}
+\DoxyCodeLine{106 }
+\DoxyCodeLine{107     \textcolor{comment}{/* Create new node */}}
+\DoxyCodeLine{108     new\_node = \mbox{\hyperlink{kheap_8h_a8279359d679aa29118d8f0b09e581947}{kmalloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}));}
+\DoxyCodeLine{109     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}(new\_node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}, \textcolor{stringliteral}{"{}Could not allocate knode"{}}, \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}});}
+\DoxyCodeLine{110 }
+\DoxyCodeLine{111 }
+\DoxyCodeLine{112     \textcolor{comment}{/* Init the structure */}}
+\DoxyCodeLine{113     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(new\_node, 0, \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}));}
+\DoxyCodeLine{114     new\_node-\/>\mbox{\hyperlink{structkqueue__node_a735984d41155bc1032e09bece8f8d66d}{data}} = data;}
+\DoxyCodeLine{115 }
+\DoxyCodeLine{116     \textcolor{keywordflow}{return} new\_node;}
+\DoxyCodeLine{117 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kqueue_8h_aa6eb0751346f9589b7ef6c2bd338d422_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kqueue_8h_a1043b432fda620e37b0f915142cdc75c}\label{kqueue_8h_a1043b432fda620e37b0f915142cdc75c}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_create\_queue@{kqueue\_create\_queue}}
+\index{kqueue\_create\_queue@{kqueue\_create\_queue}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_create\_queue()}{kqueue\_create\_queue()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}}$\ast$ kqueue\+\_\+create\+\_\+queue (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Creates an empty queue ready to be used. 
+
+Creates and initializes a new queue. The returned queue is ready to be used. 
+
+Definition at line 133 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{134 \{}
+\DoxyCodeLine{135     \mbox{\hyperlink{structkqueue__t}{kqueue\_t}}* new\_queue;}
+\DoxyCodeLine{136 }
+\DoxyCodeLine{137     \textcolor{comment}{/* Create new node */}}
+\DoxyCodeLine{138     new\_queue = \mbox{\hyperlink{kheap_8h_a8279359d679aa29118d8f0b09e581947}{kmalloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structkqueue__t}{kqueue\_t}}));}
+\DoxyCodeLine{139     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}(new\_queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{140                   \textcolor{stringliteral}{"{}Could not allocate kqueue"{}},}
+\DoxyCodeLine{141                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a34cb628cf78c31b09268e0f874cd9385}{OS\_ERR\_NO\_MORE\_MEMORY}});}
+\DoxyCodeLine{142 }
+\DoxyCodeLine{143     \textcolor{comment}{/* Init the structure */}}
+\DoxyCodeLine{144     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(new\_queue, 0, \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structkqueue__t}{kqueue\_t}}));}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{146     \textcolor{keywordflow}{return} new\_queue;}
+\DoxyCodeLine{147 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kqueue_8h_a1043b432fda620e37b0f915142cdc75c_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kqueue_8h_adb79dcf108f575715ac616ded8045aed}\label{kqueue_8h_adb79dcf108f575715ac616ded8045aed}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_delete\_node@{kqueue\_delete\_node}}
+\index{kqueue\_delete\_node@{kqueue\_delete\_node}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_delete\_node()}{kqueue\_delete\_node()}}
+{\footnotesize\ttfamily void kqueue\+\_\+delete\+\_\+node (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$$\ast$}]{node }\end{DoxyParamCaption})}
+
+
+
+Deletes a queue node. 
+
+Deletes a node from the memory. The node should not be used in any queue. If it is the case, the function will return an error.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em node} & The node pointer of pointer to destroy. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 119 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{120 \{}
+\DoxyCodeLine{121     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& *node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{122                   \textcolor{stringliteral}{"{}Tried to delete a NULL node"{}},}
+\DoxyCodeLine{123                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{124 }
+\DoxyCodeLine{125     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((*node)-\/>enlisted == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}},}
+\DoxyCodeLine{126                   \textcolor{stringliteral}{"{}Tried to delete an enlisted node"{}},}
+\DoxyCodeLine{127                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a}{OS\_ERR\_UNAUTHORIZED\_ACTION}});}
+\DoxyCodeLine{128 }
+\DoxyCodeLine{129     \mbox{\hyperlink{kheap_8h_a069f85a5001d71bc44d8be6532a4e432}{kfree}}(*node);}
+\DoxyCodeLine{130     *node = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{131 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kqueue_8h_adb79dcf108f575715ac616ded8045aed_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kqueue_8h_ada3593181a150730b46ae63f781329f9}\label{kqueue_8h_ada3593181a150730b46ae63f781329f9}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_delete\_queue@{kqueue\_delete\_queue}}
+\index{kqueue\_delete\_queue@{kqueue\_delete\_queue}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_delete\_queue()}{kqueue\_delete\_queue()}}
+{\footnotesize\ttfamily void kqueue\+\_\+delete\+\_\+queue (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$$\ast$}]{queue }\end{DoxyParamCaption})}
+
+
+
+Deletes a previously created queue. 
+
+Delete a queue from the memory. If the queue is not empty an error is returned.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em queue} & The queue pointer of pointer to destroy. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 149 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{150 \{}
+\DoxyCodeLine{151     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& *queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{152                   \textcolor{stringliteral}{"{}Tried to delete a NULL queue"{}},}
+\DoxyCodeLine{153                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{154 }
+\DoxyCodeLine{155     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}(((*queue)-\/>head == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& (*queue)-\/>tail == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{156                   \textcolor{stringliteral}{"{}Tried to delete a non empty queue"{}},}
+\DoxyCodeLine{157                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0aa36717e006e71ac3f5eee56c69bff79a}{OS\_ERR\_UNAUTHORIZED\_ACTION}});}
+\DoxyCodeLine{158 }
+\DoxyCodeLine{159     \mbox{\hyperlink{kheap_8h_a069f85a5001d71bc44d8be6532a4e432}{kfree}}(*queue);}
+\DoxyCodeLine{160     *queue = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{161 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kqueue_8h_ada3593181a150730b46ae63f781329f9_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kqueue_8h_a553289d748b611edc07c25874c7cef2a}\label{kqueue_8h_a553289d748b611edc07c25874c7cef2a}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_find@{kqueue\_find}}
+\index{kqueue\_find@{kqueue\_find}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_find()}{kqueue\_find()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}}$\ast$ kqueue\+\_\+find (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$}]{queue,  }\item[{void $\ast$}]{data }\end{DoxyParamCaption})}
+
+
+
+Finds a node containing the data given as parameter in the queue. 
+
+Find a node containing the data given as parameter in the queue. An error is set if not any node is found.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em queue} & The queue to search the data in. \\
+\hline
+\mbox{\texttt{ in}}  & {\em data} & The data contained by the node to find.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The function returns a pointer to the node if found, NULL otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 315 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{316 \{}
+\DoxyCodeLine{317     \mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}* node;}
+\DoxyCodeLine{318 }
+\DoxyCodeLine{319     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{320                  \textcolor{stringliteral}{"{}KQueue try find data 0x\%p from kqueue 0x\%p"{}}, data, queue);}
+\DoxyCodeLine{321 }
+\DoxyCodeLine{322     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}(queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{323                   \textcolor{stringliteral}{"{}Cannot find in NULL kqueue"{}},}
+\DoxyCodeLine{324                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{325 }
+\DoxyCodeLine{326     \textcolor{comment}{/* Search for the data */}}
+\DoxyCodeLine{327     node = queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}};}
+\DoxyCodeLine{328     \textcolor{keywordflow}{while}(node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& node-\/>\mbox{\hyperlink{structkqueue__node_a735984d41155bc1032e09bece8f8d66d}{data}} != data)}
+\DoxyCodeLine{329     \{}
+\DoxyCodeLine{330         node = node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}};}
+\DoxyCodeLine{331     \}}
+\DoxyCodeLine{332 }
+\DoxyCodeLine{333     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{334                  \textcolor{stringliteral}{"{}KQueue found node 0x\%p from kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{335 }
+\DoxyCodeLine{336     \textcolor{keywordflow}{return} node;}
+\DoxyCodeLine{337 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kqueue_8h_ad74bd712320e37f73fea5231f201bc93}\label{kqueue_8h_ad74bd712320e37f73fea5231f201bc93}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_pop@{kqueue\_pop}}
+\index{kqueue\_pop@{kqueue\_pop}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_pop()}{kqueue\_pop()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}}$\ast$ kqueue\+\_\+pop (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$}]{queue }\end{DoxyParamCaption})}
+
+
+
+Removes a node from a queue. 
+
+Removes a node from the queue given as parameter. The retreived node that is returned is the one placed in the head of the QUEUE.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em queue} & The queue to manage.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The data pointer placed in the head of the queue is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 272 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{273 \{}
+\DoxyCodeLine{274     \mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}* node;}
+\DoxyCodeLine{275 }
+\DoxyCodeLine{276     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{277                  \textcolor{stringliteral}{"{}KQueue try pop knode from kqueue 0x\%p"{}}, queue);}
+\DoxyCodeLine{278 }
+\DoxyCodeLine{279     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}(queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{280                   \textcolor{stringliteral}{"{}Cannot pop NULL kqueue"{}},}
+\DoxyCodeLine{281                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{282 }
+\DoxyCodeLine{283     \textcolor{comment}{/* If this queue is empty */}}
+\DoxyCodeLine{284     \textcolor{keywordflow}{if}(queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{285     \{}
+\DoxyCodeLine{286         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{287     \}}
+\DoxyCodeLine{288 }
+\DoxyCodeLine{289     \textcolor{comment}{/* Dequeue the last item */}}
+\DoxyCodeLine{290     node = queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}};}
+\DoxyCodeLine{291 }
+\DoxyCodeLine{292     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{293                  \textcolor{stringliteral}{"{}Pop knode 0x\%p from kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{294 }
+\DoxyCodeLine{295     \textcolor{keywordflow}{if}(node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{296     \{}
+\DoxyCodeLine{297         node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}}-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{298         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}};}
+\DoxyCodeLine{299     \}}
+\DoxyCodeLine{300     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{301     \{}
+\DoxyCodeLine{302         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{303         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{304     \}}
+\DoxyCodeLine{305 }
+\DoxyCodeLine{306     -\/-\/queue-\/>\mbox{\hyperlink{structkqueue__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{307 }
+\DoxyCodeLine{308     node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{309     node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{310     node-\/>\mbox{\hyperlink{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{311 }
+\DoxyCodeLine{312     \textcolor{keywordflow}{return} node;}
+\DoxyCodeLine{313 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kqueue_8h_a27b2b0809ad35ba4dfa56ba30cc370a8}\label{kqueue_8h_a27b2b0809ad35ba4dfa56ba30cc370a8}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_push@{kqueue\_push}}
+\index{kqueue\_push@{kqueue\_push}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_push()}{kqueue\_push()}}
+{\footnotesize\ttfamily void kqueue\+\_\+push (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$}]{node,  }\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$}]{queue }\end{DoxyParamCaption})}
+
+
+
+Enlists a node in the queue. 
+
+Enlists a node in the queue given as parameter. The data will be placed in the tail of the queue.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em node} & A now node to add in the queue. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em queue} & The queue to manage. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 163 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{164 \{}
+\DoxyCodeLine{165     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{166                  \textcolor{stringliteral}{"{}KQueue try push knode 0x\%p in kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{167 }
+\DoxyCodeLine{168     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{169                   \textcolor{stringliteral}{"{}Cannot push with NULL knode or NULL kqueue"{}},}
+\DoxyCodeLine{170                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{171 }
+\DoxyCodeLine{172     \textcolor{comment}{/* If this queue is empty */}}
+\DoxyCodeLine{173     \textcolor{keywordflow}{if}(queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{174     \{}
+\DoxyCodeLine{175         \textcolor{comment}{/* Set the first item */}}
+\DoxyCodeLine{176         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = node;}
+\DoxyCodeLine{177         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = node;}
+\DoxyCodeLine{178         node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{179         node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{180     \}}
+\DoxyCodeLine{181     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{182     \{}
+\DoxyCodeLine{183         \textcolor{comment}{/* Just put on the head */}}
+\DoxyCodeLine{184         node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}};}
+\DoxyCodeLine{185         node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{186         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}}-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = node;}
+\DoxyCodeLine{187         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = node;}
+\DoxyCodeLine{188     \}}
+\DoxyCodeLine{189 }
+\DoxyCodeLine{190     ++queue-\/>\mbox{\hyperlink{structkqueue__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{191     node-\/>\mbox{\hyperlink{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{192 }
+\DoxyCodeLine{193     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} != node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} ||}
+\DoxyCodeLine{194                    node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{195                    node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{196                   \textcolor{stringliteral}{"{}Cycle detected in KQueue"{}},}
+\DoxyCodeLine{197                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}},  \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{200                  \textcolor{stringliteral}{"{}KQueue pushed knode 0x\%p in kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{201 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kqueue_8h_a2e54996aee515531bc1cb48efaa668ca}\label{kqueue_8h_a2e54996aee515531bc1cb48efaa668ca}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_push\_prio@{kqueue\_push\_prio}}
+\index{kqueue\_push\_prio@{kqueue\_push\_prio}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_push\_prio()}{kqueue\_push\_prio()}}
+{\footnotesize\ttfamily void kqueue\+\_\+push\+\_\+prio (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$}]{node,  }\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$}]{queue,  }\item[{const uintptr\+\_\+t}]{priority }\end{DoxyParamCaption})}
+
+
+
+Enlists a node in the queue. 
+
+Enlist a node in the queue given as parameter. The data will be placed in the queue with regard to the priority argument.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em node} & A now node to add in the queue. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em queue} & The queue to manage. \\
+\hline
+\mbox{\texttt{ in}}  & {\em priority} & The element priority. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 204 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{207 \{}
+\DoxyCodeLine{208     \mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}* cursor;}
+\DoxyCodeLine{209 }
+\DoxyCodeLine{210     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{211                  \textcolor{stringliteral}{"{}KQueue try push prio knode 0x\%p in kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{212 }
+\DoxyCodeLine{213     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{214                   \textcolor{stringliteral}{"{}Cannot push with NULL knode or NULL kqueue"{}},}
+\DoxyCodeLine{215                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{216 }
+\DoxyCodeLine{217     node-\/>\mbox{\hyperlink{structkqueue__node_ae1526716a9b24e75d656506b16f03297}{priority}} = priority;}
+\DoxyCodeLine{218 }
+\DoxyCodeLine{219     \textcolor{comment}{/* If this queue is empty */}}
+\DoxyCodeLine{220     \textcolor{keywordflow}{if}(queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{221     \{}
+\DoxyCodeLine{222         \textcolor{comment}{/* Set the first item */}}
+\DoxyCodeLine{223         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = node;}
+\DoxyCodeLine{224         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = node;}
+\DoxyCodeLine{225         node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{226         node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{227     \}}
+\DoxyCodeLine{228     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{229     \{}
+\DoxyCodeLine{230         cursor = queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}};}
+\DoxyCodeLine{231         \textcolor{keywordflow}{while}(cursor != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& cursor-\/>\mbox{\hyperlink{structkqueue__node_ae1526716a9b24e75d656506b16f03297}{priority}} > priority)}
+\DoxyCodeLine{232         \{}
+\DoxyCodeLine{233             cursor = cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}};}
+\DoxyCodeLine{234         \}}
+\DoxyCodeLine{235 }
+\DoxyCodeLine{236         \textcolor{keywordflow}{if}(cursor != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{237         \{}
+\DoxyCodeLine{238             node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = cursor;}
+\DoxyCodeLine{239             node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}};}
+\DoxyCodeLine{240             cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = node;}
+\DoxyCodeLine{241             \textcolor{keywordflow}{if}(node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{242             \{}
+\DoxyCodeLine{243                 node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}}-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = node;}
+\DoxyCodeLine{244             \}}
+\DoxyCodeLine{245             \textcolor{keywordflow}{else}}
+\DoxyCodeLine{246             \{}
+\DoxyCodeLine{247                 queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = node;}
+\DoxyCodeLine{248             \}}
+\DoxyCodeLine{249         \}}
+\DoxyCodeLine{250         \textcolor{keywordflow}{else}}
+\DoxyCodeLine{251         \{}
+\DoxyCodeLine{252             \textcolor{comment}{/* Just put on the tail */}}
+\DoxyCodeLine{253             node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}};}
+\DoxyCodeLine{254             node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{255             queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}}-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = node;}
+\DoxyCodeLine{256             queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = node;}
+\DoxyCodeLine{257         \}}
+\DoxyCodeLine{258     \}}
+\DoxyCodeLine{259     ++queue-\/>\mbox{\hyperlink{structkqueue__t_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{260     node-\/>\mbox{\hyperlink{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{261 }
+\DoxyCodeLine{262     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} != node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} ||}
+\DoxyCodeLine{263                    node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} ||}
+\DoxyCodeLine{264                    node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{265                   \textcolor{stringliteral}{"{}Cycle detected in KQueue"{}},}
+\DoxyCodeLine{266                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{267 }
+\DoxyCodeLine{268     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{269                  \textcolor{stringliteral}{"{}KQueue pushed knode 0x\%p in kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{270 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kqueue_8h_aa3704a543f000073b484939004ee8eb8}\label{kqueue_8h_aa3704a543f000073b484939004ee8eb8}} 
+\index{kqueue.h@{kqueue.h}!kqueue\_remove@{kqueue\_remove}}
+\index{kqueue\_remove@{kqueue\_remove}!kqueue.h@{kqueue.h}}
+\doxysubsubsection{\texorpdfstring{kqueue\_remove()}{kqueue\_remove()}}
+{\footnotesize\ttfamily void kqueue\+\_\+remove (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structkqueue__t}{kqueue\+\_\+t}} $\ast$}]{queue,  }\item[{\mbox{\hyperlink{kqueue_8h_a1145be1d357749d29fc82a9010b54259}{kqueue\+\_\+node\+\_\+t}} $\ast$}]{node,  }\item[{const \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}}}]{panic }\end{DoxyParamCaption})}
+
+
+
+Removes a node from a queue. 
+
+Removes a node from a queue given as parameter. If the node is not found, nothing is done and an error is returned.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em queue} & The queue containing the node. \\
+\hline
+\mbox{\texttt{ in}}  & {\em node} & The node to remove. \\
+\hline
+\mbox{\texttt{ in}}  & {\em panic} & Tells if the function should generate a kernel panic of the node is not found. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 339 of file kqueue.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{340 \{}
+\DoxyCodeLine{341     \mbox{\hyperlink{structkqueue__node}{kqueue\_node\_t}}* cursor;}
+\DoxyCodeLine{342 }
+\DoxyCodeLine{343     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{344                  \textcolor{stringliteral}{"{}KQueue try renove knode 0x\%p from kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{345 }
+\DoxyCodeLine{346     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((node != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& queue != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),}
+\DoxyCodeLine{347                   \textcolor{stringliteral}{"{}Cannot remove with NULL knode or NULL kqueue"{}},}
+\DoxyCodeLine{348                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a8177a51adc2ead06e58edc0efd4ec20e}{OS\_ERR\_NULL\_POINTER}});}
+\DoxyCodeLine{349 }
+\DoxyCodeLine{350     \textcolor{comment}{/* Search for node in the queue*/}}
+\DoxyCodeLine{351     cursor = queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}};}
+\DoxyCodeLine{352     \textcolor{keywordflow}{while}(cursor != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& cursor != node)}
+\DoxyCodeLine{353     \{}
+\DoxyCodeLine{354         cursor = cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}};}
+\DoxyCodeLine{355     \}}
+\DoxyCodeLine{356 }
+\DoxyCodeLine{357     \mbox{\hyperlink{kqueue_8c_ac5fea804f0e5eb3034817c090323c98d}{KQUEUE\_ASSERT}}((cursor != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} || panic == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}}),}
+\DoxyCodeLine{358                   \textcolor{stringliteral}{"{}Could not find knode to remove"{}},}
+\DoxyCodeLine{359                   \mbox{\hyperlink{kerror_8h_a51557cb52bbb9ee9d55aab5b9b16c3d0a9aecdbdd1ae10ab77e2e648c8b5f1df5}{OS\_ERR\_INCORRECT\_VALUE}});}
+\DoxyCodeLine{360 }
+\DoxyCodeLine{361     \textcolor{comment}{/* Manage link */}}
+\DoxyCodeLine{362     \textcolor{keywordflow}{if}(cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{363     \{}
+\DoxyCodeLine{364         cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}}-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}};}
+\DoxyCodeLine{365         cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}}-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}};}
+\DoxyCodeLine{366     \}}
+\DoxyCodeLine{367     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{368     \{}
+\DoxyCodeLine{369         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}};}
+\DoxyCodeLine{370         cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}}-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{371     \}}
+\DoxyCodeLine{372     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \&\& cursor-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{373     \{}
+\DoxyCodeLine{374         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}};}
+\DoxyCodeLine{375         cursor-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}}-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{376     \}}
+\DoxyCodeLine{377     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{378     \{}
+\DoxyCodeLine{379         queue-\/>\mbox{\hyperlink{structkqueue__t_a6c8e0515c264613da0519e7064c0a8ce}{head}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{380         queue-\/>\mbox{\hyperlink{structkqueue__t_a1b9eb1994d92aba94d3ee88304a31dee}{tail}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{381     \}}
+\DoxyCodeLine{382 }
+\DoxyCodeLine{383     node-\/>\mbox{\hyperlink{structkqueue__node_abd647bcc566c19947e09966f6e73a757}{next}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{384     node-\/>\mbox{\hyperlink{structkqueue__node_ae5eb20d0da628ef08382d79b93e19128}{prev}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{385 }
+\DoxyCodeLine{386     node-\/>\mbox{\hyperlink{structkqueue__node_ab6d56c0ac29cb11618f954964d3d44aa}{enlisted}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{387 }
+\DoxyCodeLine{388     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_a3c3566bba659fcf54a9824dc7af0b380}{KQUEUE\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KQUEUE"{}},}
+\DoxyCodeLine{389                  \textcolor{stringliteral}{"{}KQueue renoved knode 0x\%p from kqueue 0x\%p"{}}, node, queue);}
+\DoxyCodeLine{390 \}}
+
+\end{DoxyCode}

@@ -1,0 +1,68 @@
+\hypertarget{strncpy_8c}{}\doxysection{Source/\+Kernel/\+Libs/libc/src/strncpy.c File Reference}
+\label{strncpy_8c}\index{Source/Kernel/Libs/libc/src/strncpy.c@{Source/Kernel/Libs/libc/src/strncpy.c}}
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for strncpy.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=264pt]{strncpy_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{strncpy_8c_ad8d7a2363df37e5256d54ff6a60acfcc}{strncpy}} (char $\ast$dst, const char $\ast$src, \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} n)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{strncpy_8c_ad8d7a2363df37e5256d54ff6a60acfcc}\label{strncpy_8c_ad8d7a2363df37e5256d54ff6a60acfcc}} 
+\index{strncpy.c@{strncpy.c}!strncpy@{strncpy}}
+\index{strncpy@{strncpy}!strncpy.c@{strncpy.c}}
+\doxysubsubsection{\texorpdfstring{strncpy()}{strncpy()}}
+{\footnotesize\ttfamily char$\ast$ strncpy (\begin{DoxyParamCaption}\item[{char $\ast$}]{dst,  }\item[{const char $\ast$}]{src,  }\item[{\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line 73 of file strncpy.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{74 \{}
+\DoxyCodeLine{75     \textcolor{keywordtype}{char} *q = dst;}
+\DoxyCodeLine{76     \textcolor{keyword}{const} \textcolor{keywordtype}{char} *p = src;}
+\DoxyCodeLine{77 }
+\DoxyCodeLine{78     \textcolor{keywordflow}{while} (n) \{}
+\DoxyCodeLine{79         \textcolor{keywordtype}{char} ch;}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81         n-\/-\/;}
+\DoxyCodeLine{82         *q++ = ch = *p++;}
+\DoxyCodeLine{83         \textcolor{keywordflow}{if} (!ch)}
+\DoxyCodeLine{84             \textcolor{keywordflow}{break};}
+\DoxyCodeLine{85     \}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     \mbox{\hyperlink{string_8h_a68d2b40ef2213b9227a1ce3b81997ae5}{memset}}(q, 0, n);}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89     \textcolor{keywordflow}{return} dst;}
+\DoxyCodeLine{90 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{strncpy_8c_ad8d7a2363df37e5256d54ff6a60acfcc_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{strncpy_8c_ad8d7a2363df37e5256d54ff6a60acfcc_icgraph}
+\end{center}
+\end{figure}

@@ -17,7 +17,7 @@ trace {
 
 clock {
     name = sys_clock;
-    freq = 3000000000;
+    freq = 3600000000;
     offset_s = 0;
 };
 
@@ -57,317 +57,2118 @@ stream {
 /*******************************************************************************
  * Events definition
  ******************************************************************************/
+
+ /********************************* Kickstart */
+
 event {
     id = 1;
-    name = "Kernel Kickstart Start";
+    name = "Kickstart entry";
 };
 
 event {
     id = 2;
-    name = "Kernel Kickstart End";
+    name = "Kickstart exit";
 };
+
+/********************************* X86 PIC */
 
 event {
     id = 3;
-    name = "VGA Init Start";
+    name = "x86 PIC driver attach entry";
 };
 
 event {
     id = 4;
-    name = "VGA Init End";
+    name = "x86 PIC driver attach exit";
     fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-        uint32_t buff_len;
+        uint32_t returnCode;
     };
 };
 
 event {
     id = 5;
-    name = "CPU Setup GDT Start";
-};
-
-event {
-    id = 6;
-    name = "CPU Setup GDT End";
+    name = "x86 PIC driver set IRQ mask entry";
     fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 7;
-    name = "CPU Setup IDT Start";
-};
-
-event {
-    id = 8;
-    name = "CPU Setup IDT End";
-    fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 9;
-    name = "CPU Setup TSS Start";
-};
-
-event {
-    id = 10;
-    name = "CPU Setup TSS End";
-    fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 11;
-    name = "CPU Setup Start";
-};
-
-event {
-    id = 12;
-    name = "CPU Setup End";
-};
-
-event {
-    id = 13;
-    name = "CPU Raise Interrupt Start";
-    fields := struct {
-        uint32_t int_idx;
-    };
-};
-
-event {
-    id = 14;
-    name = "CPU Raise Interrupt End";
-    fields := struct {
-        uint32_t int_idx;
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 15;
-    name = "Kernel Panic Request";
-    fields := struct {
-        uint32_t code;
-    };
-};
-
-event {
-    id = 16;
-    name = "Kernel Panic Handler Start";
-    fields := struct {
-        uint32_t error_code;
-    };
-};
-
-event {
-    id = 17;
-    name = "Kernel Panic Handler End";
-    fields := struct {
-        uint32_t error_code;
-    };
-};
-
-event {
-    id = 18;
-    name = "Disable Interrupts";
-};
-
-event {
-    id = 19;
-    name = "Enable Interrupts";
-};
-
-event {
-    id = 20;
-    name = "Halt System";
-};
-
-event {
-    id = 21;
-    name = "Kernel General Interrupt Handler Start";
-    fields := struct {
-        uint32_t int_idx;
-        uint32_t thread_id;
-    };
-};
-
-event {
-    id = 22;
-    name = "Kernel General Interrupt Handler End";
-    fields := struct {
-        uint32_t int_idx;
-        uint32_t thread_id;
-    };
-};
-
-event {
-    id = 23;
-    name = "Kernel Interrupt Init Start";
-};
-
-event {
-    id = 24;
-    name = "Kernel Interrupt Init End";
-    fields := struct {
-        uint32_t code;
-    };
-};
-
-event {
-    id = 25;
-    name = "Kernel Interrupt Set Driver Start";
-    fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 26;
-    name = "Kernel Interrupt Set Driver End";
-    fields := struct {
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 27;
-    name = "Kernel Interrupt Register Interrupt Start";
-    fields := struct {
-        uint32_t int_idx;
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 28;
-    name = "Kernel Interrupt Register Interrupt End";
-    fields := struct {
-        uint32_t int_idx;
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 29;
-    name = "Kernel Interrupt Remove Interrupt Start";
-    fields := struct {
-        uint32_t int_idx;
-    };
-};
-
-event {
-    id = 30;
-    name = "Kernel Interrupt Remove Interrupt End";
-    fields := struct {
-        uint32_t int_idx;
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 31;
-    name = "Kernel Interrupt Register IRQ Start";
-    fields := struct {
-        uint32_t irq_idx;
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
-};
-
-event {
-    id = 32;
-    name = "Kernel Interrupt Register IRQ End";
-    fields := struct {
-        uint32_t irq_idx;
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 33;
-    name = "Kernel Interrupt Remove IRQ Start";
-    fields := struct {
-        uint32_t irq_idx;
-    };
-};
-
-event {
-    id = 34;
-    name = "Kernel Interrupt Remove IRQ End";
-    fields := struct {
-        uint32_t irq_idx;
-        uint32_t ret_code;
-    };
-};
-
-event {
-    id = 35;
-    name = "Kernel Interrupt Restore Interrupt";
-    fields := struct {
-        uint32_t prev_state;
-    };
-};
-
-event {
-    id = 36;
-    name = "Kernel Interrupt Disable Interrupt";
-    fields := struct {
-        uint32_t prev_state;
-    };
-};
-
-event {
-    id = 37;
-    name = "Kernel Interrupt Set IRQ Mask";
-    fields := struct {
-        uint32_t irq_idx;
+        uint32_t irqNumber;
         uint32_t enabled;
     };
 };
 
 event {
-    id = 38;
-    name = "Kernel Interrupt Set IRQ EOI";
+    id = 6;
+    name = "x86 PIC driver set IRQ mask exit";
     fields := struct {
-        uint32_t irq_idx;
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 7;
+    name = "x86 PIC driver set IRQ EOI entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 8;
+    name = "x86 PIC driver set IRQ EOI exit";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 9;
+    name = "x86 PIC driver handle spurious entry";
+    fields := struct {
+        uint32_t intNumber;
+    };
+};
+
+event {
+    id = 10;
+    name = "x86 PIC driver handle spurious exit";
+    fields := struct {
+        uint32_t intNumber;
+        uint32_t type;
+    };
+};
+
+event {
+    id = 11;
+    name = "x86 PIC driver get interrupt line entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 12;
+    name = "x86 PIC driver get interrupt line exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t intNumber;
+    };
+};
+
+/********************************* X86 PIT */
+
+event {
+    id = 13;
+    name = "x86 PIT driver attach entry";
+};
+
+event {
+    id = 14;
+    name = "x86 PIT driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 15;
+    name = "x86 PIT driver enable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 16;
+    name = "x86 PIT driver enable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 17 ;
+    name = "x86 PIT driver disable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 18;
+    name = "x86 PIT driver disable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 19;
+    name = "x86 PIT set frequency entry";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 20;
+    name = "x86 PIT set frequency exit";
+    fields := struct {
+        uint32_t frequency;
+        uint32_t newFrequency;
+    };
+};
+
+event {
+    id = 21;
+    name = "x86 PIT get frequency entry";
+};
+
+event {
+    id = 22;
+    name = "x86 PIT get frequency exit";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 23;
+    name = "x86 PIT set handler entry";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+    };
+};
+
+event {
+    id = 24;
+    name = "x86 PIT set handler exit";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 25;
+    name = "x86 PIT remove handler";
+};
+
+event {
+    id = 26;
+    name = "x86 PIT acknowledge";
+};
+
+/********************************* X86 RTC */
+
+event {
+    id = 27;
+    name = "x86 RTC driver attach entry";
+};
+
+event {
+    id = 28;
+    name = "x86 RTC driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 29;
+    name = "x86 RTC driver enable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 30;
+    name = "x86 RTC driver enable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 31 ;
+    name = "x86 RTC driver disable entry";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 32;
+    name = "x86 RTC driver disable exit";
+    fields := struct {
+        uint32_t nesting;
+    };
+};
+
+event {
+    id = 33;
+    name = "x86 RTC set frequency entry";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 34;
+    name = "x86 RTC set frequency exit";
+    fields := struct {
+        uint32_t frequency;
+        uint32_t newFrequency;
+    };
+};
+
+event {
+    id = 35;
+    name = "x86 RTC get frequency entry";
+};
+
+event {
+    id = 36;
+    name = "x86 RTC get frequency exit";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 37;
+    name = "x86 RTC set handler entry";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+    };
+};
+
+event {
+    id = 38;
+    name = "x86 RTC set handler exit";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t returnCode;
     };
 };
 
 event {
     id = 39;
-    name = "Kernel Set Console Driver Start";
-    fields := struct {
-        xuint32_t addr_low;
-        xuint32_t addr_high;
-    };
+    name = "x86 RTC remove handler";
 };
 
 event {
     id = 40;
-    name = "Kernel Set Console Driver End";
-    fields := struct {
-        uint32_t ret_code;
-    };
+    name = "x86 RTC get daytime entry";
 };
 
 event {
     id = 41;
-    name = "Kernel UART Driver Init Start";
+    name = "x86 RTC get daytime exit";
 };
 
 event {
     id = 42;
-    name = "Kernel UART Driver Init End";
+    name = "x86 RTC get date entry";
+};
+
+event {
+    id = 43;
+    name = "x86 RTC get date exit";
 };
 
 
+event {
+    id = 44;
+    name = "x86 RTC update time entry";
+};
+
+event {
+    id = 45;
+    name = "x86 RTC update time exit";
+};
+
+event {
+    id = 46;
+    name = "x86 RTC acknowledge";
+};
+
+/********************************* X86 UART */
+
+event {
+    id = 47;
+    name = "x86 UART driver attach entry";
+};
+
+event {
+    id = 48;
+    name = "x86 UART driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 49;
+    name = "x86 UART driver set line";
+    fields := struct {
+        xuint32_t attributes;
+        xuint32_t comport;
+    };
+};
+
+event {
+    id = 50;
+    name = "x86 UART driver set buffer";
+    fields := struct {
+        xuint32_t attributes;
+        xuint32_t comport;
+    };
+};
+
+event {
+    id = 51;
+    name = "x86 UART driver set baudrate";
+    fields := struct {
+        uint32_t baudrate;
+        xuint32_t comport;
+    };
+};
+
+/********************************* X86 VGA TEXT */
+
+event {
+    id = 52;
+    name = "x86 VGA text driver attach entry";
+};
+
+event {
+    id = 53;
+    name = "x86 VGA text driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 54;
+    name = "x86 VGA text driver put string entry";
+};
+
+event {
+    id = 55;
+    name = "x86 VGA text driver put string exit";
+    fields := struct {
+        uint32_t stringLenHigh;
+        uint32_t stringLenLow;
+    };
+};
+
+event {
+    id = 56;
+    name = "x86 VGA text driver put char entry";
+};
+
+event {
+    id = 57;
+    name = "x86 VGA text driver put char exit";
+};
+
+/********************************* X86 TSC */
+
+event {
+    id = 58;
+    name = "x86 TSC driver attach entry";
+};
+
+event {
+    id = 59;
+    name = "x86 TSC driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 60;
+    name = "x86 TSC driver enable";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 61;
+    name = "x86 TSC driver disable";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 62;
+    name = "x86 TSC driver set frequency";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 63;
+    name = "x86 TSC driver get frequency entry";
+};
+
+event {
+    id = 64;
+    name = "x86 TSC driver get frequency exit";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 65;
+    name = "x86 TSC driver set handler";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 66;
+    name = "x86 TSC driver remove handler";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 67;
+    name = "x86 TSC driver set time NS";
+    fields := struct {
+        uint32_t newTimeHighNs;
+        uint32_t newTimeLowNs;
+    };
+};
+
+/********************************* X86 CPU */
+
+event {
+    id = 68;
+    name = "x86 CPU setup GDT entry";
+};
+
+event {
+    id = 69;
+    name = "x86 CPU setup GDT exit";
+};
+
+event {
+    id = 70;
+    name = "x86 CPU setup IDT entry";
+};
+
+event {
+    id = 71;
+    name = "x86 CPU setup IDT exit";
+};
+
+event {
+    id = 72;
+    name = "x86 CPU setup TSS entry";
+};
+
+event {
+    id = 73;
+    name = "x86 CPU setup TSS exit";
+};
+
+event {
+    id = 74;
+    name = "x86 CPU setup entry";
+};
+
+event {
+    id = 75;
+    name = "x86 CPU setup exit";
+};
+
+event {
+    id = 76;
+    name = "x86 CPU raise interrupt entry";
+    fields := struct {
+        uint32_t interruptLine;
+    };
+};
+
+event {
+    id = 77;
+    name = "x86 CPU raise interrupt exit";
+    fields := struct {
+        uint32_t interruptLine;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 78;
+    name = "x86 CPU validate entry";
+};
+
+
+event {
+    id = 79;
+    name = "x86 CPU validate exit";
+};
+
+event {
+    id = 80;
+    name = "x86 CPU Kernel enter critical";
+    fields := struct {
+        uint32_t interruptState;
+    };
+};
+
+event {
+    id = 81;
+    name = "x86 CPU Kernel exit critical";
+    fields := struct {
+        uint32_t interruptState;
+    };
+};
+
+event {
+    id = 82;
+    name = "x86 CPU Kernel spinlock lock";
+    fields := struct {
+        uint32_t lockValue;
+    };
+};
+
+event {
+    id = 83;
+    name = "x86 CPU Kernel spinlock unlock";
+    fields := struct {
+        uint32_t lockValue;
+    };
+};
+
+event {
+    id = 84;
+    name = "x86 CPU Kernel panic";
+    fields := struct {
+        uint32_t errorCode;
+    };
+};
+
+event {
+    id = 85;
+    name = "x86 CPU Kernel panic handler";
+    fields := struct {
+        uint32_t cpuId;
+        uint32_t intId;
+        uint32_t errorCode;
+    };
+};
+
+
+/********************************* Driver manager */
+
+event {
+    id = 86;
+    name = "Driver manager initialization entry";
+};
+
+event {
+    id = 87;
+    name = "Driver manager initialization exit";
+};
+
+/********************************* Exception manager */
+event {
+    id = 88;
+    name = "Exception manager division by zero";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 89;
+    name = "Exception manager init entry";
+};
+
+event {
+    id = 90;
+    name = "Exception manager init exit";
+};
+
+event {
+    id = 91;
+    name = "Exception manager reigster entry";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t exceptionLine;
+    };
+};
+
+event {
+    id = 92;
+    name = "Exception manager reigster exit";
+    fields := struct {
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t exceptionLine;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 93;
+    name = "Exception manager remove entry";
+    fields := struct {
+        uint32_t exceptionLine;
+    };
+};
+
+event {
+    id = 94;
+    name = "Exception manager remove exit";
+    fields := struct {
+        uint32_t exceptionLine;
+        uint32_t returnCode;
+    };
+};
+
+/********************************* Interrupt manager */
+event {
+    id = 95;
+    name = "Interrupt manager handler entry";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t interruptLine;
+    };
+};
+
+event {
+    id = 96;
+    name = "Interrupt manager handler exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t interruptLine;
+        uint32_t status;
+    };
+};
+
+event {
+    id = 97;
+    name = "Interrupt manager init entry";
+};
+
+event {
+    id = 98;
+    name = "Interrupt manager init exit";
+};
+
+event {
+    id = 99;
+    name = "Interrupt manager set driver entry";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+    };
+};
+
+event {
+    id = 100;
+    name = "Interrupt manager set driver exit";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 101;
+    name = "Interrupt manager register interrupt entry";
+    fields := struct {
+        xuint32_t handlerAddrHigh;
+        xuint32_t handlerAddrLow;
+        uint32_t interruptLine;
+    };
+};
+
+event {
+    id = 102;
+    name = "Interrupt manager register interrupt exit";
+    fields := struct {
+        xuint32_t handlerAddrHigh;
+        xuint32_t handlerAddrLow;
+        uint32_t interruptLine;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 103;
+    name = "Interrupt manager remove interrupt entry";
+    fields := struct {
+        uint32_t interruptLine;
+    };
+};
+
+event {
+    id = 104;
+    name = "Interrupt manager remove interrupt exit";
+    fields := struct {
+        uint32_t interruptLine;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 105;
+    name = "Interrupt manager register IRQ entry";
+    fields := struct {
+        xuint32_t handlerAddrHigh;
+        xuint32_t handlerAddrLow;
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 106;
+    name = "Interrupt manager register IRQ exit";
+    fields := struct {
+        xuint32_t handlerAddrHigh;
+        xuint32_t handlerAddrLow;
+        uint32_t irqNumber;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 107;
+    name = "Interrupt manager remove IRQ entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 108;
+    name = "Interrupt manager remove IRQ exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 109;
+    name = "Interrupt manager interrupt restore";
+    fields := struct {
+        uint32_t interruptState;
+    };
+};
+
+event {
+    id = 110;
+    name = "Interrupt manager interrupt disable";
+    fields := struct {
+        uint32_t interruptState;
+    };
+};
+
+event {
+    id = 111;
+    name = "Interrupt manager set IRQ mask";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 112;
+    name = "Interrupt manager set IRQ EOI";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+/********************************* Kernel Heap */
+event {
+    id = 113;
+    name = "Kernel Heap Alloc Entry";
+    fields := struct {
+        uint32_t sizeHigh;
+        uint32_t sizeLow;
+        xuint32_t memfree;
+    };
+};
+
+event {
+    id = 114;
+    name = "Kernel Heap Alloc Exit";
+    fields := struct {
+        uint32_t sizeHigh;
+        uint32_t sizeLow;
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        xuint32_t memfree;
+    };
+};
+
+event {
+    id = 115;
+    name = "Kernel Heap Free Entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        xuint32_t memfree;
+    };
+};
+
+event {
+    id = 116;
+    name = "Kernel Heap Free exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        uint32_t status;
+        xuint32_t memfree;
+    };
+};
+
+/********************************* Kernel Queues */
+
+event {
+    id = 117;
+    name = "Kernel Queue create node entry";
+    fields := struct {
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+    };
+};
+
+event {
+    id = 118;
+    name = "Kernel Queue create node exit";
+    fields := struct {
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+    };
+};
+
+event {
+    id = 119;
+    name = "Kernel Queue destroy node";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+    };
+};
+
+event {
+    id = 120;
+    name = "Kernel Queue create queue entry";
+};
+
+
+event {
+    id = 121;
+    name = "Kernel Queue create queue exit";
+    fields := struct {
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 122;
+    name = "Kernel Queue destroy queue";
+    fields := struct {
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 123;
+    name = "Kernel Queue push node entry";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 124;
+    name = "Kernel Queue push node exit";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 125;
+    name = "Kernel Queue push node priority entry";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+        uint32_t priority;
+    };
+};
+
+event {
+    id = 126;
+    name = "Kernel Queue push node priority exit";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+        uint32_t priority;
+    };
+};
+
+event {
+    id = 127;
+    name = "Kernel Queue pop node entry";
+    fields := struct {
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 128;
+    name = "Kernel Queue pop node exit";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 129;
+    name = "Kernel Queue find node entry";
+    fields := struct {
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+    };
+};
+
+event {
+    id = 130;
+    name = "Kernel Queue find node exit";
+    fields := struct {
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+    };
+};
+
+event {
+    id = 131;
+    name = "Kernel Queue remove node entry";
+    fields := struct {
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+    };
+};
+
+event {
+    id = 132;
+    name = "Kernel Queue remove node exit";
+    fields := struct {
+        xuint32_t queueHigh;
+        xuint32_t queueLow;
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        uint32_t status;
+    };
+};
+
+
+/********************************* X86 ACPI */
+event {
+    id = 133;
+    name = "X86 ACPI attach entry";
+};
+
+event {
+    id = 134;
+    name = "X86 ACPI attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 135;
+    name = "X86 ACPI parse RSDP entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 136;
+    name = "X86 ACPI parse RSDP exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 137;
+    name = "X86 ACPI parse RSDT entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 138;
+    name = "X86 ACPI parse RSDT exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 139;
+    name = "X86 ACPI parse XSDT entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 140;
+    name = "X86 ACPI parse XSDT exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 141;
+    name = "X86 ACPI parse DT entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 142;
+    name = "X86 ACPI parse DT exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 143;
+    name = "X86 ACPI parse FADT entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 144;
+    name = "X86 ACPI parse FADT exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 145;
+    name = "X86 ACPI parse DSDT entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 146;
+    name = "X86 ACPI parse DSDT exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 147;
+    name = "X86 ACPI parse APIC entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 148;
+    name = "X86 ACPI parse APIC exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 149;
+    name = "X86 ACPI parse HPET entry ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 150;
+    name = "X86 ACPI parse HPET exit ";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 151;
+    name = "X86 ACPI get remaped IRQ entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 152;
+    name = "X86 ACPI get remaped IRQ exit ";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t remapedIrqNumber;
+    };
+};
+
+/********************************* X86 IO-APIC */
+event {
+    id = 153;
+    name = "X86 IO-APIC attach entry";
+};
+
+event {
+    id = 154;
+    name = "X86 IO-APIC attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 155;
+    name = "X86 IO-APIC set IRQ mask entry";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 156;
+    name = "X86 IO-APIC set IRQ mask exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 157;
+    name = "X86 IO-APIC set IRQ mask for entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 158;
+    name = "X86 IO-APIC set IRQ mask for exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        uint32_t irqNumber;
+        uint32_t enabled;
+    };
+};
+
+event {
+    id = 159;
+    name = "X86 IO-APIC handle spurious entry";
+    fields := struct {
+        uint32_t intNumber;
+    };
+};
+
+event {
+    id = 160;
+    name = "X86 IO-APIC handle spurious exit";
+    fields := struct {
+        uint32_t intNumber;
+        uint32_t type;
+    };
+};
+
+event {
+    id = 161;
+    name = "X86 IO-APIC get interrupt line entry";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 162;
+    name = "X86 IO-APIC get interrupt line exit";
+    fields := struct {
+        uint32_t irqNumber;
+        uint32_t intNumber;
+    };
+};
+
+/********************************* X86 LAPIC */
+event {
+    id = 163;
+    name = "X86 LAPIC attach entry";
+};
+
+event {
+    id = 164;
+    name = "X86 LAPIC attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 165;
+    name = "X86 LAPIC set IRQ EOI entry";
+    fields := struct {
+        uint32_t interruptLine;
+    };
+};
+
+event {
+    id = 166;
+    name = "X86 LAPIC set IRQ EOI exit";
+    fields := struct {
+        uint32_t interruptLine;
+    };
+};
+
+/********************************* X86 LAPIC Timer */
+event {
+    id = 167;
+    name = "X86 LAPIC Timer attach entry";
+};
+
+event {
+    id = 168;
+    name = "X86 LAPIC Timer attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 169;
+    name = "X86 LAPIC Timer calibrate entry";
+};
+
+event {
+    id = 170;
+    name = "X86 LAPIC Timer calibrate exit";
+    fields := struct {
+        uint32_t internalFrequency;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 171;
+    name = "X86 LAPIC Timer enable entry";
+    fields := struct {
+        uint32_t disableNesting;
+    };
+};
+
+event {
+    id = 172;
+    name = "X86 LAPIC Timer enable exit";
+    fields := struct {
+        uint32_t disableNesting;
+    };
+};
+
+event {
+    id = 173;
+    name = "X86 LAPIC Timer disable entry";
+    fields := struct {
+        uint32_t disableNesting;
+    };
+};
+
+event {
+    id = 174;
+    name = "X86 LAPIC Timer disable exit";
+    fields := struct {
+        uint32_t disableNesting;
+    };
+};
+
+event {
+    id = 175;
+    name = "X86 LAPIC Timer set frequency entry";
+    fields := struct {
+        uint32_t newFreq;
+    };
+};
+
+event {
+    id = 176;
+    name = "X86 LAPIC Timer set frequency exit";
+    fields := struct {
+        uint32_t newFreq;
+    };
+};
+
+event {
+    id = 177;
+    name = "X86 LAPIC Timer get frequency";
+    fields := struct {
+        uint32_t frequency;
+    };
+};
+
+event {
+    id = 178;
+    name = "X86 LAPIC Timer set handler entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 179;
+    name = "X86 LAPIC Timer set handler exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 180;
+    name = "X86 LAPIC Timer remove handler";
+};
+
+event {
+    id = 181;
+    name = "X86 LAPIC Timer acknowledge interrupt";
+};
+
+/********************************* Driver manager cont'd */
+event {
+    id = 182;
+    name = "Driver manager set device data entry";
+    fields := struct {
+        xuint32_t nodeAddrHigh;
+        xuint32_t nodeAddrLow;
+        xuint32_t dataAddrHigh;
+        xuint32_t dataAddrLow;
+    };
+};
+
+event {
+    id = 183;
+    name = "Driver manager set device data exit";
+    fields := struct {
+        xuint32_t nodeAddrHigh;
+        xuint32_t nodeAddrLow;
+        xuint32_t dataAddrHigh;
+        xuint32_t dataAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 184;
+    name = "Driver manager get device data entry";
+    fields := struct {
+        uint32_t handle;
+    };
+};
+
+event {
+    id = 185;
+    name = "Driver manager get device data exit";
+    fields := struct {
+        uint32_t handle;
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+/********************************* Kernel console */
+event {
+    id = 186;
+    name = "Kernel console set driver entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 187;
+    name = "Kernel console set driver exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 188;
+    name = "Kernel console clear entry";
+};
+
+event {
+    id = 189;
+    name = "Kernel console clear exit";
+};
+
+event {
+    id = 190;
+    name = "Kernel console put cursor entry";
+    fields := struct {
+        uint32_t line;
+        uint32_t column;
+    };
+};
+
+event {
+    id = 191;
+    name = "Kernel console put cursor exit";
+    fields := struct {
+        uint32_t line;
+        uint32_t column;
+    };
+};
+
+event {
+    id = 192;
+    name = "Kernel console save cursor entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 193;
+    name = "Kernel console put cursor exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 194;
+    name = "Kernel console restore cursor entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 195;
+    name = "Kernel console restore cursor exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 196;
+    name = "Kernel console scroll entry";
+    fields := struct {
+        uint32_t direction;
+        uint32_t line;
+    };
+};
+
+event {
+    id = 197;
+    name = "Kernel console scroll exit";
+    fields := struct {
+        uint32_t direction;
+        uint32_t line;
+    };
+};
+
+event {
+    id = 198;
+    name = "Kernel console set colorscheme entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 199;
+    name = "Kernel console set colorscheme exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 200;
+    name = "Kernel console save colorscheme entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 201;
+    name = "Kernel console save colorscheme exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 202;
+    name = "Kernel console put string entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 203;
+    name = "Kernel console put string exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
+};
+
+event {
+    id = 204;
+    name = "Kernel console put char entry";
+    fields := struct {
+        uint32_t character;
+    };
+};
+
+event {
+    id = 205;
+    name = "Kernel console put char exit";
+    fields := struct {
+        uint32_t character;
+    };
+};
+
+/********************************* Kernel output */
+
+event {
+    id = 206;
+    name = "Kernel output formater entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 207;
+    name = "Kernel output formater exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 208;
+    name = "Kernel output tagprintf entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 209;
+    name = "Kernel output tagprintf exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 210;
+    name = "Kernel output to bufferstring entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 211;
+    name = "Kernel output to buffer string exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 212;
+    name = "Kernel output to buffer char entry";
+    fields := struct {
+        uint32_t character;
+    };
+};
+
+event {
+    id = 213;
+    name = "Kernel output to buffer char exit";
+    fields := struct {
+        uint32_t character;
+    };
+};
+
+event {
+    id = 214;
+    name = "Kernel output kprintf entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 215;
+    name = "Kernel output kprintf exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 216;
+    name = "Kernel output kprintf error entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 217;
+    name = "Kernel output kprintf error exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 218;
+    name = "Kernel output kprintf success entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 219;
+    name = "Kernel output kprintf success exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 220;
+    name = "Kernel output kprintf info entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 221;
+    name = "Kernel output kprintf info exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 222;
+    name = "Kernel output kprintf debug entry";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 223;
+    name = "Kernel output kprintf debug exit";
+    fields := struct {
+        xuint32_t strHigh;
+        xuint32_t strLow;
+    };
+};
+
+event {
+    id = 224;
+    name = "Kernel output flush entry";
+};
+
+event {
+    id = 225;
+    name = "Kernel output flush exit";
+};
+
+/********************************* Kernel device tree manager  */
+event {
+    id = 226;
+    name = "Device tree manager link node entry";
+};
+
+event {
+    id = 227;
+    name = "Device tree manager link node exit";
+};
+
+event {
+    id = 228;
+    name = "Device tree manager link property entry";
+};
+
+event {
+    id = 229;
+    name = "Device tree manager link property exit";
+};
+
+event {
+    id = 230;
+    name = "Device tree manager read property entry";
+};
+
+event {
+    id = 231;
+    name = "Device tree manager read property exit";
+};
+
+event {
+    id = 232;
+    name = "Device tree manager action phandle entry";
+};
+
+event {
+    id = 233;
+    name = "Device tree manager action phandle exit";
+};
+
+event {
+    id = 234;
+    name = "Device tree manager action addrcells entry";
+};
+
+event {
+    id = 235;
+    name = "Device tree manager action addrcells exit";
+};
+
+event {
+    id = 236;
+    name = "Device tree manager action sizecells entry";
+};
+
+event {
+    id = 237;
+    name = "Device tree manager action sizecells exit";
+};
+
+event {
+    id = 238;
+    name = "Device tree manager property action entry";
+};
+
+event {
+    id = 239;
+    name = "Device tree manager property action exit";
+};
+
+event {
+    id = 240;
+    name = "Device tree manager parse property entry";
+};
+
+event {
+    id = 241;
+    name = "Device tree manager parse property exit";
+};
+
+event {
+    id = 242;
+    name = "Device tree manager parse node entry";
+};
+
+event {
+    id = 243;
+    name = "Device tree manager parse node exit";
+};
+
+event {
+    id = 244;
+    name = "Device tree manager init entry";
+};
+
+event {
+    id = 245;
+    name = "Device tree manager init exit";
+};
+
+event {
+    id = 246;
+    name = "Device tree manager get property entry";
+};
+
+event {
+    id = 247;
+    name = "Device tree manager get property exit";
+};
+
+event {
+    id = 248;
+    name = "Device tree manager get phandle entry";
+};
+
+event {
+    id = 249;
+    name = "Device tree manager get phandle exit";
+};
+
+/********************************* Kernel time manager  */
+event {
+    id = 250;
+    name = "Kernel time manager main timer handler entry";
+    fields := struct {
+        uint32_t currentThreadId;
+    };
+};
+
+event {
+    id = 251;
+    name = "Kernel time manager main timer handler exit";
+    fields := struct {
+        uint32_t currentThreadId;
+    };
+};
+
+event {
+    id = 252;
+    name = "Kernel time manager RTC timer handler entry";
+    fields := struct {
+        uint32_t currentThreadId;
+    };
+};
+
+event {
+    id = 253;
+    name = "Kernel time manager RTC timer handler exit";
+    fields := struct {
+        uint32_t currentThreadId;
+    };
+};
+
+event {
+    id = 254;
+    name = "Kernel time manager add aux timer entry";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+    };
+};
+
+event {
+    id = 255;
+    name = "Kernel time manager add aux timer exit";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 256;
+    name = "Kernel time manager add timer entry";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+        uint32_t type;
+    };
+};
+
+event {
+    id = 257;
+    name = "Kernel time manager add timer exit";
+    fields := struct {
+        xuint32_t driverAddrHigh;
+        xuint32_t driverAddrLow;
+        uint32_t type;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 258;
+    name = "Kernel time manager get uptime entry";
+};
+
+
+event {
+    id = 259;
+    name = "Kernel time manager get uptime exit";
+    fields := struct {
+        xuint32_t uptimeHigh;
+        xuint32_t uptimeLow;
+    };
+};
+
+event {
+    id = 260;
+    name = "Kernel time manager get day time entry";
+};
+
+event {
+    id = 261;
+    name = "Kernel time manager get day time exit";
+    fields := struct {
+        uint32_t hours;
+        uint32_t minutes;
+        uint32_t seconds;
+    };
+};
+
+event {
+    id = 262;
+    name = "Kernel time manager get ticks";
+};
+
+event {
+    id = 263;
+    name = "Kernel time manager wait no sched entry";
+    fields := struct {
+        xuint32_t timewaitHigh;
+        xuint32_t timewaitLow;
+    };
+};
+
+
+event {
+    id = 264;
+    name = "Kernel time manager wait no sched exit";
+    fields := struct {
+        xuint32_t timewaitHigh;
+        xuint32_t timewaitLow;
+    };
+};
+
+event {
+    id = 265;
+    name = "Kernel time manager register scheduler entry";
+    fields := struct {
+        xuint32_t schedRoutineAddrHigh;
+        xuint32_t schedRoutineAddrLow;
+    };
+};
+
+event {
+    id = 266;
+    name = "Kernel time manager register scheduler exit";
+    fields := struct {
+        xuint32_t schedRoutineAddrHigh;
+        xuint32_t schedRoutineAddrLow;
+        uint32_t returnCode;
+    };
+};

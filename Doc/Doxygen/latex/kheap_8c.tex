@@ -1,0 +1,1351 @@
+\hypertarget{kheap_8c}{}\doxysection{Source/\+Kernel/\+Core/src/kheap.c File Reference}
+\label{kheap_8c}\index{Source/Kernel/Core/src/kheap.c@{Source/Kernel/Core/src/kheap.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$kernel\+\_\+output.\+h$>$}\newline
+{\ttfamily \#include $<$critical.\+h$>$}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$test\+\_\+framework.\+h$>$}\newline
+{\ttfamily \#include $<$kheap.\+h$>$}\newline
+Include dependency graph for kheap.\+c\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structlist}{list}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap allocator list node. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap allocator memory chunk representation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}{NUM\+\_\+\+SIZES}}~32
+\begin{DoxyCompactList}\small\item\em Num size. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}}~4
+\begin{DoxyCompactList}\small\item\em Memory chunk alignement. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kheap_8c_a278694c2333c9826f21ddd2c2d220f66}{MIN\+\_\+\+SIZE}}~sizeof(\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}})
+\begin{DoxyCompactList}\small\item\em Chunk minimal size. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\+\_\+\+SIZE}}~\+\_\+\+\_\+builtin\+\_\+offsetof(\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}, data)
+\begin{DoxyCompactList}\small\item\em Header size. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(C,  l,  v)~((C$\ast$)(((char$\ast$)v) -\/ (uintptr\+\_\+t)\&(((C$\ast$)0)-\/$>$l)))
+\item 
+\#define \mbox{\hyperlink{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}{LIST\+\_\+\+INIT}}(v,  l)~\mbox{\hyperlink{kheap_8c_a578597a12d55f295f38c4dc48e72fa91}{\+\_\+list\+\_\+init}}(\&v-\/$>$l)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}{LIST\+\_\+\+REMOVE\+\_\+\+FROM}}(h,  d,  l)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_ab31501c856704e2e138b6216a690e658}{LIST\+\_\+\+PUSH}}(h,  v,  l)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_ab96a3fffefb88de5950967fd340bfd7b}{LIST\+\_\+\+POP}}(h,  l)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_abd87016f090ba13951faeaca1f7104d6}{LIST\+\_\+\+ITERATOR\+\_\+\+BEGIN}}(h,  l,  it)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_abd65e372e80528423fb486c579a727f5}{LIST\+\_\+\+ITERATOR\+\_\+\+END}}(it)
+\item 
+\#define \mbox{\hyperlink{kheap_8c_a1cd3fb0ac2f9023b637a2da00100a093}{LIST\+\_\+\+ITERATOR\+\_\+\+REMOVE\+\_\+\+FROM}}(h,  it,  l)~\mbox{\hyperlink{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}{LIST\+\_\+\+REMOVE\+\_\+\+FROM}}(h, iter\+\_\+\#\#it, l)
+\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \mbox{\hyperlink{structlist}{list}} \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap allocator list node. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{kheap_8c_a578597a12d55f295f38c4dc48e72fa91}{\+\_\+list\+\_\+init}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$node)
+\begin{DoxyCompactList}\small\item\em Initializes the memory list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_add63201240319a7f38faaad5df0a45e6}{\+\_\+insert\+\_\+before}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$current, \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$new)
+\begin{DoxyCompactList}\small\item\em Inserts a node before the current node in the list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}{\+\_\+insert\+\_\+after}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$current, \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$new)
+\begin{DoxyCompactList}\small\item\em Inserts a node after the current node in the list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}{\+\_\+remove}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$node)
+\begin{DoxyCompactList}\small\item\em Removes a node from the list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_a62b4eee17fc732f7d1232266ca53f9f8}{\+\_\+push}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$\mbox{\hyperlink{structlist}{list}}, \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$node)
+\begin{DoxyCompactList}\small\item\em Pushes a node at the end of the list. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$ \mbox{\hyperlink{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07}{\+\_\+pop}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$\mbox{\hyperlink{structlist}{list}})
+\begin{DoxyCompactList}\small\item\em Pops a node from the list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_a9b614d07c7dca0887bab1dc8a1c2c235}{\+\_\+remove\+\_\+from}} (\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$\mbox{\hyperlink{structlist}{list}}, \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$node)
+\begin{DoxyCompactList}\small\item\em Removes a node from the list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}{\+\_\+memory\+\_\+chunk\+\_\+init}} (\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$chunk)
+\begin{DoxyCompactList}\small\item\em Initializes a memory chunk structure. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\+\_\+memory\+\_\+chunk\+\_\+size}} (const \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$chunk)
+\begin{DoxyCompactList}\small\item\em Returns the size of a memory chunk. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\+\_\+memory\+\_\+chunk\+\_\+slot}} (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} size)
+\begin{DoxyCompactList}\small\item\em Returns the slot of a memory chunk for the desired size. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_a94d4dd186b06bd6e36777080a99b2957}{\+\_\+remove\+\_\+free}} (\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$chunk)
+\begin{DoxyCompactList}\small\item\em Removes a memory chunk in the free memory chunks list. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d}{\+\_\+push\+\_\+free}} (\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$chunk)
+\begin{DoxyCompactList}\small\item\em Pushes a memory chunk in the free memory chunks list. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kheap_8c_a34ef347a6500d98fc1c2034929c8244d}{kheap\+\_\+init}} (void)
+\begin{DoxyCompactList}\small\item\em Initializes the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\item 
+void $\ast$ \mbox{\hyperlink{kheap_8c_a5f52d7c56b7d67dc2f96b2e93dfdc7be}{kmalloc}} (\mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}} size)
+\begin{DoxyCompactList}\small\item\em Allocate memory from the kernel heap. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{kheap_8c_a069f85a5001d71bc44d8be6532a4e432}{kfree}} (void $\ast$ptr)
+\begin{DoxyCompactList}\small\item\em Free allocated memory. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{kheap_8c_ababd7dca67c1bb349bd0a7e676347373}{kheap\+\_\+get\+\_\+free}} (void)
+\begin{DoxyCompactList}\small\item\em Returns the kernel heap available memory. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{kheap_8c_aa5611acaefaa4340432dbd56defedef8}{\+\_\+\+KERNEL\+\_\+\+HEAP\+\_\+\+BASE}}
+\begin{DoxyCompactList}\small\item\em Start address of the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \mbox{\hyperlink{kheap_8c_aeb8393c9e5d0ffb3c77c82a86b2a8cb3}{\+\_\+\+KERNEL\+\_\+\+HEAP\+\_\+\+SIZE}}
+\begin{DoxyCompactList}\small\item\em End address of the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} \mbox{\hyperlink{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}{init}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap initialization state. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$ \mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\+\_\+chunk}} \mbox{[}\mbox{\hyperlink{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}{NUM\+\_\+\+SIZES}}\mbox{]} = \{ \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap free memory chunks. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$ \mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\+\_\+chunk}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap first memory chunk. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$ \mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\+\_\+chunk}}
+\begin{DoxyCompactList}\small\item\em Kernel\textquotesingle{}s heap last memory chunk. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\+\_\+free}}
+\begin{DoxyCompactList}\small\item\em Quantity of free memory in the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\+\_\+init\+\_\+free}}
+\begin{DoxyCompactList}\small\item\em Quantity of initial free memory in the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\+\_\+meta}}
+\begin{DoxyCompactList}\small\item\em Quantity of memory used to store meta data in the kernel\textquotesingle{}s heap. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}\label{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}} 
+\index{kheap.c@{kheap.c}!ALIGN@{ALIGN}}
+\index{ALIGN@{ALIGN}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{ALIGN}{ALIGN}}
+{\footnotesize\ttfamily \#define ALIGN~4}
+
+
+
+Memory chunk alignement. 
+
+
+
+Definition at line 50 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}\label{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}} 
+\index{kheap.c@{kheap.c}!CONTAINER@{CONTAINER}}
+\index{CONTAINER@{CONTAINER}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{CONTAINER}{CONTAINER}}
+{\footnotesize\ttfamily \#define CONTAINER(\begin{DoxyParamCaption}\item[{}]{C,  }\item[{}]{l,  }\item[{}]{v }\end{DoxyParamCaption})~((C$\ast$)(((char$\ast$)v) -\/ (uintptr\+\_\+t)\&(((C$\ast$)0)-\/$>$l)))}
+
+
+
+Definition at line 93 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}\label{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}} 
+\index{kheap.c@{kheap.c}!HEADER\_SIZE@{HEADER\_SIZE}}
+\index{HEADER\_SIZE@{HEADER\_SIZE}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{HEADER\_SIZE}{HEADER\_SIZE}}
+{\footnotesize\ttfamily \#define HEADER\+\_\+\+SIZE~\+\_\+\+\_\+builtin\+\_\+offsetof(\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}, data)}
+
+
+
+Header size. 
+
+
+
+Definition at line 56 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}\label{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}} 
+\index{kheap.c@{kheap.c}!LIST\_INIT@{LIST\_INIT}}
+\index{LIST\_INIT@{LIST\_INIT}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_INIT}{LIST\_INIT}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+INIT(\begin{DoxyParamCaption}\item[{}]{v,  }\item[{}]{l }\end{DoxyParamCaption})~\mbox{\hyperlink{kheap_8c_a578597a12d55f295f38c4dc48e72fa91}{\+\_\+list\+\_\+init}}(\&v-\/$>$l)}
+
+
+
+Definition at line 95 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_abd87016f090ba13951faeaca1f7104d6}\label{kheap_8c_abd87016f090ba13951faeaca1f7104d6}} 
+\index{kheap.c@{kheap.c}!LIST\_ITERATOR\_BEGIN@{LIST\_ITERATOR\_BEGIN}}
+\index{LIST\_ITERATOR\_BEGIN@{LIST\_ITERATOR\_BEGIN}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_ITERATOR\_BEGIN}{LIST\_ITERATOR\_BEGIN}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+ITERATOR\+\_\+\+BEGIN(\begin{DoxyParamCaption}\item[{}]{h,  }\item[{}]{l,  }\item[{}]{it }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{                                                                           \(\backslash\)}
+\DoxyCodeLine{    \_\_typeof\_\_(*h) *h\_ = h;                                                 \(\backslash\)}
+\DoxyCodeLine{      list\_t* last\_\#\#it = h\_-\/>l.prev, *iter\_\#\#it = \&h\_-\/>l, *next\_\#\#it;      \(\backslash\)}
+\DoxyCodeLine{    do                                                                      \(\backslash\)}
+\DoxyCodeLine{    \{                                                                       \(\backslash\)}
+\DoxyCodeLine{        if (iter\_\#\#it == last\_\#\#it)                                         \(\backslash\)}
+\DoxyCodeLine{        \{                                                                   \(\backslash\)}
+\DoxyCodeLine{            next\_\#\#it = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};                                               \(\backslash\)}
+\DoxyCodeLine{        \}                                                                   \(\backslash\)}
+\DoxyCodeLine{        else                                                                \(\backslash\)}
+\DoxyCodeLine{        \{                                                                   \(\backslash\)}
+\DoxyCodeLine{            next\_\#\#it = iter\_\#\#it-\/>next;                                    \(\backslash\)}
+\DoxyCodeLine{        \}                                                                   \(\backslash\)}
+\DoxyCodeLine{        \_\_typeof\_\_(*h)* it = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\_\_typeof\_\_(*h), l, iter\_\#\#it);       \(\backslash\)}
+
+\end{DoxyCode}
+
+
+Definition at line 141 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_abd65e372e80528423fb486c579a727f5}\label{kheap_8c_abd65e372e80528423fb486c579a727f5}} 
+\index{kheap.c@{kheap.c}!LIST\_ITERATOR\_END@{LIST\_ITERATOR\_END}}
+\index{LIST\_ITERATOR\_END@{LIST\_ITERATOR\_END}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_ITERATOR\_END}{LIST\_ITERATOR\_END}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+ITERATOR\+\_\+\+END(\begin{DoxyParamCaption}\item[{}]{it }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \}\textcolor{keywordflow}{while}((iter\_\#\#it = next\_\#\#it));                \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line 157 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a1cd3fb0ac2f9023b637a2da00100a093}\label{kheap_8c_a1cd3fb0ac2f9023b637a2da00100a093}} 
+\index{kheap.c@{kheap.c}!LIST\_ITERATOR\_REMOVE\_FROM@{LIST\_ITERATOR\_REMOVE\_FROM}}
+\index{LIST\_ITERATOR\_REMOVE\_FROM@{LIST\_ITERATOR\_REMOVE\_FROM}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_ITERATOR\_REMOVE\_FROM}{LIST\_ITERATOR\_REMOVE\_FROM}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+ITERATOR\+\_\+\+REMOVE\+\_\+\+FROM(\begin{DoxyParamCaption}\item[{}]{h,  }\item[{}]{it,  }\item[{}]{l }\end{DoxyParamCaption})~\mbox{\hyperlink{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}{LIST\+\_\+\+REMOVE\+\_\+\+FROM}}(h, iter\+\_\+\#\#it, l)}
+
+
+
+Definition at line 161 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_ab96a3fffefb88de5950967fd340bfd7b}\label{kheap_8c_ab96a3fffefb88de5950967fd340bfd7b}} 
+\index{kheap.c@{kheap.c}!LIST\_POP@{LIST\_POP}}
+\index{LIST\_POP@{LIST\_POP}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_POP}{LIST\_POP}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+POP(\begin{DoxyParamCaption}\item[{}]{h,  }\item[{}]{l }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\_\_extension\_\_                                           \(\backslash\)}
+\DoxyCodeLine{(\{                                                      \(\backslash\)}
+\DoxyCodeLine{    \_\_typeof\_\_(**h) **h\_ = h;                           \(\backslash\)}
+\DoxyCodeLine{    list\_t* head = \&(*h\_)-\/>l;                           \(\backslash\)}
+\DoxyCodeLine{    list\_t* res = \mbox{\hyperlink{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07}{\_pop}}(\&head);                          \(\backslash\)}
+\DoxyCodeLine{    if (head == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})                                   \(\backslash\)}
+\DoxyCodeLine{    \{                                                   \(\backslash\)}
+\DoxyCodeLine{           *h\_ = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};                                  \(\backslash\)}
+\DoxyCodeLine{    \}                                                   \(\backslash\)}
+\DoxyCodeLine{    else                                                \(\backslash\)}
+\DoxyCodeLine{    \{                                                   \(\backslash\)}
+\DoxyCodeLine{          *h\_ = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\_\_typeof\_\_(**h), l, head);    \(\backslash\)}
+\DoxyCodeLine{    \}                                                   \(\backslash\)}
+\DoxyCodeLine{    CONTAINER(\_\_typeof\_\_(**h), l, res);                 \(\backslash\)}
+\DoxyCodeLine{\})}
+
+\end{DoxyCode}
+
+
+Definition at line 124 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_ab31501c856704e2e138b6216a690e658}\label{kheap_8c_ab31501c856704e2e138b6216a690e658}} 
+\index{kheap.c@{kheap.c}!LIST\_PUSH@{LIST\_PUSH}}
+\index{LIST\_PUSH@{LIST\_PUSH}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_PUSH}{LIST\_PUSH}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+PUSH(\begin{DoxyParamCaption}\item[{}]{h,  }\item[{}]{v,  }\item[{}]{l }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{                                                   \(\backslash\)}
+\DoxyCodeLine{    \_\_typeof\_\_(*v) **h\_ = h, *v\_ = v;               \(\backslash\)}
+\DoxyCodeLine{    list\_t* head = \&(*h\_)-\/>l;                       \(\backslash\)}
+\DoxyCodeLine{    if (*h\_ == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})                                \(\backslash\)}
+\DoxyCodeLine{    \{                                               \(\backslash\)}
+\DoxyCodeLine{        head = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};                                \(\backslash\)}
+\DoxyCodeLine{    \}                                               \(\backslash\)}
+\DoxyCodeLine{    \_push(\&head, \&v\_-\/>l);                           \(\backslash\)}
+\DoxyCodeLine{    *h\_ = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\_\_typeof\_\_(*v), l, head);       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line 112 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}\label{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}} 
+\index{kheap.c@{kheap.c}!LIST\_REMOVE\_FROM@{LIST\_REMOVE\_FROM}}
+\index{LIST\_REMOVE\_FROM@{LIST\_REMOVE\_FROM}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{LIST\_REMOVE\_FROM}{LIST\_REMOVE\_FROM}}
+{\footnotesize\ttfamily \#define LIST\+\_\+\+REMOVE\+\_\+\+FROM(\begin{DoxyParamCaption}\item[{}]{h,  }\item[{}]{d,  }\item[{}]{l }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{                                                           \(\backslash\)}
+\DoxyCodeLine{    \_\_typeof\_\_(**h) **h\_ = h, *d\_ = d;                      \(\backslash\)}
+\DoxyCodeLine{    list\_t* head = \&(*h\_)-\/>l;                               \(\backslash\)}
+\DoxyCodeLine{    \_remove\_from(\&head, \&d\_-\/>l);                            \(\backslash\)}
+\DoxyCodeLine{    if (head == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})                                       \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{          *h\_ = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};                                       \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{    else                                                    \(\backslash\)}
+\DoxyCodeLine{    \{                                                       \(\backslash\)}
+\DoxyCodeLine{        *h\_ = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\_\_typeof\_\_(**h), l, head);          \(\backslash\)}
+\DoxyCodeLine{    \}                                                       \(\backslash\)}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line 97 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a278694c2333c9826f21ddd2c2d220f66}\label{kheap_8c_a278694c2333c9826f21ddd2c2d220f66}} 
+\index{kheap.c@{kheap.c}!MIN\_SIZE@{MIN\_SIZE}}
+\index{MIN\_SIZE@{MIN\_SIZE}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{MIN\_SIZE}{MIN\_SIZE}}
+{\footnotesize\ttfamily \#define MIN\+\_\+\+SIZE~sizeof(\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}})}
+
+
+
+Chunk minimal size. 
+
+
+
+Definition at line 53 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}\label{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}} 
+\index{kheap.c@{kheap.c}!NUM\_SIZES@{NUM\_SIZES}}
+\index{NUM\_SIZES@{NUM\_SIZES}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{NUM\_SIZES}{NUM\_SIZES}}
+{\footnotesize\ttfamily \#define NUM\+\_\+\+SIZES~32}
+
+
+
+Num size. 
+
+
+
+Definition at line 47 of file kheap.\+c.
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}\label{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}} 
+\index{kheap.c@{kheap.c}!list\_t@{list\_t}}
+\index{list\_t@{list\_t}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{list\_t}{list\_t}}
+{\footnotesize\ttfamily typedef struct \mbox{\hyperlink{structlist}{list}} \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}}}
+
+
+
+Kernel\textquotesingle{}s heap allocator list node. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}\label{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}} 
+\index{kheap.c@{kheap.c}!\_insert\_after@{\_insert\_after}}
+\index{\_insert\_after@{\_insert\_after}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_insert\_after()}{\_insert\_after()}}
+{\footnotesize\ttfamily static void \+\_\+insert\+\_\+after (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{current,  }\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{new }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Inserts a node after the current node in the list. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em current} & The current node. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em new} & The new node to insert after the current node. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 337 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{338 \{}
+\DoxyCodeLine{339     \mbox{\hyperlink{structlist}{list\_t}} *current\_next = current-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}};}
+\DoxyCodeLine{340     \mbox{\hyperlink{structlist}{list\_t}} *new\_prev = \textcolor{keyword}{new}-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}};}
+\DoxyCodeLine{341 }
+\DoxyCodeLine{342     current-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = \textcolor{keyword}{new};}
+\DoxyCodeLine{343     \textcolor{keyword}{new}-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = current;}
+\DoxyCodeLine{344     new\_prev-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = current\_next;}
+\DoxyCodeLine{345     current\_next-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = new\_prev;}
+\DoxyCodeLine{346 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_add63201240319a7f38faaad5df0a45e6}\label{kheap_8c_add63201240319a7f38faaad5df0a45e6}} 
+\index{kheap.c@{kheap.c}!\_insert\_before@{\_insert\_before}}
+\index{\_insert\_before@{\_insert\_before}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_insert\_before()}{\_insert\_before()}}
+{\footnotesize\ttfamily static void \+\_\+insert\+\_\+before (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{current,  }\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{new }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Inserts a node before the current node in the list. 
+
+Inserts a node before the current node in the list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em current} & The current node. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em new} & The new node to insert before the current node. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 326 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{327 \{}
+\DoxyCodeLine{328     \mbox{\hyperlink{structlist}{list\_t}}* current\_prev = current-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}};}
+\DoxyCodeLine{329     \mbox{\hyperlink{structlist}{list\_t}}* new\_prev = \textcolor{keyword}{new}-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}};}
+\DoxyCodeLine{330 }
+\DoxyCodeLine{331     current\_prev-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = \textcolor{keyword}{new};}
+\DoxyCodeLine{332     \textcolor{keyword}{new}-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = current\_prev;}
+\DoxyCodeLine{333     new\_prev-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = current;}
+\DoxyCodeLine{334     current-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = new\_prev;}
+\DoxyCodeLine{335 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=247pt]{kheap_8c_add63201240319a7f38faaad5df0a45e6_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a578597a12d55f295f38c4dc48e72fa91}\label{kheap_8c_a578597a12d55f295f38c4dc48e72fa91}} 
+\index{kheap.c@{kheap.c}!\_list\_init@{\_list\_init}}
+\index{\_list\_init@{\_list\_init}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_list\_init()}{\_list\_init()}}
+{\footnotesize\ttfamily static void \+\_\+list\+\_\+init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Initializes the memory list. 
+
+Initializes the memory list with the basic node value.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em node} & The list\textquotesingle{}s node to initialize. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 320 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{321 \{}
+\DoxyCodeLine{322     node-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = node;}
+\DoxyCodeLine{323     node-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = node;}
+\DoxyCodeLine{324 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}\label{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}} 
+\index{kheap.c@{kheap.c}!\_memory\_chunk\_init@{\_memory\_chunk\_init}}
+\index{\_memory\_chunk\_init@{\_memory\_chunk\_init}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_memory\_chunk\_init()}{\_memory\_chunk\_init()}}
+{\footnotesize\ttfamily static void \+\_\+memory\+\_\+chunk\+\_\+init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Initializes a memory chunk structure. 
+
+Initializes a memory chunk structure.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em chunk} & The chunk structure to initialize. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 398 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{399 \{}
+\DoxyCodeLine{400     \mbox{\hyperlink{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}{LIST\_INIT}}(chunk, all);}
+\DoxyCodeLine{401     chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{402     \mbox{\hyperlink{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}{LIST\_INIT}}(chunk, free);}
+\DoxyCodeLine{403 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}\label{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}} 
+\index{kheap.c@{kheap.c}!\_memory\_chunk\_size@{\_memory\_chunk\_size}}
+\index{\_memory\_chunk\_size@{\_memory\_chunk\_size}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_memory\_chunk\_size()}{\_memory\_chunk\_size()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} \+\_\+memory\+\_\+chunk\+\_\+size (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the size of a memory chunk. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em chunk} & The chunk to get the size of.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The size of the memory chunk is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 405 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{406 \{}
+\DoxyCodeLine{407     \textcolor{keywordflow}{return} ((\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)(chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}.\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}}) -\/ (\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)(\&chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}})) -\/ \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{408 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_ad25c392f9dbab023549ff379f8b4e370_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}\label{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}} 
+\index{kheap.c@{kheap.c}!\_memory\_chunk\_slot@{\_memory\_chunk\_slot}}
+\index{\_memory\_chunk\_slot@{\_memory\_chunk\_slot}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_memory\_chunk\_slot()}{\_memory\_chunk\_slot()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\+\_\+t}} \+\_\+memory\+\_\+chunk\+\_\+slot (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}}}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Returns the slot of a memory chunk for the desired size. 
+
+Returns the slot of a memory chunk for the desired size.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em size} & The size of the chunk to get the slot of.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The slot of a memory chunk for the desired size. 
+\end{DoxyReturn}
+
+
+Definition at line 410 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{411 \{}
+\DoxyCodeLine{412     \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}} n = -\/1;}
+\DoxyCodeLine{413     \textcolor{keywordflow}{while}(size > 0)}
+\DoxyCodeLine{414     \{}
+\DoxyCodeLine{415         ++n;}
+\DoxyCodeLine{416         size /= 2;}
+\DoxyCodeLine{417     \}}
+\DoxyCodeLine{418     \textcolor{keywordflow}{return} n;}
+\DoxyCodeLine{419 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07}\label{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07}} 
+\index{kheap.c@{kheap.c}!\_pop@{\_pop}}
+\index{\_pop@{\_pop}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_pop()}{\_pop()}}
+{\footnotesize\ttfamily static \mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$ \+\_\+pop (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$}]{list }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Pops a node from the list. 
+
+Pops a node from the list and returns it.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em list} & The list to be poped from.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The node poped from the list is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 366 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{367 \{}
+\DoxyCodeLine{368 }
+\DoxyCodeLine{369     \mbox{\hyperlink{structlist}{list\_t}}* top = *\mbox{\hyperlink{structlist}{list}};}
+\DoxyCodeLine{370     \mbox{\hyperlink{structlist}{list\_t}}* next\_top = top-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}};}
+\DoxyCodeLine{371 }
+\DoxyCodeLine{372     \mbox{\hyperlink{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}{\_remove}}(top);}
+\DoxyCodeLine{373 }
+\DoxyCodeLine{374     \textcolor{keywordflow}{if} (top == next\_top)}
+\DoxyCodeLine{375     \{}
+\DoxyCodeLine{376            *\mbox{\hyperlink{structlist}{list}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{377     \}}
+\DoxyCodeLine{378     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{379     \{}
+\DoxyCodeLine{380            *\mbox{\hyperlink{structlist}{list}} = next\_top;}
+\DoxyCodeLine{381     \}}
+\DoxyCodeLine{382 }
+\DoxyCodeLine{383     \textcolor{keywordflow}{return} top;}
+\DoxyCodeLine{384 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=215pt]{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a62b4eee17fc732f7d1232266ca53f9f8}\label{kheap_8c_a62b4eee17fc732f7d1232266ca53f9f8}} 
+\index{kheap.c@{kheap.c}!\_push@{\_push}}
+\index{\_push@{\_push}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_push()}{\_push()}}
+{\footnotesize\ttfamily static void \+\_\+push (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$}]{list,  }\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Pushes a node at the end of the list. 
+
+Pushes a node at the end of the list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em list} & The list to be pushed. \\
+\hline
+\mbox{\texttt{ in}}  & {\em node} & The node to push to the list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 356 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{357 \{}
+\DoxyCodeLine{358     \textcolor{keywordflow}{if} (*\mbox{\hyperlink{structlist}{list}} != \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{359     \{}
+\DoxyCodeLine{360         \mbox{\hyperlink{kheap_8c_add63201240319a7f38faaad5df0a45e6}{\_insert\_before}}(*\mbox{\hyperlink{structlist}{list}}, node);}
+\DoxyCodeLine{361     \}}
+\DoxyCodeLine{362 }
+\DoxyCodeLine{363     *\mbox{\hyperlink{structlist}{list}} = node;}
+\DoxyCodeLine{364 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=247pt]{kheap_8c_a62b4eee17fc732f7d1232266ca53f9f8_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d}\label{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d}} 
+\index{kheap.c@{kheap.c}!\_push\_free@{\_push\_free}}
+\index{\_push\_free@{\_push\_free}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_push\_free()}{\_push\_free()}}
+{\footnotesize\ttfamily static void \+\_\+push\+\_\+free (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Pushes a memory chunk in the free memory chunks list. 
+
+Pushes a memory chunk in the free memory chunks list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em chunk} & The chunk to be placed in the list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 430 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{431 \{}
+\DoxyCodeLine{432     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} len = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(chunk);}
+\DoxyCodeLine{433     \textcolor{keywordtype}{int} n = \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\_memory\_chunk\_slot}}(len);}
+\DoxyCodeLine{434 }
+\DoxyCodeLine{435     \mbox{\hyperlink{kheap_8c_ab31501c856704e2e138b6216a690e658}{LIST\_PUSH}}(\&\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n], chunk, free);}
+\DoxyCodeLine{436     \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} += len;}
+\DoxyCodeLine{437 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=308pt]{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}\label{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}} 
+\index{kheap.c@{kheap.c}!\_remove@{\_remove}}
+\index{\_remove@{\_remove}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_remove()}{\_remove()}}
+{\footnotesize\ttfamily static void \+\_\+remove (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Removes a node from the list. 
+
+Removes a node from the list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em node} & The node to remove from the list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 348 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{349 \{}
+\DoxyCodeLine{350     node-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}}-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = node-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}};}
+\DoxyCodeLine{351     node-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}}-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = node-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}};}
+\DoxyCodeLine{352     node-\/>\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}} = node;}
+\DoxyCodeLine{353     node-\/>\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}} = node;}
+\DoxyCodeLine{354 \}}
+
+\end{DoxyCode}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a94d4dd186b06bd6e36777080a99b2957}\label{kheap_8c_a94d4dd186b06bd6e36777080a99b2957}} 
+\index{kheap.c@{kheap.c}!\_remove\_free@{\_remove\_free}}
+\index{\_remove\_free@{\_remove\_free}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_remove\_free()}{\_remove\_free()}}
+{\footnotesize\ttfamily static void \+\_\+remove\+\_\+free (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}} $\ast$}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Removes a memory chunk in the free memory chunks list. 
+
+Removes a memory chunk in the free memory chunks list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em chunk} & The chunk to be removed from the list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 421 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{422 \{}
+\DoxyCodeLine{423     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} len = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(chunk);}
+\DoxyCodeLine{424     \textcolor{keywordtype}{int} n = \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\_memory\_chunk\_slot}}(len);}
+\DoxyCodeLine{425 }
+\DoxyCodeLine{426     \mbox{\hyperlink{kheap_8c_afc6ebd6c1f0224d36b361f7132447bac}{LIST\_REMOVE\_FROM}}(\&\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n], chunk, free);}
+\DoxyCodeLine{427     \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} -\/= len;}
+\DoxyCodeLine{428 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{kheap_8c_a94d4dd186b06bd6e36777080a99b2957_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_a94d4dd186b06bd6e36777080a99b2957_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a9b614d07c7dca0887bab1dc8a1c2c235}\label{kheap_8c_a9b614d07c7dca0887bab1dc8a1c2c235}} 
+\index{kheap.c@{kheap.c}!\_remove\_from@{\_remove\_from}}
+\index{\_remove\_from@{\_remove\_from}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_remove\_from()}{\_remove\_from()}}
+{\footnotesize\ttfamily static void \+\_\+remove\+\_\+from (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$$\ast$}]{list,  }\item[{\mbox{\hyperlink{kheap_8c_a15376354e4e8b4f1732e9df17f30786c}{list\+\_\+t}} $\ast$}]{node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Removes a node from the list. 
+
+Removes a node from the list.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em list} & The list to remove the node from. \\
+\hline
+\mbox{\texttt{ out}}  & {\em node} & The node to remove from the list. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 386 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{387 \{}
+\DoxyCodeLine{388     \textcolor{keywordflow}{if} (*\mbox{\hyperlink{structlist}{list}} == node)}
+\DoxyCodeLine{389     \{}
+\DoxyCodeLine{390         \mbox{\hyperlink{kheap_8c_afb11cd189cca869bbe2d4b0f7c1c8b07}{\_pop}}(\mbox{\hyperlink{structlist}{list}});}
+\DoxyCodeLine{391     \}}
+\DoxyCodeLine{392     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{393     \{}
+\DoxyCodeLine{394         \mbox{\hyperlink{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}{\_remove}}(node);}
+\DoxyCodeLine{395     \}}
+\DoxyCodeLine{396 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=339pt]{kheap_8c_a9b614d07c7dca0887bab1dc8a1c2c235_cgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a069f85a5001d71bc44d8be6532a4e432}\label{kheap_8c_a069f85a5001d71bc44d8be6532a4e432}} 
+\index{kheap.c@{kheap.c}!kfree@{kfree}}
+\index{kfree@{kfree}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{kfree()}{kfree()}}
+{\footnotesize\ttfamily void kfree (\begin{DoxyParamCaption}\item[{void $\ast$}]{ptr }\end{DoxyParamCaption})}
+
+
+
+Free allocated memory. 
+
+Releases allocated memory.\+IOf the pointer is NULL or has not been allocated previously from the heap, nothing is done.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em ptr} & The start address of the memory area to free. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 605 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{606 \{}
+\DoxyCodeLine{607     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}     used;}
+\DoxyCodeLine{608     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* chunk;}
+\DoxyCodeLine{609     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* next;}
+\DoxyCodeLine{610     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* prev;}
+\DoxyCodeLine{611     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}     int\_state;}
+\DoxyCodeLine{612 }
+\DoxyCodeLine{613     \textcolor{keywordflow}{if}(\mbox{\hyperlink{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}{init}} == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}} || ptr == \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{614     \{}
+\DoxyCodeLine{615         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{616     \}}
+\DoxyCodeLine{617 }
+\DoxyCodeLine{618     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{619 }
+\DoxyCodeLine{620     chunk = (\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}*)((\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)ptr -\/ \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}});}
+\DoxyCodeLine{621     next = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}, all, chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}.\mbox{\hyperlink{structlist_a316ac2a777ad970368f874242890171e}{next}});}
+\DoxyCodeLine{622     prev = \mbox{\hyperlink{kheap_8c_aaf42941e72e1744957c3f655f98ae10a}{CONTAINER}}(\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}, all, chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}.\mbox{\hyperlink{structlist_a31b2b1b9b2362fd1841e6d9949b26c81}{prev}});}
+\DoxyCodeLine{623 }
+\DoxyCodeLine{624     used = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(chunk);}
+\DoxyCodeLine{625 }
+\DoxyCodeLine{626     \textcolor{keywordflow}{if} (next-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})}
+\DoxyCodeLine{627     \{}
+\DoxyCodeLine{628         \mbox{\hyperlink{kheap_8c_a94d4dd186b06bd6e36777080a99b2957}{\_remove\_free}}(next);}
+\DoxyCodeLine{629         \mbox{\hyperlink{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}{\_remove}}(\&next-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}});}
+\DoxyCodeLine{630 }
+\DoxyCodeLine{631         \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\_meta}} -\/= \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{632         \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} += \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{633     \}}
+\DoxyCodeLine{634 }
+\DoxyCodeLine{635     \textcolor{keywordflow}{if} (prev-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})}
+\DoxyCodeLine{636     \{}
+\DoxyCodeLine{637         \mbox{\hyperlink{kheap_8c_a94d4dd186b06bd6e36777080a99b2957}{\_remove\_free}}(prev);}
+\DoxyCodeLine{638         \mbox{\hyperlink{kheap_8c_afeb5803417a7390d3331bad7fa4cd6f7}{\_remove}}(\&chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}});}
+\DoxyCodeLine{639 }
+\DoxyCodeLine{640         \mbox{\hyperlink{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d}{\_push\_free}}(prev);}
+\DoxyCodeLine{641         \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\_meta}} -\/= \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{642         \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} += \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{643     \}}
+\DoxyCodeLine{644     \textcolor{keywordflow}{else}}
+\DoxyCodeLine{645     \{}
+\DoxyCodeLine{646         chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{647         \mbox{\hyperlink{kheap_8c_ab6bc3dfaedd918bd6a990b7d4d657acc}{LIST\_INIT}}(chunk, free);}
+\DoxyCodeLine{648         \mbox{\hyperlink{kheap_8c_abd725f3c658de7bd1c84e20f8f88061d}{\_push\_free}}(chunk);}
+\DoxyCodeLine{649     \}}
+\DoxyCodeLine{650 }
+\DoxyCodeLine{651     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_abd082c0804abc6f2d1d3129fa3cef155}{KHEAP\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KHEAP"{}},}
+\DoxyCodeLine{652                  \textcolor{stringliteral}{"{}[KHEAP] Kheap freed 0x\%p -\/> \%uB"{}}, ptr, used);}
+\DoxyCodeLine{653 }
+\DoxyCodeLine{654 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{655     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_FREE, 3,}
+\DoxyCodeLine{656                        (uintptr\_t)ptr \& 0xFFFFFFFF,}
+\DoxyCodeLine{657                        (uintptr\_t)ptr >> 32,}
+\DoxyCodeLine{658                        \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{659 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{660     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_FREE, 3,}
+\DoxyCodeLine{661                        (uintptr\_t)ptr \& 0xFFFFFFFF,}
+\DoxyCodeLine{662                        (uintptr\_t)0,}
+\DoxyCodeLine{663                        \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{664 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{665 }
+\DoxyCodeLine{666     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{667 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_a069f85a5001d71bc44d8be6532a4e432_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_a069f85a5001d71bc44d8be6532a4e432_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_ababd7dca67c1bb349bd0a7e676347373}\label{kheap_8c_ababd7dca67c1bb349bd0a7e676347373}} 
+\index{kheap.c@{kheap.c}!kheap\_get\_free@{kheap\_get\_free}}
+\index{kheap\_get\_free@{kheap\_get\_free}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{kheap\_get\_free()}{kheap\_get\_free()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} kheap\+\_\+get\+\_\+free (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Returns the kernel heap available memory. 
+
+Returns the kernel heap available memory.
+
+\begin{DoxyReturn}{Returns}
+The kernel heap available memory is returned. 
+\end{DoxyReturn}
+
+
+Definition at line 669 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{670 \{}
+\DoxyCodeLine{671     \textcolor{keywordflow}{return} \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}};}
+\DoxyCodeLine{672 \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{kheap_8c_a34ef347a6500d98fc1c2034929c8244d}\label{kheap_8c_a34ef347a6500d98fc1c2034929c8244d}} 
+\index{kheap.c@{kheap.c}!kheap\_init@{kheap\_init}}
+\index{kheap\_init@{kheap\_init}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{kheap\_init()}{kheap\_init()}}
+{\footnotesize\ttfamily void kheap\+\_\+init (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+
+
+Initializes the kernel\textquotesingle{}s heap. 
+
+Setups kernel heap management. It will also allign kernel heap start and initialize the basic heap parameters such as its size. 
+
+Definition at line 439 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{440 \{}
+\DoxyCodeLine{441     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* second;}
+\DoxyCodeLine{442     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} len;}
+\DoxyCodeLine{443     \mbox{\hyperlink{stdint_8h_a32f2e37ee053cf2ce8ca28d1f74630e5}{int32\_t}}  n;}
+\DoxyCodeLine{444 }
+\DoxyCodeLine{445     \textcolor{keywordtype}{void}* mem = \&\mbox{\hyperlink{kheap_8c_aa5611acaefaa4340432dbd56defedef8}{\_KERNEL\_HEAP\_BASE}};}
+\DoxyCodeLine{446     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}} size = (\mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}})(uintptr\_t)\&\mbox{\hyperlink{kheap_8c_aeb8393c9e5d0ffb3c77c82a86b2a8cb3}{\_KERNEL\_HEAP\_SIZE}};}
+\DoxyCodeLine{447     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}* mem\_start = (\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)}
+\DoxyCodeLine{448                         (((uintptr\_t)mem + \mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}} -\/ 1) \& (\string~(\mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}} -\/ 1)));}
+\DoxyCodeLine{449     \mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}* mem\_end = (\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)(((uintptr\_t)mem + size) \& (\string~(\mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}} -\/ 1)));}
+\DoxyCodeLine{450 }
+\DoxyCodeLine{451 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{452     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_INIT\_START, 2,}
+\DoxyCodeLine{453                        (uintptr\_t)mem \& 0xFFFFFFFF,}
+\DoxyCodeLine{454                        (uintptr\_t)mem >> 32);}
+\DoxyCodeLine{455 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{456     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_INIT\_START, 2,}
+\DoxyCodeLine{457                        (uintptr\_t)mem \& 0xFFFFFFFF,}
+\DoxyCodeLine{458                        (uintptr\_t)0);}
+\DoxyCodeLine{459 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{460 }
+\DoxyCodeLine{461     \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} = 0;}
+\DoxyCodeLine{462     \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}} = 0;}
+\DoxyCodeLine{463     \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\_meta}} = 0;}
+\DoxyCodeLine{464     \mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{465     \mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\_chunk}} = \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{466 }
+\DoxyCodeLine{467     \mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}} = (\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}*)mem\_start;}
+\DoxyCodeLine{468     second = \mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}} + 1;}
+\DoxyCodeLine{469 }
+\DoxyCodeLine{470     \mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\_chunk}} = ((\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}*)mem\_end) -\/ 1;}
+\DoxyCodeLine{471 }
+\DoxyCodeLine{472     \mbox{\hyperlink{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}{\_memory\_chunk\_init}}(\mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}});}
+\DoxyCodeLine{473     \mbox{\hyperlink{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}{\_memory\_chunk\_init}}(second);}
+\DoxyCodeLine{474 }
+\DoxyCodeLine{475     \mbox{\hyperlink{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}{\_memory\_chunk\_init}}(\mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\_chunk}});}
+\DoxyCodeLine{476     \mbox{\hyperlink{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}{\_insert\_after}}(\&\mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}}-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}, \&second-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}});}
+\DoxyCodeLine{477     \mbox{\hyperlink{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}{\_insert\_after}}(\&second-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}}, \&\mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\_chunk}}-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}});}
+\DoxyCodeLine{478 }
+\DoxyCodeLine{479     \mbox{\hyperlink{kheap_8c_a5bab399ba10394e05532e160c792927c}{first\_chunk}}-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{480     \mbox{\hyperlink{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}{last\_chunk}}-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{481 }
+\DoxyCodeLine{482     len = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(second);}
+\DoxyCodeLine{483     n   = \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\_memory\_chunk\_slot}}(len);}
+\DoxyCodeLine{484 }
+\DoxyCodeLine{485     \mbox{\hyperlink{kheap_8c_ab31501c856704e2e138b6216a690e658}{LIST\_PUSH}}(\&\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n], second, free);}
+\DoxyCodeLine{486     \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} = len;}
+\DoxyCodeLine{487     \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}} = \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}};}
+\DoxyCodeLine{488     \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\_meta}} = \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}) * 2 + \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{489 }
+\DoxyCodeLine{490     \mbox{\hyperlink{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}{init}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{491 }
+\DoxyCodeLine{492     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_abd082c0804abc6f2d1d3129fa3cef155}{KHEAP\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KHEAP"{}},}
+\DoxyCodeLine{493                  \textcolor{stringliteral}{"{}Kernel Heap Initialized at 0x\%p"{}}, mem\_start);}
+\DoxyCodeLine{494 }
+\DoxyCodeLine{495 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{496     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_INIT\_END, 3,}
+\DoxyCodeLine{497                        (uintptr\_t)mem \& 0xFFFFFFFF,}
+\DoxyCodeLine{498                        (uintptr\_t)mem >> 32,}
+\DoxyCodeLine{499                        \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}});}
+\DoxyCodeLine{500 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{501     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_INIT\_END, 3,}
+\DoxyCodeLine{502                        (uintptr\_t)mem \& 0xFFFFFFFF,}
+\DoxyCodeLine{503                        (uintptr\_t)0,}
+\DoxyCodeLine{504                        \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}});}
+\DoxyCodeLine{505 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{506 }
+\DoxyCodeLine{507     \mbox{\hyperlink{test__framework_8h_a41ccebea0fb21bcf77ae2e3c16d2968e}{TEST\_POINT\_FUNCTION\_CALL}}(\mbox{\hyperlink{test__list_8h_a2423c0ed7b6dead22d05869967d82c41}{kheap\_test}}, \mbox{\hyperlink{test__list_8h_a6caa622cb4bd58687176f72deb7fa6ba}{TEST\_KHEAP\_ENABLED}});}
+\DoxyCodeLine{508 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=306pt]{kheap_8c_a34ef347a6500d98fc1c2034929c8244d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=243pt]{kheap_8c_a34ef347a6500d98fc1c2034929c8244d_icgraph}
+\end{center}
+\end{figure}
+\mbox{\Hypertarget{kheap_8c_a5f52d7c56b7d67dc2f96b2e93dfdc7be}\label{kheap_8c_a5f52d7c56b7d67dc2f96b2e93dfdc7be}} 
+\index{kheap.c@{kheap.c}!kmalloc@{kmalloc}}
+\index{kmalloc@{kmalloc}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{kmalloc()}{kmalloc()}}
+{\footnotesize\ttfamily void$\ast$ kmalloc (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{stddef_8h_aa9d55e2f20e580b7445617d0d12fff6e}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})}
+
+
+
+Allocate memory from the kernel heap. 
+
+Allocate a chunk of memory form the kernel heap and returns the start address of the chunk.
+
+­
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em size} & The number of byte to allocate.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the start address of the allocated memory is returned. If the memory cannot be allocated, this pointer will be NULL. 
+\end{DoxyReturn}
+
+
+Definition at line 510 of file kheap.\+c.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{511 \{}
+\DoxyCodeLine{512     \textcolor{keywordtype}{size\_t}       n;}
+\DoxyCodeLine{513     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* chunk;}
+\DoxyCodeLine{514     \mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}* chunk2;}
+\DoxyCodeLine{515     \textcolor{keywordtype}{size\_t}       size2;}
+\DoxyCodeLine{516     \textcolor{keywordtype}{size\_t}       len;}
+\DoxyCodeLine{517     \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\_t}}     int\_state;}
+\DoxyCodeLine{518 }
+\DoxyCodeLine{519     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_abd082c0804abc6f2d1d3129fa3cef155}{KHEAP\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KHEAP"{}},}
+\DoxyCodeLine{520                  \textcolor{stringliteral}{"{}Kheap allocating \%uB (\%uB free, \%uB used)"{}},}
+\DoxyCodeLine{521                  size, \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}},}
+\DoxyCodeLine{522                  \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}} -\/ \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{523 }
+\DoxyCodeLine{524     \textcolor{keywordflow}{if}(\mbox{\hyperlink{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}{init}} == \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}} || size == 0)}
+\DoxyCodeLine{525     \{}
+\DoxyCodeLine{526         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{527     \}}
+\DoxyCodeLine{528 }
+\DoxyCodeLine{529     \mbox{\hyperlink{i386_2includes_2critical_8h_a2022f694c4b84258f5a89536d07a3475}{ENTER\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{530 }
+\DoxyCodeLine{531     size = (size + \mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}} -\/ 1) \& (\string~(\mbox{\hyperlink{kheap_8c_ae4ff5a07c6ff43ed11a3887ef7d524f2}{ALIGN}} -\/ 1));}
+\DoxyCodeLine{532 }
+\DoxyCodeLine{533     \textcolor{keywordflow}{if} (size < \mbox{\hyperlink{kheap_8c_a278694c2333c9826f21ddd2c2d220f66}{MIN\_SIZE}})}
+\DoxyCodeLine{534     \{}
+\DoxyCodeLine{535          size = \mbox{\hyperlink{kheap_8c_a278694c2333c9826f21ddd2c2d220f66}{MIN\_SIZE}};}
+\DoxyCodeLine{536     \}}
+\DoxyCodeLine{537 }
+\DoxyCodeLine{538     n = \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\_memory\_chunk\_slot}}(size -\/ 1) + 1;}
+\DoxyCodeLine{539 }
+\DoxyCodeLine{540     \textcolor{keywordflow}{if} (n >= \mbox{\hyperlink{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}{NUM\_SIZES}})}
+\DoxyCodeLine{541     \{}
+\DoxyCodeLine{542         \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{543         \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{544     \}}
+\DoxyCodeLine{545 }
+\DoxyCodeLine{546     \textcolor{keywordflow}{while}(\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n] == 0)}
+\DoxyCodeLine{547     \{}
+\DoxyCodeLine{548         ++n;}
+\DoxyCodeLine{549         \textcolor{keywordflow}{if} (n >= \mbox{\hyperlink{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}{NUM\_SIZES}})}
+\DoxyCodeLine{550         \{}
+\DoxyCodeLine{551             \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{552             \textcolor{keywordflow}{return} \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{553         \}}
+\DoxyCodeLine{554     \}}
+\DoxyCodeLine{555 }
+\DoxyCodeLine{556     chunk = \mbox{\hyperlink{kheap_8c_ab96a3fffefb88de5950967fd340bfd7b}{LIST\_POP}}(\&\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n], free);}
+\DoxyCodeLine{557     size2 = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(chunk);}
+\DoxyCodeLine{558     len = 0;}
+\DoxyCodeLine{559 }
+\DoxyCodeLine{560     \textcolor{keywordflow}{if} (size + \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}) <= size2)}
+\DoxyCodeLine{561     \{}
+\DoxyCodeLine{562         chunk2 = (\mbox{\hyperlink{structmem__chunk__t}{mem\_chunk\_t}}*)(((\mbox{\hyperlink{stdint_8h_aef44329758059c91c76d334e8fc09700}{int8\_t}}*)chunk) + \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}} + size);}
+\DoxyCodeLine{563 }
+\DoxyCodeLine{564         \mbox{\hyperlink{kheap_8c_ae8a7c4debee323e4eeb1e06c90507780}{\_memory\_chunk\_init}}(chunk2);}
+\DoxyCodeLine{565 }
+\DoxyCodeLine{566         \mbox{\hyperlink{kheap_8c_a5720eb7da9d70aff0c14a371bf9f444c}{\_insert\_after}}(\&chunk-\/>all, \&chunk2-\/>\mbox{\hyperlink{structmem__chunk__t_a9e91af790d9ded5d541d57b9b30e5ef2}{all}});}
+\DoxyCodeLine{567 }
+\DoxyCodeLine{568         len = \mbox{\hyperlink{kheap_8c_ad25c392f9dbab023549ff379f8b4e370}{\_memory\_chunk\_size}}(chunk2);}
+\DoxyCodeLine{569         n = \mbox{\hyperlink{kheap_8c_ae110f6374ef6cc5abaa5b28ec8b56a6c}{\_memory\_chunk\_slot}}(len);}
+\DoxyCodeLine{570 }
+\DoxyCodeLine{571         \mbox{\hyperlink{kheap_8c_ab31501c856704e2e138b6216a690e658}{LIST\_PUSH}}(\&\mbox{\hyperlink{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}{free\_chunk}}[n], chunk2, free);}
+\DoxyCodeLine{572 }
+\DoxyCodeLine{573         \mbox{\hyperlink{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}{mem\_meta}} += \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}};}
+\DoxyCodeLine{574         \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} += len;}
+\DoxyCodeLine{575     \}}
+\DoxyCodeLine{576 }
+\DoxyCodeLine{577     chunk-\/>\mbox{\hyperlink{structmem__chunk__t_a33a790083c6334e6715465a66d3e174e}{used}} = \mbox{\hyperlink{stdint_8h_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{578 }
+\DoxyCodeLine{579     \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}} -\/= size2;}
+\DoxyCodeLine{580 }
+\DoxyCodeLine{581     \mbox{\hyperlink{kernel__output_8h_ad5a087734220dd655d1effaa240275fa}{KERNEL\_DEBUG}}(\mbox{\hyperlink{config_8h_abd082c0804abc6f2d1d3129fa3cef155}{KHEAP\_DEBUG\_ENABLED}}, \textcolor{stringliteral}{"{}KHEAP"{}},}
+\DoxyCodeLine{582                  \textcolor{stringliteral}{"{}Kheap allocated 0x\%p -\/> \%uB (\%uB free, \%uB used)"{}},}
+\DoxyCodeLine{583                  chunk-\/>\mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}}, size2 -\/ len -\/ \mbox{\hyperlink{kheap_8c_a49999be01380f41cc0d0f1f1406fb277}{HEADER\_SIZE}}, \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}},}
+\DoxyCodeLine{584                  \mbox{\hyperlink{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}{kheap\_init\_free}} -\/ \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{585 }
+\DoxyCodeLine{586     \mbox{\hyperlink{i386_2includes_2critical_8h_a0c9934639d2ec5b4c8c297c096a0d104}{EXIT\_CRITICAL}}(int\_state);}
+\DoxyCodeLine{587 }
+\DoxyCodeLine{588 \textcolor{preprocessor}{\#ifdef ARCH\_64\_BITS}}
+\DoxyCodeLine{589     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_ALLOC, 4,}
+\DoxyCodeLine{590                        (uintptr\_t)chunk-\/>\mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{591                        (uintptr\_t)chunk-\/>\mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}} >> 32,}
+\DoxyCodeLine{592                        size,}
+\DoxyCodeLine{593                        \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{594 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{595     \mbox{\hyperlink{tracing_8h_a631034fc8d54090aa7f8fca47f5f4d58}{KERNEL\_TRACE\_EVENT}}(EVENT\_KERNEL\_HEAP\_ALLOC, 4,}
+\DoxyCodeLine{596                        (uintptr\_t)chunk-\/>\mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}} \& 0xFFFFFFFF,}
+\DoxyCodeLine{597                        (uintptr\_t)0,}
+\DoxyCodeLine{598                        size,}
+\DoxyCodeLine{599                        \mbox{\hyperlink{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}{mem\_free}});}
+\DoxyCodeLine{600 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{601 }
+\DoxyCodeLine{602     \textcolor{keywordflow}{return} chunk-\/>\mbox{\hyperlink{structmem__chunk__t_abe222f6d3581e7920dcad5306cc906a8}{data}};}
+\DoxyCodeLine{603 \}}
+
+\end{DoxyCode}
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=294pt]{kheap_8c_a5f52d7c56b7d67dc2f96b2e93dfdc7be_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kheap_8c_a5f52d7c56b7d67dc2f96b2e93dfdc7be_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{kheap_8c_aa5611acaefaa4340432dbd56defedef8}\label{kheap_8c_aa5611acaefaa4340432dbd56defedef8}} 
+\index{kheap.c@{kheap.c}!\_KERNEL\_HEAP\_BASE@{\_KERNEL\_HEAP\_BASE}}
+\index{\_KERNEL\_HEAP\_BASE@{\_KERNEL\_HEAP\_BASE}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_KERNEL\_HEAP\_BASE}{\_KERNEL\_HEAP\_BASE}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \+\_\+\+KERNEL\+\_\+\+HEAP\+\_\+\+BASE\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+Start address of the kernel\textquotesingle{}s heap. 
+
+\mbox{\Hypertarget{kheap_8c_aeb8393c9e5d0ffb3c77c82a86b2a8cb3}\label{kheap_8c_aeb8393c9e5d0ffb3c77c82a86b2a8cb3}} 
+\index{kheap.c@{kheap.c}!\_KERNEL\_HEAP\_SIZE@{\_KERNEL\_HEAP\_SIZE}}
+\index{\_KERNEL\_HEAP\_SIZE@{\_KERNEL\_HEAP\_SIZE}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{\_KERNEL\_HEAP\_SIZE}{\_KERNEL\_HEAP\_SIZE}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\+\_\+t}} \+\_\+\+KERNEL\+\_\+\+HEAP\+\_\+\+SIZE\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+End address of the kernel\textquotesingle{}s heap. 
+
+\mbox{\Hypertarget{kheap_8c_a5bab399ba10394e05532e160c792927c}\label{kheap_8c_a5bab399ba10394e05532e160c792927c}} 
+\index{kheap.c@{kheap.c}!first\_chunk@{first\_chunk}}
+\index{first\_chunk@{first\_chunk}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{first\_chunk}{first\_chunk}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}$\ast$ first\+\_\+chunk\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Kernel\textquotesingle{}s heap first memory chunk. 
+
+
+
+Definition at line 185 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}\label{kheap_8c_ae05237f434a34b9c8cb95c0b0bff5b54}} 
+\index{kheap.c@{kheap.c}!free\_chunk@{free\_chunk}}
+\index{free\_chunk@{free\_chunk}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{free\_chunk}{free\_chunk}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}$\ast$ free\+\_\+chunk\mbox{[}\mbox{\hyperlink{kheap_8c_a8c38ad43f5e558ed28297fe9d151949f}{NUM\+\_\+\+SIZES}}\mbox{]} = \{ \mbox{\hyperlink{stddef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}} \}\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Kernel\textquotesingle{}s heap free memory chunks. 
+
+
+
+Definition at line 183 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}\label{kheap_8c_ada161ed38a9174ff5b3a4f10b10fd238}} 
+\index{kheap.c@{kheap.c}!init@{init}}
+\index{init@{init}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{init}{init}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a57c3b7201116536b822f0f8520aa99c7}{bool\+\_\+t}} init = \mbox{\hyperlink{stdint_8h_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}}\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Kernel\textquotesingle{}s heap initialization state. 
+
+
+
+Definition at line 179 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}\label{kheap_8c_af5ec787aa92fe3d283d6897f3ee0e4a0}} 
+\index{kheap.c@{kheap.c}!kheap\_init\_free@{kheap\_init\_free}}
+\index{kheap\_init\_free@{kheap\_init\_free}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{kheap\_init\_free}{kheap\_init\_free}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} kheap\+\_\+init\+\_\+free\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Quantity of initial free memory in the kernel\textquotesingle{}s heap. 
+
+
+
+Definition at line 192 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}\label{kheap_8c_a40f5e900d4b369f4e9bb823c08d93caf}} 
+\index{kheap.c@{kheap.c}!last\_chunk@{last\_chunk}}
+\index{last\_chunk@{last\_chunk}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{last\_chunk}{last\_chunk}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structmem__chunk__t}{mem\+\_\+chunk\+\_\+t}}$\ast$ last\+\_\+chunk\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Kernel\textquotesingle{}s heap last memory chunk. 
+
+
+
+Definition at line 187 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}\label{kheap_8c_a018ca54b4009ff9bf2dce3333d3d2b56}} 
+\index{kheap.c@{kheap.c}!mem\_free@{mem\_free}}
+\index{mem\_free@{mem\_free}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{mem\_free}{mem\_free}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} mem\+\_\+free\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Quantity of free memory in the kernel\textquotesingle{}s heap. 
+
+
+
+Definition at line 190 of file kheap.\+c.
+
+\mbox{\Hypertarget{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}\label{kheap_8c_a818f154b2f3d42e94229a6d034ceb644}} 
+\index{kheap.c@{kheap.c}!mem\_meta@{mem\_meta}}
+\index{mem\_meta@{mem\_meta}!kheap.c@{kheap.c}}
+\doxysubsubsection{\texorpdfstring{mem\_meta}{mem\_meta}}
+{\footnotesize\ttfamily \mbox{\hyperlink{stdint_8h_a324c5d28c0d82f502a234ab99efac87a}{uint32\+\_\+t}} mem\+\_\+meta\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Quantity of memory used to store meta data in the kernel\textquotesingle{}s heap. 
+
+
+
+Definition at line 194 of file kheap.\+c.
+

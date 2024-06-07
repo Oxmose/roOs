@@ -50,7 +50,7 @@
 * Kernel threads support
 * System calls
 
-### BSP Support: i386/x86_64
+### bsp Support: i386/x86_64
 
 * PIC and IO-APIC support (PIC supported but IO APIC required)
 * Local APIC support with timers

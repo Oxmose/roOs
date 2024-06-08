@@ -28,6 +28,7 @@
 #include <stdlib.h>   /* uitoa, itoa */
 #include <console.h>  /* Console driver */
 #include <time_mgt.h> /* System time management */
+#include <critical.h> /* Kernel critical sections */
 
 /* Configuration files */
 #include <config.h>
@@ -194,6 +195,9 @@ static size_t sBufferSize = 0;
 
 /** @brief Stores the current buffer size */
 static char spBuffer[KPRINTF_BUFFER_SIZE + 1];
+
+/** @brief Kernel output lock */
+static kernel_spinlock_t lock = KERNEL_SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -558,6 +562,8 @@ void kprintf(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
+    KERNEL_CRITICAL_LOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_ENTRY,
@@ -574,6 +580,7 @@ void kprintf(const char* kpFmt, ...)
 
     if(kpFmt == NULL)
     {
+        KERNEL_CRITICAL_UNLOCK(lock);
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTF_EXIT,
@@ -594,6 +601,8 @@ void kprintf(const char* kpFmt, ...)
     __builtin_va_start(args, kpFmt);
     _formater(kpFmt, args);
     __builtin_va_end(args);
+
+    KERNEL_CRITICAL_UNLOCK(lock);
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
@@ -616,6 +625,8 @@ void kprintfError(const char* kpFmt, ...)
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
 
+    KERNEL_CRITICAL_LOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_ENTRY,
@@ -632,6 +643,7 @@ void kprintfError(const char* kpFmt, ...)
 
     if(kpFmt == NULL)
     {
+        KERNEL_CRITICAL_UNLOCK(lock);
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFERROR_EXIT,
@@ -669,6 +681,8 @@ void kprintfError(const char* kpFmt, ...)
     _formater(kpFmt, args);
     __builtin_va_end(args);
 
+    KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_EXIT,
@@ -690,6 +704,8 @@ void kprintfSuccess(const char* kpFmt, ...)
     colorscheme_t        buffer;
     colorscheme_t        newScheme;
 
+    KERNEL_CRITICAL_LOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_ENTRY,
@@ -706,6 +722,8 @@ void kprintfSuccess(const char* kpFmt, ...)
 
     if(kpFmt == NULL)
     {
+        KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
@@ -743,6 +761,8 @@ void kprintfSuccess(const char* kpFmt, ...)
     _formater(kpFmt, args);
     __builtin_va_end(args);
 
+    KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
@@ -764,6 +784,8 @@ void kprintfInfo(const char* kpFmt, ...)
     colorscheme_t        buffer;
     colorscheme_t        newScheme;
 
+    KERNEL_CRITICAL_LOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_ENTRY,
@@ -780,6 +802,8 @@ void kprintfInfo(const char* kpFmt, ...)
 
     if(kpFmt == NULL)
     {
+        KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFINFO_EXIT,
@@ -817,6 +841,8 @@ void kprintfInfo(const char* kpFmt, ...)
     _formater(kpFmt, args);
     __builtin_va_end(args);
 
+    KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_EXIT,
@@ -839,6 +865,8 @@ void kprintfDebug(const char* kpFmt, ...)
     colorscheme_t        newScheme;
     uint64_t             uptime;
 
+    KERNEL_CRITICAL_LOCK(lock);
+
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFDEBUG_ENTRY,
@@ -855,6 +883,8 @@ void kprintfDebug(const char* kpFmt, ...)
 
     if(kpFmt == NULL)
     {
+        KERNEL_CRITICAL_UNLOCK(lock);
+
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
@@ -896,6 +926,8 @@ void kprintfDebug(const char* kpFmt, ...)
     __builtin_va_start(args, kpFmt);
     _formater(kpFmt, args);
     __builtin_va_end(args);
+
+    KERNEL_CRITICAL_UNLOCK(lock);
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,

@@ -70,7 +70,12 @@ __intHandlerEntry:
         push ebx
 
         ; Get the current thread handle
-        mov eax, [pCurrentThread]
+        mov eax, 4
+        mov ebx, gs ; GS stores the CPU id
+        mul ebx
+        mov ebx, pCurrentThread
+        add eax, ebx
+        mov eax, [eax]
         mov eax, [eax]
 
         ; Save the interrupt context
@@ -116,7 +121,12 @@ __intHandlerEntry:
         call interruptMainHandler
 
         ; Get the current thread handle
-        mov eax, [pCurrentThread]
+        mov eax, 4
+        mov ebx, gs ; GS stores the CPU id
+        mul ebx
+        mov ebx, pCurrentThread
+        add eax, ebx
+        mov eax, [eax]
         mov eax, [eax]
 
         ; Restore registers

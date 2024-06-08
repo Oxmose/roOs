@@ -97,19 +97,6 @@ typedef struct
     uint32_t (*pGetFrequency)(void* pDriverCtrl);
 
     /**
-     * @brief The function should allow the kernel to set the frequency of a
-     * timer source.
-     *
-     * @details The function should allow the kernel to set the frequency of a
-     * timer source. The frequency is defined in Hz.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kFrequency The frequency to apply to the timer source.
-     */
-    void (*pSetFrequency)(void* pDriverCtrl, const uint32_t kFrequency);
-
-    /**
      * @brief Returns the time elasped since the last timer's reset in ns.
      *
      * @details Returns the time elasped since the last timer's reset in ns. The
@@ -294,13 +281,15 @@ uint64_t timeGetUptime(void);
 time_t timeGetDayTime(void);
 
 /**
- * @brief Returns the number of system's ticks since the system started.
+ * @brief Returns the number of CPU's ticks since the CPU started.
  *
- * @details Returns the number of system's ticks since the system started.
+ * @details Returns the number of CPU's ticks since the CPU started.
  *
- * @returns The number of system's ticks since the system started.
+ * @param[in] kCpuId The CPU identifer of which to get the number of ticks.
+ *
+ * @returns The number of CPU's ticks since the CPU started.
  */
-uint64_t timeGetTicks(void);
+uint64_t timeGetTicks(const uint8_t kCpuId);
 
 /**
  * @brief Performs a wait for ms nanoseconds.

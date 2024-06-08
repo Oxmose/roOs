@@ -290,6 +290,21 @@ inline static uint32_t _cpuInL(const uint16_t kPort)
     return rega;
 }
 
+/**
+ * @brief Entry C function for secondary cores.
+ *
+ * @details Entry C function for secondary cores. This function is called by the
+ * secondary cores after initializing their state in the secondary core
+ * startup function.
+ *
+ * @param[in] kCpuId The booted CPU identifier that call the function.
+ *
+ * @warning This function should never be called by the user, only the assembly
+ * startup should call it.
+ */
+void cpuApInit(const uint8_t kCpuId);
+
+
 #endif /* #ifndef __I386_X86_CPU_H_ */
 
 /************************************ EOF *************************************/

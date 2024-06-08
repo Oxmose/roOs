@@ -509,14 +509,6 @@ event {
 };
 
 event {
-    id = 62;
-    name = "x86 TSC driver set frequency";
-    fields := struct {
-        uint32_t returnCode;
-    };
-};
-
-event {
     id = 63;
     name = "x86 TSC driver get frequency entry";
 };
@@ -668,7 +660,6 @@ event {
     id = 85;
     name = "x86 CPU Kernel panic handler";
     fields := struct {
-        uint32_t cpuId;
         uint32_t intId;
         uint32_t errorCode;
     };

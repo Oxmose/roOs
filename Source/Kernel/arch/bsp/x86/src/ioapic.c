@@ -530,7 +530,7 @@ inline static void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
 
     KERNEL_CRITICAL_LOCK(pCtrl->lock);
 
-    /* Set the mask */
+    /* Set the mask, IO APIC uses physical destination only to core 0 */
     entryLow = _ioapicGetInterruptLine(kIrqNumber);
     if(kEnabled == FALSE)
     {

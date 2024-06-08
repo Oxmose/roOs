@@ -157,6 +157,14 @@ void cpuSetInterrupt(void);
 /** @brief Halts the CPU for lower energy consuption. */
 void cpuHalt(void);
 
+/**
+ * @brief Returns the CPU identifier of the calling code.
+ *
+ * @details Returns the CPU identifier of the calling code.
+ *
+ * @return The CPU identifier of the calling core is returned.
+ */
+uint8_t cpuGetId(void);
 
 #endif /* #ifndef __CPU_H_ */
 

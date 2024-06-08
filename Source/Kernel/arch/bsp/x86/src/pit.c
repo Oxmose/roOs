@@ -305,7 +305,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     }
 
     pTimerDrv->pGetFrequency  = _pitGetFrequency;
-    pTimerDrv->pSetFrequency  = _pitSetFrequency;
     pTimerDrv->pGetTimeNs     = NULL;
     pTimerDrv->pSetTimeNs     = NULL;
     pTimerDrv->pGetDate       = NULL;

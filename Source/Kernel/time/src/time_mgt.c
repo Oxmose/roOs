@@ -104,10 +104,6 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer);
 /* None */
 
 /************************** Static global variables ***************************/
-/** @brief Stores the number of main kernel's timer tick since the
- * initialization of the time manager.
- */
-static uint64_t sSysTickCount = 0;
 
 /** @brief The kernel's main timer interrupt source.
  *
@@ -116,7 +112,6 @@ static uint64_t sSysTickCount = 0;
  */
 static kernel_timer_t sSysMainTimer = {
     .pGetFrequency  = NULL,
-    .pSetFrequency  = NULL,
     .pGetTimeNs     = NULL,
     .pSetTimeNs     = NULL,
     .pGetDate       = NULL,
@@ -134,7 +129,6 @@ static kernel_timer_t sSysMainTimer = {
  */
 static kernel_timer_t sSysRtcTimer = {
     .pGetFrequency  = NULL,
-    .pSetFrequency  = NULL,
     .pGetTimeNs     = NULL,
     .pSetTimeNs     = NULL,
     .pGetDate       = NULL,
@@ -152,7 +146,6 @@ static kernel_timer_t sSysRtcTimer = {
  */
 static kernel_timer_t sSysLifetimeTimer = {
     .pGetFrequency  = NULL,
-    .pSetFrequency  = NULL,
     .pGetTimeNs     = NULL,
     .pSetTimeNs     = NULL,
     .pGetDate       = NULL,
@@ -163,11 +156,16 @@ static kernel_timer_t sSysLifetimeTimer = {
     .pRemoveHandler = NULL,
 };
 
+/** @brief Stores the number of main kernel's timer tick since the
+ * initialization of the time manager.
+ */
+static uint64_t sSysTickCount[MAX_CPU_COUNT] = {0};
+
 /** @brief Auxiliary timers list */
 static kqueue_t* spAuxTimersQueue = NULL;
 
 /** @brief Active wait counter per CPU. */
-static volatile uint64_t sActiveWait = 0;
+static volatile uint64_t sActiveWait[MAX_CPU_COUNT] = {0};
 
 /** @brief Stores the routine to call the scheduler. */
 static void (*sSchedRoutine)(kernel_thread_t*) = NULL;
@@ -184,15 +182,18 @@ static kernel_spinlock_t auxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
-    void (*pCurrSched)(kernel_thread_t*);
+    uint8_t cpuId;
+    void    (*pCurrSched)(kernel_thread_t*);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_ENTRY,
                        1,
                        (uint32_t)pCurrThread->tid);
 
+    cpuId = cpuGetId();
+
     /* Add a tick count */
-    ++sSysTickCount;
+    ++sSysTickCount[cpuId];
 
     KERNEL_CRITICAL_LOCK(managerLock);
     if(sSysMainTimer.pTickManager != NULL)
@@ -210,13 +211,13 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
     else
     {
         /* Use coarse active wait if not lifetime timer is present */
-        if(sActiveWait != 0)
+        if(sActiveWait[cpuId] != 0)
         {
             /* Use ticks */
-            if(sActiveWait <= sSysTickCount * 1000000000 /
+            if(sActiveWait[cpuId] <= sSysTickCount[cpuId] * 1000000000 /
                     sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl))
             {
-                sActiveWait = 0;
+                sActiveWait[cpuId] = 0;
             }
         }
         KERNEL_CRITICAL_UNLOCK(managerLock);
@@ -404,7 +405,6 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     /* Check the main timer integrity */
     if(kpTimer == NULL ||
        kpTimer->pGetFrequency == NULL ||
-       kpTimer->pSetFrequency == NULL ||
        kpTimer->pEnable == NULL ||
        kpTimer->pDisable == NULL ||
        kpTimer->pSetHandler == NULL ||
@@ -440,21 +440,26 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     {
         case MAIN_TIMER:
             sSysMainTimer = *kpTimer;
-            retCode = sSysMainTimer.pSetHandler(kpTimer->pDriverCtrl,
-                                                 _mainTimerHandler);
+            KERNEL_CRITICAL_UNLOCK(managerLock);
+            retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
+                                           _mainTimerHandler);
             break;
         case RTC_TIMER:
             sSysRtcTimer = *kpTimer;
-            retCode = sSysRtcTimer.pSetHandler(kpTimer->pDriverCtrl,
-                                                _rtcTimerHandler);
+            KERNEL_CRITICAL_UNLOCK(managerLock);
+            retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
+                                           _rtcTimerHandler);
             break;
         case LIFETIME_TIMER:
             sSysLifetimeTimer = *kpTimer;
+            KERNEL_CRITICAL_UNLOCK(managerLock);
             break;
         case AUX_TIMER:
+            KERNEL_CRITICAL_UNLOCK(managerLock);
             retCode = _timeMgtAddAuxTimer(kpTimer);
             break;
         default:
+            KERNEL_CRITICAL_UNLOCK(managerLock);
             KERNEL_ERROR("Timer type %d not supported\n", kType);
             retCode = OS_ERR_NOT_SUPPORTED;
     }
@@ -466,7 +471,6 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     {
         kpTimer->pEnable(kpTimer->pDriverCtrl);
     }
-    KERNEL_CRITICAL_UNLOCK(managerLock);
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
@@ -492,6 +496,8 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
 uint64_t timeGetUptime(void)
 {
     uint64_t time;
+    uint64_t maxTick;
+    uint32_t i;
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_GET_UPTIME_ENTRY,
@@ -509,9 +515,19 @@ uint64_t timeGetUptime(void)
     }
     else if(sSysMainTimer.pGetFrequency != NULL)
     {
-        time = sSysTickCount * 1000000000ULL /
+        /* Get the highest time tick */
+        maxTick = 0;
+        for(i = 0; i < MAX_CPU_COUNT; ++i)
+        {
+            if(maxTick < sSysTickCount[i])
+            {
+                maxTick = sSysTickCount[i];
+            }
+        }
+        time = maxTick * 1000000000ULL /
                sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
     }
+    /* TODO: Check RTC */
     else
     {
         time = 0;
@@ -560,25 +576,40 @@ time_t timeGetDayTime(void)
     return time;
 }
 
-uint64_t timeGetTicks(void)
+uint64_t timeGetTicks(const uint8_t kCpuId)
 {
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_GET_TICKS,
                        0);
-    return sSysTickCount;
+    if(kCpuId < MAX_CPU_COUNT)
+    {
+        return sSysTickCount[kCpuId];
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void timeWaitNoScheduler(const uint64_t ns)
 {
     uint64_t currTime;
-
-    sActiveWait = 0;
+    uint8_t  cpuId;
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
                        2,
                        (uint32_t)(ns >> 32),
                        (uint32_t)(ns & 0xFFFFFFFF));
+
+    if(sSchedRoutine != NULL)
+    {
+        return;
+    }
+
+    cpuId = cpuGetId();
+
+    sActiveWait[cpuId] = 0;
 
     /* We can lock here, the is no scheduler using this */
     KERNEL_CRITICAL_LOCK(managerLock);
@@ -594,9 +625,9 @@ void timeWaitNoScheduler(const uint64_t ns)
         else if(sSysMainTimer.pGetFrequency != NULL)
         {
             /* Use ticks */
-            sActiveWait = ns + sSysTickCount * 1000000000 /
+            sActiveWait[cpuId] = ns + sSysTickCount[cpuId] * 1000000000 /
                          sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
-            while(sActiveWait > 0){}
+            while(sActiveWait[cpuId] > 0){}
         }
         else/* TODO: Check aux and RTC*/
         {

@@ -25,6 +25,7 @@
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
+#include <core_mgt.h>      /* Core management */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
 
@@ -40,6 +41,10 @@
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
+
+#if MAX_CPU_COUNT <= 0
+#error "MAX_CPU_COUNT must be greater or equal to 1"
+#endif
 
 /** @brief Current module name */
 #define MODULE_NAME "CPU_I386"
@@ -2467,8 +2472,8 @@ static void _setupGDT(void)
     __asm__ __volatile__("movw %w0,%%ds\n\t"
                          "movw %w0,%%es\n\t"
                          "movw %w0,%%fs\n\t"
-                         "movw %w0,%%gs\n\t"
-                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_32));
+                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_32), "r" (0));
     __asm__ __volatile__("ljmp %0, $new_gdt \n\t new_gdt: \n\t" ::
                          "i" (KERNEL_CS_32));
 
@@ -2533,7 +2538,7 @@ static void _setupTSS(void)
         sTSS[i].ss = KERNEL_DS_32;
         sTSS[i].ds = KERNEL_DS_32;
         sTSS[i].fs = KERNEL_DS_32;
-        sTSS[i].gs = KERNEL_DS_32;
+        sTSS[i].gs = i; // GS stores the CPU Id
         sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
     }
 
@@ -3681,6 +3686,75 @@ void cpuSetInterrupt(void)
 void cpuHalt(void)
 {
     __asm__ __volatile__ ("hlt":::"memory");
+}
+
+void cpuApInit(const uint8_t kCpuId)
+{
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_ENTRY, 0);
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Cpu %d Init", kCpuId);
+
+    /* Register GDT */
+    __asm__ __volatile__("lgdt %0" :: "m" (sGDTPtr.size),
+                                      "m" (sGDTPtr.base));
+
+    __asm__ __volatile__("movw %w0,%%ds\n\t"
+                         "movw %w0,%%es\n\t"
+                         "movw %w0,%%fs\n\t"
+                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_32), "r" (kCpuId));
+    __asm__ __volatile__("ljmp %0, $newGdtAp \n\t newGdtAp: \n\t" ::
+                         "i" (KERNEL_CS_32));
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d GDT Initialized at 0x%P",
+                 kCpuId,
+                 sGDTPtr.base);
+
+    /* Register IDT */
+    __asm__ __volatile__("lidt %0" :: "m" (sIDTPtr.size),
+                                      "m" (sIDTPtr.base));
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d IDT Initialized at 0x%P",
+                 kCpuId,
+                 sIDTPtr.base);
+
+    /* Register TSS */
+    __asm__ __volatile__("ltr %0"
+                         :
+                         : "rm" ((uint16_t)(TSS_SEGMENT + kCpuId * 8)));
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d TSS Initialized at 0x%P\n",
+                 kCpuId,
+                 &sTSS[kCpuId]);
+
+    /* Init the rest of the CPU facilities */
+    coreMgtApInit(kCpuId);
+
+    KERNEL_SUCCESS("Secondary CPU %d initialized\n", kCpuId);
+
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_EXIT, 0);
+
+    /* TODO: Once we have a scheduler, remove that */
+    while(1)
+    {
+        cpuClearInterrupt();
+        cpuHalt();
+    }
+
+    /* Call scheduler, we should never come back. Restoring a thread should
+     * enable interrupt.
+     */
+    /* TODO: Add call to scheduler */
+
+    /* Once the scheduler is started, we should never come back here. */
+    CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
 }
 
 /************************************ EOF *************************************/

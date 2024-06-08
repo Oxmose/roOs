@@ -37,7 +37,20 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief x86 LAPIC Timer driver. */
+typedef struct
+{
+    /**
+     * @brief Initializes a secondary core LAPIC Timer.
+     *
+     * @details Initializes a secondary core LAPIC Timer. This function
+     * initializes the secondary core LAPIC timer interrupts and settings.
+     *
+     * @param[in] kCpuId The CPU identifier for which we should enable the LAPIC
+     * timer.
+     */
+    void (*pInitApCore)(const uint8_t kCpuId);
+} lapic_timer_driver_t;
 
 /*******************************************************************************
  * MACROS

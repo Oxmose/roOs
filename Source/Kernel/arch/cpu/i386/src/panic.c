@@ -28,6 +28,8 @@
 #include <string.h>           /* Memset */
 #include <console.h>          /* Console service */
 #include <time_mgt.h>         /* Time management */
+#include <critical.h>         /* Critical section */
+#include <core_mgt.h>         /* Core manager */
 #include <ctrl_block.h>       /* Thread's control block */
 #include <interrupts.h>       /* Interrupts manager */
 #include <kerneloutput.h>     /* Kernel output methods */
@@ -58,32 +60,6 @@
  ******************************************************************************/
 
 /* None */
-
-/*******************************************************************************
- * GLOBAL VARIABLES
- ******************************************************************************/
-
-/************************* Imported global variables **************************/
-/* None */
-
-/************************* Exported global variables **************************/
-/* None */
-
-/************************** Static global variables ***************************/
-/** @brief Stores the current kernel panic error code. */
-static uint32_t sPanicCode = 0;
-
-/** @brief Stores the line at which the kernel panic was called. */
-static uint32_t sPanicLine = 0;
-
-/** @brief Stores the file from which the panic was called. */
-static const char* skpPanicFile = NULL;
-
-/** @brief Stores the module related to the panic. */
-static const char* skpPanicModule = NULL;
-
-/** @brief Stores the message related to the panic. */
-static const char* skpPanicMsg = NULL;
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -128,6 +104,38 @@ static void _printCpuFlags(const virtual_cpu_t* kpVCpu);
  * multiboot at initialization time.
  */
 static void _printStackTrace(void);
+
+/*******************************************************************************
+ * GLOBAL VARIABLES
+ ******************************************************************************/
+
+/************************* Imported global variables **************************/
+/* None */
+
+/************************* Exported global variables **************************/
+/* None */
+
+/************************** Static global variables ***************************/
+/** @brief Stores the current kernel panic error code. */
+static uint32_t sPanicCode = 0;
+
+/** @brief Stores the line at which the kernel panic was called. */
+static uint32_t sPanicLine = 0;
+
+/** @brief Stores the file from which the panic was called. */
+static const char* skpPanicFile = NULL;
+
+/** @brief Stores the module related to the panic. */
+static const char* skpPanicModule = NULL;
+
+/** @brief Stores the message related to the panic. */
+static const char* skpPanicMsg = NULL;
+
+/** @brief Panic lock */
+static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
+
+/** @brief Panic delivered flag */
+static bool_t sDelivered = FALSE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -410,23 +418,34 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     colorscheme_t  consoleScheme;
     cursor_t       consoleCursor;
     virtual_cpu_t* pThreadVCpu;
-
-    uint32_t cpuId;
-    time_t   currTime;
-    uint64_t uptime;
-
-    interruptDisable();
-
-    cpuId = 0; // TODO: Get CPU id
-
-    pThreadVCpu = pCurrThread->pVCpu;
+    uint8_t        cpuId;
+    time_t         currTime;
+    uint64_t       uptime;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_KERNEL_PANIC_HANDLER,
-                       3,
-                       cpuId,
+                       2,
                        pThreadVCpu->intContext.intId,
                        sPanicCode);
+
+    interruptDisable();
+
+    KERNEL_CRITICAL_LOCK(sLock);
+
+    if(sDelivered)
+    {
+        KERNEL_CRITICAL_UNLOCK(sLock);
+        goto PANIC_END;
+    }
+
+
+    cpuId = cpuGetId();
+
+    /* Send IPI to all other cores and tell that the panic was delivered */
+    sDelivered = TRUE;
+    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, PANIC_INT_LINE);
+
+    pThreadVCpu = pCurrThread->pVCpu;
 
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_CYAN;
@@ -487,7 +506,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     consoleSetColorScheme(&consoleScheme);
 
-
+    KERNEL_CRITICAL_UNLOCK(sLock);
 
     TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
                             TRUE,
@@ -499,6 +518,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     TEST_FRAMEWORK_END();
 #endif
 
+PANIC_END:
     /* We will never return from interrupt */
     while(1)
     {

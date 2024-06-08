@@ -114,15 +114,6 @@ static void _tscEnable(void* pDrvCtrl);
  */
 static void _tscDisable(void* pDrvCtrl);
 
-/**
- * @brief Unused, TSC does not support settings frequency.
- *
- * @details Unused, TSC does not support settings frequency..
- *
- * @param[in, out] pDrvCtrl Unused.
- * @param[in] kFreq Unused.
- */
-static void _tscSetFrequency(void* pDrvCtrl, const uint32_t kFreq);
 
 /**
  * @brief Returns the TSC count frequency in Hz.
@@ -242,7 +233,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     }
 
     pTimerDrv->pGetFrequency  = _tscGetFrequency;
-    pTimerDrv->pSetFrequency  = _tscSetFrequency;
     pTimerDrv->pGetTimeNs     = _tscGetTimeNs;
     pTimerDrv->pSetTimeNs     = _tscSetTimeNs;
     pTimerDrv->pGetDate       = NULL;
@@ -333,17 +323,6 @@ static void _tscDisable(void* pDrvCtrl)
 
     KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
                        TRACE_X86_TSC_DISABLE,
-                       1,
-                       OS_ERR_NOT_SUPPORTED);
-}
-
-static void _tscSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
-{
-    (void)pDrvCtrl;
-    (void)kFreq;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_SET_FREQUENCY,
                        1,
                        OS_ERR_NOT_SUPPORTED);
 }

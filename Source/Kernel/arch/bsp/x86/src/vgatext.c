@@ -779,6 +779,10 @@ static void _vgaScroll(void*                    pDriverCtrl,
             _vgaPrintChar(pDriverCtrl, pCtrl->lineCount - 1, i, ' ');
         }
     }
+    else
+    {
+        KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
+    }
 
     /* Replace cursor */
     _vgaPutCursor(pDriverCtrl, pCtrl->lineCount - toScroll, 0);

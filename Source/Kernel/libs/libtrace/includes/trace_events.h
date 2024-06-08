@@ -133,7 +133,6 @@ typedef enum
     TRACE_X86_TSC_ATTACH_EXIT                       = 59,
     TRACE_X86_TSC_ENABLE                            = 60,
     TRACE_X86_TSC_DISABLE                           = 61,
-    TRACE_X86_TSC_SET_FREQUENCY                     = 62,
     TRACE_X86_TSC_GET_FREQUENCY_ENTRY               = 63,
     TRACE_X86_TSC_GET_FREQUENCY_EXIT                = 64,
     TRACE_X86_TSC_SET_HANDLER                       = 65,

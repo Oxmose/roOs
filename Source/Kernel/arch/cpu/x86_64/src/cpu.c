@@ -41,6 +41,10 @@
  * CONSTANTS
  ******************************************************************************/
 
+#if MAX_CPU_COUNT <= 0
+#error "MAX_CPU_COUNT must be greater or equal to 1"
+#endif
+
 /** @brief Current module name */
 #define MODULE_NAME "CPU_X64"
 

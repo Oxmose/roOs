@@ -28,6 +28,7 @@
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
 #include <devtree.h>       /* Device tree manager */
+#include <core_mgt.h>      /* Core manager */
 #include <drivermgr.h>     /* Driver manager */
 #include <interrupts.h>    /* Interrupt manager */
 #include <exceptions.h>    /* Exception manager */
@@ -164,8 +165,11 @@ void kickstart(void)
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
 
-    /* Restore interrupts */
-    interruptRestore(1);
+    /* Now that devices are configured, start the core manager, in charge of
+     * starting other cores if needed. After calling this function all the
+     * running cores excepted this one have their interrupt enabled.
+     */
+    coreMgtInit();
 
     TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
@@ -187,11 +191,12 @@ void kickstart(void)
 #endif
 
 #if 1
+    interruptRestore(1);
     uint32_t j;
     j = 0;
-    for(j = 0; j < 1000; ++j)
+    for(j = 0;; ++j)
     {
-        if(j % 100 == 0)
+        if(j % 500 == 0)
         {
             KERNEL_DEBUG(1, "TIMETEST", ".");
         }
@@ -200,6 +205,8 @@ void kickstart(void)
 #endif
 
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
+
+    /* TODO: Call scheduler */
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

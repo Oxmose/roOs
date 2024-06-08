@@ -22,7 +22,8 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <ctrl_block.h>         /* Threads and processes control block */
+#include <cpu.h>        /* CPU API */
+#include <ctrl_block.h> /* Threads and processes control block */
 
 /* Configuration files */
 #include <config.h>
@@ -75,10 +76,12 @@
 /************************* Exported global variables **************************/
 
 /** @brief Pointer to the currently kernel thread */
-kernel_thread_t* pCurrentThread = NULL;
+kernel_thread_t* pCurrentThread[MAX_CPU_COUNT] = {NULL};
 
 /* TODO: Remove */
-kernel_thread_t dummy_thread;
+kernel_thread_t dummy_thread[MAX_CPU_COUNT];
+
+uint8_t vcpubuffer[MAX_CPU_COUNT * 72];
 
 /************************** Static global variables ***************************/
 /* None */
@@ -95,12 +98,19 @@ kernel_thread_t dummy_thread;
 void scheduler_dummy_init(void);
 void scheduler_dummy_init(void)
 {
-    pCurrentThread = &dummy_thread;
+    uint32_t i;
+    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    {
+        pCurrentThread[i] = &dummy_thread[i];
+        dummy_thread[i].pVCpu = vcpubuffer + 72 * i;
+    }
 }
 
 kernel_thread_t* schedGetCurrentThread(void)
 {
-    return pCurrentThread;
+    uint8_t cpuId;
+    cpuId = cpuGetId();
+    return pCurrentThread[cpuId];
 }
 
 /************************************ EOF *************************************/

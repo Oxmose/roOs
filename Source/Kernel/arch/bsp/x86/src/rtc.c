@@ -381,7 +381,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     }
 
     pTimerDrv->pGetFrequency  = _rtcGetFrequency;
-    pTimerDrv->pSetFrequency  = _rtcSetFrequency;
     pTimerDrv->pGetTimeNs     = NULL;
     pTimerDrv->pSetTimeNs     = NULL;
     pTimerDrv->pGetDate       = _rtcGetDate;
@@ -801,7 +800,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     }
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
-
 
     _rtcDisable(pDrvCtrl);
 

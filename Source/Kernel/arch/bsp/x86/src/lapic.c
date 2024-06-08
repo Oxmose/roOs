@@ -31,6 +31,8 @@
 #include <string.h>       /* String manipualtion */
 #include <kerror.h>       /* Kernel error */
 #include <devtree.h>      /* FDT driver */
+#include <core_mgt.h>     /* X86 CPUs core manager */
+#include <time_mgt.h>     /* Timed waits */
 #include <critical.h>     /* Kernel critical locks */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
@@ -144,6 +146,12 @@
 /** @brief LAPIC destination flag shift. */
 #define ICR_DESTINATION_SHIFT 24
 
+/** @brief Delay between INIT and STARTUP IPI in NS (10ms) */
+#define LAPIC_CPU_INIT_DELAY_NS 10000000
+
+/** @brief Delay between two STARTUP IPI in NS (10ms) */
+#define LAPIC_CPU_STARTUP_DELAY_NS 10000000
+
 /** @brief Current module name */
 #define MODULE_NAME "X86 LAPIC"
 
@@ -159,6 +167,9 @@ typedef struct lapic_controler_t
 
     /** @brief CPU's spurious interrupt line */
     uint32_t spuriousIntLine;
+
+    /** @brief Driver's lock */
+    kernel_spinlock_t lock;
 
     /** @brief List of present LAPICs from the ACPI. */
     const lapic_node_t* pLapicList;
@@ -185,6 +196,15 @@ typedef struct lapic_controler_t
         PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
     }                                                       \
 }
+
+/**
+ * @brief Sets the value for a STARTUP IPI of the startup code.
+ *
+ * @details Sets the value for a STARTUP IPI of the startup code. The startup
+ * IPI send the startup code address on a 4k page boundary. Thus we only send
+ * the page ID.
+ */
+#define LAPIC_STARTUP_ADDR(ADDR) ((((uintptr_t)(ADDR)) >> 12) & 0xFF)
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -218,7 +238,53 @@ static void _lapicSetIrqEOI(const uint32_t kInterruptLine);
  *
  * @return The base address of the LAPIC is returned.
  */
-uintptr_t _lapicGetBaseAddress(void);
+static uintptr_t _lapicGetBaseAddress(void);
+
+/**
+ * @brief Returns the LAPIC identifier.
+ *
+ * @details Returns the LAPIC identifier for the caller.
+ *
+ * ­@return The LAPIC identifier is returned.
+ */
+static uint8_t _lapicGetId(void);
+
+/**
+ * @brief Enables a CPU given its LAPIC id.
+ *
+ * @details Enables a CPU given its LAPIC id. The startup sequence is
+ * executed, using LAPIC IPI.
+ *
+ * @param[in] kLapicId The LAPIC identifier for the CPU to start.
+ */
+static void _lapicStartCpu(const uint8_t kLapicId);
+
+/**
+ * @brief Sends an IPI to a CPU given its LAPIC id.
+ *
+ * @details Sends an IPI to a a CPU given its LAPIC id.
+ *
+ * @param[in] kLapicId The LAPIC identifier IPI destination.
+ * @param[in] kVector The vector used to trigger the IPI.
+ */
+static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector);
+
+/**
+ * @brief Returns the list of detected LAPICs in the system.
+ *
+ * @details Returns the list of detected LAPICs in the system.
+ *
+ * @return The list of detected LAPICs in the system is returned.
+ */
+static const lapic_node_t* _lapicGetLAPICList(void);
+
+/**
+ * @brief Initializes a secondary core LAPIC.
+ *
+ * @details Initializes a secondary core LAPIC. This function initializes
+ * the secondary core LAPIC interrupts and settings.
+ */
+static void _lapicInitApCore(void);
 
 /**
  * @brief Reads into the LAPIC controller memory.
@@ -246,7 +312,12 @@ inline static void _lapicWrite(const uint32_t kRegister, const uint32_t kVal);
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/* None */
+
+/** @brief Number of booted CPU counts defined in the CPU init assembly  */
+extern volatile uint32_t _bootedCPUCount;
+
+/** @brief Startup code address for secondary CPUs */
+extern uint8_t _START_LOW_AP_STARTUP_ADDR;
 
 /************************* Exported global variables **************************/
 /* None */
@@ -265,7 +336,12 @@ static driver_t sX86LAPICDriver = {
 /** @brief LAPIC API driver. */
 static lapic_driver_t sAPIDriver = {
     .pSetIrqEOI      = _lapicSetIrqEOI,
-    .pGetBaseAddress = _lapicGetBaseAddress
+    .pGetBaseAddress = _lapicGetBaseAddress,
+    .pGetLAPICId     = _lapicGetId,
+    .pStartCpu       = _lapicStartCpu,
+    .pSendIPI        = _lapicSendIPI,
+    .pGetLAPICList   = _lapicGetLAPICList,
+    .pInitApCore     = _lapicInitApCore
 };
 
 /** @brief LAPIC driver controler instance. There will be only on for all
@@ -297,6 +373,9 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
                        0);
 
     retCode = OS_NO_ERR;
+
+    /* Init the driver lock */
+    KERNEL_SPINLOCK_INIT(sDrvCtrl.lock);
 
     /* Get the cpu's spurious int line */
     sDrvCtrl.spuriousIntLine = cpuGetInterruptConfig()->spuriousInterruptLine;
@@ -339,7 +418,7 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     _lapicWrite(LAPIC_DFR, 0xffffffff);
     _lapicWrite(LAPIC_LDR, 0x01000000);
 
-    /* Set spurious inetrrupt vector */
+    /* Set spurious interrupt vector */
     _lapicWrite(LAPIC_SVR, 0x100 | sDrvCtrl.spuriousIntLine);
 
 #if LAPIC_DEBUG_ENABLED
@@ -361,6 +440,11 @@ ATTACH_END:
     {
         /* Set the API driver */
         retCode = driverManagerSetDeviceData(pkFdtNode, &sAPIDriver);
+        if(retCode == OS_NO_ERR)
+        {
+            /* Register the driver in the core manager */
+            coreMgtRegLapicDriver(&sAPIDriver);
+        }
     }
     else
     {
@@ -397,9 +481,151 @@ static void _lapicSetIrqEOI(const uint32_t kInterruptLine)
                        kInterruptLine);
 }
 
-uintptr_t _lapicGetBaseAddress(void)
+static uintptr_t _lapicGetBaseAddress(void)
 {
     return sDrvCtrl.basePhysAddr;
+}
+
+
+static uint8_t _lapicGetId(void)
+{
+    return (uint8_t)(_lapicRead(LAPIC_ID) >> 24);
+}
+
+static void _lapicStartCpu(const uint8_t kLapicId)
+{
+    uint8_t tryCount;
+    uint8_t oldBootedCpuCount;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_START_CPU_ENTRY,
+                       2,
+                       kLapicId,
+                       _bootedCPUCount);
+
+    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Starting CPU with LAPIC id %d",
+                 kLapicId);
+
+    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
+
+    /* Send the INIT IPI */
+    _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
+    _lapicWrite(LAPIC_ICRLO,
+                ICR_ASSERT | ICR_INIT | ICR_PHYSICAL | ICR_EDGE |
+                ICR_NO_SHORTHAND);
+
+    /* Wait for pending sends */
+    while((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
+
+    /* Wait 10ms */
+    timeWaitNoScheduler(LAPIC_CPU_INIT_DELAY_NS);
+
+    tryCount = 0;
+    oldBootedCpuCount = _bootedCPUCount;
+    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Booted CPU count: %d | Startup at page 0x%0x (0x%p)",
+                 oldBootedCpuCount,
+                 LAPIC_STARTUP_ADDR(&_START_LOW_AP_STARTUP_ADDR),
+                 &_START_LOW_AP_STARTUP_ADDR);
+    do
+    {
+        /* Send the STARTUP IPI */
+        _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
+        _lapicWrite(LAPIC_ICRLO,
+                    LAPIC_STARTUP_ADDR(&_START_LOW_AP_STARTUP_ADDR) |
+                    ICR_ASSERT | ICR_STARTUP | ICR_PHYSICAL | ICR_EDGE |
+                    ICR_NO_SHORTHAND);
+
+        /* Wait for pending sends */
+        while ((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
+
+        /* Wait 100ms and check if the number of cores was updated */
+        timeWaitNoScheduler(LAPIC_CPU_STARTUP_DELAY_NS);
+        if(oldBootedCpuCount != _bootedCPUCount)
+        {
+            /* Our CPU increased the booted CPU count, stop */
+            break;
+        }
+        ++tryCount;
+    } while(tryCount < 2);
+
+    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "New booted CPU count: %d",
+                 _bootedCPUCount);
+
+    if(oldBootedCpuCount == _bootedCPUCount)
+    {
+        KERNEL_ERROR("Failed to startup CPU with LAPIC ID %d\n", kLapicId);
+    }
+
+    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_START_CPU_EXIT,
+                       2,
+                       kLapicId,
+                       _bootedCPUCount);
+}
+
+static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
+{
+    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_SEND_IPI_ENTRY,
+                       2,
+                       kLapicId,
+                       _bootedCPUCount);
+
+    /* Send IPI */
+    _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
+    _lapicWrite(LAPIC_ICRLO,
+                (kVector & 0xFF) |
+                ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | ICR_NO_SHORTHAND);
+
+    /* Wait for pending sends */
+    while ((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
+
+    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_SEND_IPI_EXIT,
+                       2,
+                       kLapicId,
+                       _bootedCPUCount);
+}
+
+static const lapic_node_t* _lapicGetLAPICList(void)
+{
+    return sDrvCtrl.pLapicList;
+}
+
+static void _lapicInitApCore(void)
+{
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_INIT_AP_CORE_ENTRY,
+                       0);
+
+    /* We are in a secondary core (AP core), just setup interrupts */
+    _lapicWrite(LAPIC_TPR, 0);
+
+    /* Set logical destination mode */
+    _lapicWrite(LAPIC_DFR, 0xffffffff);
+    _lapicWrite(LAPIC_LDR, 0x01000000);
+
+    /* Set spurious interrupt vector */
+    _lapicWrite(LAPIC_SVR, 0x100 | sDrvCtrl.spuriousIntLine);
+
+    /* Set EOI */
+    _lapicWrite(LAPIC_EOI, 0);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                       TRACE_X86_LAPIC_INIT_AP_CORE_EXIT,
+                       0);
 }
 
 inline static uint32_t _lapicRead(const uint32_t kRegister)

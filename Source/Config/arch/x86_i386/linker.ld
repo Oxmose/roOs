@@ -19,7 +19,8 @@ KERNEL_MEM_OFFSET = 0xE0000000;
 /* Memory map */
 MEMORY
 {
-    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 16K
+    LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 1K
+    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 8K
 
     HIGH_STARTUP_CODE       (rx)    :   ORIGIN = 0xE0104000,    LENGTH = 16K
     KERNEL_CODE             (rx)    :   ORIGIN = 0xE0108000,    LENGTH = 256K
@@ -37,6 +38,15 @@ MEMORY
 /* Memory layout */
 SECTIONS
 {
+    /* Contains the startup code for secondary CPUs */
+    . = ORIGIN(LOW_AP_STARTUP_CODE);
+    .low_startup ALIGN(4K) :
+    {
+        _START_LOW_AP_STARTUP_ADDR = .;
+        *(.low_ap_startup_code)
+        _END_LOW_AP_STARTUP_ADDR = .;
+    } > LOW_AP_STARTUP_CODE
+
     /* Contains the startup code used by grub to bootstrap the kernel */
     . = ORIGIN(LOW_STARTUP_CODE);
     .low_startup ALIGN(4K) :

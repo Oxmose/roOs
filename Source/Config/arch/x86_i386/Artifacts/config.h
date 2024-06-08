@@ -85,5 +85,6 @@
 #define IOAPIC_DEBUG_ENABLED 0
 #define LAPIC_DEBUG_ENABLED 0
 #define LAPICT_DEBUG_ENABLED 0
+#define CORE_MGT_DEBUG_ENABLED 0
 
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

@@ -27,8 +27,24 @@
         };
     };
 
-    memory@100000 {
-        reg = <0x00100000 0x0FEFFFFF>; /* Available RAM, rest IO / lower mem */
+    memory@0 {
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        device_type = "memory";
+        reg = <0x0 0x10000000>;
+    };
+
+    reserved-memory {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+        reservedlow: lowmem@0 {
+            reg = <0x0 0x100000>;
+        };
+        reservedacpi: acpimem@1 {
+            reg = <0xffe1000 0x001000>;
+        };
     };
 
     platform {
@@ -46,7 +62,7 @@
 
         acpi: acpi@E0000 {
             compatible = "x86,x86-acpi";
-            reg = <0x000E0000 0x0001FFFF>;
+            reg = <0xE0000 0x20000>;
         };
 
         lapic: local-apic {

@@ -25,6 +25,7 @@
  ******************************************************************************/
 
 #include <test_list.h> /* Test list */
+#include <kerror.h> /* Kernel error */
 
 #ifdef _TESTING_FRAMEWORK_ENABLED
 

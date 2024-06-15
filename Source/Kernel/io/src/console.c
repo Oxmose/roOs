@@ -102,8 +102,8 @@ OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_DRIVER_ENTRY,
                        2,
-                       (uint32_t)(pkDriver >> 32),
-                       (uint32_t)pkDriver);
+                       (uint32_t)((uintptr_t)pkDriver >> 32),
+                       (uint32_t)(uintptr_t)pkDriver);
 #endif
 
     sConsoleDriver = *pkDriver;
@@ -118,8 +118,8 @@ OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_DRIVER_EXIT,
                        2,
-                       (uint32_t)(pkDriver >> 32),
-                       (uint32_t)pkDriver);
+                       (uint32_t)((uintptr_t)pkDriver >> 32),
+                       (uint32_t)(uintptr_t)pkDriver);
 #endif
     return OS_NO_ERR;
 }
@@ -166,8 +166,8 @@ void consoleSaveCursor(cursor_t* pBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_CURSOR_ENTRY,
                        2,
-                       (uint32_t)(pBuffer >> 32),
-                       (uint32_t)pBuffer);
+                       (uint32_t)((uintptr_t)pBuffer >> 32),
+                       (uint32_t)(uintptr_t)pBuffer);
 #endif
 
     EXEC_IF_SET(sConsoleDriver,
@@ -185,8 +185,8 @@ void consoleSaveCursor(cursor_t* pBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_CURSOR_EXIT,
                        2,
-                       (uint32_t)(pBuffer >> 32),
-                       (uint32_t)pBuffer);
+                       (uint32_t)((uintptr_t)pBuffer >> 32),
+                       (uint32_t)(uintptr_t)pBuffer);
 #endif
 }
 
@@ -202,8 +202,8 @@ void consoleRestoreCursor(const cursor_t* pkBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_RESTORE_CURSOR_ENTRY,
                        2,
-                       (uint32_t)(pkBuffer >> 32),
-                       (uint32_t)pkBuffer);
+                       (uint32_t)((uintptr_t)pkBuffer >> 32),
+                       (uint32_t)(uintptr_t)pkBuffer);
 #endif
 
     EXEC_IF_SET(sConsoleDriver,
@@ -221,8 +221,8 @@ void consoleRestoreCursor(const cursor_t* pkBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_RESTORE_CURSOR_EXIT,
                        2,
-                       (uint32_t)(pkBuffer >> 32),
-                       (uint32_t)pkBuffer);
+                       (uint32_t)((uintptr_t)pkBuffer >> 32),
+                       (uint32_t)(uintptr_t)pkBuffer);
 #endif
 }
 
@@ -259,8 +259,8 @@ void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_COLORSCHEME_ENTRY,
                        2,
-                       (uint32_t)(pkColorScheme >> 32),
-                       (uint32_t)pkColorScheme);
+                       (uint32_t)((uintptr_t)pkColorScheme >> 32),
+                       (uint32_t)(uintptr_t)pkColorScheme);
 #endif
 
     EXEC_IF_SET(sConsoleDriver,
@@ -278,8 +278,8 @@ void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_COLORSCHEME_EXIT,
                        2,
-                       (uint32_t)(pkColorScheme >> 32),
-                       (uint32_t)pkColorScheme);
+                       (uint32_t)((uintptr_t)pkColorScheme >> 32),
+                       (uint32_t)(uintptr_t)pkColorScheme);
 #endif
 }
 
@@ -295,8 +295,8 @@ void consoleSaveColorScheme(colorscheme_t* pBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_COLORSCHEME_ENTRY,
                        2,
-                       (uint32_t)(pBuffer >> 32),
-                       (uint32_t)pBuffer);
+                       (uint32_t)((uintptr_t)pBuffer >> 32),
+                       (uint32_t)(uintptr_t)pBuffer);
 #endif
 
     EXEC_IF_SET(sConsoleDriver,
@@ -314,8 +314,8 @@ void consoleSaveColorScheme(colorscheme_t* pBuffer)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_COLORSCHEME_EXIT,
                        2,
-                       (uint32_t)(pBuffer >> 32),
-                       (uint32_t)pBuffer);
+                       (uint32_t)((uintptr_t)pBuffer >> 32),
+                       (uint32_t)(uintptr_t)pBuffer);
 #endif
 }
 
@@ -332,8 +332,8 @@ void consolePutString(const char* pkString)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_PUT_STRING_ENTRY,
                        2,
-                       (uint32_t)(pkString >> 32),
-                       (uint32_t)pkString);
+                       (uint32_t)((uintptr_t)pkString >> 32),
+                       (uint32_t)(uintptr_t)pkString);
 #endif
 
 #if DEBUG_LOG_UART
@@ -354,8 +354,8 @@ void consolePutString(const char* pkString)
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_PUT_STRING_EXIT,
                        2,
-                       (uint32_t)(pkString >> 32),
-                       (uint32_t)pkString);
+                       (uint32_t)((uintptr_t)pkString >> 32),
+                       (uint32_t)(uintptr_t)pkString);
 #endif
 }
 

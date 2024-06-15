@@ -20,14 +20,7 @@
 #include <tracing.h>
 
 /* Architecture definitions */
-#define ARCH_X86_64  1
-#define ARCH_64_BITS 1
-
-/* Kernel memory offset
- * WARNING This value should be updated to fit other configuration files
- */
-#define KERNEL_MEM_OFFSET 0xFFFFFFF800000000
-#define KERNEL_MEM_START  0x00100000
+#define ARCH_64_BITS
 
 /* Kernel stack default size
  * WARNING This value should be updated to fit other configuration files
@@ -40,12 +33,9 @@
 /* Kernel log level */
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
+/* Kernel log on UART */
 #define DEBUG_LOG_UART      1
 #define DEBUG_LOG_UART_RATE BAUDRATE_115200
-
-/* Defines the limit address allocable by the kernel */
-#define KERNEL_VIRTUAL_ADDR_MAX      0xFFFFFFFFFFFFFFFF
-#define KERNEL_VIRTUAL_ADDR_MAX_MASK 0xFFFFFFFFFFFFFFFF
 
 /** @brief Defines the maximum number of process in the system. This number is
  * limited by the PCID feature.*/
@@ -53,9 +43,6 @@
 
 /** @brief Current year */
 #define CURRENT_YEAR 2024
-
-/** @brief Stack default alignement */
-#define STACK_ALIGN 8
 
 /*******************************************************************************
  * DEBUG Configuration
@@ -84,4 +71,6 @@
 #define IOAPIC_DEBUG_ENABLED 0
 #define LAPIC_DEBUG_ENABLED 0
 #define LAPICT_DEBUG_ENABLED 0
+#define CORE_MGT_DEBUG_ENABLED 0
+#define MEMORY_MGR_DEBUG_ENABLED 0
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

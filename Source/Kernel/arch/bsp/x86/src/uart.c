@@ -383,7 +383,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(uart_controler_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -393,7 +392,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -412,7 +410,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, UART_FDT_COMM_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -422,7 +419,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     /* Check if we are trying to attach the debug port */
     if(pDrvCtrl->cpuCommPort == SERIAL_DEBUG_PORT)
     {
-        KERNEL_ERROR("Tried to register debug UART as regular UART.\n");
         retCode = OS_ERR_UNAUTHORIZED_ACTION;
         goto ATTACH_END;
     }
@@ -432,7 +428,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, UART_FDT_RATE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the baudrate from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -453,7 +448,6 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         retCode = consoleSetDriver(pConsoleDrv);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set UART driver as console driver.\n");
             goto ATTACH_END;
         }
     }
@@ -464,7 +458,6 @@ ATTACH_END:
 
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach UART driver. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);

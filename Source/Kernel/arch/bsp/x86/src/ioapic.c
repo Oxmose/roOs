@@ -33,6 +33,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <string.h>       /* String manipualtion */
 #include <kerror.h>       /* Kernel error */
+#include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* FDT driver */
 #include <critical.h>     /* Kernel critical locks */
 #include <drivermgr.h>    /* Driver manager */
@@ -65,6 +66,9 @@
 #define IOREGSEL 0x00
 /** @brief IO-APIC data access register. */
 #define IOWIN 0x10
+
+/** @brief IO-ACPI memory size */
+#define IOAPIC_MEM_SIZE 0x10
 
 /** @brief IO-APIC ID register. */
 #define IOAPICID  0x00
@@ -99,7 +103,10 @@
 typedef struct io_apic_controler_t
 {
     /** @brief IO-APIC base physical address */
-    uintptr_t basePhysAddr;
+    uintptr_t baseAddr;
+
+    /** @brief IO-APIC mapping size */
+    size_t mappingSize;
 
     /** @brief IO-APIC identifier. */
     uint8_t identifier;
@@ -181,7 +188,7 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
  * to disable the IRQ.
  */
-inline static void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
+static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
                                         const uint32_t       kIrqNumber,
                                         const bool_t         kEnabled);
 
@@ -225,7 +232,7 @@ static int32_t _ioapicGetInterruptLine(const uint32_t kIrqNumber);
  *
  * @return The value contained in the register.
  */
-inline static uint32_t _ioapicRead(const io_apic_controler_t* kpCtrl,
+static inline uint32_t _ioapicRead(const io_apic_controler_t* kpCtrl,
                                    const uint32_t             kRegister);
 
 /**
@@ -237,7 +244,7 @@ inline static uint32_t _ioapicRead(const io_apic_controler_t* kpCtrl,
  * @param[in] kRegister The register to write.
  * @param[in] kVal The value to write to the register.
  */
-inline static void _ioapicWrite(const io_apic_controler_t* kpCtrl,
+static inline void _ioapicWrite(const io_apic_controler_t* kpCtrl,
                                 const uint32_t             kRegister,
                                 const uint32_t             kVal);
 /*******************************************************************************
@@ -294,6 +301,8 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     size_t                propLen;
     uint8_t               i;
     uint32_t              ioapicVerRegister;
+    uintptr_t             ioApicPhysAddr;
+    size_t                toMap;
 
     KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
                        TRACE_X86_IOAPIC_ATTACH_ENTRY,
@@ -308,7 +317,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, IOAPIC_FDT_INTOFF_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the IOAPIC IRQ offset from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -318,7 +326,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, IOAPIC_FDT_ACPI_NODE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the IOAPIC ACPI handle FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -327,7 +334,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     skpACPIDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     if(skpACPIDriver == NULL)
     {
-        KERNEL_ERROR("Failed to retreive the IOAPIC ACPI driver.\n");
         retCode = OS_ERR_NULL_POINTER;
         goto ATTACH_END;
     }
@@ -336,7 +342,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, IOAPIC_FDT_LAPIC_NODE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the IOAPIC LAPIC handle FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -345,7 +350,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     pLapicDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     if(pLapicDriver == NULL)
     {
-        KERNEL_ERROR("Failed to retreive the IOAPIC LAPIC driver.\n");
         retCode = OS_ERR_NULL_POINTER;
         goto ATTACH_END;
     }
@@ -371,16 +375,34 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
         pNewDrvCtrl = kmalloc(sizeof(io_apic_controler_t));
         if(pNewDrvCtrl == NULL)
         {
-            KERNEL_ERROR("Failed to allocate IOAPIC controller.\n");
             retCode = OS_ERR_NO_MORE_MEMORY;
             goto ATTACH_END;
         }
+        memset(pNewDrvCtrl, 0, sizeof(io_apic_controler_t));
 
         /* Set the spinlock and driver */
         KERNEL_SPINLOCK_INIT(pNewDrvCtrl->lock);
 
+        /* Map the IO APIC */
+        ioApicPhysAddr = kpIOAPICNode->ioApic.ioApicAddr & ~PAGE_SIZE_MASK;
+        toMap = IOAPIC_MEM_SIZE + (ioApicPhysAddr & PAGE_SIZE_MASK);
+        toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+        pNewDrvCtrl->baseAddr = (uintptr_t)memoryKernelMap((void*)ioApicPhysAddr,
+                                                toMap,
+                                                MEMMGR_MAP_HARDWARE |
+                                                MEMMGR_MAP_KERNEL   |
+                                                MEMMGR_MAP_RW,
+                                                &retCode);
+        if(pNewDrvCtrl->baseAddr == (uintptr_t)NULL || retCode != OS_NO_ERR)
+        {
+            goto ATTACH_END;
+        }
+        pNewDrvCtrl->baseAddr |= kpIOAPICNode->ioApic.ioApicAddr &
+                                 PAGE_SIZE_MASK;
+        pNewDrvCtrl->mappingSize = toMap;
+
         /* Setup the controller */
-        pNewDrvCtrl->basePhysAddr = kpIOAPICNode->ioApic.ioApicAddr;
         pNewDrvCtrl->identifier = kpIOAPICNode->ioApic.ioApicId;
         pNewDrvCtrl->gsib = kpIOAPICNode->ioApic.globalSystemInterruptBase;
 
@@ -399,12 +421,14 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
                      MODULE_NAME,
                      "IOAPIC ID %d:\n"
                      "\tPhysical Address: 0x%p\n"
+                     "\tVirtual Address: 0x%p\n"
                      "\tIdentifier: %d\n"
                      "\tVersion: %d\n"
                      "\tMin IRQ: %d\n"
                      "\tIRQ Limit: %d\n",
                      pNewDrvCtrl->identifier,
-                     pNewDrvCtrl->basePhysAddr,
+                     kpIOAPICNode->ioApic.ioApicAddr,
+                     pNewDrvCtrl->baseAddr,
                      pNewDrvCtrl->identifier,
                      pNewDrvCtrl->version,
                      pNewDrvCtrl->gsib,
@@ -426,18 +450,25 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
         /* Register as interrupt controler */
         retCode = interruptSetDriver(&sIOAPICDriver);
         IOAPIC_ASSERT(retCode == OS_NO_ERR,
-                    "Failed to register IO-APIC in interrupt manager",
-                    retCode);
+                      "Failed to register IO-APIC in interrupt manager",
+                      retCode);
     }
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach IOAPIC driver. Error %d.\n", retCode);
         while(spDrvCtrl != NULL)
         {
             pNewDrvCtrl = spDrvCtrl->pNext;
             kfree(spDrvCtrl);
+            if(spDrvCtrl->baseAddr != (uintptr_t)NULL)
+            {
+                if(memoryKernelUnmap((void*)spDrvCtrl->baseAddr,
+                                     spDrvCtrl->mappingSize))
+                {
+                    KERNEL_ERROR("Failed to unmap IO-APIC memory\n");
+                }
+            }
             spDrvCtrl = pNewDrvCtrl;
         }
     }
@@ -496,7 +527,7 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
                        (uint32_t)kEnabled);
 }
 
-inline static void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
+static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
                                         const uint32_t       kIrqNumber,
                                         const bool_t         kEnabled)
 {
@@ -515,8 +546,8 @@ inline static void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
     KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
                        TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_ENTRY,
                        4,
-                       (uint32_t)(pCtrl >> 32),
-                       (uint32_t)pCtrl,
+                       (uint32_t)((uintptr_t)pCtrl >> 32),
+                       (uint32_t)(uintptr_t)pCtrl,
                        kIrqNumber,
                        (uint32_t)kEnabled);
 #endif
@@ -563,8 +594,8 @@ inline static void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
     KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
                        TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_EXIT,
                        4,
-                       (uint32_t)(pCtrl >> 32),
-                       (uint32_t)pCtrl,
+                       (uint32_t)((uintptr_t)pCtrl >> 32),
+                       (uint32_t)(uintptr_t)pCtrl,
                        kIrqNumber,
                        (uint32_t)kEnabled);
 #endif
@@ -623,25 +654,25 @@ static int32_t _ioapicGetInterruptLine(const uint32_t kIrqNumber)
     return sIntOffset + remapIrq;
 }
 
-inline static uint32_t _ioapicRead(const io_apic_controler_t* kpCtrl,
+static inline uint32_t _ioapicRead(const io_apic_controler_t* kpCtrl,
                                    const uint32_t kRegister)
 {
     /* Set IOREGSEL */
-    _mmioWrite32((void*)(kpCtrl->basePhysAddr + IOREGSEL), kRegister);
+    _mmioWrite32((void*)(kpCtrl->baseAddr + IOREGSEL), kRegister);
 
     /* Get register value */
-    return _mmioRead32((void*)(kpCtrl->basePhysAddr + IOWIN));
+    return _mmioRead32((void*)(kpCtrl->baseAddr + IOWIN));
 }
 
-inline static void _ioapicWrite(const io_apic_controler_t* kpCtrl,
+static inline void _ioapicWrite(const io_apic_controler_t* kpCtrl,
                                 const uint32_t kRegister,
                                 const uint32_t kVal)
 {
     /* Set IOREGSEL */
-    _mmioWrite32((void*)(kpCtrl->basePhysAddr + IOREGSEL), kRegister);
+    _mmioWrite32((void*)(kpCtrl->baseAddr + IOREGSEL), kRegister);
 
     /* Set register value */
-    _mmioWrite32((void*)(kpCtrl->basePhysAddr + IOWIN), kVal);
+    _mmioWrite32((void*)(kpCtrl->baseAddr + IOWIN), kVal);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

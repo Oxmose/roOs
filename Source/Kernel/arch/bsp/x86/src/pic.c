@@ -287,7 +287,6 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIC_FDT_INTOFF_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the PIC IRQ offset from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -300,7 +299,6 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     {
         if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 4)
         {
-            KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }
@@ -313,7 +311,6 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     {
         if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
         {
-            KERNEL_ERROR("Failed to retreive the PIC COMM from FDT.\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
         }

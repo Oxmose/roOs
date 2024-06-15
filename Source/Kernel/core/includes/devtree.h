@@ -80,6 +80,18 @@ typedef struct fdt_node_t
     void* pDevData;
 } fdt_node_t;
 
+/** @brief FDT memory node descriptor */
+typedef struct fdt_mem_node_t
+{
+    /** @brief Memory region base address */
+    uintptr_t baseAddress;
+
+    /** @brief Memory region size */
+    size_t size;
+
+    struct fdt_mem_node_t* pNextNode;
+} fdt_mem_node_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -138,7 +150,7 @@ void fdtInit(const uintptr_t kStartAddr);
  * @param[in] pkName The name of the property to extract.
  * @param[out] pReadSize The buffer to store the size of the extracted property.
  *
- * @returns A constand pointer to the property value is returned.
+ * @return A constand pointer to the property value is returned.
 */
 const void* fdtGetProp(const fdt_node_t* pkFdtNode,
                        const char*       pkName,
@@ -147,7 +159,7 @@ const void* fdtGetProp(const fdt_node_t* pkFdtNode,
 /**
  * @brief Returns the root node of the FDT.
  *
- * @returns The root node of the FDT is returned.
+ * @return The root node of the FDT is returned.
  */
 const fdt_node_t* fdtGetRoot(void);
 
@@ -159,7 +171,7 @@ const fdt_node_t* fdtGetRoot(void);
  *
  * @param[in] pkNode The node of which the next node should be returned.
  *
- * @returns The next simbling node of the node given as parameter is returned.
+ * @return The next simbling node of the node given as parameter is returned.
  * NULL is returned if the node has no simbling node.
 */
 const fdt_node_t* fdtGetNextNode(const fdt_node_t* pkNode);
@@ -172,7 +184,7 @@ const fdt_node_t* fdtGetNextNode(const fdt_node_t* pkNode);
  *
  * @param[in] pkNode The node of which the child node should be returned.
  *
- * @returns The first child node of the node given as parameter is returned.
+ * @return The first child node of the node given as parameter is returned.
  * NULL is returned if the node has no child node.
 */
 const fdt_node_t* fdtGetChild(const fdt_node_t* pkNode);
@@ -185,7 +197,7 @@ const fdt_node_t* fdtGetChild(const fdt_node_t* pkNode);
  *
  * @param[in] pkNode The node of which the first property should be returned.
  *
- * @returns The first property of the node given as parameter is returned.
+ * @return The first property of the node given as parameter is returned.
  * NULL is returned if the node has no property.
 */
 const fdt_property_t* fdtGetFirstProp(const fdt_node_t* pkNode);
@@ -198,7 +210,7 @@ const fdt_property_t* fdtGetFirstProp(const fdt_node_t* pkNode);
  *
  * @param[in] pkProp The property of which the next property should be returned.
  *
- * @returns The first property of the property given as parameter is returned.
+ * @return The first property of the property given as parameter is returned.
  * NULL is returned if the property has no next property.
 */
 const fdt_property_t* fdtGetNextProp(const fdt_property_t* pkProp);
@@ -211,10 +223,29 @@ const fdt_property_t* fdtGetNextProp(const fdt_property_t* pkProp);
  *
  * @param[in] kHandleId The phandle value to lookup.
  *
- * @returns The node that corresponds to the phandle value is returned. NULL is
+ * @return The node that corresponds to the phandle value is returned. NULL is
  * returned is the node cannot be found.
 */
 const fdt_node_t* fdtGetNodeByHandle(const uint32_t kHandleId);
+
+/**
+ * @brief Returns the list of available memory regions.
+ *
+ * @brief Returns the list of available memory regions present in the system.
+ *
+ * @return The list of available memory regions is returned.
+ */
+const fdt_mem_node_t* fdtGetMemory(void);
+
+/**
+ * @brief Returns the list of reserved memory regions.
+ *
+ * @brief Returns the list of reserved memory regions that should not be used
+ * for general purpose memory usage.
+ *
+ * @return The list of reserved memory regions is returned.
+ */
+const fdt_mem_node_t* fdtGetReservedMemory(void);
 
 #endif /* #ifndef __CORE_DEVTREE_H_ */
 

@@ -27,6 +27,7 @@
 #include <stddef.h>       /* Standard definition types */
 #include <string.h>       /* Memory manipulation */
 #include <kerror.h>       /* UTK error types */
+#include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* Device tree service */
 #include <drivermgr.h>    /* Driver manager */
 #include <kerneloutput.h> /* Outputs */
@@ -626,6 +627,7 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc);
  */
 static void _acpiParseRSDT(const rsdt_descriptor_t* kpRsdtPtr);
 
+#ifdef ARCH_64_BITS
 /**
  * @brief Parse the APIC XSDT table.
  *
@@ -635,6 +637,7 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRsdtPtr);
  * @param[in] kpXsdtPtr The address of the XSDT entry to parse.
  */
 static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr);
+#endif
 
 /**
  * @brief Parse the APIC SDT table.
@@ -644,29 +647,21 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr);
  * entry is correctly detected and supported, the parsing function corresponding
  * will be called.
  *
- * @param[in] kpHeader The address of the SDT entry to parse.
+ * @param[in] kpHeader The virtual address of the SDT entry to parse.
+ * @param[in] kPhysAddr The physical address of the SDT entry.
  */
-static void _acpiParseDT(const acpi_header_t* kpHeader);
+static void _acpiParseDT(const acpi_header_t* kpHeader,
+                         const uintptr_t      kPhysAddr);
 
 /**
  * @brief Parse the APIC FADT table.
  *
  * @details Parse the APIC FADT table. The function will save the FADT table
- * address in for further use. Then the FACS and DSDT addresses are extracted
- * and both tables are parsed.
+ * address in for further use.
  *
  * @param[in] kpFadtPtr The address of the FADT entry to parse.
  */
 static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr);
-
-/**
- * @brief Parse the APIC DSDT table.
- *
- * @details The function will save the DSDT table address in for further use.
- *
- * @param[in] dsdt_ptr The address of the DSDT entry to parse.
- */
-static void _acpiParseDSDT(const acpi_dsdt_t* kpDsdtPtr);
 
 /**
  * @brief Parses the APIC entries of the MADT table.
@@ -696,7 +691,7 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr);
  *
  * @details Returns the number of LAPIC detected in the system.
  *
- * @returns The number of LAPIC detected in the system is returned.
+ * @return The number of LAPIC detected in the system is returned.
     */
 uint8_t _acpiGetLAPICCount(void);
 
@@ -725,7 +720,7 @@ uintptr_t _acpiGetLAPICBaseAddress(void);
  *
  * @details Returns the number of IO-APIC detected in the system.
  *
- * @returns The number of IO-APIC detected in the system is returned.
+ * @return The number of IO-APIC detected in the system is returned.
     */
 uint8_t _acpiGetIOAPICCount(void);
 
@@ -806,9 +801,9 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
     OS_RETURN_E      retCode;
     uintptr_t        searchRangeStart;
     uintptr_t        searchRangeEnd;
+    size_t           mapSize;
+    uintptr_t        mapBase;
     uint64_t         signature;
-
-    (void)sDrvCtrl;
 
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED, TRACE_X86_ACPI_ATTACH_ENTRY, 0);
 
@@ -816,15 +811,14 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
     pUintptrProp = fdtGetProp(pkFdtNode, ACPI_FDT_REGS_PROP, &propLen);
     if(pUintptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the regs from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
 
-#if ARCH_I386
+#ifdef ARCH_32_BITS
     searchRangeStart = FDTTOCPU32(*pUintptrProp);
     searchRangeEnd   = searchRangeStart + FDTTOCPU32(*(pUintptrProp + 1));
-#elif ARCH_X86_64
+#elif defined(ARCH_64_BITS)
     searchRangeStart = FDTTOCPU64(*pUintptrProp);
     searchRangeEnd   = searchRangeStart + FDTTOCPU64(*(pUintptrProp + 1));
 #else
@@ -837,7 +831,23 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
                  searchRangeStart,
                  searchRangeEnd);
 
+    /* Map the memory */
+    mapBase = searchRangeStart & ~PAGE_SIZE_MASK;
+    mapSize = ((searchRangeEnd - mapBase) + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+    searchRangeStart = (uintptr_t)memoryKernelMap((void*)mapBase,
+                                                  mapSize,
+                                                  MEMMGR_MAP_HARDWARE |
+                                                  MEMMGR_MAP_KERNEL   |
+                                                  MEMMGR_MAP_RO,
+                                                  &retCode);
+    if(retCode != OS_NO_ERR)
+    {
+        goto ATTACH_END;
+    }
     /* Search for the ACPI table */
+    mapBase = searchRangeStart;
+    searchRangeEnd = searchRangeStart + mapSize;
     while(searchRangeStart < searchRangeEnd)
     {
         signature = *(uint64_t*)searchRangeStart;
@@ -858,11 +868,17 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
         searchRangeStart += sizeof(uintptr_t);
     }
 
+    /* Unmap the memory */
+    retCode = memoryKernelUnmap((void*)mapBase, mapSize);
+    if(retCode != OS_NO_ERR)
+    {
+        KERNEL_ERROR("Failed to unmap ACPI memory\n");
+    }
+
     if(searchRangeStart >= searchRangeEnd)
     {
-        KERNEL_ERROR("Failed to find ACPI.\n");
-                     retCode = OS_ERR_INCORRECT_VALUE;
-                     goto ATTACH_END;
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
     }
     else
     {
@@ -884,8 +900,10 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
 {
     uint8_t              sum;
     uint8_t              i;
-    uintptr_t            xsdtAddr;
+    uintptr_t            descAddr;
+    size_t               toMap;
     rsdp_descriptor_2_t* pExtendedRsdp;
+    OS_RETURN_E          errCode;
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
@@ -897,8 +915,8 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
                        2,
-                       (uint32_t)(kpRsdpDesc >> 32),
-                       (uint32_t)kpRsdpDesc);
+                       (uint32_t)((uintptr_t)kpRsdpDesc >> 32),
+                       (uint32_t)(uintptr_t)kpRsdpDesc);
 #endif
 
     ACPI_ASSERT(kpRsdpDesc != NULL,
@@ -927,9 +945,26 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
                  kpRsdpDesc->revision);
 
     /* ACPI version check */
+    descAddr = (uintptr_t)NULL;
     if(kpRsdpDesc->revision == 0)
     {
-        _acpiParseRSDT((rsdt_descriptor_t*)(uintptr_t)kpRsdpDesc->rsdtAddress);
+        /* Map pages for RSDT */
+        toMap = ((uintptr_t)kpRsdpDesc->rsdtAddress & PAGE_SIZE_MASK) +
+                 sizeof(rsdt_descriptor_t);
+        toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+        descAddr = (uintptr_t)kpRsdpDesc->rsdtAddress & ~PAGE_SIZE_MASK;
+        descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                              toMap,
+                                              MEMMGR_MAP_HARDWARE |
+                                              MEMMGR_MAP_KERNEL   |
+                                              MEMMGR_MAP_RO,
+                                              &errCode);
+        ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                    "Failed to map RSDT",
+                    errCode);
+        _acpiParseRSDT((rsdt_descriptor_t*)
+                       (descAddr | (kpRsdpDesc->rsdtAddress & PAGE_SIZE_MASK)));
     }
     else if(kpRsdpDesc->revision == 2)
     {
@@ -942,16 +977,52 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
         }
         if(sum == 0)
         {
-            xsdtAddr = pExtendedRsdp->xsdtAddress;
-
-            if(xsdtAddr)
+#ifdef ARCH_64_BITS
+            if(pExtendedRsdp->xsdtAddress)
             {
-                _acpiParseXSDT((xsdt_descriptor_t*)xsdtAddr);
+                /* Map pages for XSDT */
+                toMap = ((uintptr_t)pExtendedRsdp->xsdtAddress & PAGE_SIZE_MASK) +
+                         sizeof(xsdt_descriptor_t);
+                toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+                descAddr = (uintptr_t)pExtendedRsdp->xsdtAddress &
+                           ~PAGE_SIZE_MASK;
+                descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                                    toMap,
+                                                    MEMMGR_MAP_HARDWARE |
+                                                    MEMMGR_MAP_KERNEL   |
+                                                    MEMMGR_MAP_RO,
+                                                    &errCode);
+                ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                            "Failed to map XSDT",
+                            errCode);
+                _acpiParseXSDT((xsdt_descriptor_t*)(descAddr |
+                               ((uintptr_t)pExtendedRsdp->xsdtAddress &
+                                 PAGE_SIZE_MASK)));
             }
             else
+#endif
             {
-                _acpiParseRSDT((rsdt_descriptor_t*)(uintptr_t)
-                    kpRsdpDesc->rsdtAddress);
+                /* Map pages for RSDT */
+                toMap = ((uintptr_t)kpRsdpDesc->rsdtAddress & PAGE_SIZE_MASK) +
+                         sizeof(rsdt_descriptor_t);
+                toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+                descAddr = (uintptr_t)kpRsdpDesc->rsdtAddress &
+                           ~PAGE_SIZE_MASK;
+                descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                                    KERNEL_PAGE_SIZE * 2,
+                                                    MEMMGR_MAP_HARDWARE |
+                                                    MEMMGR_MAP_KERNEL   |
+                                                    MEMMGR_MAP_RO,
+                                                    &errCode);
+                ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                            "Failed to map RSDT",
+                            errCode);
+
+                _acpiParseRSDT((rsdt_descriptor_t*)
+                                (descAddr |
+                                 (kpRsdpDesc->rsdtAddress & PAGE_SIZE_MASK)));
             }
         }
     }
@@ -960,6 +1031,15 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
         ACPI_ASSERT(FALSE,
                     "Unsupported ACPI version",
                     OS_ERR_NOT_SUPPORTED);
+    }
+
+    /* Unmap */
+    if(descAddr != (uintptr_t)NULL)
+    {
+        errCode = memoryKernelUnmap((void*)descAddr, toMap);
+        ACPI_ASSERT(errCode == OS_NO_ERR,
+                    "Failed to unmap RSDT",
+                    errCode);
     }
 
 #ifdef ARCH_32_BITS
@@ -972,8 +1052,8 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_EXIT,
                        2,
-                       (uint32_t)(kpRsdpDesc >> 32),
-                       (uint32_t)kpRsdpDesc);
+                       (uint32_t)((uintptr_t)kpRsdpDesc >> 32),
+                       (uint32_t)(uintptr_t)kpRsdpDesc);
 #endif
 }
 
@@ -981,6 +1061,9 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
 {
     uintptr_t      rangeBegin;
     uintptr_t      rangeEnd;
+    uintptr_t      descAddr;
+    size_t         toMap;
+    OS_RETURN_E    errCode;
     uint8_t        i;
     int8_t         sum;
     acpi_header_t* pAddress;
@@ -995,8 +1078,8 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
                        2,
-                       (uint32_t)(kpRrsdtPtr >> 32),
-                       (uint32_t)kpRrsdtPtr);
+                       (uint32_t)((uintptr_t)kpRrsdtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpRrsdtPtr);
 #endif
 
     ACPI_ASSERT(kpRrsdtPtr != NULL,
@@ -1029,9 +1112,38 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     /* Parse each SDT of the RSDT */
     while(rangeBegin < rangeEnd)
     {
-        pAddress = (acpi_header_t*)(*(uintptr_t*)rangeBegin);
-        _acpiParseDT(pAddress);
-        rangeBegin += sizeof(uintptr_t);
+        pAddress = (acpi_header_t*)(uintptr_t)(*(uint32_t*)rangeBegin);
+        KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "Detected SDT at 0x%p",
+                     pAddress);
+
+        /* Map pages */
+        toMap = ((uintptr_t)pAddress & PAGE_SIZE_MASK) + sizeof(acpi_header_t);
+        toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+        descAddr = (uintptr_t)pAddress & ~PAGE_SIZE_MASK;
+        descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                              toMap,
+                                              MEMMGR_MAP_HARDWARE |
+                                              MEMMGR_MAP_KERNEL   |
+                                              MEMMGR_MAP_RO,
+                                              &errCode);
+        ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                    "Failed to map DT",
+                    errCode);
+
+        _acpiParseDT((acpi_header_t*)
+                     (descAddr | ((uintptr_t)pAddress & PAGE_SIZE_MASK)),
+                     (uintptr_t)pAddress);
+
+        /* Unmap */
+        errCode = memoryKernelUnmap((void*)descAddr, toMap);
+        ACPI_ASSERT(errCode == OS_NO_ERR,
+                    "Failed to unmap DT",
+                    errCode);
+
+        rangeBegin += sizeof(uint32_t);
     }
 
 #ifdef ARCH_32_BITS
@@ -1044,32 +1156,28 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDT_EXIT,
                        2,
-                       (uint32_t)(kpRrsdtPtr >> 32),
-                       (uint32_t)kpRrsdtPtr);
+                       (uint32_t)((uintptr_t)kpRrsdtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpRrsdtPtr);
 #endif
 }
 
+#ifdef ARCH_64_BITS
 static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
 {
     uintptr_t      rangeBegin;
     uintptr_t      rangeEnd;
+    uintptr_t      descAddr;
+    size_t         toMap;
+    OS_RETURN_E    errCode;
     uint8_t        i;
     int8_t         sum;
     acpi_header_t* pAddress;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_XSDT_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpXsdtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_XSDT_ENTRY,
-                       2,
-                       (uint32_t)(kpXsdtPtr >> 32),
-                       (uint32_t)kpXsdtPtr);
-#endif
+                       (uint32_t)((uintptr_t)kpXsdtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpXsdtPtr);
 
     ACPI_ASSERT(kpXsdtPtr != NULL,
                 "Tried to parse a NULL XSDT",
@@ -1101,29 +1209,60 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
     /* Parse each SDT of the RSDT */
     while(rangeBegin < rangeEnd)
     {
-        pAddress = (acpi_header_t*)(*(uintptr_t*)rangeBegin);
-        _acpiParseDT((acpi_header_t*)pAddress);
-        rangeBegin += sizeof(uintptr_t);
+        pAddress = (acpi_header_t*)(*(uint64_t*)rangeBegin);
+        KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "Detected SDT at 0x%p",
+                     pAddress);
+
+        /* Map pages */
+        toMap = ((uintptr_t)pAddress & PAGE_SIZE_MASK) + sizeof(acpi_header_t);
+        toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+        descAddr = (uintptr_t)pAddress & ~PAGE_SIZE_MASK;
+        descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                              toMap,
+                                              MEMMGR_MAP_HARDWARE |
+                                              MEMMGR_MAP_KERNEL   |
+                                              MEMMGR_MAP_RO,
+                                              &errCode);
+        ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                    "Failed to map DT",
+                    errCode);
+
+        _acpiParseDT((acpi_header_t*)
+                     (descAddr | ((uintptr_t)pAddress & PAGE_SIZE_MASK)),
+                     (uintptr_t)pAddress);
+
+        /* Unmap */
+        errCode = memoryKernelUnmap((void*)descAddr, toMap);
+        ACPI_ASSERT(errCode == OS_NO_ERR,
+                    "Failed to unmap DT",
+                    errCode);
+
+        rangeBegin += sizeof(uint64_t);
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_XSDT_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpXsdtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_XSDT_EXIT,
-                       2,
-                       (uint32_t)(kpXsdtPtr >> 32),
-                       (uint32_t)kpXsdtPtr);
-#endif
+                       (uint32_t)((uintptr_t)kpXsdtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpXsdtPtr);
+
 }
+#endif
 
-static void _acpiParseDT(const acpi_header_t* kpHeader)
+static void _acpiParseDT(const acpi_header_t* kpHeader,
+                         const uintptr_t      kPhysAddr)
 {
-    char pSigStr[5];
+    uintptr_t   descAddr;
+    uintptr_t   descPtr;
+    size_t      toMap;
+    OS_RETURN_E errCode;
+
+#if ACPI_DEBUG_ENABLED
+    char        pSigStr[5];
+#endif
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
@@ -1135,8 +1274,8 @@ static void _acpiParseDT(const acpi_header_t* kpHeader)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_DT_ENTRY,
                        2,
-                       (uint32_t)(kpHeader >> 32),
-                       (uint32_t)kpHeader);
+                       (uint32_t)((uintptr_t)kpHeader >> 32),
+                       (uint32_t)(uintptr_t)kpHeader);
 #endif
 
     ACPI_ASSERT(kpHeader != NULL,
@@ -1148,6 +1287,7 @@ static void _acpiParseDT(const acpi_header_t* kpHeader)
                  "Parsing SDT at 0x%p",
                  kpHeader);
 
+#if ACPI_DEBUG_ENABLED
     memcpy(pSigStr, kpHeader->pSignature, 4);
     pSigStr[4] = 0;
 
@@ -1155,26 +1295,51 @@ static void _acpiParseDT(const acpi_header_t* kpHeader)
                  MODULE_NAME,
                  "Signature: %s",
                  pSigStr);
+#endif
 
+    /* Map memory */
+    toMap = ((uintptr_t)kpHeader & PAGE_SIZE_MASK) + kpHeader->length;
+    toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+    descAddr = (uintptr_t)kPhysAddr & ~PAGE_SIZE_MASK;
+    descAddr = (uintptr_t)memoryKernelMap((void*)descAddr,
+                                          toMap,
+                                          MEMMGR_MAP_HARDWARE |
+                                          MEMMGR_MAP_KERNEL   |
+                                          MEMMGR_MAP_RO,
+                                          &errCode);
+    ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
+                "Failed to remap DT",
+                errCode);
+
+    descPtr = descAddr | (kPhysAddr & PAGE_SIZE_MASK);
     if(*((uint32_t*)kpHeader->pSignature) == ACPI_FACP_SIG)
     {
-        _acpiParseFADT((acpi_fadt_t*)kpHeader);
+        _acpiParseFADT((acpi_fadt_t*)descPtr);
     }
     else if(*((uint32_t*)kpHeader->pSignature) == ACPI_APIC_SIG)
     {
-        _acpiParseMADT((acpi_madt_t*)kpHeader);
+        _acpiParseMADT((acpi_madt_t*)descPtr);
     }
     else if(*((uint32_t*)kpHeader->pSignature) == ACPI_HPET_SIG)
     {
-        _acpiParseHPET((acpi_hpet_desc_t*)kpHeader);
+        _acpiParseHPET((acpi_hpet_desc_t*)descPtr);
     }
     else
     {
+#if ACPI_DEBUG_ENABLED
         KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Signature not supported: %s",
                      pSigStr);
+#endif
     }
+
+    /* Unmap memory */
+    errCode = memoryKernelUnmap((void*)descAddr, toMap);
+    ACPI_ASSERT(errCode == OS_NO_ERR,
+                "Failed to unmap DT",
+                errCode);
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
@@ -1186,8 +1351,8 @@ static void _acpiParseDT(const acpi_header_t* kpHeader)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_DT_EXIT,
                        2,
-                       (uint32_t)(kpHeader >> 32),
-                       (uint32_t)kpHeader);
+                       (uint32_t)((uintptr_t)kpHeader >> 32),
+                       (uint32_t)(uintptr_t)kpHeader);
 #endif
 }
 
@@ -1206,8 +1371,8 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_FADT_ENTRY,
                        2,
-                       (uint32_t)(kpFadtPtr >> 32),
-                       (uint32_t)kpFadtPtr);
+                       (uint32_t)((uintptr_t)kpFadtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpFadtPtr);
 #endif
 
     ACPI_ASSERT(kpFadtPtr != NULL,
@@ -1234,9 +1399,6 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
                 "FADT Signature comparison failed",
                 OS_ERR_INCORRECT_VALUE);
 
-    /* Parse DSDT */
-    _acpiParseDSDT((acpi_dsdt_t*)(uintptr_t)kpFadtPtr->dsdt);
-
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_FADT_EXIT,
@@ -1247,66 +1409,8 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_FADT_EXIT,
                        2,
-                       (uint32_t)(kpFadtPtr >> 32),
-                       (uint32_t)kpFadtPtr);
-#endif
-}
-
-static void _acpiParseDSDT(const acpi_dsdt_t* kpDsdtPtr)
-{
-    int32_t  sum;
-    uint32_t i;
-
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DSDT_ENTRY,
-                       2,
-                       0,
-                       (uint32_t)kpDsdtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DSDT_ENTRY,
-                       2,
-                       (uint32_t)(kpDsdtPtr >> 32),
-                       (uint32_t)kpDsdtPtr);
-#endif
-
-    ACPI_ASSERT(kpDsdtPtr != NULL,
-                "Tried to parse a NULL DSDT",
-                OS_ERR_NULL_POINTER);
-
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing DSDT at 0x%p", kpDsdtPtr);
-
-    /* Verify checksum */
-    sum = 0;
-
-    for(i = 0; i < kpDsdtPtr->header.length; ++i)
-    {
-        sum += ((uint8_t*)kpDsdtPtr)[i];
-    }
-
-    ACPI_ASSERT((sum & 0xFF) == 0,
-                "DSDT Checksum failed",
-                OS_ERR_INCORRECT_VALUE);
-
-    ACPI_ASSERT(*((uint32_t*)kpDsdtPtr->header.pSignature) == ACPI_DSDT_SIG,
-                "Wrong DSDT Signature",
-                OS_ERR_INCORRECT_VALUE);
-
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DSDT_EXIT,
-                       2,
-                       0,
-                       (uint32_t)kpDsdtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DSDT_EXIT,
-                       2,
-                       (uint32_t)(kpDsdtPtr >> 32),
-                       (uint32_t)kpDsdtPtr);
+                       (uint32_t)((uintptr_t)kpFadtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpFadtPtr);
 #endif
 }
 
@@ -1334,8 +1438,8 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_APIC_ENTRY,
                        2,
-                       (uint32_t)(kpMadtPtr >> 32),
-                       (uint32_t)kpMadtPtr);
+                       (uint32_t)((uintptr_t)kpMadtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpMadtPtr);
 #endif
 
     ACPI_ASSERT(kpMadtPtr != NULL,
@@ -1484,8 +1588,8 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_APIC_EXIT,
                        2,
-                       (uint32_t)(kpMadtPtr >> 32),
-                       (uint32_t)kpMadtPtr);
+                       (uint32_t)((uintptr_t)kpMadtPtr >> 32),
+                       (uint32_t)(uintptr_t)kpMadtPtr);
 #endif
 }
 
@@ -1506,8 +1610,8 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_HPET_ENTRY,
                        2,
-                       (uint32_t)(kpHpetPtr >> 32),
-                       (uint32_t)kpHpetPtr);
+                       (uint32_t)((uintptr_t)kpHpetPtr >> 32),
+                       (uint32_t)(uintptr_t)kpHpetPtr);
 #endif
 
     ACPI_ASSERT(kpHpetPtr != NULL,
@@ -1573,8 +1677,8 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_HPET_EXIT,
                        2,
-                       (uint32_t)(kpHpetPtr >> 32),
-                       (uint32_t)kpHpetPtr);
+                       (uint32_t)((uintptr_t)kpHpetPtr >> 32),
+                       (uint32_t)(uintptr_t)kpHpetPtr);
 #endif
 }
 

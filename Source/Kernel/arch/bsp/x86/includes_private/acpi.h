@@ -169,7 +169,7 @@ typedef struct
      *
      * @details Returns the number of LAPIC detected in the system.
      *
-     * @returns The number of LAPIC detected in the system is returned.
+     * @return The number of LAPIC detected in the system is returned.
     */
     uint8_t (*pGetLAPICCount)(void);
 
@@ -198,7 +198,7 @@ typedef struct
      *
      * @details Returns the number of IO-APIC detected in the system.
      *
-     * @returns The number of IO-APIC detected in the system is returned.
+     * @return The number of IO-APIC detected in the system is returned.
     */
     uint8_t (*pGetIOAPICCount)(void);
 

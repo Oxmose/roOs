@@ -24,6 +24,9 @@
         "compare": "c",
         "kerror.h": "c",
         "critical.h": "c",
-        "ioapic.h": "c"
+        "ioapic.h": "c",
+        "*.c_no": "c",
+        "tracing.h": "c",
+        "x86memory.h": "c"
     }
 }

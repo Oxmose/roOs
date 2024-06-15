@@ -225,10 +225,10 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
     KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
                        TRACE_DRV_MGR_SETDEVDATA_ENTRY,
                        4,
-                       (uint32_t)(pkFdtNode >> 32),
-                       (uint32_t)pkFdtNode,
-                       (uint32_t)(pData >> 32),
-                       (uint32_t)pData);
+                       (uint32_t)((uintptr_t)pkFdtNode >> 32),
+                       (uint32_t)(uintptr_t)pkFdtNode,
+                       (uint32_t)((uintptr_t)pData >> 32),
+                       (uint32_t)(uintptr_t)pData);
 #endif
 
     /* Check parameters */
@@ -259,11 +259,10 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
     KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
                        TRACE_DRV_MGR_SETDEVDATA_EXIT,
                        5,
-                       kHandle,
-                       (uint32_t)(pkFdtNode >> 32),
-                       (uint32_t)pkFdtNode,
-                       (uint32_t)(pData >> 32),
-                       (uint32_t)pData,
+                       (uint32_t)((uintptr_t)pkFdtNode >> 32),
+                       (uint32_t)(uintptr_t)pkFdtNode,
+                       (uint32_t)((uintptr_t)pData >> 32),
+                       (uint32_t)(uintptr_t)pData,
                        retCode);
 #endif
 
@@ -300,8 +299,8 @@ void* driverManagerGetDeviceData(const uint32_t kHandle)
                        TRACE_DRV_MGR_GETDEVDATA_EXIT,
                        3,
                        kHandle,
-                       (uint32_t)(pDevData >> 32),
-                       (uint32_t)pDevData);
+                       (uint32_t)((uintptr_t)pDevData >> 32),
+                       (uint32_t)(uintptr_t)pDevData);
 #endif
 
     return pDevData;

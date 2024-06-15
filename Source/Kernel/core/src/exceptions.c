@@ -173,16 +173,14 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                        TRACE_EXCEPTION_REGISTER_ENTRY,
                        3,
-                       (uint32_t)(handler >> 32),
-                       (uint32_t)(handler & 0xFFFFFFFF),
+                       (uint32_t)((uintptr_t)handler >> 32),
+                       (uint32_t)(uintptr_t)handler,
                        kExceptionLine);
 #endif
 
     if(kExceptionLine < sMinExceptionNumber ||
        kExceptionLine > sMaxExceptionNumber)
     {
-        KERNEL_ERROR("Invalid registered exception line: %d\n", kExceptionLine);
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
@@ -195,8 +193,8 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           (uint32_t)(handler >> 32),
-                           (uint32_t)(handler & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)handler >> 32),
+                           (uint32_t)(uintptr_t)handler,
                            kExceptionLine,
                            OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 #endif
@@ -206,8 +204,6 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
 
     if(handler == NULL)
     {
-        KERNEL_ERROR("NULL registered exception handler\n");
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
@@ -220,8 +216,8 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           (uint32_t)(handler >> 32),
-                           (uint32_t)(handler & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)handler >> 32),
+                           (uint32_t)(uintptr_t)handler,
                            kExceptionLine,
                            OS_ERR_NULL_POINTER);
 #endif
@@ -234,9 +230,6 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
     if(pKernelInterruptHandlerTable[kExceptionLine] != NULL)
     {
         KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
-        KERNEL_ERROR("Invalid registered exception %d: already registered\n",
-                     kExceptionLine);
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
@@ -249,8 +242,8 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           (uint32_t)(handler >> 32),
-                           (uint32_t)(handler & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)handler >> 32),
+                           (uint32_t)(uintptr_t)handler,
                            kExceptionLine,
                            OS_ERR_INTERRUPT_ALREADY_REGISTERED);
 #endif
@@ -280,8 +273,8 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           (uint32_t)(handler >> 32),
-                           (uint32_t)(handler & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)handler >> 32),
+                           (uint32_t)(uintptr_t)handler,
                            kExceptionLine,
                            OS_NO_ERR);
 #endif
@@ -299,8 +292,6 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
     if(kExceptionLine < sMinExceptionNumber ||
        kExceptionLine > sMaxExceptionNumber)
     {
-        KERNEL_ERROR("Invalid removed exception line: %d\n", kExceptionLine);
-
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REMOVE_EXIT,
                            2,
@@ -315,7 +306,6 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
     if(pKernelInterruptHandlerTable[kExceptionLine] == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
-        KERNEL_ERROR("Exception line not registered: %d\n", kExceptionLine);
 
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REMOVE_EXIT,

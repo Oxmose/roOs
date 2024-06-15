@@ -289,7 +289,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(pit_controler_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -299,7 +298,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -320,7 +318,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_INT_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -335,7 +332,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_COMM_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -352,7 +348,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_QUARTZ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -367,7 +362,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_SELFREQ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -382,7 +376,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, PIT_FDT_FREQRANGE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the frequency range from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -399,7 +392,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     if(pDrvCtrl->frequencyLow > pDrvCtrl->selectedFrequency ||
        pDrvCtrl->frequencyHigh < pDrvCtrl->selectedFrequency)
     {
-        KERNEL_ERROR("Selected PIT frequency is not within range.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -416,8 +408,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, MAIN_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set PIT driver as main timer. Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -426,8 +416,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set PIT driver as aux timer. Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -435,7 +423,6 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach PIT. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);
@@ -620,8 +607,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
     if(pHandler == NULL)
     {
-        KERNEL_ERROR("Tried to set PIT handler to NULL.\n");
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                            TRACE_X86_PIT_SET_HANDLER_EXIT,
@@ -637,7 +622,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
                            (uintptr_t)pHandler & 0xFFFFFFFF,
                            (uint32_t)OS_ERR_NULL_POINTER);
 #endif
-
         return OS_ERR_NULL_POINTER;
     }
 
@@ -651,7 +635,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
     if(err != OS_NO_ERR)
     {
         KERNEL_CRITICAL_UNLOCK(pPitCtrl->lock);
-        KERNEL_ERROR("Failed to register PIT irqHandler. Error: %d\n", err);
 
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,

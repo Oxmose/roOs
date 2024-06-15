@@ -29,7 +29,8 @@ EXTRA_FLAGS = -O3 -g
 CFLAGS = -m32 -std=c11 -nostdinc -fno-builtin -nostdlib -fno-stack-protector \
          -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -fno-pie \
 		 -no-pie -MD -ffreestanding -Wno-address-of-packed-member \
-		 -fno-omit-frame-pointer -Wmissing-prototypes
+		 -fno-omit-frame-pointer -Wmissing-prototypes \
+		 -Wunused-result
 
 TESTS_FLAGS = -D_TESTING_FRAMEWORK_ENABLED
 

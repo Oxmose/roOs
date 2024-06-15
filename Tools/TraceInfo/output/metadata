@@ -24,6 +24,9 @@ clock {
 /*******************************************************************************
  * Types definition
  ******************************************************************************/
+typealias integer {
+    size = 8;
+} := uint8_t;
 
 typealias integer {
     size = 32;
@@ -51,6 +54,10 @@ stream {
     event.header := struct {
         uint32_t id;
         uint64_t timestamp;
+    };
+
+    packet.context := struct {
+        uint8_t cpu_id;
     };
 };
 
@@ -665,6 +672,16 @@ event {
     };
 };
 
+event {
+    id = 273;
+    name = "x86 CPU AP Init entry";
+};
+
+event {
+    id = 274;
+    name = "x86 CPU AP Init exit";
+};
+
 
 /********************************* Driver manager */
 
@@ -676,6 +693,47 @@ event {
 event {
     id = 87;
     name = "Driver manager initialization exit";
+};
+
+event {
+    id = 182;
+    name = "Driver manager set device data entry";
+    fields := struct {
+        xuint32_t nodeAddrHigh;
+        xuint32_t nodeAddrLow;
+        xuint32_t dataAddrHigh;
+        xuint32_t dataAddrLow;
+    };
+};
+
+event {
+    id = 183;
+    name = "Driver manager set device data exit";
+    fields := struct {
+        xuint32_t nodeAddrHigh;
+        xuint32_t nodeAddrLow;
+        xuint32_t dataAddrHigh;
+        xuint32_t dataAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 184;
+    name = "Driver manager get device data entry";
+    fields := struct {
+        uint32_t handle;
+    };
+};
+
+event {
+    id = 185;
+    name = "Driver manager get device data exit";
+    fields := struct {
+        uint32_t handle;
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+    };
 };
 
 /********************************* Exception manager */
@@ -1399,6 +1457,52 @@ event {
     };
 };
 
+event {
+    id = 275;
+    name = "X86 LAPIC start CPU entry";
+    fields := struct {
+        uint32_t lapicId;
+        uint32_t bootedCpuCount;
+    };
+};
+
+event {
+    id = 276;
+    name = "X86 LAPIC start CPU exit";
+    fields := struct {
+        uint32_t lapicId;
+        uint32_t bootedCpuCount;
+    };
+};
+
+event {
+    id = 277;
+    name = "X86 LAPIC send IPI entry";
+    fields := struct {
+        uint32_t lapicId;
+        uint32_t vector;
+    };
+};
+
+event {
+    id = 278;
+    name = "X86 LAPIC send IPI exit";
+    fields := struct {
+        uint32_t lapicId;
+        uint32_t vector;
+    };
+};
+
+event {
+    id = 279;
+    name = "X86 LAPIC init AP core entry";
+};
+
+event {
+    id = 280;
+    name = "X86 LAPIC init AP core exit";
+};
+
 /********************************* X86 LAPIC Timer */
 event {
     id = 167;
@@ -1512,46 +1616,14 @@ event {
     name = "X86 LAPIC Timer acknowledge interrupt";
 };
 
-/********************************* Driver manager cont'd */
 event {
-    id = 182;
-    name = "Driver manager set device data entry";
-    fields := struct {
-        xuint32_t nodeAddrHigh;
-        xuint32_t nodeAddrLow;
-        xuint32_t dataAddrHigh;
-        xuint32_t dataAddrLow;
-    };
+    id = 281;
+    name = "X86 LAPIC Timer init AP core entry";
 };
 
 event {
-    id = 183;
-    name = "Driver manager set device data exit";
-    fields := struct {
-        xuint32_t nodeAddrHigh;
-        xuint32_t nodeAddrLow;
-        xuint32_t dataAddrHigh;
-        xuint32_t dataAddrLow;
-        uint32_t returnCode;
-    };
-};
-
-event {
-    id = 184;
-    name = "Driver manager get device data entry";
-    fields := struct {
-        uint32_t handle;
-    };
-};
-
-event {
-    id = 185;
-    name = "Driver manager get device data exit";
-    fields := struct {
-        uint32_t handle;
-        xuint32_t addrHigh;
-        xuint32_t addrLow;
-    };
+    id = 282;
+    name = "X86 LAPIC Timer init AP core exit";
 };
 
 /********************************* Kernel console */
@@ -2018,6 +2090,16 @@ event {
     name = "Device tree manager get phandle exit";
 };
 
+event {
+    id = 311;
+    name = "Device tree manager parse reserved memory entry";
+};
+
+event {
+    id = 312;
+    name = "Device tree manager parse reserved memory exit";
+};
+
 /********************************* Kernel time manager  */
 event {
     id = 250;
@@ -2160,6 +2242,327 @@ event {
     fields := struct {
         xuint32_t schedRoutineAddrHigh;
         xuint32_t schedRoutineAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+/********************************* X86 Core manager */
+
+event {
+    id = 267;
+    name = "X86 Core manager init entry";
+};
+
+event {
+    id = 268;
+    name = "X86 Core manager init exit";
+    fields := struct {
+        uint32_t status;
+    };
+};
+
+
+event {
+    id = 269;
+    name = "X86 Core manager AP init entry";
+};
+
+
+event {
+    id = 270;
+    name = "X86 Core manager AP init exit";
+};
+
+
+event {
+    id = 271;
+    name = "X86 Core manager send IPI entry";
+    fields := struct {
+        xuint32_t flags;
+        xuint32_t vector;
+    };
+};
+
+event {
+    id = 272;
+    name = "X86 Core manager send IPI exit";
+    fields := struct {
+        xuint32_t flags;
+        xuint32_t vector;
+    };
+};
+
+/********************************* X86 Memory manager */
+event {
+    id = 283;
+    name = "X86 Memory manager check memory type entry";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 284;
+    name = "X86 Memory manager check memory type exit";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t isHardware;
+        uint32_t isMemory;
+    };
+};
+
+event {
+    id = 285;
+    name = "X86 Memory manager add block entry";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 286;
+    name = "X86 Memory manager add block exit";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 287;
+    name = "X86 Memory manager remove block entry";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 288;
+    name = "X86 Memory manager remove block exit";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 289;
+    name = "X86 Memory manager get block entry";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 290;
+    name = "X86 Memory manager get block exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 291;
+    name = "X86 Memory manager is mapped entry";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 292;
+    name = "X86 Memory manager is mapped exit";
+    fields := struct {
+        xuint32_t addressHigh;
+        xuint32_t addressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 293;
+    name = "X86 Memory manager internal map entry";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t physAddressHigh;
+        xuint32_t physAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t flags;
+    };
+};
+
+event {
+    id = 294;
+    name = "X86 Memory manager internal map exit";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t physAddressHigh;
+        xuint32_t physAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t flags;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 295;
+    name = "X86 Memory manager internal unmap entry";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 296;
+    name = "X86 Memory manager internal unmap exit";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 297;
+    name = "X86 Memory detect memory entry";
+};
+
+event {
+    id = 298;
+    name = "X86 Memory detect memory exit";
+};
+
+event {
+    id = 299;
+    name = "X86 Memory initialize address table entry";
+};
+
+event {
+    id = 300;
+    name = "X86 Memory initialize address table exit";
+};
+
+event {
+    id = 301;
+    name = "X86 Memory manager map kernel region entry";
+    fields := struct {
+        xuint32_t virtStartAddressHigh;
+        xuint32_t virtStartAddressLow;
+        xuint32_t virtEndAddressHigh;
+        xuint32_t virtEndAddressLow;
+        uint32_t flags;
+    };
+};
+
+event {
+    id = 302;
+    name = "X86 Memory manager map kernel region exit";
+    fields := struct {
+        xuint32_t virtStartAddressHigh;
+        xuint32_t virtStartAddressLow;
+        xuint32_t virtEndAddressHigh;
+        xuint32_t virtEndAddressLow;
+        uint32_t flags;
+    };
+};
+
+event {
+    id = 303;
+    name = "X86 Memory initialize paging entry";
+};
+
+event {
+    id = 304;
+    name = "X86 Memory initialize paging exit";
+};
+
+event {
+    id = 305;
+    name = "X86 Memory initialize entry";
+};
+
+event {
+    id = 306;
+    name = "X86 Memory initialize exit";
+};
+
+event {
+    id = 307;
+    name = "X86 Memory manager kernel map entry";
+    fields := struct {
+        xuint32_t physAddressHigh;
+        xuint32_t physAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t flags;
+    };
+};
+
+event {
+    id = 308;
+    name = "X86 Memory manager kernel map exit";
+    fields := struct {
+        xuint32_t physAddressHigh;
+        xuint32_t physAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        uint32_t flags;
+        uint32_t returnCode;
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+    };
+};
+
+event {
+    id = 309;
+    name = "X86 Memory manager kernel unmap entry";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 310;
+    name = "X86 Memory manager kernel unmap exit";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
         uint32_t returnCode;
     };
 };

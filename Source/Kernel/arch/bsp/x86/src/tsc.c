@@ -217,7 +217,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(tsc_controler_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -227,7 +226,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -248,7 +246,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, TSC_FDT_SELFREQ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -260,9 +257,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, LIFETIME_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set TSC driver as lifetime timer."
-                         " Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -271,23 +265,18 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set TSC driver as aux timer. Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
 
+    /* Set the API driver as the TSC can be used to calibrate other
+     * drivers
+     */
+    retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
+
 ATTACH_END:
-    if(retCode == OS_NO_ERR)
+    if(retCode != OS_NO_ERR)
     {
-        /* Set the API driver as the TSC can be used to calibrate other
-         * drivers
-         */
-        retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
-    }
-    else
-    {
-        KERNEL_ERROR("Failed to attach TSC. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);

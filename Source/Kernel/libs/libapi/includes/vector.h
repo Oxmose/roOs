@@ -121,7 +121,7 @@ typedef struct
  * @param[in] kSize The initial size of the vector.
  * @param[out] pError The error buffer to received the error status.
  *
- * @returns A pointer to the created vector is returned.
+ * @return A pointer to the created vector is returned.
  */
 vector_t* vectorCreate(vector_alloc_t allocator,
                        void*          pInitData,
@@ -137,7 +137,7 @@ vector_t* vectorCreate(vector_alloc_t allocator,
  *
  * @param[out] pVector The vector to destroy.
  *
- * @returns The error status is retuned.
+ * @return The error status is retuned.
  */
 OS_RETURN_E vectorDestroy(vector_t* pVector);
 
@@ -150,7 +150,7 @@ OS_RETURN_E vectorDestroy(vector_t* pVector);
  *
  * @param[out] pVector The vector to clear.
  *
- * @returns The error status is retuned.
+ * @return The error status is retuned.
  */
 OS_RETURN_E vectorClear(vector_t* pVector);
 
@@ -176,7 +176,7 @@ vector_t* vectorCopy(const vector_t* pSrc, OS_RETURN_E* pError);
  *
  * @param[out] pVector The vector to shrink.
  *
- * @returns The error status is retuned.
+ * @return The error status is retuned.
  */
 OS_RETURN_E vectorSrink(vector_t* pVector);
 
@@ -192,7 +192,7 @@ OS_RETURN_E vectorSrink(vector_t* pVector);
  * @param[out] pVector The vector to resize.
  * @param[in] kSize The size of apply to the vector.
  *
- * @returns The error status is retuned.
+ * @return The error status is retuned.
  */
 OS_RETURN_E vectorResize(vector_t* pVector, const size_t kSize);
 

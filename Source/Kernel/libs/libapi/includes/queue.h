@@ -141,7 +141,7 @@ typedef struct
  * - OS_ERR_NO_MORE_MEMORY if the allocator failed to allocate memory for the node.
  * - OS_NO_ERR if no error is encountered.
  *
- * @returns The node pointer is returned. In case of error NULL is returned.
+ * @return The node pointer is returned. In case of error NULL is returned.
  */
 queue_node_t* queueCreateNode(void*         pData,
                               queue_alloc_t allocator,
@@ -176,7 +176,7 @@ OS_RETURN_E queueDeleteNode(queue_node_t** ppNode);
  * queue.
  * - OS_NO_ERR if no error is encountered.
  *
- * @returns The queue pointer is returned. In case of error NULL is returned.
+ * @return The queue pointer is returned. In case of error NULL is returned.
  */
 queue_t* queueCreate(queue_alloc_t allocator, OS_RETURN_E* pError);
 

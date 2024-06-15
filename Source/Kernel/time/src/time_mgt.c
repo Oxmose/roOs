@@ -276,8 +276,8 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_ENTRY,
                        2,
-                       (uint32_t)(kpTimer >> 32),
-                       (uint32_t)(kpTimer & 0xFFFFFFFF));
+                       (uint32_t)((uintptr_t)kpTimer >> 32),
+                       (uint32_t)(uintptr_t)kpTimer);
 #endif
 
     /* Copy the timer */
@@ -295,8 +295,8 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           (uint32_t)(kpTimer >> 32),
-                           (uint32_t)(kpTimer & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)kpTimer >> 32),
+                           (uint32_t)(uintptr_t)kpTimer,
                            OS_ERR_NO_MORE_MEMORY);
 #endif
         return OS_ERR_NO_MORE_MEMORY;
@@ -320,8 +320,8 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           (uint32_t)(kpTimer >> 32),
-                           (uint32_t)(kpTimer & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)kpTimer >> 32),
+                           (uint32_t)(uintptr_t)kpTimer,
                            OS_ERR_NULL_POINTER);
 #endif
         return OS_ERR_NULL_POINTER;
@@ -351,8 +351,8 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           (uint32_t)(kpTimer >> 32),
-                           (uint32_t)(kpTimer & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)kpTimer >> 32),
+                           (uint32_t)(uintptr_t)kpTimer,
                            OS_ERR_NULL_POINTER);
 #endif
         return OS_ERR_NULL_POINTER;
@@ -374,8 +374,8 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_EXIT,
                        3,
-                       (uint32_t)(kpTimer >> 32),
-                       (uint32_t)(kpTimer & 0xFFFFFFFF),
+                       (uint32_t)((uintptr_t)kpTimer >> 32),
+                       (uint32_t)(uintptr_t)kpTimer,
                        OS_NO_ERR);
 #endif
     return OS_NO_ERR;
@@ -397,8 +397,8 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_TIMER_ENTRY,
                        3,
-                       (uint32_t)(kpTimer >> 32),
-                       (uint32_t)(kpTimer & 0xFFFFFFFF),
+                       (uint32_t)((uintptr_t)kpTimer >> 32),
+                       (uint32_t)(uintptr_t)kpTimer,
                        kType);
 #endif
 
@@ -411,8 +411,6 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
        kpTimer->pRemoveHandler == NULL)
 
     {
-        KERNEL_ERROR("Timer misses mandatory hooks\n");
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_TIMER_EXIT,
@@ -425,8 +423,8 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_TIMER_EXIT,
                            4,
-                           (uint32_t)(kpTimer >> 32),
-                           (uint32_t)(kpTimer & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)kpTimer >> 32),
+                           (uint32_t)(uintptr_t)kpTimer,
                            kType,
                            OS_ERR_NULL_POINTER);
 #endif
@@ -460,7 +458,6 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
             break;
         default:
             KERNEL_CRITICAL_UNLOCK(managerLock);
-            KERNEL_ERROR("Timer type %d not supported\n", kType);
             retCode = OS_ERR_NOT_SUPPORTED;
     }
 
@@ -484,8 +481,8 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_TIMER_EXIT,
                        4,
-                       (uint32_t)(kpTimer >> 32),
-                       (uint32_t)(kpTimer & 0xFFFFFFFF),
+                       (uint32_t)((uintptr_t)kpTimer >> 32),
+                       (uint32_t)(uintptr_t)kpTimer,
                        kType,
                        retCode);
 #endif
@@ -527,7 +524,6 @@ uint64_t timeGetUptime(void)
         time = maxTick * 1000000000ULL /
                sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
     }
-    /* TODO: Check RTC */
     else
     {
         time = 0;
@@ -539,7 +535,7 @@ uint64_t timeGetUptime(void)
                        TRACE_TIME_MGT_GET_UPTIME_EXIT,
                        2,
                        (uint32_t)(time >> 32),
-                       (uint32_t)(time & 0xFFFFFFFF));
+                       (uint32_t)time);
 
     return time;
 }
@@ -600,7 +596,7 @@ void timeWaitNoScheduler(const uint64_t ns)
                        TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
                        2,
                        (uint32_t)(ns >> 32),
-                       (uint32_t)(ns & 0xFFFFFFFF));
+                       (uint32_t)ns);
 
     if(sSchedRoutine != NULL)
     {
@@ -647,7 +643,7 @@ void timeWaitNoScheduler(const uint64_t ns)
                        TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
                        2,
                        (uint32_t)(ns >> 32),
-                       (uint32_t)(ns & 0xFFFFFFFF));
+                       (uint32_t)ns);
 }
 
 OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
@@ -662,15 +658,14 @@ OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_REG_SCHED_ENTRY,
                        2,
-                       (uint32_t)(pSchedRoutine >> 32),
-                       (uint32_t)(pSchedRoutine & 0xFFFFFFFF));
+                       (uint32_t)((uintptr_t)pSchedRoutine >> 32),
+                       (uint32_t)(uintptr_t)pSchedRoutine);
 #endif
 
     KERNEL_CRITICAL_LOCK(managerLock);
     if(pSchedRoutine == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(managerLock);
-        KERNEL_ERROR("Invalid NULL scheduler routine\n");
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_REG_SCHED_EXIT,
@@ -682,8 +677,8 @@ OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_REG_SCHED_EXIT,
                            3,
-                           (uint32_t)(pSchedRoutine >> 32),
-                           (uint32_t)(pSchedRoutine & 0xFFFFFFFF),
+                           (uint32_t)((uintptr_t)pSchedRoutine >> 32),
+                           (uint32_t)(uintptr_t)pSchedRoutine,
                            OS_ERR_NULL_POINTER);
 #endif
         return OS_ERR_NULL_POINTER;
@@ -709,8 +704,8 @@ OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_REG_SCHED_EXIT,
                        3,
-                       (uint32_t)(pSchedRoutine >> 32),
-                       (uint32_t)(pSchedRoutine & 0xFFFFFFFF),
+                       (uint32_t)((uintptr_t)pSchedRoutine >> 32),
+                       (uint32_t)(uintptr_t)pSchedRoutine,
                        OS_NO_ERR);
 #endif
     return OS_NO_ERR;

@@ -9,7 +9,7 @@
 ; Version: 1.0
 ;
 ; Kernel entry point and CPU initialization. This module setup high-memory
-; kernel by mapping the first 4MB of memory 1:1 and 16MB in high memory.
+; kernel by mapping the first 4MB of memory 1:1 and 4MB in high memory.
 ; Paging is enabled.
 ; BSS is initialized (zeroed)
 ;-------------------------------------------------------------------------------
@@ -27,10 +27,12 @@
 ;-------------------------------------------------------------------------------
 ; DEFINES
 ;-------------------------------------------------------------------------------
+; None
 
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE
 ;-------------------------------------------------------------------------------
+; None
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
@@ -48,6 +50,10 @@ extern kickstart
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
 global __kinitx86_64
+global _bootedCPUCount
+global _kernelPGDir
+global _pagingPDP
+global _pagingPD
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
@@ -72,27 +78,23 @@ __bssInit:
     jb   __bssInit
 
     ; Init stack
+__stackInit:
     mov rax, _KERNEL_STACKS_BASE
     mov rbx, KERNEL_STACK_SIZE - 16
     add rax, rbx
+    mov rbx, 0
+    mov [rax], rbx
     mov rsp, rax
     mov rbp, rsp
 
     ; Update the booted CPU count
-    mov eax, 1
+    mov rax, 1
     mov rbx, _bootedCPUCount
-    mov [rbx], eax
+    mov [rbx], rax
 
-    ; Enable SSE
-    fninit
-    mov rax, cr0
-    and rax, 0xFFFFFFFFFFFFFFFB
-    or  rax, 0x0000000000000002
-    mov cr0, rax
-    mov rax, cr4
-    or  rax, 0x00000600
-    mov cr4, rax
-
+    ; GS contains the CPU id
+    mov rax, 0
+    mov gs, rax
     call kickstart
 
 __kinitx64End:
@@ -123,9 +125,23 @@ __kinitx64EndPrintEnd:
 
 section .data
 
+; Number of booted CPUs
 _bootedCPUCount:
     dd 0x00000000
 
 _kinitEndOfLine:
     db " END OF LINE "
     db 0
+
+;-------------------------------------------------------------------------------
+; Boot temporary paging structures
+align 0x1000
+_kernelPGDir:
+    ; Keep entry 1 clear, it is used by the memory manager at boot
+    times (512) dq 0x00
+_pagingPDP:
+    times (512) dq 0x00
+_pagingPD:
+    dq 0x0000000000000083
+    dq 0x0000000000200083
+    times (508) dq 0x00

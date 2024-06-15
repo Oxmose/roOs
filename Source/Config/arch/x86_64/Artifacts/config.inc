@@ -15,7 +15,7 @@
 
 ; Kernel memory offset
 ; WARNING This value should be updated to fit other configuration files
-KERNEL_MEM_OFFSET equ 0xFFFFFFF800000000
+KERNEL_MEM_OFFSET equ 0xFFFFFFFF80000000
 
 ; Kernel stack default size
 ; WARNING This value should be updated to fit other configuration files

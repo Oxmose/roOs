@@ -29,6 +29,7 @@
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>
+#include <x86cpu.h>
 
 /* Configuration files */
 #include <config.h>
@@ -89,7 +90,7 @@ static void incrementer_handler(kernel_thread_t* curr_thread)
 
     if(counter < UINT32_MAX)
     {
-        counter += curr_thread->vCpu.intContext.intId;
+        counter += ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
 }
 
@@ -97,7 +98,7 @@ static void decrementer_handler(kernel_thread_t* curr_thread)
 {
     if(counter > 0)
     {
-        counter -= curr_thread->vCpu.intContext.intId;
+        counter -= ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
 }
 
@@ -107,7 +108,7 @@ static void test_sw_interupts_lock(void)
     uint32_t    int_state;
     uint32_t    cnt_val;
 
-    err = interruptRegister(MIN_INTERRUPT_LINE,
+    err = interruptRegister(MIN_INTERRUPT_LINE + 1,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REG_HANDLER0_ID,
                             err == OS_NO_ERR,
@@ -115,7 +116,7 @@ static void test_sw_interupts_lock(void)
                             err,
                             TEST_INTERRUPT_ENABLED);
 
-    err = interruptRegister(MIN_INTERRUPT_LINE + 1,
+    err = interruptRegister(MIN_INTERRUPT_LINE + 2,
                                                 decrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REG_HANDLER1_ID,
                             err == OS_NO_ERR,
@@ -144,13 +145,13 @@ static void test_sw_interupts_lock(void)
                            TEST_INTERRUPT_ENABLED);
 
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
+    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
+    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK2_ID,
-                           cnt_val + 3 * MIN_INTERRUPT_LINE == counter,
-                           cnt_val + 3 * MIN_INTERRUPT_LINE,
+                           cnt_val + 3 * (MIN_INTERRUPT_LINE + 1) == counter,
+                           cnt_val + 3 * (MIN_INTERRUPT_LINE + 1),
                            counter,
                            TEST_INTERRUPT_ENABLED);
 
@@ -159,7 +160,7 @@ static void test_sw_interupts_lock(void)
     interruptDisable();
     int_state = 0;
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" ((MIN_INTERRUPT_LINE + 1)));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK3_ID,
                            cnt_val == counter,
@@ -169,7 +170,7 @@ static void test_sw_interupts_lock(void)
 
     interruptRestore(int_state);
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" ((MIN_INTERRUPT_LINE + 1)));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK4_ID,
                            cnt_val == counter,
@@ -179,7 +180,7 @@ static void test_sw_interupts_lock(void)
 
     interruptRestore(int_state);
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" ((MIN_INTERRUPT_LINE + 1)));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK5_ID,
                            cnt_val == counter,
@@ -189,10 +190,10 @@ static void test_sw_interupts_lock(void)
 
     interruptRestore(1);
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" ((MIN_INTERRUPT_LINE + 1)));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK6_ID,
-                           cnt_val + MIN_INTERRUPT_LINE == counter,
+                           cnt_val + (MIN_INTERRUPT_LINE + 1) == counter,
                            cnt_val,
                            counter,
                            TEST_INTERRUPT_ENABLED);
@@ -203,7 +204,7 @@ static void test_sw_interupts_lock(void)
 
     cnt_val = counter;
 
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE));
+    __asm__ __volatile__("int %0" :: "i" ((MIN_INTERRUPT_LINE + 1)));
 
     TEST_POINT_ASSERT_UINT(TEST_INTERRUPT_SW_LOCK_CHECK7_ID,
                            cnt_val == counter,
@@ -212,14 +213,14 @@ static void test_sw_interupts_lock(void)
                            TEST_INTERRUPT_ENABLED);
 
 
-    err = interruptRemove(MIN_INTERRUPT_LINE);
+    err = interruptRemove((MIN_INTERRUPT_LINE + 1));
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REM_HANDLER0_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
                             err,
                             TEST_INTERRUPT_ENABLED);
 
-    err = interruptRemove(MIN_INTERRUPT_LINE + 1);
+    err = interruptRemove(MIN_INTERRUPT_LINE + 2);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_LOCK_REM_HANDLER1_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
@@ -336,7 +337,6 @@ static void test_sw_interupts(void)
     }
 
     interruptRestore(1);
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 0));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 2));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 3));
@@ -346,6 +346,7 @@ static void test_sw_interupts(void)
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 7));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 8));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 9));
+    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 10));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 11));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 12));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 13));
@@ -603,8 +604,6 @@ static void test_sw_interupts(void)
     }
 
     interruptRestore(int_state);
-
-    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 0));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 1));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 2));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 3));
@@ -614,6 +613,7 @@ static void test_sw_interupts(void)
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 7));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 8));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 9));
+    __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 10));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 11));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 12));
     __asm__ __volatile__("int %0" :: "i" (MIN_INTERRUPT_LINE + 13));

@@ -174,8 +174,8 @@ static void * _get_test_memory(const size_t size)
 {
     uint8_t * address;
 
-    if((uint32_t)(uintptr_t)_KERNEL_TEST_BUFFER_SIZE +
-       &_KERNEL_TEST_BUFFER_BASE <
+    if((uint32_t)(uintptr_t)&_KERNEL_TEST_BUFFER_SIZE +
+       &_KERNEL_TEST_BUFFER_BASE >
        memoryPoolHead + size)
     {
         address = memoryPoolHead;

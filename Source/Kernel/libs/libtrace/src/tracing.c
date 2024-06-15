@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>      /* CPU API */
 #include <stdint.h>   /* Generic integer definitions */
 #include <string.h>   /* Memory manipulation */
 #include <time_mgt.h> /* System time management */
@@ -40,13 +41,13 @@
  ******************************************************************************/
 
 /** @brief Trace library magic */
-#define TRACE_LIB_MAGIC ((uint32_t)0x1ACEAC1D)
+#define TRACE_LIB_MAGIC 0x1ACEAC1DU
 
 /** @brief Trace library file version */
-#define TRACE_LIB_VERSION ((uint32_t)1)
+#define TRACE_LIB_VERSION 1U
 
 /** @brief Trace library header length */
-#define TRACE_LIB_HEADER_LEN 2
+#define TRACE_LIB_HEADER_LEN 9
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -58,7 +59,7 @@
  * MACROS
  ******************************************************************************/
 
-/* None */
+#define TRACE_CURSOR_POS(CPUID, CURSOR) (CPUID * sTraceBufferSize + CURSOR)
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -79,7 +80,7 @@ static void _kernelTraceInit(void);
 
 /************************* Imported global variables **************************/
 /** @brief Trace buffer address set by linker */
-extern uint32_t _KERNEL_TRACE_BUFFER_BASE[];
+extern uint8_t _KERNEL_TRACE_BUFFER_BASE[];
 /** @brief Trace buffer size set by linker */
 extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 
@@ -89,18 +90,18 @@ extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 /************************** Static global variables ***************************/
 
 /** @brief Trace buffer sCursor */
-static size_t sCursor;
+static size_t sCursor[MAX_CPU_COUNT] = {0};
 
 /** @brief Tracing lock */
-static volatile uint32_t sTraceLock = 0;
+static volatile uint32_t sTraceLock[MAX_CPU_COUNT] = {0};
 
 /** @brief Tells if the tracing was sEnabled. */
 static bool_t sEnabled = FALSE;
 
 /** @brief Trace buffer address */
-static uint32_t* spTraceBuffer = (uint32_t*)&_KERNEL_TRACE_BUFFER_BASE;
+static uint8_t* spTraceBuffer = (uint8_t*)_KERNEL_TRACE_BUFFER_BASE;
 /** @brief Trace buffer size */
-static size_t sTraceBufferSize = (size_t)&_KERNEL_TRACE_BUFFER_SIZE;
+static size_t sTraceBufferSize = 0;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -111,16 +112,27 @@ extern uint64_t tracingTimerGetTick(void);
 
 static void _kernelTraceInit(void)
 {
-    /** Init the buffer */
-    memset(spTraceBuffer, 0, sTraceBufferSize);
+    size_t  offset;
+    uint32_t i;
 
-    /* Init the trace buffer header */
-    spTraceBuffer[0] = TRACE_LIB_MAGIC;
-    spTraceBuffer[1] = TRACE_LIB_VERSION;
+    sTraceBufferSize = ((size_t)&_KERNEL_TRACE_BUFFER_SIZE) / MAX_CPU_COUNT;
+    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    {
+        /* Init the buffer */
+        offset = i * sTraceBufferSize;
+        memset(spTraceBuffer + offset, 0, sTraceBufferSize);
 
-    /* Init the sCursor after the header */
-    sCursor = TRACE_LIB_HEADER_LEN;
+        /* Init the trace buffer header */
+        *((uint32_t*)(spTraceBuffer + offset)) = TRACE_LIB_MAGIC;
+        offset += sizeof(uint32_t);
+        *((uint32_t*)(spTraceBuffer + offset)) = TRACE_LIB_VERSION;
+        offset += sizeof(uint32_t);
+        *((uint8_t*)(spTraceBuffer + offset)) = i;
+        offset += sizeof(uint8_t);
 
+        /* Init the sCursor after the header */
+        sCursor[i] = TRACE_LIB_HEADER_LEN;
+    }
     sEnabled = TRUE;
 }
 
@@ -131,10 +143,12 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
     __builtin_va_list args;
     uint32_t          i;
     uint64_t          timestamp;
+    uint8_t           cpuId;
 
     timestamp = tracingTimerGetTick();
+    cpuId     = cpuGetId();
 
-    cpuSpinlockAcquire(&sTraceLock);
+    cpuSpinlockAcquire(&sTraceLock[0]);
 
     /* Init the tracing feature is needed */
     if(sEnabled == FALSE)
@@ -142,29 +156,37 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
         _kernelTraceInit();
     }
 
-    /* Get the variadic arguments */
-    __builtin_va_start(args, kFieldCount);
+    cpuSpinlockRelease(&sTraceLock[0]);
+
+    cpuSpinlockAcquire(&sTraceLock[cpuId]);
 
     /* Check the sCursor position and cycle if needed */
-    if(sizeof(uint32_t) * (sCursor + 3 + kFieldCount)  >= sTraceBufferSize)
+    if(sizeof(uint32_t) * (3 + kFieldCount) + sCursor[cpuId] >=
+       sTraceBufferSize)
     {
-        sCursor = TRACE_LIB_HEADER_LEN;
+        sCursor[cpuId] = TRACE_LIB_HEADER_LEN;
+        while(1);
     }
 
     /* Write the event */
-    spTraceBuffer[sCursor++] = (uint32_t)kEvent;
-    spTraceBuffer[sCursor++] = (uint32_t)timestamp;
-    spTraceBuffer[sCursor++] = (uint32_t)(timestamp >> 32);
+    *((uint32_t*)(spTraceBuffer + TRACE_CURSOR_POS(cpuId, sCursor[cpuId]))) = (uint32_t)kEvent;
+    sCursor[cpuId] += sizeof(uint32_t);
+    *((uint64_t*)(spTraceBuffer + TRACE_CURSOR_POS(cpuId, sCursor[cpuId]))) = timestamp;
+    sCursor[cpuId] += sizeof(uint64_t);
+
+    /* Get the variadic arguments */
+    __builtin_va_start(args, kFieldCount);
 
     /* Write all metadata */
     for(i = 0; i < kFieldCount; ++i)
     {
-        spTraceBuffer[sCursor++] = __builtin_va_arg(args, uint32_t);
+        *((uint32_t*)(spTraceBuffer + TRACE_CURSOR_POS(cpuId, sCursor[cpuId]))) = __builtin_va_arg(args, uint32_t);
+        sCursor[cpuId] += sizeof(uint32_t);
     }
 
     __builtin_va_end(args);
 
-    cpuSpinlockRelease(&sTraceLock);
+    cpuSpinlockRelease(&sTraceLock[cpuId]);
 }
 
 #endif /* #ifdef _TRACING_ENABLED */

@@ -278,7 +278,7 @@ static OS_RETURN_E _rtcRemoveHandler(void* pDrvCtrl);
  * @param[in, out] pDrvCtrl The driver controler used by the registered
  * console driver.
  *
- * @returns The current date in in RTC date format
+ * @return The current date in in RTC date format
  */
 static date_t _rtcGetDate(void* pDrvCtrl);
 
@@ -290,7 +290,7 @@ static date_t _rtcGetDate(void* pDrvCtrl);
  * @param[in, out] pDrvCtrl The driver controler used by the registered
  * console driver.
  *
- * @returns The current daytime in seconds.
+ * @return The current daytime in seconds.
  */
 static time_t _rtcGetDaytime(void* pDrvCtrl);
 
@@ -365,7 +365,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(rtc_controler_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -375,7 +374,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -396,7 +394,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_INT_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -411,7 +408,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -428,7 +424,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the quartz frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -443,7 +438,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -458,7 +452,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the frequency range from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -475,7 +468,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     if(pDrvCtrl->frequencyLow > pDrvCtrl->selectedFrequency ||
        pDrvCtrl->frequencyHigh < pDrvCtrl->selectedFrequency)
     {
-        KERNEL_ERROR("Selected RTC frequency is not within range.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -507,8 +499,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, RTC_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set RTC driver as RTC timer. Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -517,8 +507,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set RTC driver as RTC timer. Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -526,7 +514,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach RTC driver. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);
@@ -778,7 +765,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
 
     if(pHandler == NULL)
     {
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                            TRACE_X86_RTC_SET_HANDLER_EXIT,
@@ -794,8 +780,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
                            (uintptr_t)pHandler & 0xFFFFFFFF,
                            (uint32_t)OS_ERR_NULL_POINTER);
 #endif
-
-        KERNEL_ERROR("Tried to register NULL handler for RTC.\n");
         return OS_ERR_NULL_POINTER;
     }
 
@@ -809,7 +793,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     if(err != OS_NO_ERR)
     {
         KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
-        KERNEL_ERROR("Failed to register RTC irqHandler. Error: %d\n", err);
 
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,

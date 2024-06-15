@@ -90,7 +90,7 @@
  *
  * @return The computed hash is returned.
  */
-inline static uint64_t _uhash64(const uintptr_t kKey);
+static inline uint64_t _uhash64(const uintptr_t kKey);
 
 /**
  * @brief Sets the data for a given entry in the unsigned hash table.
@@ -155,7 +155,7 @@ static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth);
  * FUNCTIONS
  ******************************************************************************/
 
-inline static uint64_t _uhash64(const uintptr_t kKey)
+static inline uint64_t _uhash64(const uintptr_t kKey)
 {
     uint64_t hash;
     size_t   i;

@@ -135,14 +135,16 @@ typedef struct
  * @param[in] kExt The opperation code for the CPUID instruction.
  * @return The highest supported input value for CPUID instruction.
  */
-inline static uint32_t _cpuGetCPUIDMax(const uint32_t kExt)
+static inline uint32_t _cpuGetCPUIDMax(const uint32_t kExt)
 {
     uint32_t regs[4];
 
     /* Host supports CPUID. Return highest supported CPUID input value. */
     __asm__ __volatile__("cpuid":
-                         "=a"(*regs),"=b"(*(regs+1)),
-                         "=c"(*(regs+2)),"=d"(*(regs+3)):
+                         "=a"(*regs),
+                         "=b"(*(regs+1)),
+                         "=c"(*(regs+2)),
+                         "=d"(*(regs+3)):
                          "a"(kExt));
 
     return regs[0];
@@ -156,11 +158,11 @@ inline static uint32_t _cpuGetCPUIDMax(const uint32_t kExt)
  * supported and returns 1 for valid CPUID information or 0 for
  * unsupported CPUID leaf. All pointers are required to be non-null.
  *
- * @param[in] code The opperation code for the CPUID instruction.
+ * @param[in] kCode The opperation code for the CPUID instruction.
  * @param[out] regs The register used to store the CPUID instruction return.
  * @return 1 in case of succes, 0 otherwise.
  */
-inline static int32_t _cpuCPUID(const uint32_t kCode, uint32_t pRegs[4])
+static inline int32_t _cpuCPUID(const uint32_t kCode, uint32_t pRegs[4])
 {
     uint32_t ext;
     uint32_t maxLevel;
@@ -173,8 +175,10 @@ inline static int32_t _cpuCPUID(const uint32_t kCode, uint32_t pRegs[4])
         return 0;
     }
     __asm__ __volatile__("cpuid":
-                         "=a"(*pRegs),"=b"(*(pRegs+1)),
-                         "=c"(*(pRegs+2)),"=d"(*(pRegs+3)):
+                         "=a"(*pRegs),
+                         "=b"(*(pRegs+1)),
+                         "=c"(*(pRegs+2)),
+                         "=d"(*(pRegs+3)):
                          "a"(kCode));
     return 1;
 }
@@ -184,13 +188,13 @@ inline static int32_t _cpuCPUID(const uint32_t kCode, uint32_t pRegs[4])
  *
  * @return The current CPU flags.
  */
-inline static uint32_t _cpuSaveFlags(void)
+static inline uint32_t _cpuSaveFlags(void)
 {
     uint32_t flags;
 
     __asm__ __volatile__(
-        "pushfl\n"
-        "\tpopl    %0\n"
+        "pushfl\n\t"
+        "popl %0\n\t"
         : "=g" (flags)
         :
         : "memory"
@@ -202,15 +206,15 @@ inline static uint32_t _cpuSaveFlags(void)
 /**
  * @brief Restores CPU flags
  *
- * @param[in] rFlags The flags to be restored.
+ * @param[in] kFlags The flags to be restored.
  */
-inline static void _cpuRestoreFlags(const uint32_t rFlags)
+static inline void _cpuRestoreFlags(const uint32_t kFlags)
 {
     __asm__ __volatile__(
-        "pushl    %0\n"
-        "\tpopfl\n"
+        "pushl %0\n\t"
+        "popfl\n\t"
         :
-        : "g" (rFlags)
+        : "g" (kFlags)
         : "memory"
     );
 }
@@ -218,12 +222,12 @@ inline static void _cpuRestoreFlags(const uint32_t rFlags)
 /**
  * @brief Writes byte on port.
  *
- * @param[in] kVvalue The value to send to the port.
+ * @param[in] kValue The value to send to the port.
  * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutB(const uint8_t kVvalue, const uint16_t kPort)
+static inline void _cpuOutB(const uint8_t kValue, const uint16_t kPort)
 {
-    __asm__ __volatile__("outb %0, %1" : : "a" (kVvalue), "Nd" (kPort));
+    __asm__ __volatile__("outb %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
 
 /**
@@ -232,7 +236,7 @@ inline static void _cpuOutB(const uint8_t kVvalue, const uint16_t kPort)
  * @param[in] kValue The value to send to the port.
  * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutW(const uint16_t kValue, const uint16_t kPort)
+static inline void _cpuOutW(const uint16_t kValue, const uint16_t kPort)
 {
     __asm__ __volatile__("outw %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
@@ -243,7 +247,7 @@ inline static void _cpuOutW(const uint16_t kValue, const uint16_t kPort)
  * @param[in] kValue The value to send to the port.
  * @param[in] kPort The port to which the value has to be written.
  */
-inline static void _cpuOutL(const uint32_t kValue, const uint16_t kPort)
+static inline void _cpuOutL(const uint32_t kValue, const uint16_t kPort)
 {
     __asm__ __volatile__("outl %0, %1" : : "a" (kValue), "Nd" (kPort));
 }
@@ -255,7 +259,7 @@ inline static void _cpuOutL(const uint32_t kValue, const uint16_t kPort)
  *
  * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint8_t _cpuInB(const uint16_t kPort)
+static inline uint8_t _cpuInB(const uint16_t kPort)
 {
     uint8_t rega;
     __asm__ __volatile__("inb %1,%0" : "=a" (rega) : "Nd" (kPort));
@@ -269,7 +273,7 @@ inline static uint8_t _cpuInB(const uint16_t kPort)
  *
  * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint16_t _cpuInW(const uint16_t kPort)
+static inline uint16_t _cpuInW(const uint16_t kPort)
 {
     uint16_t rega;
     __asm__ __volatile__("inw %1,%0" : "=a" (rega) : "Nd" (kPort));
@@ -283,7 +287,7 @@ inline static uint16_t _cpuInW(const uint16_t kPort)
  *
  * @param[in] kPort The port to which the value has to be read.
  */
-inline static uint32_t _cpuInL(const uint16_t kPort)
+static inline uint32_t _cpuInL(const uint16_t kPort)
 {
     uint32_t rega;
     __asm__ __volatile__("inl %1,%0" : "=a" (rega) : "Nd" (kPort));
@@ -304,6 +308,28 @@ inline static uint32_t _cpuInL(const uint16_t kPort)
  */
 void cpuApInit(const uint8_t kCpuId);
 
+/**
+ * @brief Sets the new page directory for the calling CPU.
+ *
+ * @details Sets the new page directory for the calling CPU. The page directory
+ * address passed as parameter must be a physical address.
+ *
+ * @param[in] kNewPgDir The physical address of the new page directory.
+ */
+void cpuSetPageDirectory(const uintptr_t kNewPgDir);
+
+/**
+ * @brief Invalidates a page in the TLB that contains the virtual address given
+ * as parameter.
+ *
+ * @details Invalidates a page in the TLB that contains the virtual address
+ * given as parameter. This macro uses inline assembly to invocate the INVLPG
+ * instruction.
+ *
+ * @param[in] kVirtAddress The virtual address contained in the page to
+ * invalidate.
+ */
+void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress);
 
 #endif /* #ifndef __I386_X86_CPU_H_ */
 

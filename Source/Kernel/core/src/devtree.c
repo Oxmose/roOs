@@ -114,12 +114,20 @@ typedef struct
     uint32_t*   pStructs;
     /** @brief String table pointer */
     const char* pStrings;
+    /** @brief Reserved memory pointer  */
+    uintptr_t* pResMemory;
 
     /** @brief First root node of the FDT */
     fdt_node_t* pFirstNode;
 
     /** @brief FDT pHandle list */
     phandle_t* pHandleList;
+
+    /** @brief FDT available memory regions list */
+    fdt_mem_node_t* pFirstMemoryNode;
+
+    /** @brief FDT reserved memory regions list */
+    fdt_mem_node_t* pFirstReservedMemoryNode;
 } fdt_descriptor_t;
 
 /** @brief Specific property actions */
@@ -143,7 +151,6 @@ typedef struct
     /** @brief Table of actions */
     specprop_action_t pSpecProps[3];
 } specprop_table_t;
-
 
 /*******************************************************************************
  * MACROS
@@ -191,12 +198,15 @@ static inline void _linkProperty(fdt_property_t* pProp,
  * by this function.
  * @param[in] kAddrCells Current address-cells value.
  * @param[in] kSizeCells Current size-cells value.
+ * @param[in] kIsResMemSubNode Tells if the current node is a reserved-memory
+ * sub-node.
  *
- * @returns A new node parsed from the FDT is returned.
+ * @return A new node parsed from the FDT is returned.
 */
 static fdt_node_t* _parseNode(uint32_t*     pOffset,
                               const uint8_t kAddrCells,
-                              const uint8_t kSizeCells);
+                              const uint8_t kSizeCells,
+                              const bool_t  kIsResMemSubNode);
 
 /**
  * @brief Parses a property in the FDT.
@@ -208,7 +218,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
  * by this function.
  * @param[in] pNode The node from which we should parse the property from.
  *
- * @returns A new property parsed from the FDT is returned.
+ * @return A new property parsed from the FDT is returned.
 */
 static fdt_property_t* _parseProperty(uint32_t* pOffset, fdt_node_t* pNode);
 
@@ -275,10 +285,18 @@ static void _applyActionPhandle(fdt_node_t*     pNode,
  * @param[in] kpProperty The property to read.
  * @param[out] pReadSize The buffer that receives the property size.
  *
- * @returns The pointer to the property cells is returned.
+ * @return The pointer to the property cells is returned.
 */
 static inline const void* _fdtInternalReadProp(const fdt_property_t* kpProperty,
                                                size_t*               pReadSize);
+
+/**
+ * @brief Parses the reserved memory section of the FDT.
+ *
+ * @details Parses the reserved memory section of the FDT. A list of reserved
+ * memory region will be created in teh FDT descriptor.
+ */
+static void _parseReservedMemory(void);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -417,7 +435,7 @@ static void _applyActionAddressCells(fdt_node_t*     pNode,
     }
     else
     {
-        KERNEL_ERROR("Incorrect read size in property\n");
+        KERNEL_ERROR("Incorrect read size in address-cells property\n");
     }
     KERNEL_DEBUG(DTB_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -447,7 +465,7 @@ static void _applyActionSizeCells(fdt_node_t*     pNode,
     }
     else
     {
-        KERNEL_ERROR("Incorrect read size in property\n");
+        KERNEL_ERROR("Incorrect read size in size-cells property\n");
     }
 
     KERNEL_DEBUG(DTB_DEBUG_ENABLED,
@@ -579,14 +597,19 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
 
 static fdt_node_t* _parseNode(uint32_t*     pOffset,
                               const uint8_t kAddrCells,
-                              const uint8_t kSizeCells)
+                              const uint8_t kSizeCells,
+                              const bool_t  kIsResMemSubNode)
 {
     fdt_node_t*     pNode;
     fdt_node_t*     pChildNode;
+    fdt_mem_node_t* pMemNode;
+    fdt_mem_node_t* pMemNodeCursor;
     fdt_property_t* pProperty;
     const char*     pInitName;
     size_t          length;
     uint32_t        cursor;
+    size_t          i;
+    bool_t          isResMem;
 
     KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
                        TRACE_DEVTREE_PARSE_NODE_ENTRY,
@@ -632,6 +655,8 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
     memcpy(pNode->pName, pInitName, length);
     pNode->pName[length] = 0;
 
+    isResMem = (strcmp(pNode->pName, "reserved-memory") == 0);
+
     KERNEL_DEBUG(DTB_DEBUG_ENABLED, MODULE_NAME, "Read node %s", pNode->pName);
 
     /* Update offset */
@@ -646,7 +671,8 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
             /* New Child */
             pChildNode = _parseNode(pOffset,
                                     pNode->addrCells,
-                                    pNode->sizeCells);
+                                    pNode->sizeCells,
+                                    isResMem);
             if(pChildNode != NULL)
             {
                 if(pNode->pFirstChildNode == NULL)
@@ -674,6 +700,91 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
                 {
                     _linkProperty(pNode->pProps, pProperty);
                 }
+
+                /* If node is memory */
+                if(strncmp(pNode->pName, "memory@", 7) == 0 &&
+                   strcmp(pProperty->pName, "reg") == 0)
+                {
+                    for(i = 0;
+                        i < pProperty->length / sizeof(uintptr_t);
+                        i += 2)
+                    {
+                        pMemNode = kmalloc(sizeof(fdt_mem_node_t));
+                        if(pMemNode == NULL)
+                        {
+                            PANIC(OS_ERR_NO_MORE_MEMORY,
+                                MODULE_NAME,
+                                "Failed to allocate new memory node",
+                                TRUE);
+                        }
+                        pMemNode->baseAddress =
+                            *(((uintptr_t*)pProperty->pCells) + i);
+                        pMemNode->size =
+                            *(((uintptr_t*)pProperty->pCells) + 1 + i);
+
+                        pMemNode->pNextNode = NULL;
+
+                        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
+                                    MODULE_NAME,
+                                    "Adding memory region at 0x%p of size 0x%x",
+                                    pMemNode->baseAddress,
+                                    pMemNode->size);
+                        if(sFdtDesc.pFirstMemoryNode != NULL)
+                        {
+                            pMemNodeCursor = sFdtDesc.pFirstMemoryNode;
+                            while(pMemNodeCursor->pNextNode != NULL)
+                            {
+                                pMemNodeCursor = pMemNodeCursor->pNextNode;
+                            }
+                            pMemNodeCursor->pNextNode = pMemNode;
+                        }
+                        else
+                        {
+                            sFdtDesc.pFirstMemoryNode = pMemNode;
+                        }
+                    }
+                }
+                /* If node is subnode of reserved-memory */
+                else if(kIsResMemSubNode)
+                {
+                    if(strcmp(pProperty->pName, "reg") == 0)
+                    {
+                        pMemNode = kmalloc(sizeof(fdt_mem_node_t));
+                        if(pMemNode == NULL)
+                        {
+                            PANIC(OS_ERR_NO_MORE_MEMORY,
+                                MODULE_NAME,
+                                "Failed to allocate new memory node",
+                                TRUE);
+                        }
+                        pMemNode->baseAddress =
+                            *((uintptr_t*)pProperty->pCells);
+                        pMemNode->size =
+                            *(((uintptr_t*)pProperty->pCells) + 1);
+
+                        pMemNode->pNextNode = NULL;
+
+                        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
+                                    MODULE_NAME,
+                                    "Adding reserved memory region at 0x%p of "
+                                    "size 0x%x",
+                                    pMemNode->baseAddress,
+                                    pMemNode->size);
+                        if(sFdtDesc.pFirstReservedMemoryNode != NULL)
+                        {
+                            pMemNodeCursor = sFdtDesc.pFirstReservedMemoryNode;
+                            while(pMemNodeCursor->pNextNode != NULL)
+                            {
+                                pMemNodeCursor = pMemNodeCursor->pNextNode;
+                            }
+                            pMemNodeCursor->pNextNode = pMemNode;
+                        }
+                        else
+                        {
+                            sFdtDesc.pFirstReservedMemoryNode = pMemNode;
+                        }
+                    }
+                }
             }
         }
         else
@@ -699,6 +810,75 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
                        0);
 
     return NULL;
+}
+
+static void _parseReservedMemory(void)
+{
+    uint64_t*       pCursor;
+    uintptr_t       startAddr;
+    uintptr_t       size;
+    fdt_mem_node_t* pNode;
+    fdt_mem_node_t* pNodeCursor;
+
+    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
+                       TRACE_DEVTREE_PARSE_RESERVED_MEM_ENTRY,
+                       0);
+
+    /* Register the first node */
+    pCursor = (uint64_t*)sFdtDesc.pResMemory;
+    startAddr = (uintptr_t)FDTTOCPU64(pCursor[0]);
+    size      = (uintptr_t)FDTTOCPU64(pCursor[1]);
+
+    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Parsing reserved memory regions at 0x%p with 0x%p 0x%p",
+                 sFdtDesc.pResMemory,
+                 startAddr,
+                 size);
+
+    while(startAddr != 0 && size != 0)
+    {
+        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "Adding reserved memory region at 0x%p of size 0x%x",
+                     startAddr,
+                     size);
+        pNode = kmalloc(sizeof(fdt_mem_node_t));
+        if(pNode == NULL)
+        {
+            PANIC(OS_ERR_NO_MORE_MEMORY,
+                  MODULE_NAME,
+                  "Failed to allocate new reserved memory node",
+                  TRUE);
+        }
+
+        pNode->baseAddress = startAddr;
+        pNode->size        = size;
+
+        pNode->pNextNode = NULL;
+
+        if(sFdtDesc.pFirstReservedMemoryNode != NULL)
+        {
+            pNodeCursor = sFdtDesc.pFirstMemoryNode;
+            while(pNodeCursor->pNextNode != NULL)
+            {
+                pNodeCursor = pNodeCursor->pNextNode;
+            }
+            pNodeCursor->pNextNode = pNode;
+        }
+        else
+        {
+            sFdtDesc.pFirstMemoryNode = pNode;
+        }
+
+        pCursor   += 2;
+        startAddr = (uintptr_t)FDTTOCPU64(pCursor[0]);
+        size      = (uintptr_t)FDTTOCPU64(pCursor[1]);
+    }
+
+    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
+                       TRACE_DEVTREE_PARSE_RESERVED_MEM_EXIT,
+                       0);
 }
 
 void fdtInit(const uintptr_t kStartAddr)
@@ -732,14 +912,19 @@ void fdtInit(const uintptr_t kStartAddr)
     sFdtDesc.pStructs = (uint32_t*)(kStartAddr +
                                     FDTTOCPU32(pHeader->offStructs));
     sFdtDesc.pStrings = (char*)(kStartAddr + FDTTOCPU32(pHeader->offStrings));
+    sFdtDesc.pResMemory = (uintptr_t*)(kStartAddr +
+                                    FDTTOCPU32(pHeader->offMemRsvMap));
 
     sFdtDesc.nbStructs = FDTTOCPU32(pHeader->sizeStructs) / sizeof(uint32_t);
+
+    /* Get the reseved memory regions */
+    _parseReservedMemory();
 
     /* Now start parsing the first level */
     for(i = 0; i < sFdtDesc.nbStructs; ++i)
     {
         /* Get the node and add to root */
-        pNode = _parseNode(&i, INIT_ADDR_CELLS, INIT_SIZE_CELLS);
+        pNode = _parseNode(&i, INIT_ADDR_CELLS, INIT_SIZE_CELLS, FALSE);
         if(pNode != NULL)
         {
             /* Link node */
@@ -885,6 +1070,16 @@ const fdt_node_t* fdtGetNodeByHandle(const uint32_t kHandleId)
     KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_GET_PROP_EXIT, 0);
 
     return NULL;
+}
+
+const fdt_mem_node_t* fdtGetMemory(void)
+{
+    return sFdtDesc.pFirstMemoryNode;
+}
+
+const fdt_mem_node_t* fdtGetReservedMemory(void)
+{
+    return sFdtDesc.pFirstReservedMemoryNode;
 }
 
 /************************************ EOF *************************************/

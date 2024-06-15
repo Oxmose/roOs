@@ -23,8 +23,9 @@ echo "incbin \"x86_64_fdt.dtb\"" >> dtb_obj.s
 nasm -g -f elf64 -w+gnu-elf-extensions -F dwarf dtb_obj.s -o dtb_obj.o -I .
 ar r librawdtb.a dtb_obj.o
 mv librawdtb.a ../../../Kernel/ARTIFACTS/
+mv x86_64_fdt.dtb ../../../Kernel/ARTIFACTS/
 
 cp Artifacts/* ../../../Kernel/ARTIFACTS/
-rm x86_64_fdt.dtb dtb_obj.o dtb_obj.s
+rm dtb_obj.o dtb_obj.s
 
 echo -e "\e[1m\e[92m\nUpdated ARTIFACTS\e[22m\e[39m"

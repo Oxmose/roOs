@@ -9,7 +9,7 @@
     },
     {
         "name": "Kernel Lib Suite",
-        "group": ["KHEAP", "OS_KQUEUE", "OS_QUEUE", "OS_VECTOR", "OS_UHASHTABLE"]
+        "group": ["OS_KQUEUE", "OS_QUEUE", "OS_VECTOR", "OS_UHASHTABLE"]
     },
     {
         "name": "Device Tree Lib Suite",

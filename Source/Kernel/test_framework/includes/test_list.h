@@ -23,8 +23,6 @@
  ******************************************************************************/
 #ifdef _TESTING_FRAMEWORK_ENABLED
 
-#include <cpu_interrupt.h> /* CPU Interrupt test ids */
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -33,6 +31,7 @@
  * TESTING ENABLE FLAGS
  ************************************************/
 #define TEST_KHEAP_ENABLED                        0
+#define TEST_MEMMGR_ENABLED                       0
 #define TEST_EXCEPTION_ENABLED                    0
 #define TEST_KICKSTART_ENABLED                    0
 #define TEST_INTERRUPT_ENABLED                    0
@@ -76,11 +75,11 @@
 #define TEST_INTERRUPT_SW_COUNTER_CHECK1_ID             2022
 #define TEST_INTERRUPT_SW_REG0_SWINT_HANDLER(IDVAL)     (2023 + IDVAL)
 #define TEST_INTERRUPT_SW_REM0_SWINT_HANDLER(IDVAL)     \
-    (TEST_INTERRUPT_SW_REG0_SWINT_HANDLER(MAX_INTERRUPT_LINE) + IDVAL)
+    (TEST_INTERRUPT_SW_REG0_SWINT_HANDLER(500) + IDVAL)
 #define TEST_INTERRUPT_SW_REG1_SWINT_HANDLER(IDVAL)     \
-    (TEST_INTERRUPT_SW_REM0_SWINT_HANDLER(MAX_INTERRUPT_LINE) + IDVAL)
+    (TEST_INTERRUPT_SW_REM0_SWINT_HANDLER(500) + IDVAL)
 #define TEST_INTERRUPT_SW_REM1_SWINT_HANDLER(IDVAL)     \
-    (TEST_INTERRUPT_SW_REG1_SWINT_HANDLER(MAX_INTERRUPT_LINE) + IDVAL)
+    (TEST_INTERRUPT_SW_REG1_SWINT_HANDLER(500) + IDVAL)
 
 #define TEST_KHEAP_START_ID 3000
 #define TEST_KHEAP_ALLOC0_ID(IDVAL) (TEST_KHEAP_START_ID + IDVAL + 1)
@@ -312,6 +311,23 @@
 #define TEST_DEVTREE_GETHANDLE0     9024
 #define TEST_DEVTREE_GETHANDLE1     9025
 #define TEST_DEVTREE_GETHANDLE2     9026
+#define TEST_DEVTREE_GETMEMORY0     9027
+#define TEST_DEVTREE_GETMEMORY1     9028
+#define TEST_DEVTREE_GETMEMORY2     9029
+#define TEST_DEVTREE_GETMEMORY3     9030
+#define TEST_DEVTREE_GETRESMEMORY0  9031
+#define TEST_DEVTREE_GETRESMEMORY1  9032
+#define TEST_DEVTREE_GETRESMEMORY2  9033
+#define TEST_DEVTREE_GETRESMEMORY3  9034
+
+#define TEST_MEMMGR_INIT_0 10000
+#define TEST_MEMMGR_INIT_1 10001
+#define TEST_MEMMGR_INIT_2 10002
+#define TEST_MEMMGR_INIT_3 10003
+#define TEST_MEMMGR_INIT_4 10004
+#define TEST_MEMMGR_INIT_5 10005
+#define TEST_MEMMGR_ADDBLOCK(X) ((X) + TEST_MEMMGR_INIT_5 + 1)
+
 /** @brief Current test name */
 #define TEST_FRAMEWORK_TEST_NAME "Device Tree Lib Suite"
 
@@ -352,8 +368,9 @@ void kqueue_test(void);
 void vector_test(void);
 void uhashtable_test(void);
 void devtreeTest(void);
+void memmgrTest(void);
 
-#endif
+#endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */
 
 #endif /* #ifndef __TEST_FRAMEWORK_TEST_LIST_H_ */
 

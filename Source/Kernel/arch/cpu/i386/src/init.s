@@ -62,7 +62,7 @@ global __kinitLow
 ; EXPORTED DATA
 ;-------------------------------------------------------------------------------
 global _bootedCPUCount
-global _kinitPGDir
+global _kernelPGDir
 global _fcw
 
 ;-------------------------------------------------------------------------------
@@ -102,21 +102,21 @@ section .low_startup_code
 ;-------------------------------------------------------------------------------
 ; Kernel entry point
 __kinit:
-    ; Clear flags
-    push  0
-    popfd
+    ; Make sure interrupts are disabled
+    cli
 
     ; Map the higher half addresses
-    mov eax, (_kinitPGDir - KERNEL_MEM_OFFSET)
+    mov eax, (_kernelPGDir - KERNEL_MEM_OFFSET)
     mov cr3, eax
 
-    ; Enable 4MB pages
+    ; Enable 4MB pages and PGE
     mov eax, cr4
-    or  eax, 0x00000010
+    or  eax, 0x00000090
     mov cr4, eax
 
     ; Enable paging and write protect
     mov eax, cr0
+    and eax, 0x7FFFFFFF
     or  eax, 0x80010000
     mov cr0, eax
 
@@ -146,7 +146,7 @@ __bssInit:
     mov eax, __kinitHigh
     jmp eax
 
-section .high_startup_code
+section .text
 align 4
 ; High memory loader
 __kinitHigh:
@@ -161,6 +161,9 @@ __kinitHigh:
     mov eax, 1
     mov [_bootedCPUCount], eax
 
+    ; GS contains the CPU id
+    mov eax, 0
+    mov gs, eax
     call kickstart
 
 __kinitEnd:
@@ -195,34 +198,17 @@ section .data
 ; 16MB mapped for high addresses
 ; 4MB mapped 1-1 for low addresses
 align 0x1000
-_kinitPGDir:
+_kernelPGDir:
     ; First 4MB R/W Present.
     dd 0x00000083
+    ; Keep this entry free, it is used by the memory manager at boot
+    dd 0x00000000
     ; Pages before kernel space.
-    ; TODO: reenable this
-    ; times (KERNEL_START_PAGE_ID - 1) dd 0
-
-    ; TODO: remove this when paging is available (ACPI mapping)
-    times (KERNEL_START_PAGE_ID - 834) dd 0
-    dd 0x0FC00083
-    times (832) dd 0
-
+    times (KERNEL_START_PAGE_ID - 2) dd 0
     ; This page directory entry defines a 4MB page containing the kernel.
     dd 0x00000083
-    ; This page directory entry defines a 4MB page containing the kernel.
-    dd 0x00400083
-    ; This page directory entry defines a 4MB page containing the kernel.
-    dd 0x00800083
-    ; This page directory entry defines a 4MB page containing the kernel.
-    dd 0x00C00083
-
-    ; TODO: Reenable this
-    ; times (1024 - KERNEL_START_PAGE_ID - 5) dd 0  ; Pages after the kernel.
-
-    ; TODO: remove this when paging is available (IOAPIC mapping)
-    times (1024 - KERNEL_START_PAGE_ID - 9) dd 0  ; Pages after the kernel.
-    dd 0xFEC00083
-    times (1024 - KERNEL_START_PAGE_ID - 8) dd 0  ; Pages after the kernel.
+    ; Pages after the kernel.
+    times (1024 - KERNEL_START_PAGE_ID - 1) dd 0
 
 ; Number of booted CPUs
 _bootedCPUCount:

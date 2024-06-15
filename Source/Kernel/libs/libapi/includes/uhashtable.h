@@ -136,7 +136,7 @@ typedef struct
  * hash table.
  * @param[out] pError The buffer to return the error status.
  *
- * @returns A pointer to the newly created table is returned.
+ * @return A pointer to the newly created table is returned.
  */
 uhashtable_t* uhashtableCreate(uhashtable_alloc_t allocator,
                                OS_RETURN_E*       pError);
@@ -150,7 +150,7 @@ uhashtable_t* uhashtableCreate(uhashtable_alloc_t allocator,
  *
  * @param[out] pTable The unsigned hash table to destroy.
  *
- * @returns The error status is returned.
+ * @return The error status is returned.
  */
 OS_RETURN_E uhashtableDestroy(uhashtable_t* pTable);
 
@@ -164,7 +164,7 @@ OS_RETURN_E uhashtableDestroy(uhashtable_t* pTable);
  * @param[in] kKey The key to search.
  * @param[out] ppData The data buffer to receive the data associated to the key.
  *
- * @returns The error status is returned.
+ * @return The error status is returned.
  */
 OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
                           const uintptr_t     kKey,
@@ -180,7 +180,7 @@ OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
  * @param[in] kKey The key to associate to the data.
  * @param[in] pData The data to set in the table.
  *
- * @returns The error status is returned.
+ * @return The error status is returned.
  */
 OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
                           const uintptr_t kKey,
@@ -199,7 +199,7 @@ OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
  * This parameter can be set to NULL is the user does not want to retreive the
  * removed data.
  *
- * @returns The error status is returned.
+ * @return The error status is returned.
  */
 OS_RETURN_E uhashtableRemove(uhashtable_t*   pTable,
                              const uintptr_t kKey,

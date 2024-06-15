@@ -129,7 +129,7 @@ typedef struct
      * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      *
-     * @returns The current date in in RTC date format
+     * @return The current date in in RTC date format
      */
     date_t (*pGetDate)(void* pDriverCtrl);
 
@@ -141,7 +141,7 @@ typedef struct
      * @param[in, out] pDriverCtrl The driver controler used by the registered
      * console driver.
      *
-     * @returns The current daytime.
+     * @return The current daytime.
      */
     time_t (*pGetDaytime)(void* pDriverCtrl);
 
@@ -287,7 +287,7 @@ time_t timeGetDayTime(void);
  *
  * @param[in] kCpuId The CPU identifer of which to get the number of ticks.
  *
- * @returns The number of CPU's ticks since the CPU started.
+ * @return The number of CPU's ticks since the CPU started.
  */
 uint64_t timeGetTicks(const uint8_t kCpuId);
 

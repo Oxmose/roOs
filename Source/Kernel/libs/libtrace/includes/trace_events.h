@@ -54,8 +54,9 @@
 #define TRACE_CONS_ENABLED              (TRACE_ALL_ENABLED | 0)
 #define TRACE_KOUTPUT_ENABLED           (TRACE_ALL_ENABLED | 0)
 #define TRACE_DEVTREE_ENABLED           (TRACE_ALL_ENABLED | 0)
-#define TRACE_TIME_MGT_ENABLED          (TRACE_ALL_ENABLED | 1)
-
+#define TRACE_TIME_MGT_ENABLED          (TRACE_ALL_ENABLED | 0)
+#define TRACE_CRITICAL_SECTION_ENABLED  (TRACE_ALL_ENABLED | 0)
+#define TRACE_X86_MEMMGR_ENABLED        (TRACE_ALL_ENABLED | 1)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -151,12 +152,13 @@ typedef enum
     TRACE_X86_CPU_RAISE_INT_EXIT                    = 77,
     TRACE_X86_CPU_VALIDATE_ARCH_ENTRY               = 78,
     TRACE_X86_CPU_VALIDATE_ARCH_EXIT                = 79,
-    TRACE_X86_CPU_ENTER_CRITICAL                    = 80,
-    TRACE_X86_CPU_EXIT_CRITICAL                     = 81,
-    TRACE_X86_CPU_SPINLOCK_LOCK                     = 82,
-    TRACE_X86_CPU_SPINLOCK_UNLOCK                   = 83,
-    TRACE_X86_CPU_KERNEL_PANIC                      = 84,
-    TRACE_X86_CPU_KERNEL_PANIC_HANDLER              = 85,
+
+    TRACE_CPU_ENTER_CRITICAL                        = 80,
+    TRACE_CPU_EXIT_CRITICAL                         = 81,
+    TRACE_CPU_SPINLOCK_LOCK                         = 82,
+    TRACE_CPU_SPINLOCK_UNLOCK                       = 83,
+    TRACE_CPU_KERNEL_PANIC                          = 84,
+    TRACE_CPU_KERNEL_PANIC_HANDLER                  = 85,
 
     TRACE_DRV_MGR_INIT_ENTRY                        = 86,
     TRACE_DRV_MGR_INIT_EXIT                         = 87,
@@ -352,6 +354,59 @@ typedef enum
     TRACE_TIME_MGT_WAIT_NO_SCHED_EXIT               = 264,
     TRACE_TIME_MGT_REG_SCHED_ENTRY                  = 265,
     TRACE_TIME_MGT_REG_SCHED_EXIT                   = 266,
+
+    TRACE_X86_CPU_CORE_MGT_INIT_ENTRY               = 267,
+    TRACE_X86_CPU_CORE_MGT_INIT_EXIT                = 268,
+    TRACE_X86_CPU_CORE_MGT_AP_INIT_ENTRY            = 269,
+    TRACE_X86_CPU_CORE_MGT_AP_INIT_EXIT             = 270,
+    TRACE_X86_CPU_CORE_MGT_SEND_IPI_ENTRY           = 271,
+    TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT            = 272,
+
+    TRACE_X86_CPU_AP_INIT_ENTRY                     = 273,
+    TRACE_X86_CPU_AP_INIT_EXIT                      = 274,
+
+    TRACE_X86_LAPIC_START_CPU_ENTRY                 = 275,
+    TRACE_X86_LAPIC_START_CPU_EXIT                  = 276,
+    TRACE_X86_LAPIC_SEND_IPI_ENTRY                  = 277,
+    TRACE_X86_LAPIC_SEND_IPI_EXIT                   = 278,
+    TRACE_X86_LAPIC_INIT_AP_CORE_ENTRY              = 279,
+    TRACE_X86_LAPIC_INIT_AP_CORE_EXIT               = 280,
+
+    TRACE_X86_LAPIC_TIMER_INIT_AP_CORE_ENTRY        = 281,
+    TRACE_X86_LAPIC_TIMER_INIT_AP_CORE_EXIT         = 282,
+
+    TRACE_X86_MEMMGR_CHECK_MEM_TYPE_ENTRY           = 283,
+    TRACE_X86_MEMMGR_CHECK_MEM_TYPE_EXIT            = 284,
+    TRACE_X86_MEMMGR_ADD_BLOCK_ENTRY                = 285,
+    TRACE_X86_MEMMGR_ADD_BLOCK_EXIT                 = 286,
+    TRACE_X86_MEMMGR_REMOVE_BLOCK_EXIT              = 287,
+    TRACE_X86_MEMMGR_REMOVE_BLOCK_ENTRY             = 288,
+    TRACE_X86_MEMMGR_GET_BLOCK_ENTRY                = 289,
+    TRACE_X86_MEMMGR_GET_BLOCK_EXIT                 = 290,
+    TRACE_X86_MEMMGR_IS_MAPPED_ENTRY                = 291,
+    TRACE_X86_MEMMGR_IS_MAPPED_EXIT                 = 292,
+    TRACE_X86_MEMMGR_MAP_ENTRY                      = 293,
+    TRACE_X86_MEMMGR_MAP_EXIT                       = 294,
+    TRACE_X86_MEMMGR_UNMAP_ENTRY                    = 295,
+    TRACE_X86_MEMMGR_UNMAP_EXIT                     = 296,
+    TRACE_X86_MEMMGR_DETECT_MEM_ENTRY               = 297,
+    TRACE_X86_MEMMGR_DETECT_MEM_EXIT                = 298,
+    TRACE_X86_MEMMGR_INIT_ADDRTABLE_ENTRY           = 299,
+    TRACE_X86_MEMMGR_INIT_ADDRTABLE_EXIT            = 300,
+    TRACE_X86_MEMMGR_MAP_KERNEL_ENTRY               = 301,
+    TRACE_X86_MEMMGR_MAP_KERNEL_EXIT                = 302,
+    TRACE_X86_MEMMGR_INIT_MAPPING_ENTRY             = 303,
+    TRACE_X86_MEMMGR_INIT_MAPPING_EXIT              = 304,
+    TRACE_X86_MEMMGR_INIT_ENTRY                     = 305,
+    TRACE_X86_MEMMGR_INIT_EXIT                      = 306,
+    TRACE_X86_MEMMGR_KERNELMAP_ENTRY                = 307,
+    TRACE_X86_MEMMGR_KERNELMAP_EXIT                 = 308,
+    TRACE_X86_MEMMGR_KERNELUNMAP_ENTRY              = 309,
+    TRACE_X86_MEMMGR_KERNELUNMAP_EXIT               = 310,
+
+    TRACE_DEVTREE_PARSE_RESERVED_MEM_ENTRY          = 311,
+    TRACE_DEVTREE_PARSE_RESERVED_MEM_EXIT           = 312,
+
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

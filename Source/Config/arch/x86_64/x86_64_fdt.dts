@@ -27,8 +27,24 @@
         };
     };
 
-    memory@100000 {
-        reg = <0x0 0x00100000 0x0 0x0FEFFFFF>; /* Available RAM, rest IO / lower mem */
+    memory@0 {
+        #address-cells = <2>;
+        #size-cells = <2>;
+
+        device_type = "memory";
+        reg = <0x0 0x0 0x0 0x10000000>;
+    };
+
+    reserved-memory {
+        #address-cells = <2>;
+        #size-cells = <2>;
+        ranges;
+        reservedlow: lowmem@0 {
+            reg = <0x0 0x0 0x0 0x100000>;
+        };
+        reservedacpi: acpimem@1 {
+            reg = <0x0 0xffe1000 0x0 0x001000>;
+        };
     };
 
     platform {
@@ -46,7 +62,7 @@
 
         acpi: acpi@E0000 {
             compatible = "x86,x86-acpi";
-            reg = <0x0 0x000E0000 0x0 0x0001FFFF>;
+            reg = <0x0 0xE0000 0x0 0x20000>;
         };
 
         lapic: local-apic {
@@ -125,6 +141,7 @@
                 qartz-freq = <0x1234DD>;
                 freq = <500>;
                 freq-range = <20 8000>;
+                is-aux;
             };
 
             rtc {
@@ -147,7 +164,7 @@
                 compatible = "x86,x86-lapic-timer";
                 interrupts = <0 0x21>; /* 0: is not IRQ; 1: Int line */
                 freq = <500>;
-                freq-range = <1 10000>;
+                bus-freq-divider = <16>;
                 /* The current hardware has a fixed-rate TSC that is the most
                  * precise way to measure time.
                  */

@@ -311,12 +311,12 @@ static void _lapicTimerInitApCore(const uint8_t kCpuId);
  *
  * @details Reads into the LAPIC controller memory.
  *
- * @param[in] kBasePhysAddr The LAPIC base address in memory.
+ * @param[in] kBaseAddr The LAPIC base address in memory.
  * @param[in] kRegister The register to read.
  *
  * @return The value contained in the register.
  */
-inline static uint32_t _lapicTimerRead(const uintptr_t kBasePhysAddr,
+static inline uint32_t _lapicTimerRead(const uintptr_t kBaseAddr,
                                        const uint32_t  kRegister);
 
 /**
@@ -324,11 +324,11 @@ inline static uint32_t _lapicTimerRead(const uintptr_t kBasePhysAddr,
  *
  * @details Writes to the LAPIC controller memory.
  *
- * @param[in] kBasePhysAddr The LAPIC base address in memory.
+ * @param[in] kBaseAddr The LAPIC base address in memory.
  * @param[in] kRegister The register to write.
  * @param[in] kVal The value to write to the register.
  */
-inline static void _lapicTimerWrite(const uintptr_t kBasePhysAddr,
+static inline void _lapicTimerWrite(const uintptr_t kBaseAddr,
                                     const uint32_t  kRegister,
                                     const uint32_t  kVal);
 
@@ -386,7 +386,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(lapic_timer_ctrl_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate LAPIC Timer driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -400,7 +399,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate LAPIC Timer driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -421,7 +419,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_INT_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the IRQ from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -436,7 +433,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_SELFREQ_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the selected frequency from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -446,7 +442,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_DIVIDER_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the bus divider from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -478,8 +473,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
             pDrvCtrl->divider = LAPICT_DIVIDER_128;
             break;
         default:
-            KERNEL_ERROR("Unsuported frequency divider, please use: \n"
-                         "1, 2, 4, 8, 16, 32, 64, 128\n");
             retCode = OS_ERR_INCORRECT_VALUE;
             goto ATTACH_END;
     }
@@ -493,7 +486,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_LAPIC_NODE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the LAPIC handle FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -502,7 +494,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     pLapicDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     if(pLapicDriver == NULL)
     {
-        KERNEL_ERROR("Failed to retreive the LAPIC driver.\n");
         retCode = OS_ERR_NULL_POINTER;
         goto ATTACH_END;
     }
@@ -513,7 +504,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
                            &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the base timer handle FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -522,13 +512,11 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->kpBaseTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     if(pDrvCtrl->kpBaseTimer == NULL)
     {
-        KERNEL_ERROR("Failed to retreive the base timer driver.\n");
         retCode = OS_ERR_NULL_POINTER;
         goto ATTACH_END;
     }
     if(pDrvCtrl->kpBaseTimer->pGetTimeNs == NULL)
     {
-        KERNEL_ERROR("Base timer driver does not support getTimeNS.\n");
         retCode = OS_ERR_NOT_SUPPORTED;
         goto ATTACH_END;
     }
@@ -554,9 +542,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, MAIN_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set LAPIC Timer driver as main timer."
-                         " Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
@@ -565,17 +550,16 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
         retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set LAPIC Timer driver as aux timer."
-                         " Error %d\n",
-                         retCode);
             goto ATTACH_END;
         }
     }
 
+    /* Register the driver in the core manager */
+    coreMgtRegLapicTimerDriver(&sAPIDriver);
+
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach LAPIC Timer. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             kfree(pDrvCtrl);
@@ -584,11 +568,6 @@ ATTACH_END:
         {
             kfree(pTimerDrv);
         }
-    }
-    else
-    {
-        /* Register the driver in the core manager */
-        coreMgtRegLapicTimerDriver(&sAPIDriver);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
@@ -641,8 +620,6 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     period = (endTime - startTime);
     if(period < lapicTimerCount)
     {
-        KERNEL_ERROR("LAPIC Timer calibration base timer not precise enough\n");
-
         KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_CALIBRATE_EXIT,
                        2,
@@ -864,8 +841,6 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
 
     if(pHandler == NULL)
     {
-        KERNEL_ERROR("Tried to set LAPIC Timer handler to NULL.\n");
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                            TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
@@ -881,7 +856,6 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
                            (uintptr_t)pHandler & 0xFFFFFFFF,
                            (uint32_t)OS_ERR_NULL_POINTER);
 #endif
-
         return OS_ERR_NULL_POINTER;
     }
 
@@ -892,9 +866,6 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
     err = interruptRegister(pLapicTimerCtrl->interruptNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to register LAPIC Timer irqHandler. Error: %d\n",
-                     err);
-
 #ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                            TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
@@ -998,17 +969,17 @@ static void _lapicTimerInitApCore(const uint8_t kCpuId)
                        0);
 }
 
-inline static uint32_t _lapicTimerRead(const uintptr_t kBasePhysAddr,
+static inline uint32_t _lapicTimerRead(const uintptr_t kBaseAddr,
                                        const uint32_t  kRegister)
 {
-    return _mmioRead32((void*)(kBasePhysAddr + kRegister));
+    return _mmioRead32((void*)(kBaseAddr + kRegister));
 }
 
-inline static void _lapicTimerWrite(const uintptr_t kBasePhysAddr,
+static inline void _lapicTimerWrite(const uintptr_t kBaseAddr,
                                     const uint32_t  kRegister,
                                     const uint32_t  kVal)
 {
-    _mmioWrite32((void*)(kBasePhysAddr + kRegister), kVal);
+    _mmioWrite32((void*)(kBaseAddr + kRegister), kVal);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

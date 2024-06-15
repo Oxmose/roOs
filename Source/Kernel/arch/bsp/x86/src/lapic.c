@@ -30,6 +30,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <string.h>       /* String manipualtion */
 #include <kerror.h>       /* Kernel error */
+#include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* FDT driver */
 #include <core_mgt.h>     /* X86 CPUs core manager */
 #include <time_mgt.h>     /* Timed waits */
@@ -152,6 +153,9 @@
 /** @brief Delay between two STARTUP IPI in NS (10ms) */
 #define LAPIC_CPU_STARTUP_DELAY_NS 10000000
 
+/** @brief Defines the LAPIC memory size */
+#define LAPIC_MEMORY_SIZE 0x3F4
+
 /** @brief Current module name */
 #define MODULE_NAME "X86 LAPIC"
 
@@ -163,7 +167,10 @@
 typedef struct lapic_controler_t
 {
     /** @brief LAPIC base physical address */
-    uintptr_t basePhysAddr;
+    uintptr_t baseAddr;
+
+    /** @brief LAPIC memory mapping size */
+    size_t mappingSize;
 
     /** @brief CPU's spurious interrupt line */
     uint32_t spuriousIntLine;
@@ -295,7 +302,7 @@ static void _lapicInitApCore(void);
  *
  * @return The value contained in the register.
  */
-inline static uint32_t _lapicRead(const uint32_t kRegister);
+static inline uint32_t _lapicRead(const uint32_t kRegister);
 
 /**
  * @brief Writes to the LAPIC controller memory.
@@ -305,7 +312,7 @@ inline static uint32_t _lapicRead(const uint32_t kRegister);
  * @param[in] kRegister The register to write.
  * @param[in] kVal The value to write to the register.
  */
-inline static void _lapicWrite(const uint32_t kRegister, const uint32_t kVal);
+static inline void _lapicWrite(const uint32_t kRegister, const uint32_t kVal);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -348,7 +355,8 @@ static lapic_driver_t sAPIDriver = {
  * lapics, no need for dynamic allocation
  */
 static lapic_controler_t sDrvCtrl = {
-    .basePhysAddr    = 0,
+    .baseAddr    = 0,
+    .mappingSize = 0,
     .spuriousIntLine = 0,
     .pLapicList      = NULL
 };
@@ -363,6 +371,8 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     const acpi_driver_t* skpACPIDriver;
     OS_RETURN_E          retCode;
     size_t               propLen;
+    uintptr_t            lapicPhysAddr;
+    size_t               toMap;
 
 #if LAPIC_DEBUG_ENABLED
     const lapic_node_t*  kpLAPICNode;
@@ -384,7 +394,6 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, LAPIC_FDT_ACPI_NODE_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t))
     {
-        KERNEL_ERROR("Failed to retreive the LAPIC ACPI handle FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -393,20 +402,35 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     skpACPIDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     if(skpACPIDriver == NULL)
     {
-        KERNEL_ERROR("Failed to retreive the LAPIC ACPI driver.\n");
         retCode = OS_ERR_NULL_POINTER;
         goto ATTACH_END;
     }
 
-    /* Get the LAPIC base address */
-    sDrvCtrl.basePhysAddr = skpACPIDriver->pGetLAPICBaseAddress();
+    /* Map the IO APIC */
+    lapicPhysAddr = skpACPIDriver->pGetLAPICBaseAddress() & ~PAGE_SIZE_MASK;
+    toMap = LAPIC_MEMORY_SIZE + (lapicPhysAddr & PAGE_SIZE_MASK);
+    toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+
+    sDrvCtrl.baseAddr = (uintptr_t)memoryKernelMap((void*)lapicPhysAddr,
+                                                   toMap,
+                                                   MEMMGR_MAP_HARDWARE |
+                                                   MEMMGR_MAP_KERNEL   |
+                                                   MEMMGR_MAP_RW,
+                                                   &retCode);
+    if(sDrvCtrl.baseAddr == (uintptr_t)NULL || retCode != OS_NO_ERR)
+    {
+        goto ATTACH_END;
+    }
+    sDrvCtrl.baseAddr |= skpACPIDriver->pGetLAPICBaseAddress() & PAGE_SIZE_MASK;
+    sDrvCtrl.mappingSize = toMap;
 
     /* Get the LAPICs */
     KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
                  MODULE_NAME,
-                 "Attaching %d LAPICs with base address 0x%p",
+                 "Attaching %d LAPICs with base address 0x%p (0x%p)",
                  skpACPIDriver->pGetLAPICCount(),
-                 sDrvCtrl.basePhysAddr);
+                 sDrvCtrl.baseAddr,
+                 skpACPIDriver->pGetLAPICBaseAddress());
 
     /* Get the LAPIC list */
     sDrvCtrl.pLapicList = skpACPIDriver->pGetLAPICList();
@@ -435,20 +459,22 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     }
 #endif
 
-ATTACH_END:
+    /* Set the API driver */
+    retCode = driverManagerSetDeviceData(pkFdtNode, &sAPIDriver);
     if(retCode == OS_NO_ERR)
     {
-        /* Set the API driver */
-        retCode = driverManagerSetDeviceData(pkFdtNode, &sAPIDriver);
-        if(retCode == OS_NO_ERR)
-        {
-            /* Register the driver in the core manager */
-            coreMgtRegLapicDriver(&sAPIDriver);
-        }
+        /* Register the driver in the core manager */
+        coreMgtRegLapicDriver(&sAPIDriver);
     }
-    else
+
+ATTACH_END:
+    if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach LAPIC driver. Error %d.\n", retCode);
+        if(memoryKernelUnmap((void*)sDrvCtrl.baseAddr,
+                             sDrvCtrl.mappingSize))
+        {
+            KERNEL_ERROR("Failed to unmap IO-APIC memory\n");
+        }
     }
 
     KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
@@ -483,7 +509,7 @@ static void _lapicSetIrqEOI(const uint32_t kInterruptLine)
 
 static uintptr_t _lapicGetBaseAddress(void)
 {
-    return sDrvCtrl.basePhysAddr;
+    return sDrvCtrl.baseAddr;
 }
 
 
@@ -573,13 +599,25 @@ static void _lapicStartCpu(const uint8_t kLapicId)
 
 static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
 {
-    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_SEND_IPI_ENTRY,
                        2,
                        kLapicId,
-                       _bootedCPUCount);
+                       kVector);
+
+    /* Check if init */
+    if(sDrvCtrl.baseAddr == 0)
+    {
+        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
+                           TRACE_X86_LAPIC_SEND_IPI_EXIT,
+                           2,
+                           kLapicId,
+                           kVector);
+        return;
+    }
+
+    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
 
     /* Send IPI */
     _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
@@ -596,7 +634,7 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
                        TRACE_X86_LAPIC_SEND_IPI_EXIT,
                        2,
                        kLapicId,
-                       _bootedCPUCount);
+                       kVector);
 }
 
 static const lapic_node_t* _lapicGetLAPICList(void)
@@ -628,14 +666,14 @@ static void _lapicInitApCore(void)
                        0);
 }
 
-inline static uint32_t _lapicRead(const uint32_t kRegister)
+static inline uint32_t _lapicRead(const uint32_t kRegister)
 {
-    return _mmioRead32((void*)(sDrvCtrl.basePhysAddr + kRegister));
+    return _mmioRead32((void*)(sDrvCtrl.baseAddr + kRegister));
 }
 
-inline static void _lapicWrite(const uint32_t kRegister, const uint32_t kVal)
+static inline void _lapicWrite(const uint32_t kRegister, const uint32_t kVal)
 {
-    _mmioWrite32((void*)(sDrvCtrl.basePhysAddr + kRegister), kVal);
+    _mmioWrite32((void*)(sDrvCtrl.baseAddr + kRegister), kVal);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

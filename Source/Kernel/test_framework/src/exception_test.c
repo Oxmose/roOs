@@ -29,6 +29,7 @@
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>
+#include <x86cpu.h>
 
 /* Configuration files */
 #include <config.h>
@@ -93,9 +94,9 @@ static void _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
 #ifdef ARCH_64_BITS
-    curr_thread->vCpu.intContext.rip = (uintptr_t)_end;
+    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.rip = (uintptr_t)_end;
 #else
-    curr_thread->vCpu.intContext.eip = (uintptr_t)_end;
+    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.eip = (uintptr_t)_end;
 #endif
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,
@@ -111,7 +112,11 @@ void exception_test(void)
     uint32_t minExc;
     uint32_t maxExc;
 
-    cpuGetExceptionNumberRange(&minExc, &maxExc);
+    const cpu_interrupt_config_t* pConfig;
+
+    pConfig = cpuGetInterruptConfig();
+    minExc = pConfig->minExceptionLine;
+    maxExc = pConfig->maxExceptionLine;
 
     /* TEST REGISTER < MIN */
     err = exceptionRegister(minExc - 1, _dummy);

@@ -60,8 +60,8 @@ typedef struct
  */
 #define ENTER_CRITICAL(INT_STATE) {                  \
     INT_STATE = interruptDisable();                  \
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,        \
-                       TRACE_X86_CPU_ENTER_CRITICAL, \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,        \
+                       TRACE_CPU_ENTER_CRITICAL,     \
                        1,                            \
                        INT_STATE);                   \
 }
@@ -76,8 +76,8 @@ typedef struct
  */
 #define EXIT_CRITICAL(INT_STATE) {                  \
     interruptRestore(INT_STATE);                    \
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,       \
-                       TRACE_X86_CPU_EXIT_CRITICAL, \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,       \
+                       TRACE_CPU_EXIT_CRITICAL,     \
                        1,                           \
                        INT_STATE);                  \
 }
@@ -92,8 +92,8 @@ typedef struct
 #define KERNEL_CRITICAL_LOCK(LOCK) {                \
     cpuSpinlockAcquire(&((LOCK).lock));             \
     ENTER_CRITICAL((LOCK).intState);                \
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,       \
-                       TRACE_X86_CPU_SPINLOCK_LOCK, \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,       \
+                       TRACE_CPU_SPINLOCK_LOCK,     \
                        1,                           \
                        LOCK);                       \
 }
@@ -108,8 +108,8 @@ typedef struct
 #define KERNEL_CRITICAL_UNLOCK(LOCK) {                  \
     cpuSpinlockRelease(&((LOCK).lock));                 \
     EXIT_CRITICAL((LOCK).intState);                     \
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,           \
-                       TRACE_X86_CPU_SPINLOCK_UNLOCK,   \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,           \
+                       TRACE_CPU_SPINLOCK_UNLOCK,       \
                        1,                               \
                        LOCK);                           \
 }

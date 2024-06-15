@@ -25,6 +25,8 @@
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
+#include <core_mgt.h>      /* Core management */
+#include <x86memory.h>     /* X86 memory definitions */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
 
@@ -48,35 +50,19 @@
 /** @brief Current module name */
 #define MODULE_NAME "CPU_X64"
 
-/** @brief Kernel's 32 bits code segment descriptor. */
-#define KERNEL_CS_32 0x08
-/** @brief Kernel's 32 bits data segment descriptor. */
-#define KERNEL_DS_32 0x10
-/** @brief Kernel's 16 bits ode segment descriptor. */
-#define KERNEL_CS_16 0x18
-/** @brief Kernel's 16 bits data segment descriptor. */
-#define KERNEL_DS_16 0x20
-/** @brief Kernel's 64 bits ode segment descriptor. */
-#define KERNEL_CS_64 0x28
+/** @brief Kernel's 64 bits code segment descriptor. */
+#define KERNEL_CS_64 0x08
 /** @brief Kernel's 64 bits data segment descriptor. */
-#define KERNEL_DS_64 0x30
-
-/** @brief User's 32 bits code segment descriptor. */
-#define USER_CS_32 0x38
-/** @brief User's 32 bits data segment descriptor. */
-#define USER_DS_32 0x40
+#define KERNEL_DS_64 0x10
 /** @brief User's 64 bits code segment descriptor. */
-#define USER_CS_64 0x48
+#define USER_CS_64 0x18
 /** @brief User's 64 bits data segment descriptor. */
-#define USER_DS_64 0x50
-
+#define USER_DS_64 0x20
 /** @brief Kernel's TSS segment descriptor. */
-#define TSS_SEGMENT  0x60
+#define TSS_SEGMENT  0x30
 
-/** @brief Select the thread code segment. */
-#define THREAD_KERNEL_CS KERNEL_CS_64
-/** @brief Select the thread code segment. */
-#define THREAD_KERNEL_DS KERNEL_DS_64
+/** @brief Number of entries in the kernel's GDT. */
+#define GDT_ENTRY_COUNT (6 + MAX_CPU_COUNT * 2)
 
 /** @brief Kernel's 64 bits code segment base address. */
 #define KERNEL_CODE_SEGMENT_BASE_64  0x00000000
@@ -87,24 +73,6 @@
 /** @brief Kernel's 64 bits data segment limit address. */
 #define KERNEL_DATA_SEGMENT_LIMIT_64 0x000FFFFF
 
-/** @brief Kernel's 32 bits code segment base address. */
-#define KERNEL_CODE_SEGMENT_BASE_32  0x00000000
-/** @brief Kernel's 32 bits code segment limit address. */
-#define KERNEL_CODE_SEGMENT_LIMIT_32 0x000FFFFF
-/** @brief Kernel's 32 bits data segment base address. */
-#define KERNEL_DATA_SEGMENT_BASE_32  0x00000000
-/** @brief Kernel's 32 bits data segment limit address. */
-#define KERNEL_DATA_SEGMENT_LIMIT_32 0x000FFFFF
-
-/** @brief Kernel's 16 bits code segment base address. */
-#define KERNEL_CODE_SEGMENT_BASE_16  0x00000000
-/** @brief Kernel's 16 bits code segment limit address. */
-#define KERNEL_CODE_SEGMENT_LIMIT_16 0x000FFFFF
-/** @brief Kernel's 16 bits data segment base address. */
-#define KERNEL_DATA_SEGMENT_BASE_16  0x00000000
-/** @brief Kernel's 16 bits data segment limit address. */
-#define KERNEL_DATA_SEGMENT_LIMIT_16 0x000FFFFF
-
 /** @brief User's 64 bits code segment base address. */
 #define USER_CODE_SEGMENT_BASE_64  0x00000000
 /** @brief User's 64 bits code segment limit address. */
@@ -114,67 +82,64 @@
 /** @brief User's 64 bits data segment limit address. */
 #define USER_DATA_SEGMENT_LIMIT_64 0x000FFFFF
 
-/** @brief User's 32 bits code segment base address. */
-#define USER_CODE_SEGMENT_BASE_32  0x00000000
-/** @brief User's 32 bits code segment limit address. */
-#define USER_CODE_SEGMENT_LIMIT_32 0x000FFFFF
-/** @brief User's 32 bits data segment base address. */
-#define USER_DATA_SEGMENT_BASE_32  0x00000000
-/** @brief User's 32 bits data segment limit address. */
-#define USER_DATA_SEGMENT_LIMIT_32 0x000FFFFF
-
 /***************************
  * GDT Flags
  **************************/
 
-/** @brief GDT granularity flag: 4K block. */
-#define GDT_FLAG_GRANULARITY_4K   0x800000
-/** @brief GDT granularity flag: 1B block. */
-#define GDT_FLAG_GRANULARITY_BYTE 0x000000
-/** @brief GDT size flag: 16b protected mode. */
-#define GDT_FLAG_16_BIT_SEGMENT   0x000000
-/** @brief GDT size flag: 32b protected mode. */
-#define GDT_FLAG_32_BIT_SEGMENT   0x400000
-/** @brief GDT size flag: 64b protected mode. */
-#define GDT_FLAG_64_BIT_SEGMENT   0x200000
-/** @brief GDT AVL flag. */
-#define GDT_FLAG_AVL              0x100000
-/** @brief GDT segment present flag. */
-#define GDT_FLAG_SEGMENT_PRESENT  0x008000
-/** @brief GDT privilege level flag: Ring 0 (kernel). */
-#define GDT_FLAG_PL0              0x000000
-/** @brief GDT privilege level flag: Ring 1 (kernel-). */
-#define GDT_FLAG_PL1              0x002000
-/** @brief GDT privilege level flag: Ring 2 (kernel--). */
-#define GDT_FLAG_PL2              0x004000
-/** @brief GDT privilege level flag: Ring 3 (user). */
-#define GDT_FLAG_PL3              0x006000
-/** @brief GDT data type flag: code. */
-#define GDT_FLAG_CODE_TYPE        0x001000
-/** @brief GDT data type flag: data. */
-#define GDT_FLAG_DATA_TYPE        0x001000
-/** @brief GDT data type flag: system. */
-#define GDT_FLAG_SYSTEM_TYPE      0x000000
-/** @brief GDT TSS flag. */
-#define GDT_FLAG_TSS              0x09
+/** @brief GDT Accessed Bit */
+#define GDT_ACCESS_BYTE_ACCESSED 0x01
+/** @brief GDT Readable / Writeable Bit */
+#define GDT_ACCESS_BYTE_WR 0x02
+/** @brief GDT Direction Grow Up Bit */
+#define GDT_ACCESS_BYTE_GROW_UP 0x00
+/** @brief GDT Direction Grow Down Bit */
+#define GDT_ACCESS_BYTE_GROW_DOWN 0x04
+/** @brief GDT Conforming Clear Bit */
+#define GDT_ACCESS_BYTE_NON_CONFORMING 0x00
+/** @brief GDT Conforming Set Bit */
+#define GDT_ACCESS_BYTE_CONFORMING 0x04
+/** @brief GDT Executable Bit */
+#define GDT_ACCESS_BYTE_EXEC 0x08
+/** @brief GDT System Segment Type 16B TSS Available Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_16B_TSS_AVAIL 0x01
+/** @brief GDT System Segment Type LDT Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_LDT 0x02
+/** @brief GDT System Segment Type 16B TSS Busy Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_16B_TSS_BUSY 0x03
+/** @brief GDT System Segment Type 32B TSS Available Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_32B_TSS_AVAIL 0x09
+/** @brief GDT System Segment Type 64B TSS Available Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_64B_TSS_AVAIL 0x09
+/** @brief GDT System Segment Type 32B TSS Busy Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_32B_TSS_BUSY 0x0B
+/** @brief GDT System Segment Type 64B TSS Busy Bit */
+#define GDT_ACCESS_BYTE_SYS_TYPE_64B_TSS_BUSY 0x0B
 
-/** @brief GDT access byte flag: executable. */
-#define GDT_TYPE_EXECUTABLE       0x8
-/** @brief GDT access byte flag: growth direction up. */
-#define GDT_TYPE_GROW_UP          0x4
-/** @brief GDT access byte flag: growth direction down. */
-#define GDT_TYPE_GROW_DOWN        0x0
-/** @brief GDT access byte flag: conforming code. */
-#define GDT_TYPE_CONFORMING       0x4
-/** @brief GDT access byte flag: protected. */
-#define GDT_TYPE_PROTECTED        0x0
-/** @brief GDT access byte flag: readable. */
-#define GDT_TYPE_READABLE         0x2
-/** @brief GDT access byte flag: writable. */
-#define GDT_TYPE_WRITABLE         0x2
-/** @brief GDT access byte flag: accessed byte. */
-#define GDT_TYPE_ACCESSED         0x1
+/** @brief GDT Type System Bit */
+#define GDT_ACCESS_BYTE_SYSTEM 0x00
+/** @brief GDT Type Code or Data Bit */
+#define GDT_ACCESS_BYTE_CODE_DATA 0x10
+/** @brief GDT Descriptor Level Ring 0 Bit */
+#define GDT_ACCESS_BYTE_RING0 0x00
+/** @brief GDT Descriptor Level Ring 1 Bit */
+#define GDT_ACCESS_BYTE_RING1 0x20
+/** @brief GDT Descriptor Level Ring 2 Bit */
+#define GDT_ACCESS_BYTE_RING2 0x40
+/** @brief GDT Descriptor Level Ring 3 Bit */
+#define GDT_ACCESS_BYTE_RING3 0x60
+/** @brief GDT Present Bit */
+#define GDT_ACCESS_BYTE_PRESENT 0x80
 
+/** @brief GDT Long Mode Flag */
+#define GDT_FLAG_LONGMODE_CODE 0x2
+/** @brief GDT DB 16 Bits Flag */
+#define GDT_FLAG_DB_16B 0x0
+/** @brief GDT DB 32 Bits Flag */
+#define GDT_FLAG_DB_32B 0x4
+/** @brief GDT Granularity 1B Flag */
+#define GDT_FLAG_GRANULARITY_1B 0x0
+/** @brief GDT Granularity 4K Flag */
+#define GDT_FLAG_GRANULARITY_4K 0x8
 
 /***************************
  * IDT Flags
@@ -200,9 +165,6 @@
 /** @brief IDT flag: interrupt type trap gate. */
 #define IDT_TYPE_TRAP_GATE 0x0F
 
-/** @brief Number of entries in the kernel's GDT. */
-#define GDT_ENTRY_COUNT (13 + MAX_CPU_COUNT)
-
 /** @brief Request vendor string. */
 #define CPUID_GETVENDORSTRING          0x00000000
 /** @brief Request capabled CPUID features. */
@@ -221,6 +183,8 @@
 #define CPUID_INTELBRANDSTRINGMORE     0x80000003
 /** @brief Request Intel brand string end. */
 #define CPUID_INTELBRANDSTRINGEND      0x80000004
+/** @brief Request address width. */
+#define CPUID_ADDRESS_WIDTH            0x80000008
 
 /****************************
  * General Features
@@ -355,7 +319,7 @@
 /** @brief CPUID MMX etended flag. */
 #define EDX_MMX_EX    (1U << 22)
 /** @brief CPUID FXSAVE/STOR available flag. */
-#define EDX_FXSR     (1U << 24)
+#define EDX_FXSR      (1U << 24)
 /** @brief CPUID FXSAVE/STOR optimized flag. */
 #define EDX_FXSR_OPT  (1U << 25)
 /** @brief CPUID 1 GB Pages flag. */
@@ -551,7 +515,7 @@ typedef struct
 typedef struct
 {
     /** @brief The GDT size. */
-    uint16_t  size;
+    uint16_t size;
 
     /** @brief The GDT address. */
     uintptr_t base;
@@ -563,7 +527,7 @@ typedef struct
 typedef struct
 {
     /** @brief The IDT size. */
-    uint16_t  size;
+    uint16_t size;
 
     /** @brief The IDT address. */
     uintptr_t base;
@@ -610,7 +574,12 @@ typedef struct cpu_tss_entry
 #define CPU_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, "CPU", MSG, TRUE);                     \
+        KERNEL_ERROR(MSG);                                  \
+        kprintfFlush();                                     \
+        while(TRUE)                                         \
+        {                                                   \
+            cpuHalt();                                      \
+        }                                                   \
     }                                                       \
 }
 
@@ -1920,6 +1889,12 @@ extern void __intHandler254(void);
  */
 extern void __intHandler255(void);
 
+/** @brief CPU physical addressing width */
+extern uint8_t physAddressWidth;
+
+/** @brief CPU virtual addressing width */
+extern uint8_t virtAddressWidth;
+
 /************************* Exported global variables **************************/
 /* None */
 
@@ -2249,14 +2224,32 @@ static void _setupTSS(void);
  * @param[out] pEntry The pointer to the entry structure to format.
  * @param[in] kBase  The base address of the segment for the GDT entry.
  * @param[in] kLimit The limit address of the segment for the GDT entry.
- * @param[in] kType  The type of segment for the GDT entry.
+ * @param[in] kAccess The access bits of segment for the GDT entry.
  * @param[in] kFlags The flags to be set for the GDT entry.
  */
 static void _formatGDTEntry(uint64_t*      pEntry,
                             const uint32_t kBase,
                             const uint32_t kLimit,
-                            const uint8_t  kType,
-                            const uint32_t kFlags);
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags);
+
+/**
+ * @brief Formats a TSS entry.
+ *
+ * @details Formats data given as parameter into a standard TSS entry.
+ * The result is directly written in the memory pointed by the entry parameter.
+ *
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kBase  The base address of the segment for the TSS entry.
+ * @param[in] kSize The size of the segment for the TSS entry.
+ * @param[in] kAccess  The access byte of segment for the TSS entry.
+ * @param[in] kFlags The flags to be set for the TSS entry.
+ */
+static void _formatTSSEntry(uint64_t*      pEntry,
+                            const uint64_t kBase,
+                            const uint32_t kSize,
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags);
 
 /**
  * @brief Formats an IDT entry.
@@ -2281,42 +2274,35 @@ static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
 static void _formatGDTEntry(uint64_t*      pEntry,
                             const uint32_t kBase,
                             const uint32_t kLimit,
-                            const uint8_t  kType,
-                            const uint32_t kFlags)
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags)
 {
-    uint32_t lo_part = 0;
-    uint32_t hi_part = 0;
+    *((uint32_t*)pEntry) = ((kBase & 0xFFFF) << 16) | (kLimit & 0xFFFF);
 
-    /*
-     * Low part[31;0] = Base[15;0] Limit[15;0]
-     */
-    lo_part = ((kBase & 0xFFFF) << 16) | (kLimit & 0xFFFF);
+    *(((uint32_t*)pEntry) + 1) = ((kBase >> 16) & 0xFF) |
+                                 (kAccess << 8)         |
+                                 (kLimit & 0x000F0000)  |
+                                 ((kFlags & 0xF) << 20) |
+                                 (kBase & 0xFF000000);
+}
 
-    /*
-     * High part[7;0] = Base[23;16]
-     */
-    hi_part = (kBase >> 16) & 0xFF;
-    /*
-     * High part[11;8] = Type[3;0]
-     */
-    hi_part |= (kType & 0xF) << 8;
-    /*
-     * High part[15;12] = Seg_Present[1;0]Privilege[2;0]Descriptor_Type[1;0]
-     * High part[23;20] = Granularity[1;0]Op_Size[1;0]L[1;0]AVL[1;0]
-     */
-    hi_part |= kFlags & 0x00F0F000;
+static void _formatTSSEntry(uint64_t*      pEntry,
+                            const uint64_t kBase,
+                            const uint32_t kSize,
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags)
+{
+    *((uint32_t*)pEntry) = ((kBase & 0xFFFF) << 16) | (kSize & 0xFFFF);
 
-    /*
-     * High part[19;16] = Limit[19;16]
-     */
-    hi_part |= kLimit & 0xF0000;
-    /*
-     * High part[31;24] = Base[31;24]
-     */
-    hi_part |= kBase & 0xFF000000;
+    *(((uint32_t*)pEntry) + 1) = ((kBase >> 16) & 0xFF) |
+                                 (kAccess << 8)         |
+                                 (kSize & 0x000F0000)   |
+                                 (kFlags << 20)         |
+                                 (kBase & 0xFF000000);
 
-    /* Set the value of the entry */
-    *pEntry = lo_part | (((uint64_t) hi_part) << 32);
+    *(((uint32_t*)pEntry) + 2) = (kBase >> 32) & 0xFFFFFFFF;
+
+    *(((uint32_t*)pEntry) + 3) = 0;
 }
 
 static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
@@ -2351,113 +2337,53 @@ static void _setupGDT(void)
      ***********************************/
 
     /* Set the kernel 64 bits code descriptor */
-    uint32_t kernelCode64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_CODE_TYPE;
-
-    uint32_t kernelCode64SegType =  GDT_TYPE_EXECUTABLE |
-                                    GDT_TYPE_READABLE |
-                                    GDT_TYPE_PROTECTED;
+    uint32_t kernelCode64SegFlags  = GDT_FLAG_LONGMODE_CODE |
+                                     GDT_FLAG_GRANULARITY_4K;
+    uint32_t kernelCode64SegAccess = GDT_ACCESS_BYTE_EXEC           |
+                                     GDT_ACCESS_BYTE_WR             |
+                                     GDT_ACCESS_BYTE_CODE_DATA      |
+                                     GDT_ACCESS_BYTE_PRESENT        |
+                                     GDT_ACCESS_BYTE_NON_CONFORMING |
+                                     GDT_ACCESS_BYTE_RING0;
 
     /* Set the kernel 64 bits data descriptor */
-    uint32_t kernelData64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_DATA_TYPE;
-
-    uint32_t kernelData64SegType =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
-
-    /* Set the kernel code descriptor */
-    uint32_t kernelCode32SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                    GDT_FLAG_32_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_CODE_TYPE;
-
-    uint32_t kernelCode32SegType =  GDT_TYPE_EXECUTABLE |
-                                    GDT_TYPE_READABLE |
-                                    GDT_TYPE_PROTECTED;
-
-    /* Set the kernel data descriptor */
-    uint32_t kernelData32SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                    GDT_FLAG_32_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_DATA_TYPE;
-
-    uint32_t kernelData32SegType =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
-
-    /* Set the kernel 16 bits code descriptor */
-    uint32_t kernelCode16SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                    GDT_FLAG_16_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_CODE_TYPE;
-
-    uint32_t kernelCode16SegType =  GDT_TYPE_EXECUTABLE |
-                                    GDT_TYPE_READABLE |
-                                    GDT_TYPE_PROTECTED;
-
-    /* Set the kernel 16 bits data descriptor */
-    uint32_t kernelData16SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                    GDT_FLAG_16_BIT_SEGMENT |
-                                    GDT_FLAG_PL0 |
-                                    GDT_FLAG_SEGMENT_PRESENT |
-                                    GDT_FLAG_DATA_TYPE;
-
-    uint32_t kernelData16SegType  = GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
-
-    /* Set the user 32 bits code descriptor */
-    uint32_t userCode32SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                  GDT_FLAG_32_BIT_SEGMENT |
-                                  GDT_FLAG_PL3 |
-                                  GDT_FLAG_SEGMENT_PRESENT |
-                                  GDT_FLAG_CODE_TYPE;
-
-    uint32_t userCode32SegType  = GDT_TYPE_EXECUTABLE |
-                                  GDT_TYPE_READABLE |
-                                  GDT_TYPE_PROTECTED;
-
-    /* Set the user 32 bits data descriptor */
-    uint32_t userData32SegFlags = GDT_FLAG_GRANULARITY_4K |
-                                  GDT_FLAG_32_BIT_SEGMENT |
-                                  GDT_FLAG_PL3 |
-                                  GDT_FLAG_SEGMENT_PRESENT |
-                                  GDT_FLAG_DATA_TYPE;
-
-    uint32_t userData32SegType  =  GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
+    uint32_t kernelData64SegFlags  = GDT_FLAG_DB_32B |
+                                     GDT_FLAG_GRANULARITY_4K;
+    uint32_t kernelData64SegAccess = GDT_ACCESS_BYTE_WR        |
+                                     GDT_ACCESS_BYTE_CODE_DATA |
+                                     GDT_ACCESS_BYTE_PRESENT   |
+                                     GDT_ACCESS_BYTE_GROW_UP   |
+                                     GDT_ACCESS_BYTE_RING0;
 
     /* Set the user 64 bits code descriptor */
-    uint32_t userCode64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
-                                  GDT_FLAG_PL3 |
-                                  GDT_FLAG_SEGMENT_PRESENT |
-                                  GDT_FLAG_CODE_TYPE;
-
-    uint32_t userCode64SegType  = GDT_TYPE_EXECUTABLE |
-                                  GDT_TYPE_READABLE |
-                                  GDT_TYPE_PROTECTED;
+    uint32_t userCode64SegFlags  = GDT_FLAG_LONGMODE_CODE |
+                                   GDT_FLAG_GRANULARITY_4K;
+    uint32_t userCode64SegAccess = GDT_ACCESS_BYTE_EXEC           |
+                                   GDT_ACCESS_BYTE_WR             |
+                                   GDT_ACCESS_BYTE_CODE_DATA      |
+                                   GDT_ACCESS_BYTE_PRESENT        |
+                                   GDT_ACCESS_BYTE_NON_CONFORMING |
+                                   GDT_ACCESS_BYTE_RING3;
 
     /* Set the user 64 bits data descriptor */
-    uint32_t userData64SegFlags = GDT_FLAG_64_BIT_SEGMENT |
-                                  GDT_FLAG_PL3 |
-                                  GDT_FLAG_SEGMENT_PRESENT |
-                                  GDT_FLAG_DATA_TYPE;
+    uint32_t userData64SegFlags = GDT_FLAG_DB_32B |
+                                  GDT_FLAG_GRANULARITY_4K;
 
-    uint32_t userData64SegType  = GDT_TYPE_WRITABLE | GDT_TYPE_GROW_DOWN;
+    uint32_t userData64SegAccess = GDT_ACCESS_BYTE_WR        |
+                                   GDT_ACCESS_BYTE_CODE_DATA |
+                                   GDT_ACCESS_BYTE_PRESENT   |
+                                   GDT_ACCESS_BYTE_GROW_UP   |
+                                   GDT_ACCESS_BYTE_RING3;
 
     /************************************
      * TSS ENTRY
      ***********************************/
 
-    uint32_t tss_seg_flags = GDT_FLAG_GRANULARITY_4K |
-                             GDT_FLAG_64_BIT_SEGMENT |
-                             GDT_FLAG_SEGMENT_PRESENT |
-                             GDT_FLAG_PL0 |
-                             GDT_FLAG_TSS;
-
-    uint32_t tss_seg_type = GDT_TYPE_ACCESSED |
-                            GDT_TYPE_EXECUTABLE;
+    uint32_t tssSegFlags  = 0;
+    uint32_t tssSegAccess = GDT_ACCESS_BYTE_EXEC     |
+                            GDT_ACCESS_BYTE_ACCESSED |
+                            GDT_ACCESS_BYTE_PRESENT  |
+                            GDT_ACCESS_BYTE_SYSTEM;
 
     /* Blank the GDT, set the NULL descriptor */
     memset(sGDT, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
@@ -2466,70 +2392,34 @@ static void _setupGDT(void)
     _formatGDTEntry(&sGDT[KERNEL_CS_64 / 8],
                     KERNEL_CODE_SEGMENT_BASE_64,
                     KERNEL_CODE_SEGMENT_LIMIT_64,
-                    kernelCode64SegType,
+                    kernelCode64SegAccess,
                     kernelCode64SegFlags);
 
     _formatGDTEntry(&sGDT[KERNEL_DS_64 / 8],
                     KERNEL_DATA_SEGMENT_BASE_64,
                     KERNEL_DATA_SEGMENT_LIMIT_64,
-                    kernelData64SegType,
+                    kernelData64SegAccess,
                     kernelData64SegFlags);
-
-    _formatGDTEntry(&sGDT[KERNEL_CS_32 / 8],
-                    KERNEL_CODE_SEGMENT_BASE_32,
-                    KERNEL_CODE_SEGMENT_LIMIT_32,
-                    kernelCode32SegType,
-                    kernelCode32SegFlags);
-
-    _formatGDTEntry(&sGDT[KERNEL_DS_32 / 8],
-                    KERNEL_DATA_SEGMENT_BASE_32,
-                    KERNEL_DATA_SEGMENT_LIMIT_32,
-                    kernelData32SegType,
-                    kernelData32SegFlags);
-
-    _formatGDTEntry(&sGDT[KERNEL_CS_16 / 8],
-                    KERNEL_CODE_SEGMENT_BASE_16,
-                    KERNEL_CODE_SEGMENT_LIMIT_16,
-                    kernelCode16SegType,
-                    kernelCode16SegFlags);
-
-    _formatGDTEntry(&sGDT[KERNEL_DS_16 / 8],
-                    KERNEL_DATA_SEGMENT_BASE_16,
-                    KERNEL_DATA_SEGMENT_LIMIT_16,
-                    kernelData16SegType,
-                    kernelData16SegFlags);
 
     _formatGDTEntry(&sGDT[USER_CS_64 / 8],
                     USER_CODE_SEGMENT_BASE_64,
                     USER_CODE_SEGMENT_LIMIT_64,
-                    userCode64SegType,
+                    userCode64SegAccess,
                     userCode64SegFlags);
 
     _formatGDTEntry(&sGDT[USER_DS_64 / 8],
                     USER_DATA_SEGMENT_BASE_64,
                     USER_DATA_SEGMENT_LIMIT_64,
-                    userData64SegType,
+                    userData64SegAccess,
                     userData64SegFlags);
-
-    _formatGDTEntry(&sGDT[USER_CS_32 / 8],
-                    USER_CODE_SEGMENT_BASE_32,
-                    USER_CODE_SEGMENT_LIMIT_32,
-                    userCode32SegType,
-                    userCode32SegFlags);
-
-    _formatGDTEntry(&sGDT[USER_DS_32 / 8],
-                    USER_DATA_SEGMENT_BASE_32,
-                    USER_DATA_SEGMENT_LIMIT_32,
-                    userData32SegType,
-                    userData32SegFlags);
 
     for(i = 0; i < MAX_CPU_COUNT; ++i)
     {
-        _formatGDTEntry(&sGDT[(TSS_SEGMENT + i * 0x08) / 8],
+        _formatTSSEntry(&sGDT[(TSS_SEGMENT + i * 0x10) / 8],
                         (uintptr_t)&sTSS[i],
-                        ((uintptr_t)(&sTSS[i])) + sizeof(cpu_tss_entry_t),
-                        tss_seg_type,
-                        tss_seg_flags);
+                        sizeof(cpu_tss_entry_t) - 1,
+                        tssSegAccess,
+                        tssSegFlags);
     }
 
     /* Set the GDT descriptor */
@@ -2544,8 +2434,8 @@ static void _setupGDT(void)
     __asm__ __volatile__("movw %w0,%%ds\n\t"
                          "movw %w0,%%es\n\t"
                          "movw %w0,%%fs\n\t"
-                         "movw %w0,%%gs\n\t"
-                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64));
+                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64), "r" (0));
 
     __asm__ __volatile__("mov %0, %%rax\n\t"
                          "push %%rax\n\t"
@@ -2580,11 +2470,11 @@ static void _setupIDT(void)
                         IDT_TYPE_INT_GATE, IDT_FLAG_PRESENT | IDT_FLAG_PL0);
     }
 
-    /* Set the GDT descriptor */
+    /* Set the IDT descriptor */
     sIDTPtr.size = ((sizeof(cpu_idt_entry_t) * IDT_ENTRY_COUNT) - 1);
     sIDTPtr.base = (uintptr_t)&sIDT;
 
-    /* Load the GDT */
+    /* Load the IDT */
     __asm__ __volatile__("lidt %0" :: "m" (sIDTPtr.size),
                                       "m" (sIDTPtr.base));
 
@@ -2608,12 +2498,12 @@ static void _setupTSS(void)
     for(i = 0; i < MAX_CPU_COUNT; ++i)
     {
         sTSS[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
-                        KERNEL_STACK_SIZE * (i + 1) - sizeof(uint32_t);
+                        KERNEL_STACK_SIZE * (i + 1) - sizeof(uint64_t) * 2;
         sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
     }
 
-    /* TODO: Load TSS */
-    //__asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
+    /* Load TSS */
+    __asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
 
     KERNEL_SUCCESS("TSS Initialized at 0x%P\n", sTSS);
 
@@ -2646,8 +2536,6 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
 
     if(kInterruptLine > MAX_INTERRUPT_LINE)
     {
-        KERNEL_ERROR("Requested an invalid CPU interrupt raise: %d\n",
-                     kInterruptLine);
         KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                            TRACE_X86_CPU_RAISE_INT_EXIT,
                            2,
@@ -3452,8 +3340,6 @@ void cpuValidateArchitecture(void)
     uint32_t outputBuffIndex;
     char     outputBuff[512];
     char     vendorString[26] = "CPU Vendor:             \n\0";
-
-    outputBuffIndex = 0;
 #endif
 
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, "CPU", "Detecting cpu capabilities");
@@ -3483,13 +3369,76 @@ void cpuValidateArchitecture(void)
     KERNEL_INFO(vendorString);
 #endif
 
-    /* Get CPUID features */
+    /* Get CPUID basic features */
     _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
+
+    /* Validate basic features */
+    CPU_ASSERT((regs[3] & EDX_SEP) == EDX_SEP,
+               "CPU does not support SYSENTER",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
+               "CPU does not support FPU",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_TSC) == EDX_TSC,
+               "CPU does not support TSC",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
+               "CPU does not support APIC",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
+               "CPU does not support FX instructions",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_SSE) == EDX_SSE,
+               "CPU does not support SSE",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_SSE2) == EDX_SSE2,
+               "CPU does not support SSE2",
+               OS_ERR_NOT_SUPPORTED);
+
+    /* Check for extended features */
+    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
+    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_ADDRESS_WIDTH)
+    {
+        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
+        CPU_ASSERT((regsExt[3] & EDX_64_BIT) == EDX_64_BIT,
+                   "CPU addressing width unavailable",
+                   OS_ERR_NOT_SUPPORTED);
+
+        _cpuCPUID(CPUID_ADDRESS_WIDTH, (uint32_t*)regsExt);
+
+        physAddressWidth = regsExt[0] & 0xFF;
+        virtAddressWidth = (regsExt[0] >> 8) & 0xFF;
+
+        CPU_ASSERT(physAddressWidth != 0 && virtAddressWidth != 0,
+                   "CPU addressing width unavailable",
+                   OS_ERR_NOT_SUPPORTED);
+
+#if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
+        KERNEL_INFO("CPU Addressing: Physical %dbits | Virtual %dbits\n",
+                    physAddressWidth,
+                    virtAddressWidth);
+#endif
+        /* Check addressing width */
+        CPU_ASSERT(KERNEL_VIRTUAL_ADDR_WIDTH == virtAddressWidth,
+                   "CPU addressing width incompatible with virtual address "
+                   "width\n",
+                   OS_ERR_NOT_SUPPORTED);
+
+    }
+    else
+    {
+        CPU_ASSERT(FALSE,
+                   "CPU does not support extended info",
+                   OS_ERR_NOT_SUPPORTED);
+    }
+
 
 #if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
     memset(outputBuff, 0, 512 * sizeof(char));
     strncpy(outputBuff, "CPU Features: ", 14);
     outputBuffIndex = 14;
+
+    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
 
     if((regs[2] & ECX_SSE3) == ECX_SSE3)
     { CONCAT_STR(outputBuff, outputBuffIndex, "SSE3 - "); }
@@ -3695,29 +3644,6 @@ void cpuValidateArchitecture(void)
     (void)regsExt;
 #endif
 
-    /* Validate features */
-    CPU_ASSERT((regs[3] & EDX_SEP) == EDX_SEP,
-               "CPU does not support SYSENTER",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
-               "CPU does not support FPU",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_TSC) == EDX_TSC,
-               "CPU does not support TSC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
-               "CPU does not support APIC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
-               "CPU does not support FX instructions",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE) == EDX_SSE,
-               "CPU does not support SSE",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE2) == EDX_SSE2,
-               "CPU does not support SSE2",
-               OS_ERR_NOT_SUPPORTED);
-
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_VALIDATE_ARCH_EXIT,
                        0);
@@ -3756,6 +3682,88 @@ void cpuSetInterrupt(void)
 void cpuHalt(void)
 {
     __asm__ __volatile__ ("hlt":::"memory");
+}
+
+void cpuApInit(const uint8_t kCpuId)
+{
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_ENTRY, 0);
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Cpu %d Init", kCpuId);
+
+    /* Register GDT */
+    __asm__ __volatile__("lgdt %0" :: "m" (sGDTPtr.size),
+                                      "m" (sGDTPtr.base));
+
+    __asm__ __volatile__("movw %w0,%%ds\n\t"
+                         "movw %w0,%%es\n\t"
+                         "movw %w0,%%fs\n\t"
+                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64), "r" (kCpuId));
+    __asm__ __volatile__("mov %0, %%rax\n\t"
+                         "push %%rax\n\t"
+                         "movabs $new_gdt_seg_ap, %%rax\n\t"
+                         "push %%rax\n\t"
+                         "lretq\n\t"
+                         "new_gdt_seg_ap: \n\t" :: "i" (KERNEL_CS_64) : "rax");
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d GDT Initialized at 0x%P",
+                 kCpuId,
+                 sGDTPtr.base);
+
+    /* Register IDT */
+    __asm__ __volatile__("lidt %0" :: "m" (sIDTPtr.size),
+                                      "m" (sIDTPtr.base));
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d IDT Initialized at 0x%P",
+                 kCpuId,
+                 sIDTPtr.base);
+
+    /* Register TSS */
+    __asm__ __volatile__("ltr %0"
+                         :
+                         : "rm" ((uint16_t)(TSS_SEGMENT + kCpuId * 0x10)));
+
+    KERNEL_DEBUG(CPU_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "CPU %d TSS Initialized at 0x%P\n",
+                 kCpuId,
+                 &sTSS[kCpuId]);
+
+    /* Init the rest of the CPU facilities */
+    coreMgtApInit(kCpuId);
+
+    KERNEL_SUCCESS("Secondary CPU %d initialized\n", kCpuId);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_EXIT, 0);
+
+    /* TODO: Once we have a scheduler, remove that */
+    while(1)
+    {
+        cpuClearInterrupt();
+        cpuHalt();
+    }
+
+    /* Call scheduler, we should never come back. Restoring a thread should
+     * enable interrupt.
+     */
+    /* TODO: Add call to scheduler */
+
+    /* Once the scheduler is started, we should never come back here. */
+    CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
+}
+
+void cpuSetPageDirectory(const uintptr_t kNewPgDir)
+{
+    __asm__ __volatile__("mov %%rax, %%cr3"::"a"(kNewPgDir));
+}
+
+void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
+{
+    __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
 }
 
 /************************************ EOF *************************************/

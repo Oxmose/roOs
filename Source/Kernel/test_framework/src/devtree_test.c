@@ -113,6 +113,7 @@ void devtreeTest(void)
     const fdt_property_t* pkProp;
     const void*           pProp;
     size_t                propLen;
+    const fdt_mem_node_t*     pMemNode;
 
     /* TEST CORRECT PARSING */
     pkNode = fdtGetRoot();
@@ -257,7 +258,7 @@ void devtreeTest(void)
                               (uintptr_t)NULL,
                               (uintptr_t)pkNode,
                               TEST_DEVTREE_ENABLED);
-    kprintf("HEREHRERER\n");
+
 #if 0
     /* TEST GET BY NAME */
     pkNode = fdtGetNodeFromName("NONODE");
@@ -289,10 +290,78 @@ void devtreeTest(void)
     pkNode = fdtGetNodeByHandle(1);
 
     TEST_POINT_ASSERT_UINT(TEST_DEVTREE_GETHANDLE2,
-                           strcmp(pkNode->pName, "interrupt-controller") == 0,
+                           strcmp(pkNode->pName, "acpi@E0000") == 0,
                            0,
-                           strcmp(pkNode->pName, "interrupt-controller"),
+                           strcmp(pkNode->pName, "acpi@E0000"),
                            TEST_DEVTREE_ENABLED);
+
+    pMemNode = fdtGetMemory();
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETMEMORY0,
+                           pMemNode != NULL,
+                           (uintptr_t)0xDEADC0DE,
+                           (uintptr_t)NULL,
+                           TEST_DEVTREE_ENABLED);
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETMEMORY1,
+                           pMemNode->pNextNode == NULL,
+                           (uintptr_t)NULL,
+                           (uintptr_t)pMemNode->pNextNode,
+                           TEST_DEVTREE_ENABLED);
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETMEMORY2,
+                           pMemNode->baseAddress == 0x0,
+                           (uintptr_t)0x0,
+                           (uintptr_t)pMemNode->baseAddress,
+                           TEST_DEVTREE_ENABLED);
+#ifdef ARCH_32_BITS
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETMEMORY3,
+                           FDTTOCPU32(pMemNode->size) == 0x10000000,
+                           (uintptr_t)0x10000000,
+                           (uintptr_t)FDTTOCPU32(pMemNode->size),
+                           TEST_DEVTREE_ENABLED);
+#else
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETMEMORY3,
+                           FDTTOCPU64(pMemNode->size) == 0x10000000,
+                           (uintptr_t)0x10000000,
+                           (uintptr_t)FDTTOCPU64(pMemNode->size),
+                           TEST_DEVTREE_ENABLED);
+#endif
+    pMemNode = fdtGetReservedMemory();
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETRESMEMORY0,
+                           pMemNode != NULL,
+                           (uintptr_t)0xDEADC0DE,
+                           (uintptr_t)NULL,
+                           TEST_DEVTREE_ENABLED);
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETRESMEMORY1,
+                           pMemNode->pNextNode != NULL,
+                           (uintptr_t)0xDEADC0DE,
+                           (uintptr_t)pMemNode->pNextNode,
+                           TEST_DEVTREE_ENABLED);
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETRESMEMORY2,
+                           pMemNode->baseAddress == 0x0,
+                           (uintptr_t)0x0,
+                           (uintptr_t)pMemNode->baseAddress,
+                           TEST_DEVTREE_ENABLED);
+
+#ifdef ARCH_32_BITS
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETRESMEMORY3,
+                           FDTTOCPU32(pMemNode->size) == 0x100000,
+                           (uintptr_t)0x100000,
+                           (uintptr_t)FDTTOCPU32(pMemNode->size),
+                           TEST_DEVTREE_ENABLED);
+#else
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETRESMEMORY3,
+                           FDTTOCPU64(pMemNode->size) == 0x100000,
+                           (uintptr_t)0x100000,
+                           (uintptr_t)FDTTOCPU64(pMemNode->size),
+                           TEST_DEVTREE_ENABLED);
+#endif
+
+
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

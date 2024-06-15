@@ -27,6 +27,7 @@
 #include <uart.h>          /* UART driver */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
+#include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree manager */
 #include <core_mgt.h>      /* Core manager */
 #include <drivermgr.h>     /* Driver manager */
@@ -161,6 +162,10 @@ void kickstart(void)
     fdtInit((uintptr_t)&_KERNEL_DEV_TREE_BASE);
     KERNEL_SUCCESS("FDT initialized\n");
 
+    /* Initialize the memory manager */
+    memoryMgrInit();
+    KERNEL_SUCCESS("Memory manager initialized\n");
+
     /* Init device manager */
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
@@ -190,11 +195,11 @@ void kickstart(void)
     TEST_FRAMEWORK_END();
 #endif
 
-#if 1
+#if 0
     interruptRestore(1);
     uint32_t j;
     j = 0;
-    for(j = 0;; ++j)
+    for(j = 0; j < 100000; ++j)
     {
         if(j % 500 == 0)
         {

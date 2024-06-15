@@ -52,7 +52,7 @@
 #endif
 
 /** @brief Current module name */
-#define MODULE_NAME "I386 CORE MGT"
+#define MODULE_NAME "X86_64 CORE MGT"
 
 /** @brief LAPIC flag: enabled (running) */
 #define LAPIC_FLAG_ENABLED 0x1
@@ -285,7 +285,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
 uint8_t cpuGetId(void)
 {
     uint32_t cpuId;
-    /* On I386, GS stores the CPU Id assigned at boot */
+    /* On X86_64, GS stores the CPU Id assigned at boot */
     __asm__ __volatile__ ("mov %%gs, %0" : "=r"(cpuId));
     return cpuId & 0xFF;
 }

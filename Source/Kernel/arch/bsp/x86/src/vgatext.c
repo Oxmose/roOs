@@ -29,6 +29,7 @@
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipualtion */
 #include <kerror.h>        /* Kernel error */
+#include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree */
 #include <console.h>       /* Console driver manager */
 #include <critical.h>      /* Kernel locks */
@@ -171,7 +172,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode);
  * @param[in] kColumn The colums index where to write the character.
  * @param[in] kCharacter The character to display on the screem.
  */
-inline static void _vgaPrintChar(void*          pDriverCtrl,
+static inline void _vgaPrintChar(void*          pDriverCtrl,
                                  const uint32_t kLine,
                                  const uint32_t kColumn,
                                  const char     kCharacter);
@@ -335,6 +336,9 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     vga_controler_t*  pDrvCtrl;
     console_driver_t* pConsoleDrv;
     colorscheme_t     initScheme;
+    uintptr_t         frameBufferPhysAddr;
+    size_t            frameBufferPhysSize;
+    void*             mappedFrameBufferAddr;
 
     KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
                        TRACE_X86_VGA_TEXT_ATTACH_ENTRY,
@@ -347,7 +351,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl = kmalloc(sizeof(vga_controler_t));
     if(pDrvCtrl == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver controler.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -357,7 +360,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
     {
-        KERNEL_ERROR("Failed to allocate driver instance.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -376,35 +378,56 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_REG_PROP, &propLen);
     if(ptrProp == NULL || propLen != sizeof(uintptr_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the framebuffer from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-#if ARCH_I386
+#ifdef ARCH_32_BITS
     pDrvCtrl->pFramebuffer    = (uint16_t*)FDTTOCPU32(*ptrProp);
     pDrvCtrl->framebufferSize = (size_t)FDTTOCPU32(*(ptrProp + 1));
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Framebuffer: 0x%p | Size: 0x%p",
-                 pDrvCtrl->pFramebuffer,
-                 pDrvCtrl->framebufferSize);
-#elif ARCH_X86_64
+#elif defined(ARCH_64_BITS)
     pDrvCtrl->pFramebuffer    = (uint16_t*)FDTTOCPU64(*ptrProp);
     pDrvCtrl->framebufferSize = (size_t)FDTTOCPU64(*(ptrProp + 1));
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Framebuffer: 0x%p | Size: 0x%p",
-                 pDrvCtrl->pFramebuffer,
-                 pDrvCtrl->framebufferSize);
 #else
     #error "Invalid architecture"
 #endif
+
+    /* Align and map framebuffer */
+    frameBufferPhysAddr = (uintptr_t)pDrvCtrl->pFramebuffer & ~PAGE_SIZE_MASK;
+    frameBufferPhysSize = pDrvCtrl->framebufferSize;
+
+    frameBufferPhysSize += (uintptr_t)pDrvCtrl->pFramebuffer -
+                           frameBufferPhysAddr;
+    frameBufferPhysSize = (frameBufferPhysSize + PAGE_SIZE_MASK) &
+                          ~PAGE_SIZE_MASK;
+
+    mappedFrameBufferAddr = memoryKernelMap((void*)frameBufferPhysAddr,
+                                            frameBufferPhysSize,
+                                            MEMMGR_MAP_HARDWARE |
+                                            MEMMGR_MAP_KERNEL   |
+                                            MEMMGR_MAP_RW,
+                                            &retCode);
+    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Framebuffer: 0x%p: 0x%p (0x%p) | Size: 0x%p (0x%p)",
+                 mappedFrameBufferAddr,
+                 pDrvCtrl->pFramebuffer,
+                 frameBufferPhysAddr,
+                 pDrvCtrl->framebufferSize,
+                 frameBufferPhysSize);
+
+    if(mappedFrameBufferAddr == NULL || retCode != OS_NO_ERR)
+    {
+        goto ATTACH_END;
+    }
+
+    /* Update framebuffer address */
+    pDrvCtrl->pFramebuffer    = mappedFrameBufferAddr;
+    pDrvCtrl->framebufferSize = frameBufferPhysSize;
 
     /* Get the VGA CPU communication ports */
     kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the CPU comm from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -421,7 +444,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
     if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 2)
     {
-        KERNEL_ERROR("Failed to retreive the resolution from FDT.\n");
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
@@ -438,7 +460,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         (uint8_t*)kmalloc(pDrvCtrl->lineCount * sizeof(uint8_t));
     if(pDrvCtrl->pLastColumns == NULL)
     {
-        KERNEL_ERROR("Failed allocate last colums manager.\n");
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
@@ -451,7 +472,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = consoleSetDriver(pConsoleDrv);
         if(retCode != OS_NO_ERR)
         {
-            KERNEL_ERROR("Failed to set VGA driver as console driver.\n");
             goto ATTACH_END;
         }
     }
@@ -467,7 +487,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to attach VGA driver. Error %d.\n", retCode);
         if(pDrvCtrl != NULL)
         {
             if(pDrvCtrl->pLastColumns != NULL)
@@ -491,7 +510,7 @@ ATTACH_END:
 }
 
 
-inline static void _vgaPrintChar(void*          pDriverCtrl,
+static inline void _vgaPrintChar(void*          pDriverCtrl,
                                  const uint32_t kLine,
                                  const uint32_t kColumn,
                                  const char     kCharacter)

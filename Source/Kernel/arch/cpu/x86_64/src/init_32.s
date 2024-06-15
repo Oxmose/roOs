@@ -9,7 +9,7 @@
 ; Version: 1.0
 ;
 ; Kernel entry point and CPU initialization. This module setup high-memory
-; kernel by mapping the first 4MB of memory 1:1 and 16MB in high memory.
+; kernel by mapping the first 4MB of memory 1:1 and 4MB in high memory.
 ; Paging is enabled.
 ; BSS is initialized (zeroed)
 ;-------------------------------------------------------------------------------
@@ -36,20 +36,25 @@ CHECKSUM    equ -(MAGIC + FLAGS)
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE
 ;-------------------------------------------------------------------------------
+__kinitLow        equ (__kinit - KERNEL_MEM_OFFSET)
+
 ; Kernel memory layout
-KERNEL_PML4_ENTRY    equ (KERNEL_MEM_OFFSET >> 39)
-KERNEL_PDPT_ENTRY    equ (KERNEL_MEM_OFFSET >> 30)
-KERNEL_PDT_ENTRY     equ (KERNEL_MEM_OFFSET >> 21)
-__kinitLow           equ (__kinit - KERNEL_MEM_OFFSET)
+KERNEL_PML4_ENTRY equ (KERNEL_MEM_OFFSET >> 39)
+KERNEL_PDP_ENTRY  equ (KERNEL_MEM_OFFSET >> 30)
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
+; None
+
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
 extern __kinitx86_64
+extern _kernelPGDir
+extern _pagingPDP
+extern _pagingPD
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -60,6 +65,7 @@ global __kinitLow
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
 ;-------------------------------------------------------------------------------
+global _fcw
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -98,24 +104,20 @@ align 4
 ;-------------------------------------------------------------------------------
 ; Kernel entry point
 __kinit:
-    ; Make sure interrupts are disabled and clear flags
-    push  0
-    popfd
-
-    ; Set temporary stack
-    mov esp, _kinitStackEnd
-    mov ebp, esp
+    ; Make sure interrupts are disabled
+    cli
 
     ; Check for 64 bits compatibility
-    call __kinitCheckLMAvailable
+    jmp __kinitCheckLMAvailable
 
+__kinitLMAvailable:
     ; Set 64 bits capable GDT
-    lgdt [_gdt_tmp_ptr]
+    lgdt [_gdtTmpPtr]
 
     ; Update code segment
-    jmp dword (_gdtTmp.code_32 - _gdtTmp):__kinitSetSegments
+    jmp dword (_gdtTmp.code_32 - _gdtTmp):__kinitInitLM
 
-__kinitSetSegments:
+__kinitInitLM:
     ; Update data segments
     mov eax, (_gdtTmp.data_32 - _gdtTmp)
     mov ds, ax
@@ -124,110 +126,67 @@ __kinitSetSegments:
     mov gs, ax
     mov ss, ax
 
-__kinitInitPml4t:
-    ; Set PML4T
-    mov ebx, _pagingPdpt0             ; First entry to PDPT0
-    or  ebx, 0x3                       ; Present and writable
-    mov eax, _pagingPml4t
-    mov [eax], ebx
+    ; Init FPU
+    fninit
+    fldcw [_fcw]
 
-    xor ebx, ebx
-__kinitBlankPml4t:
-    add eax, 8
-    cmp eax, _pagingPdpt0
-    mov [eax], ebx
-    jne __kinitBlankPml4t
-
-    ; Set PDPT0
-    mov ebx, _pagingPdt0             ; First entry to PDT0
-    or  ebx, 0x3                      ; Present and writable
-    mov eax, _pagingPdpt0
-    mov [eax], ebx
-
-    xor ebx, ebx
-__kinitBlankPdpt:
-    add eax, 8
-    cmp eax, _pagingPdt0
-    mov [eax], ebx
-    jne __kinitBlankPdpt
-
-    ; Set PDPT0
-    mov ebx, 0x83                       ; Present, writable, 2MB page
-    mov eax, _pagingPdt0
-__kinitInitPdt0:
-    mov [eax], ebx
-    add eax, 8
-    add ebx, 0x200000
-    xor ebx, ebx                        ; Rest entries will be not present
-    cmp eax, (_pagingPdt0 + 0x1000)
-    jne __kinitInitPdt0
-
-__kinitInitPml4tk:
-    ; Set PML4T for kernel
-    mov eax, KERNEL_PML4_ENTRY
-    and eax, 0x1FF
-    shl eax, 3
-
-    ; If it is the same as the loader, skip
-    mov ebx, _pagingPdpt0
-    cmp eax, 0
-    je  __kinitInitPdptk
-
-    add eax, _pagingPml4t
-    mov ebx, _pagingPdptk
-    or  ebx, 0x3                ; Present and writable
-    mov [eax], ebx
-
-__kinitInitPdptk:
-    and ebx, 0xFFFFFF00
-    ; Set the PDPT for kernel
-    mov eax, KERNEL_PDPT_ENTRY
-    and eax, 0x1FF
-    shl eax, 3
-
-    add eax, ebx
-    mov ebx, _pagingPdtk
-    or  ebx, 0x3                ; Present and writable
-    mov [eax], ebx
-
-__kinitInitPdtk:
-    ; Set the PDT entries for kernel
-    and ebx, 0xFFFFFF00
-    mov eax, KERNEL_PDT_ENTRY
-    and eax, 0x1FF
-    shl eax, 3
-    add eax, ebx
-    mov ecx, eax
-    add ecx, 0x800
-    mov ebx, 0x83                     ; Present, writable, 2MB page
-
-__kinitInitPdtkLoop:
-    ; Set the rest of the entries to reach 512Mb mapping
-    mov [eax], ebx
-    add eax, 8
-    add ebx, 0x200000
-    cmp eax, ecx
-    jne __kinitInitPdtkLoop
-
-__kinitInitLM:
-    ; Long mode switch
-    ; Set CR3
-    mov eax, _pagingPml4t
-    mov cr3, eax
-
-    ; Enable PAE
+    ; Enable SSE
+    mov eax, cr0
+    and al, ~0x04
+    or  al, 0x22
+    mov cr0, eax
     mov eax, cr4
-    or  eax, 0x20
+    or  ax, 0x600
     mov cr4, eax
 
-    ; Switch to compatibility mode
+__kinitInitPGdir:
+    ; Init the page directory using its physical address
+    mov ebx, (_pagingPDP - KERNEL_MEM_OFFSET)
+    mov ecx, (_pagingPD - KERNEL_MEM_OFFSET)
+
+    ; Set first 4MB in PDP
+    or ecx, 0x3
+    mov [ebx], ecx
+
+    ; Set high 4MB in PDP
+    mov eax, KERNEL_PDP_ENTRY
+    and eax, 0x1FF
+    mov edx, 8
+    mul edx
+    add ebx, eax
+    mov [ebx], ecx
+
+    ; Set PML4
+    mov ebx, (_pagingPDP - KERNEL_MEM_OFFSET)
+    or ebx, 0x3
+    mov eax, (_kernelPGDir - KERNEL_MEM_OFFSET)
+    mov [eax], ebx
+
+    mov eax, KERNEL_PML4_ENTRY
+    and eax, 0x1FF
+    mov ecx, 8
+    mul ecx
+    add eax, (_kernelPGDir - KERNEL_MEM_OFFSET)
+    mov [eax], ebx
+
+    ; Enable PAE and PGE
+    mov eax, cr4
+    or  eax, 0xA0
+    mov cr4, eax
+
+    ; Switch to compatibility mode and NXE
     mov ecx, 0xC0000080
     rdmsr
-    or  eax, 0x00000100
+    or  eax, 0x00000900
     wrmsr
+
+    ; Set CR3
+    mov eax, (_kernelPGDir - KERNEL_MEM_OFFSET)
+    mov cr3, eax
 
     ; Enable paging
     mov eax, cr0
+    and eax, 0x0FFFFFFF
     or  eax, 0x80010000
     mov cr0, eax
 
@@ -256,12 +215,12 @@ __kinitEnd:
 ;-------------------------------------------------------------------------------
 ; Long mode availability test
 __kinitCheckLMAvailable:
-    push eax
-    push ebx
-    push ecx
-    push edx
+    ; Setup mini stack
+    mov eax, _miniStackEnd
+    sub eax, 8
+    mov esp, eax
 
-    ; 1) Check CPUID availability
+    ; 1. Check CPUID availability
 
     ; Get flags
     pushfd
@@ -285,42 +244,30 @@ __kinitCheckLMAvailable:
     cmp eax, ecx
     je  __kinitLMUnAvailable
 
-
-    ; 2) Check CPUID extended features
+    ; 2. Check CPUID extended features
     mov eax, 0x80000000
     cpuid
     cmp eax, 0x80000001
     jb  __kinitLMUnAvailable
 
-
-    ; 3) Detect LM with CPUID
+    ; 3. Detect LM with CPUID
     mov eax, 0x80000001
     cpuid
     and edx, 0x20000000
     cmp edx, 0
     je __kinitLMUnAvailable
 
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
-    ret
+    jmp __kinitLMAvailable
 
 __kinitLMUnAvailable:
     mov eax, 0
     mov ebx, 0
     mov ecx, _noLMMessage
-    call __kinitKernelError
-__kinit_lm_unavailable_loop:
-    cli
-    hlt
-    jmp  __kinit_lm_unavailable_loop
+    jmp __kinitKernelError
 
 ;-------------------------------------------------------------------------------
 ; Error output function
 __kinitKernelError: ; Print string pointed by BX
-    pusha       ; Save registers
-
     ; Compute start address
     mov edx, 160
     mul edx      ; eax now contains the offset in lines
@@ -342,8 +289,9 @@ __kinitKernelErrorLoop:      ; Display loop
     jmp __kinitKernelErrorLoop ; Loop
 
 __kinitKernelErrorEnd:
-    popa ; Restore registers
-    ret
+    cli
+    hlt
+    jmp  __kinitKernelErrorEnd
 
 
 ;-------------------------------------------------------------------------------
@@ -363,7 +311,6 @@ _gdtTmp:
     .null:
         dd 0x00000000
         dd 0x00000000
-
     .code_32:
         dw 0xFFFF
         dw 0x0000
@@ -371,7 +318,6 @@ _gdtTmp:
         db 0x9A
         db 0xCF
         db 0x00
-
     .data_32:
         dw 0xFFFF
         dw 0x0000
@@ -379,58 +325,28 @@ _gdtTmp:
         db 0x92
         db 0xCF
         db 0x00
-
-    .code_16:
-        dw 0xFFFF
-        dw 0x0000
-        db 0x00
-        db 0x9A
-        db 0x0F
-        db 0x00
-
-    .data_16:
-        dw 0xFFFF
-        dw 0x0000
-        db 0x00
-        db 0x92
-        db 0x0F
-        db 0x00
-
     .code_64:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x98
-        db 0x20
+        db 0x9A
+        db 0xAF
         db 0x00
-
     .data_64:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x90
-        db 0x20
+        db 0x92
+        db 0xCF
         db 0x00
 
-_gdt_tmp_ptr:                      ; GDT pointer for 16bit access
-    dw _gdt_tmp_ptr - _gdtTmp - 1 ; GDT limit
+_gdtTmpPtr:                     ; GDT pointer for 16bit access
+    dw _gdtTmpPtr - _gdtTmp - 1 ; GDT limit
     dd _gdtTmp                    ; GDT base address
 
-;-------------------------------------------------------------------------------
-; Boot temporary paging structures
-align 0x1000
-_pagingPml4t:
-    times 0x1000 db 0x00
-_pagingPdpt0:
-    times 0x1000 db 0x00
-_pagingPdptk:
-    times 0x1000 db 0x00
-_pagingPdt0:
-    times 0x1000 db 0x00
-_pagingPdtk:
-    times 0x1000 db 0x00
+_miniStack:
+    times 0x20 db 0x00
+_miniStackEnd:
 
-section .bss
-_kinitStackStart:
-resb 0x200
-_kinitStackEnd:
+_fcw:
+    dw 0x037F

@@ -408,8 +408,10 @@ static void _printStackTrace(void)
             kprintf("\n");
         }
 
-        lastEBP  = (uintptr_t*)*lastEBP;
-        callAddr = *(uintptr_t**)(lastEBP + 1);
+        /* TODO: We need to check if mapped to avoid another interrupt */
+
+        //lastEBP  = (uintptr_t*)*lastEBP;
+        //callAddr = *(uintptr_t**)(lastEBP + 1);
     }
 }
 
@@ -423,9 +425,9 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     uint64_t       uptime;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_KERNEL_PANIC_HANDLER,
+                       TRACE_CPU_KERNEL_PANIC_HANDLER,
                        2,
-                       pThreadVCpu->intContext.intId,
+                       ((virtual_cpu_t*)(pCurrThread->pVCpu))->intContext.intId,
                        sPanicCode);
 
     interruptDisable();
@@ -437,7 +439,6 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
         KERNEL_CRITICAL_UNLOCK(sLock);
         goto PANIC_END;
     }
-
 
     cpuId = cpuGetId();
 
@@ -549,7 +550,7 @@ void kernelPanic(const uint32_t kErrorCode,
     cpuRaiseInterrupt(PANIC_INT_LINE);
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_KERNEL_PANIC,
+                       TRACE_CPU_KERNEL_PANIC,
                        1,
                        kErrorCode);
 

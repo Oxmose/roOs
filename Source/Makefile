@@ -82,19 +82,21 @@ clean:
 	@mkdir -p Kernel/ARTIFACTS
 	@touch Kernel/ARTIFACTS/settings.mk
 
-# Clean the architecture module
+# Clean modules
 ifeq ($(target), x86_i386)
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
+	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 else ifeq ($(target), x86_64)
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 else
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
@@ -106,10 +108,8 @@ else
 	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
 	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
+	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 endif
-
-# Clean modules
-	@make clean -C $(SOURCE_DIR)/test_framework
 
 # Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)

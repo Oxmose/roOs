@@ -19,20 +19,22 @@ KERNEL_MEM_OFFSET = 0xE0000000;
 /* Memory map */
 MEMORY
 {
-    LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 1K
-    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 8K
+    LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 256
+    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 256
 
-    HIGH_STARTUP_CODE       (rx)    :   ORIGIN = 0xE0104000,    LENGTH = 16K
-    KERNEL_CODE             (rx)    :   ORIGIN = 0xE0108000,    LENGTH = 256K
-    KERNEL_RO_DATA          (r)     :   ORIGIN = 0xE0148000,    LENGTH = 64K
-    KERNEL_RW_DATA          (rw)    :   ORIGIN = 0xE0158000,    LENGTH = 64K
-    KERNEL_DEVTREE_MEM      (rw)    :   ORIGIN = 0xE0168000,    LENGTH = 128K
+    KERNEL_CODE             (rx)    :   ORIGIN = 0xE0101000,    LENGTH = 128K
+    KERNEL_RO_DATA          (r)     :   ORIGIN = 0xE0121000,    LENGTH = 64K
+    KERNEL_RW_DATA          (rw)    :   ORIGIN = 0xE0131000,    LENGTH = 64K
 
-    KERNEL_TRACE_BUFFER     (rw)    :   ORIGIN = 0xE0188000,    LENGTH = 128K
-    KERNEL_TEST_BUFFER      (rw)    :   ORIGIN = 0xE01A8000,    LENGTH = 256K
+    /* 1 page / frame left blank to catch overflow */
+    KERNEL_STACKS           (rw)    :   ORIGIN = 0xE0142000,    LENGTH = 32K
+    /* 1 page / frame left blank to catch overflow */
+    KERNEL_HEAP             (rw)    :   ORIGIN = 0xE014B000,    LENGTH = 2M
+    /* 1 page / frame left blank to catch overflow */
+    KERNEL_END_PAGE         (r)     :   ORIGIN = 0xE034C000,    LENGTH = 1K
 
-    KERNEL_STACKS           (rw)    :   ORIGIN = 0xE01E8000,    LENGTH = 32K
-    KERNEL_HEAP             (rw)    :   ORIGIN = 0xE01F0000,    LENGTH = 2M
+    KERNEL_TRACE_BUFFER     (rw)    :   ORIGIN = 0xE034C000,    LENGTH = 128K
+    KERNEL_TEST_BUFFER      (rw)    :   ORIGIN = 0xE036C000,    LENGTH = 256K
 }
 
 /* Memory layout */
@@ -40,7 +42,7 @@ SECTIONS
 {
     /* Contains the startup code for secondary CPUs */
     . = ORIGIN(LOW_AP_STARTUP_CODE);
-    .low_startup ALIGN(4K) :
+    .low_startup_ap ALIGN(4K) :
     {
         _START_LOW_AP_STARTUP_ADDR = .;
         *(.low_ap_startup_code)
@@ -58,36 +60,31 @@ SECTIONS
         _END_LOW_STARTUP_ADDR = .;
     } > LOW_STARTUP_CODE
 
-    . = ORIGIN(HIGH_STARTUP_CODE);
-    .high_startup ALIGN(4K) : AT(ADDR(.high_startup) - KERNEL_MEM_OFFSET)
-    {
-        . = ALIGN(16);
-        _START_HIGH_STARTUP_ADDR = .;
-        *(.high_startup_code)
-        _END_HIGH_STARTUP_ADDR = .;
-    } > HIGH_STARTUP_CODE
-
     /* Contains the kernel code */
     . = ORIGIN(KERNEL_CODE);
     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_MEM_OFFSET)
     {
         _START_TEXT_ADDR = .;
-
         *(.text)
         *(.text*)
-
         _END_TEXT_ADDR = .;
     } > KERNEL_CODE
 
     /* Contains the kernel read only data */
     . = ORIGIN(KERNEL_RO_DATA);
-    .rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_MEM_OFFSET)
+    /* Contains the DTB */
+    .dtb_raw ALIGN(4K) : AT(ADDR(.dtb_raw) - KERNEL_MEM_OFFSET)
     {
         _START_RO_DATA_ADDR = .;
-
+        _KERNEL_DEV_TREE_START = .;
+        KEEP(*(.dtb_raw))
+        KEEP(*(.dtb_raw*))
+        _KERNEL_DEV_TREE_END = .;
+    } > KERNEL_RO_DATA
+    .rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_MEM_OFFSET)
+    {
         *(.rodata)
         *(.rodata*)
-
     } > KERNEL_RO_DATA
     .utk_driver_tbl ALIGN(4K) : AT(ADDR(.utk_driver_tbl) - KERNEL_MEM_OFFSET)
     {
@@ -107,31 +104,18 @@ SECTIONS
     . = ORIGIN(KERNEL_RW_DATA);
     .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_MEM_OFFSET)
     {
+        _START_RW_DATA_ADDR = .;
         _START_DATA_ADDR = .;
-
         *(.data)
         *(.data*)
         _END_DATA_ADDR = .;
-    } > KERNEL_RW_DATA
-
-    /* Contains the kernel BSS */
-    .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_MEM_OFFSET)
-    {
+        . = ALIGN(8);
         _START_BSS_ADDR = .;
-
         *(COMMON)
         *(.bss)
-
         _END_BSS_ADDR = .;
+        _END_RW_DATA_ADDR = .;
     } > KERNEL_RW_DATA
-
-    . = ORIGIN(KERNEL_DEVTREE_MEM);
-    /* Contains the DTB (TODO: load as separate file ) */
-    .dtb_raw ALIGN(4K) : AT(ADDR(.dtb_raw) - KERNEL_MEM_OFFSET)
-    {
-        KEEP(*(.dtb_raw))
-        KEEP(*(.dtb_raw*))
-    } > KERNEL_DEVTREE_MEM
 }
 
 /* Symbols */
@@ -141,8 +125,8 @@ _KERNEL_STACKS_SIZE = LENGTH(KERNEL_STACKS);
 _KERNEL_HEAP_BASE  = ORIGIN(KERNEL_HEAP);
 _KERNEL_HEAP_SIZE  = LENGTH(KERNEL_HEAP);
 
-_KERNEL_DEV_TREE_BASE = ORIGIN(KERNEL_DEVTREE_MEM);
-_KERNEL_DEV_TREE_SIZE = LENGTH(KERNEL_DEVTREE_MEM);
+_KERNEL_DEV_TREE_BASE = _KERNEL_DEV_TREE_START;
+_KERNEL_DEV_TREE_SIZE = _KERNEL_DEV_TREE_END - _KERNEL_DEV_TREE_START;
 
 _KERNEL_TRACE_BUFFER_BASE = ORIGIN(KERNEL_TRACE_BUFFER);
 _KERNEL_TRACE_BUFFER_SIZE = LENGTH(KERNEL_TRACE_BUFFER);
@@ -150,4 +134,5 @@ _KERNEL_TRACE_BUFFER_SIZE = LENGTH(KERNEL_TRACE_BUFFER);
 _KERNEL_TEST_BUFFER_BASE = ORIGIN(KERNEL_TEST_BUFFER);
 _KERNEL_TEST_BUFFER_SIZE = LENGTH(KERNEL_TEST_BUFFER);
 
-_KERNEL_MEMORY_END = _KERNEL_HEAP_BASE + _KERNEL_HEAP_SIZE;
+_KERNEL_MEMORY_START = ORIGIN(LOW_STARTUP_CODE) + KERNEL_MEM_OFFSET;
+_KERNEL_MEMORY_END   = ORIGIN(KERNEL_END_PAGE);

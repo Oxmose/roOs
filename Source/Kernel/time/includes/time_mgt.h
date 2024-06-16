@@ -300,7 +300,7 @@ uint64_t timeGetTicks(const uint8_t kCpuId);
  * @param[in] kNs The time to wait in nanoseconds.
  *
  * @warning This function must only be called before the scheduler is
- * initialized. Otherwise the function will immediatly return.
+ * running. Otherwise the function will has undefined behavior.
  */
 void timeWaitNoScheduler(const uint64_t kNs);
 
@@ -316,7 +316,7 @@ void timeWaitNoScheduler(const uint64_t kNs);
  * - OS_NO_ERR is returned if no error is encountered.
  * - OS_ERR_NULL_POINTER if the scheduler routine pointer is NULL.
  */
-OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*));
+OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(void));
 
 
 #endif /* #ifndef __TIME_TIME_MGT_H_ */

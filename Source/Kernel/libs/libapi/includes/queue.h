@@ -75,7 +75,7 @@ typedef struct queue_node
     bool_t enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
-    uint32_t priority;
+    uint64_t priority;
 
     /** @brief Node's data pointer. Store the address of the contained data. */
     void* pData;
@@ -226,9 +226,9 @@ OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue);
  * - OS_ERR_NULL_POINTER is returned if the pointer to the queue or the node is
  *   NULL.
  */
-OS_RETURN_E queuePushPrio(queue_node_t*   pNode,
-                          queue_t*        pQueue,
-                          const uintptr_t kPriority);
+OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
+                          queue_t*       pQueue,
+                          const uint64_t kPriority);
 
 /**
  * @brief Removes a node from a queue.

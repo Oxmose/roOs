@@ -43,6 +43,9 @@
 /* Unit test header */
 #include <test_framework.h>
 
+/* Tracing feature */
+#include <tracing.h>
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -93,14 +96,10 @@ extern volatile uint32_t _bootedCPUCount;
 /* None */
 
 /************************** Static global variables ***************************/
-
-/** @brief Stores the number of available cores in the system. */
-static uint8_t sAvailabeCpuCount = 1;
+#if MAX_CPU_COUNT > 1
 
 /** @brief Stores the translated CPU identifiers */
 static uint8_t sCoreIds[MAX_CPU_COUNT] = {0};
-
-#if MAX_CPU_COUNT > 1
 
 /** @brief Stores the LAPIC driver instance */
 static const lapic_driver_t* kspLapicDriver = NULL;
@@ -167,9 +166,6 @@ void coreMgtInit(void)
         /* If not self */
         if(sCoreIds[0] != kpLapicNode->lapic.lapicId)
         {
-            /* Increase the available CPU count */
-            ++sAvailabeCpuCount;
-
             KERNEL_DEBUG(CORE_MGT_DEBUG_ENABLED,
                          MODULE_NAME,
                          "CPU With LAPIC id %d flags: 0x%x",
@@ -307,8 +303,10 @@ void coreMgtInit(void)
     return;
 }
 
-void coreMgtApInit(void)
+void coreMgtApInit(const uint8_t kCpuId)
 {
+    (void)kCpuId;
+
     return;
 }
 

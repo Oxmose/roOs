@@ -52,7 +52,7 @@ typedef struct kqueue_node
     bool_t enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
-    uintptr_t priority;
+    uint64_t priority;
 
     /** @brief Node's data pointer. Store the address of the contained data. */
     void* pData;
@@ -159,9 +159,9 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue);
  * @param[in, out] pQueue The queue to manage.
  * @param[in] kPriority The element priority.
  */
-void kQueuePushPrio(kqueue_node_t*  pNode,
-                    kqueue_t*       pQueue,
-                    const uintptr_t kPriority);
+void kQueuePushPrio(kqueue_node_t* pNode,
+                    kqueue_t*      pQueue,
+                    const uint64_t kPriority);
 
 /**
  * @brief Removes a node from a queue.

@@ -1,22 +1,25 @@
 /*******************************************************************************
- * @file cpu_interrupt.h
+ * @file kernelshell.h
+ *
+ * @see kernelshell.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 31/03/2023
+ * @date 16/06/2024
  *
- * @version 2.0
+ * @version 1.0
  *
- * @brief i386 interrupt manager.
+ * @brief Kernel's shell definition.
  *
- * @details i386 interrupt manager. Stores the interrupt settings such as the
- * interrupt lines.
+ * @details Kernel's shell definition. This shell is the entry point of the
+ * kernel for the user. It has kernel rights and can be extended by the user
+ * for different purposes.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __I386_INTERRUPT_
-#define __I386_INTERRUPT_
+#ifndef __USER_KERNELSHELL_H_
+#define __USER_KERNELSHELL_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -28,31 +31,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Number of entries in the kernel's IDT. */
-#define IDT_ENTRY_COUNT 256
-
-/** @brief Minimal customizable accepted interrupt line. */
-#define MIN_INTERRUPT_LINE 0x20
-/** @brief Maximal customizable accepted interrupt line. */
-#define MAX_INTERRUPT_LINE (IDT_ENTRY_COUNT - 1)
-
-/** @brief Defines the number of possible interrupt on the i386 processor. */
-#define INT_ENTRY_COUNT IDT_ENTRY_COUNT
-
-/** @brief Minimal customizable accepted exception line. */
-#define MIN_EXCEPTION_LINE 0x0
-/** @brief Maximal customizable accepted exception line. */
-#define MAX_EXCEPTION_LINE 0x1F
-
-/** @brief Defines the panic interrupt line. */
-#define PANIC_INT_LINE 0x20
-
-/** @brief Defines the spurious interrupt line */
-#define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
-
-/** @brief Defines the software interrupt number for scheduling. */
-#define SCHEDULER_SW_INT_LINE 0x22
-
+/* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -83,8 +62,14 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Initializes the kernel shell.
+ *
+ * @details Initializes the kernel shell. This function creates the kernel shell
+ * thread and starts it.
+ */
+void kernelShellInit(void);
 
-#endif /* #ifndef __I386_INTERRUPT_ */
+#endif /* #ifndef __USER_KERNELSHELL_H_ */
 
 /************************************ EOF *************************************/

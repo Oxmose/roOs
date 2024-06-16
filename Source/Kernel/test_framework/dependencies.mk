@@ -5,9 +5,6 @@ DEP_INCLUDES += -I ../libs/libtrace/includes
 DEP_INCLUDES += -I ../libs/libapi/includes
 DEP_INCLUDES += -I ../arch/cpu/includes
 
-DEP_LIBS =
-
-
 ifeq ($(target), x86_i386)
 	DEP_INCLUDES += -I ../arch/cpu/i386/includes_private
 else ifeq ($(target), x86_64)

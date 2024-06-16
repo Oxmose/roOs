@@ -22,13 +22,17 @@
  ******************************************************************************/
 #include <cpu.h>           /* Generic CPU API */
 #include <panic.h>         /* Kernel Panic */
+#include <kheap.h>         /* Kernel heap */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
+#include <memory.h>        /* Memory management */
 #include <core_mgt.h>      /* Core management */
+#include <x86memory.h>     /* X86 memory definitions */
+#include <scheduler.h>     /* Kernel scheduler */
+#include <ctrl_block.h>    /* Kernel control block */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
-
 /* Configuration files */
 #include <config.h>
 
@@ -37,6 +41,9 @@
 
 /* Unit test header */
 #include <test_framework.h>
+
+/* Tracing feature */
+#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -80,6 +87,9 @@
 #define USER_DATA_SEGMENT_BASE_32  0x00000000
 /** @brief User's 32 bits data segment limit address. */
 #define USER_DATA_SEGMENT_LIMIT_32 0x000FFFFF
+
+/** @brief Thread's initial EFLAGS register value. */
+#define KERNEL_THREAD_INIT_EFLAGS 0x202 /* INT | PARITY */
 
 /***************************
  * GDT Flags
@@ -585,12 +595,7 @@ typedef struct
 #define CPU_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        KERNEL_ERROR(MSG);                                  \
-        kprintfFlush();                                     \
-        while(TRUE)                                         \
-        {                                                   \
-            cpuHalt();                                      \
-        }                                                   \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
     }                                                       \
 }
 
@@ -2185,6 +2190,7 @@ const cpu_interrupt_config_t ksInterruptConfig = {
     .maxInterruptLine        = MAX_INTERRUPT_LINE,
     .totalInterruptLineCount = INT_ENTRY_COUNT,
     .panicInterruptLine      = PANIC_INT_LINE,
+    .schedulerInterruptLine  = SCHEDULER_SW_INT_LINE,
     .spuriousInterruptLine   = SPURIOUS_INT_LINE
 };
 
@@ -3672,17 +3678,10 @@ void cpuApInit(const uint8_t kCpuId)
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_EXIT, 0);
 
-    /* TODO: Once we have a scheduler, remove that */
-    while(1)
-    {
-        cpuClearInterrupt();
-        cpuHalt();
-    }
-
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    /* TODO: Add call to scheduler */
+    schedSchedule();
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
@@ -3696,6 +3695,93 @@ void cpuSetPageDirectory(const uintptr_t kNewPgDir)
 void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
 {
     __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
+}
+
+uintptr_t cpuCreateKernelStack(const size_t kStackSize)
+{
+    uintptr_t stackAddr;
+
+    /* Request to map the stack */
+    stackAddr = (uintptr_t)memoryKernelMapStack(kStackSize);
+
+    /* Check value */
+    if(stackAddr == 0)
+    {
+        return 0;
+    }
+
+    /* Set end address and align on 16 bytes */
+    stackAddr = ((stackAddr + kStackSize) - 0xFULL) & ~0xFULL;
+
+    return stackAddr;
+}
+
+void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
+                           const size_t    kStackSize)
+{
+    uintptr_t baseAddress;
+    size_t    actualSize;
+
+    /* Get the actual base address */
+    baseAddress = (kStackEndAddr - kStackSize) & PAGE_SIZE_MASK;
+    actualSize  = (kStackSize + PAGE_SIZE_MASK) & PAGE_SIZE_MASK;
+
+    memoryKernelUnmapStack(baseAddress, actualSize);
+}
+
+uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
+                              kernel_thread_t* pThread)
+{
+    virtual_cpu_t* pVCpu;
+    uintptr_t*     pStack;
+
+    /* Allocate the new VCPU */
+    pVCpu = kmalloc(sizeof(virtual_cpu_t));
+    if(pVCpu == NULL)
+    {
+        return 0;
+    }
+
+    /* Setup the interrupt context */
+    pVCpu->intContext.intId     = 0;
+    pVCpu->intContext.errorCode = 0;
+    pVCpu->intContext.eip       = (uint32_t)kEntryPoint;
+    pVCpu->intContext.cs        = KERNEL_CS_32;
+    pVCpu->intContext.eflags    = KERNEL_THREAD_INIT_EFLAGS;
+
+    /* Setup the CPU stack, ready to get out of interrupt */
+    pStack = (uintptr_t*)pThread->kernelStackEnd - 2;
+    pStack[0] = pVCpu->intContext.eip;
+    pStack[1] = pVCpu->intContext.cs;
+    pStack[2] = pVCpu->intContext.eflags;
+
+    /* Setup stack pointers */
+    pVCpu->cpuState.esp = (uintptr_t)pStack;
+    pVCpu->cpuState.ebp = pThread->kernelStackEnd;
+
+    /* Setup the CPU state */
+    pVCpu->cpuState.edi = 0;
+    pVCpu->cpuState.esi = 0;
+    pVCpu->cpuState.edx = 0;
+    pVCpu->cpuState.ecx = 0;
+    pVCpu->cpuState.ebx = 0;
+    pVCpu->cpuState.eax = 0;
+    pVCpu->cpuState.ss  = KERNEL_DS_32;
+    pVCpu->cpuState.gs  = 0;
+    pVCpu->cpuState.fs  = KERNEL_DS_32;
+    pVCpu->cpuState.es  = KERNEL_DS_32;
+    pVCpu->cpuState.ds  = KERNEL_DS_32;
+
+    return (uintptr_t)pVCpu;
+}
+
+void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
+{
+    CPU_ASSERT(kVCpuAddress != (uintptr_t)NULL,
+               "Destroying a NULL vCPU",
+               OS_ERR_NULL_POINTER);
+
+    kfree((void*)kVCpuAddress);
 }
 
 /************************************ EOF *************************************/

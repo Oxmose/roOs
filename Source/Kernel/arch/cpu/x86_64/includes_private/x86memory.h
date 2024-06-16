@@ -75,7 +75,18 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Maps a stack in the kernel memory region and returns its address.
+ *
+ * @details Maps a stack in the kernel memory region and returns its address.
+ * One more page after the stack is allocated but not mapped to catch overflows.
+ *
+ * @param[in] kSize The size of the stack. If not aligned with the kernel page
+ * size, the actual mapped size will be aligned up on page boundaries.
+ *
+ * @return The base address of the stack in kernel memory is returned.
+ */
+void* memoryKernelMapStack(const size_t kSize);
 
 #endif /* #ifndef __X664_X86_MEMORY_H_ */
 

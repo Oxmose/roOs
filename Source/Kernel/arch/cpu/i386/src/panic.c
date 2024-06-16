@@ -30,6 +30,7 @@
 #include <time_mgt.h>         /* Time management */
 #include <critical.h>         /* Critical section */
 #include <core_mgt.h>         /* Core manager */
+#include <scheduler.h>        /* Kernel scheduler */
 #include <ctrl_block.h>       /* Thread's control block */
 #include <interrupts.h>       /* Interrupts manager */
 #include <kerneloutput.h>     /* Kernel output methods */
@@ -43,6 +44,9 @@
 
 /* Unit test header */
 #include <test_framework.h>
+
+/* Tracing feature */
+#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -104,6 +108,15 @@ static void _printCpuFlags(const virtual_cpu_t* kpVCpu);
  * multiboot at initialization time.
  */
 static void _printStackTrace(void);
+
+/**
+ * @brief Kernel panic function used when the scheduler is not initialized.
+ *
+ * @details Kernel panic function used when the scheduler is not initialized.
+ * This function does not rely on the currently executed thread to display
+ * the panic information.
+ */
+static void _panicNoSched(void);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -236,7 +249,7 @@ static void _printCpuState(const virtual_cpu_t* kpVCpu)
     const int_context_t* intState;
 
     intState = &kpVCpu->intContext;
-    cpuState = &kpVCpu->vCpu;
+    cpuState = &kpVCpu->cpuState;
 
     uint32_t CR0;
     uint32_t CR2;
@@ -415,6 +428,87 @@ static void _printStackTrace(void)
     }
 }
 
+static void _panicNoSched(void)
+{
+    colorscheme_t  consoleScheme;
+    cursor_t       consoleCursor;
+    uint8_t        cpuId;
+    time_t         currTime;
+    uint64_t       uptime;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_CPU_KERNEL_PANIC_HANDLER,
+                       2,
+                       0,
+                       sPanicCode);
+
+    interruptDisable();
+
+    cpuId = cpuGetId();
+
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_CYAN;
+    consoleScheme.vgaColor   = TRUE;
+
+    consoleSetColorScheme(&consoleScheme);
+
+    /* Clear screen */
+    consoleClear();
+    consoleCursor.x = 0;
+    consoleCursor.y = 0;
+    consoleRestoreCursor(&consoleCursor);
+
+    kprintf("##############################    KERNEL PANIC    ##########"
+                    "####################\n");
+
+    kprintf("\nPanic called before scheduler was initialized. Error %d\n",
+            sPanicCode);
+    uptime = timeGetUptime();
+    currTime = timeGetDayTime();
+    kprintf("\n--------------------------------- INFORMATION ------------"
+                    "----------------------\n");
+    kprintf("Core ID: %u | Time: %02u:%02u:%02u | "
+            "Core uptime: [%llu.%llu.%llu.%llu]\n",
+            cpuId,
+            currTime.hours,
+            currTime.minutes,
+            currTime.seconds,
+            uptime / 1000000000,
+            (uptime / 1000000) % 1000,
+            (uptime / 1000) % 1000,
+            uptime % 1000);
+
+    if(skpPanicFile != NULL)
+    {
+        kprintf("File: %s at line %d\n", skpPanicFile, sPanicLine);
+    }
+
+    if(skpPanicModule != NULL && strlen(skpPanicModule) != 0)
+    {
+        kprintf("[%s] | ", skpPanicModule);
+    }
+    if(skpPanicMsg != NULL)
+    {
+        kprintf("%s (%d)\n\n", skpPanicMsg, sPanicCode);
+    }
+
+    _printStackTrace();
+
+    /* Hide cursor */
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_BLACK;
+    consoleScheme.vgaColor   = TRUE;
+
+    consoleSetColorScheme(&consoleScheme);
+
+    /* We will never return from interrupt */
+    while(1)
+    {
+        interruptDisable();
+        cpuHalt();
+    }
+}
+
 void kernelPanicHandler(kernel_thread_t* pCurrThread)
 {
     colorscheme_t  consoleScheme;
@@ -535,6 +629,10 @@ void kernelPanic(const uint32_t kErrorCode,
                  const size_t   kLine)
 {
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_CPU_KERNEL_PANIC,
+                       1,
+                       kErrorCode);
 
     /* We don't need interrupt anymore */
     interruptDisable();
@@ -546,13 +644,16 @@ void kernelPanic(const uint32_t kErrorCode,
     skpPanicFile   = kpFile;
     sPanicLine     = kLine;
 
-    /* Call the panic formater */
-    cpuRaiseInterrupt(PANIC_INT_LINE);
+    if(schedGetCurrentThread() == NULL)
+    {
+        _panicNoSched();
+    }
+    else
+    {
+        /* Call the panic formater */
+        cpuRaiseInterrupt(PANIC_INT_LINE);
+    }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_CPU_KERNEL_PANIC,
-                       1,
-                       kErrorCode);
 
     /* We should never get here, but just in case */
     while(1)

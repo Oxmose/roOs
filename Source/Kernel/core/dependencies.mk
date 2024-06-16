@@ -4,5 +4,4 @@ DEP_INCLUDES += -I ../io/includes
 DEP_INCLUDES += -I ../libs/libtrace/includes
 DEP_INCLUDES += -I ../test_framework/includes
 DEP_INCLUDES += -I ../arch/cpu/includes
-
-DEP_LIBS =
+DEP_INCLUDES += -I ../time/includes

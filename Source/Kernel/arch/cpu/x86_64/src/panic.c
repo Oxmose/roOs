@@ -44,6 +44,9 @@
 /* Unit test header */
 #include <test_framework.h>
 
+/* Tracing feature */
+#include <tracing.h>
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -236,7 +239,7 @@ static void _printCpuState(const virtual_cpu_t* kpVCpu)
     const int_context_t* intState;
 
     intState = &kpVCpu->intContext;
-    cpuState = &kpVCpu->vCpu;
+    cpuState = &kpVCpu->cpuState;
 
     uint64_t CR0;
     uint64_t CR2;

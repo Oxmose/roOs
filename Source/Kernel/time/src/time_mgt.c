@@ -38,6 +38,9 @@
 /* Header file */
 #include <time_mgt.h>
 
+/* Tracing feature */
+#include <tracing.h>
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -168,7 +171,7 @@ static kqueue_t* spAuxTimersQueue = NULL;
 static volatile uint64_t sActiveWait[MAX_CPU_COUNT] = {0};
 
 /** @brief Stores the routine to call the scheduler. */
-static void (*sSchedRoutine)(kernel_thread_t*) = NULL;
+static void (*sSchedRoutine)(void) = NULL;
 
 /** @brief Timers manager global lock */
 static kernel_spinlock_t managerLock = KERNEL_SPINLOCK_INIT_VALUE;
@@ -182,8 +185,10 @@ static kernel_spinlock_t auxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
+    (void)pCurrThread;
+
     uint8_t cpuId;
-    void    (*pCurrSched)(kernel_thread_t*);
+    void    (*pCurrSched)(void);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_ENTRY,
@@ -206,7 +211,7 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
         pCurrSched = sSchedRoutine;
         KERNEL_CRITICAL_UNLOCK(managerLock);
         /* We might never come back from here */
-        pCurrSched(pCurrThread);
+        pCurrSched();
     }
     else
     {
@@ -598,11 +603,6 @@ void timeWaitNoScheduler(const uint64_t ns)
                        (uint32_t)(ns >> 32),
                        (uint32_t)ns);
 
-    if(sSchedRoutine != NULL)
-    {
-        return;
-    }
-
     cpuId = cpuGetId();
 
     sActiveWait[cpuId] = 0;
@@ -646,7 +646,7 @@ void timeWaitNoScheduler(const uint64_t ns)
                        (uint32_t)ns);
 }
 
-OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
+OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(void))
 {
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
@@ -691,7 +691,7 @@ OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(kernel_thread_t*))
                  pSchedRoutine);
 
     sSchedRoutine = pSchedRoutine;
-    KERNEL_CRITICAL_LOCK(managerLock);
+    KERNEL_CRITICAL_UNLOCK(managerLock);
 
 #ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,

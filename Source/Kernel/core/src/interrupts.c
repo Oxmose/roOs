@@ -42,6 +42,9 @@
 /* Header file */
 #include <interrupts.h>
 
+/* Tracing feature */
+#include <tracing.h>
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -180,8 +183,17 @@ void interruptMainHandler(void)
     uint32_t         intId;
     uint32_t         intState;
 
+
     /* Get the current thread */
     pCurrentThread = schedGetCurrentThread();
+    if(pCurrentThread == NULL)
+    {
+        PANIC(OS_ERR_NULL_POINTER,
+              MODULE_NAME,
+              "Interrupt triggered on NULL current thread",
+              TRUE);
+    }
+
     intId    = cpuGetContextIntNumber(pCurrentThread->pVCpu);
     intState = cpuGetContextIntState(pCurrentThread->pVCpu);
 
@@ -257,6 +269,8 @@ void interruptMainHandler(void)
                        (uint32_t)pCurrentThread->tid,
                        intId,
                        0);
+
+    schedSchedule();
 }
 
 void interruptInit(void)

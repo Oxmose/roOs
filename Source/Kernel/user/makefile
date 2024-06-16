@@ -5,7 +5,7 @@
 #
 # Author: Alexy Torres Aurora Dugo
 #
-# Time module makefile. This makefile is used to compile the Time module.
+# User module makefile. This makefile is used to compile the User module.
 ################################################################################
 
 # Dependencies
@@ -31,15 +31,15 @@ all: init module
 
 init:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
-	@echo "\e[1m\e[34m| Compiling Time module\e[22m\e[39m"
+	@echo "\e[1m\e[34m| Compiling User module\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BIN_DIR)
 
 module: compile_asm compile_cc
-	@ar r $(BIN_DIR)/libtime.a $(BUILD_DIR)/*.o
-	@echo "\e[1m\e[92m=> Generated Time module\e[22m\e[39m"
+	@ar r $(BIN_DIR)/libuser.a $(BUILD_DIR)/*.o
+	@echo "\e[1m\e[92m=> Generated User module\e[22m\e[39m"
 	@echo "\e[1m\e[92m--------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 # Assembly sources compilation
@@ -67,7 +67,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 clean:
 	$(RM) -rf $(BUILD_DIR) $(BIN_DIR)
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
-	@echo "\e[1m\e[34m| Cleaned Time module\e[22m\e[39m"
+	@echo "\e[1m\e[34m| Cleaned User module\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 # Check header files modifications

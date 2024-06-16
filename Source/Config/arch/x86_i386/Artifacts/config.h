@@ -16,9 +16,6 @@
 #ifndef __GLOBAL_CONFIG_H_
 #define __GLOBAL_CONFIG_H_
 
-/* Tracing feature */
-#include <tracing.h>
-
 /* Architecture definitions */
 #define ARCH_32_BITS
 
@@ -28,13 +25,13 @@
 #define KERNEL_STACK_SIZE 0x1000
 
 /* Maximal number of CPU supported by the architecture */
-#define MAX_CPU_COUNT 4
+#define MAX_CPU_COUNT 1
 
 /* Kernel log level */
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
-#define DEBUG_LOG_UART      1
+#define DEBUG_LOG_UART      0
 #define DEBUG_LOG_UART_RATE BAUDRATE_115200
 
 /** @brief Defines the maximum number of process in the system. This number is
@@ -61,7 +58,6 @@
 #define KQUEUE_DEBUG_ENABLED 0
 #define RTC_DEBUG_ENABLED 0
 #define SCHED_DEBUG_ENABLED 0
-#define SERIAL_DEBUG_ENABLED 0
 #define TIME_MGT_DEBUG_ENABLED 0
 #define VGA_DEBUG_ENABLED 0
 #define DTB_DEBUG_ENABLED 0

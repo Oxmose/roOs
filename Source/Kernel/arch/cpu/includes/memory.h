@@ -157,6 +157,7 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
  * does not apply to hardware mapping.
  */
 OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
+
 #endif /* #ifndef __MEMORY_MGR_ */
 
 /************************************ EOF *************************************/

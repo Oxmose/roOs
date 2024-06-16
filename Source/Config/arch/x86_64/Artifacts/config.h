@@ -16,9 +16,6 @@
 #ifndef __GLOBAL_CONFIG_H_
 #define __GLOBAL_CONFIG_H_
 
-/* Tracing feature */
-#include <tracing.h>
-
 /* Architecture definitions */
 #define ARCH_64_BITS
 
@@ -60,8 +57,7 @@
 #define QUEUE_DEBUG_ENABLED 0
 #define KQUEUE_DEBUG_ENABLED 0
 #define RTC_DEBUG_ENABLED 0
-#define SCHED_DEBUG_ENABLED 0
-#define SERIAL_DEBUG_ENABLED 0
+#define SCHED_DEBUG_ENABLED 1
 #define TIME_MGT_DEBUG_ENABLED 0
 #define VGA_DEBUG_ENABLED 0
 #define DTB_DEBUG_ENABLED 0

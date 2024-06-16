@@ -1,22 +1,29 @@
 /*******************************************************************************
- * @file cpu_interrupt.h
+ * @file userinit.h
+ *
+ * @see userinit.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 31/03/2023
+ * @date 16/06/2024
  *
- * @version 2.0
+ * @version 1.0
  *
- * @brief i386 interrupt manager.
+ * @brief Kernel's user entry point.
  *
- * @details i386 interrupt manager. Stores the interrupt settings such as the
- * interrupt lines.
+ * @details Kernel's user entry point. This file gather the functions called
+ * by the kernel just before starting the scheduler and executing the tast.
+ * Users can use this function to add relevant code to their applications'
+ * initialization or for other purposes.
+ *
+ * @warning All interrupts are disabled when calling the user initialization
+ * functions.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __I386_INTERRUPT_
-#define __I386_INTERRUPT_
+#ifndef __USER_USERINIT_H_
+#define __USER_USERINIT_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -28,31 +35,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Number of entries in the kernel's IDT. */
-#define IDT_ENTRY_COUNT 256
-
-/** @brief Minimal customizable accepted interrupt line. */
-#define MIN_INTERRUPT_LINE 0x20
-/** @brief Maximal customizable accepted interrupt line. */
-#define MAX_INTERRUPT_LINE (IDT_ENTRY_COUNT - 1)
-
-/** @brief Defines the number of possible interrupt on the i386 processor. */
-#define INT_ENTRY_COUNT IDT_ENTRY_COUNT
-
-/** @brief Minimal customizable accepted exception line. */
-#define MIN_EXCEPTION_LINE 0x0
-/** @brief Maximal customizable accepted exception line. */
-#define MAX_EXCEPTION_LINE 0x1F
-
-/** @brief Defines the panic interrupt line. */
-#define PANIC_INT_LINE 0x20
-
-/** @brief Defines the spurious interrupt line */
-#define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
-
-/** @brief Defines the software interrupt number for scheduling. */
-#define SCHEDULER_SW_INT_LINE 0x22
-
+/* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -83,8 +66,17 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Kernel's user entry point.
+ *
+ * @details Kernel's user entry point. This functions is called
+ * by the kernel just before starting the scheduler and executing the tast.
+ * Users can use this function to add relevant code to their applications'
+ * initialization or for other purposes.
+ */
+void userInit(void);
 
-#endif /* #ifndef __I386_INTERRUPT_ */
+
+#endif /* #ifndef __USER_USERINIT_H_ */
 
 /************************************ EOF *************************************/

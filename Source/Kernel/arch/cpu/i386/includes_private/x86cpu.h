@@ -96,7 +96,7 @@ typedef struct
     int_context_t intContext;
 
     /** @brief Virtual CPU context */
-    cpu_state_t vCpu;
+    cpu_state_t cpuState;
 } virtual_cpu_t;
 
 /*******************************************************************************

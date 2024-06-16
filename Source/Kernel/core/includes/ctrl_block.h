@@ -30,6 +30,11 @@
  * CONSTANTS
  ******************************************************************************/
 
+/* The afinity is defined as a 64 bits bitmask */
+#if MAX_CPU_COUNT > 64
+#error "Affinity cannot manage enough processor"
+#endif
+
 /** @brief Maximal thead's name length. */
 #define THREAD_NAME_MAX_LENGTH 32
 
@@ -110,7 +115,7 @@ typedef struct
     int32_t tid;
 
     /** @brief Thread's name. */
-    char pName[THREAD_NAME_MAX_LENGTH];
+    char pName[THREAD_NAME_MAX_LENGTH + 1];
 
     /** @brief Thread's type. */
     THREAD_TYPE_E type;
@@ -164,23 +169,30 @@ typedef struct
     size_t    stackSize;
 
     /** @brief Thread's interrupt stack. */
-    uintptr_t intStackEnd;
+    uintptr_t kernelStackEnd;
 
     /** @brief Thread's interrupt stack size. */
-    size_t    intStackSize;
+    size_t    kernelStackSize;
 
     /**************************************
      * Time management
      *************************************/
 
     /** @brief Wake up time limit for the sleeping thread. */
-    int64_t wakeupTime;
+    uint64_t wakeupTime;
 
     /** @brief Thread's start time. */
-    int64_t startTime;
+    uint64_t startTime;
 
     /** @brief Thread's end time. */
-    int64_t endTime;
+    uint64_t endTime;
+
+    /**************************************
+     * Scheduler management
+     *************************************/
+    void* pThreadNode;
+
+    uint64_t affinity;
 } kernel_thread_t;
 
 /*******************************************************************************

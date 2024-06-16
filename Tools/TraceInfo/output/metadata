@@ -667,7 +667,6 @@ event {
     id = 85;
     name = "x86 CPU Kernel panic handler";
     fields := struct {
-        uint32_t intId;
         uint32_t errorCode;
     };
 };

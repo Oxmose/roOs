@@ -29,8 +29,10 @@
 #include <kheap.h>         /* Kernel heap */
 #include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree manager */
+#include <userinit.h>      /* User initialization */
 #include <core_mgt.h>      /* Core manager */
 #include <drivermgr.h>     /* Driver manager */
+#include <scheduler.h>     /* Kernel scheduler */
 #include <interrupts.h>    /* Interrupt manager */
 #include <exceptions.h>    /* Exception manager */
 #include <kerneloutput.h>  /* Kernel logger */
@@ -40,6 +42,9 @@
 
 /* Unit test header */
 #include <test_framework.h>
+
+/* Tracing feature */
+#include <tracing.h>
 
 /* Header file */
 /* None */
@@ -111,10 +116,6 @@ extern uintptr_t _KERNEL_DEV_TREE_BASE;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-/* TODO: remove */
-extern void scheduler_dummy_init(void);
-
 void kickstart(void)
 {
     /* Start testing framework */
@@ -129,10 +130,9 @@ void kickstart(void)
     uartDebugInit();
 #endif
 
-    /* TODO: remove */
-    scheduler_dummy_init();
-
     KERNEL_INFO("UTK Kickstart\n");
+
+    /* Initialize the scheduler */
 
     /* Validate architecture */
     cpuValidateArchitecture();
@@ -166,6 +166,11 @@ void kickstart(void)
     memoryMgrInit();
     KERNEL_SUCCESS("Memory manager initialized\n");
 
+
+    /* Init the scheduler */
+    schedInit();
+    KERNEL_SUCCESS("Scheduler initialized\n");
+
     /* Init device manager */
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
@@ -175,6 +180,10 @@ void kickstart(void)
      * running cores excepted this one have their interrupt enabled.
      */
     coreMgtInit();
+
+    /* Initialize the user functions */
+    userInit();
+    KERNEL_SUCCESS("User initialization done\n");
 
     TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
@@ -195,23 +204,9 @@ void kickstart(void)
     TEST_FRAMEWORK_END();
 #endif
 
-#if 0
-    interruptRestore(1);
-    uint32_t j;
-    j = 0;
-    for(j = 0; j < 100000; ++j)
-    {
-        if(j % 500 == 0)
-        {
-            KERNEL_DEBUG(1, "TIMETEST", ".");
-        }
-        cpuHalt();
-    }
-#endif
-
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 
-    /* TODO: Call scheduler */
+    schedSchedule();
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

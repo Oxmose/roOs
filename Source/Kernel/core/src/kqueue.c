@@ -42,6 +42,9 @@
 /* Header file */
 #include <kqueue.h>
 
+/* Tracing feature */
+#include <tracing.h>
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -331,9 +334,9 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 }
 
 
-void kQueuePushPrio(kqueue_node_t*  pNode,
-                    kqueue_t*       pQueue,
-                    const uintptr_t kPriority)
+void kQueuePushPrio(kqueue_node_t* pNode,
+                    kqueue_t*      pQueue,
+                    const uint64_t kPriority)
 {
     kqueue_node_t* pCursor;
 

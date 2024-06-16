@@ -25,7 +25,9 @@
  ******************************************************************************/
 
 #include <stdint.h>       /* Generic int types */
+#include <stddef.h>       /* Standard definitions */
 #include <kerror.h>       /* Kernel error */
+#include <ctrl_block.h>   /* Kernel control blocks */
 
 /*******************************************************************************
  * CONSTANTS
@@ -52,6 +54,8 @@ typedef struct
     uint32_t totalInterruptLineCount;
     /** @brief Kernel panic interrupt line id */
     uint32_t panicInterruptLine;
+    /** @brief Kernel scheduling interrupt line */
+    uint32_t schedulerInterruptLine;
     /** @brief Spurious interrupts line id */
     uint32_t spuriousInterruptLine;
 } cpu_interrupt_config_t;
@@ -165,6 +169,67 @@ void cpuHalt(void);
  * @return The CPU identifier of the calling core is returned.
  */
 uint8_t cpuGetId(void);
+
+/**
+ * @brief Creates and allocates a kernel stack.
+ *
+ * @details Creates and allocates a kernel stack. The stack will be mapped
+ * to the kernel's virtual memory. The function aligns the end pointer of the
+ * stack based on the CPU requirements and returns this end pointer.
+ *
+ * @param[in] kStackSize The stack size in bytes.
+ *
+ * @return The end address (high address) with CPU required alignement is
+ * returned.
+ */
+uintptr_t cpuCreateKernelStack(const size_t kStackSize);
+
+/**
+ * @brief Destroys and deallocates a kernel stack.
+ *
+ * @details Destroys and deallocates a kernel stack. The stack will be unmapped
+ * from the kernel's virtual memory.
+ *
+ * @param[in] kStackEndAddr The stack end address to destroy.
+ * @param[in] kStackSize The stack size in bytes.
+ */
+void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
+                           const size_t kStackSize);
+
+/**
+ * @brief Creates a thread's virtual CPU.
+ *
+ * @details Initializes the thread's virtual CPU structure later used by the
+ * CPU. This structure is private to the architecture and should not be used
+ * elsewhere than the CPU module.
+ *
+ * @param[in] kpEntryPoint The thread's entry point used to initialize the vCPU.
+ * @param[out] pThread The thread's structure to update.
+ *
+ * @return The address of the newly created VCPU is returned.
+ */
+uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
+                              kernel_thread_t* pThread);
+
+/**
+ * @brief Detroys a thread's virtual CPU.
+ *
+ * @details Detroys the thread's virtual CPU structure.
+ *
+ * @param[in] kpEntryPoint The thread's entry point used to initialize the vCPU.
+ * @param[out] pThread The thread's structure to update.
+ */
+void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress);
+
+/**
+ * @brief Restores the CPU context of a thread.
+ *
+ * @details Restores the CPU context of a thread. This function will load the
+ * thread's vCPU and replace the current context.
+ *
+ * @param[in] kpThread The thread of which the CPU should restore the context.
+ */
+void cpuRestoreContext(const kernel_thread_t* kpThread);
 
 #endif /* #ifndef __CPU_H_ */
 

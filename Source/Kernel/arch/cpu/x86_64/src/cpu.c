@@ -27,6 +27,7 @@
 #include <string.h>        /* Memory manipulation */
 #include <core_mgt.h>      /* Core management */
 #include <x86memory.h>     /* X86 memory definitions */
+#include <scheduler.h>     /* Kernel scheduler */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
 
@@ -38,6 +39,9 @@
 
 /* Unit test header */
 #include <test_framework.h>
+
+/* Tracing feature */
+#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -574,12 +578,7 @@ typedef struct cpu_tss_entry
 #define CPU_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        KERNEL_ERROR(MSG);                                  \
-        kprintfFlush();                                     \
-        while(TRUE)                                         \
-        {                                                   \
-            cpuHalt();                                      \
-        }                                                   \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
     }                                                       \
 }
 
@@ -2180,6 +2179,7 @@ const cpu_interrupt_config_t ksInterruptConfig = {
     .maxInterruptLine        = MAX_INTERRUPT_LINE,
     .totalInterruptLineCount = INT_ENTRY_COUNT,
     .panicInterruptLine      = PANIC_INT_LINE,
+    .schedulerInterruptLine  = SCHEDULER_SW_INT_LINE,
     .spuriousInterruptLine   = SPURIOUS_INT_LINE
 };
 
@@ -3740,17 +3740,10 @@ void cpuApInit(const uint8_t kCpuId)
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED, TRACE_X86_CPU_AP_INIT_EXIT, 0);
 
-    /* TODO: Once we have a scheduler, remove that */
-    while(1)
-    {
-        cpuClearInterrupt();
-        cpuHalt();
-    }
-
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    /* TODO: Add call to scheduler */
+    schedSchedule();
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
@@ -3764,6 +3757,26 @@ void cpuSetPageDirectory(const uintptr_t kNewPgDir)
 void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
 {
     __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
+}
+
+uintptr_t cpuCreateKernelStack(const size_t kStackSize)
+{
+    uintptr_t stackAddr;
+
+    /* Request to map the stack */
+    stackAddr = (uintptr_t)memoryKernelMapStack(kStackSize);
+
+    /* Check value */
+    if(stackAddr == 0)
+    {
+        return 0;
+    }
+
+    /* Set end address and align on 16 bytes */
+    stackAddr += kStackSize;
+    stackAddr = (stackAddr + kStackSize) & ~0xFULL;
+
+    return stackAddr;
 }
 
 /************************************ EOF *************************************/

@@ -224,9 +224,9 @@ OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue)
 }
 
 
-OS_RETURN_E queuePushPrio(queue_node_t*   pNode,
-                          queue_t*        pQueue,
-                          const uintptr_t kPriority)
+OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
+                          queue_t*       pQueue,
+                          const uint64_t kPriority)
 {
     queue_node_t* pCursor;
 

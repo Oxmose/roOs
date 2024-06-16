@@ -1,2 +1,0 @@
-DEP_INCLUDES =
-DEP_LIBS =

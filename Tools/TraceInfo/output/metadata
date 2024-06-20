@@ -2565,3 +2565,260 @@ event {
         uint32_t returnCode;
     };
 };
+
+event {
+    id = 313;
+    name = "X86 Memory manager get physical address entry";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+    };
+};
+
+event {
+    id = 314;
+    name = "X86 Memory manager get physical address exit";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        xuint32_t physAddressHigh;
+        xuint32_t physAddressLow;
+    };
+};
+
+event {
+    id = 315;
+    name = "X86 Memory manager map kernel stack entry";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 316;
+    name = "X86 Memory manager map kernel stack exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+    };
+};
+
+event {
+    id = 317;
+    name = "X86 Memory manager unmap kernel stack exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+    };
+};
+
+event {
+    id = 318;
+    name = "X86 Memory manager unmap kernel stack exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+    };
+};
+
+/********************************* Scheduler */
+
+event {
+    id = 319;
+    name = "Scheduler idle started";
+};
+
+event {
+    id = 320;
+    name = "Scheduler thread entry point entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 321;
+    name = "Scheduler thread entry point exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t returnValueHigh;
+        uint32_t returnValueLow;
+    };
+};
+
+event {
+    id = 322;
+    name = "Scheduler thread exit point entry";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t cause;
+        uint32_t returnState;
+    };
+};
+
+event {
+    id = 323;
+    name = "Scheduler thread exit point exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t cause;
+        uint32_t returnState;
+    };
+};
+
+event {
+    id = 324;
+    name = "Scheduler create idle threads entry";
+};
+
+event {
+    id = 325;
+    name = "Scheduler create idle threads exit";
+};
+
+event {
+    id = 326;
+    name = "Scheduler get next thread from table entry";
+};
+
+event {
+    id = 327;
+    name = "Scheduler get next thread from table exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 328;
+    name = "Scheduler update sleeping threads entry";
+};
+
+event {
+    id = 329;
+    name = "Scheduler update sleeping threads exit";
+};
+
+event {
+    id = 330;
+    name = "Scheduler clean thread entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 331;
+    name = "Scheduler clean thread exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 332;
+    name = "Scheduler init entry";
+};
+
+event {
+    id = 333;
+    name = "Scheduler init exit";
+};
+
+event {
+    id = 334;
+    name = "Scheduler schedule entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 335;
+    name = "Scheduler schedule exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 336;
+    name = "Scheduler release thread entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 337;
+    name = "Scheduler release thread exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t cpuId;
+    };
+};
+
+event {
+    id = 338;
+    name = "Scheduler sleep entry";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t timeHigh;
+        uint32_t timeLow;
+    };
+};
+
+event {
+    id = 339;
+    name = "Scheduler sleep exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t timeHigh;
+        uint32_t timeLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 340;
+    name = "Scheduler create thread entry";
+    fields := struct {
+        xuint32_t threadPtrHigh;
+        xuint32_t threadPtrLow;
+    };
+};
+
+event {
+    id = 341;
+    name = "Scheduler create thread exit";
+    fields := struct {
+        xuint32_t threadPtrHigh;
+        xuint32_t threadPtrLow;
+        uint32_t newThreadId;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 342;
+    name = "Scheduler join thread entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 343;
+    name = "Scheduler join thread exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t returnCode;
+    };
+};

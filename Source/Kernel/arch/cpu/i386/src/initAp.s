@@ -135,7 +135,7 @@ __kinitApPM:
     mov ebx, _KERNEL_STACKS_BASE - 16
     add eax, ebx
     mov esp, eax
-    mov ebp, esp
+    mov ebp, 0
 
     ; Update the booted CPU count and set as call parameters
     push ecx

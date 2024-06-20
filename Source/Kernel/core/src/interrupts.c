@@ -181,47 +181,17 @@ void interruptMainHandler(void)
     custom_handler_t handler;
     kernel_thread_t* pCurrentThread;
     uint32_t         intId;
-    uint32_t         intState;
 
 
     /* Get the current thread */
     pCurrentThread = schedGetCurrentThread();
-    if(pCurrentThread == NULL)
-    {
-        PANIC(OS_ERR_NULL_POINTER,
-              MODULE_NAME,
-              "Interrupt triggered on NULL current thread",
-              TRUE);
-    }
-
-    intId    = cpuGetContextIntNumber(pCurrentThread->pVCpu);
-    intState = cpuGetContextIntState(pCurrentThread->pVCpu);
+    intId = cpuGetContextIntNumber(pCurrentThread->pVCpu);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_HANDLER_ENTRY,
                        2,
                        (uint32_t)pCurrentThread->tid,
                        intId);
-
-    /* If interrupts are disabled */
-    if(intState == 0 &&
-       intId != kspCpuInterruptConfig->panicInterruptLine &&
-       intId >= kspCpuInterruptConfig->minInterruptLine &&
-       intId <= kspCpuInterruptConfig->maxInterruptLine)
-    {
-        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Blocked interrupt %u",
-                     intId);
-
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_HANDLER_EXIT,
-                           3,
-                           (uint32_t)pCurrentThread->tid,
-                           intId,
-                           1);
-        return;
-    }
 
     if(intId == kspCpuInterruptConfig->panicInterruptLine)
     {
@@ -270,7 +240,12 @@ void interruptMainHandler(void)
                        intId,
                        0);
 
+    /* Schedule, we will never return */
     schedSchedule();
+    PANIC(OS_ERR_UNAUTHORIZED_ACTION,
+          MODULE_NAME,
+          "Schedule returned",
+          TRUE);
 }
 
 void interruptInit(void)
@@ -677,13 +652,12 @@ OS_RETURN_E interruptIRQRemove(const uint32_t kIrqNumber)
 
 void interruptRestore(const uint32_t kPrevState)
 {
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_INTERRUPT_RESTORE,
-                       1,
-                       kPrevState);
     if(kPrevState != 0)
     {
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                        TRACE_INTERRUPT_INTERRUPT_RESTORE,
+                        1,
+                        kPrevState);
         KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Enabled HW INT");
         cpuSetInterrupt();
     }
@@ -695,16 +669,16 @@ uint32_t interruptDisable(void)
 
     prevState = cpuGeIntState();
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_INTERRUPT_DISABLE,
-                       1,
-                       prevState);
 
     if(prevState == 0)
     {
         return 0;
     }
 
+    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                    TRACE_INTERRUPT_INTERRUPT_DISABLE,
+                    1,
+                    prevState);
     cpuClearInterrupt();
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Disabled HW INT");

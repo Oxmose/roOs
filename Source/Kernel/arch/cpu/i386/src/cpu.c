@@ -33,6 +33,7 @@
 #include <ctrl_block.h>    /* Kernel control block */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
+
 /* Configuration files */
 #include <config.h>
 
@@ -3733,7 +3734,6 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
                               kernel_thread_t* pThread)
 {
     virtual_cpu_t* pVCpu;
-    uintptr_t*     pStack;
 
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
@@ -3745,19 +3745,13 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     /* Setup the interrupt context */
     pVCpu->intContext.intId     = 0;
     pVCpu->intContext.errorCode = 0;
-    pVCpu->intContext.eip       = (uint32_t)kEntryPoint;
+    pVCpu->intContext.eip       = (uintptr_t)kEntryPoint;
     pVCpu->intContext.cs        = KERNEL_CS_32;
     pVCpu->intContext.eflags    = KERNEL_THREAD_INIT_EFLAGS;
 
-    /* Setup the CPU stack, ready to get out of interrupt */
-    pStack = (uintptr_t*)pThread->kernelStackEnd - 2;
-    pStack[0] = pVCpu->intContext.eip;
-    pStack[1] = pVCpu->intContext.cs;
-    pStack[2] = pVCpu->intContext.eflags;
-
     /* Setup stack pointers */
-    pVCpu->cpuState.esp = (uintptr_t)pStack;
-    pVCpu->cpuState.ebp = pThread->kernelStackEnd;
+    pVCpu->cpuState.esp = pThread->kernelStackEnd;
+    pVCpu->cpuState.ebp = 0;
 
     /* Setup the CPU state */
     pVCpu->cpuState.edi = 0;

@@ -170,12 +170,6 @@ static kqueue_t* spAuxTimersQueue = NULL;
 /** @brief Active wait counter per CPU. */
 static volatile uint64_t sActiveWait[MAX_CPU_COUNT] = {0};
 
-/** @brief Stores the routine to call the scheduler. */
-static void (*sSchedRoutine)(void) = NULL;
-
-/** @brief Timers manager global lock */
-static kernel_spinlock_t managerLock = KERNEL_SPINLOCK_INIT_VALUE;
-
 /** @brief Auxiliary timers list lock */
 static kernel_spinlock_t auxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
@@ -188,7 +182,6 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
     (void)pCurrThread;
 
     uint8_t cpuId;
-    void    (*pCurrSched)(void);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_ENTRY,
@@ -200,37 +193,22 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
     /* Add a tick count */
     ++sSysTickCount[cpuId];
 
-    KERNEL_CRITICAL_LOCK(managerLock);
     if(sSysMainTimer.pTickManager != NULL)
     {
         sSysMainTimer.pTickManager(sSysMainTimer.pDriverCtrl);
     }
 
-    if(sSchedRoutine != NULL)
+    /* Use coarse active wait if not lifetime timer is present */
+    if(sActiveWait[cpuId] != 0)
     {
-        pCurrSched = sSchedRoutine;
-        KERNEL_CRITICAL_UNLOCK(managerLock);
-        /* We might never come back from here */
-        pCurrSched();
-    }
-    else
-    {
-        /* Use coarse active wait if not lifetime timer is present */
-        if(sActiveWait[cpuId] != 0)
+        /* Use ticks */
+        if(sActiveWait[cpuId] <= sSysTickCount[cpuId] * 1000000000 /
+                sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl))
         {
-            /* Use ticks */
-            if(sActiveWait[cpuId] <= sSysTickCount[cpuId] * 1000000000 /
-                    sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl))
-            {
-                sActiveWait[cpuId] = 0;
-            }
+            sActiveWait[cpuId] = 0;
         }
-        KERNEL_CRITICAL_UNLOCK(managerLock);
     }
 
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Time manager main handler");
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_EXIT,
@@ -247,14 +225,10 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
                        1,
                        (uint32_t)pCurrThread->tid);
 
-    KERNEL_CRITICAL_LOCK(managerLock);
-
     if(sSysRtcTimer.pTickManager != NULL)
     {
         sSysRtcTimer.pTickManager(sSysRtcTimer.pDriverCtrl);
     }
-
-    KERNEL_CRITICAL_UNLOCK(managerLock);
 
     KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -438,31 +412,25 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
 
     retCode = OS_NO_ERR;
 
-    KERNEL_CRITICAL_LOCK(managerLock);
     switch(kType)
     {
         case MAIN_TIMER:
             sSysMainTimer = *kpTimer;
-            KERNEL_CRITICAL_UNLOCK(managerLock);
             retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
                                            _mainTimerHandler);
             break;
         case RTC_TIMER:
             sSysRtcTimer = *kpTimer;
-            KERNEL_CRITICAL_UNLOCK(managerLock);
             retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
                                            _rtcTimerHandler);
             break;
         case LIFETIME_TIMER:
             sSysLifetimeTimer = *kpTimer;
-            KERNEL_CRITICAL_UNLOCK(managerLock);
             break;
         case AUX_TIMER:
-            KERNEL_CRITICAL_UNLOCK(managerLock);
             retCode = _timeMgtAddAuxTimer(kpTimer);
             break;
         default:
-            KERNEL_CRITICAL_UNLOCK(managerLock);
             retCode = OS_ERR_NOT_SUPPORTED;
     }
 
@@ -505,8 +473,6 @@ uint64_t timeGetUptime(void)
                        TRACE_TIME_MGT_GET_UPTIME_ENTRY,
                        0);
 
-    KERNEL_CRITICAL_LOCK(managerLock);
-
     if(sSysLifetimeTimer.pGetTimeNs != NULL)
     {
         time = sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl);
@@ -534,8 +500,6 @@ uint64_t timeGetUptime(void)
         time = 0;
     }
 
-    KERNEL_CRITICAL_UNLOCK(managerLock);
-
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_GET_UPTIME_EXIT,
                        2,
@@ -553,15 +517,12 @@ time_t timeGetDayTime(void)
                        TRACE_TIME_MGT_GET_DAYTIME_ENTRY,
                        0);
 
-    KERNEL_CRITICAL_LOCK(managerLock);
     if(sSysRtcTimer.pGetDaytime != NULL)
     {
         time = sSysRtcTimer.pGetDaytime(sSysRtcTimer.pDriverCtrl);
-        KERNEL_CRITICAL_UNLOCK(managerLock);
     }
     else
     {
-        KERNEL_CRITICAL_UNLOCK(managerLock);
         time.hours   = 0;
         time.minutes = 0;
         time.seconds = 0;
@@ -607,8 +568,6 @@ void timeWaitNoScheduler(const uint64_t ns)
 
     sActiveWait[cpuId] = 0;
 
-    /* We can lock here, the is no scheduler using this */
-    KERNEL_CRITICAL_LOCK(managerLock);
     if(sSysLifetimeTimer.pGetTimeNs == NULL)
     {
         if(sSysMainTimer.pGetTimeNs != NULL)
@@ -637,78 +596,12 @@ void timeWaitNoScheduler(const uint64_t ns)
         while(sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl) <
               currTime + ns){}
     }
-    KERNEL_CRITICAL_UNLOCK(managerLock);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
                        2,
                        (uint32_t)(ns >> 32),
                        (uint32_t)ns);
-}
-
-OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(void))
-{
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_REG_SCHED_ENTRY,
-                       2,
-                       0,
-                       (uint32_t)pSchedRoutine);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_REG_SCHED_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pSchedRoutine >> 32),
-                       (uint32_t)(uintptr_t)pSchedRoutine);
-#endif
-
-    KERNEL_CRITICAL_LOCK(managerLock);
-    if(pSchedRoutine == NULL)
-    {
-        KERNEL_CRITICAL_UNLOCK(managerLock);
-#ifdef ARCH_32_BITS
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_REG_SCHED_EXIT,
-                           3,
-                           0,
-                           (uint32_t)pSchedRoutine,
-                           OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_REG_SCHED_EXIT,
-                           3,
-                           (uint32_t)((uintptr_t)pSchedRoutine >> 32),
-                           (uint32_t)(uintptr_t)pSchedRoutine,
-                           OS_ERR_NULL_POINTER);
-#endif
-        return OS_ERR_NULL_POINTER;
-    }
-
-
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Registered scheduler routine at 0x%p",
-                 pSchedRoutine);
-
-    sSchedRoutine = pSchedRoutine;
-    KERNEL_CRITICAL_UNLOCK(managerLock);
-
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_REG_SCHED_EXIT,
-                       3,
-                       0,
-                       (uint32_t)pSchedRoutine,
-                       OS_NO_ERR);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_REG_SCHED_EXIT,
-                       3,
-                       (uint32_t)((uintptr_t)pSchedRoutine >> 32),
-                       (uint32_t)(uintptr_t)pSchedRoutine,
-                       OS_NO_ERR);
-#endif
-    return OS_NO_ERR;
 }
 
 /************************************ EOF *************************************/

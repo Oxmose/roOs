@@ -151,7 +151,7 @@ __kinitApPM64bEntry:
     mov rbx, _KERNEL_STACKS_BASE - 16
     add rax, rbx
     mov rsp, rax
-    mov rbp, rsp
+    mov rbp, 0
 
     ; RCX contains the CPU ID, set as first parameter
     mov rdi, rcx

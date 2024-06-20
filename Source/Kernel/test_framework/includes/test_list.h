@@ -40,7 +40,7 @@
 #define TEST_OS_QUEUE_ENABLED                     0
 #define TEST_OS_VECTOR_ENABLED                    0
 #define TEST_OS_UHASHTABLE_ENABLED                0
-#define TEST_DEVTREE_ENABLED                      1
+#define TEST_DEVTREE_ENABLED                      0
 
 /*************************************************
  * TEST IDENTIFIERS

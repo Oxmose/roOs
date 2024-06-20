@@ -97,15 +97,28 @@ do {                                                                    \
  ******************************************************************************/
 
 /**
+ * @brief Prints a formated string to the screen. Used in panic for its lack
+ * of locks.
+ *
+ * @details Prints the desired string to the screen. This uses the generic
+ * graphic driver to output data. Used in panic for its lack
+ * of locks.
+ *
+ * @param[in] kpFmt The format string to output.
+ * @param[in] ... format's parameters.
+ */
+void kprintfPanic(const char* kpFmt, ...);
+
+/**
  * @brief Prints a formated string to the screen.
  *
  * @details Prints the desired string to the screen. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] pFmt The format string to output.
+ * @param[in] kpFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kprintf(const char* pFmt, ...);
+void kprintf(const char* kpFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -114,10 +127,10 @@ void kprintf(const char* pFmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] pFmt The format string to output.
+ * @param[in] kpFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kprintfError(const char* pFmt, ...);
+void kprintfError(const char* kpFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -126,10 +139,10 @@ void kprintfError(const char* pFmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] pFmt The format string to output.
+ * @param[in] kpFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kprintfSuccess(const char* pFmt, ...);
+void kprintfSuccess(const char* kpFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -138,10 +151,10 @@ void kprintfSuccess(const char* pFmt, ...);
  * the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] pFmt The format string to output.
+ * @param[in] kpFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kprintfInfo(const char* pFmt, ...);
+void kprintfInfo(const char* kpFmt, ...);
 
 /**
  * @brief Prints the desired string to the screen.
@@ -150,10 +163,10 @@ void kprintfInfo(const char* pFmt, ...);
  * at the beggining of the string before printing it. This uses the generic
  * graphic driver to output data.
  *
- * @param[in] pFmt The format string to output.
+ * @param[in] kpFmt The format string to output.
  * @param[in] ... format's parameters.
  */
-void kprintfDebug(const char* pFmt, ...);
+void kprintfDebug(const char* kpFmt, ...);
 
 /**
  * @brief Flushes the output buffer.

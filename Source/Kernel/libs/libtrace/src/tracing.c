@@ -148,7 +148,7 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
     timestamp = tracingTimerGetTick();
     cpuId     = cpuGetId();
 
-    cpuSpinlockAcquire(&sTraceLock[0]);
+    spinlockAcquire(&sTraceLock[0]);
 
     /* Init the tracing feature is needed */
     if(sEnabled == FALSE)
@@ -156,9 +156,9 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
         _kernelTraceInit();
     }
 
-    cpuSpinlockRelease(&sTraceLock[0]);
+    spinlockRelease(&sTraceLock[0]);
 
-    cpuSpinlockAcquire(&sTraceLock[cpuId]);
+    spinlockAcquire(&sTraceLock[cpuId]);
 
     /* Check the sCursor position and cycle if needed */
     if(sizeof(uint32_t) * (3 + kFieldCount) + sCursor[cpuId] >=
@@ -186,7 +186,7 @@ void kernelTraceEvent(const TRACE_EVENT_E kEvent,
 
     __builtin_va_end(args);
 
-    cpuSpinlockRelease(&sTraceLock[cpuId]);
+    spinlockRelease(&sTraceLock[cpuId]);
 }
 
 #endif /* #ifdef _TRACING_ENABLED */

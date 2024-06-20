@@ -30,29 +30,31 @@ global __intHandler%1
 __intHandler%1:
     push    0                       ; push 0 as dummy error code
     push    %1                      ; push the interrupt number
-    jmp     __intHandlerEntry   ; jump to the common handler
+    jmp     __intHandlerEntry       ; jump to the common handler
 %endmacro
 
-%macro ERR_CODE_INT_HANDLER 1    ; Interrupt that do not come with an
-                                       ; err code.
+%macro ERR_CODE_INT_HANDLER 1       ; Interrupt that do not come with an
+                                    ; err code.
 
 global __intHandler%1
 __intHandler%1:
     push    %1                      ; push the interrupt number
-    jmp     __intHandlerEntry   ; jump to the common handler
+    jmp     __intHandlerEntry       ; jump to the common handler
 %endmacro
 
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
 
-extern pCurrentThread
+; None
 
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
 
 extern interruptMainHandler
+extern kernelPanic
+extern cpuSaveContext
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -65,107 +67,12 @@ extern interruptMainHandler
 
 section .text
 __intHandlerEntry:
-        ; Save a bit of context
-        push rax
-        push rbx
+        ; Save the context
+        call cpuSaveContext
 
-        ; Get the current thread handle
-        mov rbx, pCurrentThread
-        mov rax, [rbx]
-        mov rax, [rax]
-
-        ; Save the interrupt context
-        mov rbx, [rsp+16]  ; Int id
-        mov [rax], rbx
-        mov rbx, [rsp+24]  ; Int code
-        mov [rax+8], rbx
-        mov rbx, [rsp+32]  ; RIP
-        mov [rax+16], rbx
-        mov rbx, [rsp+40]  ; CS
-        mov [rax+24], rbx
-        mov rbx, [rsp+48]  ; RFLAGS
-        mov [rax+32], rbx
-
-        ; Save CPU state before calling interrupt
-        mov rbx, rsp       ; RSP before int save
-        add rbx, 32
-        mov [rax+40], rbx
-
-        mov [rax+48], rbp
-        mov [rax+56], rdi
-        mov [rax+64], rsi
-        mov [rax+72], rdx
-        mov [rax+80], rcx
-
-        pop rbx             ; restore prelude rbx
-        mov [rax+88], rbx
-        push rbx            ; save rbx
-
-        mov rbx, [rsp+8]    ; pre int rax
-        mov [rax+96], rbx
-        pop rbx             ; restore prelude rbx
-
-        mov [rax+104], r8
-        mov [rax+112], r9
-        mov [rax+120], r10
-        mov [rax+128], r11
-        mov [rax+136], r12
-        mov [rax+144], r13
-        mov [rax+152], r14
-        mov [rax+160], r15
-
-        mov [rax+168], ss
-        mov [rax+176], gs
-        mov [rax+184], fs
-        mov [rax+192], es
-        mov [rax+200], ds
-
-        pop rax ; Restore
-
-        ; call the C generic interrupt handler
+        ; Call the C generic interrupt handler, we should never come back
         call interruptMainHandler
 
-        ; Get the current thread handle
-        mov rbx, pCurrentThread
-        mov rax, [rbx]
-        mov rax, [rax]
-
-        ; Restore registers
-        mov ss, [rax+168]
-        mov gs, [rax+176]
-        mov fs, [rax+184]
-        mov es, [rax+192]
-        mov ds, [rax+200]
-
-        mov r8,  [rax+104]
-        mov r9,  [rax+112]
-        mov r10, [rax+120]
-        mov r11, [rax+128]
-        mov r12, [rax+136]
-        mov r13, [rax+144]
-        mov r14, [rax+152]
-        mov r15, [rax+160]
-
-        mov rsp, [rax+40]
-        mov rbp, [rax+48]
-        mov rdi, [rax+56]
-        mov rsi, [rax+64]
-        mov rdx, [rax+72]
-        mov rcx, [rax+80]
-
-        ; Restore the interrupt context
-        mov rbx, [rax+16]  ; RIP
-        mov [rsp], rbx
-        mov rbx, [rax+24]  ; CS
-        mov [rsp+8], rbx
-        mov rbx, [rax+32]  ; RFLAGS
-        mov [rsp+16], rbx
-
-        mov rbx, [rax+88]
-        mov rax, [rax+96]
-
-        ; Return from interrupt
-        iretq
 
     ; Now create handlers for each interrupt
     ERR_CODE_INT_HANDLER 8

@@ -22,12 +22,15 @@
  ******************************************************************************/
 #include <cpu.h>           /* Generic CPU API */
 #include <panic.h>         /* Kernel Panic */
+#include <kheap.h>         /* Kernel heap */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
+#include <memory.h>        /* Memory management */
 #include <core_mgt.h>      /* Core management */
 #include <x86memory.h>     /* X86 memory definitions */
 #include <scheduler.h>     /* Kernel scheduler */
+#include <ctrl_block.h>    /* Kernel control block */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
 
@@ -85,6 +88,9 @@
 #define USER_DATA_SEGMENT_BASE_64  0x00000000
 /** @brief User's 64 bits data segment limit address. */
 #define USER_DATA_SEGMENT_LIMIT_64 0x000FFFFF
+
+/** @brief Thread's initial EFLAGS register value. */
+#define KERNEL_THREAD_INIT_RFLAGS 0x202 /* INT | PARITY */
 
 /***************************
  * GDT Flags
@@ -3773,10 +3779,78 @@ uintptr_t cpuCreateKernelStack(const size_t kStackSize)
     }
 
     /* Set end address and align on 16 bytes */
-    stackAddr += kStackSize;
-    stackAddr = (stackAddr + kStackSize) & ~0xFULL;
+    stackAddr = ((stackAddr + kStackSize) - 0xFULL) & ~0xFULL;
 
     return stackAddr;
+}
+
+void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
+                           const size_t    kStackSize)
+{
+    uintptr_t baseAddress;
+    size_t    actualSize;
+
+    /* Get the actual base address */
+    baseAddress = (kStackEndAddr - kStackSize) & PAGE_SIZE_MASK;
+    actualSize  = (kStackSize + PAGE_SIZE_MASK) & PAGE_SIZE_MASK;
+
+    memoryKernelUnmapStack(baseAddress, actualSize);
+}
+
+uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
+                              kernel_thread_t* pThread)
+{
+    virtual_cpu_t* pVCpu;
+
+    /* Allocate the new VCPU */
+    pVCpu = kmalloc(sizeof(virtual_cpu_t));
+    if(pVCpu == NULL)
+    {
+        return 0;
+    }
+
+    /* Setup the interrupt context */
+    pVCpu->intContext.intId     = 0;
+    pVCpu->intContext.errorCode = 0;
+    pVCpu->intContext.rip       = (uintptr_t)kEntryPoint;
+    pVCpu->intContext.cs        = KERNEL_CS_64;
+    pVCpu->intContext.rflags    = KERNEL_THREAD_INIT_RFLAGS;
+
+    /* Setup stack pointers */
+    pVCpu->cpuState.rsp = pThread->kernelStackEnd;
+    pVCpu->cpuState.rbp = 0;
+
+    /* Setup the CPU state */
+    pVCpu->cpuState.rdi = 0;
+    pVCpu->cpuState.rsi = 0;
+    pVCpu->cpuState.rdx = 0;
+    pVCpu->cpuState.rcx = 0;
+    pVCpu->cpuState.rbx = 0;
+    pVCpu->cpuState.rax = 0;
+    pVCpu->cpuState.r8  = 0;
+    pVCpu->cpuState.r9  = 0;
+    pVCpu->cpuState.r10 = 0;
+    pVCpu->cpuState.r11 = 0;
+    pVCpu->cpuState.r12 = 0;
+    pVCpu->cpuState.r13 = 0;
+    pVCpu->cpuState.r14 = 0;
+    pVCpu->cpuState.r15 = 0;
+    pVCpu->cpuState.ss  = KERNEL_DS_64;
+    pVCpu->cpuState.gs  = 0;
+    pVCpu->cpuState.fs  = KERNEL_DS_64;
+    pVCpu->cpuState.es  = KERNEL_DS_64;
+    pVCpu->cpuState.ds  = KERNEL_DS_64;
+
+    return (uintptr_t)pVCpu;
+}
+
+void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
+{
+    CPU_ASSERT(kVCpuAddress != (uintptr_t)NULL,
+               "Destroying a NULL vCPU",
+               OS_ERR_NULL_POINTER);
+
+    kfree((void*)kVCpuAddress);
 }
 
 /************************************ EOF *************************************/

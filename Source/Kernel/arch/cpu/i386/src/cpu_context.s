@@ -33,7 +33,7 @@
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
-extern pCurrentThread
+extern pCurrentThreadsPtr
 
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
@@ -58,31 +58,19 @@ cpuSaveContext:
         ; Save a bit of context
         push eax
         push ebx
+        push edx
 
         ; Get the current thread handle
         mov eax, 4
         mov ebx, gs ; GS stores the CPU id
         mul ebx
-        mov ebx, pCurrentThread
+        mov ebx, pCurrentThreadsPtr
         add eax, ebx
         mov eax, [eax]
-
-        ; Check if the current thread is not NULL
-        cmp eax, 0
-        jne __cpuSaveContextValid
-
-        ; Context is NULL, set panic parameters and call
-        mov eax, [esp+12]  ; Int id
-        push eax
-        mov eax, 0
-        push eax
-        push eax
-        push eax
-        push eax
-        call kernelPanic
-
-__cpuSaveContextValid:
         mov eax, [eax]
+
+        ; Restore EDX used with mul
+        pop edx
 
         ; Save the interrupt context
         mov ebx, [esp+12]  ; Int id

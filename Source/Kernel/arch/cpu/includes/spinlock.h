@@ -1,35 +1,31 @@
 /*******************************************************************************
- * @file userinit.h
+ * @file spinlock.h
  *
- * @see userinit.c
+ * @see critical.h
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 16/06/2024
+ * @date 01/04/2023
  *
  * @version 1.0
  *
- * @brief Kernel's user entry point.
+ * @brief Kernel's spinlock management module.
  *
- * @details Kernel's user entry point. This file gather the functions called
- * by the kernel just before starting the scheduler and executing the tast.
- * Users can use this function to add relevant code to their applications'
- * initialization or for other purposes.
- *
- * @warning All interrupts are disabled when calling the user initialization
- * functions.
+ * @details Kernel's spinlock management module. Defines the different basic
+ * synchronization primitives used in the kernel.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __USER_USERINIT_H_
-#define __USER_USERINIT_H_
+#ifndef __CPU_SPINLOCK_H_
+#define __CPU_SPINLOCK_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-/* None */
+#include <stdint.h> /* Standard int definitions */
+#include <config.h> /* Configuration */
 
 /*******************************************************************************
  * CONSTANTS
@@ -41,13 +37,34 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines a kernel spinlock. */
+typedef struct
+{
+    /** @brief The lock value */
+    volatile uint32_t lock;
+
+    /** @brief The interrupt state when acquiring the lock */
+    uint8_t intState[MAX_CPU_COUNT];
+} kernel_spinlock_t;
 
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Initializes a spinlock.
+ *
+ * @details Initializes a spinlock. This function is safe in kernel mode.
+ *
+ * @param[out] LOCK The lock to initialize.
+*/
+#define KERNEL_SPINLOCK_INIT(LOCK) {    \
+    LOCK.lock = 0;                      \
+}
+
+
+/** @brief Kernel spinlock initializer */
+#define KERNEL_SPINLOCK_INIT_VALUE {0}
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -67,20 +84,23 @@
  ******************************************************************************/
 
 /**
- * @brief Kernel's user entry point.
+ * @brief Locks a spinlock.
  *
- * @details Kernel's user entry point. This functions is called
- * by the kernel just before starting the scheduler and executing the tast.
- * Users can use this function to add relevant code to their applications'
- * initialization or for other purposes.
+ * @details Locks a spinlock. This function is safe in kernel mode.
  *
- * @warning This function runs in the idle task of the system. The use may not
- * use sleep, join and other thread management functions. The use should create
- * a new thread to perform those actions.
- */
-void userInit(void);
+ * @param[in, out] pLock The pointer to the lock to lock.
+*/
+void spinlockAcquire(volatile uint32_t * pLock);
 
+/**
+ * @brief Unlocks a spinlock.
+ *
+ * @details Unlocks a spinlock. This function is safe in kernel mode.
+ *
+ * @param[out] pLock The pointer to the lock to unlock.
+*/
+void spinlockRelease(volatile uint32_t * pLock);
 
-#endif /* #ifndef __USER_USERINIT_H_ */
+#endif /* #ifndef __CPU_SPINLOCK_H_ */
 
 /************************************ EOF *************************************/

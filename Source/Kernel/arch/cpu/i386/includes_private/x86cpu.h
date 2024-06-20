@@ -97,7 +97,7 @@ typedef struct
 
     /** @brief Virtual CPU context */
     cpu_state_t cpuState;
-} virtual_cpu_t;
+} __attribute__((packed)) virtual_cpu_t;
 
 /*******************************************************************************
  * MACROS

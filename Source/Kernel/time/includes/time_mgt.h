@@ -304,21 +304,6 @@ uint64_t timeGetTicks(const uint8_t kCpuId);
  */
 void timeWaitNoScheduler(const uint64_t kNs);
 
-/**
- * @brief Registers the function to call the system's scheduler.
- *
- * @details Registers the function to call the system's scheduler. This function
- * will be called at each tick of the main timer.
- *
- * @param[in] pSchedRoutine The scheduling routine to call every tick.
- *
- * @return The success state or the error code.
- * - OS_NO_ERR is returned if no error is encountered.
- * - OS_ERR_NULL_POINTER if the scheduler routine pointer is NULL.
- */
-OS_RETURN_E timeRegisterSchedRoutine(void(*pSchedRoutine)(void));
-
-
 #endif /* #ifndef __TIME_TIME_MGT_H_ */
 
 /************************************ EOF *************************************/

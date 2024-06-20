@@ -426,6 +426,19 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
  */
 static void _memoryMgrInitPaging(void);
 
+
+/**
+ * @brief Returns the physical address of a virtual address mapped in the
+ * current page directory.
+ *
+ * @details Returns the physical address of a virtual address mapped in the
+ * current page directory. If not found, KERNEL_VIRTUAL_ADDR_MAX is returned.
+ *
+ * @returns The physical address of a virtual address mapped in the
+ * current page directory. If not found, KERNEL_VIRTUAL_ADDR_MAX is returned.
+ */
+static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -925,7 +938,7 @@ static void _removeBlock(mem_list_t*  pList,
                  baseAddress,
                  limit);
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_CRITICAL_LOCK(pList->lock);
 
     /* Try to find all the regions that might be impacted */
     pCursor = pList->pQueue->pHead;
@@ -1291,8 +1304,8 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
 {
     size_t     toMap;
     int8_t     j;
-    uint32_t   mapFlags;
-    uint32_t   mapPgdirFlags;
+    uint64_t   mapFlags;
+    uint64_t   mapPgdirFlags;
     bool_t     isMapped;
     bool_t     isHardware;
     bool_t     isMemory;
@@ -1480,6 +1493,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
                     PAGE_FLAG_USER_ACCESS   |
                     PAGE_FLAG_READ_WRITE    |
                     PAGE_FLAG_CACHE_WB      |
+                    PAGE_FLAG_XD            |
                     PAGE_FLAG_PRESENT;
 
     /* Apply the mapping */
@@ -2254,6 +2268,7 @@ static void _memoryMgrInitPaging(void)
         PAGE_FLAG_PAGE_SIZE_4KB                          |
         PAGE_FLAG_SUPER_ACCESS                           |
         PAGE_FLAG_READ_WRITE                             |
+        PAGE_FLAG_XD                                     |
         PAGE_FLAG_PRESENT;
 
     /* Update the whole page table */
@@ -2327,6 +2342,62 @@ static void _memoryMgrInitPaging(void)
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_INIT_MAPPING_EXIT,
                        0);
+}
+
+static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
+{
+    uintptr_t  retPhysAddr;
+    uintptr_t* pRecurTableEntry;
+    uint16_t   pmlEntry[4];
+    int8_t     j;
+
+    retPhysAddr = KERNEL_VIRTUAL_ADDR_MAX;
+
+    KERNEL_CRITICAL_LOCK(sLock);
+    pmlEntry[3] = (kVirtualAddress >> PML4_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[2] = (kVirtualAddress >> PML3_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[1] = (kVirtualAddress >> PML2_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[0] = (kVirtualAddress >> PML1_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+
+    for(j = 3; j >= 0; --j)
+    {
+        if(j == 3)
+        {
+            pRecurTableEntry = (uintptr_t*)KERNEL_RECUR_PML4_DIR_BASE;
+        }
+        else if(j == 2)
+        {
+            pRecurTableEntry =
+                (uintptr_t*)KERNEL_RECUR_PML3_DIR_BASE(pmlEntry[3]);
+        }
+        else if(j == 1)
+        {
+            pRecurTableEntry =
+                (uintptr_t*)KERNEL_RECUR_PML2_DIR_BASE(pmlEntry[3],
+                                                       pmlEntry[2]);
+        }
+
+        if((pRecurTableEntry[pmlEntry[j]] & PAGE_FLAG_PRESENT) != 0)
+        {
+            if(j == 0)
+            {
+                retPhysAddr = (pRecurTableEntry[pmlEntry[j]] &
+                               sPhysAddressWidthMask) & ~PAGE_SIZE_MASK;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    KERNEL_CRITICAL_UNLOCK(sLock);
+
+    return retPhysAddr;
 }
 
 void memoryMgrInit(void)
@@ -2557,6 +2628,104 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
                        error);
 
     return error;
+}
+
+void* memoryKernelMapStack(const size_t kSize)
+{
+    size_t      pageCount;
+    size_t      mappedCount;
+    size_t      i;
+    OS_RETURN_E error;
+    uintptr_t   pageBaseAddress;
+    uintptr_t   newFrame;
+
+
+    /* Get the page count */
+    pageCount = ALIGN_UP(kSize, KERNEL_PAGE_SIZE) / KERNEL_PAGE_SIZE;
+
+    /* Request the pages + 1 to catch overflow (not mapping the last page)*/
+    pageBaseAddress = _allocateKernelPages(pageCount + 1);
+    if(pageBaseAddress == 0)
+    {
+        return NULL;
+    }
+
+    /* Now map, we do not need contiguous frames */
+    for(i = 0; i < pageCount; ++i)
+    {
+        newFrame = _allocateFrames(1);
+        if(newFrame == 0)
+        {
+            break;
+        }
+
+        error = _memoryMgrMap(pageBaseAddress + i * KERNEL_PAGE_SIZE,
+                              newFrame,
+                              1,
+                              MEMMGR_MAP_RW | MEMMGR_MAP_KERNEL);
+        if(error != OS_NO_ERR)
+        {
+            /* On error, release the frame */
+            _releaseFrames(newFrame, 1);
+            break;
+        }
+    }
+
+    /* Check if everything is mapped, if not unmap and return */
+    if(i < pageCount)
+    {
+        if(i != 0)
+        {
+            mappedCount = i;
+            /* Release frames */
+            for(i = 0; i < mappedCount; ++i)
+            {
+                newFrame = _memoryMgrGetPhysAddr(pageBaseAddress +
+                                                 KERNEL_PAGE_SIZE * i);
+                MEM_ASSERT(newFrame != KERNEL_VIRTUAL_ADDR_MAX,
+                           "Invalid physical frame",
+                           OS_ERR_INCORRECT_VALUE);
+                _releaseFrames(newFrame, 1);
+            }
+
+            _memoryMgrUnmap(pageBaseAddress, mappedCount);
+        }
+        _releaseKernelPages(pageBaseAddress, pageCount + 1);
+
+        return NULL;
+    }
+
+    return (void*)pageBaseAddress;
+}
+
+void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
+{
+    size_t    pageCount;
+    size_t    i;
+    uintptr_t frameAddr;
+
+    MEM_ASSERT((kBaseAddress & PAGE_SIZE_MASK) == 0 &&
+                (kSize & PAGE_SIZE_MASK) == 0 &&
+                kSize != 0,
+                "Unmaped kernel stack with invalid parameters",
+                OS_ERR_INCORRECT_VALUE);
+
+    /* Get the page count */
+    pageCount = kSize / KERNEL_PAGE_SIZE;
+
+    /* Free the frames and memory */
+    for(i = 0; i < pageCount; ++i)
+    {
+        frameAddr = _memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i);
+        MEM_ASSERT(frameAddr != KERNEL_VIRTUAL_ADDR_MAX,
+                   "Invalid physical frame",
+                   OS_ERR_INCORRECT_VALUE);
+        _releaseFrames(frameAddr, 1);
+    }
+
+    /* Unmap the memory */
+    _memoryMgrUnmap(kBaseAddress, pageCount);
+    _releaseKernelPages(kBaseAddress, pageCount + 1);
 }
 
 /************************************ EOF *************************************/

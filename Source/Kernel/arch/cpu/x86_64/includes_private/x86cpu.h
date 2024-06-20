@@ -113,8 +113,8 @@ typedef struct
     int_context_t intContext;
 
     /** @brief Virtual CPU context */
-    cpu_state_t vCpu;
-} virtual_cpu_t;
+    cpu_state_t cpuState;
+} __attribute__((packed)) virtual_cpu_t;
 
 /*******************************************************************************
  * MACROS

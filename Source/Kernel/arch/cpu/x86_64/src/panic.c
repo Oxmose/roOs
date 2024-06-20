@@ -30,6 +30,7 @@
 #include <time_mgt.h>         /* Time management */
 #include <critical.h>         /* Critical section */
 #include <core_mgt.h>         /* Core manager */
+#include <scheduler.h>        /* Kernel scheduler */
 #include <ctrl_block.h>       /* Thread's control block */
 #include <interrupts.h>       /* Interrupts manager */
 #include <kerneloutput.h>     /* Kernel output methods */
@@ -52,7 +53,7 @@
  ******************************************************************************/
 
 /** @brief Defines the stack trace size */
-#define STACK_TRACE_SIZE 6
+#define STACK_TRACE_SIZE 9
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -105,8 +106,19 @@ static void _printCpuFlags(const virtual_cpu_t* kpVCpu);
  * @details Prints the stack frame rewind at the moment of the panic. The frames
  * will be unwinded and the symbols printed based on the information passed by
  * multiboot at initialization time.
+ *
+ * @param[in] lastRPB The last RBP in the stack to display.
  */
-static void _printStackTrace(void);
+static void _printStackTrace(uintptr_t* lastRPB);
+
+/**
+ * @brief Kernel panic function used when the scheduler is not initialized.
+ *
+ * @details Kernel panic function used when the scheduler is not initialized.
+ * This function does not rely on the currently executed thread to display
+ * the panic information.
+ */
+static void _panicNoSched(void);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -150,87 +162,87 @@ static void _printHeader(const virtual_cpu_t* kpVCpu)
 
     kpIntState = &kpVCpu->intContext;
 
-    kprintf("##############################    KERNEL PANIC    ##########"
+    kprintfPanic("##############################    KERNEL PANIC    ##########"
                     "####################\n");
     switch(kpIntState->intId)
     {
         case 0:
-            kprintf("Division by zero                        ");
+            kprintfPanic("Division by zero                        ");
             break;
         case 1:
-            kprintf("Single-step interrupt                   ");
+            kprintfPanic("Single-step interrupt                   ");
             break;
         case 2:
-            kprintf("Non maskable interrupt                  ");
+            kprintfPanic("Non maskable interrupt                  ");
             break;
         case 3:
-            kprintf("Breakpoint                              ");
+            kprintfPanic("Breakpoint                              ");
             break;
         case 4:
-            kprintf("Overflow                                ");
+            kprintfPanic("Overflow                                ");
             break;
         case 5:
-            kprintf("Bounds                                  ");
+            kprintfPanic("Bounds                                  ");
             break;
         case 6:
-            kprintf("Invalid Opcode                          ");
+            kprintfPanic("Invalid Opcode                          ");
             break;
         case 7:
-            kprintf("Coprocessor not available               ");
+            kprintfPanic("Coprocessor not available               ");
             break;
         case 8:
-            kprintf("Double fault                            ");
+            kprintfPanic("Double fault                            ");
             break;
         case 9:
-            kprintf("Coprocessor Segment Overrun             ");
+            kprintfPanic("Coprocessor Segment Overrun             ");
             break;
         case 10:
-            kprintf("Invalid Task State Segment              ");
+            kprintfPanic("Invalid Task State Segment              ");
             break;
         case 11:
-            kprintf("Segment not present                     ");
+            kprintfPanic("Segment not present                     ");
             break;
         case 12:
-            kprintf("Stack Fault                             ");
+            kprintfPanic("Stack Fault                             ");
             break;
         case 13:
-            kprintf("General protection fault                ");
+            kprintfPanic("General protection fault                ");
             break;
         case 14:
-            kprintf("Page fault                              ");
+            kprintfPanic("Page fault                              ");
             break;
         case 16:
-            kprintf("Math Fault                              ");
+            kprintfPanic("Math Fault                              ");
             break;
         case 17:
-            kprintf("Alignment Check                         ");
+            kprintfPanic("Alignment Check                         ");
             break;
         case 18:
-            kprintf("Machine Check                           ");
+            kprintfPanic("Machine Check                           ");
             break;
         case 19:
-            kprintf("SIMD Floating-Point Exception           ");
+            kprintfPanic("SIMD Floating-Point Exception           ");
             break;
         case 20:
-            kprintf("Virtualization Exception                ");
+            kprintfPanic("Virtualization Exception                ");
             break;
         case 21:
-            kprintf("Control Protection Exception            ");
+            kprintfPanic("Control Protection Exception            ");
             break;
         case PANIC_INT_LINE:
-            kprintf("Panic generated by the kernel           ");
+            kprintfPanic("Panic generated by the kernel           ");
             break;
         default:
-            kprintf("Unknown reason                          ");
+            kprintfPanic("Unknown reason                          ");
     }
 
-    kprintf("          INT ID: 0x%02X                 \n",
+    kprintfPanic("          INT ID: 0x%02X                 \n",
                   kpIntState->intId);
-    kprintf("Instruction [RIP]: 0x%p             Error code: "
+    kprintfPanic("Instruction [RIP]: 0x%p             Error code: "
                    "0x%X       \n",
                    kpIntState->rip,
                    kpIntState->errorCode);
-    kprintf("\n\n");
+    kprintfPanic("\n\n");
 }
 
 static void _printCpuState(const virtual_cpu_t* kpVCpu)
@@ -260,32 +272,32 @@ static void _printCpuState(const virtual_cpu_t* kpVCpu)
     : "%rax"
     );
 
-    kprintf("RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
+    kprintfPanic("RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
                   cpuState->rax,
                   cpuState->rbx,
                   cpuState->rcx);
-    kprintf("RDX: 0x%p | RSI: 0x%p | RDI: 0x%p \n",
+    kprintfPanic("RDX: 0x%p | RSI: 0x%p | RDI: 0x%p \n",
                   cpuState->rdx,
                   cpuState->rsi,
                   cpuState->rdi);
-    kprintf("RBP: 0x%p | RSP: 0x%p | R8:  0x%p\n",
+    kprintfPanic("RBP: 0x%p | RSP: 0x%p | R8:  0x%p\n",
                   cpuState->rbp,
                   cpuState->rsp,
                   cpuState->r8);
-    kprintf("R9:  0x%p | R10: 0x%p | R11: 0x%p\n",
+    kprintfPanic("R9:  0x%p | R10: 0x%p | R11: 0x%p\n",
                   cpuState->r9,
                   cpuState->r10,
                   cpuState->r11);
-    kprintf("R12: 0x%p | R13: 0x%p | R14: 0x%p\n",
+    kprintfPanic("R12: 0x%p | R13: 0x%p | R14: 0x%p\n",
                   cpuState->r12,
                   cpuState->r13,
                   cpuState->r14);
-    kprintf("R15: 0x%p\n", cpuState->r15);
-    kprintf("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p\nCR4: 0x%p\n",
+    kprintfPanic("R15: 0x%p\n", cpuState->r15);
+    kprintfPanic("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p\nCR4: 0x%p\n",
                   CR0, CR2,
                   CR3,
                   CR4);
-    kprintf("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
+    kprintfPanic("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
                   "FS: 0x%04X | GS: 0x%04X\n",
                     intState->cs & 0xFFFF,
                     cpuState->ds & 0xFFFF,
@@ -320,109 +332,186 @@ static void _printCpuFlags(const virtual_cpu_t* kpVCpu)
     int8_t vif_f = (intState->rflags & 0x8000) >> 19;
     int8_t vip_f = (intState->rflags & 0x100000) >> 20;
 
-    kprintf("RFLAGS: 0x%p | ", intState->rflags);
+    kprintfPanic("RFLAGS: 0x%p | ", intState->rflags);
 
     if(cf_f != 0)
     {
-        kprintf("CF ");
+        kprintfPanic("CF ");
     }
     if(pf_f != 0)
     {
-        kprintf("PF ");
+        kprintfPanic("PF ");
     }
     if(af_f != 0)
     {
-        kprintf("AF ");
+        kprintfPanic("AF ");
     }
     if(zf_f != 0)
     {
-        kprintf("ZF ");
+        kprintfPanic("ZF ");
     }
     if(sf_f != 0)
     {
-        kprintf("SF ");
+        kprintfPanic("SF ");
     }
     if(tf_f != 0)
     {
-        kprintf("TF ");
+        kprintfPanic("TF ");
     }
     if(if_f != 0)
     {
-        kprintf("IF ");
+        kprintfPanic("IF ");
     }
     if(df_f != 0)
     {
-        kprintf("DF ");
+        kprintfPanic("DF ");
     }
     if(of_f != 0)
     {
-        kprintf("OF ");
+        kprintfPanic("OF ");
     }
     if(nf_f != 0)
     {
-        kprintf("NT ");
+        kprintfPanic("NT ");
     }
     if(rf_f != 0)
     {
-        kprintf("RF ");
+        kprintfPanic("RF ");
     }
     if(vm_f != 0)
     {
-        kprintf("VM ");
+        kprintfPanic("VM ");
     }
     if(ac_f != 0)
     {
-        kprintf("AC ");
+        kprintfPanic("AC ");
     }
     if(vif_f != 0)
     {
-        kprintf("VF ");
+        kprintfPanic("VF ");
     }
     if(vip_f != 0)
     {
-        kprintf("VP ");
+        kprintfPanic("VP ");
     }
     if(id_f != 0)
     {
-        kprintf("ID ");
+        kprintfPanic("ID ");
     }
     if((iopl0_f | iopl1_f) != 0)
     {
-        kprintf("IO: %d ", (iopl0_f | iopl1_f << 1));
+        kprintfPanic("IO: %d ", (iopl0_f | iopl1_f << 1));
     }
-    kprintf("\n");
+    kprintfPanic("\n");
 }
 
-static void _printStackTrace(void)
+static void _printStackTrace(uintptr_t* lastRBP)
 {
-    size_t        i;
-    uintptr_t*    callAddr;
-    uintptr_t*    lastRBP;
-    char*         symbol;
-
-    /* Get ebp */
-    __asm__ __volatile__ ("mov %%rbp, %0\n\t" : "=m" (lastRBP));
+    size_t    i;
+    uintptr_t callAddr;
 
     /* Get the return address */
-    callAddr = *(uintptr_t**)(lastRBP + 1);
-    for(i = 0; i < STACK_TRACE_SIZE && callAddr != NULL; ++i)
-    {
-        /* Get the associated symbol */
-        symbol = NULL;
+    kprintfPanic("Last RBP: 0x%p\n", lastRBP);
 
-        kprintf("[%u] 0x%p in %s", i, callAddr,
-                      symbol == NULL ? "[NO_SYMBOL]" : symbol);
-        if(i % 2 == 0)
+    for(i = 0; i < STACK_TRACE_SIZE && lastRBP != NULL; ++i)
+    {
+        callAddr = *(lastRBP + 1);
+
+        kprintfPanic("[%u] 0x%p", i, callAddr);
+        if(i != 0 && i % 2 == 0)
         {
-            kprintf(" | ");
+            kprintfPanic("\n");
         }
         else
         {
-            kprintf("\n");
+            kprintfPanic(" | ");
         }
-        /* TODO: We need to check if mapped to avoid another interrupt */
-        //lastRBP  = (uintptr_t*)*lastRBP;
-        //callAddr = *(uintptr_t**)(lastRBP + 1);
+        lastRBP  = (uintptr_t*)*lastRBP;
+    }
+}
+
+static void _panicNoSched(void)
+{
+    colorscheme_t  consoleScheme;
+    cursor_t       consoleCursor;
+    uint8_t        cpuId;
+    time_t         currTime;
+    uint64_t       uptime;
+    uintptr_t*     lastRBP;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_CPU_KERNEL_PANIC_HANDLER,
+                       2,
+                       0,
+                       sPanicCode);
+
+    interruptDisable();
+
+    cpuId = cpuGetId();
+
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_CYAN;
+    consoleScheme.vgaColor   = TRUE;
+
+    consoleSetColorScheme(&consoleScheme);
+
+    /* Clear screen */
+    consoleClear();
+    consoleCursor.x = 0;
+    consoleCursor.y = 0;
+    consoleRestoreCursor(&consoleCursor);
+
+    kprintfPanic("##############################    KERNEL PANIC    ##########"
+                    "####################\n");
+
+    kprintfPanic("\nPanic called before scheduler was initialized. Error %d\n",
+            sPanicCode);
+    uptime = timeGetUptime();
+    currTime = timeGetDayTime();
+    kprintfPanic("\n--------------------------------- INFORMATION ------------"
+                    "----------------------\n");
+    kprintfPanic("Core ID: %u | Time: %02u:%02u:%02u | "
+            "Core uptime: [%llu.%llu.%llu.%llu]\n",
+            cpuId,
+            currTime.hours,
+            currTime.minutes,
+            currTime.seconds,
+            uptime / 1000000000,
+            (uptime / 1000000) % 1000,
+            (uptime / 1000) % 1000,
+            uptime % 1000);
+
+    if(skpPanicFile != NULL)
+    {
+        kprintfPanic("File: %s at line %d\n", skpPanicFile, sPanicLine);
+    }
+
+    if(skpPanicModule != NULL && strlen(skpPanicModule) != 0)
+    {
+        kprintfPanic("[%s] | ", skpPanicModule);
+    }
+    if(skpPanicMsg != NULL)
+    {
+        kprintfPanic("%s (%d)\n\n", skpPanicMsg, sPanicCode);
+    }
+
+    /* Get rbp */
+    __asm__ __volatile__ ("mov %%rbp, %0\n\t" : "=m" (lastRBP));
+
+    _printStackTrace(lastRBP);
+
+    /* Hide cursor */
+    consoleScheme.background = BG_BLACK;
+    consoleScheme.foreground = FG_BLACK;
+    consoleScheme.vgaColor   = TRUE;
+
+    consoleSetColorScheme(&consoleScheme);
+
+    /* We will never return from interrupt */
+    while(1)
+    {
+        interruptDisable();
+        cpuHalt();
     }
 }
 
@@ -454,8 +543,8 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     cpuId = cpuGetId();
 
     /* Send IPI to all other cores and tell that the panic was delivered */
-    //coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, PANIC_INT_LINE);
     sDelivered = TRUE;
+    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, PANIC_INT_LINE);
 
     pThreadVCpu = pCurrThread->pVCpu;
 
@@ -477,9 +566,9 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     uptime = timeGetUptime();
     currTime = timeGetDayTime();
-    kprintf("\n--------------------------------- INFORMATION ------------"
+    kprintfPanic("\n--------------------------------- INFORMATION ------------"
                     "----------------------\n");
-    kprintf("Core ID: %u | Time: %02u:%02u:%02u | "
+    kprintfPanic("Core ID: %u | Time: %02u:%02u:%02u | "
             "Core uptime: [%llu.%llu.%llu.%llu]\n"
             "Thread: %s (%u) | Process: %s (%u)\n",
             cpuId,
@@ -497,19 +586,19 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     if(skpPanicFile != NULL)
     {
-        kprintf("File: %s at line %d\n", skpPanicFile, sPanicLine);
+        kprintfPanic("File: %s at line %d\n", skpPanicFile, sPanicLine);
     }
 
     if(skpPanicModule != NULL && strlen(skpPanicModule) != 0)
     {
-        kprintf("[%s] | ", skpPanicModule);
+        kprintfPanic("[%s] | ", skpPanicModule);
     }
     if(skpPanicMsg != NULL)
     {
-        kprintf("%s (%d)\n\n", skpPanicMsg, sPanicCode);
+        kprintfPanic("%s (%d)\n\n", skpPanicMsg, sPanicCode);
     }
 
-    _printStackTrace();
+    _printStackTrace((uintptr_t*)pThreadVCpu->cpuState.rbp);
 
     /* Hide cursor */
     consoleScheme.background = BG_BLACK;
@@ -546,6 +635,10 @@ void kernelPanic(const uint32_t kErrorCode,
                  const size_t   kLine)
 {
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_CPU_KERNEL_PANIC,
+                       1,
+                       kErrorCode);
 
     /* We don't need interrupt anymore */
     interruptDisable();
@@ -557,13 +650,15 @@ void kernelPanic(const uint32_t kErrorCode,
     skpPanicFile   = kpFile;
     sPanicLine     = kLine;
 
-    /* Call the panic formater */
-    cpuRaiseInterrupt(PANIC_INT_LINE);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_CPU_KERNEL_PANIC,
-                       1,
-                       kErrorCode);
+    if(schedGetCurrentThread() == NULL)
+    {
+        _panicNoSched();
+    }
+    else
+    {
+        /* Call the panic formater */
+        cpuRaiseInterrupt(PANIC_INT_LINE);
+    }
 
     /* We should never get here, but just in case */
     while(1)

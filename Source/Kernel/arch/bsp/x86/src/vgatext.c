@@ -423,9 +423,8 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
 
-    /* Update framebuffer address */
-    pDrvCtrl->pFramebuffer    = mappedFrameBufferAddr;
-    pDrvCtrl->framebufferSize = frameBufferPhysSize;
+    /* Update framebuffer address but not size even if we mapped more */
+    pDrvCtrl->pFramebuffer = mappedFrameBufferAddr;
 
     /* Get the VGA CPU communication ports */
     kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_COMM_PROP, &propLen);

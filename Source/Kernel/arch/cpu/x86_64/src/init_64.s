@@ -85,7 +85,7 @@ __stackInit:
     mov rbx, 0
     mov [rax], rbx
     mov rsp, rax
-    mov rbp, rsp
+    mov rbp, 0
 
     ; Update the booted CPU count
     mov rax, 1

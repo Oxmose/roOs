@@ -34,8 +34,8 @@
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-global cpuSpinlockAcquire
-global cpuSpinlockRelease
+global spinlockAcquire
+global spinlockRelease
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -48,7 +48,7 @@ section .text
 ; Param:
 ;     Input: ESP + 4: Address of the lock
 
-cpuSpinlockAcquire:
+spinlockAcquire:
     push eax
     mov  eax, [esp + 8]
 
@@ -71,7 +71,7 @@ __pauseSpinlockPause:
 ; Param:
 ;     Input: ESP + 4: Address of the lock
 
-cpuSpinlockRelease:
+spinlockRelease:
     push eax
     mov  eax, [esp + 8]
     mov  dword [eax], 0

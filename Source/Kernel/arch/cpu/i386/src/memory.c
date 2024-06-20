@@ -868,7 +868,7 @@ static void _removeBlock(mem_list_t*  pList,
                  baseAddress,
                  limit);
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_CRITICAL_LOCK(pList->lock);
 
     /* Try to find all the regions that might be impacted */
     pCursor = pList->pQueue->pHead;
@@ -2218,6 +2218,9 @@ void* memoryKernelMapStack(const size_t kSize)
             {
                 newFrame = _memoryMgrGetPhysAddr(pageBaseAddress +
                                                  KERNEL_PAGE_SIZE * i);
+                MEM_ASSERT(newFrame != KERNEL_VIRTUAL_ADDR_MAX,
+                           "Invalid physical frame",
+                           OS_ERR_INCORRECT_VALUE);
                 _releaseFrames(newFrame, 1);
             }
 
@@ -2250,6 +2253,9 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     for(i = 0; i < pageCount; ++i)
     {
         frameAddr = _memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i);
+        MEM_ASSERT(frameAddr != KERNEL_VIRTUAL_ADDR_MAX,
+                   "Invalid physical frame",
+                   OS_ERR_INCORRECT_VALUE);
         _releaseFrames(frameAddr, 1);
     }
 

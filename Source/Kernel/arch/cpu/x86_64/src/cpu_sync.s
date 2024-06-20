@@ -34,8 +34,8 @@
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-global cpuSpinlockAcquire
-global cpuSpinlockRelease
+global spinlockAcquire
+global spinlockRelease
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -48,7 +48,7 @@ section .text
 ; Param:
 ;     Input: rdi: Address of the lock
 
-cpuSpinlockAcquire:
+spinlockAcquire:
 __pauseSpinlockEntry:
     lock bts dword [rdi], 0
     jc   __pauseSpinlockPause
@@ -66,7 +66,7 @@ __pauseSpinlockPause:
 ; Param:
 ;     Input: rdi: Address of the lock
 
-cpuSpinlockRelease:
+spinlockRelease:
     mov  dword [rdi], 0
     ret
 
@@ -74,3 +74,4 @@ cpuSpinlockRelease:
 ; DATA
 ;-------------------------------------------------------------------------------
 
+;************************************ EOF **************************************

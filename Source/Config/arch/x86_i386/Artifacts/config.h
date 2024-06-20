@@ -25,13 +25,13 @@
 #define KERNEL_STACK_SIZE 0x1000
 
 /* Maximal number of CPU supported by the architecture */
-#define MAX_CPU_COUNT 1
+#define MAX_CPU_COUNT 4
 
 /* Kernel log level */
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
 
 /* Kernel log on UART */
-#define DEBUG_LOG_UART      0
+#define DEBUG_LOG_UART      1
 #define DEBUG_LOG_UART_RATE BAUDRATE_115200
 
 /** @brief Defines the maximum number of process in the system. This number is

@@ -3,7 +3,7 @@
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 29/03/3023
+ * @date 29/03/2023
  *
  * @version 1.0
  *
@@ -57,7 +57,7 @@
 #define QUEUE_DEBUG_ENABLED 0
 #define KQUEUE_DEBUG_ENABLED 0
 #define RTC_DEBUG_ENABLED 0
-#define SCHED_DEBUG_ENABLED 1
+#define SCHED_DEBUG_ENABLED 0
 #define TIME_MGT_DEBUG_ENABLED 0
 #define VGA_DEBUG_ENABLED 0
 #define DTB_DEBUG_ENABLED 0

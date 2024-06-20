@@ -23,8 +23,9 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic int types */
-#include <stddef.h> /* Standard definition type */
+#include <stdint.h>   /* Generic int types */
+#include <stddef.h>   /* Standard definition type */
+#include <spinlock.h> /* Critical sections spinlock */
 
 /*******************************************************************************
  * CONSTANTS
@@ -100,7 +101,7 @@ typedef enum
 } THREAD_TYPE_E;
 
 /** @brief This is the representation of the thread for the kernel. */
-typedef struct
+typedef struct kernel_thread_t
 {
     /** @brief Thread's virtual CPU context, must be at the begining of the
      * structure for easy interface with assembly.
@@ -190,9 +191,23 @@ typedef struct
     /**************************************
      * Scheduler management
      *************************************/
+    /** @brief Associated queue node in the scheduler */
     void* pThreadNode;
 
+    /** @brief Thread's CPU affinity */
     uint64_t affinity;
+
+    /** @brief Parent thread */
+    struct kernel_thread_t* pParentThread;
+
+    /** @brief Joining thread */
+    struct kernel_thread_t* pJoiningThread;
+
+    /** @brief Currently joined thread */
+    struct kernel_thread_t* pJoinedThread;
+
+    /** @brief The thread's structure lock */
+    kernel_spinlock_t lock;
 } kernel_thread_t;
 
 /*******************************************************************************

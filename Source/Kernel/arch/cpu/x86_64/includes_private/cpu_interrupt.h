@@ -50,6 +50,10 @@
 /** @brief Defines the spurious interrupt line */
 #define SPURIOUS_INT_LINE MAX_INTERRUPT_LINE
 
+/** @brief Defines the software interrupt number for scheduling. */
+#define SCHEDULER_SW_INT_LINE 0x22
+
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/

@@ -73,16 +73,6 @@ __intHandlerEntry:
         ; Call the C generic interrupt handler, we should never come back
         call interruptMainHandler
 
-__intHandlerEntryEnd:
-        mov eax, 0
-        push eax
-        push eax
-        push eax
-        push eax
-        push eax
-        call kernelPanic
-        hlt
-        jmp __intHandlerEntryEnd
 
     ; Now create handlers for each interrupt
     ERR_CODE_INT_HANDLER 8

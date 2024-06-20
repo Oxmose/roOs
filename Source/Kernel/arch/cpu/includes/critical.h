@@ -36,15 +36,7 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/** @brief Defines a kernel spinlock. */
-typedef struct
-{
-    /** @brief The lock value */
-    volatile uint32_t lock;
-
-    /** @brief The interrupt state when acquiring the lock */
-    uint32_t intState;
-} kernel_spinlock_t;
+/* None */
 
 /*******************************************************************************
  * MACROS
@@ -90,12 +82,12 @@ typedef struct
  * @param[in, out] LOCK The lock to lock.
 */
 #define KERNEL_CRITICAL_LOCK(LOCK) {                \
-    cpuSpinlockAcquire(&((LOCK).lock));             \
-    ENTER_CRITICAL((LOCK).intState);                \
+    ENTER_CRITICAL((LOCK).intState[cpuGetId()]);                \
+    spinlockAcquire(&((LOCK).lock));             \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,       \
                        TRACE_CPU_SPINLOCK_LOCK,     \
                        1,                           \
-                       LOCK);                       \
+                       (LOCK).lock);                       \
 }
 
 /**
@@ -106,29 +98,13 @@ typedef struct
  * @param[out] LOCK The lock to unlock.
 */
 #define KERNEL_CRITICAL_UNLOCK(LOCK) {                  \
-    cpuSpinlockRelease(&((LOCK).lock));                 \
-    EXIT_CRITICAL((LOCK).intState);                     \
+    spinlockRelease(&((LOCK).lock));                 \
+    EXIT_CRITICAL((LOCK).intState[cpuGetId()]);                     \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,           \
                        TRACE_CPU_SPINLOCK_UNLOCK,       \
                        1,                               \
                        LOCK);                           \
 }
-
-/**
- * @brief Initializes a spinlock.
- *
- * @details Initializes a spinlock. This function is safe in kernel mode.
- *
- * @param[out] LOCK The lock to initialize.
-*/
-#define KERNEL_SPINLOCK_INIT(LOCK) {    \
-    LOCK.lock = 0;                      \
-    LOCK.intState = 0;                  \
-}
-
-
-/** @brief Kernel spinlock initializer */
-#define KERNEL_SPINLOCK_INIT_VALUE {.lock = 0, .intState = 0}
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -147,23 +123,7 @@ typedef struct
  * FUNCTIONS
  ******************************************************************************/
 
-/**
- * @brief Locks a spinlock.
- *
- * @details Locks a spinlock. This function is safe in kernel mode.
- *
- * @param[in, out] pLock The pointer to the lock to lock.
-*/
-void cpuSpinlockAcquire(volatile uint32_t * pLock);
-
-/**
- * @brief Unlocks a spinlock.
- *
- * @details Unlocks a spinlock. This function is safe in kernel mode.
- *
- * @param[out] pLock The pointer to the lock to unlock.
-*/
-void cpuSpinlockRelease(volatile uint32_t * pLock);
+/* None */
 
 #endif /* #ifndef __CPU_CRITICAL_H_ */
 

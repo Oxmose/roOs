@@ -136,36 +136,10 @@ static void* _shellEntry(void* args)
     while(TRUE)
     {
         _shellPrintHeader();
-
         schedSleep(1000000000);
     }
 
     return (void*)0;
-}
-
-unsigned long next=1;
-int rand(void) ;
-void* testThread(void* args);
-int rand(void)
-{
-    next = next*1103515245 + 12345;
-    return (unsigned int)(next/65536) % 32768;
-}
-
-void* testThread(void* args)
-{
-    (void)args;
-
-    while(1)
-    {
-        for(volatile int i = 0; i < 100 * (rand() % 1000000000); ++i)
-        {
-
-        }
-        schedSleep(1000000);
-    }
-
-    return NULL;
 }
 
 void kernelShellInit(void)
@@ -184,14 +158,6 @@ void kernelShellInit(void)
                                     0,
                                     _shellEntry,
                                     NULL);
-    error = schedCreateKernelThread(&pShellThread,
-                                    1,
-                                    "K_SHELLTEST",
-                                    0x1000,
-                                    0,
-                                    testThread,
-                                    NULL);
-
     if(error != OS_NO_ERR)
     {
         KERNEL_ERROR("Failed to start the kernel shell. Error %d\n", error);

@@ -155,7 +155,7 @@ __kinitHigh:
     mov ebx, KERNEL_STACK_SIZE - 16
     add eax, ebx
     mov esp, eax
-    mov ebp, esp
+    mov ebp, 0
 
     ; Update the booted CPU count
     mov eax, 1

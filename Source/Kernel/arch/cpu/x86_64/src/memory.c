@@ -2351,6 +2351,12 @@ static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
     uint16_t   pmlEntry[4];
     int8_t     j;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_ENTRY,
+                       2,
+                       (uint32_t)(kVirtualAddress >> 32),
+                       (uint32_t)kVirtualAddress);
+
     retPhysAddr = KERNEL_VIRTUAL_ADDR_MAX;
 
     KERNEL_CRITICAL_LOCK(sLock);
@@ -2396,6 +2402,14 @@ static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
     }
 
     KERNEL_CRITICAL_UNLOCK(sLock);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_EXIT,
+                       4,
+                       (uint32_t)(kVirtualAddress >> 32),
+                       (uint32_t)kVirtualAddress,
+                       (uint32_t)(retPhysAddr >> 32),
+                       (uint32_t)retPhysAddr);
 
     return retPhysAddr;
 }
@@ -2639,6 +2653,12 @@ void* memoryKernelMapStack(const size_t kSize)
     uintptr_t   pageBaseAddress;
     uintptr_t   newFrame;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_KERNEL_MAP_STACK_ENTRY,
+                       2,
+                       (uint32_t)(kSize >> 32),
+                       (uint32_t)kSize);
+
 
     /* Get the page count */
     pageCount = ALIGN_UP(kSize, KERNEL_PAGE_SIZE) / KERNEL_PAGE_SIZE;
@@ -2692,8 +2712,16 @@ void* memoryKernelMapStack(const size_t kSize)
         }
         _releaseKernelPages(pageBaseAddress, pageCount + 1);
 
-        return NULL;
+        pageBaseAddress = (uintptr_t)NULL;
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_KERNEL_MAP_STACK_EXIT,
+                       4,
+                       (uint32_t)(kSize >> 32),
+                       (uint32_t)kSize,
+                       (uint32_t)(pageBaseAddress >> 32),
+                       (uint32_t)pageBaseAddress);
 
     return (void*)pageBaseAddress;
 }
@@ -2703,6 +2731,14 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     size_t    pageCount;
     size_t    i;
     uintptr_t frameAddr;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_KERNEL_UNMAP_STACK_ENTRY,
+                       4,
+                       (uint32_t)(kSize >> 32),
+                       (uint32_t)kSize,
+                       (uint32_t)(kBaseAddress >> 32),
+                       (uint32_t)kBaseAddress);
 
     MEM_ASSERT((kBaseAddress & PAGE_SIZE_MASK) == 0 &&
                 (kSize & PAGE_SIZE_MASK) == 0 &&
@@ -2726,6 +2762,14 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     /* Unmap the memory */
     _memoryMgrUnmap(kBaseAddress, pageCount);
     _releaseKernelPages(kBaseAddress, pageCount + 1);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_KERNEL_UNMAP_STACK_EXIT,
+                       4,
+                       (uint32_t)(kSize >> 32),
+                       (uint32_t)kSize,
+                       (uint32_t)(kBaseAddress >> 32),
+                       (uint32_t)kBaseAddress);
 }
 
 /************************************ EOF *************************************/

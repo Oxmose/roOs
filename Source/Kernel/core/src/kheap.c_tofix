@@ -605,26 +605,15 @@ void* kmalloc(size_t size)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
+    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
+                       TRACE_KHEAP_MALLOC_EXIT,
+                       5,
+                       KERNEL_TRACE_HIGH(size),
+                       KERNEL_TRACE_LOW(size),
+                       KERNEL_TRACE_HIGH(pChunk->pData),
+                       KERNEL_TRACE_LOW(pChunk->pData)
+                       sMemFree);
 
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_MALLOC_EXIT,
-                       5,
-                       (uint32_t)((uint64_t)size >> 32),
-                       (uint32_t)size,
-                       0,
-                       (uint32_t)pChunk->pData,
-                       sMemFree);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_MALLOC_EXIT,
-                       5,
-                       (uint32_t)((uint64_t)size >> 32),
-                       (uint32_t)size,
-                       (uint32_t)(pChunk->pData >> 32),
-                       (uint32_t)(pChunk->pData & 0xFFFFFFFF),
-                       sMemFree);
-#endif
     return pChunk->pData;
 }
 
@@ -638,41 +627,22 @@ void kfree(void* ptr)
     uint32_t     used;
 #endif
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
                        TRACE_KHEAP_FREE_ENTRY,
                        3,
-                       0,
-                       (uint32_t)ptr,
+                       KERNEL_TRACE_HIGH(ptr),
+                       KERNEL_TRACE_LOW(ptr),
                        sMemFree);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_FREE_ENTRY,
-                       3,
-                       (uint32_t)(ptr >> 32),
-                       (uint32_t)(ptr & 0xFFFFFFFF),
-                       sMemFree);
-#endif
 
     if(sInit == FALSE || ptr == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
                            TRACE_KHEAP_FREE_EXIT,
                            4,
-                           0,
-                           (uint32_t)ptr,
+                           KERNEL_TRACE_HIGH(ptr),
+                           KERNEL_TRACE_LOW(ptr),
                            -1,
                            sMemFree);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                           TRACE_KHEAP_FREE_EXIT,
-                           4,
-                           (uint32_t)(ptr >> 32),
-                           (uint32_t)(ptr & 0xFFFFFFFF),
-                           -1,
-                           sMemFree);
-#endif
         return;
     }
 
@@ -720,22 +690,13 @@ void kfree(void* ptr)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
                        TRACE_KHEAP_FREE_EXIT,
                        4,
-                       0,
-                       (uint32_t)ptr,
-                       0,
-                       sMemFree);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_FREE_EXIT,
-                       4,
-                       (uint32_t)(ptr >> 32),
-                       (uint32_t)(ptr & 0xFFFFFFFF),
-                       sMemFree);
-#endif
+                       KERNEL_TRACE_HIGH(ptr),
+                       KERNEL_TRACE_LOW(ptr),
+                       KERNEL_TRACE_HIGH(sMemFree),
+                       KERNEL_TRACE_LOW(sMemFree));
 }
 
 uint32_t kHeapGetFree(void)

@@ -95,35 +95,21 @@ static console_driver_t sConsoleDriver = {NULL};
 
 OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
 {
-#ifdef ARCH_32_BITS
+
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_DRIVER_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pkDriver);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_DRIVER_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pkDriver >> 32),
-                       (uint32_t)(uintptr_t)pkDriver);
-#endif
+                       KERNEL_TRACE_HIGH(pkDriver),
+                       KERNEL_TRACE_LOW(pkDriver));
 
     sConsoleDriver = *pkDriver;
 
-#ifdef ARCH_32_BITS
+
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_DRIVER_EXIT,
                        2,
-                       0,
-                       (uint32_t)pkDriver);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_DRIVER_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pkDriver >> 32),
-                       (uint32_t)(uintptr_t)pkDriver);
-#endif
+                       KERNEL_TRACE_HIGH(pkDriver),
+                       KERNEL_TRACE_LOW(pkDriver));
     return OS_NO_ERR;
 }
 
@@ -159,74 +145,42 @@ void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
 
 void consoleSaveCursor(cursor_t* pBuffer)
 {
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_CURSOR_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_CURSOR_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pBuffer >> 32),
-                       (uint32_t)(uintptr_t)pBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
                 pSaveCursor,
                 sConsoleDriver.pDriverCtrl,
                 pBuffer);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_CURSOR_EXIT,
                        2,
-                       0,
-                       (uint32_t)pBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_CURSOR_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pBuffer >> 32),
-                       (uint32_t)(uintptr_t)pBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer));
 }
 
 void consoleRestoreCursor(const cursor_t* pkBuffer)
 {
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_RESTORE_CURSOR_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pkBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_RESTORE_CURSOR_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pkBuffer >> 32),
-                       (uint32_t)(uintptr_t)pkBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pkBuffer),
+                       KERNEL_TRACE_LOW(pkBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
                 pRestoreCursor,
                 sConsoleDriver.pDriverCtrl,
                 pkBuffer);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_RESTORE_CURSOR_EXIT,
                        2,
-                       0,
-                       (uint32_t)pkBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_RESTORE_CURSOR_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pkBuffer >> 32),
-                       (uint32_t)(uintptr_t)pkBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pkBuffer),
+                       KERNEL_TRACE_LOW(pkBuffer));
 }
 
 void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
@@ -252,92 +206,52 @@ void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
 
 void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
 {
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_COLORSCHEME_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pkColorScheme);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_COLORSCHEME_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pkColorScheme >> 32),
-                       (uint32_t)(uintptr_t)pkColorScheme);
-#endif
+                       KERNEL_TRACE_HIGH(pkColorScheme),
+                       KERNEL_TRACE_LOW(pkColorScheme));
 
     EXEC_IF_SET(sConsoleDriver,
                 pSetColorScheme,
                 sConsoleDriver.pDriverCtrl,
                 pkColorScheme);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SET_COLORSCHEME_EXIT,
                        2,
-                       0,
-                       (uint32_t)pkColorScheme);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_COLORSCHEME_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pkColorScheme >> 32),
-                       (uint32_t)(uintptr_t)pkColorScheme);
-#endif
+                       KERNEL_TRACE_HIGH(pkColorScheme),
+                       KERNEL_TRACE_LOW(pkColorScheme));
 }
 
 void consoleSaveColorScheme(colorscheme_t* pBuffer)
 {
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_COLORSCHEME_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_COLORSCHEME_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pBuffer >> 32),
-                       (uint32_t)(uintptr_t)pBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
                 pSaveColorScheme,
                 sConsoleDriver.pDriverCtrl,
                 pBuffer);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_SAVE_COLORSCHEME_EXIT,
                        2,
-                       0,
-                       (uint32_t)pBuffer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_COLORSCHEME_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pBuffer >> 32),
-                       (uint32_t)(uintptr_t)pBuffer);
-#endif
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer));
 }
 
 void consolePutString(const char* pkString)
 {
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_PUT_STRING_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pkString);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_STRING_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pkString >> 32),
-                       (uint32_t)(uintptr_t)pkString);
-#endif
+                       KERNEL_TRACE_HIGH(pkString),
+                       KERNEL_TRACE_LOW(pkString));
 
 #if DEBUG_LOG_UART
     uartDebugPutString(pkString);
@@ -347,19 +261,11 @@ void consolePutString(const char* pkString)
                 sConsoleDriver.pDriverCtrl,
                 pkString);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_PUT_STRING_EXIT,
                        2,
-                       0,
-                       (uint32_t)pkString);
-#else
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_STRING_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pkString >> 32),
-                       (uint32_t)(uintptr_t)pkString);
-#endif
+                       KERNEL_TRACE_HIGH(pkString),
+                       KERNEL_TRACE_LOW(pkString));
 }
 
 void consolePutChar(const char kCharacter)

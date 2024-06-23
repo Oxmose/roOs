@@ -1162,6 +1162,28 @@ event {
     };
 };
 
+event {
+    id = 352;
+    name = "Kernel Queue init node entry";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+    };
+};
+
+event {
+    id = 354;
+    name = "Kernel Queue init node exit";
+    fields := struct {
+        xuint32_t nodeHigh;
+        xuint32_t nodeLow;
+        xuint32_t dataHigh;
+        xuint32_t dataLow;
+    };
+};
+
 
 /********************************* X86 ACPI */
 event {

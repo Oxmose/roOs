@@ -61,11 +61,17 @@
     }                                                               \
 }
 
+#define KERNEL_TRACE_HIGH(X) ((uint32_t)((uint64_t)((uintptr_t)(X)) >> 32))
+#define KERNEL_TRACE_LOW(X) ((uint32_t)(((uintptr_t)(X))))
+
 #else
 
 #define KERNEL_TRACE_EVENT(...)
+#define KERNEL_TRACE_HIGH(X)
+#define KERNEL_TRACE_LOW(X)
 
 #endif /* #ifdef _TRACING_ENABLED */
+
 
 #ifdef _TRACING_ENABLED
 

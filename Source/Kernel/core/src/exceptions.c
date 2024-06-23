@@ -163,65 +163,36 @@ void exceptionInit(void)
 OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
                               custom_handler_t handler)
 {
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                        TRACE_EXCEPTION_REGISTER_ENTRY,
                        3,
-                       0,
-                       (uint32_t)handler,
+                       KERNEL_TRACE_HIGH(handler),
+                       KERNEL_TRACE_LOW(handler),
                        kExceptionLine);
-#else
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                       TRACE_EXCEPTION_REGISTER_ENTRY,
-                       3,
-                       (uint32_t)((uintptr_t)handler >> 32),
-                       (uint32_t)(uintptr_t)handler,
-                       kExceptionLine);
-#endif
 
     if(kExceptionLine < sMinExceptionNumber ||
        kExceptionLine > sMaxExceptionNumber)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           0,
-                           (uint32_t)handler,
+                           KERNEL_TRACE_HIGH(handler),
+                           KERNEL_TRACE_LOW(handler),
                            kExceptionLine,
                            OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
-#else
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           (uint32_t)((uintptr_t)handler >> 32),
-                           (uint32_t)(uintptr_t)handler,
-                           kExceptionLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
-#endif
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
     if(handler == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           0,
-                           (uint32_t)handler,
+                           KERNEL_TRACE_HIGH(handler),
+                           KERNEL_TRACE_LOW(handler),
                            kExceptionLine,
                            OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           (uint32_t)((uintptr_t)handler >> 32),
-                           (uint32_t)(uintptr_t)handler,
-                           kExceptionLine,
-                           OS_ERR_NULL_POINTER);
-#endif
 
         return OS_ERR_NULL_POINTER;
     }
@@ -231,23 +202,14 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
     if(pKernelInterruptHandlerTable[kExceptionLine] != NULL)
     {
         KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
-#ifdef ARCH_32_BITS
+
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           0,
-                           (uint32_t)handler,
+                           KERNEL_TRACE_HIGH(handler),
+                           KERNEL_TRACE_LOW(handler),
                            kExceptionLine,
                            OS_ERR_INTERRUPT_ALREADY_REGISTERED);
-#else
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           (uint32_t)((uintptr_t)handler >> 32),
-                           (uint32_t)(uintptr_t)handler,
-                           kExceptionLine,
-                           OS_ERR_INTERRUPT_ALREADY_REGISTERED);
-#endif
 
         return OS_ERR_INTERRUPT_ALREADY_REGISTERED;
     }
@@ -262,23 +224,13 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
 
     KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
-                           0,
-                           (uint32_t)handler,
+                           KERNEL_TRACE_HIGH(handler),
+                           KERNEL_TRACE_LOW(handler),
                            kExceptionLine,
                            OS_NO_ERR);
-#else
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           (uint32_t)((uintptr_t)handler >> 32),
-                           (uint32_t)(uintptr_t)handler,
-                           kExceptionLine,
-                           OS_NO_ERR);
-#endif
 
     return OS_NO_ERR;
 }

@@ -245,39 +245,23 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     kernel_timer_t* pTimerCopy;
     kqueue_node_t*  pNewNode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpTimer);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_AUX_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpTimer >> 32),
-                       (uint32_t)(uintptr_t)kpTimer);
-#endif
+                       KERNEL_TRACE_HIGH(kpTimer),
+                       KERNEL_TRACE_LOW(kpTimer));
 
     /* Copy the timer */
     pTimerCopy = kmalloc(sizeof(kernel_timer_t));
     if(pTimerCopy == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           0,
-                           (uint32_t)kpTimer,
+                           KERNEL_TRACE_HIGH(kpTimer),
+                           KERNEL_TRACE_LOW(kpTimer),
                            OS_ERR_NO_MORE_MEMORY);
-#else
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           (uint32_t)((uintptr_t)kpTimer >> 32),
-                           (uint32_t)(uintptr_t)kpTimer,
-                           OS_ERR_NO_MORE_MEMORY);
-#endif
+
         return OS_ERR_NO_MORE_MEMORY;
     }
     *pTimerCopy = *kpTimer;
@@ -288,21 +272,12 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     {
         kfree(pTimerCopy);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           0,
-                           (uint32_t)kpTimer,
+                           KERNEL_TRACE_HIGH(kpTimer),
+                           KERNEL_TRACE_LOW(kpTimer),
                            OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           (uint32_t)((uintptr_t)kpTimer >> 32),
-                           (uint32_t)(uintptr_t)kpTimer,
-                           OS_ERR_NULL_POINTER);
-#endif
         return OS_ERR_NULL_POINTER;
     }
 
@@ -319,21 +294,13 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         kQueueDestroyNode(&pNewNode);
         kfree(pTimerCopy);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
-                           0,
-                           (uint32_t)kpTimer,
+                           KERNEL_TRACE_HIGH(kpTimer),
+                           KERNEL_TRACE_LOW(kpTimer),
                            OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           (uint32_t)((uintptr_t)kpTimer >> 32),
-                           (uint32_t)(uintptr_t)kpTimer,
-                           OS_ERR_NULL_POINTER);
-#endif
+
         return OS_ERR_NULL_POINTER;
     }
 
@@ -342,21 +309,12 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
 
     KERNEL_CRITICAL_UNLOCK(auxTimersListLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_EXIT,
                        3,
-                       0,
-                       (uint32_t)kpTimer,
+                       KERNEL_TRACE_HIGH(kpTimer),
+                       KERNEL_TRACE_LOW(kpTimer),
                        OS_NO_ERR);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_AUX_EXIT,
-                       3,
-                       (uint32_t)((uintptr_t)kpTimer >> 32),
-                       (uint32_t)(uintptr_t)kpTimer,
-                       OS_NO_ERR);
-#endif
     return OS_NO_ERR;
 }
 
@@ -365,21 +323,12 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
 {
     OS_RETURN_E retCode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_TIMER_ENTRY,
                        3,
-                       0,
-                       (uint32_t)kpTimer,
+                       KERNEL_TRACE_HIGH(kpTimer),
+                       KERNEL_TRACE_LOW(kpTimer),
                        kType);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_TIMER_ENTRY,
-                       3,
-                       (uint32_t)((uintptr_t)kpTimer >> 32),
-                       (uint32_t)(uintptr_t)kpTimer,
-                       kType);
-#endif
 
     /* Check the main timer integrity */
     if(kpTimer == NULL ||
@@ -390,23 +339,14 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
        kpTimer->pRemoveHandler == NULL)
 
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_TIMER_EXIT,
                            4,
-                           0,
-                           (uint32_t)kpTimer,
+                           KERNEL_TRACE_HIGH(kpTimer),
+                           KERNEL_TRACE_LOW(kpTimer),
                            kType,
                            OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_TIMER_EXIT,
-                           4,
-                           (uint32_t)((uintptr_t)kpTimer >> 32),
-                           (uint32_t)(uintptr_t)kpTimer,
-                           kType,
-                           OS_ERR_NULL_POINTER);
-#endif
+
         return OS_ERR_NULL_POINTER;
     }
 
@@ -442,23 +382,13 @@ OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
         kpTimer->pEnable(kpTimer->pDriverCtrl);
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_TIMER_EXIT,
                        4,
-                       0,
-                       (uint32_t)kpTimer,
+                       KERNEL_TRACE_HIGH(kpTimer),
+                       KERNEL_TRACE_LOW(kpTimer),
                        kType,
                        retCode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_TIMER_EXIT,
-                       4,
-                       (uint32_t)((uintptr_t)kpTimer >> 32),
-                       (uint32_t)(uintptr_t)kpTimer,
-                       kType,
-                       retCode);
-#endif
 
     return retCode;
 }

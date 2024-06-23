@@ -908,19 +908,12 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     rsdp_descriptor_2_t* pExtendedRsdp;
     OS_RETURN_E          errCode;
 
-#ifdef ARCH_32_BITS
+
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpRsdpDesc);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpRsdpDesc >> 32),
-                       (uint32_t)(uintptr_t)kpRsdpDesc);
-#endif
+                       KERNEL_TRACE_HIGH(kpRsdpDesc),
+                       KERNEL_TRACE_LOW(kpRsdpDesc));
 
     ACPI_ASSERT(kpRsdpDesc != NULL,
                 "Tried to parse a NULL RSDP",
@@ -1045,19 +1038,11 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
                     errCode);
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpRsdpDesc);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDP_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpRsdpDesc >> 32),
-                       (uint32_t)(uintptr_t)kpRsdpDesc);
-#endif
+                       KERNEL_TRACE_HIGH(kpRsdpDesc),
+                       KERNEL_TRACE_LOW(kpRsdpDesc));
 }
 
 static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
@@ -1071,19 +1056,11 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     int8_t         sum;
     acpi_header_t* pAddress;
 
-#ifdef ARCH_32_BITS
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDT_ENTRY,
-                       2,
-                       0,
-                       (uint32_t)kpRrsdtPtr);
-#else
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
                        2,
-                       (uint32_t)((uintptr_t)kpRrsdtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpRrsdtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpRrsdtPtr),
+                       KERNEL_TRACE_LOW(kpRrsdtPtr));
 
     ACPI_ASSERT(kpRrsdtPtr != NULL,
                 "Tried to parse a NULL RSDT",
@@ -1149,19 +1126,11 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
         rangeBegin += sizeof(uint32_t);
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_RSDT_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpRrsdtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDT_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpRrsdtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpRrsdtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpRrsdtPtr),
+                       KERNEL_TRACE_LOW(kpRrsdtPtr));
 }
 
 #ifdef ARCH_64_BITS
@@ -1179,8 +1148,8 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_XSDT_ENTRY,
                        2,
-                       (uint32_t)((uintptr_t)kpXsdtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpXsdtPtr);
+                       KERNEL_TRACE_HIGH(kpXsdtPtr),
+                       KERNEL_TRACE_LOW(kpXsdtPtr));
 
     ACPI_ASSERT(kpXsdtPtr != NULL,
                 "Tried to parse a NULL XSDT",
@@ -1249,8 +1218,8 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_XSDT_EXIT,
                        2,
-                       (uint32_t)((uintptr_t)kpXsdtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpXsdtPtr);
+                       KERNEL_TRACE_HIGH(kpXsdtPtr),
+                       KERNEL_TRACE_LOW(kpXsdtPtr));
 
 }
 #endif
@@ -1267,19 +1236,11 @@ static void _acpiParseDT(const acpi_header_t* kpHeader,
     char        pSigStr[5];
 #endif
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_DT_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpHeader);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DT_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpHeader >> 32),
-                       (uint32_t)(uintptr_t)kpHeader);
-#endif
+                       KERNEL_TRACE_HIGH(kpHeader),
+                       KERNEL_TRACE_LOW(kpHeader));
 
     ACPI_ASSERT(kpHeader != NULL,
                 "Tried to parse a NULL DT",
@@ -1344,19 +1305,11 @@ static void _acpiParseDT(const acpi_header_t* kpHeader,
                 "Failed to unmap DT",
                 errCode);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_DT_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpHeader);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DT_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpHeader >> 32),
-                       (uint32_t)(uintptr_t)kpHeader);
-#endif
+                       KERNEL_TRACE_HIGH(kpHeader),
+                       KERNEL_TRACE_LOW(kpHeader));
 }
 
 static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
@@ -1364,19 +1317,11 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
     int32_t  sum;
     uint32_t i;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_FADT_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFadtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_FADT_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFadtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpFadtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpFadtPtr),
+                       KERNEL_TRACE_LOW(kpFadtPtr));
 
     ACPI_ASSERT(kpFadtPtr != NULL,
                 "Tried to parse a NULL FADT",
@@ -1402,19 +1347,11 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
                 "FADT Signature comparison failed",
                 OS_ERR_INCORRECT_VALUE);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_FADT_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFadtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_FADT_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFadtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpFadtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpFadtPtr),
+                       KERNEL_TRACE_LOW(kpFadtPtr));
 }
 
 static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
@@ -1431,19 +1368,11 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
     int_override_node_t* pIntOverrideNode;
     int_override_node_t* pIntOverrideListCursor;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_APIC_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpMadtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_APIC_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpMadtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpMadtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpMadtPtr),
+                       KERNEL_TRACE_LOW(kpMadtPtr));
 
     ACPI_ASSERT(kpMadtPtr != NULL,
                 "Tried to parse a NULL APIC",
@@ -1581,19 +1510,11 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
         madtEntry += pHeader->length;
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_APIC_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpMadtPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_APIC_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpMadtPtr >> 32),
-                       (uint32_t)(uintptr_t)kpMadtPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpMadtPtr),
+                       KERNEL_TRACE_LOW(kpMadtPtr));
 }
 
 static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
@@ -1603,19 +1524,11 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     hpet_node_t* pHpetNode;
     hpet_node_t* pHpetListCursor;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_HPET_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpHpetPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_HPET_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpHpetPtr >> 32),
-                       (uint32_t)(uintptr_t)kpHpetPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpHpetPtr),
+                       KERNEL_TRACE_LOW(kpHpetPtr));
 
     ACPI_ASSERT(kpHpetPtr != NULL,
                 "Tried to parse a NULL HPET",
@@ -1670,19 +1583,11 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     ADD_TO_LIST(sDrvCtrl.pHpetList, pHpetListCursor, pHpetNode);
     ++sDrvCtrl.detectedHpetCount;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
                        TRACE_X86_ACPI_PARSE_HPET_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpHpetPtr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_HPET_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpHpetPtr >> 32),
-                       (uint32_t)(uintptr_t)kpHpetPtr);
-#endif
+                       KERNEL_TRACE_HIGH(kpHpetPtr),
+                       KERNEL_TRACE_LOW(kpHpetPtr));
 }
 
 uint8_t _acpiGetLAPICCount(void)

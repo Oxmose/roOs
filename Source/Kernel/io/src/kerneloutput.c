@@ -247,19 +247,11 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     char     tmpSeq[128];
     char*    pArgsValue;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_FORMATER_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpStr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_FORMATER_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpStr >> 32),
-                       (uint32_t)(uintptr_t)kpStr);
-#endif
+                       KERNEL_TRACE_HIGH(kpStr),
+                       KERNEL_TRACE_LOW(kpStr));
 
     modifier   = 0;
     lengthMod  = 4;
@@ -417,54 +409,31 @@ static void _formater(const char* kpStr, __builtin_va_list args)
         modifier   = 0;
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_FORMATER_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpStr);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_FORMATER_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpStr >> 32),
-                       (uint32_t)(uintptr_t)kpStr);
-#endif
+                       KERNEL_TRACE_HIGH(kpStr),
+                       KERNEL_TRACE_LOW(kpStr));
 }
 
 static void _tagPrintf(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_TAGPRINTF_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TAGPRINTF_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
+
 
     if(kpFmt == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_TAGPRINTF_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_TAGPRINTF_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
     /* Prtinf format string */
@@ -477,19 +446,11 @@ static void _tagPrintf(const char* kpFmt, ...)
     sCurrentOutput.pPuts(spBuffer);
     sBufferSize = 0;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_TAGPRINTF_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TAGPRINTF_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 static inline void _toBufferStr(const char* kpString)
@@ -497,22 +458,19 @@ static inline void _toBufferStr(const char* kpString)
     size_t newSize;
     size_t i;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_TOBUFFER_STR_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpString);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_STR_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpString >> 32),
-                       (uint32_t)(uintptr_t)kpString);
-#endif
+                       KERNEL_TRACE_HIGH(kpString),
+                       KERNEL_TRACE_LOW(kpString));
 
     if(kpString == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
+                          TRACE_KOUTPUT_TOBUFFER_STR_EXIT,
+                          2,
+                          KERNEL_TRACE_HIGH(kpString),
+                          KERNEL_TRACE_LOW(kpString));
         return;
     }
 
@@ -522,20 +480,11 @@ static inline void _toBufferStr(const char* kpString)
         _toBufferChar(kpString[i]);
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_TOBUFFER_STR_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpString);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_STR_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpString >> 32),
-                       (uint32_t)(uintptr_t)kpString);
-#endif
-
+                       KERNEL_TRACE_HIGH(kpString),
+                       KERNEL_TRACE_LOW(kpString));
 }
 
 static inline void _toBufferChar(const char kCharacter)
@@ -573,35 +522,19 @@ void kprintfPanic(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTF_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTF_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -615,19 +548,11 @@ void kprintfPanic(const char* kpFmt, ...)
     sCurrentOutput.pPuts(spBuffer);
     sBufferSize = 0;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintf(const char* kpFmt, ...)
@@ -636,36 +561,21 @@ void kprintf(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_LOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(sLock);
-#ifdef ARCH_32_BITS
+
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTF_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTF_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -676,19 +586,11 @@ void kprintf(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfError(const char* kpFmt, ...)
@@ -699,36 +601,21 @@ void kprintfError(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_LOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFERROR_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(sLock);
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFERROR_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFERROR_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
+
         return;
     }
 
@@ -755,19 +642,11 @@ void kprintfError(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFERROR_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfSuccess(const char* kpFmt, ...)
@@ -778,37 +657,21 @@ void kprintfSuccess(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_LOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFSUCCESS_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -835,19 +698,11 @@ void kprintfSuccess(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfInfo(const char* kpFmt, ...)
@@ -858,37 +713,21 @@ void kprintfInfo(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_LOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFINFO_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFINFO_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFINFO_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -915,19 +754,11 @@ void kprintfInfo(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_EXIT,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFINFO_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfDebug(const char* kpFmt, ...)
@@ -939,37 +770,21 @@ void kprintfDebug(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_LOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFDEBUG_ENTRY,
                        2,
-                       0,
-                       (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFDEBUG_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 
     if(kpFmt == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                            TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
                            2,
-                           0,
-                           (uint32_t)kpFmt);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
-                           2,
-                           (uint32_t)((uintptr_t)kpFmt >> 32),
-                           (uint32_t)(uintptr_t)kpFmt);
-#endif
+                           KERNEL_TRACE_HIGH(kpFmt),
+                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -1002,19 +817,11 @@ void kprintfDebug(const char* kpFmt, ...)
 
     KERNEL_CRITICAL_UNLOCK(sLock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
                        2,
-                       0,
-                        (uint32_t)kpFmt);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)kpFmt >> 32),
-                       (uint32_t)(uintptr_t)kpFmt);
-#endif
+                       KERNEL_TRACE_HIGH(kpFmt),
+                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfFlush(void)

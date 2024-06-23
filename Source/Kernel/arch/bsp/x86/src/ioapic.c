@@ -537,23 +537,13 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
     uint32_t entryLow;
     uint32_t remapIrq;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
                        TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_ENTRY,
                        4,
-                       0,
-                       (uint32_t)pCtrl,
+                       KERNEL_TRACE_HIGH(pCtrl),
+                       KERNEL_TRACE_LOW(pCtrl),
                        kIrqNumber,
                        (uint32_t)kEnabled);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_ENTRY,
-                       4,
-                       (uint32_t)((uintptr_t)pCtrl >> 32),
-                       (uint32_t)(uintptr_t)pCtrl,
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
-#endif
 
     IOAPIC_ASSERT(kIrqNumber >= pCtrl->gsib && kIrqNumber < pCtrl->gsil,
                   "No such IRQ for current IOAPIC",
@@ -585,23 +575,13 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
                  remapIrq,
                  (uint32_t)kEnabled);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
                        TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_EXIT,
                        4,
-                       0,
-                       (uint32_t)pCtrl,
+                       KERNEL_TRACE_HIGH(pCtrl),
+                       KERNEL_TRACE_LOW(pCtrl),
                        kIrqNumber,
                        (uint32_t)kEnabled);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_EXIT,
-                       4,
-                       (uint32_t)((uintptr_t)pCtrl >> 32),
-                       (uint32_t)(uintptr_t)pCtrl,
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
-#endif
 }
 
 static INTERRUPT_TYPE_E _ioapicHandleSpurious(const uint32_t kIntNumber)

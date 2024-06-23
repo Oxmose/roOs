@@ -176,8 +176,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_WAIT_ENTRY,
                        3,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
                        kWaitValue);
 
     /* Check parameters */
@@ -186,8 +186,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAIT_EXIT,
                            4,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
                            kWaitValue,
                            OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
@@ -200,8 +200,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAIT_EXIT,
                            4,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
                            kWaitValue,
                            OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
@@ -212,8 +212,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAIT_EXIT,
                            4,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
                            kWaitValue,
                            OS_ERR_NOT_BLOCKED);
         return OS_ERR_NOT_BLOCKED;
@@ -335,8 +335,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_WAIT_EXIT,
                        4,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
                        kWaitValue,
                        error);
 
@@ -356,10 +356,10 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_WAKE_ENTRY,
                        4,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
-                       (uint32_t)((uint64_t)kWakeCount >> 32),
-                       (uint32_t)kWakeCount);
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
+                       KERNEL_TRACE_HIGH(kWakeCount),
+                       KERNEL_TRACE_LOW(kWakeCount));
 
     /* Check parameters */
     if(pFutex == NULL || pFutex->pHandle == NULL)
@@ -367,10 +367,10 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAKE_EXIT,
                            5,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
-                           (uint32_t)((uint64_t)kWakeCount >> 32),
-                           (uint32_t)kWakeCount,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
+                           KERNEL_TRACE_HIGH(kWakeCount),
+                           KERNEL_TRACE_LOW(kWakeCount),
                            OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
@@ -382,10 +382,10 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAKE_EXIT,
                            5,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
-                           (uint32_t)((uint64_t)kWakeCount >> 32),
-                           (uint32_t)kWakeCount,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
+                           KERNEL_TRACE_HIGH(kWakeCount),
+                           KERNEL_TRACE_LOW(kWakeCount),
                            OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
@@ -399,10 +399,10 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_WAKE_EXIT,
                            5,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
-                           (uint32_t)((uint64_t)kWakeCount >> 32),
-                           (uint32_t)kWakeCount,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
+                           KERNEL_TRACE_HIGH(kWakeCount),
+                           KERNEL_TRACE_LOW(kWakeCount),
                            error);
         return error;
     }
@@ -444,10 +444,10 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_WAKE_EXIT,
                        5,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
-                       (uint32_t)((uint64_t)kWakeCount >> 32),
-                       (uint32_t)kWakeCount,
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
+                       KERNEL_TRACE_HIGH(kWakeCount),
+                       KERNEL_TRACE_LOW(kWakeCount),
                        OS_NO_ERR);
 
     return OS_NO_ERR;
@@ -466,10 +466,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_CANCEL_WAIT_ENTRY,
                        5,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
-                       (uint32_t)((uint64_t)pThread >> 32),
-                       (uint32_t)pThread,
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
                        kReschedule);
 
     /* Check parameters */
@@ -478,10 +478,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_CANCEL_WAIT_EXIT,
                            6,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
-                           (uint32_t)((uint64_t)pThread >> 32),
-                           (uint32_t)pThread,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
+                           KERNEL_TRACE_HIGH(pThread),
+                           KERNEL_TRACE_LOW(pThread),
                            kReschedule,
                            OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
@@ -494,10 +494,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                            TRACE_FUTEX_CANCEL_WAIT_EXIT,
                            6,
-                           (uint32_t)((uint64_t)pFutex >> 32),
-                           (uint32_t)pFutex,
-                           (uint32_t)((uint64_t)pThread >> 32),
-                           (uint32_t)pThread,
+                           KERNEL_TRACE_HIGH(pFutex),
+                           KERNEL_TRACE_LOW(pFutex),
+                           KERNEL_TRACE_HIGH(pThread),
+                           KERNEL_TRACE_LOW(pThread),
                            kReschedule,
                            OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
@@ -520,10 +520,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
             KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                                TRACE_FUTEX_CANCEL_WAIT_EXIT,
                                6,
-                               (uint32_t)((uint64_t)pFutex >> 32),
-                               (uint32_t)pFutex,
-                               (uint32_t)((uint64_t)pThread >> 32),
-                               (uint32_t)pThread,
+                               KERNEL_TRACE_HIGH(pFutex),
+                               KERNEL_TRACE_LOW(pFutex),
+                               KERNEL_TRACE_HIGH(pThread),
+                               KERNEL_TRACE_LOW(pThread),
                                kReschedule,
                                OS_ERR_INCORRECT_VALUE);
             return OS_ERR_INCORRECT_VALUE;
@@ -538,10 +538,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
             KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                                TRACE_FUTEX_CANCEL_WAIT_EXIT,
                                6,
-                               (uint32_t)((uint64_t)pFutex >> 32),
-                               (uint32_t)pFutex,
-                               (uint32_t)((uint64_t)pThread >> 32),
-                               (uint32_t)pThread,
+                               KERNEL_TRACE_HIGH(pFutex),
+                               KERNEL_TRACE_LOW(pFutex),
+                               KERNEL_TRACE_HIGH(pThread),
+                               KERNEL_TRACE_LOW(pThread),
                                kReschedule,
                                OS_ERR_NOT_BLOCKED);
             return OS_ERR_NOT_BLOCKED;
@@ -554,10 +554,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
             KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                                TRACE_FUTEX_CANCEL_WAIT_EXIT,
                                6,
-                               (uint32_t)((uint64_t)pFutex >> 32),
-                               (uint32_t)pFutex,
-                               (uint32_t)((uint64_t)pThread >> 32),
-                               (uint32_t)pThread,
+                               KERNEL_TRACE_HIGH(pFutex),
+                               KERNEL_TRACE_LOW(pFutex),
+                               KERNEL_TRACE_HIGH(pThread),
+                               KERNEL_TRACE_LOW(pThread),
                                kReschedule,
                                OS_ERR_NOT_BLOCKED);
             return OS_ERR_NOT_BLOCKED;
@@ -598,10 +598,10 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_CANCEL_WAIT_EXIT,
                        6,
-                       (uint32_t)((uint64_t)pFutex >> 32),
-                       (uint32_t)pFutex,
-                       (uint32_t)((uint64_t)pThread >> 32),
-                       (uint32_t)pThread,
+                       KERNEL_TRACE_HIGH(pFutex),
+                       KERNEL_TRACE_LOW(pFutex),
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
                        kReschedule,
                        error);
 

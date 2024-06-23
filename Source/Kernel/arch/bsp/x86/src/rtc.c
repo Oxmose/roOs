@@ -752,37 +752,21 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     OS_RETURN_E      err;
     rtc_controler_t* pRtcCtrl;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_SET_HANDLER_ENTRY,
                        2,
-                       0,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_SET_HANDLER_ENTRY,
-                       2,
-                       (uintptr_t)pHandler >> 32,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#endif
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler));
 
     if(pHandler == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                            TRACE_X86_RTC_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
                            (uint32_t)OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)OS_ERR_NULL_POINTER);
-#endif
+
         return OS_ERR_NULL_POINTER;
     }
 
@@ -797,21 +781,12 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     {
         KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                            TRACE_X86_RTC_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
                            (uint32_t)err);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)err);
-#endif
 
         return err;
     }
@@ -823,21 +798,12 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
 
     _rtcEnable(pDrvCtrl);
 
-#ifdef ARCH_32_BITS
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)err);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)err);
-#endif
+    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
+                       TRACE_X86_RTC_SET_HANDLER_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler),
+                       (uint32_t)err);
 
     return err;
 }

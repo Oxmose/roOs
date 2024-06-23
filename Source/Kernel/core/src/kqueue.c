@@ -108,19 +108,11 @@ kqueue_node_t* kQueueCreateNode(void* pData)
 {
     kqueue_node_t* pNewNode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_CREATE_NODE_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pData);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_CREATE_NODE_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pData >> 32),
-                       (uint32_t)(uintptr_t)pData);
-#endif
+                       KERNEL_TRACE_HIGH(pData),
+                       KERNEL_TRACE_LOW(pData));
 
     /* Create new node */
     pNewNode = kmalloc(sizeof(kqueue_node_t));
@@ -133,23 +125,13 @@ kqueue_node_t* kQueueCreateNode(void* pData)
     memset(pNewNode, 0, sizeof(kqueue_node_t));
     pNewNode->pData = pData;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_CREATE_NODE_EXIT,
                        4,
-                       0,
-                       (uint32_t)pData,
-                       0,
-                       (uint32_t)pNewNode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_CREATE_NODE_EXIT,
-                       4,
-                       (uint32_t)((uintptr_t)pData >> 32),
-                       (uint32_t)(uintptr_t)pData,
-                       (uint32_t)((uintptr_t)pNewNode >> 32),
-                       (uint32_t)(uintptr_t)pNewNode);
-#endif
+                       KERNEL_TRACE_HIGH(pData),
+                       KERNEL_TRACE_LOW(pData),
+                       KERNEL_TRACE_HIGH(pNewNode),
+                       KERNEL_TRACE_LOW(pNewNode));
 
     return pNewNode;
 }
@@ -182,20 +164,11 @@ void kQueueInitNode(kqueue_node_t* pNode, void* pData)
 
 void kQueueDestroyNode(kqueue_node_t** ppNode)
 {
-
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_DESTROY_NODE,
                        2,
-                       0,
-                       (uint32_t)ppNode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_DESTROY_NODE,
-                       2,
-                       (uint32_t)((uintptr_t)ppNode >> 32),
-                       (uint32_t)(uintptr_t)ppNode);
-#endif
+                       KERNEL_TRACE_HIGH(ppNode),
+                       KERNEL_TRACE_LOW(ppNode));
 
     KQUEUE_ASSERT((ppNode != NULL && *ppNode != NULL),
                   "Tried to delete a NULL node",
@@ -227,19 +200,11 @@ kqueue_t* kQueueCreate(void)
     memset(pNewQueue, 0, sizeof(kqueue_t));
     KERNEL_SPINLOCK_INIT(pNewQueue->lock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_CREATE_EXIT,
                        2,
-                       0,
-                       (uint32_t)pNewQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_CREATE_EXIT,
-                       2,
-                       (uint32_t)((uintptr_t)pNewQueue >> 32),
-                       (uint32_t)(uintptr_t)pNewQueue);
-#endif
+                       KERNEL_TRACE_HIGH(pNewQueue),
+                       KERNEL_TRACE_LOW(pNewQueue));
 
     return pNewQueue;
 }
@@ -247,19 +212,11 @@ kqueue_t* kQueueCreate(void)
 void kQueueDestroy(kqueue_t** ppQueue)
 {
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_DESTROY,
                        2,
-                       0,
-                       (uint32_t)ppQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_DESTROY,
-                       2,
-                       (uint32_t)((uintptr_t)ppQueue >> 32),
-                       (uint32_t)(uintptr_t)ppQueue);
-#endif
+                       KERNEL_TRACE_HIGH(ppQueue),
+                       KERNEL_TRACE_LOW(ppQueue));
 
     KQUEUE_ASSERT((ppQueue != NULL && *ppQueue != NULL),
                   "Tried to delete a NULL queue",
@@ -275,24 +232,13 @@ void kQueueDestroy(kqueue_t** ppQueue)
 
 void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 {
-
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
                        4,
-                       0,
-                       (uint32_t)pNode,
-                       0,
-                       (uint32_t)pQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
-                       4,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue);
-#endif
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue));
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -341,23 +287,13 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
                  "KQueue pushed knode 0x%p in kqueue 0x%p",
                  pNode,
                  pQueue);
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_EXIT,
                        4,
-                       0,
-                       (uint32_t)pNode,
-                       0,
-                       (uint32_t)pQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_EXIT,
-                       4,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue);
-#endif
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue));
 }
 
 
@@ -367,25 +303,14 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 {
     kqueue_node_t* pCursor;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
                        5,
-                       0,
-                       (uint32_t)pNode,
-                       0,
-                       (uint32_t)pQueue,
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue),
                        kPriority);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
-                       5,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue,
-                       kPriority);
-#endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -456,44 +381,25 @@ void kQueuePushPrio(kqueue_node_t* pNode,
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, MODULE_NAME,
                  "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_PRIO_EXIT,
                        5,
-                       0,
-                       (uint32_t)pNode,
-                       0,
-                       (uint32_t)pQueue,
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue),
                        kPriority);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_EXIT,
-                       5,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue,
-                       kPriority);
-#endif
 }
 
 kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 {
     kqueue_node_t* pNode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_POP_ENTRY,
                        2,
-                       0,
-                       (uint32_t)pQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_POP_ENTRY,
-                       2,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue);
-#endif
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue));
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -511,23 +417,13 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
     {
         KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                            TRACE_KQUEUE_QUEUE_POP_EXIT,
                            4,
                            NULL,
                            NULL,
-                           0,
-                           (uint32_t)pQueue);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                           TRACE_KQUEUE_QUEUE_POP_EXIT,
-                           4,
-                           NULL,
-                           NULL,
-                           (uint32_t)((uintptr_t)pQueue >> 32),
-                           (uint32_t)(uintptr_t)pQueue);
-#endif
+                           KERNEL_TRACE_HIGH(pQueue),
+                           KERNEL_TRACE_LOW(pQueue));
         return NULL;
     }
 
@@ -559,23 +455,13 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_POP_EXIT,
                        4,
-                       0,
-                       (uint32_t)pNode,
-                       0,
-                       (uint32_t)pQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_POP_EXIT,
-                       4,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue);
-#endif
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue));
 
     return pNode;
 }
@@ -584,23 +470,13 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 {
     kqueue_node_t* pNode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_FIND_ENTRY,
                        4,
-                       0,
-                       (uint32_t)kpData,
-                       0,
-                       (uint32_t)pQueue);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_FIND_ENTRY,
-                       4,
-                       (uint32_t)((uintptr_t)kpData >> 32),
-                       (uint32_t)(uintptr_t)kpData,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue);
-#endif
+                       KERNEL_TRACE_HIGH(kpData),
+                       KERNEL_TRACE_LOW(kpData),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue));
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -629,27 +505,15 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_FIND_EXIT,
                        6,
-                       0,
-                       (uint32_t)kpData,
-                       0,
-                       (uint32_t)pQueue,
-                       0,
-                       (uint32_t)pNode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_FIND_EXIT,
-                       6,
-                       (uint32_t)((uintptr_t)kpData >> 32),
-                       (uint32_t)(uintptr_t)kpData,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode);
-#endif
+                       KERNEL_TRACE_HIGH(kpData),
+                       KERNEL_TRACE_LOW(kpData),
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue),
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode));
 
     return pNode;
 }
@@ -658,23 +522,13 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 {
     kqueue_node_t* pCursor;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
                        4,
-                       0,
-                       (uint32_t)pQueue,
-                       0,
-                       (uint32_t)pNode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
-                       4,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode);
-#endif
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue),
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode));
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -702,25 +556,15 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
     if(pCursor == NULL)
     {
         KERNEL_CRITICAL_UNLOCK(pQueue->lock);
-#ifdef ARCH_32_BITS
+
         KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                            TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
                            5,
-                           0,
-                           (uint32_t)pQueue,
-                           0,
-                           (uint32_t)pNode,
+                           KERNEL_TRACE_HIGH(pQueue),
+                           KERNEL_TRACE_LOW(pQueue),
+                           KERNEL_TRACE_HIGH(pNode),
+                           KERNEL_TRACE_LOW(pNode),
                            1);
-#else
-        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                           TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
-                           5,
-                           (uint32_t)((uintptr_t)pQueue >> 32),
-                           (uint32_t)(uintptr_t)pQueue,
-                           (uint32_t)((uintptr_t)pNode >> 32),
-                           (uint32_t)(uintptr_t)pNode,
-                           1);
-#endif
         return;
     }
 
@@ -758,25 +602,14 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
                  "KQueue renoved knode 0x%p from kqueue 0x%p",
                  pNode, pQueue);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
                        5,
-                       0,
-                       (uint32_t)pQueue,
-                       0,
-                       (uint32_t)pNode,
+                       KERNEL_TRACE_HIGH(pQueue),
+                       KERNEL_TRACE_LOW(pQueue),
+                       KERNEL_TRACE_HIGH(pNode),
+                       KERNEL_TRACE_LOW(pNode),
                        0);
-#else
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
-                       5,
-                       (uint32_t)((uintptr_t)pQueue >> 32),
-                       (uint32_t)(uintptr_t)pQueue,
-                       (uint32_t)((uintptr_t)pNode >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       0);
-#endif
 }
 
 /************************************ EOF *************************************/

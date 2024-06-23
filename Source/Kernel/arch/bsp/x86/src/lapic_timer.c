@@ -823,37 +823,20 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
     OS_RETURN_E         err;
     lapic_timer_ctrl_t* pLapicTimerCtrl;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_SET_HANDLER_ENTRY,
                        2,
-                       0,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_HANDLER_ENTRY,
-                       2,
-                       (uintptr_t)pHandler >> 32,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#endif
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler));
 
     if(pHandler == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                            TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)OS_ERR_NULL_POINTER);
-#endif
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -864,21 +847,12 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
     err = interruptRegister(pLapicTimerCtrl->interruptNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                            TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
                            (uint32_t)err);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)err);
-#endif
 
         return err;
     }
@@ -890,21 +864,12 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
 
     _lapicTimerEnable(pDrvCtrl);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
                        3,
-                       0,
-                       (uintptr_t)pHandler & 0xFFFFFFFF,
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler),
                        (uint32_t)err);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                       3,
-                       (uintptr_t)pHandler >> 32,
-                       (uintptr_t)pHandler & 0xFFFFFFFF,
-                       (uint32_t)err);
-#endif
 
     return err;
 }

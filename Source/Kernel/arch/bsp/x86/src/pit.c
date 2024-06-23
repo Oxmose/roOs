@@ -594,37 +594,21 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
     pit_controler_t* pPitCtrl;
     uint32_t         intState;
 
-#ifdef ARCH_32_BITS
+
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_HANDLER_ENTRY,
                        2,
-                       0,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
-                       TRACE_X86_PIT_SET_HANDLER_ENTRY,
-                       2,
-                       (uintptr_t)pHandler >> 32,
-                       (uintptr_t)pHandler & 0xFFFFFFFF);
-#endif
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler));
 
     if(pHandler == NULL)
     {
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                            TRACE_X86_PIT_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
                            (uint32_t)OS_ERR_NULL_POINTER);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
-                           TRACE_X86_PIT_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)OS_ERR_NULL_POINTER);
-#endif
         return OS_ERR_NULL_POINTER;
     }
 
@@ -639,21 +623,12 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
     {
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-#ifdef ARCH_32_BITS
         KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                            TRACE_X86_PIT_SET_HANDLER_EXIT,
                            3,
-                           0,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
+                           KERNEL_TRACE_HIGH(pHandler),
+                           KERNEL_TRACE_LOW(pHandler),
                            (uint32_t)err);
-#else
-        KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
-                           TRACE_X86_PIT_SET_HANDLER_EXIT,
-                           3,
-                           (uintptr_t)pHandler >> 32,
-                           (uintptr_t)pHandler & 0xFFFFFFFF,
-                           (uint32_t)err);
-#endif
 
         return err;
     }
@@ -667,21 +642,12 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
     _pitEnable(pDrvCtrl);
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_HANDLER_EXIT,
                        3,
-                       0,
-                       (uintptr_t)pHandler & 0xFFFFFFFF,
+                       KERNEL_TRACE_HIGH(pHandler),
+                       KERNEL_TRACE_LOW(pHandler),
                        (uint32_t)err);
-#else
-    KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
-                       TRACE_X86_PIT_SET_HANDLER_EXIT,
-                       3,
-                       (uintptr_t)pHandler >> 32,
-                       (uintptr_t)pHandler & 0xFFFFFFFF,
-                       (uint32_t)err);
-#endif
 
     return err;
 }

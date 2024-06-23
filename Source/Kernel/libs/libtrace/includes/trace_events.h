@@ -57,7 +57,8 @@
 #define TRACE_TIME_MGT_ENABLED          (TRACE_ALL_ENABLED | 0)
 #define TRACE_CRITICAL_SECTION_ENABLED  (TRACE_ALL_ENABLED | 0)
 #define TRACE_X86_MEMMGR_ENABLED        (TRACE_ALL_ENABLED | 0)
-#define TRACE_SCHEDULER_ENABLED         (TRACE_ALL_ENABLED | 1)
+#define TRACE_SCHEDULER_ENABLED         (TRACE_ALL_ENABLED | 0)
+#define TRACE_FUTEX_ENABLED             (TRACE_ALL_ENABLED | 0)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -449,6 +450,9 @@ typedef enum
     TRACE_FUTEX_WAKE_EXIT                           = 349,
     TRACE_FUTEX_CANCEL_WAIT_ENTRY                   = 350,
     TRACE_FUTEX_CANCEL_WAIT_EXIT                    = 351,
+
+    TRACE_KQUEUE_INIT_NODE_ENTRY                    = 352,
+    TRACE_KQUEUE_INIT_NODE_EXIT                     = 353,
 
 } TRACE_EVENT_E;
 /*******************************************************************************

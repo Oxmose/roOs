@@ -216,23 +216,13 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
 {
     OS_RETURN_E retCode;
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
                        TRACE_DRV_MGR_SETDEVDATA_ENTRY,
                        4,
-                       0,
-                       (uint32_t)pkFdtNode,
-                       0,
-                       (uint32_t)pData);
-#else
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_SETDEVDATA_ENTRY,
-                       4,
-                       (uint32_t)((uintptr_t)pkFdtNode >> 32),
-                       (uint32_t)(uintptr_t)pkFdtNode,
-                       (uint32_t)((uintptr_t)pData >> 32),
-                       (uint32_t)(uintptr_t)pData);
-#endif
+                       KERNEL_TRACE_HIGH(pkFdtNode),
+                       KERNEL_TRACE_LOW(pkFdtNode),
+                       KERNEL_TRACE_HIGH(pData),
+                       KERNEL_TRACE_LOW(pData));
 
     /* Check parameters */
     if(pkFdtNode != NULL)
@@ -249,25 +239,14 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
         retCode = OS_ERR_NULL_POINTER;
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
                        TRACE_DRV_MGR_SETDEVDATA_EXIT,
                        5,
-                       0,
-                       (uint32_t)pkFdtNode,
-                       0,
-                       (uint32_t)pData,
+                       KERNEL_TRACE_HIGH(pkFdtNode),
+                       KERNEL_TRACE_LOW(pkFdtNode),
+                       KERNEL_TRACE_HIGH(pData),
+                       KERNEL_TRACE_LOW(pData),
                        retCode);
-#else
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_SETDEVDATA_EXIT,
-                       5,
-                       (uint32_t)((uintptr_t)pkFdtNode >> 32),
-                       (uint32_t)(uintptr_t)pkFdtNode,
-                       (uint32_t)((uintptr_t)pData >> 32),
-                       (uint32_t)(uintptr_t)pData,
-                       retCode);
-#endif
 
     return retCode;
 }
@@ -290,21 +269,12 @@ void* driverManagerGetDeviceData(const uint32_t kHandle)
         pDevData = kpNode->pDevData;
     }
 
-#ifdef ARCH_32_BITS
     KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
                        TRACE_DRV_MGR_GETDEVDATA_EXIT,
                        3,
                        kHandle,
-                       0,
-                       (uint32_t)pDevData);
-#else
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_GETDEVDATA_EXIT,
-                       3,
-                       kHandle,
-                       (uint32_t)((uintptr_t)pDevData >> 32),
-                       (uint32_t)(uintptr_t)pDevData);
-#endif
+                       KERNEL_TRACE_HIGH(pDevData),
+                       KERNEL_TRACE_LOW(pDevData));
 
     return pDevData;
 }

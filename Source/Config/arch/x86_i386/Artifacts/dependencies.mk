@@ -13,6 +13,7 @@ DEP_LIBS += -ltrace
 DEP_LIBS += -ltime
 DEP_LIBS += -llibc
 DEP_LIBS += -luser
+DEP_LIBS += -lsync
 DEP_LIBS += --whole-archive -lrawdtb
 ifeq ($(TESTS), TRUE)
 DEP_LIBS += --end-group
@@ -24,6 +25,7 @@ DEP_MODULES += -L../libs/bin
 DEP_MODULES += -L../core/bin
 DEP_MODULES += -L../time/bin
 DEP_MODULES += -L../user/bin
+DEP_MODULES += -L../sync/bin
 DEP_MODULES += -L../ARTIFACTS
 ifeq ($(TESTS), TRUE)
 DEP_MODULES += -L../test_framework/bin

@@ -36,6 +36,8 @@ TARGET_LIST = [
     "x86_i386"
 ]
 
+TEST_TIMEOUT = 60
+
 def Validate(jsonTestsuite):
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
     print(COLORS.OKCYAN + COLORS.BOLD + "| UTK Test Suite                                   |" + COLORS.ENDC)
@@ -147,19 +149,18 @@ def UpdateTestFile(filename, testGroup, testName):
             exit(-1)
 
         # Add or enable flags based on groups
-        for testFlag in testGroup:
-            found = False
-            pattern = re.compile("TEST_{}_ENABLED".format(testFlag))
-            newLine = "#define TEST_{}_ENABLED".format(testFlag)
-            newLine = newLine + " " * (50 - len(newLine)) + "1\n"
-            for i in range(startPosition, len(fileContent)):
-                result = pattern.search(fileContent[i])
-                if result != None:
-                    fileContent[i] = newLine
-                    found = True
-                    break
-            if not found:
-                fileContent.insert(startPosition + 1, newLine)
+        found = False
+        pattern = re.compile("TEST_{}_ENABLED".format(testGroup))
+        newLine = "#define TEST_{}_ENABLED".format(testGroup)
+        newLine = newLine + " " * (50 - len(newLine)) + "1\n"
+        for i in range(startPosition, len(fileContent)):
+            result = pattern.search(fileContent[i])
+            if result != None:
+                fileContent[i] = newLine
+                found = True
+                break
+        if not found:
+            fileContent.insert(startPosition + 1, newLine)
 
         # Save file
         fileDesc.seek(0)
@@ -196,14 +197,14 @@ if __name__ == "__main__":
         for group in jsonObject:
             print(COLORS.OKBLUE + "\n#==============================================================================#" + COLORS.ENDC)
             print(COLORS.OKBLUE + " > Executing Group {}".format(group["name"])  + COLORS.ENDC)
-            print(COLORS.OKBLUE + " > " + str(group["group"])  + COLORS.ENDC)
+            print(COLORS.OKBLUE + " > " + str(group["testname"])  + COLORS.ENDC)
             print(COLORS.OKBLUE + " > Target {}".format(target) + COLORS.ENDC)
             print(COLORS.OKBLUE + "#==============================================================================#\n"  + COLORS.ENDC)
 
             total += 1
 
             # Update test file
-            UpdateTestFile(testListFileName, group["group"], group["name"])
+            UpdateTestFile(testListFileName, group["testname"], group["name"])
 
             retValue = os.system("make clean")
             if retValue != 0:
@@ -219,7 +220,7 @@ if __name__ == "__main__":
             with open(testOutputFileName, "w") as outputFile:
                 p = subprocess.Popen(["make", "target={}".format(target), "qemu-test-mode"], stdout = outputFile)
                 try:
-                    p.wait(30)
+                    p.wait(TEST_TIMEOUT)
                 except subprocess.TimeoutExpired:
                     p.kill()
 

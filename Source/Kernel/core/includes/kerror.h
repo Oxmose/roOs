@@ -60,6 +60,12 @@ typedef enum
     OS_ERR_NOT_SUPPORTED                   = 10,
     /** @brief Memory mapping already exists */
     OS_ERR_MAPPING_ALREADY_EXISTS          = 11,
+    /** @brief Identifier not found */
+    OS_ERR_NO_SUCH_ID                      = 12,
+    /** @brief The resource was destroyed */
+    OS_ERR_DESTROYED                       = 13,
+    /** @brief The resource was not blocked */
+    OS_ERR_NOT_BLOCKED                     = 14,
 } OS_RETURN_E;
 
 /*******************************************************************************

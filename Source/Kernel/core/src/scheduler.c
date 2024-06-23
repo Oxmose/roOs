@@ -122,7 +122,7 @@ typedef struct
 #define SCHED_ASSERT(COND, MSG, ERROR) {                    \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, "SCHED", MSG, TRUE);                   \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
     }                                                       \
 }
 
@@ -343,7 +343,7 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
                        kCause,
                        kRetState);
 
-    ENTER_CRITICAL(intState);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     cpuId      = cpuGetId();
     pCurThread = pCurrentThreadsPtr[cpuId];
@@ -382,14 +382,12 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
         {
             /* Release the joining thread */
             pJoiningThread->state = THREAD_STATE_READY;
-            releaseThread(pJoiningThread);
+            schedReleaseThread(pJoiningThread);
         }
         KERNEL_CRITICAL_UNLOCK(pCurThread->pJoiningThread->lock);
     }
 
     KERNEL_CRITICAL_UNLOCK(pCurThread->lock);
-
-    EXIT_CRITICAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_THREAD_EXIT_PT_EXIT,
@@ -401,12 +399,14 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
     /* Schedule thread, no need for interrupt, the context does not need to be
      * saved.
      */
-    schedSchedule();
+    schedScheduleNoInt();
 
     /* We should never return */
     SCHED_ASSERT(FALSE,
                  "Thread retuned after exiting",
                  OS_ERR_UNAUTHORIZED_ACTION);
+
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 }
 
 
@@ -497,10 +497,10 @@ static kernel_thread_t* _getNextThreadFromTable(thread_table_t* pTable)
         /* Get a thread from the list */
         --pTable->threadCount;
         pThreadNode = kQueuePop(pTable->pReadyList[nextPrio]);
-        SCHED_ASSERT(pThreadNode != NULL,
-                     "Got a NULL thread node",
-                     OS_ERR_NULL_POINTER);
     }
+    SCHED_ASSERT(pThreadNode != NULL,
+                 "Got a NULL thread node",
+                 OS_ERR_NULL_POINTER);
 
     /* Decrease the global highest priority if needed */
     for(i = nextPrio; i < KERNEL_NONE_PRIORITY; ++i)
@@ -511,11 +511,6 @@ static kernel_thread_t* _getNextThreadFromTable(thread_table_t* pTable)
             break;
         }
     }
-
-    SCHED_ASSERT(pThreadNode != NULL,
-                 "Got a NULL thread node",
-                 OS_ERR_NULL_POINTER);
-
     pTable->highestPriority = i;
 
     KERNEL_CRITICAL_UNLOCK(pTable->lock);
@@ -564,7 +559,7 @@ static void _updateSleepingThreads(void)
                          OS_ERR_NULL_POINTER);
 
             /* Release the thread */
-            releaseThread(pThreadNode->pData);
+            schedReleaseThread(pThreadNode->pData);
         }
     }
     KERNEL_CRITICAL_UNLOCK(sSleepingThreadsTable.lock);
@@ -681,9 +676,11 @@ void schedInit(void)
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_INIT_EXIT,
                        0);
+
+    TEST_POINT_FUNCTION_CALL(schedulerTest, TEST_SCHEDULER_ENABLED);
 }
 
-void schedSchedule(void)
+void schedScheduleNoInt(void)
 {
     uint8_t          cpuId;
     uint8_t          currPrio;
@@ -695,6 +692,10 @@ void schedSchedule(void)
                        TRACE_SHEDULER_SCHEDULE_ENTRY,
                        1,
                        pCurrentThreadsPtr[cpuGetId()]->tid);
+
+    SCHED_ASSERT(cpuGeIntState() == 0,
+                 "Called scheduler no int with interrupt enabled",
+                 OS_ERR_UNAUTHORIZED_ACTION);
 
     /* Get current CPU ID */
     cpuId = cpuGetId();
@@ -725,7 +726,7 @@ void schedSchedule(void)
              * it is currently equal or higher.
              */
             KERNEL_CRITICAL_UNLOCK(sThreadTables[cpuId].lock);
-            releaseThread(pThread);
+            schedReleaseThread(pThread);
 
             /* Elect the new thread*/
             pCurrentThreadsPtr[cpuId] = _getNextThreadFromTable(pCurrentTable);
@@ -782,24 +783,33 @@ void schedSchedule(void)
                  OS_ERR_UNAUTHORIZED_ACTION);
 }
 
+void schedSchedule(void)
+{
+    /* Just generate a scheduler interrupt */
+    cpuRaiseInterrupt(sSchedulerInterruptLine);
+}
+
 void schedScheduleHandler(kernel_thread_t* pThread)
 {
     (void)pThread;
 
     /* Just call the scheduler */
-    schedSchedule();
+    schedScheduleNoInt();
 }
 
-void releaseThread(kernel_thread_t* pThread)
+void schedReleaseThread(kernel_thread_t* pThread)
 {
     uint64_t i;
     uint8_t  cpuId;
     double   lastCpuLoad;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_RELEASE_THREAD_ENTRY,
                        1,
                        pThread->tid);
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     /* Get the CPU list to release to */
     lastCpuLoad = 1000.0;
@@ -842,9 +852,9 @@ void releaseThread(kernel_thread_t* pThread)
 
     kQueuePush(pThread->pThreadNode,
                sThreadTables[cpuId].pReadyList[pThread->priority]);
+    ++sThreadTables[cpuId].threadCount;
     if(sThreadTables[cpuId].highestPriority > pThread->priority)
     {
-        ++sThreadTables[cpuId].threadCount;
         sThreadTables[cpuId].highestPriority = pThread->priority;
     }
 
@@ -861,6 +871,8 @@ void releaseThread(kernel_thread_t* pThread)
                        2,
                        pThread->tid,
                        cpuId);
+
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 }
 
 
@@ -924,12 +936,26 @@ size_t schedGetThreadCount(void)
 
 kernel_thread_t* schedGetCurrentThread(void)
 {
-    return pCurrentThreadsPtr[cpuGetId()];
+    kernel_thread_t* pCur;
+    uint32_t         intState;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    pCur = pCurrentThreadsPtr[cpuGetId()];
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    return pCur;
 }
 
 int32_t schedGetTid(void)
 {
-    return pCurrentThreadsPtr[cpuGetId()]->tid;
+    kernel_thread_t* pCur;
+    uint32_t         intState;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    pCur = pCurrentThreadsPtr[cpuGetId()];
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    return pCur->tid;
 }
 
 OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
@@ -1031,7 +1057,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     KERNEL_CRITICAL_UNLOCK(sGlobalLock);
 
     /* Release the thread */
-    releaseThread(pNewThread);
+    schedReleaseThread(pNewThread);
 
 SCHED_CREATE_KTHREAD_END:
     if(error != OS_NO_ERR)

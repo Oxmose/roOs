@@ -3682,7 +3682,7 @@ void cpuApInit(const uint8_t kCpuId)
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    schedSchedule();
+    schedScheduleNoInt();
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
@@ -3701,6 +3701,10 @@ void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
 uintptr_t cpuCreateKernelStack(const size_t kStackSize)
 {
     uintptr_t stackAddr;
+    uintptr_t newSize;
+
+    /* Align stack on 4K */
+    newSize = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
 
     /* Request to map the stack */
     stackAddr = (uintptr_t)memoryKernelMapStack(kStackSize);
@@ -3712,7 +3716,7 @@ uintptr_t cpuCreateKernelStack(const size_t kStackSize)
     }
 
     /* Set end address and align on 16 bytes */
-    stackAddr = ((stackAddr + kStackSize) - 0xFULL) & ~0xFULL;
+    stackAddr = (stackAddr + newSize - 0xFULL);
 
     return stackAddr;
 }
@@ -3724,8 +3728,8 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
     size_t    actualSize;
 
     /* Get the actual base address */
-    baseAddress = (kStackEndAddr - kStackSize) & PAGE_SIZE_MASK;
-    actualSize  = (kStackSize + PAGE_SIZE_MASK) & PAGE_SIZE_MASK;
+    actualSize  = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+    baseAddress = kStackEndAddr + 0xFULL - kStackSize;
 
     memoryKernelUnmapStack(baseAddress, actualSize);
 }

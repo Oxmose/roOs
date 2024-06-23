@@ -1,18 +1,50 @@
 [
     {
-        "name": "Basic Init Suite",
-        "group": ["KICKSTART", "PANIC"]
+        "name": "Kernel Panic Tests Suite",
+        "testname": "PANIC"
     },
     {
-        "name": "Interrupt Suite",
-        "group": ["INTERRUPT", "EXCEPTION"]
+        "name": "Futex Tests Suite",
+        "testname": "FUTEX"
     },
     {
-        "name": "Kernel Lib Suite",
-        "group": ["OS_KQUEUE", "OS_QUEUE", "OS_VECTOR", "OS_UHASHTABLE"]
+        "name": "Interrupt Tests Suite",
+        "testname": "INTERRUPT"
+    },
+    {
+        "name": "Exceptions Tests Suite",
+        "testname": "EXCEPTION"
+    },
+    {
+        "name": "Kernel Heap Tests Suite",
+        "testname": "KHEAP"
+    },
+    {
+        "name": "Kernel Queues Tests Suite",
+        "testname": "OS_KQUEUE"
+    },
+    {
+        "name": "Queues Tests Suite",
+        "testname": "OS_QUEUE"
+    },
+    {
+        "name": "Vector Tests Suite",
+        "testname": "OS_VECTOR"
+    },
+    {
+        "name": "UHashTable Tests Suite",
+        "testname": "OS_UHASHTABLE"
     },
     {
         "name": "Device Tree Lib Suite",
-        "group": ["DEVTREE"]
+        "testname": "DEVTREE"
+    },
+    {
+        "name": "Memory Suite",
+        "testname": "MEMMGR"
+    },
+    {
+        "name": "Core Suite",
+        "testname": "SCHEDULER"
     }
 ]

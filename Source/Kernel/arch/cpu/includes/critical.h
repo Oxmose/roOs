@@ -50,12 +50,12 @@
  * @details Enters a critical section in the kernel. Save interrupt state and
  * disables interrupts.
  */
-#define ENTER_CRITICAL(INT_STATE) {                  \
-    INT_STATE = interruptDisable();                  \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,        \
-                       TRACE_CPU_ENTER_CRITICAL,     \
-                       1,                            \
-                       INT_STATE);                   \
+#define KERNEL_ENTER_CRITICAL_LOCAL(INT_STATE) {                    \
+    INT_STATE = interruptDisable();                                 \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,              \
+                       TRACE_CPU_ENTER_CRITICAL,                    \
+                       1,                                           \
+                       INT_STATE);                                  \
 }
 
 /**
@@ -66,12 +66,12 @@
  * @details Exits a critical section in the kernel. Restore the previous
  * interrupt state.
  */
-#define EXIT_CRITICAL(INT_STATE) {                  \
-    interruptRestore(INT_STATE);                    \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,       \
-                       TRACE_CPU_EXIT_CRITICAL,     \
-                       1,                           \
-                       INT_STATE);                  \
+#define KERNEL_EXIT_CRITICAL_LOCAL(INT_STATE) {                 \
+    interruptRestore(INT_STATE);                                \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
+                       TRACE_CPU_EXIT_CRITICAL,                 \
+                       1,                                       \
+                       INT_STATE);                              \
 }
 
 /**
@@ -81,13 +81,13 @@
  *
  * @param[in, out] LOCK The lock to lock.
 */
-#define KERNEL_CRITICAL_LOCK(LOCK) {                \
-    ENTER_CRITICAL((LOCK).intState[cpuGetId()]);                \
-    spinlockAcquire(&((LOCK).lock));             \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,       \
-                       TRACE_CPU_SPINLOCK_LOCK,     \
-                       1,                           \
-                       (LOCK).lock);                       \
+#define KERNEL_CRITICAL_LOCK(LOCK) {                            \
+    KERNEL_ENTER_CRITICAL_LOCAL((LOCK).intState[cpuGetId()]);   \
+    spinlockAcquire(&((LOCK).lock));                            \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
+                       TRACE_CPU_SPINLOCK_LOCK,                 \
+                       1,                                       \
+                       (LOCK).lock);                            \
 }
 
 /**
@@ -97,13 +97,13 @@
  *
  * @param[out] LOCK The lock to unlock.
 */
-#define KERNEL_CRITICAL_UNLOCK(LOCK) {                  \
-    spinlockRelease(&((LOCK).lock));                 \
-    EXIT_CRITICAL((LOCK).intState[cpuGetId()]);                     \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,           \
-                       TRACE_CPU_SPINLOCK_UNLOCK,       \
-                       1,                               \
-                       LOCK);                           \
+#define KERNEL_CRITICAL_UNLOCK(LOCK) {                          \
+    spinlockRelease(&((LOCK).lock));                            \
+    KERNEL_EXIT_CRITICAL_LOCAL((LOCK).intState[cpuGetId()]);    \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
+                       TRACE_CPU_SPINLOCK_UNLOCK,               \
+                       1,                                       \
+                       LOCK);                                   \
 }
 
 /*******************************************************************************

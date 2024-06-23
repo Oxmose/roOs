@@ -132,9 +132,6 @@ typedef struct
 
     /** @brief Time base driver */
     const kernel_timer_t* kpBaseTimer;
-
-    /** @brief Driver's lock */
-    kernel_spinlock_t lock[MAX_CPU_COUNT];
 } lapic_timer_ctrl_t;
 
 /*******************************************************************************
@@ -394,10 +391,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     }
     spDrvCtrl = pDrvCtrl;
     memset(pDrvCtrl, 0, sizeof(lapic_timer_ctrl_t));
-    for(propLen = 0; propLen < MAX_CPU_COUNT; ++propLen)
-    {
-        KERNEL_SPINLOCK_INIT(pDrvCtrl->lock[propLen]);
-    }
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -674,6 +667,7 @@ static void _lapicTimerEnable(void* pDrvCtrl)
     lapic_timer_ctrl_t* pLAPICTimerCtrl;
     uint32_t            lapicInitCount;
     uint8_t             cpuId;
+    uint32_t            intState;
 
 
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
@@ -685,7 +679,7 @@ static void _lapicTimerEnable(void* pDrvCtrl)
                        pLAPICTimerCtrl->disabledNesting[cpuId]);
 
 
-    KERNEL_CRITICAL_LOCK(pLAPICTimerCtrl->lock[cpuId]);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] > 0)
     {
@@ -717,7 +711,7 @@ static void _lapicTimerEnable(void* pDrvCtrl)
                          LAPIC_TIMER_MODE_PERIODIC);
     }
 
-    KERNEL_CRITICAL_UNLOCK(pLAPICTimerCtrl->lock[cpuId]);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_ENABLE_EXIT,
@@ -729,6 +723,7 @@ static void _lapicTimerDisable(void* pDrvCtrl)
 {
     lapic_timer_ctrl_t* pLAPICTimerCtrl;
     uint8_t             cpuId;
+    uint32_t            intState;
 
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
 
@@ -738,7 +733,7 @@ static void _lapicTimerDisable(void* pDrvCtrl)
                        1,
                        pLAPICTimerCtrl->disabledNesting[cpuId]);
 
-    KERNEL_CRITICAL_LOCK(pLAPICTimerCtrl->lock[cpuId]);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] < UINT32_MAX)
     {
@@ -755,7 +750,7 @@ static void _lapicTimerDisable(void* pDrvCtrl)
     /* Set counter to 0 */
     _lapicTimerWrite(pLAPICTimerCtrl->lapicBaseAddress, LAPIC_TICR, 0);
 
-    KERNEL_CRITICAL_UNLOCK(pLAPICTimerCtrl->lock[cpuId]);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_DISABLE_EXIT,

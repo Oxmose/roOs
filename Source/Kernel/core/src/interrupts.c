@@ -241,7 +241,7 @@ void interruptMainHandler(void)
                        0);
 
     /* Schedule, we will never return */
-    schedSchedule();
+    schedScheduleNoInt();
     PANIC(OS_ERR_UNAUTHORIZED_ACTION,
           MODULE_NAME,
           "Schedule returned",
@@ -289,8 +289,6 @@ void interruptInit(void)
     sInterruptDriver.pHandleSpurious      = _initDriverHandleSpurious;
     sInterruptDriver.pSetIrqEOI           = _initDriverSetIrqEOI;
     sInterruptDriver.pSetIrqMask          = _initDriverSetIrqMask;
-
-    TEST_POINT_FUNCTION_CALL(interrupt_test, TEST_INTERRUPT_ENABLED);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED, TRACE_INTERRUPT_INIT_EXIT, 0);
 }

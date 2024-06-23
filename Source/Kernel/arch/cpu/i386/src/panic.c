@@ -407,6 +407,8 @@ static void _printStackTrace(uintptr_t* lastEBP)
     {
         callAddr = *(lastEBP + 1);
 
+        if(callAddr == 0x0) break;
+
         kprintfPanic("[%u] 0x%p", i, callAddr);
         if(i != 0 && i % 2 == 0)
         {

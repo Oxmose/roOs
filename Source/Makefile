@@ -38,26 +38,21 @@ endif
 
 build_modules:
 ifeq ($(target), x86_i386)
-# Build the architecture module
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=i386
 else ifeq ($(target), x86_64)
-# Build the architecture module
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=x86_64
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
 	@echo "Available targets: $(TARGET_LIST)\n"
 	@exit 1
 endif
+
+	@make -C $(SOURCE_DIR)/core
+	@make -C $(SOURCE_DIR)/io
+	@make -C $(SOURCE_DIR)/time
+	@make -C $(SOURCE_DIR)/libs
+	@make -C $(SOURCE_DIR)/user
+	@make -C $(SOURCE_DIR)/sync
 
 ifeq ($(TESTS), TRUE)
 	# Build the tests module
@@ -87,37 +82,26 @@ clean:
 # Clean modules
 ifeq ($(target), x86_i386)
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 else ifeq ($(target), x86_64)
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 else
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=i386 clean
 	@make -C $(SOURCE_DIR)/arch target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/core target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/io target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/time target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/libs target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=i386 clean
-	@make -C $(SOURCE_DIR)/user target_board=x86 target_cpu=x86_64 clean
-	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 endif
 
-# Clean kernel build directory
+	@make -C $(SOURCE_DIR)/core clean
+	@make -C $(SOURCE_DIR)/io clean
+	@make -C $(SOURCE_DIR)/time clean
+	@make -C $(SOURCE_DIR)/libs clean
+	@make -C $(SOURCE_DIR)/user clean
+	@make -C $(SOURCE_DIR)/sync clean
+
+ifeq ($(TESTS), TRUE)
+	# Build the tests module
+	@make -C $(SOURCE_DIR)/test_framework target=$(target)
+endif
+
+	# Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)
 
 

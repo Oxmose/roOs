@@ -361,7 +361,7 @@ void devtreeTest(void)
                            TEST_DEVTREE_ENABLED);
 #endif
 
-
+    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

@@ -49,7 +49,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Current module name */
+#define MODULE_NAME "KQUEUE"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -76,7 +77,7 @@
 #define KQUEUE_ASSERT(COND, MSG, ERROR) {                    \
     if((COND) == FALSE)                                      \
     {                                                        \
-        PANIC(ERROR, "KQUEUE", MSG, TRUE);                   \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);                \
     }                                                        \
 }
 
@@ -151,6 +152,32 @@ kqueue_node_t* kQueueCreateNode(void* pData)
 #endif
 
     return pNewNode;
+}
+
+void kQueueInitNode(kqueue_node_t* pNode, void* pData)
+{
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_INIT_NODE_ENTRY,
+                       4,
+                       (uint32_t)(((uint64_t)(uintptr_t)pNode) >> 32),
+                       (uint32_t)(uintptr_t)pNode,
+                       (uint32_t)(((uint64_t)(uintptr_t)pData) >> 32),
+                       (uint32_t)(uintptr_t)pData);
+
+    KQUEUE_ASSERT(pNode != NULL,
+                  "Initializes a NULL node",
+                  OS_ERR_NULL_POINTER);
+
+    memset(pNode, 0, sizeof(kqueue_node_t));
+    pNode->pData = pData;
+
+    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                       TRACE_KQUEUE_INIT_NODE_EXIT,
+                       4,
+                       (uint32_t)(((uint64_t)(uintptr_t)pNode) >> 32),
+                       (uint32_t)(uintptr_t)pNode,
+                       (uint32_t)(((uint64_t)(uintptr_t)pData) >> 32),
+                       (uint32_t)(uintptr_t)pData);
 }
 
 void kQueueDestroyNode(kqueue_node_t** ppNode)
@@ -268,7 +295,7 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 #endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue try push knode 0x%p in kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -310,7 +337,7 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue pushed knode 0x%p in kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -361,7 +388,7 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 #endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue try push prio knode 0x%p in kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -426,7 +453,7 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, "KQUEUE",
+    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, MODULE_NAME,
                  "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
 
 #ifdef ARCH_32_BITS
@@ -469,7 +496,7 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 #endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue try pop knode from kqueue 0x%p",
                  pQueue);
 
@@ -508,7 +535,7 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
     pNode = pQueue->pTail;
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "Pop knode 0x%p from kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -576,7 +603,7 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 #endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue try find data 0x%p from kqueue 0x%p",
                  kpData,
                  pQueue);
@@ -595,7 +622,7 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
     }
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue found node 0x%p from kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -650,7 +677,7 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 #endif
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue try renove knode 0x%p from kqueue 0x%p",
                  pNode,
                  pQueue);
@@ -727,7 +754,7 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 "KQUEUE",
+                 MODULE_NAME,
                  "KQueue renoved knode 0x%p from kqueue 0x%p",
                  pNode, pQueue);
 

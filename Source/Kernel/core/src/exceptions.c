@@ -157,8 +157,6 @@ void exceptionInit(void)
                "Could not initialize exception manager.",
                err);
 
-    TEST_POINT_FUNCTION_CALL(exception_test, TEST_EXCEPTION_ENABLED);
-
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED, TRACE_EXCEPTION_INIT_EXIT, 0);
 }
 

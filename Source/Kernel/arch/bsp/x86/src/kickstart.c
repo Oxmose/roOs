@@ -27,6 +27,7 @@
 #include <uart.h>          /* UART driver */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
+#include <futex.h>         /* Futex library */
 #include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree manager */
 #include <userinit.h>      /* User initialization */
@@ -131,7 +132,6 @@ void kickstart(void)
 #endif
 
     KERNEL_INFO("UTK Kickstart\n");
-
     /* Initialize the scheduler */
 
     /* Validate architecture */
@@ -154,10 +154,6 @@ void kickstart(void)
     exceptionInit();
     KERNEL_SUCCESS("Exception manager initialized\n");
 
-#if TEST_INTERRUPT_ENABLED
-    TEST_FRAMEWORK_END();
-#endif
-
     /* Init FDT */
     fdtInit((uintptr_t)&_KERNEL_DEV_TREE_BASE);
     KERNEL_SUCCESS("FDT initialized\n");
@@ -166,10 +162,16 @@ void kickstart(void)
     memoryMgrInit();
     KERNEL_SUCCESS("Memory manager initialized\n");
 
-
     /* Init the scheduler */
     schedInit();
     KERNEL_SUCCESS("Scheduler initialized\n");
+
+    TEST_POINT_FUNCTION_CALL(interrupt_test, TEST_INTERRUPT_ENABLED);
+    TEST_POINT_FUNCTION_CALL(exception_test, TEST_EXCEPTION_ENABLED);
+
+    /* Init the futex library */
+    futexLibInit();
+    KERNEL_SUCCESS("Futex library initialized\n");
 
     /* Init device manager */
     driverManagerInit();
@@ -181,36 +183,27 @@ void kickstart(void)
      */
     coreMgtInit();
 
+#ifndef _TESTING_FRAMEWORK_ENABLED
     /* Initialize the user functions */
     userInit();
     KERNEL_SUCCESS("User initialization done\n");
-
-    TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(vector_test, TEST_OS_VECTOR_ENABLED);
-    TEST_POINT_FUNCTION_CALL(uhashtable_test, TEST_OS_UHASHTABLE_ENABLED);
-
-#if TEST_KHEAP_ENABLED
-    TEST_FRAMEWORK_END();
 #endif
 
-    TEST_POINT_ASSERT_RCODE(TEST_KICKSTART_END_ID,
-                            TRUE,
-                            OS_NO_ERR,
-                            OS_NO_ERR,
-                            TEST_KICKSTART_ENABLED);
-
-#if !TEST_PANIC_ENABLED
-    TEST_FRAMEWORK_END();
+    TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(vector_test, TEST_OS_VECTOR_ENABLED);
+    TEST_POINT_FUNCTION_CALL(uhashtable_test, TEST_OS_UHASHTABLE_ENABLED);
+#if TEST_PANIC_ENABLED
+    PANIC(OS_NO_ERR, "PANIC TEST", "Test PANIC", TRUE);
 #endif
 
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 
-    schedSchedule();
+    /* Call first schedule */
+    schedScheduleNoInt();
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);
 }
-#undef MODULE_NAME
 
 /************************************ EOF *************************************/

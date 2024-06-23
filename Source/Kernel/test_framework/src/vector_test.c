@@ -511,6 +511,8 @@ void vector_test(void)
                              (uint64_t)0,
                              (uint64_t)(uintptr_t)vector_cpy->capacity,
                              TEST_OS_VECTOR_ENABLED);
+
+    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

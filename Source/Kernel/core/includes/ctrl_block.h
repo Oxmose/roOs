@@ -69,6 +69,13 @@ typedef enum
     THREAD_WAIT_TYPE_IO
 } THREAD_WAIT_TYPE_E;
 
+/** @brief Defines the type of waiting resource */
+typedef enum
+{
+    /** @brief Thread is waiting on a futex */
+    THREAD_WAIT_RESOURCE_FUTEX,
+} THREAD_WAIT_RESOURCE_TYPE_E;
+
 /** @brief Defines the possitble return state of a thread. */
 typedef enum
 {
@@ -120,21 +127,6 @@ typedef struct kernel_thread_t
 
     /** @brief Thread's type. */
     THREAD_TYPE_E type;
-
-    /**************************************
-     * State management
-     *************************************/
-
-    /** @brief Thread's current priority. */
-    uint8_t priority;
-
-    /** @brief Thread's current state. */
-    THREAD_STATE_E state;
-
-    /** @brief Thread's wait type. This is inly relevant when the thread's state
-     * is THREAD_STATE_WAITING.
-     */
-    THREAD_WAIT_TYPE_E blockType;
 
     /**************************************
      * System interface
@@ -191,6 +183,23 @@ typedef struct kernel_thread_t
     /**************************************
      * Scheduler management
      *************************************/
+    /** @brief Thread's current priority. */
+    uint8_t priority;
+
+    /** @brief Thread's current state. */
+    THREAD_STATE_E state;
+
+    /** @brief Thread's wait type. This is inly relevant when the thread's state
+     * is THREAD_STATE_WAITING.
+     */
+    THREAD_WAIT_TYPE_E blockType;
+
+    /** @brief Type of resource the thread is blocked on. */
+    THREAD_WAIT_RESOURCE_TYPE_E resourceBlockType;
+
+    /** @brief Blocking resource */
+    void* pBlockingResource;
+
     /** @brief Associated queue node in the scheduler */
     void* pThreadNode;
 

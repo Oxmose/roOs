@@ -49,10 +49,10 @@ typedef struct kqueue_node
     struct kqueue_node* pPrev;
 
     /** @brief Tell if the node is present in a queue or stands alone. */
-    bool_t enlisted;
+    volatile bool_t enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
-    uint64_t priority;
+    volatile uint64_t priority;
 
     /** @brief Node's data pointer. Store the address of the contained data. */
     void* pData;
@@ -67,7 +67,7 @@ typedef struct
     kqueue_node_t* pTail;
 
     /** @brief Current queue's size. */
-    size_t size;
+    volatile size_t size;
 
     /** @brief Queue's lock */
     kernel_spinlock_t lock;
@@ -109,6 +109,19 @@ typedef struct
  * @return The node pointer is returned.
  */
 kqueue_node_t* kQueueCreateNode(void* pData);
+
+/**
+ * @brief Initializes a new queue node.
+ *
+ * @details Initializes a node ready to be inserted in a queue. The data can be
+ * modified later by accessing the data field of the node structure.
+ *
+ * @warning A node should be only used in one queue at most.
+ *
+ * @param[in] pNode The pointer to the node to initialize to carry in the node.
+ * @param[in] pData The pointer to the data to carry in the node.
+ */
+void kQueueInitNode(kqueue_node_t* pNode, void* pData);
 
 /**
  * @brief Deletes a queue node.

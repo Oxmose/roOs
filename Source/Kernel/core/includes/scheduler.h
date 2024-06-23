@@ -88,7 +88,17 @@ void schedInit(void);
  *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
- * the thread's context was saved.
+ * the thread's context was saved. Use schedSchedule to save the context.
+ */
+
+void schedScheduleNoInt(void);
+
+/**
+ * @brief Calls the scheduler dispatch function by generating an interrupt.
+ *
+ * @details Calls the scheduler dispatch function by generating an interrupt.
+ * This function will select the next thread to schedule and execute it. The
+ * context of the calling thread is saved before scheduling.
  */
 
 void schedSchedule(void);
@@ -117,7 +127,7 @@ void schedScheduleHandler(kernel_thread_t* pThread);
  *
  * @param[in] pThread The thread to release.
  */
-void releaseThread(kernel_thread_t* pThread);
+void schedReleaseThread(kernel_thread_t* pThread);
 
 /**
  * @brief Puts the calling thread to sleep.

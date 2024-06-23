@@ -426,19 +426,6 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
  */
 static void _memoryMgrInitPaging(void);
 
-
-/**
- * @brief Returns the physical address of a virtual address mapped in the
- * current page directory.
- *
- * @details Returns the physical address of a virtual address mapped in the
- * current page directory. If not found, KERNEL_VIRTUAL_ADDR_MAX is returned.
- *
- * @returns The physical address of a virtual address mapped in the
- * current page directory. If not found, KERNEL_VIRTUAL_ADDR_MAX is returned.
- */
-static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress);
-
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -2344,76 +2331,6 @@ static void _memoryMgrInitPaging(void)
                        0);
 }
 
-static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
-{
-    uintptr_t  retPhysAddr;
-    uintptr_t* pRecurTableEntry;
-    uint16_t   pmlEntry[4];
-    int8_t     j;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_ENTRY,
-                       2,
-                       (uint32_t)(kVirtualAddress >> 32),
-                       (uint32_t)kVirtualAddress);
-
-    retPhysAddr = KERNEL_VIRTUAL_ADDR_MAX;
-
-    KERNEL_CRITICAL_LOCK(sLock);
-    pmlEntry[3] = (kVirtualAddress >> PML4_ENTRY_OFFSET) &
-                    PG_ENTRY_OFFSET_MASK;
-    pmlEntry[2] = (kVirtualAddress >> PML3_ENTRY_OFFSET) &
-                    PG_ENTRY_OFFSET_MASK;
-    pmlEntry[1] = (kVirtualAddress >> PML2_ENTRY_OFFSET) &
-                    PG_ENTRY_OFFSET_MASK;
-    pmlEntry[0] = (kVirtualAddress >> PML1_ENTRY_OFFSET) &
-                    PG_ENTRY_OFFSET_MASK;
-
-    for(j = 3; j >= 0; --j)
-    {
-        if(j == 3)
-        {
-            pRecurTableEntry = (uintptr_t*)KERNEL_RECUR_PML4_DIR_BASE;
-        }
-        else if(j == 2)
-        {
-            pRecurTableEntry =
-                (uintptr_t*)KERNEL_RECUR_PML3_DIR_BASE(pmlEntry[3]);
-        }
-        else if(j == 1)
-        {
-            pRecurTableEntry =
-                (uintptr_t*)KERNEL_RECUR_PML2_DIR_BASE(pmlEntry[3],
-                                                       pmlEntry[2]);
-        }
-
-        if((pRecurTableEntry[pmlEntry[j]] & PAGE_FLAG_PRESENT) != 0)
-        {
-            if(j == 0)
-            {
-                retPhysAddr = (pRecurTableEntry[pmlEntry[j]] &
-                               sPhysAddressWidthMask) & ~PAGE_SIZE_MASK;
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    KERNEL_CRITICAL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_EXIT,
-                       4,
-                       (uint32_t)(kVirtualAddress >> 32),
-                       (uint32_t)kVirtualAddress,
-                       (uint32_t)(retPhysAddr >> 32),
-                       (uint32_t)retPhysAddr);
-
-    return retPhysAddr;
-}
-
 void memoryMgrInit(void)
 {
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
@@ -2700,9 +2617,9 @@ void* memoryKernelMapStack(const size_t kSize)
             /* Release frames */
             for(i = 0; i < mappedCount; ++i)
             {
-                newFrame = _memoryMgrGetPhysAddr(pageBaseAddress +
-                                                 KERNEL_PAGE_SIZE * i);
-                MEM_ASSERT(newFrame != KERNEL_VIRTUAL_ADDR_MAX,
+                newFrame = memoryMgrGetPhysAddr(pageBaseAddress +
+                                                KERNEL_PAGE_SIZE * i);
+                MEM_ASSERT(newFrame != MEMMGR_PHYS_ADDR_ERROR,
                            "Invalid physical frame",
                            OS_ERR_INCORRECT_VALUE);
                 _releaseFrames(newFrame, 1);
@@ -2752,8 +2669,8 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     /* Free the frames and memory */
     for(i = 0; i < pageCount; ++i)
     {
-        frameAddr = _memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i);
-        MEM_ASSERT(frameAddr != KERNEL_VIRTUAL_ADDR_MAX,
+        frameAddr = memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i);
+        MEM_ASSERT(frameAddr != MEMMGR_PHYS_ADDR_ERROR,
                    "Invalid physical frame",
                    OS_ERR_INCORRECT_VALUE);
         _releaseFrames(frameAddr, 1);
@@ -2772,4 +2689,84 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
                        (uint32_t)kBaseAddress);
 }
 
+uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
+{
+    uintptr_t  retPhysAddr;
+    uintptr_t* pRecurTableEntry;
+    uint16_t   pmlEntry[4];
+    int8_t     j;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_ENTRY,
+                       2,
+                       (uint32_t)(kVirtualAddress >> 32),
+                       (uint32_t)kVirtualAddress);
+
+    retPhysAddr = MEMMGR_PHYS_ADDR_ERROR;
+
+    KERNEL_CRITICAL_LOCK(sLock);
+    pmlEntry[3] = (kVirtualAddress >> PML4_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[2] = (kVirtualAddress >> PML3_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[1] = (kVirtualAddress >> PML2_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+    pmlEntry[0] = (kVirtualAddress >> PML1_ENTRY_OFFSET) &
+                    PG_ENTRY_OFFSET_MASK;
+
+    for(j = 3; j >= 0; --j)
+    {
+        if(j == 3)
+        {
+            pRecurTableEntry = (uintptr_t*)KERNEL_RECUR_PML4_DIR_BASE;
+        }
+        else if(j == 2)
+        {
+            pRecurTableEntry =
+                (uintptr_t*)KERNEL_RECUR_PML3_DIR_BASE(pmlEntry[3]);
+        }
+        else if(j == 1)
+        {
+            pRecurTableEntry =
+                (uintptr_t*)KERNEL_RECUR_PML2_DIR_BASE(pmlEntry[3],
+                                                       pmlEntry[2]);
+        }
+        if(j == 0)
+        {
+            pRecurTableEntry =
+            (uintptr_t*)KERNEL_RECUR_PML1_DIR_BASE(pmlEntry[3],
+                                                   pmlEntry[2],
+                                                   pmlEntry[1]);
+        }
+
+        if((pRecurTableEntry[pmlEntry[j]] & PAGE_FLAG_PRESENT) != 0)
+        {
+            if(j == 0)
+            {
+                retPhysAddr = (pRecurTableEntry[pmlEntry[j]] &
+                               sPhysAddressWidthMask) & ~PAGE_SIZE_MASK;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    KERNEL_CRITICAL_UNLOCK(sLock);
+    if(retPhysAddr != MEMMGR_PHYS_ADDR_ERROR)
+    {
+        retPhysAddr |= kVirtualAddress & PAGE_SIZE_MASK;
+    }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_EXIT,
+                       4,
+                       (uint32_t)(kVirtualAddress >> 32),
+                       (uint32_t)kVirtualAddress,
+                       (uint32_t)(retPhysAddr >> 32),
+                       (uint32_t)retPhysAddr);
+
+    return retPhysAddr;
+}
 /************************************ EOF *************************************/

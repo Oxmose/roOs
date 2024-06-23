@@ -537,8 +537,6 @@ static void _lapicStartCpu(const uint8_t kLapicId)
                  "Starting CPU with LAPIC id %d",
                  kLapicId);
 
-    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
-
     /* Send the INIT IPI */
     _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
     _lapicWrite(LAPIC_ICRLO,
@@ -590,8 +588,6 @@ static void _lapicStartCpu(const uint8_t kLapicId)
     {
         KERNEL_ERROR("Failed to startup CPU with LAPIC ID %d\n", kLapicId);
     }
-
-    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_START_CPU_EXIT,

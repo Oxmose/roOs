@@ -29,6 +29,7 @@
 #include <stddef.h>        /* Standard definitions */
 #include <panic.h>         /* Kernel panic */
 #include <kerror.h>        /* Kernel errors */
+#include <cpu.h>          /*  CPU API */
 
 /* Configuration files */
 #include <config.h>
@@ -297,6 +298,11 @@ void test_framework_end(void)
     kprintf("#-------- TESTING SECTION END --------#\n");
 
     _kill_qemu();
+    while(1)
+    {
+        cpuClearInterrupt();
+        cpuHalt();
+    }
 }
 
 void test_framework_assert_uint(const uint32_t test_id,

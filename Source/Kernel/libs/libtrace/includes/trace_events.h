@@ -441,6 +441,15 @@ typedef enum
     TRACE_SHEDULER_JOIN_THREAD_ENTRY                = 342,
     TRACE_SHEDULER_JOIN_THREAD_EXIT                 = 343,
 
+    TRACE_FUTEX_INIT_ENTRY                          = 344,
+    TRACE_FUTEX_INIT_EXIT                           = 345,
+    TRACE_FUTEX_WAIT_ENTRY                          = 346,
+    TRACE_FUTEX_WAIT_EXIT                           = 347,
+    TRACE_FUTEX_WAKE_ENTRY                          = 348,
+    TRACE_FUTEX_WAKE_EXIT                           = 349,
+    TRACE_FUTEX_CANCEL_WAIT_ENTRY                   = 350,
+    TRACE_FUTEX_CANCEL_WAIT_EXIT                    = 351,
+
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

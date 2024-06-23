@@ -54,6 +54,9 @@
 /** @brief Page size mask */
 #define PAGE_SIZE_MASK 0xFFF
 
+/** @brief Defines the error for physical address */
+#define MEMMGR_PHYS_ADDR_ERROR ((uintptr_t)0xFFFFFFFFFFFFFFFFULL)
+
 /* @brief  */
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -157,6 +160,18 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
  * does not apply to hardware mapping.
  */
 OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
+
+/**
+ * @brief Returns the physical address of a virtual address mapped in the
+ * current page directory.
+ *
+ * @details Returns the physical address of a virtual address mapped in the
+ * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
+ *
+ * @returns The physical address of a virtual address mapped in the
+ * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
+ */
+uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

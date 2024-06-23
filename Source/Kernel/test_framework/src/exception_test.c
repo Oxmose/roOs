@@ -93,10 +93,10 @@ static void _end(void)
 static void _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
-#ifdef ARCH_64_BITS
-    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.rip = (uintptr_t)_end;
-#else
+#ifdef ARCH_32_BITS
     ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.eip = (uintptr_t)_end;
+#else
+    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.rip = (uintptr_t)_end;
 #endif
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,

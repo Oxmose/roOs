@@ -430,7 +430,7 @@ OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
         entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
-    return OS_ERR_INCORRECT_VALUE;
+    return OS_ERR_NO_SUCH_ID;
 }
 
 OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
@@ -513,7 +513,7 @@ OS_RETURN_E uhashtableRemove(uhashtable_t*   pTable,
         entryIdx = (entryIdx + 1) % pTable->capacity;
     }
 
-    return OS_ERR_INCORRECT_VALUE;
+    return OS_ERR_NO_SUCH_ID;
 }
 
 /************************************ EOF *************************************/

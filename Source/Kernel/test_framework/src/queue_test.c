@@ -471,6 +471,8 @@ void queue_test(void)
                                  (uint64_t)(uintptr_t)nodes[i],
                                  TEST_OS_QUEUE_ENABLED);
     }
+
+    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

@@ -2822,3 +2822,83 @@ event {
         uint32_t returnCode;
     };
 };
+
+/********************************* Futex */
+event {
+    id = 344;
+    name = "Futex initialization entry";
+};
+
+event {
+    id = 345;
+    name = "Futex initialization exit";
+};
+
+event {
+    id = 346;
+    name = "Futex wait entry";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        uint32_t waitValue;
+    };
+};
+
+event {
+    id = 347;
+    name = "Futex wait exit";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        uint32_t waitValue;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 348;
+    name = "Futex wake entry";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        uint32_t wakeCountHigh;
+        uint32_t wakeCountLow;
+    };
+};
+
+event {
+    id = 349;
+    name = "Futex wake exit";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        uint32_t wakeCountHigh;
+        uint32_t wakeCountLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 350;
+    name = "Futex cancel entry";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        xuint32_t threadAddrHigh;
+        xuint32_t threadAddrLow;
+        uint32_t schedule;
+    };
+};
+
+event {
+    id = 351;
+    name = "Futex cancel exit";
+    fields := struct {
+        xuint32_t futexAddrHigh;
+        xuint32_t futexAddrLow;
+        xuint32_t threadAddrHigh;
+        xuint32_t threadAddrLow;
+        uint32_t schedule;
+        uint32_t returnCode;
+    };
+};

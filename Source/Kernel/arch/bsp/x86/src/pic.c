@@ -132,9 +132,6 @@ typedef struct
     /** @brief Tells if the PIC has a slave */
     bool_t hasSlave;
 
-    /** @brief Driver's lock */
-    kernel_spinlock_t lock;
-
     /** @brief PIC IRQ interrupt offset */
     uint8_t intOffset;
 } pic_controler_t;
@@ -278,8 +275,6 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
 
     retCode = OS_NO_ERR;
 
-    KERNEL_SPINLOCK_INIT(sDrvCtrl.lock);
-
     /* Check for slave */
     if(fdtGetProp(pkFdtNode, PIC_FDT_HASSLAVE_PROP, &propLen) != NULL)
     {
@@ -370,6 +365,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 {
     uint8_t  initMask;
     uint32_t cascadingNumber;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_MASK_ENTRY,
@@ -381,7 +377,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
                "Could not find PIC IRQ",
                OS_ERR_NO_SUCH_IRQ);
 
-    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     /* Manage master PIC */
     if(kIrqNumber < 8)
@@ -463,7 +459,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
                  _cpuInB(sDrvCtrl.cpuSlaveDataPort));
     }
 
-    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_MASK_EXIT,
@@ -474,12 +470,14 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 
 static void _picSetIrqEOI(const uint32_t kIrqNumber)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_EOI_ENTRY,
                        1,
                        kIrqNumber);
 
-    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
@@ -497,7 +495,7 @@ static void _picSetIrqEOI(const uint32_t kIrqNumber)
     }
     _cpuOutB(PIC_EOI, sDrvCtrl.cpuMasterCommPort);
 
-    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIC_ENABLED,
                        TRACE_X86_PIC_SET_IRQ_EOI_EXIT,

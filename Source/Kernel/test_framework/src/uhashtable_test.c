@@ -255,8 +255,8 @@ void uhashtable_test(void)
         if(err != OS_NO_ERR)
         {
             TEST_POINT_ASSERT_RCODE(TEST_UHASHTABLE_GETBURST2_ID(i * 2),
-                                    err == OS_ERR_INCORRECT_VALUE,
-                                    OS_ERR_INCORRECT_VALUE,
+                                    err == OS_ERR_NO_SUCH_ID,
+                                    OS_ERR_NO_SUCH_ID,
                                     err,
                                     TEST_OS_UHASHTABLE_ENABLED);
             TEST_POINT_ASSERT_UDWORD(TEST_UHASHTABLE_GETBURST2_ID(i * 2 + 1),
@@ -397,6 +397,8 @@ void uhashtable_test(void)
                              TEST_OS_UHASHTABLE_ENABLED);
 
     kfree(table_data);
+
+    TEST_FRAMEWORK_END();
 }
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */

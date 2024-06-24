@@ -195,6 +195,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)
@@ -215,6 +216,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)
@@ -235,6 +237,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)
@@ -254,6 +257,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)
@@ -273,6 +277,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)
@@ -293,6 +298,7 @@ static void test_sw_interupts(void)
     for(i = MIN_INTERRUPT_LINE; i <= MAX_INTERRUPT_LINE; ++i)
     {
         if(i == PANIC_INT_LINE || i == SCHEDULER_SW_INT_LINE ||
+           i == PAGE_FAULT_EXC_LINE ||
            i == PIC_SPURIOUS_IRQ_MASTER + INT_PIC_IRQ_OFFSET ||
            i == PIC_SPURIOUS_IRQ_SLAVE + INT_PIC_IRQ_OFFSET ||
            i == 0xFF)

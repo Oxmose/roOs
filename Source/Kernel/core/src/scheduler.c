@@ -616,7 +616,7 @@ void schedInit(void)
     sThreadCount  = 0;
     memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * MAX_CPU_COUNT);
     memset(sScheduleCount, 0, sizeof(uint64_t) * MAX_CPU_COUNT);
-    memset(sIdleSchedCount, 0, sizeof(sizeof(uint64_t) * MAX_CPU_COUNT));
+    memset(sIdleSchedCount, 0, sizeof(uint64_t) * MAX_CPU_COUNT);
     KERNEL_SPINLOCK_INIT(sGlobalLock);
 
     /* Initialize the thread table */

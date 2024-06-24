@@ -229,7 +229,6 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
     {
         /* Not clean, but this avoids a lot of function calls and
          * processing.
-         * TODO: Clean this.
          */
         ((fdt_node_t*)pkFdtNode)->pDevData = pData;
         retCode = OS_NO_ERR;

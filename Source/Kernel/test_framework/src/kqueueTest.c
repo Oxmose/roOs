@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file kqueue_test.c
+ * @file kqueueTest.c
  *
  * @see test_framework.h
  *
@@ -76,7 +76,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void kqueue_test(void)
+void kqueueTest(void)
 {
     kqueue_node_t* nodes[40] = { NULL };
     kqueue_node_t* find;

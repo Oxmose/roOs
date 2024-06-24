@@ -157,21 +157,21 @@ test_item_t null_test_item = {
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-static void * _get_test_memory(const size_t size);
+static void * _getTestMemory(const size_t size);
 
-static void _init_test_item(const uint32_t test_id,
+static void _initTestItem(const uint32_t test_id,
                             const bool_t condition,
                             const uint64_t expected,
                             const uint64_t value,
                             test_item_t** item);
 
-void _kill_qemu(void);
+void _killQemu(void);
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void * _get_test_memory(const size_t size)
+static void * _getTestMemory(const size_t size)
 {
     uint8_t * address;
 
@@ -190,14 +190,14 @@ static void * _get_test_memory(const size_t size)
     return address;
 }
 
-static void _init_test_item(const uint32_t test_id,
+static void _initTestItem(const uint32_t test_id,
                             const bool_t condition,
                             const uint64_t expected,
                             const uint64_t value,
                             test_item_t** item)
 {
     /* Create test item and allocate memory */
-    *item = _get_test_memory(sizeof(test_item_t));
+    *item = _getTestMemory(sizeof(test_item_t));
     if(*item != NULL)
     {
         /* Setup information */
@@ -239,7 +239,7 @@ static void _init_test_item(const uint32_t test_id,
     }
 }
 
-void _kill_qemu(void)
+void _killQemu(void)
 {
     while(1)
     {
@@ -248,12 +248,12 @@ void _kill_qemu(void)
     }
 }
 
-void test_framework_init(void)
+void testFrameworkInit(void)
 {
     memoryPoolHead = &_KERNEL_TEST_BUFFER_BASE;
 }
 
-void test_framework_end(void)
+void testFrameworkEnd(void)
 {
     uint32_t i;
 
@@ -297,7 +297,7 @@ void test_framework_end(void)
     kprintf("}\n");
     kprintf("#-------- TESTING SECTION END --------#\n");
 
-    _kill_qemu();
+    _killQemu();
     while(1)
     {
         cpuClearInterrupt();
@@ -305,7 +305,7 @@ void test_framework_end(void)
     }
 }
 
-void test_framework_assert_uint(const uint32_t test_id,
+void testFrameworkAssertUint(const uint32_t test_id,
                                 const bool_t condition,
                                 const uint32_t expected,
                                 const uint32_t value)
@@ -313,7 +313,7 @@ void test_framework_assert_uint(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -323,7 +323,7 @@ void test_framework_assert_uint(const uint32_t test_id,
     item->type = TEST_TYPE_UDWORD;
 }
 
-void test_framework_assert_int(const uint32_t test_id,
+void testFrameworkAssertInt(const uint32_t test_id,
                                const bool_t condition,
                                const int32_t expected,
                                const int32_t value)
@@ -331,7 +331,7 @@ void test_framework_assert_int(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -341,7 +341,7 @@ void test_framework_assert_int(const uint32_t test_id,
     item->type = TEST_TYPE_DWORD;
 }
 
-void test_framework_assert_huint(const uint32_t test_id,
+void testFrameworkAssertHuint(const uint32_t test_id,
                                  const bool_t condition,
                                  const uint16_t expected,
                                  const uint16_t value)
@@ -349,7 +349,7 @@ void test_framework_assert_huint(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -359,7 +359,7 @@ void test_framework_assert_huint(const uint32_t test_id,
     item->type = TEST_TYPE_UHALF;
 }
 
-void test_framework_assert_hint(const uint32_t test_id,
+void testFrameworkAssertHint(const uint32_t test_id,
                                 const bool_t condition,
                                 const int16_t expected,
                                 const int16_t value)
@@ -367,7 +367,7 @@ void test_framework_assert_hint(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -377,7 +377,7 @@ void test_framework_assert_hint(const uint32_t test_id,
     item->type = TEST_TYPE_HALF;
 }
 
-void test_framework_assert_ubyte(const uint32_t test_id,
+void testFrameworkAssertUbyte(const uint32_t test_id,
                                  const bool_t condition,
                                  const uint8_t expected,
                                  const uint8_t value)
@@ -385,7 +385,7 @@ void test_framework_assert_ubyte(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -395,7 +395,7 @@ void test_framework_assert_ubyte(const uint32_t test_id,
     item->type = TEST_TYPE_UBYTE;
 }
 
-void test_framework_assert_byte(const uint32_t test_id,
+void testFrameworkAssertByte(const uint32_t test_id,
                                 const bool_t condition,
                                 const uint8_t expected,
                                 const uint8_t value)
@@ -403,7 +403,7 @@ void test_framework_assert_byte(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -413,7 +413,7 @@ void test_framework_assert_byte(const uint32_t test_id,
     item->type = TEST_TYPE_BYTE;
 }
 
-void test_framework_assert_udword(const uint32_t test_id,
+void testFrameworkAssertUdword(const uint32_t test_id,
                                   const bool_t condition,
                                   const uint64_t expected,
                                   const uint64_t value)
@@ -421,7 +421,7 @@ void test_framework_assert_udword(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     expected,
                     value,
@@ -431,7 +431,7 @@ void test_framework_assert_udword(const uint32_t test_id,
     item->type = TEST_TYPE_UDWORD;
 }
 
-void test_framework_assert_dword(const uint32_t test_id,
+void testFrameworkAssertDword(const uint32_t test_id,
                                  const bool_t condition,
                                  const int64_t expected,
                                  const int64_t value)
@@ -439,7 +439,7 @@ void test_framework_assert_dword(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -449,7 +449,7 @@ void test_framework_assert_dword(const uint32_t test_id,
     item->type = TEST_TYPE_DWORD;
 }
 
-void test_framework_assert_float(const uint32_t test_id,
+void testFrameworkAssertFloat(const uint32_t test_id,
                                  const bool_t condition,
                                  const float expected,
                                  const float value)
@@ -461,7 +461,7 @@ void test_framework_assert_float(const uint32_t test_id,
     /* Init */
     float_conv_expected.float_value = expected;
     float_conv_value.float_value = value;
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)float_conv_expected.raw_value,
                     (uint64_t)float_conv_value.raw_value,
@@ -471,7 +471,7 @@ void test_framework_assert_float(const uint32_t test_id,
     item->type = TEST_TYPE_FLOAT;
 }
 
-void test_framework_assert_double(const uint32_t test_id,
+void testFrameworkAssertDouble(const uint32_t test_id,
                                   const bool_t condition,
                                   const double expected,
                                   const double value)
@@ -483,7 +483,7 @@ void test_framework_assert_double(const uint32_t test_id,
     /* Init */
     double_conv_expected.double_value = expected;
     double_conv_value.double_value = value;
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     double_conv_expected.raw_value,
                     double_conv_value.raw_value,
@@ -493,7 +493,7 @@ void test_framework_assert_double(const uint32_t test_id,
     item->type = TEST_TYPE_DOUBLE;
 }
 
-void test_framework_assert_errcode(const uint32_t test_id,
+void testFrameworkAssertErrCode(const uint32_t test_id,
                                    const bool_t condition,
                                    const OS_RETURN_E expected,
                                    const OS_RETURN_E value)
@@ -501,7 +501,7 @@ void test_framework_assert_errcode(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,
@@ -511,7 +511,7 @@ void test_framework_assert_errcode(const uint32_t test_id,
     item->type = TEST_TYPE_RCODE;
 }
 
-void test_framework_assert_pointer(const uint32_t test_id,
+void testFrameworkAssertPointer(const uint32_t test_id,
                                    const bool_t condition,
                                    const uintptr_t expected,
                                    const uintptr_t value)
@@ -519,7 +519,7 @@ void test_framework_assert_pointer(const uint32_t test_id,
     test_item_t* item;
 
     /* Init */
-    _init_test_item(test_id,
+    _initTestItem(test_id,
                     condition,
                     (uint64_t)expected,
                     (uint64_t)value,

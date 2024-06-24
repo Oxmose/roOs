@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file exception_test.c
+ * @file exceptionTest.c
  *
  * @see test_framework.h
  *
@@ -106,7 +106,7 @@ static void _dummy(kernel_thread_t* curr_thread)
                             TEST_EXCEPTION_ENABLED);
 }
 
-void exception_test(void)
+void exceptionTest(void)
 {
     OS_RETURN_E err;
     uint32_t minExc;

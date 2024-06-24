@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file kheap_test.c
+ * @file kheapTtest.c
  *
  * @see test_framework.h
  *
@@ -80,7 +80,7 @@ static uint64_t allocated_expected[200];
  * FUNCTIONS
  ******************************************************************************/
 
-void kheap_test(void)
+void kheapTtest(void)
 {
 
     /* TODO: enable again */

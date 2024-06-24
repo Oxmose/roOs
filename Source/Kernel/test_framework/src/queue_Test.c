@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file queue_test.c
+ * @file queueTest.c
  *
  * @see test_framework.h
  *
@@ -76,7 +76,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void queue_test(void)
+void queueTest(void)
 {
     OS_RETURN_E   error = OS_ERR_NULL_POINTER;
     queue_node_t* nodes[40] = { NULL };

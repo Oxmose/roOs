@@ -419,13 +419,13 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void interrupt_test(void);
-void exception_test(void);
-void kheap_test(void);
-void queue_test(void);
-void kqueue_test(void);
-void vector_test(void);
-void uhashtable_test(void);
+void interruptTest(void);
+void exceptionTest(void);
+void kheapTtest(void);
+void queueTest(void);
+void kqueueTest(void);
+void vectorTest(void);
+void uhashtableTest(void);
 void devtreeTest(void);
 void memmgrTest(void);
 void futexTest(void);

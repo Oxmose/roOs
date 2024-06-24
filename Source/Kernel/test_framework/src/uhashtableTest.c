@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file uhashtable_test.c
+ * @file uhashtableTest.c
  *
  * @see test_framework.h
  *
@@ -81,7 +81,7 @@ static uint32_t _random_get(void)
     return g_seed;
 }
 
-void uhashtable_test(void)
+void uhashtableTest(void)
 {
     size_t       i;
     uhashtable_t* table;

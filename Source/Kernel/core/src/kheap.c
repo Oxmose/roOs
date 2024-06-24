@@ -92,7 +92,7 @@ void kHeapInit(void)
 
     KERNEL_SPINLOCK_INIT(sLock);
 
-    TEST_POINT_FUNCTION_CALL(kheap_test, TEST_KHEAP_ENABLED);
+    TEST_POINT_FUNCTION_CALL(kheapTtest, TEST_KHEAP_ENABLED);
 
     KERNEL_DEBUG(KHEAP_DEBUG_ENABLED, "KHEAP",
                  "Kernel Heap Initialized at 0x%p", head);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file vector_test.c
+ * @file vectorTest.c
  *
  * @see test_framework.h
  *
@@ -76,7 +76,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void vector_test(void)
+void vectorTest(void)
 {
     size_t i;
     uint64_t data;

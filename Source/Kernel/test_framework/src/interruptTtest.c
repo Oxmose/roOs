@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file interrupt_test.c
+ * @file interruptTest.c
  *
  * @see test_framework.h
  *
@@ -309,7 +309,7 @@ static void test_sw_interupts(void)
     }
 }
 
-void interrupt_test(void)
+void interruptTest(void)
 {
     test_sw_interupts();
 

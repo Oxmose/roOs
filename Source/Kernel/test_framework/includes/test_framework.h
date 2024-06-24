@@ -48,14 +48,14 @@
 #define TEST_POINT_ASSERT_UINT(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {   \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_uint(ID, COND, EXPECTED, VALUE);              \
+        testFrameworkAssertUint(ID, COND, EXPECTED, VALUE);              \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_INT(ID, COND, EXPECTED, VALUE, TEST_ENABLED)  {   \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_int(ID, COND, EXPECTED, VALUE);               \
+        testFrameworkAssertInt(ID, COND, EXPECTED, VALUE);               \
     }                                                                       \
 }
 
@@ -69,63 +69,63 @@
 #define TEST_POINT_ASSERT_HINT(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {   \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_hint(ID, COND, EXPECTED, VALUE);              \
+        testFrameworkAssertHint(ID, COND, EXPECTED, VALUE);              \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_UBYTE(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_ubyte(ID, COND, EXPECTED, VALUE);             \
+        testFrameworkAssertUbyte(ID, COND, EXPECTED, VALUE);             \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_BYTE(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {   \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_byte(ID, COND, EXPECTED, VALUE);              \
+        testFrameworkAssertByte(ID, COND, EXPECTED, VALUE);              \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_UDWORD(ID, COND, EXPECTED, VALUE, TEST_ENABLED) { \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_udword(ID, COND, EXPECTED, VALUE);            \
+        testFrameworkAssertUdword(ID, COND, EXPECTED, VALUE);            \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_DWORD(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_dword(ID, COND, EXPECTED, VALUE);             \
+        testFrameworkAssertDword(ID, COND, EXPECTED, VALUE);             \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_FLOAT(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_float(ID, COND, EXPECTED, VALUE);             \
+        testFrameworkAssertFloat(ID, COND, EXPECTED, VALUE);             \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_DOUBLE(ID, COND, EXPECTED, VALUE, TEST_ENABLED) { \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_double(ID, COND, EXPECTED, VALUE);            \
+        testFrameworkAssertDouble(ID, COND, EXPECTED, VALUE);            \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_RCODE(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
     if(TEST_ENABLED)                                                        \
     {                                                                       \
-        test_framework_assert_errcode(ID, COND, EXPECTED, VALUE);           \
+        testFrameworkAssertErrCode(ID, COND, EXPECTED, VALUE);           \
     }                                                                       \
 }
 
 #define TEST_POINT_ASSERT_POINTER(ID, COND, EXPECTED, VALUE, TEST_ENABLED) {  \
     if(TEST_ENABLED)                                                          \
     {                                                                         \
-        test_framework_assert_pointer(ID, COND, EXPECTED, VALUE);             \
+        testFrameworkAssertPointer(ID, COND, EXPECTED, VALUE);             \
     }                                                                         \
 }
 
@@ -136,9 +136,9 @@
     }                                                                       \
 }
 
-#define TEST_FRAMEWORK_START() test_framework_init();
+#define TEST_FRAMEWORK_START() testFrameworkInit();
 
-#define TEST_FRAMEWORK_END() test_framework_end();
+#define TEST_FRAMEWORK_END() testFrameworkEnd();
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -157,65 +157,65 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void test_framework_init(void);
-void test_framework_end(void);
+void testFrameworkInit(void);
+void testFrameworkEnd(void);
 
-void test_framework_assert_uint(const uint32_t test_id,
+void testFrameworkAssertUint(const uint32_t test_id,
                                 const bool_t condition,
                                 const uint32_t expected,
                                 const uint32_t value);
 
-void test_framework_assert_int(const uint32_t test_id,
+void testFrameworkAssertInt(const uint32_t test_id,
                                const bool_t condition,
                                const int32_t expected,
                                const int32_t value);
 
-void test_framework_assert_huint(const uint32_t test_id,
+void testFrameworkAssertHuint(const uint32_t test_id,
                                  const bool_t condition,
                                  const uint16_t expected,
                                  const uint16_t value);
 
-void test_framework_assert_hint(const uint32_t test_id,
+void testFrameworkAssertHint(const uint32_t test_id,
                                 const bool_t condition,
                                 const int16_t expected,
                                 const int16_t value);
 
-void test_framework_assert_ubyte(const uint32_t test_id,
+void testFrameworkAssertUbyte(const uint32_t test_id,
                                  const bool_t condition,
                                  const uint8_t expected,
                                  const uint8_t value);
 
-void test_framework_assert_byte(const uint32_t test_id,
+void testFrameworkAssertByte(const uint32_t test_id,
                                 const bool_t condition,
                                 const uint8_t expected,
                                 const uint8_t value);
 
-void test_framework_assert_udword(const uint32_t test_id,
+void testFrameworkAssertUdword(const uint32_t test_id,
                                   const bool_t condition,
                                   const uint64_t expected,
                                   const uint64_t value);
 
-void test_framework_assert_dword(const uint32_t test_id,
+void testFrameworkAssertDword(const uint32_t test_id,
                                  const bool_t condition,
                                  const int64_t expected,
                                  const int64_t value);
 
-void test_framework_assert_float(const uint32_t test_id,
+void testFrameworkAssertFloat(const uint32_t test_id,
                                  const bool_t condition,
                                  const float expected,
                                  const float value);
 
-void test_framework_assert_double(const uint32_t test_id,
+void testFrameworkAssertDouble(const uint32_t test_id,
                                   const bool_t condition,
                                   const double expected,
                                   const double value);
 
-void test_framework_assert_errcode(const uint32_t test_id,
+void testFrameworkAssertErrCode(const uint32_t test_id,
                                    const bool_t condition,
                                    const OS_RETURN_E expected,
                                    const OS_RETURN_E value);
 
-void test_framework_assert_pointer(const uint32_t test_id,
+void testFrameworkAssertPointer(const uint32_t test_id,
                                    const bool_t condition,
                                    const uintptr_t expected,
                                    const uintptr_t value);

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file devtree_test.c
+ * @file devtreeTest.c
  *
  * @see test_framework.h
  *

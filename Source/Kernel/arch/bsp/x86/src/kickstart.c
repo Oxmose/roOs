@@ -166,8 +166,8 @@ void kickstart(void)
     schedInit();
     KERNEL_SUCCESS("Scheduler initialized\n");
 
-    TEST_POINT_FUNCTION_CALL(interrupt_test, TEST_INTERRUPT_ENABLED);
-    TEST_POINT_FUNCTION_CALL(exception_test, TEST_EXCEPTION_ENABLED);
+    TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
+    TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
 
     /* Init the futex library */
     futexLibInit();
@@ -189,10 +189,10 @@ void kickstart(void)
     KERNEL_SUCCESS("User initialization done\n");
 #endif
 
-    TEST_POINT_FUNCTION_CALL(kqueue_test, TEST_OS_KQUEUE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(queue_test, TEST_OS_QUEUE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(vector_test, TEST_OS_VECTOR_ENABLED);
-    TEST_POINT_FUNCTION_CALL(uhashtable_test, TEST_OS_UHASHTABLE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(kqueueTest, TEST_OS_KQUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(queueTest, TEST_OS_QUEUE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(vectorTest, TEST_OS_VECTOR_ENABLED);
+    TEST_POINT_FUNCTION_CALL(uhashtableTest, TEST_OS_UHASHTABLE_ENABLED);
 #if TEST_PANIC_ENABLED
     PANIC(OS_NO_ERR, "PANIC TEST", "Test PANIC", TRUE);
 #endif

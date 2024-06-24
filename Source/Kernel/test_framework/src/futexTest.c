@@ -770,7 +770,7 @@ static void testReleaseResources(void)
     multipleFutexValue = 0;
     returnedThreads = 0;
 
-    identifier = memoryMgrGetPhysAddr((uintptr_t)&multipleFutexValue);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)&multipleFutexValue, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         TEST_POINT_ASSERT_POINTER(TEST_FUTEX_RELEASE_GET_ID,

@@ -23,7 +23,7 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h> /* Generic int types and bool */
+#include <stdint.h> /* Generic int types and bool_t */
 #include <stddef.h> /* Standard definition */
 #include <kerror.h> /* Kernel error codes */
 

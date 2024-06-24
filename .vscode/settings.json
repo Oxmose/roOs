@@ -28,6 +28,8 @@
         "*.c_no": "c",
         "tracing.h": "c",
         "x86memory.h": "c",
-        "x86cpu.h": "c"
+        "x86cpu.h": "c",
+        "core_mgt.h": "c",
+        "kqueue.h": "c"
     }
 }

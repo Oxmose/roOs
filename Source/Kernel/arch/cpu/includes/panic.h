@@ -63,6 +63,7 @@
     else                                                                \
     {                                                                   \
         /* TODO: processPanic(ERROR);  */                               \
+        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);            \
     }                                                                   \
 }
 

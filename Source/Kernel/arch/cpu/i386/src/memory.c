@@ -22,19 +22,21 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <x86cpu.h>       /* X86 CPU API*/
-#include <kheap.h>        /* Kernel heap */
-#include <panic.h>        /* Kernel PANIC */
-#include <string.h>       /* Memory manipulation */
-#include <stdint.h>       /* Standard int types */
-#include <stddef.h>       /* Standard definitions */
-#include <kqueue.h>       /* Kernel queue structure */
-#include <kerror.h>       /* Kernel error types */
-#include <devtree.h>      /* FDT library */
-#include <critical.h>     /* Kernel lock */
-#include <core_mgt.h>     /* Core manager */
-#include <x86memory.h>    /* I386 memory definitions */
-#include <kerneloutput.h> /* Kernel output */
+#include <x86cpu.h>        /* X86 CPU API*/
+#include <kheap.h>         /* Kernel heap */
+#include <panic.h>         /* Kernel PANIC */
+#include <string.h>        /* Memory manipulation */
+#include <stdint.h>        /* Standard int types */
+#include <stddef.h>        /* Standard definitions */
+#include <kqueue.h>        /* Kernel queue structure */
+#include <kerror.h>        /* Kernel error types */
+#include <devtree.h>       /* FDT library */
+#include <critical.h>      /* Kernel lock */
+#include <core_mgt.h>      /* Core manager */
+#include <x86memory.h>     /* I386 memory definitions */
+#include <exceptions.h>    /* Exception manager */
+#include <kerneloutput.h>  /* Kernel output */
+#include <cpu_interrupt.h> /* CPU interrupt settings */
 
 /* Configuration files */
 #include <config.h>
@@ -114,6 +116,13 @@
     ((PGDIR_ENT) * 0x1000)                      \
 )
 
+/** @brief Page fault error code: page protection violation. */
+#define PAGE_FAULT_ERROR_PROT_VIOLATION 0x1
+/** @brief Page fault error code: fault on a write. */
+#define PAGE_FAULT_ERROR_WRITE 0x2
+/** @brief Page fault error code: fault in user mode. */
+#define PAGE_FAULT_ERROR_USER 0x4
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -186,6 +195,17 @@ typedef struct
 static void _printKernelMap(void);
 
 #endif /* #if MEMORY_MGR_DEBUG_ENABLED */
+
+/**
+ * @brief Page fault handler.
+ *
+ * @details Page fault handler. Manages page fault occuring while a thread is
+ * running. The handler might call a panic if the faul cannot be resolved.
+ *
+ * @param[in, out] pCurrentThread The thread executing while the page fault
+ * occured.
+ */
+static void _pageFaultHandler(kernel_thread_t* pCurrentThread);
 
 /**
  * @brief Checks the memory type (memory vs hardware) of a physical region.
@@ -564,6 +584,69 @@ static void _printKernelMap(void)
 }
 
 #endif /* #if MEMORY_MGR_DEBUG_ENABLED */
+
+static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
+{
+    uintptr_t faultAddress;
+    uintptr_t physAddr;
+    uint32_t  errorCode;
+    uint32_t  flags;
+    bool_t      staleEntry;
+
+    /* Get the fault address and error code */
+    __asm__ __volatile__ ("mov %%cr2, %0" : "=r"(faultAddress));
+    errorCode = ((virtual_cpu_t*)pCurrentThread->pVCpu)->intContext.errorCode;
+
+    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Page fault: 0x%p | Code: %x\n",
+                 faultAddress,
+                 errorCode);
+
+    /* Check if the fault occured because we hit a stale TLB entry */
+    physAddr = memoryMgrGetPhysAddr(faultAddress, &flags);
+    if(physAddr != MEMMGR_PHYS_ADDR_ERROR)
+    {
+        staleEntry = TRUE;
+        if((errorCode & PAGE_FAULT_ERROR_PROT_VIOLATION) ==
+           PAGE_FAULT_ERROR_PROT_VIOLATION)
+        {
+            /* Check the privilege level */
+            if((errorCode & PAGE_FAULT_ERROR_USER) == PAGE_FAULT_ERROR_USER &&
+               (flags & MEMMGR_MAP_USER) != MEMMGR_MAP_USER)
+            {
+                staleEntry = FALSE;
+            }
+
+            /* Check the access rights */
+            if((errorCode & PAGE_FAULT_ERROR_WRITE) == PAGE_FAULT_ERROR_WRITE &&
+               (flags & MEMMGR_MAP_RW) != MEMMGR_MAP_RW)
+            {
+                staleEntry = FALSE;
+            }
+
+        }
+        else if(errorCode != 0)
+        {
+            staleEntry = FALSE;
+        }
+
+        if(staleEntry == TRUE)
+        {
+            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                         MODULE_NAME,
+                         "Stale entry fault: 0x%p | Code: %x\n",
+                         faultAddress,
+                         errorCode);
+            cpuInvalidateTlbEntry(faultAddress);
+            return;
+        }
+    }
+
+    /* TODO: Terminate thread, set reason page fault and reason data the address,
+     * also getthe reason code in the interrupt info */
+    kernelPanicHandler(pCurrentThread);
+}
 
 static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
                                     const uintptr_t kSize,
@@ -1904,6 +1987,8 @@ static void _memoryMgrInitPaging(void)
 
 void memoryMgrInit(void)
 {
+    OS_RETURN_E error;
+
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_INIT_ENTRY,
                        0);
@@ -1930,6 +2015,11 @@ void memoryMgrInit(void)
     /* Map the kernel */
     _memoryMgrInitPaging();
 
+    /* Registers the page fault handler */
+    error = exceptionRegister(PAGE_FAULT_EXC_LINE, _pageFaultHandler);
+    MEM_ASSERT(error == OS_NO_ERR,
+               "Failed to register the page fault handler",
+               error);
 
 #if MEMORY_MGR_DEBUG_ENABLED
     _printKernelMap();
@@ -2186,7 +2276,8 @@ void* memoryKernelMapStack(const size_t kSize)
             for(i = 0; i < mappedCount; ++i)
             {
                 newFrame = memoryMgrGetPhysAddr(pageBaseAddress +
-                                                KERNEL_PAGE_SIZE * i);
+                                                KERNEL_PAGE_SIZE * i,
+                                                NULL);
                 MEM_ASSERT(newFrame != MEMMGR_PHYS_ADDR_ERROR,
                            "Invalid physical frame",
                            OS_ERR_INCORRECT_VALUE);
@@ -2237,7 +2328,8 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     /* Free the frames and memory */
     for(i = 0; i < pageCount; ++i)
     {
-        frameAddr = memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i);
+        frameAddr = memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i,
+                                         NULL);
         MEM_ASSERT(frameAddr != MEMMGR_PHYS_ADDR_ERROR,
                    "Invalid physical frame",
                    OS_ERR_INCORRECT_VALUE);
@@ -2257,7 +2349,8 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
                        (uint32_t)kBaseAddress);
 }
 
-uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
+uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
+                               uint32_t* pFlags)
 {
     uintptr_t  retPhysAddr;
     uintptr_t* pPgDirRecurEntry;
@@ -2290,7 +2383,43 @@ uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress)
         pPgTableRecurEntry = (uintptr_t*)KERNEL_RECUR_PGTABLE_BASE(pgDirEntry);
         if((pPgTableRecurEntry[pgTableEntry] & PAGE_FLAG_PRESENT) != 0)
         {
-            retPhysAddr = pPgTableRecurEntry[pgTableEntry] & PG_ENTRY_ADDR_MASK;
+            if(pFlags != NULL)
+            {
+                retPhysAddr = pPgTableRecurEntry[pgTableEntry];
+                *pFlags     = MEMMGR_MAP_KERNEL;
+
+                if((retPhysAddr & PAGE_FLAG_READ_WRITE) ==
+                    PAGE_FLAG_READ_WRITE)
+                {
+                    *pFlags |= MEMMGR_MAP_RW;
+                }
+                else
+                {
+                    *pFlags |= MEMMGR_MAP_RO;
+                }
+                if((retPhysAddr & PAGE_FLAG_USER_ACCESS) ==
+                    PAGE_FLAG_USER_ACCESS)
+                {
+                    *pFlags |= MEMMGR_MAP_USER;
+                }
+                if((retPhysAddr & PAGE_FLAG_CACHE_DISABLED) ==
+                    PAGE_FLAG_CACHE_DISABLED)
+                {
+                    *pFlags |= MEMMGR_MAP_CACHE_DISABLED;
+                }
+                if((retPhysAddr & PAGE_FLAG_IS_HW) == PAGE_FLAG_IS_HW)
+                {
+                    *pFlags |= MEMMGR_MAP_HARDWARE;
+                }
+
+                retPhysAddr &= PG_ENTRY_ADDR_MASK;
+            }
+            else
+            {
+                retPhysAddr = pPgTableRecurEntry[pgTableEntry] &
+                              PG_ENTRY_ADDR_MASK;
+            }
+
         }
     }
 

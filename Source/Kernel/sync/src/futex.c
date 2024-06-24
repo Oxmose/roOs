@@ -194,7 +194,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
     }
 
     /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
@@ -376,7 +376,7 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     }
 
     /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
@@ -488,7 +488,7 @@ OS_RETURN_E futexCancelWait(futex_t*         pFutex,
     }
 
     /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,

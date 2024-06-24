@@ -24,7 +24,7 @@
 #include <kheap.h>        /* Kernel heap */
 #include <panic.h>        /* Kernel panic */
 #include <stddef.h>       /* Standard defined types */
-#include <stdint.h>       /* Standard int types and bool */
+#include <stdint.h>       /* Standard int types and bool_t */
 #include <kerror.h>       /* Kernel error codes */
 #include <string.h>       /* Memory manipulation */
 #include <kerneloutput.h> /* Kernel logging */

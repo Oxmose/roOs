@@ -56,6 +56,8 @@
 /** @brief Defines the IPI interrupt line. */
 #define IPI_INT_LINE 0x23
 
+/** @brief Defines the page fault exception line */
+#define PAGE_FAULT_EXC_LINE 0xE
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

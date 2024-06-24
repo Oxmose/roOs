@@ -53,7 +53,7 @@
  ******************************************************************************/
 
 /** @brief Defines the stack trace size */
-#define STACK_TRACE_SIZE 6
+#define STACK_TRACE_SIZE 8
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -409,7 +409,7 @@ static void _printStackTrace(uintptr_t* lastEBP)
 
         if(callAddr == 0x0) break;
 
-        if(i != 0 && i % 3 == 0)
+        if(i != 0 && i % 4 == 0)
         {
             kprintfPanic("\n");
         }

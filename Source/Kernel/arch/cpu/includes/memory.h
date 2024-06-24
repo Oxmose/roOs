@@ -168,10 +168,14 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
  * @details Returns the physical address of a virtual address mapped in the
  * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
  *
+ * @param[in] kVirtualAddress The virtual address to lookup.
+ * @param[out] pFlags The memory flags used for the mapping. Can be NULL.
+ *
  * @returns The physical address of a virtual address mapped in the
  * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
  */
-uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress);
+uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
+                               uint32_t* pFlags);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

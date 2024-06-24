@@ -24,6 +24,7 @@
 
 /* Included headers */
 #include <acpi.h>         /* ACPI structures */
+#include <panic.h>        /* Kernel panic */
 #include <lapic.h>        /* LAPIC driver */
 #include <x86cpu.h>       /* CPU management */
 #include <stdint.h>       /* Generic int types */
@@ -31,6 +32,7 @@
 #include <console.h>      /* Console service */
 #include <drivermgr.h>    /* Driver manager */
 #include <ctrl_block.h>   /* Thread's control block */
+#include <interrupts.h>   /* Interrupt manager */
 #include <lapic_timer.h>  /* LAPIC timer driver */
 #include <kerneloutput.h> /* Kernel output methods */
 
@@ -55,7 +57,7 @@
 #endif
 
 /** @brief Current module name */
-#define MODULE_NAME "I386 CORE MGT"
+#define MODULE_NAME "CORE MGT"
 
 /** @brief LAPIC flag: enabled (running) */
 #define LAPIC_FLAG_ENABLED 0x1
@@ -76,13 +78,39 @@
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Assert macro used by the core manager to ensure correctness of
+ * execution.
+ *
+ * @details Assert macro used by the core manager to ensure correctness of
+ * execution. Due to the critical nature of the core manager, any error
+ * generates a kernel panic.
+ *
+ * @param[in] COND The condition that should be true.
+ * @param[in] MSG The message to display in case of kernel panic.
+ * @param[in] ERROR The error code to use in case of kernel panic.
+ */
+#define CORE_MGT_ASSERT(COND, MSG, ERROR) {                    \
+    if((COND) == FALSE)                                      \
+    {                                                        \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);                \
+    }                                                        \
+}
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-/* None */
+#if MAX_CPU_COUNT > 1
+/**
+ * @brief IPI interrupt handler.
+ *
+ * @details IPI interrupt handler. Based on the IPI parameters, the handler
+ * dispatches the IPI request.
+ *
+ * @param[in] pCurrThread The executing thread at the moment of the IPI.
+ */
+static void _ipiInterruptHandler(kernel_thread_t* pCurrThread);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -96,7 +124,6 @@ extern volatile uint32_t _bootedCPUCount;
 /* None */
 
 /************************** Static global variables ***************************/
-#if MAX_CPU_COUNT > 1
 
 /** @brief Stores the translated CPU identifiers */
 static uint8_t sCoreIds[MAX_CPU_COUNT] = {0};
@@ -107,13 +134,50 @@ static const lapic_driver_t* kspLapicDriver = NULL;
 /** @brief Stores the LAPIC timer driver instance */
 static const lapic_timer_driver_t* kspLapicTimerDriver = NULL;
 
-#endif
+/** @brief Stores the IPI interrupt line. */
+static uint32_t sIpiInterruptLine;
+
+/** @brief Stores the IPI parameters */
+static ipi_params_t sIpiParameters[MAX_CPU_COUNT];
+
+/** @brief Stores the IPI parameters locks */
+static spinlock_t sIpiParametersLocks[MAX_CPU_COUNT];
+
+#endif /* #if MAX_CPU_COUNT > 1 */
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 #if MAX_CPU_COUNT > 1
+static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
+{
+    ipi_params_t params;
+    uint8_t      cpuId;
+
+    cpuId = cpuGetId();
+
+    /* Get the parameter and unlock the ipi parameters lock */
+    params = sIpiParameters[cpuId];
+    spinlockRelease(&sIpiParametersLocks[cpuId]);
+
+    /* Dispatch */
+    switch(params.function)
+    {
+        case IPI_FUNC_PANIC:
+            kernelPanicHandler(pCurrThread);
+            break;
+        case IPI_FUNC_TLB_INVAL:
+            cpuInvalidateTlbEntry((uintptr_t)params.pData);
+            break;
+        default:
+            PANIC(OS_ERR_INCORRECT_VALUE,
+                  MODULE_NAME,
+                  "Unknown IPI function",
+                  TRUE);
+    }
+}
+
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)
 {
     kspLapicDriver = kpLapicDriver;
@@ -126,7 +190,10 @@ void coreMgtRegLapicTimerDriver(const lapic_timer_driver_t* kpLapicTimerDriver)
 
 void coreMgtInit(void)
 {
-    const lapic_node_t* kpLapicNode;
+    uint32_t                      i;
+    OS_RETURN_E                   error;
+    const lapic_node_t*           kpLapicNode;
+    const cpu_interrupt_config_t* kpCpuIntConfig;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CORE_MGT_INIT_ENTRY,
@@ -154,6 +221,22 @@ void coreMgtInit(void)
                            1,
                            -1);
         return;
+    }
+
+    /* Get the CPU interrupt configuration */
+    kpCpuIntConfig = cpuGetInterruptConfig();
+    sIpiInterruptLine = kpCpuIntConfig->ipiInterruptLine;
+
+    /* Register the IPI handler */
+    error = interruptRegister(sIpiInterruptLine, _ipiInterruptHandler);
+    CORE_MGT_ASSERT(error == OS_NO_ERR,
+                    "Failed to register IPI interrupt",
+                    error);
+
+    /* Initializes the IPI parameters locks */
+    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    {
+        SPINLOCK_INIT(sIpiParametersLocks[i]);
     }
 
     /* Init the current core information */
@@ -213,7 +296,7 @@ void coreMgtApInit(const uint8_t kCpuId)
                        0);
 }
 
-void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
+void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
 {
     uint8_t i;
     uint8_t destCpuId;
@@ -223,7 +306,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
                        TRACE_X86_CPU_CORE_MGT_SEND_IPI_ENTRY,
                        2,
                        kFlags,
-                       kVector);
+                       kpParams->function);
 
     if(kspLapicDriver == NULL)
     {
@@ -231,7 +314,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
                            TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT,
                            2,
                            kFlags,
-                           kVector);
+                           kpParams->function);
         return;
     }
 
@@ -245,7 +328,9 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
         /* Check if in bounds */
         if(destCpuId < MAX_CPU_COUNT)
         {
-            kspLapicDriver->pSendIPI(sCoreIds[destCpuId], kVector);
+            spinlockAcquire(&sIpiParametersLocks[destCpuId]);
+            sIpiParameters[destCpuId] = *kpParams;
+            kspLapicDriver->pSendIPI(sCoreIds[destCpuId], sIpiInterruptLine);
         }
     }
     else if((kFlags & CORE_MGT_IPI_BROADCAST_TO_ALL) ==
@@ -254,7 +339,9 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
         /* Send to all */
         for(i = 0; i < MAX_CPU_COUNT; ++i)
         {
-            kspLapicDriver->pSendIPI(sCoreIds[i], kVector);
+            spinlockAcquire(&sIpiParametersLocks[i]);
+            sIpiParameters[i] = *kpParams;
+            kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
         }
     }
     else if((kFlags & CORE_MGT_IPI_BROADCAST_TO_OTHER) ==
@@ -266,7 +353,9 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
         {
             if(i != srcCpuId)
             {
-                kspLapicDriver->pSendIPI(sCoreIds[i], kVector);
+                spinlockAcquire(&sIpiParametersLocks[i]);
+                sIpiParameters[i] = *kpParams;
+                kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
             }
         }
     }
@@ -275,15 +364,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
                        TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT,
                        2,
                        kFlags,
-                       kVector);
-}
-
-uint8_t cpuGetId(void)
-{
-    uint32_t cpuId;
-    /* On I386, GS stores the CPU Id assigned at boot */
-    __asm__ __volatile__ ("mov %%gs, %0" : "=r"(cpuId));
-    return cpuId & 0xFF;
+                       kpParams->function);
 }
 
 #else /* MAX_CPU_COUNT > 1 */
@@ -310,16 +391,12 @@ void coreMgtApInit(const uint8_t kCpuId)
     return;
 }
 
-void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector)
+void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
 {
     (void)kFlags;
-    (void)kVector;
+    (void)kpParams;
 }
 
-uint8_t cpuGetId(void)
-{
-    return 0;
-}
 #endif /* MAX_CPU_COUNT > 1 */
 
 /************************************ EOF *************************************/

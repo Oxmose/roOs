@@ -53,7 +53,7 @@
  ******************************************************************************/
 
 /** @brief Defines the stack trace size */
-#define STACK_TRACE_SIZE 9
+#define STACK_TRACE_SIZE 6
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -409,15 +409,16 @@ static void _printStackTrace(uintptr_t* lastEBP)
 
         if(callAddr == 0x0) break;
 
-        kprintfPanic("[%u] 0x%p", i, callAddr);
-        if(i != 0 && i % 2 == 0)
+        if(i != 0 && i % 3 == 0)
         {
             kprintfPanic("\n");
         }
-        else
+        else if(i != 0)
         {
             kprintfPanic(" | ");
         }
+
+        kprintfPanic("[%u] 0x%p", i, callAddr);
         lastEBP  = (uintptr_t*)*lastEBP;
     }
 }
@@ -515,6 +516,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     uint8_t        cpuId;
     time_t         currTime;
     uint64_t       uptime;
+    ipi_params_t   ipiParams;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_CPU_KERNEL_PANIC_HANDLER,
@@ -536,7 +538,8 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     /* Send IPI to all other cores and tell that the panic was delivered */
     sDelivered = TRUE;
-    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, PANIC_INT_LINE);
+    ipiParams.function = IPI_FUNC_PANIC;
+    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
 
     pThreadVCpu = pCurrThread->pVCpu;
 

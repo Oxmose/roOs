@@ -139,7 +139,7 @@ static void _divByZeroHandler(kernel_thread_t* pCurrThread)
 void exceptionInit(void)
 {
     OS_RETURN_E                   err;
-    const cpu_interrupt_config_t* pCpuIntConfig;
+    const cpu_interrupt_config_t* kpCpuIntConfig;
 
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED, TRACE_EXCEPTION_INIT_ENTRY, 0);
 
@@ -147,9 +147,9 @@ void exceptionInit(void)
                  "Initializing exception manager.");
 
     /* Get the CPU exception bounds */
-    pCpuIntConfig = cpuGetInterruptConfig();
-    sMinExceptionNumber = pCpuIntConfig->minExceptionLine;
-    sMaxExceptionNumber = pCpuIntConfig->maxExceptionLine;
+    kpCpuIntConfig = cpuGetInterruptConfig();
+    sMinExceptionNumber = kpCpuIntConfig->minExceptionLine;
+    sMaxExceptionNumber = kpCpuIntConfig->maxExceptionLine;
 
     /* Register the division by zero handler */
     err = exceptionRegister(DIV_BY_ZERO_LINE, _divByZeroHandler);

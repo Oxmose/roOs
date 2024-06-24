@@ -669,7 +669,6 @@ static void _lapicTimerEnable(void* pDrvCtrl)
     uint8_t             cpuId;
     uint32_t            intState;
 
-
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
 
     cpuId = cpuGetId();
@@ -695,9 +694,7 @@ static void _lapicTimerEnable(void* pDrvCtrl)
     {
         /* Set the frequency to set the init counter */
         lapicInitCount = pLAPICTimerCtrl->internalFrequency[cpuId] /
-                        pLAPICTimerCtrl->selectedFrequency;
-
-        /* TODO: IPI to broadcast */
+                         pLAPICTimerCtrl->selectedFrequency;
 
         /* Write the initial count to the counter */
         _lapicTimerWrite(pLAPICTimerCtrl->lapicBaseAddress,
@@ -739,8 +736,6 @@ static void _lapicTimerDisable(void* pDrvCtrl)
     {
         ++pLAPICTimerCtrl->disabledNesting[cpuId];
     }
-
-    /* TODO: IPI to boradcast */
 
     /* Disable interrupt */
     _lapicTimerWrite(pLAPICTimerCtrl->lapicBaseAddress,

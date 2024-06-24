@@ -32,6 +32,7 @@
 #include <kerror.h>       /* Kernel error types */
 #include <devtree.h>      /* FDT library */
 #include <critical.h>     /* Kernel lock */
+#include <core_mgt.h>     /* Core manager */
 #include <x86memory.h>    /* x86-64 memory definitions */
 #include <kerneloutput.h> /* Kernel output */
 
@@ -1576,7 +1577,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
                     pRecurTableEntry[pmlEntry[0]] = (currPhysAdd &
                                                      sPhysAddressWidthMask) |
                                                      mapFlags;
-                    cpuInvalidateTlbEntry((uintptr_t)currVirtAddr);
+                    cpuInvalidateTlbEntry(currVirtAddr);
 
                     currVirtAddr += KERNEL_PAGE_SIZE;
                     currPhysAdd  += KERNEL_PAGE_SIZE;
@@ -1607,16 +1608,17 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
 static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                    const size_t    kPageCount)
 {
-    size_t     toUnmap;
-    size_t     unmapedStride;
-    bool_t     hasMapping;
-    uint16_t   offset;
-    uint16_t   i;
-    int8_t     j;
-    uintptr_t  currVirtAddr;
-    uintptr_t* pRecurTableEntry;
-    uint16_t   pmlEntry[4];
-    uintptr_t  physAddr;
+    size_t      toUnmap;
+    size_t      unmapedStride;
+    bool_t      hasMapping;
+    uint16_t    offset;
+    uint16_t    i;
+    int8_t      j;
+    uintptr_t   currVirtAddr;
+    uintptr_t*  pRecurTableEntry;
+    uint16_t    pmlEntry[4];
+    uintptr_t   physAddr;
+    ipi_params_t ipiParams;
 
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_UNMAP_ENTRY,
@@ -1677,6 +1679,8 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     /* Apply the mapping */
     toUnmap = kPageCount;
     currVirtAddr = kVirtualAddress;
+
+    ipiParams.function = IPI_FUNC_TLB_INVAL;
 
     KERNEL_CRITICAL_LOCK(sLock);
     while(toUnmap != 0)
@@ -1787,7 +1791,12 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     {
                         /* Set mapping and invalidate */
                         pRecurTableEntry[pmlEntry[0]] =  0;
-                        cpuInvalidateTlbEntry((uintptr_t)currVirtAddr);
+                        cpuInvalidateTlbEntry(currVirtAddr);
+
+                        /* Update other cores TLB */
+                        ipiParams.pData = (void*)currVirtAddr;
+                        coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER,
+                                       &ipiParams);
                     }
                     currVirtAddr += KERNEL_PAGE_SIZE;
                     --toUnmap;
@@ -1836,6 +1845,10 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     _releaseFrames(physAddr, 1);
                     pRecurTableEntry[pmlEntry[1]] = 0;
                     cpuInvalidateTlbEntry((uintptr_t)pRecurTableEntry);
+
+                    /* Update other cores TLB */
+                    ipiParams.pData = (void*)pRecurTableEntry;
+                    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
                 }
             }
             else if(j == 1)
@@ -1866,6 +1879,10 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     _releaseFrames(physAddr, 1);
                     pRecurTableEntry[pmlEntry[2]] = 0;
                     cpuInvalidateTlbEntry((uintptr_t)pRecurTableEntry);
+
+                    /* Update other cores TLB */
+                    ipiParams.pData = (void*)pRecurTableEntry;
+                    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
                 }
             }
             else if(j == 2)
@@ -1894,6 +1911,10 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     _releaseFrames(physAddr, 1);
                     pRecurTableEntry[pmlEntry[3]] = 0;
                     cpuInvalidateTlbEntry((uintptr_t)pRecurTableEntry);
+
+                    /* Update other cores TLB */
+                    ipiParams.pData = (void*)pRecurTableEntry;
+                    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
                 }
             }
         }

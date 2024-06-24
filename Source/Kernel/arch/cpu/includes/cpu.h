@@ -58,6 +58,8 @@ typedef struct
     uint32_t schedulerInterruptLine;
     /** @brief Spurious interrupts line id */
     uint32_t spuriousInterruptLine;
+    /** @brief IPI interrupt line id */
+    uint32_t ipiInterruptLine;
 } cpu_interrupt_config_t;
 
 /*******************************************************************************

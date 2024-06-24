@@ -2192,7 +2192,8 @@ const cpu_interrupt_config_t ksInterruptConfig = {
     .totalInterruptLineCount = INT_ENTRY_COUNT,
     .panicInterruptLine      = PANIC_INT_LINE,
     .schedulerInterruptLine  = SCHEDULER_SW_INT_LINE,
-    .spuriousInterruptLine   = SPURIOUS_INT_LINE
+    .spuriousInterruptLine   = SPURIOUS_INT_LINE,
+    .ipiInterruptLine        = IPI_INT_LINE,
 };
 
 /*******************************************************************************
@@ -3781,5 +3782,21 @@ void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
 
     kfree((void*)kVCpuAddress);
 }
+
+#if MAX_CPU_COUNT > 1
+uint8_t cpuGetId(void)
+{
+    uint32_t cpuId;
+    /* On x86, GS stores the CPU Id assigned at boot */
+    __asm__ __volatile__ ("mov %%gs, %0" : "=r"(cpuId));
+    return cpuId & 0xFF;
+}
+
+#else
+uint8_t cpuGetId(void)
+{
+    return 0;
+}
+#endif /* MAX_CPU_COUNT > 1 */
 
 /************************************ EOF *************************************/

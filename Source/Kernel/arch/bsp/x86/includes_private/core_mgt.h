@@ -46,7 +46,23 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the IPI functions */
+typedef enum
+{
+    /** @brief Panic function */
+    IPI_FUNC_PANIC = 0,
+    /** @brief TLB invalidation function */
+    IPI_FUNC_TLB_INVAL = 1,
+} IPI_FUNCTION_E;
+
+/** @brief Defines the IPI parameters structure. */
+typedef struct
+{
+    /** @brief IPI function to be used. */
+    IPI_FUNCTION_E function;
+    /** @brief Data for the function to be used */
+    void* pData;
+} ipi_params_t;
 
 /*******************************************************************************
  * MACROS
@@ -121,10 +137,9 @@ void coreMgtApInit(const uint8_t kCpuId);
  * IPI, if it should be broadcasted, including the calling core, etc.
  *
  * @param[in] kFlags The flags to use, see IPI flags definition.
- * @param[in] kVector The IPI vector to use.
+ * @param[in] kpParams The IPI parameters to use.
  */
-void coreMgtSendIpi(const uint32_t kFlags, const uint8_t kVector);
-
+void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
 
 #endif /* #ifndef __X86_CORE_MGT_ */
 

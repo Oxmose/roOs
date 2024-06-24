@@ -32,6 +32,7 @@
 #include <kerror.h>       /* Kernel error types */
 #include <devtree.h>      /* FDT library */
 #include <critical.h>     /* Kernel lock */
+#include <core_mgt.h>     /* Core manager */
 #include <x86memory.h>    /* I386 memory definitions */
 #include <kerneloutput.h> /* Kernel output */
 
@@ -1356,7 +1357,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
         {
             /* Set mapping and invalidate */
             pPgTableRecurEntry[pgTableEntry] = currPhysAdd | mapFlags;
-            cpuInvalidateTlbEntry((uintptr_t)currVirtAddr);
+            cpuInvalidateTlbEntry(currVirtAddr);
 
             currVirtAddr += KERNEL_PAGE_SIZE;
             currPhysAdd  += KERNEL_PAGE_SIZE;
@@ -1384,15 +1385,16 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
 static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                    const size_t    kPageCount)
 {
-    size_t     toUnmap;
-    bool_t     hasMapping;
-    uint16_t   pgDirEntry;
-    uint16_t   pgTableEntry;
-    uint16_t   offset;
-    uint16_t   i;
-    uintptr_t  currVirtAddr;
-    uintptr_t* pPgDirRecurEntry;
-    uintptr_t* pPgTableRecurEntry;
+    size_t       toUnmap;
+    bool_t       hasMapping;
+    uint16_t     pgDirEntry;
+    uint16_t     pgTableEntry;
+    uint16_t     offset;
+    uint16_t     i;
+    uintptr_t    currVirtAddr;
+    uintptr_t*   pPgDirRecurEntry;
+    uintptr_t*   pPgTableRecurEntry;
+    ipi_params_t ipiParams;
 
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_UNMAP_ENTRY,
@@ -1422,6 +1424,8 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     currVirtAddr = kVirtualAddress;
     pPgDirRecurEntry = (uintptr_t*)KERNEL_RECUR_PG_DIR_BASE;
 
+    ipiParams.function = IPI_FUNC_TLB_INVAL;
+
     KERNEL_CRITICAL_LOCK(sLock);
     while(toUnmap != 0)
     {
@@ -1445,7 +1449,11 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                 {
                     /* Set mapping and invalidate */
                     pPgTableRecurEntry[pgTableEntry] = 0;
-                    cpuInvalidateTlbEntry((uintptr_t)currVirtAddr);
+                    cpuInvalidateTlbEntry(currVirtAddr);
+
+                    /* Update other cores TLB */
+                    ipiParams.pData = (void*)currVirtAddr;
+                    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
                 }
 
                 currVirtAddr += KERNEL_PAGE_SIZE;
@@ -1490,6 +1498,10 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                1);
                 pPgDirRecurEntry[pgDirEntry] = 0;
                 cpuInvalidateTlbEntry((uintptr_t)pPgTableRecurEntry);
+
+                /* Update other cores TLB */
+                ipiParams.pData = (void*)pPgTableRecurEntry;
+                coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
             }
         }
         else

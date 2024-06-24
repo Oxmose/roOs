@@ -37,11 +37,14 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
+/** @brief Defines a regular spinlock. */
+typedef volatile uint32_t spinlock_t;
+
 /** @brief Defines a kernel spinlock. */
 typedef struct
 {
     /** @brief The lock value */
-    volatile uint32_t lock;
+    spinlock_t lock;
 
     /** @brief The interrupt state when acquiring the lock */
     uint8_t intState[MAX_CPU_COUNT];
@@ -52,9 +55,9 @@ typedef struct
  ******************************************************************************/
 
 /**
- * @brief Initializes a spinlock.
+ * @brief Initializes a kernel spinlock.
  *
- * @details Initializes a spinlock. This function is safe in kernel mode.
+ * @details Initializes a kernel spinlock. This function is safe in kernel mode.
  *
  * @param[out] LOCK The lock to initialize.
 */
@@ -65,6 +68,21 @@ typedef struct
 
 /** @brief Kernel spinlock initializer */
 #define KERNEL_SPINLOCK_INIT_VALUE {0}
+
+/**
+ * @brief Initializes a regular spinlock.
+ *
+ * @details Initializes a regular spinlock.
+ *
+ * @param[out] LOCK The lock to initialize.
+*/
+#define SPINLOCK_INIT(LOCK) {   \
+    LOCK = 0;                   \
+}
+
+
+/** @brief Sinlock initializer */
+#define SPINLOCK_INIT_VALUE 0
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -90,7 +108,7 @@ typedef struct
  *
  * @param[in, out] pLock The pointer to the lock to lock.
 */
-void spinlockAcquire(volatile uint32_t * pLock);
+void spinlockAcquire(spinlock_t* pLock);
 
 /**
  * @brief Unlocks a spinlock.
@@ -99,7 +117,7 @@ void spinlockAcquire(volatile uint32_t * pLock);
  *
  * @param[out] pLock The pointer to the lock to unlock.
 */
-void spinlockRelease(volatile uint32_t * pLock);
+void spinlockRelease(spinlock_t* pLock);
 
 #endif /* #ifndef __CPU_SPINLOCK_H_ */
 

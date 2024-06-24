@@ -53,6 +53,8 @@
 /** @brief Defines the software interrupt number for scheduling. */
 #define SCHEDULER_SW_INT_LINE 0x22
 
+/** @brief Defines the IPI interrupt line. */
+#define IPI_INT_LINE 0x23
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

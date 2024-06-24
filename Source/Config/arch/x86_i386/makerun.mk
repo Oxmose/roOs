@@ -28,7 +28,7 @@ pre-run:
 
 run: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -monitor telnet:127.0.0.1:55555,server,nowait
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -monitor telnet:127.0.0.1:55550,server,nowait
 
 qemu-test-mode: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu TEST MODE\e[22m\e[39m"
@@ -36,4 +36,4 @@ qemu-test-mode: pre-run
 
 debug: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu DEBUG MODE\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S -monitor telnet:127.0.0.1:55555,server,nowait -gdb tcp::1234
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/utk_boot.iso -S -monitor telnet:127.0.0.1:55550,server,nowait -gdb tcp::1234

@@ -9,7 +9,7 @@
 # makefiles.
 ################################################################################
 
-ifeq ($(UNAME_S),Darwin)
+ifeq ($(shell uname -s),Darwin)
 	CC = x86_64-elf-gcc
 	AS = nasm
 	LD = x86_64-elf-ld

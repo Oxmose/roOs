@@ -58,11 +58,11 @@
 #define PANIC(ERROR, MODULE, MSG, IS_KERNEL) {                          \
     if(IS_KERNEL == TRUE)                                               \
     {                                                                   \
-        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);           \
+        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);            \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        /* TODO: process_panic(ERROR);  */                              \
+        /* TODO: processPanic(ERROR);  */                               \
     }                                                                   \
 }
 

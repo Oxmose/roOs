@@ -514,7 +514,7 @@ void timeWaitNoScheduler(const uint64_t ns)
                          sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
             while(sActiveWait[cpuId] > 0){}
         }
-        else/* TODO: Check aux and RTC*/
+        else
         {
             KERNEL_ERROR("Failed to active wait, no time source present.\n");
         }

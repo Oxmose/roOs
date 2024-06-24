@@ -283,7 +283,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
     /* Check the new value, maybe we were woken up by a spurious event */
     } while(pFutex->isAlive == TRUE &&
-            *pFutex->pHandle == kWaitValue &&
+            *(pFutex->pHandle) == kWaitValue &&
             waiting.wakeReason != FUTEX_WAKEUP_CANCEL);
 
     /* Check if we were canceled */

@@ -267,7 +267,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     *pTimerCopy = *kpTimer;
 
     /* Create the new node */
-    pNewNode = kQueueCreateNode(pTimerCopy);
+    pNewNode = kQueueCreateNode(pTimerCopy, FALSE);
     if(pNewNode == NULL)
     {
         kfree(pTimerCopy);
@@ -286,22 +286,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     /* Create queue is it does not exist */
     if(spAuxTimersQueue == NULL)
     {
-        spAuxTimersQueue = kQueueCreate();
-    }
-    if(spAuxTimersQueue == NULL)
-    {
-        KERNEL_CRITICAL_UNLOCK(auxTimersListLock);
-        kQueueDestroyNode(&pNewNode);
-        kfree(pTimerCopy);
-
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(kpTimer),
-                           KERNEL_TRACE_LOW(kpTimer),
-                           OS_ERR_NULL_POINTER);
-
-        return OS_ERR_NULL_POINTER;
+        spAuxTimersQueue = kQueueCreate(TRUE);
     }
 
     /* Add the timer to the queue */

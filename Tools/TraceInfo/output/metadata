@@ -2650,6 +2650,28 @@ event {
     };
 };
 
+event {
+    id = 354;
+    name = "X86 Memory manager page fault entry";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 355;
+    name = "X86 Memory manager page fault exit";
+    fields := struct {
+        xuint32_t virtAddressHigh;
+        xuint32_t virtAddressLow;
+        uint32_t threadId;
+    };
+};
+
+TRACE_X86_MEMMGR_PAGE_FAULT_EXIT
+
 /********************************* Scheduler */
 
 event {

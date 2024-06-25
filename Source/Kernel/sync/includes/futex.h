@@ -109,6 +109,7 @@ void futexLibInit(void);
  * @warning This function is asynchronous, if a thread starts to wait just after
  * futexWake is called and no other thread was waiting on the futex, it will
  * wait until the next call to futexWake.
+ * Waiting on a destroyed futex produces undefined behavior.
  */
 OS_RETURN_E futexWait(futex_t*             pFutex,
                       const uint32_t       kWaitValue,
@@ -130,6 +131,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
  * @warning This function is asynchronous, if a thread starts to wait just after
  * this function is called and no other thread was waiting on the futex, it will
  * wait until the next call to futexWake.
+ * Waking on a destroyed futex produces undefined behavior.
  */
 OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount);
 
@@ -146,6 +148,8 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount);
  * should be rescheduled.
  *
  * @return The success or error status is returned.
+ *
+ * @warning Canceling on a destroyed futex produces undefined behavior.
  */
 OS_RETURN_E futexCancelWait(futex_t*         pFutex,
                             kernel_thread_t* pThread,

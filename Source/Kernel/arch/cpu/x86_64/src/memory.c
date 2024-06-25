@@ -642,6 +642,13 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     __asm__ __volatile__ ("mov %%cr2, %0" : "=r"(faultAddress));
     errorCode = ((virtual_cpu_t*)pCurrentThread->pVCpu)->intContext.errorCode;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_PAGE_FAULT_ENTRY,
+                       3,
+                       KERNEL_TRACE_HIGH(faultAddress),
+                       KERNEL_TRACE_LOW(faultAddress),
+                       pCurrentThread->tid);
+
     KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Page fault: 0x%p | Code: %x\n",
@@ -703,6 +710,13 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     /* TODO: Terminate thread, set reason page fault and reason data the address,
      * also getthe reason code in the interrupt info */
     kernelPanicHandler(pCurrentThread);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_PAGE_FAULT_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(faultAddress),
+                       KERNEL_TRACE_LOW(faultAddress),
+                       pCurrentThread->tid);
 }
 
 static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
@@ -957,10 +971,7 @@ static void _addBlock(mem_list_t*  pList,
                    "Failed to allocate new memory range",
                    OS_ERR_NO_MORE_MEMORY);
 
-        pNewNode = kQueueCreateNode(pRange);
-        MEM_ASSERT(pNewNode != NULL,
-                   "Failed to create memory range node",
-                   OS_ERR_NO_MORE_MEMORY);
+        pNewNode = kQueueCreateNode(pRange, TRUE);
 
         pRange->base  = baseAddress;
         pRange->limit = limit;
@@ -1120,10 +1131,7 @@ static void _removeBlock(mem_list_t*  pList,
                        "Failed to allocate new memory range",
                        OS_ERR_NO_MORE_MEMORY);
 
-            pNewNode = kQueueCreateNode(pRange);
-            MEM_ASSERT(pNewNode != NULL,
-                       "Failed to create memory range node",
-                       OS_ERR_NO_MORE_MEMORY);
+            pNewNode = kQueueCreateNode(pRange, TRUE);
 
             pRange->base  = baseAddress;
             pRange->limit = saveLimit;
@@ -2458,16 +2466,10 @@ void memoryMgrInit(void)
                        0);
 
     /* Initialize structures */
-    sPhysMemList.pQueue = kQueueCreate();
-    MEM_ASSERT(sPhysMemList.pQueue != NULL,
-               "Failed to create the physical memory list.",
-               OS_ERR_NULL_POINTER);
+    sPhysMemList.pQueue = kQueueCreate(TRUE);
     KERNEL_SPINLOCK_INIT(sPhysMemList.lock);
 
-    sKernelFreePagesList.pQueue = kQueueCreate();
-    MEM_ASSERT(sKernelFreePagesList.pQueue != NULL,
-               "Failed to create the free page list.",
-               OS_ERR_NULL_POINTER);
+    sKernelFreePagesList.pQueue = kQueueCreate(TRUE);
     KERNEL_SPINLOCK_INIT(sKernelFreePagesList.lock);
 
     sPhysAddressWidthMask = ((1ULL << physAddressWidth) - 1);

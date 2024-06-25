@@ -232,7 +232,12 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
                      OS_ERR_NO_MORE_MEMORY);
 
         /* Create the futex waiting queue */
-        pFutexData->pWaitingThreads = kQueueCreate();
+        pFutexData->pWaitingThreads = kQueueCreate(FALSE);
+        if(pFutexData->pWaitingThreads == NULL)
+        {
+            kfree(pFutexData);
+            return OS_ERR_NO_MORE_MEMORY;
+        }
         FUTEX_ASSERT(pFutexData->pWaitingThreads != NULL,
                      "Failed to allocate futex queue",
                      OS_ERR_NO_MORE_MEMORY);
@@ -267,12 +272,12 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         waiting.pWaitingThread->state             = THREAD_STATE_WAITING;
         waiting.pWaitingThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
         waiting.pWaitingThread->resourceBlockType = THREAD_WAIT_RESOURCE_FUTEX;
+        waiting.pWaitingThread->pBlockingResource = &waitingNode;
 
         KERNEL_CRITICAL_LOCK(pFutexData->lock);
 
         /* Add the node to the waiting thread */
         kQueuePush(&waitingNode, pFutexData->pWaitingThreads);
-        waiting.pWaitingThread->pBlockingResource = &waitingNode;
 
         KERNEL_CRITICAL_UNLOCK(pFutexData->lock);
 
@@ -411,6 +416,7 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
 
     /* Wake up the next threads to wake */
     pWaitingNode = pFutexData->pWaitingThreads->pTail;
+
     for(i = 0; i < kWakeCount && pWaitingNode != NULL; ++i)
     {
         pWaiting = pWaitingNode->pData;

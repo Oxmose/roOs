@@ -428,10 +428,7 @@ static void _createIdleThreads(void)
                      OS_ERR_NO_MORE_MEMORY);
 
         /* Create a new node for the threads lists */
-        pNewNode = kQueueCreateNode(spIdleThread[i]);
-        SCHED_ASSERT(pNewNode != NULL,
-                     "Failed to allocate IDLE thread node",
-                     OS_ERR_NO_MORE_MEMORY);
+        pNewNode = kQueueCreateNode(spIdleThread[i], TRUE);
 
         /* Set the thread's information */
         spIdleThread[i]->affinity      = (1ULL << i);
@@ -627,7 +624,7 @@ void schedInit(void)
         KERNEL_SPINLOCK_INIT(sThreadTables[j].lock);
         for(i = 0; i <= KERNEL_LOWEST_PRIORITY; ++i)
         {
-            sThreadTables[j].pReadyList[i]  = kQueueCreate();
+            sThreadTables[j].pReadyList[i]  = kQueueCreate(TRUE);
 
             SCHED_ASSERT(sThreadTables[j].pReadyList[i] != NULL,
                         "Failed to allocate scheduler threads lists",
@@ -637,7 +634,7 @@ void schedInit(void)
 
     /* Initialize the sleeping threads list */
     sSleepingThreadsTable.threadCount = 0;
-    sSleepingThreadsTable.pThreadList = kQueueCreate();
+    sSleepingThreadsTable.pThreadList = kQueueCreate(TRUE);
     KERNEL_SPINLOCK_INIT(sSleepingThreadsTable.lock);
 
     SCHED_ASSERT(sSleepingThreadsTable.pThreadList != NULL,
@@ -646,7 +643,7 @@ void schedInit(void)
 
     /* Initialize the zombie threads list */
     sZombieThreadsTable.threadCount = 0;
-    sZombieThreadsTable.pThreadList = kQueueCreate();
+    sZombieThreadsTable.pThreadList = kQueueCreate(TRUE);
     KERNEL_SPINLOCK_INIT(sZombieThreadsTable.lock);
 
     SCHED_ASSERT(sZombieThreadsTable.pThreadList != NULL,
@@ -989,7 +986,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     }
 
     /* Create a new node for the threads lists */
-    pNewNode = kQueueCreateNode(pNewThread);
+    pNewNode = kQueueCreateNode(pNewThread, FALSE);
     if(pNewNode == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;

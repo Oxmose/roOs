@@ -43,12 +43,27 @@
  ******************************************************************************/
 
 /**
- * @brief Enters a critical section in the kernel.
+ * @brief Gets the kernel local critical section state.
  *
  * @param[out] INT_STATE The critical state at section's entrance.
  *
- * @details Enters a critical section in the kernel. Save interrupt state and
- * disables interrupts.
+ * @details Gets the kernel local critical section state.
+ */
+#define KERNEL_GET_CRITICAL_LOCAL(INT_STATE) {                      \
+    INT_STATE = cpuGeIntState();                                    \
+    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,              \
+                       TRACE_CPU_GET_CRITICAL,                      \
+                       1,                                           \
+                       INT_STATE);                                  \
+}
+
+/**
+ * @brief Enters a local critical section in the kernel.
+ *
+ * @param[out] INT_STATE The local critical state at section's entrance.
+ *
+ * @details Enters a local critical section in the kernel. Save interrupt state
+ * and disables interrupts.
  */
 #define KERNEL_ENTER_CRITICAL_LOCAL(INT_STATE) {                    \
     INT_STATE = interruptDisable();                                 \
@@ -59,11 +74,11 @@
 }
 
 /**
- * @brief Exits a critical section in the kernel.
+ * @brief Exits a local critical section in the kernel.
  *
- * @param[in] INT_STATE The critical state at section's entrance.
+ * @param[in] INT_STATE The local critical state at section's entrance.
  *
- * @details Exits a critical section in the kernel. Restore the previous
+ * @details Exits a local critical section in the kernel. Restore the previous
  * interrupt state.
  */
 #define KERNEL_EXIT_CRITICAL_LOCAL(INT_STATE) {                 \

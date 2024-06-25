@@ -105,10 +105,12 @@ typedef struct
  * @warning A node should be only used in one queue at most.
  *
  * @param[in] pData The pointer to the data to carry in the node.
+ * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
+ * is TRUE and the queue cannot be created, a kernel panic is generated.
  *
  * @return The node pointer is returned.
  */
-kqueue_node_t* kQueueCreateNode(void* pData);
+kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical);
 
 /**
  * @brief Initializes a new queue node.
@@ -120,8 +122,11 @@ kqueue_node_t* kQueueCreateNode(void* pData);
  *
  * @param[in] pNode The pointer to the node to initialize to carry in the node.
  * @param[in] pData The pointer to the data to carry in the node.
+ * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
+ * is TRUE and the queue cannot be created, a kernel panic is generated.
  */
-void kQueueInitNode(kqueue_node_t* pNode, void* pData);
+void kQueueInitNode(kqueue_node_t* pNode,
+                    void*          pData);
 
 /**
  * @brief Deletes a queue node.
@@ -138,8 +143,11 @@ void kQueueDestroyNode(kqueue_node_t** ppNode);
  *
  * @details Creates and initializes a new queue. The returned queue is
  * ready to be used.
+ *
+ * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
+ * is TRUE and the queue cannot be created, a kernel panic is generated.
  */
-kqueue_t* kQueueCreate(void);
+kqueue_t* kQueueCreate(const bool_t kIsCritical);
 
 /**
  * @brief Deletes a previously created queue.

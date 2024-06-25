@@ -104,7 +104,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-kqueue_node_t* kQueueCreateNode(void* pData)
+kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
 {
     kqueue_node_t* pNewNode;
 
@@ -116,9 +116,26 @@ kqueue_node_t* kQueueCreateNode(void* pData)
 
     /* Create new node */
     pNewNode = kmalloc(sizeof(kqueue_node_t));
-    KQUEUE_ASSERT(pNewNode != NULL,
-                  "Could not allocate knode",
-                  OS_ERR_NO_MORE_MEMORY);
+    if(pNewNode == NULL)
+    {
+        if(kIsCritical == TRUE)
+        {
+            KQUEUE_ASSERT(FALSE,
+                          "Could not allocate knode",
+                          OS_ERR_NO_MORE_MEMORY);
+        }
+        else
+        {
+            KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                               TRACE_KQUEUE_CREATE_NODE_EXIT,
+                               4,
+                               KERNEL_TRACE_HIGH(pData),
+                               KERNEL_TRACE_LOW(pData),
+                               KERNEL_TRACE_HIGH(pNewNode),
+                               KERNEL_TRACE_LOW(pNewNode));
+            return NULL;
+        }
+    }
 
 
     /* Init the structure */
@@ -182,7 +199,7 @@ void kQueueDestroyNode(kqueue_node_t** ppNode)
     *ppNode = NULL;
 }
 
-kqueue_t* kQueueCreate(void)
+kqueue_t* kQueueCreate(const bool_t kIsCritical)
 {
     kqueue_t* pNewQueue;
 
@@ -192,9 +209,24 @@ kqueue_t* kQueueCreate(void)
 
     /* Create new node */
     pNewQueue = kmalloc(sizeof(kqueue_t));
-    KQUEUE_ASSERT(pNewQueue != NULL,
-                  "Could not allocate kqueue",
-                  OS_ERR_NO_MORE_MEMORY);
+    if(pNewQueue == NULL)
+    {
+        if(kIsCritical == TRUE)
+        {
+            KQUEUE_ASSERT(FALSE,
+                          "Could not allocate kqueue",
+                          OS_ERR_NO_MORE_MEMORY);
+        }
+        else
+        {
+            KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
+                               TRACE_KQUEUE_QUEUE_CREATE_EXIT,
+                               2,
+                               KERNEL_TRACE_HIGH(pNewQueue),
+                               KERNEL_TRACE_LOW(pNewQueue));
+            return NULL;
+        }
+    }
 
     /* Init the structure */
     memset(pNewQueue, 0, sizeof(kqueue_t));

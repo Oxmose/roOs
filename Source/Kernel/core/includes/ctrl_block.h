@@ -74,6 +74,9 @@ typedef enum
 {
     /** @brief Thread is waiting on a futex */
     THREAD_WAIT_RESOURCE_FUTEX,
+
+    /** @brief Thread is waiting on a semapore */
+    THREAD_WAIT_RESOURCE_SEMAPHORE,
 } THREAD_WAIT_RESOURCE_TYPE_E;
 
 /** @brief Defines the possitble return state of a thread. */

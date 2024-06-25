@@ -66,8 +66,10 @@ typedef enum
     OS_ERR_DESTROYED                       = 13,
     /** @brief The resource was not blocked */
     OS_ERR_NOT_BLOCKED                     = 14,
+    /** @brief The resource was blocked */
+    OS_ERR_BLOCKED                         = 15,
     /** @brief Page fault occured */
-    OS_ERR_PAGE_FAULT                      = 15,
+    OS_ERR_PAGE_FAULT                      = 16,
 } OS_RETURN_E;
 
 /*******************************************************************************

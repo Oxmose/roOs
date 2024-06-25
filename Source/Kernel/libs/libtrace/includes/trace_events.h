@@ -454,6 +454,9 @@ typedef enum
     TRACE_KQUEUE_INIT_NODE_ENTRY                    = 352,
     TRACE_KQUEUE_INIT_NODE_EXIT                     = 353,
 
+    TRACE_X86_MEMMGR_PAGE_FAULT_ENTRY               = 354,
+    TRACE_X86_MEMMGR_PAGE_FAULT_EXIT                = 355,
+
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

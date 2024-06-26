@@ -123,6 +123,7 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
             KQUEUE_ASSERT(FALSE,
                           "Could not allocate knode",
                           OS_ERR_NO_MORE_MEMORY);
+            return NULL;
         }
         else
         {
@@ -216,6 +217,7 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
             KQUEUE_ASSERT(FALSE,
                           "Could not allocate kqueue",
                           OS_ERR_NO_MORE_MEMORY);
+            return NULL;
         }
         else
         {

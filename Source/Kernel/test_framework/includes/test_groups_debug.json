@@ -1,6 +1,6 @@
 [
     {
-        "name": "Interrupt Tests Suite",
-        "testname": "FUTEX"
+        "name": "Semaphore Tests Suite",
+        "testname": "SEMAPHORE"
     }
 ]

@@ -1557,7 +1557,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
 
             /* Check if we can clean this directory entries */
             offset = pgTableEntry;
-            pgTableEntry = (currVirtAddr >> PG_TABLE_ENTRY_OFFSET) &
+            pgTableEntry = (kVirtualAddress >> PG_TABLE_ENTRY_OFFSET) &
                             PG_TABLE_ENTRY_OFFSET_MASK;
             hasMapping = FALSE;
 

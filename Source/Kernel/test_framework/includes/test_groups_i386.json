@@ -46,5 +46,9 @@
     {
         "name": "Core Suite",
         "testname": "SCHEDULER"
+    },
+    {
+        "name": "Semaphore Tests Suite",
+        "testname": "SEMAPHORE"
     }
 ]

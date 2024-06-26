@@ -1724,6 +1724,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     uint16_t     pmlEntry[4];
     uintptr_t    physAddr;
     ipi_params_t ipiParams;
+    uintptr_t    initAddr;
 
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_UNMAP_ENTRY,
@@ -1869,6 +1870,8 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
             }
         } while(hasMapping == FALSE && toUnmap > 0);
 
+        initAddr = currVirtAddr;
+
         /* Remove entry in the four levels is needed  */
         for(j = 0; j < 3 && toUnmap > 0; ++j)
         {
@@ -1895,7 +1898,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     if((pRecurTableEntry[pmlEntry[0]] & PAGE_FLAG_PRESENT) != 0)
                     {
                         /* Set mapping and invalidate */
-                        pRecurTableEntry[pmlEntry[0]] =  0;
+                        pRecurTableEntry[pmlEntry[0]] = 0;
                         cpuInvalidateTlbEntry(currVirtAddr);
 
                         /* Update other cores TLB */
@@ -1911,7 +1914,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
 
                 /* Check if we can clean this directory entries */
                 offset = pmlEntry[0];
-                pmlEntry[0] = (currVirtAddr >> PML1_ENTRY_OFFSET) &
+                pmlEntry[0] = (initAddr >> PML1_ENTRY_OFFSET) &
                               PG_ENTRY_OFFSET_MASK;
                 hasMapping = FALSE;
 

@@ -206,12 +206,12 @@ if __name__ == "__main__":
             # Update test file
             UpdateTestFile(testListFileName, group["testname"], group["name"])
 
-            retValue = os.system("make clean TESTS=TRUE")
+            retValue = os.system("make clean TESTS=TRUE >> /dev/null")
             if retValue != 0:
                 error += 1
                 continue
 
-            retValue = os.system("make target={} TESTS=TRUE".format(target, group["name"], target))
+            retValue = os.system("make target={} TESTS=TRUE >> /dev/null".format(target, group["name"], target))
             if retValue != 0:
                 error += 1
                 continue

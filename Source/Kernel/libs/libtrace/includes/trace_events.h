@@ -59,6 +59,7 @@
 #define TRACE_X86_MEMMGR_ENABLED        (TRACE_ALL_ENABLED | 0)
 #define TRACE_SCHEDULER_ENABLED         (TRACE_ALL_ENABLED | 0)
 #define TRACE_FUTEX_ENABLED             (TRACE_ALL_ENABLED | 0)
+#define TRACE_SEMAPHORE_ENABLED         (TRACE_ALL_ENABLED | 0)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -456,6 +457,17 @@ typedef enum
 
     TRACE_X86_MEMMGR_PAGE_FAULT_ENTRY               = 354,
     TRACE_X86_MEMMGR_PAGE_FAULT_EXIT                = 355,
+
+    TRACE_SEMAPHORE_INIT_ENTRY                      = 356,
+    TRACE_SEMAPHORE_INIT_EXIT                       = 357,
+    TRACE_SEMAPHORE_DESTROY_ENTRY                   = 358,
+    TRACE_SEMAPHORE_DESTROY_EXIT                    = 359,
+    TRACE_SEMAPHORE_WAIT_ENTRY                      = 360,
+    TRACE_SEMAPHORE_WAIT_EXIT                       = 361,
+    TRACE_SEMAPHORE_POST_ENTRY                      = 362,
+    TRACE_SEMAPHORE_POST_EXIT                       = 363,
+    TRACE_SEMAPHORE_TRYWAIT_ENTRY                   = 364,
+    TRACE_SEMAPHORE_TRYWAIT_EXIT                    = 365,
 
 } TRACE_EVENT_E;
 /*******************************************************************************

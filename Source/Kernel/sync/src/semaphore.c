@@ -56,7 +56,24 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the state of a semaphore when awakening */
+typedef enum
+{
+    /** @brief The semaphore was posted */
+    SEMAPHORE_POSTED = 0,
+    /** @brief The semaphore was destroyed */
+    SEMAPHORE_DESTROYED = 1
+} SEMAPHORE_WAIT_STATUS;
+
+/** @brief Defines the thread's private semaphore data */
+typedef struct
+{
+    /** @brief The thread pointer */
+    kernel_thread_t* pThread;
+
+    /** @brief The semaphore wait status */
+    SEMAPHORE_WAIT_STATUS status;
+} semaphore_data_t;
 
 /*******************************************************************************
  * MACROS
@@ -91,15 +108,39 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
                     const int32_t  kInitLevel,
                     const uint32_t kFlags)
 {
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_INIT_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       kInitLevel,
+                       kFlags);
+
     /* Check parameters */
     if(pSem == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_INIT_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           kInitLevel,
+                           kFlags,
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if((kFlags & SEMAPHORE_FLAG_QUEUING_FIFO) == SEMAPHORE_FLAG_QUEUING_FIFO &&
        (kFlags & SEMAPHORE_FLAG_QUEUING_PRIO) == SEMAPHORE_FLAG_QUEUING_PRIO)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_INIT_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           kInitLevel,
+                           kFlags,
+                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -109,6 +150,14 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     pSem->pWaitingList = kQueueCreate(FALSE);
     if(pSem->pWaitingList == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_INIT_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           kInitLevel,
+                           kFlags,
+                           OS_ERR_NO_MORE_MEMORY);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
@@ -117,22 +166,50 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
 
     /* TODO: Add the resource to the process */
 
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_INIT_EXIT,
+                       5,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       kInitLevel,
+                       kFlags,
+                       OS_ERR_NO_MORE_MEMORY);
+
     return OS_NO_ERR;
 }
 
 OS_RETURN_E semDestroy(semaphore_t* pSem)
 {
-    uint32_t       intState;
-    kqueue_node_t* pWaitNode;
+    uint32_t          intState;
+    kqueue_node_t*    pWaitNode;
+    semaphore_data_t* pData;
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_DESTROY_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem));
 
     /* Check parameters */
     if(pSem == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_DESTROY_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_DESTROY_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -146,7 +223,10 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
     pWaitNode = kQueuePop(pSem->pWaitingList);
     while(pWaitNode != NULL)
     {
-        schedReleaseThread(pWaitNode->pData);
+        pData = pWaitNode->pData;
+        pData->status = SEMAPHORE_DESTROYED;
+
+        schedReleaseThread(pData->pThread);
         pWaitNode = kQueuePop(pSem->pWaitingList);
     }
 
@@ -157,6 +237,12 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
 
     /* TODO: Remove the resource to the process */
 
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_DESTROY_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -166,15 +252,35 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     uint32_t         intState;
     kqueue_node_t*   pSemNode;
     kernel_thread_t* pCurThread;
+    semaphore_data_t data;
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_WAIT_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem));
+
 
     /* Check parameters */
     if(pSem == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_WAIT_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_WAIT_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -188,6 +294,13 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         spinlockRelease(&pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_WAIT_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_NO_ERR);
+
         return OS_NO_ERR;
     }
 
@@ -195,12 +308,20 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     pCurThread = schedGetCurrentThread();
 
     /* Create a new queue node */
-    pSemNode = kQueueCreateNode(pCurThread, FALSE);
+    data.pThread = pCurThread;
+    data.status = SEMAPHORE_DESTROYED;
+    pSemNode = kQueueCreateNode(&data, FALSE);
     if(pSemNode == NULL)
     {
         spinlockRelease(&pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_WAIT_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_NO_MORE_MEMORY);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
@@ -230,7 +351,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     /* We are back from scheduling, check if the semaphore is still alive */
-    if(pSem->isInit == FALSE)
+    if(data.status == SEMAPHORE_DESTROYED)
     {
         error = OS_ERR_DESTROYED;
     }
@@ -239,22 +360,48 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         error = OS_NO_ERR;
     }
 
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_WAIT_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       error);
+
     return error;
 }
 
 OS_RETURN_E semPost(semaphore_t* pSem)
 {
-    kqueue_node_t* pWaitNode;
-    uint32_t       intState;
+    kqueue_node_t*    pWaitNode;
+    semaphore_data_t* pData;
+    uint32_t          intState;
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_POST_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem));
 
     /* Check parameters */
     if(pSem == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_POST_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_POST_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -265,7 +412,9 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     /* If we need to release a thread */
     if(pWaitNode != NULL)
     {
-        schedReleaseThread(pWaitNode->pData);
+        pData = pWaitNode->pData;
+        pData->status = SEMAPHORE_POSTED;
+        schedReleaseThread(pData->pThread);
     }
     else
     {
@@ -278,19 +427,48 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     spinlockRelease(&pSem->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_POST_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       OS_NO_ERR);
+
     return OS_NO_ERR;
 }
 
 OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
 {
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_TRYWAIT_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem));
+
     /* Check parameters */
     if(pSem == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_TRYWAIT_EXIT,
+                           4,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           -1,
+                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE)
     {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_TRYWAIT_EXIT,
+                           4,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           -1,
+                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -304,14 +482,27 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
     {
         /* Acquire one value */
         --pSem->level;
-        spinlockRelease(&pSem->lock);
-        return OS_NO_ERR;
+        error = OS_NO_ERR;
     }
     else
     {
-        spinlockRelease(&pSem->lock);
-        return OS_ERR_BLOCKED;
+        error = OS_ERR_BLOCKED;
     }
+    spinlockRelease(&pSem->lock);
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_TRYWAIT_EXIT,
+                       4,
+                       KERNEL_TRACE_HIGH(pSem),
+                       KERNEL_TRACE_LOW(pSem),
+                       pSem->level,
+                       error);
+
+    return error;
 }
+
+/* TODO: Add a semaphore cancel when we remove a thread to avoid having an
+ * invalid semaphore_data_t on destroy / post
+ */
 
 /************************************ EOF *************************************/

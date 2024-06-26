@@ -2946,3 +2946,104 @@ event {
         uint32_t returnCode;
     };
 };
+
+/********************************* Semaphore */
+event {
+    id = 356;
+    name = "Semaphore init entry";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        xuint32_t initlevel;
+        xuint32_t flags;
+    };
+};
+
+event {
+    id = 357;
+    name = "Semaphore init exit";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        xuint32_t initlevel;
+        xuint32_t flags;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 358;
+    name = "Semaphore destroy entry";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+    };
+};
+
+event {
+    id = 359;
+    name = "Semaphore destroy exit";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 360;
+    name = "Semaphore wait entry";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+    };
+};
+
+event {
+    id = 361;
+    name = "Semaphore wait exit";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 362;
+    name = "Semaphore post entry";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+    };
+};
+
+event {
+    id = 363;
+    name = "Semaphore post exit";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 364;
+    name = "Semaphore try wait entry";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+    };
+};
+
+event {
+    id = 365;
+    name = "Semaphore try wait exit";
+    fields := struct {
+        xuint32_t semAddrHigh;
+        xuint32_t semAddrLow;
+        uint32_t level;
+        uint32_t returnCode;
+    };
+};

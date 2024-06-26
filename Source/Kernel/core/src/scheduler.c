@@ -74,10 +74,10 @@ typedef struct
     /**
      * @brief Stores the current highest priority in the ready tables
      */
-    uint8_t highestPriority;
+    volatile uint8_t highestPriority;
 
     /** @brief Stores the number of threads in the table */
-    size_t threadCount;
+    volatile size_t threadCount;
 
     /**
      * @brief The list of threads in the table, by priority
@@ -92,7 +92,7 @@ typedef struct
 typedef struct
 {
     /** @brief Stores the number of threads in the table */
-    size_t threadCount;
+    volatile size_t threadCount;
 
     /**
      * @brief The list of threads in the table
@@ -898,9 +898,9 @@ OS_RETURN_E schedSleep(const uint64_t kTimeNs)
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
+
     /* Get the current time and set as sleeping*/
     pCurrThread->wakeupTime = timeGetUptime() + kTimeNs;
-    pCurrThread->state      = THREAD_STATE_SLEEPING;
 
     KERNEL_CRITICAL_LOCK(sSleepingThreadsTable.lock);
 
@@ -909,6 +909,7 @@ OS_RETURN_E schedSleep(const uint64_t kTimeNs)
                    sSleepingThreadsTable.pThreadList,
                    pCurrThread->wakeupTime);
     ++sSleepingThreadsTable.threadCount;
+    pCurrThread->state = THREAD_STATE_SLEEPING;
 
     KERNEL_CRITICAL_UNLOCK(sSleepingThreadsTable.lock);
 

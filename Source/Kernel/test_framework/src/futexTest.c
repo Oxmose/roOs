@@ -234,6 +234,7 @@ static void* testOrderRoutineWake(void* args)
     tid = (uint32_t)(uintptr_t)args;
     timeWait = (uint64_t)(tid + 1) * 500000000 + 500000000;
 
+    kprintf("wake thread %d, sleeping %lluns\n", tid, timeWait);
     error = schedSleep(timeWait);
     TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_SLEEP_WAKE(tid),
                             error == OS_NO_ERR,
@@ -285,7 +286,7 @@ static void* testWaitSameHandleValue(void* args)
 
     tid = (uintptr_t)args;
 
-    //kprintf("Wait samehandle waiting %d\n", tid);
+    kprintf("Wait samehandle waiting %d\n", tid);
 
     error = futexWait(&multipleFutex, 0, &reason);
 
@@ -924,10 +925,15 @@ static void* testThread(void* args)
     (void)args;
 
     testOrder();
+    kprintf("Order Test Done\n");
     testCancel();
+    kprintf("Cancel Test Done\n");
     testMultiple();
+    kprintf("Multiple Test Done\n");
     testSameHandleValue();
+    kprintf("Same Handle Test Done\n");
     testReleaseResources();
+    kprintf("Release Test Done\n");
 
     TEST_FRAMEWORK_END();
 

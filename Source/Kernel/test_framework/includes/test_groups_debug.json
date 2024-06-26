@@ -1,6 +1,6 @@
 [
     {
-        "name": "OS KQUEES",
+        "name": "Interrupt Tests Suite",
         "testname": "FUTEX"
     }
 ]

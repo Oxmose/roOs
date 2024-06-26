@@ -206,7 +206,7 @@ if __name__ == "__main__":
             # Update test file
             UpdateTestFile(testListFileName, group["testname"], group["name"])
 
-            retValue = os.system("make clean")
+            retValue = os.system("make clean TESTS=TRUE")
             if retValue != 0:
                 error += 1
                 continue

@@ -30,6 +30,7 @@
         "x86memory.h": "c",
         "x86cpu.h": "c",
         "core_mgt.h": "c",
-        "kqueue.h": "c"
+        "kqueue.h": "c",
+        "spinlock.h": "c"
     }
 }

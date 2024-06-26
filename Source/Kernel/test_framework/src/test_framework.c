@@ -30,12 +30,16 @@
 #include <panic.h>         /* Kernel panic */
 #include <kerror.h>        /* Kernel errors */
 #include <cpu.h>          /*  CPU API */
+#include <critical.h>     /* Kernel critical */
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
 #include <test_framework.h>
+
+/* Tracing feature */
+#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -153,6 +157,8 @@ test_item_t null_test_item = {
     .status   = FALSE
 };
 
+/** @brief Test spinlock */
+static kernel_spinlock_t sLock;
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -196,6 +202,8 @@ static void _initTestItem(const uint32_t test_id,
                             const uint64_t value,
                             test_item_t** item)
 {
+    KERNEL_CRITICAL_LOCK(sLock);
+
     /* Create test item and allocate memory */
     *item = _getTestMemory(sizeof(test_item_t));
     if(*item != NULL)
@@ -237,6 +245,8 @@ static void _initTestItem(const uint32_t test_id,
 
         *item = &null_test_item;
     }
+
+    KERNEL_CRITICAL_UNLOCK(sLock);
 }
 
 void _killQemu(void)
@@ -250,6 +260,7 @@ void _killQemu(void)
 
 void testFrameworkInit(void)
 {
+    KERNEL_SPINLOCK_INIT(sLock);
     memoryPoolHead = &_KERNEL_TEST_BUFFER_BASE;
 }
 

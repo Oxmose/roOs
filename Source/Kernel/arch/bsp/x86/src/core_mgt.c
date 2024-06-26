@@ -176,6 +176,8 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
                   "Unknown IPI function",
                   TRUE);
     }
+
+    interruptIRQSetEOI(sIpiInterruptLine);
 }
 
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)

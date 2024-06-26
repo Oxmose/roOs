@@ -172,6 +172,7 @@ static void _spuriousHandler(void)
                  sSpuriousIntCount);
 
     ++sSpuriousIntCount;
+    interruptIRQSetEOI(kspCpuInterruptConfig->spuriousInterruptLine);
 
     return;
 }
@@ -181,7 +182,6 @@ void interruptMainHandler(void)
     custom_handler_t handler;
     kernel_thread_t* pCurrentThread;
     uint32_t         intId;
-
 
     /* Get the current thread */
     pCurrentThread = schedGetCurrentThread();
@@ -210,7 +210,8 @@ void interruptMainHandler(void)
                            (uint32_t)pCurrentThread->tid,
                            intId,
                            2);
-        return;
+        /* Schedule, we will never return */
+        schedScheduleNoInt();
     }
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
@@ -562,7 +563,6 @@ uint32_t interruptDisable(void)
     uint32_t prevState;
 
     prevState = cpuGeIntState();
-
 
     if(prevState == 0)
     {

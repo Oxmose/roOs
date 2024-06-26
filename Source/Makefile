@@ -98,7 +98,7 @@ endif
 
 ifeq ($(TESTS), TRUE)
 	# Build the tests module
-	@make -C $(SOURCE_DIR)/test_framework target=$(target)
+	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
 endif
 
 	# Clean kernel build directory

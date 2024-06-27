@@ -40,9 +40,9 @@
 #define TEST_OS_VECTOR_ENABLED                    0
 #define TEST_OS_UHASHTABLE_ENABLED                0
 #define TEST_DEVTREE_ENABLED                      0
-#define TEST_FUTEX_ENABLED                        0
+#define TEST_FUTEX_ENABLED                        1
 #define TEST_SCHEDULER_ENABLED                    0
-#define TEST_SEMAPHORE_ENABLED                    1
+#define TEST_SEMAPHORE_ENABLED                    0
 
 /*************************************************
  * TEST IDENTIFIERS

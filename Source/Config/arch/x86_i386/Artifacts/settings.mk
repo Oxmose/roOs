@@ -14,11 +14,13 @@ ifeq ($(shell uname -s),Darwin)
 	AS = nasm
 	LD = x86_64-elf-ld
 	OBJCOPY = x86_64-elf-objcopy
+	AR = x86_64-elf-ar
 else
 	CC = gcc
 	AS = nasm
 	LD = ld
 	OBJCOPY = objcopy
+	AR = ar
 endif
 
 LINKER_FILE = ../../Config/arch/x86_i386/linker.ld

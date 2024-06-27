@@ -92,9 +92,6 @@ typedef struct
     /** @brief Stores the curent screen's cursor settings. */
     cursor_t screenCursor;
 
-    /** @brief Curent screen's cursor settings of the last printed character. */
-    cursor_t lastPrintedCursor;
-
     /** @brief Column index of the last printed character for each line. */
     uint8_t* pLastColumns;
 
@@ -375,6 +372,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->outputDriver.pPutChar         = _vgaPutChar;
     pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
     pConsoleDrv->inputDriver.pRead             = NULL;
+    pConsoleDrv->inputDriver.pEcho             = NULL;
     pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
 
     /* Get the VGA framebuffer address */
@@ -574,49 +572,17 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
         {
             /* Backspace */
             case '\b':
-                if(pCtrl->lastPrintedCursor.y == pCtrl->screenCursor.y)
+                if(pCtrl->screenCursor.x > 0)
                 {
-                    if(pCtrl->screenCursor.x > pCtrl->lastPrintedCursor.x)
-                    {
-                        _vgaPutCursor(pDriverCtrl,
-                                      pCtrl->screenCursor.y,
-                                      pCtrl->screenCursor.x - 1);
-                        pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                            pCtrl->screenCursor.x;
-                        _vgaPrintChar(pDriverCtrl,
-                                      pCtrl->screenCursor.y,
-                                      pCtrl->screenCursor.x, ' ');
-                    }
+                    _vgaPutCursor(pDriverCtrl,
+                                  pCtrl->screenCursor.y,
+                                  pCtrl->screenCursor.x - 1);
                 }
-                else if(pCtrl->lastPrintedCursor.y < pCtrl->screenCursor.y)
+                else if(pCtrl->screenCursor.y > 0)
                 {
-                    if(pCtrl->screenCursor.x > 0)
-                    {
-                        _vgaPutCursor(pDriverCtrl,
-                                      pCtrl->screenCursor.y,
-                                      pCtrl->screenCursor.x - 1);
-                            pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                                pCtrl->screenCursor.x;
-                        _vgaPrintChar(pDriverCtrl,
-                                      pCtrl->screenCursor.y,
-                                      pCtrl->screenCursor.x, ' ');
-                    }
-                    else
-                    {
-                        if(pCtrl->pLastColumns[pCtrl->screenCursor.y - 1] >=
-                           pCtrl->columnCount)
-                        {
-                            pCtrl->pLastColumns[pCtrl->screenCursor.y - 1] =
-                               pCtrl->columnCount - 1;
-                        }
-
-                        _vgaPutCursor(pDriverCtrl,
-                                      pCtrl->screenCursor.y - 1,
-                            pCtrl->pLastColumns[pCtrl->screenCursor.y - 1]);
-                        _vgaPrintChar(pDriverCtrl,
-                                      pCtrl->screenCursor.y,
-                                      pCtrl->screenCursor.x, ' ');
-                    }
+                    _vgaPutCursor(pDriverCtrl,
+                                  pCtrl->screenCursor.y - 1,
+                                  pCtrl->pLastColumns[pCtrl->screenCursor.y]);
                 }
                 break;
             /* Tab */
@@ -666,8 +632,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 break;
         }
     }
-
-    pCtrl->lastPrintedCursor = pCtrl->screenCursor;
 }
 
 static void _vgaClearFramebuffer(void* pDriverCtrl)
@@ -798,18 +762,6 @@ static void _vgaScroll(void*                    pDriverCtrl,
 
     /* Replace cursor */
     _vgaPutCursor(pDriverCtrl, pCtrl->lineCount - toScroll, 0);
-    KERNEL_CRITICAL_LOCK(pCtrl->lock);
-
-    if(toScroll <= pCtrl->lastPrintedCursor.y)
-    {
-        pCtrl->lastPrintedCursor.y -= toScroll;
-    }
-    else
-    {
-        pCtrl->lastPrintedCursor.x = 0;
-        pCtrl->lastPrintedCursor.y = 0;
-    }
-    KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)

@@ -338,4 +338,12 @@ ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
     return retVal;
 }
 
+void consoleEcho(const bool_t kEnable)
+{
+    EXEC_IF_SET(sConsoleDriver,
+                inputDriver.pEcho,
+                sConsoleDriver.inputDriver.pDriverCtrl,
+                kEnable);
+}
+
 /************************************ EOF *************************************/

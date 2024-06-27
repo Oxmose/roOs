@@ -287,13 +287,25 @@ typedef struct
      * the number of bytes read. If the buffer is empty, the function is
      * blocking until the buffer is filled with the required number of bytes.
      *
-     * @param[in] pDrvCtrl The driver to be used.
+     * @param[in] pDriverCtrl The driver to be used.
      * @param[out] pBuffer The buffer used to receive data.
      * @param[in] kBufferSize The number of bytes to read.
      *
      * @return The function returns the number of bytes read or -1 on error.
      */
     ssize_t (*pRead)(void* pDriverCtrl, char* pBuffer, size_t kBufferSize);
+
+    /**
+     * @brief Enables or disables the input echo for the console input driver.
+     * 
+     * @details Enables or disables the input evho for the console input driver. If the
+     * driver supports echoing its input, the echo is enabled, otherwise not action
+     * is taken.
+     * 
+     * @param[in] pDriverCtrl The driver to be used.
+     * @param kEnable Tells if the echo should be enabled or disabled.
+     */
+    void (*pEcho)(void* pDriverCtrl, const bool_t kEnable);
 
     /**
      * @brief Contains a pointer to the driver controler, set by the driver
@@ -452,6 +464,17 @@ void consolePutChar(const char kCharacter);
  * @return The function returns the number of bytes read or -1 on error.
  */
 ssize_t consoleRead(char* pBuffer, size_t kBufferSize);
+
+/**
+ * @brief Enables or disables the input echo for the console input driver.
+ * 
+ * @details Enables or disables the input evho for the console input driver. If the
+ * driver supports echoing its input, the echo is enabled, otherwise not action
+ * is taken.
+ * 
+ * @param kEnable Tells if the echo should be enabled or disabled.
+ */
+void consoleEcho(const bool_t kEnable);
 
 #endif /* #ifndef __IO_CONSOLE_H_ */
 

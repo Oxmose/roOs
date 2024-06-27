@@ -421,7 +421,11 @@ OS_RETURN_E semPost(semaphore_t* pSem)
         /* We do not need to release a waiting thread, increase the semaphore
          * level.
          */
-        ++pSem->level;
+        if((pSem->flags & SEMAPHORE_FLAG_BINARY) != SEMAPHORE_FLAG_BINARY ||
+           pSem->level <= 0)
+        {
+            ++pSem->level;
+        }
     }
 
     spinlockRelease(&pSem->lock);

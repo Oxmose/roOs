@@ -78,6 +78,7 @@ static void* _shellEntry(void* args);
 
 static void _shellPrintHeader(void)
 {
+#if 0
     uint8_t       i;
     uint8_t       cpuId;
     cursor_t      savedCursor;
@@ -117,13 +118,24 @@ static void _shellPrintHeader(void)
         kprintf(" ");
     }
     kprintf("CPU: %02d (%03d%%)", cpuId, (uint32_t)schedGetCpuLoad(cpuId));
+#endif
+    ssize_t readBytes;
+    char buffer[2];
+    buffer[1] = 0;
 
+    readBytes = consoleRead(buffer, 1);
+    if(readBytes > 0)
+    {
+        consolePutChar(buffer[0]);
+    }
 
+#if 0
     /* Flush buffer */
     kprintfFlush();
 
     consolePutCursor(savedCursor.y, savedCursor.y);
     consoleSetColorScheme(&savedColorScheme);
+#endif
 }
 
 static void* _shellEntry(void* args)
@@ -136,7 +148,6 @@ static void* _shellEntry(void* args)
     while(TRUE)
     {
         _shellPrintHeader();
-        schedSleep(1000000000);
     }
 
     return (void*)0;

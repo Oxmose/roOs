@@ -30,6 +30,7 @@
 #include <futex.h>         /* Futex library */
 #include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree manager */
+#include <console.h>       /* Kernel console */
 #include <userinit.h>      /* User initialization */
 #include <core_mgt.h>      /* Core manager */
 #include <drivermgr.h>     /* Driver manager */
@@ -176,6 +177,10 @@ void kickstart(void)
     /* Init device manager */
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
+
+    /* Init the console */
+    consoleInit();
+    KERNEL_SUCCESS("Console initialized\n");
 
     /* Now that devices are configured, start the core manager, in charge of
      * starting other cores if needed. After calling this function all the

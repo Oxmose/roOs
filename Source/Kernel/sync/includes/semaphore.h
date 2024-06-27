@@ -43,6 +43,9 @@
 /** @brief Semaphore flag: semaphore has priority based queuing discipline. */
 #define SEMAPHORE_FLAG_QUEUING_PRIO 0x00000002
 
+/** @brief Semaphore flag: binary semaphore. */
+#define SEMAPHORE_FLAG_BINARY 0x00000004
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/

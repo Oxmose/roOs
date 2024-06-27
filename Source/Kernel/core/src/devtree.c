@@ -301,6 +301,24 @@ static inline const void* _fdtInternalReadProp(const fdt_property_t* kpProperty,
  */
 static void _parseReservedMemory(void);
 
+/**
+ * @brief Walks the FDT nodes starting from the root node and returns the
+ * node with the requested name.
+ *
+ * @details Walks the FDT nodes starting from the root node and returns the
+ * node with the requested name. The walk is
+ * performed as a depth first search walk. For each node, the compatible is
+ * compared to the list of registered drivers. If a driver is compatible, its
+ * attach function is called. NULL is returned is the node is not found.
+ *
+ * @param[in] kpRootNode The root node to use.
+ * @param[in] kpName The name of the node to find.
+ *
+ * @return The node with the requested name is returned or NULL if not found.
+ */
+static const fdt_node_t* _findFdtNode(const fdt_node_t* kpRootNode,
+                                      const char*       kpName);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -884,6 +902,32 @@ static void _parseReservedMemory(void)
                        0);
 }
 
+static const fdt_node_t* _findFdtNode(const fdt_node_t* kpRootNode,
+                                      const char*       kpName)
+{
+    const fdt_node_t* kpRetNode;
+
+    if(kpRootNode == NULL)
+    {
+        return NULL;
+    }
+
+    /* Check if the name is found */
+    if(strcmp(kpRootNode->pName, kpName) == 0)
+    {
+        return kpRootNode;
+    }
+
+    /* Got to next nodes */
+    kpRetNode = _findFdtNode(fdtGetChild(kpRootNode), kpName);
+    if(kpRetNode == NULL)
+    {
+        kpRetNode = _findFdtNode(fdtGetNextNode(kpRootNode), kpName);
+    }
+
+    return kpRetNode;
+}
+
 void fdtInit(const uintptr_t kStartAddr)
 {
     uint32_t i;
@@ -1083,6 +1127,11 @@ const fdt_mem_node_t* fdtGetMemory(void)
 const fdt_mem_node_t* fdtGetReservedMemory(void)
 {
     return sFdtDesc.pFirstReservedMemoryNode;
+}
+
+const fdt_node_t* fdtGetNodeByName(const char* kpName)
+{
+    return _findFdtNode(sFdtDesc.pFirstNode, kpName);
 }
 
 /************************************ EOF *************************************/

@@ -63,8 +63,6 @@
 #define VGA_FDT_COMM_PROP   "comm"
 /** @brief FDT property for resolution */
 #define VGA_FDT_RES_PROP    "resolution"
-/** @brief FDT property for console output set */
-#define VGA_FDT_IS_CON_PROP "is-console"
 
 /** @brief Cast a pointer to a VGA driver controler */
 #define GET_CONTROLER(PTR) ((vga_controler_t*)PTR)
@@ -366,16 +364,18 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-    pConsoleDrv->pClear           = _vgaClearFramebuffer;
-    pConsoleDrv->pPutCursor       = _vgaPutCursor;
-    pConsoleDrv->pSaveCursor      = _vgaSaveCursor;
-    pConsoleDrv->pRestoreCursor   = _vgaRestoreCursor;
-    pConsoleDrv->pScroll          = _vgaScroll;
-    pConsoleDrv->pSetColorScheme  = _vgaSetScheme;
-    pConsoleDrv->pSaveColorScheme = _vgaSaveScheme;
-    pConsoleDrv->pPutString       = _vgaPutString;
-    pConsoleDrv->pPutChar         = _vgaPutChar;
-    pConsoleDrv->pDriverCtrl      = pDrvCtrl;
+    pConsoleDrv->outputDriver.pClear           = _vgaClearFramebuffer;
+    pConsoleDrv->outputDriver.pPutCursor       = _vgaPutCursor;
+    pConsoleDrv->outputDriver.pSaveCursor      = _vgaSaveCursor;
+    pConsoleDrv->outputDriver.pRestoreCursor   = _vgaRestoreCursor;
+    pConsoleDrv->outputDriver.pScroll          = _vgaScroll;
+    pConsoleDrv->outputDriver.pSetColorScheme  = _vgaSetScheme;
+    pConsoleDrv->outputDriver.pSaveColorScheme = _vgaSaveScheme;
+    pConsoleDrv->outputDriver.pPutString       = _vgaPutString;
+    pConsoleDrv->outputDriver.pPutChar         = _vgaPutChar;
+    pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
+    pConsoleDrv->inputDriver.pRead             = NULL;
+    pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
 
     /* Get the VGA framebuffer address */
     ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_REG_PROP, &propLen);
@@ -467,24 +467,15 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     }
     memset(pDrvCtrl->pLastColumns, 0, pDrvCtrl->lineCount * sizeof(uint8_t));
 
-    /* Clear screen and set as output if needed */
-    if(fdtGetProp(pkFdtNode, VGA_FDT_IS_CON_PROP, &propLen) != NULL)
-    {
-        _vgaClearFramebuffer(pDrvCtrl);
-        retCode = consoleSetDriver(pConsoleDrv);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-
     /* Set initial scheme */
     initScheme.background = BG_BLACK;
     initScheme.foreground = FG_WHITE;
     _vgaSetScheme(pDrvCtrl, &initScheme);
 
+    /* Set the API driver */
+    retCode = driverManagerSetDeviceData(pkFdtNode, pConsoleDrv);
+
     KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA driver initialized");
-    retCode = OS_NO_ERR;
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)

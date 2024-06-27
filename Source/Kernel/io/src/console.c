@@ -23,9 +23,11 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h> /* Generic int types and bool_t */
-#include <stddef.h> /* Standard definition */
-#include <kerror.h> /* Kernel error codes */
+#include <stdint.h>    /* Generic int types and bool_t */
+#include <stddef.h>    /* Standard definition */
+#include <kerror.h>    /* Kernel error codes */
+#include <devtree.h>   /* Device tree manager */
+#include <drivermgr.h> /* Driver manager */
 
 #if DEBUG_LOG_UART
 #include <uart.h>   /* Include the UART for debug */
@@ -44,7 +46,13 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief FDT console node name */
+#define FDT_CONSOLE_NODE_NAME "console"
+
+/** @brief FDT property for the console input device property */
+#define FDT_CONSOLE_INPUT_DEV_PROP "inputdev"
+/** @brief FDT property for the console output device property */
+#define FDT_CONSOLE_OUTPUT_DEV_PROP "outputdev"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -93,31 +101,54 @@ static console_driver_t sConsoleDriver = {NULL};
  * FUNCTIONS
  ******************************************************************************/
 
-OS_RETURN_E consoleSetDriver(const console_driver_t* pkDriver)
+void consoleInit(void)
 {
+    const fdt_node_t* kpConsoleNode;
+    const uint32_t*   kpUintProp;
+    size_t            propLen;
+    console_driver_t* pConsDriver;
 
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_DRIVER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pkDriver),
-                       KERNEL_TRACE_LOW(pkDriver));
+    /* Get the FDT console node */
+    kpConsoleNode = fdtGetNodeByName(FDT_CONSOLE_NODE_NAME);
+    if(kpConsoleNode == NULL)
+    {
+        return;
+    }
 
-    sConsoleDriver = *pkDriver;
+    /* Get the input driver */
+    kpUintProp = fdtGetProp(kpConsoleNode,
+                            FDT_CONSOLE_INPUT_DEV_PROP,
+                            &propLen);
+    if(kpUintProp != NULL && propLen == sizeof(uint32_t))
+    {
+        pConsDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+        if(pConsDriver != NULL && pConsDriver->inputDriver.pDriverCtrl != NULL)
+        {
+            sConsoleDriver.inputDriver = pConsDriver->inputDriver;
+        }
+    }
 
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_DRIVER_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pkDriver),
-                       KERNEL_TRACE_LOW(pkDriver));
-    return OS_NO_ERR;
+    /* Get the output driver */
+    kpUintProp = fdtGetProp(kpConsoleNode,
+                            FDT_CONSOLE_OUTPUT_DEV_PROP,
+                            &propLen);
+    if(kpUintProp != NULL && propLen == sizeof(uint32_t))
+    {
+        pConsDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+        if(pConsDriver != NULL && pConsDriver->outputDriver.pDriverCtrl != NULL)
+        {
+            sConsoleDriver.outputDriver = pConsDriver->outputDriver;
+        }
+    }
 }
 
 void consoleClear(void)
 {
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_CLEAR_ENTRY, 0);
 
-    EXEC_IF_SET(sConsoleDriver, pClear, sConsoleDriver.pDriverCtrl);
+    EXEC_IF_SET(sConsoleDriver,
+                outputDriver.pClear,
+                sConsoleDriver.outputDriver.pDriverCtrl);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_CLEAR_EXIT, 0);
 }
@@ -131,8 +162,8 @@ void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
                        kColumn);
 
     EXEC_IF_SET(sConsoleDriver,
-                pPutCursor,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pPutCursor,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 kLine,
                 kColumn);
 
@@ -152,8 +183,8 @@ void consoleSaveCursor(cursor_t* pBuffer)
                        KERNEL_TRACE_LOW(pBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
-                pSaveCursor,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pSaveCursor,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 pBuffer);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
@@ -172,8 +203,8 @@ void consoleRestoreCursor(const cursor_t* pkBuffer)
                        KERNEL_TRACE_LOW(pkBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
-                pRestoreCursor,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pRestoreCursor,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 pkBuffer);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
@@ -192,8 +223,8 @@ void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
                        kLines);
 
     EXEC_IF_SET(sConsoleDriver,
-                pScroll,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pScroll,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 kDirection,
                 kLines);
 
@@ -213,8 +244,8 @@ void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
                        KERNEL_TRACE_LOW(pkColorScheme));
 
     EXEC_IF_SET(sConsoleDriver,
-                pSetColorScheme,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pSetColorScheme,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 pkColorScheme);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
@@ -233,8 +264,8 @@ void consoleSaveColorScheme(colorscheme_t* pBuffer)
                        KERNEL_TRACE_LOW(pBuffer));
 
     EXEC_IF_SET(sConsoleDriver,
-                pSaveColorScheme,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pSaveColorScheme,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 pBuffer);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
@@ -257,8 +288,8 @@ void consolePutString(const char* pkString)
     uartDebugPutString(pkString);
 #endif
     EXEC_IF_SET(sConsoleDriver,
-                pPutString,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pPutString,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 pkString);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
@@ -279,14 +310,32 @@ void consolePutChar(const char kCharacter)
     uartDebugPutChar(kCharacter);
 #endif
     EXEC_IF_SET(sConsoleDriver,
-                pPutChar,
-                sConsoleDriver.pDriverCtrl,
+                outputDriver.pPutChar,
+                sConsoleDriver.outputDriver.pDriverCtrl,
                 kCharacter);
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
                        TRACE_CONS_PUT_CHAR_EXIT,
                        1,
                        kCharacter);
+}
+
+ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
+{
+    ssize_t retVal;
+
+    if(sConsoleDriver.inputDriver.pRead != NULL)
+    {
+        retVal = sConsoleDriver.inputDriver.pRead(
+                                         sConsoleDriver.inputDriver.pDriverCtrl,
+                                         pBuffer,
+                                         kBufferSize);
+    }
+    else
+    {
+        retVal = -1;
+    }
+    return retVal;
 }
 
 /************************************ EOF *************************************/

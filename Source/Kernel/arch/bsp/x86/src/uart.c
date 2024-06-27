@@ -866,7 +866,7 @@ static ssize_t _uartRead(void*        pDrvCtrl,
                          const size_t kBufferSize)
 {
     OS_RETURN_E error;
-    ssize_t     toRead;
+    size_t      toRead;
     size_t      bytesToRead;
     size_t      usedSpace;
     size_t      i;

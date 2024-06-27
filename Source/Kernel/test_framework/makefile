@@ -39,7 +39,7 @@ init:
 	@mkdir -p $(BIN_DIR)
 
 module: compile_asm compile_cc
-	@ar r $(BIN_DIR)/libtestframework.a $(BUILD_DIR)/*.o
+	@$(AR) r $(BIN_DIR)/libtestframework.a $(BUILD_DIR)/*.o
 	@echo "\e[1m\e[92m=> Generated Testing Framework module\e[22m\e[39m"
 	@echo "\e[1m\e[92m--------------------------------------------------------------------------------\n\e[22m\e[39m"
 

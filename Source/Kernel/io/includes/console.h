@@ -33,7 +33,6 @@
  * CONSTANTS
  ******************************************************************************/
 
-
 /** @brief VGA background color definition: black. */
 #define BG_BLACK            0x00
 /** @brief VGA background color definition: blue. */
@@ -147,7 +146,7 @@ typedef struct
 } colorscheme_t;
 
 /**
- * @brief The kernel's console driver abstraction.
+ * @brief The kernel's console output driver abstraction.
  */
 typedef struct
 {
@@ -274,6 +273,45 @@ typedef struct
      * at the moment of the initialization of this structure.
      */
     void* pDriverCtrl;
+} console_output_driver_t;
+
+/**
+ * @brief The kernel's console input driver abstraction.
+ */
+typedef struct
+{
+    /**
+     * @brief Reads data from the console input buffer.
+     *
+     * @details Reads data from the console input buffer. The function returns
+     * the number of bytes read. If the buffer is empty, the function is
+     * blocking until the buffer is filled with the required number of bytes.
+     *
+     * @param[in] pDrvCtrl The driver to be used.
+     * @param[out] pBuffer The buffer used to receive data.
+     * @param[in] kBufferSize The number of bytes to read.
+     *
+     * @return The function returns the number of bytes read or -1 on error.
+     */
+    ssize_t (*pRead)(void* pDriverCtrl, char* pBuffer, size_t kBufferSize);
+
+    /**
+     * @brief Contains a pointer to the driver controler, set by the driver
+     * at the moment of the initialization of this structure.
+     */
+    void* pDriverCtrl;
+} console_input_driver_t;
+
+/**
+ * @brief The kernel's console complete driver abstraction.
+ */
+typedef struct
+{
+    /** @brief The console input driver */
+    console_input_driver_t inputDriver;
+
+    /** @brief The console output driver */
+    console_output_driver_t outputDriver;
 } console_driver_t;
 
 /*******************************************************************************
@@ -299,17 +337,14 @@ typedef struct
  * FUNCTIONS
  ******************************************************************************/
 
+
 /**
- * @brief Sets the current selected driver.
+ * @brief Initializes the console.
  *
- * @details Changes the current selected driver to ouput data with the new one
- * as defined by the parameter driver.
- *
- * @param[in] console_driver_t* pDriver The driver to select.
- *
- * @return The success state or the error code.
+ * @details Initializes the console. On error, this function fails silently and
+ * no input nor output will be made.
  */
-OS_RETURN_E consoleSetDriver(const console_driver_t* pDriver);
+void consoleInit(void);
 
 /**
  * @brief Clears the console, the background color is set to black.
@@ -403,6 +438,20 @@ void consolePutString(const char* kpString);
  * @param[in] kCharacter The char to display on the console.
  */
 void consolePutChar(const char kCharacter);
+
+/**
+ * @brief Reads data from the console input buffer.
+ *
+ * @details Reads data from the console input buffer. The function returns
+ * the number of bytes read. If the buffer is empty, the function is
+ * blocking until the buffer is filled with the required number of bytes.
+ *
+ * @param[out] pBuffer The buffer used to receive data.
+ * @param[in] kBufferSize The number of bytes to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error.
+ */
+ssize_t consoleRead(char* pBuffer, size_t kBufferSize);
 
 #endif /* #ifndef __IO_CONSOLE_H_ */
 

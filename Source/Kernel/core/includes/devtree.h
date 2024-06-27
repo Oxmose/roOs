@@ -247,6 +247,19 @@ const fdt_mem_node_t* fdtGetMemory(void);
  */
 const fdt_mem_node_t* fdtGetReservedMemory(void);
 
+/**
+ * @brief Returns a node based on its name.
+ *
+ * @details Returns a node based on its name. NULL is returned if
+ * the node cannot be found.
+ *
+ * @param[in] kpName The name to lookup.
+ *
+ * @return The node that corresponds to the name is returned. NULL is
+ * returned is the node cannot be found.
+*/
+const fdt_node_t* fdtGetNodeByName(const char* kpName);
+
 #endif /* #ifndef __CORE_DEVTREE_H_ */
 
 /************************************ EOF *************************************/

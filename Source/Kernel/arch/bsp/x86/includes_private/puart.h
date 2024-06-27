@@ -7,13 +7,15 @@
  *
  * @date 24/05/2024
  *
- * @version 2.0
+ * @version 2.1
  *
  * @brief UART communication driver.
  *
  * @details UART communication driver. Initializes the uart ports as in and
  * output. The uart can be used to output data or communicate with other
  * prepherals that support this communication method
+ *
+ * @warning Only one UART can be used as input at the moment.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/

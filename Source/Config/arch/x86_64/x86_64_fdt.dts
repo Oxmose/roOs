@@ -57,7 +57,6 @@
             reg = <0x0 0xB8000 0x0 0xFA0>;
             comm = <0x3D4 0x3D5>;
             resolution = <80 25>;
-            is-console;
         };
 
         acpi: acpi@E0000 {

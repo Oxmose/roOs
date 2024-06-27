@@ -41,6 +41,11 @@
  */
 typedef __SIZE_TYPE__ size_t;
 
+/**
+ * @brief Defines size_t type as a renaming for __SIZE_TYPE__.
+ */
+typedef long long int ssize_t;
+
 #ifndef __PTRDIFF_TYPE__
 #error __PTRDIFF_TYPE__ not defined
 #endif

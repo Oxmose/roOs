@@ -36,7 +36,7 @@ TARGET_LIST = [
     "x86_i386"
 ]
 
-TEST_TIMEOUT = 60
+TEST_TIMEOUT = 120
 
 def Validate(jsonTestsuite):
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)

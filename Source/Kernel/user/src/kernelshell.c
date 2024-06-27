@@ -40,6 +40,8 @@
 /** @brief Defines the kernel shell version */
 #define SHELL_VERION "0.1"
 
+#define SHELL_INPUT_BUFFER_SIZE 128
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -69,73 +71,88 @@ static void* _shellEntry(void* args);
 /* None */
 
 /************************** Static global variables ***************************/
-
-/* None */
-
+static char sInputBuffer[SHELL_INPUT_BUFFER_SIZE + 1];
+static size_t sInputBufferCursor;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _shellPrintHeader(void)
+static void _shellExecuteCommand(void)
 {
-#if 0
-    uint8_t       i;
-    uint8_t       cpuId;
-    cursor_t      savedCursor;
-    colorscheme_t savedColorScheme;
-    colorscheme_t colorScheme;
-    time_t        currTime;
-
-    /* Save cursor and scheme */
-    consoleSaveCursor(&savedCursor);
-    consoleSaveColorScheme(&savedColorScheme);
-
-    /* Set header position and scheme */
-    colorScheme.background = BG_CYAN;
-    colorScheme.foreground = FG_BLACK;
-    colorScheme.vgaColor = TRUE;
-    consoleSetColorScheme(&colorScheme);
-    consolePutCursor(0, 0);
-
-    /* Print the shell version */
-    kprintf("UTK Shell V" SHELL_VERION);
-    for(i = 0; i < 36 - strlen("UTK Shell V" SHELL_VERION); ++i)
+    size_t cursor;
+    char   command[SHELL_INPUT_BUFFER_SIZE + 1];
+    
+    if(sInputBufferCursor == 0)
     {
-        kprintf(" ");
+        return;
     }
 
-    /* Print time */
-    currTime = timeGetDayTime();
-    kprintf("%02d:%02d:%02d",
-            currTime.hours,
-            currTime.minutes,
-            currTime.seconds);
-
-    /* Print current CPU */
-    cpuId = cpuGetId();
-    for(i = 0; i < 22; ++i)
+    for(cursor = 0; cursor < sInputBufferCursor; ++cursor)
     {
-        kprintf(" ");
+        if(sInputBuffer[cursor] == ' ')
+        {
+            break;
+        }
+        else
+        {
+            command[cursor] = sInputBuffer[cursor];
+        }
     }
-    kprintf("CPU: %02d (%03d%%)", cpuId, (uint32_t)schedGetCpuLoad(cpuId));
-#endif
-    ssize_t readBytes;
-    char buffer[2];
-    buffer[1] = 0;
+    command[cursor] = 0;
 
-    readBytes = consoleRead(buffer, 1);
-    if(readBytes > 0)
+    /* Remove the space */
+    if(cursor < sInputBufferCursor)
     {
-        consolePutChar(buffer[0]);
+        ++cursor;
     }
+   
+    if(strcmp(command, "hello") == 0)
+    {
+        kprintf("Hi! I am UTK :)\n");
+        kprintf("Your arguments are: %s\n", sInputBuffer + cursor);
+    }
+    else 
+    {
+        kprintf("Unknown command: %s\n", command);
+    }
+}
 
-#if 0
-    /* Flush buffer */
+static void _shellGetCommand(void)
+{
+    
+    char readChar;
+
+    sInputBufferCursor = 0;
+    kprintf("> ");
     kprintfFlush();
+    consoleEcho(FALSE);
+    while(TRUE)
+    {
+        consoleRead(&readChar, 1);
 
-    consolePutCursor(savedCursor.y, savedCursor.y);
-    consoleSetColorScheme(&savedColorScheme);
-#endif
+        if(readChar == 0xD || readChar == 0xA)
+        {
+            kprintf("\n");
+            break;
+        }
+        else if(readChar == 0x7F)
+        {
+            if(sInputBufferCursor > 0)
+            {
+                --sInputBufferCursor;
+                kprintf("\b \b");
+                kprintfFlush();
+            }
+        }
+        else if(sInputBufferCursor < SHELL_INPUT_BUFFER_SIZE)
+        {
+            sInputBuffer[sInputBufferCursor] = readChar;
+            ++sInputBufferCursor;
+            kprintf("%c", readChar);
+            kprintfFlush();
+        }
+    }
+    sInputBuffer[sInputBufferCursor] = 0;
 }
 
 static void* _shellEntry(void* args)
@@ -144,10 +161,12 @@ static void* _shellEntry(void* args)
 
     /* Clear the console */
     consoleClear();
+    consolePutCursor(0, 0);
 
     while(TRUE)
     {
-        _shellPrintHeader();
+        _shellGetCommand();
+        _shellExecuteCommand();
     }
 
     return (void*)0;

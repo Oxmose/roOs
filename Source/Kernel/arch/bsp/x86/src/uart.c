@@ -237,6 +237,12 @@ typedef struct
     /** @brief Input buffer semaphore */
     semaphore_t inputBufferSem;
 
+    /** 
+     * @brief Tells if the driver shall output all its received data to the
+     * console.
+     */
+    bool_t echo;
+
     /** @brief Driver's lock */
     kernel_spinlock_t lock;
 } uart_controler_t;
@@ -416,6 +422,17 @@ static ssize_t _uartRead(void*        pDrvCtrl,
                          char*        pBuffer,
                          const size_t kBufferSize);
 
+/**
+ * @brief Enables or disables the input echo for the UART driver.
+ * 
+ * @details Enables or disables the input evho for the UART driver. When 
+ * enabled, the UART driver will echo all characters it receives as input.
+ * 
+ * @param[in] pDrvCtrl The driver to be used.
+ * @param kEnable Tells if the echo should be enabled or disabled.
+ */
+static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -491,6 +508,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
     pConsoleDrv->inputDriver.pDriverCtrl       = NULL;
     pConsoleDrv->inputDriver.pRead             = NULL;
+    pConsoleDrv->inputDriver.pEcho             = NULL;
 
 
     /* Get the UART CPU communication ports */
@@ -532,6 +550,8 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
             retCode = OS_ERR_INTERRUPT_ALREADY_REGISTERED;
             goto ATTACH_END;
         }
+
+        pDrvCtrl->echo = FALSE;
 
         /* Init buffer */
         pDrvCtrl->inputBufferStartCursor = 0;
@@ -578,6 +598,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         spInputCtrl = pDrvCtrl;
         pConsoleDrv->inputDriver.pDriverCtrl = pDrvCtrl;
         pConsoleDrv->inputDriver.pRead       = _uartRead;
+        pConsoleDrv->inputDriver.pEcho       = _uartSetEcho;
     }
     else
     {
@@ -782,6 +803,7 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
 static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
 {
     uint8_t     intStatus;
+    uint8_t     data;
     OS_RETURN_E error;
     size_t      availableSpace;
 
@@ -796,6 +818,12 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     intStatus = _cpuInB(SERIAL_LINE_STATUS_PORT(spInputCtrl->cpuCommPort));
     if((intStatus & UART_INT_STATUS_DATA_AVAILABLE) != 0)
     {
+        data = _cpuInB(SERIAL_DATA_PORT(spInputCtrl->cpuCommPort));
+        if(spInputCtrl->echo == TRUE)
+        {
+            _uartWrite(&spInputCtrl->lock, spInputCtrl->cpuCommPort, data);
+        }
+
         /* Try to add the new data to the buffer */
         spinlockAcquire(&spInputCtrl->inputBufferLock);
 
@@ -815,8 +843,7 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
         if(availableSpace > 0)
         {
             /* Read the data */
-            spInputCtrl->pInputBuffer[spInputCtrl->inputBufferEndCursor]
-                = _cpuInB(SERIAL_DATA_PORT(spInputCtrl->cpuCommPort));
+            spInputCtrl->pInputBuffer[spInputCtrl->inputBufferEndCursor] = data;
 
             spInputCtrl->inputBufferEndCursor =
                 (spInputCtrl->inputBufferEndCursor + 1) %
@@ -912,6 +939,11 @@ static ssize_t _uartRead(void*        pDrvCtrl,
     }
 
     return kBufferSize;
+}
+
+static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
+{
+    GET_CONTROLER(pDrvCtrl)->echo = kEnable;
 }
 
 /* TODO: Add clear input to reset waiting state */

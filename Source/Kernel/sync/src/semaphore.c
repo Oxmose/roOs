@@ -145,7 +145,21 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     }
 
     /* Setup the semaphore */
-    pSem->level = kInitLevel;
+    if((kFlags & SEMAPHORE_FLAG_BINARY) == SEMAPHORE_FLAG_BINARY)
+    {
+        if(kInitLevel != 0)
+        {
+            pSem->level = 1;
+        }
+        else 
+        {
+            pSem->level = 0;
+        }
+    }
+    else
+    {
+        pSem->level = kInitLevel;
+    }
     pSem->flags = kFlags;
     pSem->pWaitingList = kQueueCreate(FALSE);
     if(pSem->pWaitingList == NULL)

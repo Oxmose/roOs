@@ -355,7 +355,8 @@ ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
                        KERNEL_TRACE_LOW(pBuffer),
                        KERNEL_TRACE_HIGH(kBufferSize),
                        KERNEL_TRACE_LOW(kBufferSize),
-                       retVal);
+                       KERNEL_TRACE_HIGH(retVal),
+                       KERNEL_TRACE_LOW(retVal));
 
     return retVal;
 }

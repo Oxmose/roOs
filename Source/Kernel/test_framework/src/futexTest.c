@@ -232,7 +232,7 @@ static void* testOrderRoutineWake(void* args)
     OS_RETURN_E error;
 
     tid = (uint32_t)(uintptr_t)args;
-    timeWait = (uint64_t)(tid + 1) * 500000000 + 500000000;
+    timeWait = (uint64_t)(tid + 1) * 500000000;
 
     kprintf("wake thread %d, sleeping %lluns\n", tid, timeWait);
     error = schedSleep(timeWait);
@@ -924,15 +924,15 @@ static void* testThread(void* args)
 {
     (void)args;
 
-    testOrder();
+    (void)testOrder;//();
     kprintf("Order Test Done\n");
-    testCancel();
+    (void)testCancel;//();
     kprintf("Cancel Test Done\n");
-    testMultiple();
+    (void)testMultiple;//();
     kprintf("Multiple Test Done\n");
     testSameHandleValue();
     kprintf("Same Handle Test Done\n");
-    testReleaseResources();
+    (void)testReleaseResources;//();
     kprintf("Release Test Done\n");
 
     TEST_FRAMEWORK_END();

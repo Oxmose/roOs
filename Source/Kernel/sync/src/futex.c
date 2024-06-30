@@ -357,6 +357,7 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     futex_data_t*    pFutexData;
     kqueue_node_t*   pWaitingNode;
     kqueue_node_t*   pSaveNode;
+    kernel_thread_t* pThread;
 
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
                        TRACE_FUTEX_WAKE_ENTRY,
@@ -432,12 +433,13 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
             {
                 pWaiting->wakeReason = FUTEX_WAKEUP_DESTROYED;
             }
-            schedReleaseThread(pWaiting->pWaitingThread);
+            pThread = pWaiting->pWaitingThread;
             pSaveNode = pWaitingNode;
             pWaitingNode = pWaitingNode->pPrev;
             kQueueRemove(pFutexData->pWaitingThreads,
                          pSaveNode,
                          TRUE);
+            schedReleaseThread(pThread);
         }
         else
         {

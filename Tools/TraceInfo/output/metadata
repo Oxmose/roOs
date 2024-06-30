@@ -1818,6 +1818,59 @@ event {
     };
 };
 
+event {
+    id = 366;
+    name = "Kernel console init entry";
+};
+
+event {
+    id = 367;
+    name = "Kernel console init exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 368;
+    name = "Kernel console read entry";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 369;
+    name = "Kernel console read exit";
+    fields := struct {
+        xuint32_t addrHigh;
+        xuint32_t addrLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t retHigh;
+        xuint32_t retLow;
+    };
+};
+
+event {
+    id = 370;
+    name = "Kernel console echo entry";
+    fields := struct {
+        uint32_t enable;
+    };
+};
+
+event {
+    id = 371;
+    name = "Kernel console echo exit";
+    fields := struct {
+        uint32_t enable;
+    };
+};
+
 /********************************* Kernel output */
 
 event {

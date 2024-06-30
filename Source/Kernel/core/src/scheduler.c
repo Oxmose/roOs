@@ -31,7 +31,7 @@
 #include <kerror.h>       /* Kernel error codes */
 #include <kqueue.h>       /* Kernel queues */
 #include <memory.h>       /* Memory manager*/
-#include <spinlock.h>     /* Spinlocks */
+#include <atomic.h>       /* Spinlocks */
 #include <time_mgt.h>     /* Time management services */
 #include <critical.h>     /* Kernel critical */
 #include <ctrl_block.h>   /* Threads and processes control block */
@@ -232,10 +232,10 @@ kernel_thread_t* pCurrentThreadsPtr[MAX_CPU_COUNT] = {NULL};
 
 /************************** Static global variables ***************************/
 /** @brief The last TID given by the kernel. */
-static volatile uint32_t sLastGivenTid;
+static u32_atomic_t sLastGivenTid;
 
 /** @brief The number of thread in the system. */
-static volatile uint32_t sThreadCount;
+static u32_atomic_t sThreadCount;
 
 /** @brief Count of the number of times the scheduler was called per CPU. */
 static uint64_t sScheduleCount[MAX_CPU_COUNT];
@@ -432,7 +432,7 @@ static void _createIdleThreads(void)
 
         /* Set the thread's information */
         spIdleThread[i]->affinity      = (1ULL << i);
-        spIdleThread[i]->tid           = sLastGivenTid++;
+        spIdleThread[i]->tid           = atomicIncrement32(&sLastGivenTid);
         spIdleThread[i]->type          = THREAD_TYPE_KERNEL;
         spIdleThread[i]->priority      = KERNEL_LOWEST_PRIORITY;
         spIdleThread[i]->pArgs         = (void*)(uintptr_t)i;
@@ -465,7 +465,7 @@ static void _createIdleThreads(void)
         spIdleThread[i]->pThreadNode = pNewNode;
 
         ++sThreadTables[i].threadCount;
-        ++sThreadCount;
+        atomicIncrement32(&sThreadCount);
     }
 
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
@@ -591,6 +591,9 @@ static void _schedCleanThread(kernel_thread_t* pThread)
 
     /* Free the thread */
     kfree(pThread);
+
+    /* Decrement thread count */
+    atomicDecrement32(&sThreadCount);
 
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_CLEAN_THREAD_EXIT,
@@ -1010,7 +1013,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
 
     /* Set the thread's information */
     pNewThread->affinity      = kAffinitySet;
-    pNewThread->tid           = sLastGivenTid++;
+    pNewThread->tid           = atomicIncrement32(&sLastGivenTid);
     pNewThread->type          = THREAD_TYPE_KERNEL;
     pNewThread->priority      = kPriority;
     pNewThread->pArgs         = args;
@@ -1050,9 +1053,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     KERNEL_SPINLOCK_INIT(pNewThread->lock);
 
     /* Increase the global number of threads */
-    KERNEL_CRITICAL_LOCK(sGlobalLock);
-    ++sThreadCount;
-    KERNEL_CRITICAL_UNLOCK(sGlobalLock);
+    atomicIncrement32(&sThreadCount);
 
     /* Release the thread */
     schedReleaseThread(pNewThread);

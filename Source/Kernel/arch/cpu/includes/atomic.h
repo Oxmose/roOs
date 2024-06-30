@@ -1,7 +1,7 @@
 /*******************************************************************************
- * @file spinlock.h
+ * @file atomic.h
  *
- * @see critical.h
+ * @see cpu_sync.s
  *
  * @author Alexy Torres Aurora Dugo
  *
@@ -9,16 +9,16 @@
  *
  * @version 1.0
  *
- * @brief Kernel's spinlock management module.
+ * @brief Kernel's atomic management module.
  *
- * @details Kernel's spinlock management module. Defines the different basic
+ * @details Kernel's atomic management module. Defines the different basic
  * synchronization primitives used in the kernel.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __CPU_SPINLOCK_H_
-#define __CPU_SPINLOCK_H_
+#ifndef __CPU_ATOMIC_H_
+#define __CPU_ATOMIC_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -36,6 +36,9 @@
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
+
+/** @brief Defines an unsigned 32 bits atomic value. */
+typedef volatile uint32_t u32_atomic_t;
 
 /** @brief Defines a regular spinlock. */
 typedef volatile uint32_t spinlock_t;
@@ -119,6 +122,30 @@ void spinlockAcquire(spinlock_t* pLock);
 */
 void spinlockRelease(spinlock_t* pLock);
 
-#endif /* #ifndef __CPU_SPINLOCK_H_ */
+/**
+ * @brief Atomically increments a value in memory.
+ *
+ * @details Atomically increments a value in memory. Thus function is safe in
+ * kernel mode.
+ *
+ * @param[out] pValue The pointer to the value to atomically increment.
+ *
+ * @return The value of the atomic before incrementing is returned.
+ */
+uint32_t atomicIncrement32(u32_atomic_t* pValue);
+
+/**
+ * @brief Atomically decrements a value in memory.
+ *
+ * @details Atomically decrements a value in memory. Thus function is safe in
+ * kernel mode.
+ *
+ * @param[out] pValue The pointer to the value to atomically decrement.
+ *
+ * @return The value of the atomic before incrementing is returned.
+ */
+uint32_t atomicDecrement32(u32_atomic_t* pValue);
+
+#endif /* #ifndef __CPU_ATOMIC_H_ */
 
 /************************************ EOF *************************************/

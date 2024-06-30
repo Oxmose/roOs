@@ -131,7 +131,7 @@ static interrupt_driver_t sInterruptDriver;
 /** @brief Stores the number of spurious interrupts since the initialization of
  * the kernel.
  */
-static uint64_t sSpuriousIntCount;
+static u32_atomic_t sSpuriousIntCount;
 
 /** @brief Stores the CPU's interrupt configuration. */
 static const cpu_interrupt_config_t* kspCpuInterruptConfig;
@@ -170,8 +170,7 @@ static void _spuriousHandler(void)
                  MODULE_NAME,
                  "Spurious interrupt %d",
                  sSpuriousIntCount);
-
-    ++sSpuriousIntCount;
+    atomicIncrement32(&sSpuriousIntCount);
     interruptIRQSetEOI(kspCpuInterruptConfig->spuriousInterruptLine);
 
     return;

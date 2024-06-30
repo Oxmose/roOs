@@ -36,6 +36,8 @@
 ;-------------------------------------------------------------------------------
 global spinlockAcquire
 global spinlockRelease
+global atomicIncrement32
+global atomicDecrement32
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -68,6 +70,26 @@ __pauseSpinlockPause:
 
 spinlockRelease:
     mov  dword [rdi], 0
+    ret
+
+;-------------------------------------------------------------------------------
+; 32 Bits atomic increment
+;
+; Param:
+;     Input: rdi: u32_atomic_t value to increment
+atomicIncrement32:
+    mov  eax, 1
+    lock xadd dword [rdi], eax
+    ret
+
+;-------------------------------------------------------------------------------
+; 32 Bits atomic decrement
+;
+; Param:
+;     Input: rdi: u32_atomic_t value to decrement
+atomicDecrement32:
+    mov  eax, -1
+    lock xadd dword [rdi], eax
     ret
 
 ;-------------------------------------------------------------------------------

@@ -108,10 +108,13 @@ void consoleInit(void)
     size_t            propLen;
     console_driver_t* pConsDriver;
 
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_ENTRY, 0);
+
     /* Get the FDT console node */
     kpConsoleNode = fdtGetNodeByName(FDT_CONSOLE_NODE_NAME);
     if(kpConsoleNode == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_EXIT, 1, -1);
         return;
     }
 
@@ -140,6 +143,8 @@ void consoleInit(void)
             sConsoleDriver.outputDriver = pConsDriver->outputDriver;
         }
     }
+
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_EXIT, 1, 0);
 }
 
 void consoleClear(void)
@@ -324,6 +329,14 @@ ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
 {
     ssize_t retVal;
 
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_READ_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer),
+                       KERNEL_TRACE_HIGH(kBufferSize),
+                       KERNEL_TRACE_LOW(kBufferSize));
+
     if(sConsoleDriver.inputDriver.pRead != NULL)
     {
         retVal = sConsoleDriver.inputDriver.pRead(
@@ -335,15 +348,34 @@ ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
     {
         retVal = -1;
     }
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_READ_EXIT,
+                       5,
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer),
+                       KERNEL_TRACE_HIGH(kBufferSize),
+                       KERNEL_TRACE_LOW(kBufferSize),
+                       retVal);
+
     return retVal;
 }
 
 void consoleEcho(const bool_t kEnable)
 {
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_ECHO_ENTRY,
+                       1,
+                       kEnable);
+
     EXEC_IF_SET(sConsoleDriver,
                 inputDriver.pEcho,
                 sConsoleDriver.inputDriver.pDriverCtrl,
                 kEnable);
+
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_ECHO_EXIT,
+                       1,
+                       kEnable);
 }
 
 /************************************ EOF *************************************/

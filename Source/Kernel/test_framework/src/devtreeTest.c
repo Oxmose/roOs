@@ -361,6 +361,14 @@ void devtreeTest(void)
                            TEST_DEVTREE_ENABLED);
 #endif
 
+    pkNode = fdtGetNodeByName("console");
+
+    TEST_POINT_ASSERT_POINTER(TEST_DEVTREE_GETNODEBYNAME,
+                            pkNode != NULL,
+                            (uintptr_t)0xDEADC0DE,
+                            (uintptr_t)pkNode,
+                            TEST_DEVTREE_ENABLED);
+
     TEST_FRAMEWORK_END();
 }
 

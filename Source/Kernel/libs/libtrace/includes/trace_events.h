@@ -469,6 +469,13 @@ typedef enum
     TRACE_SEMAPHORE_TRYWAIT_ENTRY                   = 364,
     TRACE_SEMAPHORE_TRYWAIT_EXIT                    = 365,
 
+    TRACE_CONS_INIT_ENTRY                           = 366,
+    TRACE_CONS_INIT_EXIT                            = 367,
+    TRACE_CONS_READ_ENTRY                           = 368,
+    TRACE_CONS_READ_EXIT                            = 369,
+    TRACE_CONS_ECHO_ENTRY                           = 370,
+    TRACE_CONS_ECHO_EXIT                            = 371,
+
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

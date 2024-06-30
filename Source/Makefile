@@ -95,11 +95,7 @@ endif
 	@make -C $(SOURCE_DIR)/libs clean
 	@make -C $(SOURCE_DIR)/user clean
 	@make -C $(SOURCE_DIR)/sync clean
-
-ifeq ($(TESTS), TRUE)
-	# Build the tests module
-	@make -C $(SOURCE_DIR)/test_framework target=$(target) clean
-endif
+	@make -C $(SOURCE_DIR)/test_framework clean
 
 	# Clean kernel build directory
 	rm -rf  $(BUILD_DIR) $(BIN_DIR)

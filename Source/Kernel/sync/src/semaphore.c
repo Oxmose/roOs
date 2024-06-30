@@ -29,7 +29,7 @@
 #include <kqueue.h>       /* Kernel queue */
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definitions */
-#include <spinlock.h>     /* Kernel spinlock */
+#include <atomic.h>       /* Kernel spinlock */
 #include <critical.h>     /* Kernel critical section */
 #include <scheduler.h>    /* Kernel scheduler */
 
@@ -151,7 +151,7 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
         {
             pSem->level = 1;
         }
-        else 
+        else
         {
             pSem->level = 0;
         }

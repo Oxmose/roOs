@@ -31,7 +31,7 @@
 #include <kqueue.h>   /* Kernel queues */
 #include <stdint.h>   /* Standard int definitions */
 #include <kerror.h>   /* Kernel error */
-#include <spinlock.h> /* Spinlock structure */
+#include <atomic.h>   /* Spinlock structure */
 
 /*******************************************************************************
  * CONSTANTS

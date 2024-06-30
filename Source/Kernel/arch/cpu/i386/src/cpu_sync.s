@@ -36,6 +36,8 @@
 ;-------------------------------------------------------------------------------
 global spinlockAcquire
 global spinlockRelease
+global atomicIncrement32
+global atomicDecrement32
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -76,6 +78,27 @@ spinlockRelease:
     mov  eax, [esp + 8]
     mov  dword [eax], 0
     pop  eax
+    ret
+
+
+;-------------------------------------------------------------------------------
+; 32 Bits atomic increment
+;
+; Param:
+;     Input: ESP + 4: u32_atomic_t value to increment
+atomicIncrement32:
+    mov  eax, 1
+    lock xadd dword [esp + 4], eax
+    ret
+
+;-------------------------------------------------------------------------------
+; 32 Bits atomic decrement
+;
+; Param:
+;     Input: ESP + 4: u32_atomic_t value to decrement
+atomicDecrement32:
+    mov  eax, -1
+    lock xadd dword [esp + 4], eax
     ret
 
 ;-------------------------------------------------------------------------------

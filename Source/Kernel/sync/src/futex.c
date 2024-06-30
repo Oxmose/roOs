@@ -29,7 +29,7 @@
 #include <stddef.h>       /* Standard definitions */
 #include <kqueue.h>       /* Kernel queue */
 #include <memory.h>       /* Memory manager */
-#include <spinlock.h>     /* Kernel spinlock */
+#include <atomic.h>       /* Kernel spinlock */
 #include <critical.h>     /* Kernel critical sections */
 #include <scheduler.h>    /* Kernel scheduler */
 #include <ctrl_block.h>   /* Kernel control blocks definitions */

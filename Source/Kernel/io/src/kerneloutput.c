@@ -24,9 +24,9 @@
 /* Included headers */
 #include <string.h>   /* memset, strlen */
 #include <stdlib.h>   /* uitoa, itoa */
+#include <atomic.h>   /* Spinlocks */
 #include <console.h>  /* Console driver */
 #include <time_mgt.h> /* System time management */
-#include <spinlock.h> /* Spinlocks */
 #include <critical.h> /* Kernel critical sections */
 
 /* Configuration files */

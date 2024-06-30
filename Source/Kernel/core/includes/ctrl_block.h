@@ -25,7 +25,7 @@
 
 #include <stdint.h>   /* Generic int types */
 #include <stddef.h>   /* Standard definition type */
-#include <spinlock.h> /* Critical sections spinlock */
+#include <atomic.h>   /* Critical sections spinlock */
 
 /*******************************************************************************
  * CONSTANTS

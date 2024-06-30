@@ -142,7 +142,7 @@
                 qartz-freq = <32768>;
                 freq = <2>;
                 freq-range = <2 8192>;
-                //is-rtc;
+                is-rtc;
             };
 
             basetime: tsc {
@@ -161,7 +161,7 @@
                  */
                 base-timer = <&basetime>;
                 lapic-node = <&lapic>;
-                //is-main;
+                is-main;
             };
         };
 

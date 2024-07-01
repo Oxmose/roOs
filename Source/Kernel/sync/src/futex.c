@@ -268,11 +268,11 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
          * actual schedule call.
          */
         KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
         /* Set thread as waiting */
-        waiting.pWaitingThread->state             = THREAD_STATE_WAITING;
-        waiting.pWaitingThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
-        waiting.pWaitingThread->resourceBlockType = THREAD_WAIT_RESOURCE_FUTEX;
-        waiting.pWaitingThread->pBlockingResource = &waitingNode;
+        schedWaitThreadOnResource(waiting.pWaitingThread,
+                                  THREAD_WAIT_RESOURCE_FUTEX,
+                                  &waitingNode);
 
         KERNEL_CRITICAL_LOCK(pFutexData->lock);
 

@@ -258,9 +258,12 @@ double schedGetCpuLoad(const uint8_t kCpuId);
  *
  * @param[out] pThread The thread to set to waiting on resource state.
  * @param[in] kResource The type of waiting resource.
+ * @param[in] pResourceData The resource data that can be defined by the
+ * blocking resource.
  */
 void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
-                               const THREAD_WAIT_RESOURCE_TYPE_E kResource);
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource,
+                               void*                             pResourceData);
 
 /**
  * @brief Updates the thread's priority.

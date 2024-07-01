@@ -373,7 +373,9 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     }
 
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_MUTEX);
+    schedWaitThreadOnResource(pCurThread,
+                              THREAD_WAIT_RESOURCE_MUTEX,
+                              &mutexNode);
 
     /* Release the mutex lock */
     spinlockRelease(&pMutex->lock);

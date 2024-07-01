@@ -361,7 +361,9 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     }
 
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_SEMAPHORE);
+    schedWaitThreadOnResource(pCurThread,
+                              THREAD_WAIT_RESOURCE_SEMAPHORE,
+                              &semNode);
 
     /* Release the semaphore lock */
     spinlockRelease(&pSem->lock);

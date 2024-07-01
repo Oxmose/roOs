@@ -6,11 +6,8 @@
 </p>
 
 ## UTK - Utility Kernel
-
 * UTK is a kernel created for training and educational purposes. It is the result of multiple hours of work to better understand the underlying concepts related to operating systems.
-
 * The kernel is designed around real-time operating systems concepts and will not be intended to perform as a general-purpose operating system.
-
 
 ## UTK Build status
 

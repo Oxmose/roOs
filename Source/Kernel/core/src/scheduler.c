@@ -487,7 +487,6 @@ static kernel_thread_t* _getNextThreadFromTable(thread_table_t* pTable)
     pThreadNode = NULL;
 
     KERNEL_CRITICAL_LOCK(pTable->lock);
-
     /* Get the next thread node */
     nextPrio = pTable->highestPriority;
     if(nextPrio < KERNEL_NONE_PRIORITY)
@@ -727,6 +726,7 @@ void schedScheduleNoInt(void)
              * it is currently equal or higher.
              */
             KERNEL_CRITICAL_UNLOCK(sThreadTables[cpuId].lock);
+
             schedReleaseThread(pThread);
 
             /* Elect the new thread*/
@@ -775,7 +775,6 @@ void schedScheduleNoInt(void)
                        TRACE_SHEDULER_SCHEDULE_EXIT,
                        1,
                        pCurrentThreadsPtr[cpuId]->tid);
-
     /* We should never comme back */
     cpuRestoreContext(pThread);
 
@@ -1245,7 +1244,8 @@ double schedGetCpuLoad(const uint8_t kCpuId)
 }
 
 void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
-                               const THREAD_WAIT_RESOURCE_TYPE_E kResource)
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource,
+                               void*                             pResourceData)
 {
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_WAIT_ON_RESOURCE_ENTRY,
@@ -1258,6 +1258,7 @@ void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
     pThread->state             = THREAD_STATE_WAITING;
     pThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
     pThread->resourceBlockType = kResource;
+    pThread->pBlockingResource = pResourceData;
 
     KERNEL_CRITICAL_UNLOCK(pThread->lock);
 

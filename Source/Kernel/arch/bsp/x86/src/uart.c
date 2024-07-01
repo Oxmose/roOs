@@ -237,7 +237,7 @@ typedef struct
     /** @brief Input buffer semaphore */
     semaphore_t inputBufferSem;
 
-    /** 
+    /**
      * @brief Tells if the driver shall output all its received data to the
      * console.
      */
@@ -424,10 +424,10 @@ static ssize_t _uartRead(void*        pDrvCtrl,
 
 /**
  * @brief Enables or disables the input echo for the UART driver.
- * 
- * @details Enables or disables the input evho for the UART driver. When 
+ *
+ * @details Enables or disables the input evho for the UART driver. When
  * enabled, the UART driver will echo all characters it receives as input.
- * 
+ *
  * @param[in] pDrvCtrl The driver to be used.
  * @param kEnable Tells if the echo should be enabled or disabled.
  */
@@ -945,8 +945,6 @@ static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
 {
     GET_CONTROLER(pDrvCtrl)->echo = kEnable;
 }
-
-/* TODO: Add clear input to reset waiting state */
 
 #if DEBUG_LOG_UART
 

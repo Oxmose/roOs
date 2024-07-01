@@ -1,87 +1,128 @@
-<p align="center">
-	<img src="https://github.com/Oxmose/UTK-Reboot/raw/main/Doc/logo/utk_logo.png" width="300">
+
+<p  align="center">
+
+<img  src="https://github.com/Oxmose/UTK-Reboot/raw/main/Doc/logo/utk_logo.png"  width="300">
+
 </p>
 
 ## UTK - Utility Kernel
 
-* UTK is a kernel created for training and educational purposes. It is designed to execute in kernel mode only.
-* UTK has a configuration file allowing the kernel to be customized depending on the system it will run on.
+* UTK is a kernel created for training and educational purposes. It is the result of multiple hours of work to better understand the underlying concepts related to operating systems.
 
-----------
+* The kernel is designed around real-time operating systems concepts and will not be intended to perform as a general-purpose operating system.
+
 
 ## UTK Build status
 
-
 | Status | Main | Dev |
+
 | --- | --- | --- |
+
 | CI | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=main)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=dev)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) |
+
 | Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
 
-
-----------
-
 ## Supported Architectures
-| i386 | x86_64 | ARM |
-| --- | --- | --- |
-|  WIP |   WIP | NO |
+### I386 SoC
+Status: Work in progress
+#### Supported Processing:
+* Single-Core
+* Multi-Core
+#### Supported Drivers:
+* PIC
+* IO-APIC
+* Local APIC
+* ACPI
+* Serial Ports
+* RTC
+* PIT
+* Local APIC Timers
+* TSC
+* VGA Text 80x25
+
+
+### X64 SoC
+Status: Work in progress
+#### Supported Processing:
+* Single-Core
+* Multi-Core
+#### Supported Drivers:
+* PIC
+* IO-APIC
+* Local APIC
+* ACPI
+* Serial Ports
+* RTC
+* PIT
+* Local APIC Timers
+* TSC
+* VGA Text 80x25
+
+
+## Supported General Features
+### File Device Tree
+* FDT is used to setup the system and discover drivers
+* FDT handles used for drivers inter-operability
+* Configuration (stdin, stdout, interrupts) in FDT
+
+### Driver Management
+* Easy-to-use driver system
+* Driver attach mechanism with FDT auto-discovery
 
 ### Memory Management
-
 * Higher-half kernel
-* Virtual/physical memory allocator
-* Process isolation
+* Virtual and Physical memory allocator
+* Kernel Heap allocator
+
+### Interrupt and Exception Management
+* Custom Interrupts
+* Custom Exceptions
 
 ### Synchronization
-
 * Futex based synchronization
-* Mutex: Non recursive/Recursive - Priority inheritance capable. Futex based
-* Semaphore: FIFO based, priority of the locking thread is not relevant to select the next thread to unlock. Futex based
+* Mutex: Non recursive/Recursive - Priority inheritance capable - FIFO and Priority-based queuing disciplines.
+* Semaphore: FIFO and Priority-based queuing disciplines - Counting and Binary semaphores.
 * Spinlocks
 * Kernel critical section by disabling interrupts
 
 ### Scheduler
+* Priority based scheduler (Round Robin for all the threads having the same priority)
+* Kernel threads
+* Updateable priorities
+* Sleep capable
 
-* Priority based scheduler (threads can change their priority at execution time)
-* Round Robin for all the threads having the same priority
+### Kernel Tracing
+* Manual trace generation
+* Trace-Compass compatible trace stream generation
 
-### Process / Thread management
-
-* Fork / WaitPID
-* Kernel threads support
-* System calls
-
-### bsp Support: i386/x86_64
-
-* PIC and IO-APIC support (PIC supported but IO APIC required)
-* Local APIC support with timers
-* PIT support (can be used as an auxiliary timer source)
-* RTC support
-* Basic ACPI support (simple parsing used to enable multicore features)
-* Serial output support
-* Interrupt API (handlers can be set by the user)
-* 80x25 16colors VGA support
-* Time management API.
-
-----------
+### Libraries
+* Embedded LibC
+* Structures Libraries (Vector, HashTable, Queues, etc.)
 
 ## Roadmap
-You can see the planned tasks / features in the project's kanban on GitHub.
+You can see the planned tasks / features in the project's kanban on GitHub: https://github.com/users/Oxmose/projects/2
 
-----------
+## Testing
+UTK has a test suite allowing extensible testing. Using internal memory test buffers, the testing framework allows validating the system's correct behavior.
+Tests can be added as new features are developed.
+
 ## Build and run
 To build UTK, choose the architecture you want and execute.
-
 Architecture list to use in the TARGET flag:
+
 * x86_i386
 * x86_64
 
 ### Compilation
+```
 make target=[TARGET] TESTS=[TRUE/FALSE] DEBUG=[TRUE/FALSE] TRACE=[TRUE/FALSE]
-
+```
 ### Execution
+```
 make target=[TARGET] run
+```
+### Tests, Trace and Debug
 
-### Tests and Debug
 * TESTS flag set to TRUE to enable internal testing
 * DEBUG flag set to TRUE to enable debuging support (-O0 -g3)
 * TRACE flag set to TRUE to enable kernel tracing

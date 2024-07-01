@@ -69,7 +69,6 @@ typedef struct
     spinlock_t lock;
 } semaphore_t;
 
-
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -116,7 +115,7 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
  * threads locked on this semaphore. Using a destroyed semaphore produces
  * undefined behaviors.
  *
- * @param[in, out] sem The semaphore to destroy.
+ * @param[in, out] pSem The semaphore to destroy.
  *
  * @return The success state or the error code.
  *
@@ -131,7 +130,7 @@ OS_RETURN_E semDestroy(semaphore_t* pSem);
  * @details Pends on the semaphore given as parameter. The calling thread will
  * block on this call until the semaphore is aquired.
  *
- * @param[in] sem The semaphore to pend.
+ * @param[in] pSem The semaphore to pend.
  *
  * @return The success state or the error code.
  *
@@ -143,7 +142,7 @@ OS_RETURN_E semWait(semaphore_t* pSem);
 /**
  * @brief Post the semaphore given as parameter.
  *
- * @param[in] sem The semaphore to post.
+ * @param[in] pSem The semaphore to post.
  *
  * @return The success state or the error code.
  *
@@ -159,8 +158,8 @@ OS_RETURN_E semPost(semaphore_t* pSem);
  * return the current semaphore level. If possible the function will
  * aquire the semaphore.
  *
- * @param[in] sem The semaphore to pend.
- * @param[out] value The buffer that receives the semaphore level.
+ * @param[in] pSem The semaphore to pend.
+ * @param[out] pValue The buffer that receives the semaphore level.
  *
  * @return The success state or the error code.
  *

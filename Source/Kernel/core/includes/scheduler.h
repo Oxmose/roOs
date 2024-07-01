@@ -249,6 +249,30 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
  */
 double schedGetCpuLoad(const uint8_t kCpuId);
 
+/**
+ * @brief Sets the thread's state to waiting on a resource.
+ *
+ * @details Sets the thread's state to waiting on a resource. No scheduling
+ * operation is called, the thread is simply put in waiting state, waiting on a
+ * resource of the type passed as parameter.
+ *
+ * @param[out] pThread The thread to set to waiting on resource state.
+ * @param[in] kResource The type of waiting resource.
+ */
+void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource);
+
+/**
+ * @brief Updates the thread's priority.
+ *
+ * @details Updates the thread's priority. This will affect both running and
+ * not running threads. The thread and it's belonging table are updated.
+ *
+ * ­@param[out] pThread The thread to update.
+ * @param[in] kPrio The new priority to set.
+ */
+void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
+
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 
 /************************************ EOF *************************************/

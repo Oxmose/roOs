@@ -125,6 +125,7 @@ void kickstart(void)
 
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_ENTRY, 0);
 
+    /* Ensure interrupts are disabled */
     interruptDisable();
 
 #if DEBUG_LOG_UART
@@ -167,6 +168,7 @@ void kickstart(void)
     schedInit();
     KERNEL_SUCCESS("Scheduler initialized\n");
 
+    /* Add cpu, excpetion and interrupt related tests here */
     TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
     TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
 
@@ -188,19 +190,19 @@ void kickstart(void)
      */
     coreMgtInit();
 
-#ifndef _TESTING_FRAMEWORK_ENABLED
-    /* Initialize the user functions */
-    userInit();
-    KERNEL_SUCCESS("User initialization done\n");
-#endif
-
+    /* Add library and core tests here */
     TEST_POINT_FUNCTION_CALL(kqueueTest, TEST_OS_KQUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(queueTest, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(vectorTest, TEST_OS_VECTOR_ENABLED);
     TEST_POINT_FUNCTION_CALL(uhashtableTest, TEST_OS_UHASHTABLE_ENABLED);
     TEST_POINT_FUNCTION_CALL(semaphoreTest, TEST_SEMAPHORE_ENABLED);
-#if TEST_PANIC_ENABLED
-    PANIC(OS_NO_ERR, "PANIC TEST", "Test PANIC", TRUE);
+    TEST_POINT_FUNCTION_CALL(mutexTest, TEST_MUTEX_ENABLED);
+    TEST_POINT_FUNCTION_CALL(panicTest, TEST_PANIC_ENABLED);
+
+#ifndef _TESTING_FRAMEWORK_ENABLED
+    /* Initialize the user functions */
+    userInit();
+    KERNEL_SUCCESS("User initialization done\n");
 #endif
 
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);

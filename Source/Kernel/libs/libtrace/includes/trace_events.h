@@ -60,6 +60,7 @@
 #define TRACE_SCHEDULER_ENABLED         (TRACE_ALL_ENABLED | 0)
 #define TRACE_FUTEX_ENABLED             (TRACE_ALL_ENABLED | 0)
 #define TRACE_SEMAPHORE_ENABLED         (TRACE_ALL_ENABLED | 0)
+#define TRACE_MUTEX_ENABLED             (TRACE_ALL_ENABLED | 0)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -475,6 +476,22 @@ typedef enum
     TRACE_CONS_READ_EXIT                            = 369,
     TRACE_CONS_ECHO_ENTRY                           = 370,
     TRACE_CONS_ECHO_EXIT                            = 371,
+
+    TRACE_SHEDULER_WAIT_ON_RESOURCE_ENTRY           = 372,
+    TRACE_SHEDULER_WAIT_ON_RESOURCE_EXIT            = 373,
+    TRACE_SHEDULER_UPDATE_PRIORITY_ENTRY            = 374,
+    TRACE_SHEDULER_UPDATE_PRIORITY_EXIT             = 375,
+
+    TRACE_MUTEX_INIT_ENTRY                          = 376,
+    TRACE_MUTEX_INIT_EXIT                           = 377,
+    TRACE_MUTEX_DESTROY_ENTRY                       = 378,
+    TRACE_MUTEX_DESTROY_EXIT                        = 379,
+    TRACE_MUTEX_LOCK_ENTRY                          = 380,
+    TRACE_MUTEX_LOCK_EXIT                           = 381,
+    TRACE_MUTEX_UNLOCK_ENTRY                        = 382,
+    TRACE_MUTEX_UNLOCK_EXIT                         = 383,
+    TRACE_MUTEX_TRYLOCK_ENTRY                       = 384,
+    TRACE_MUTEX_TRYLOCK_EXIT                        = 385,
 
 } TRACE_EVENT_E;
 /*******************************************************************************

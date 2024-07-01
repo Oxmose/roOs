@@ -12,11 +12,8 @@
 ## UTK Build status
 
 | Status | Main | Dev |
-
 | --- | --- | --- |
-
 | CI | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=main)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=dev)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) |
-
 | Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
 
 ## Supported Architectures

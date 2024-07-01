@@ -87,8 +87,9 @@ spinlockRelease:
 ; Param:
 ;     Input: ESP + 4: u32_atomic_t value to increment
 atomicIncrement32:
+    mov  ecx, [esp + 4]
     mov  eax, 1
-    lock xadd dword [esp + 4], eax
+    lock xadd dword [ecx], eax
     ret
 
 ;-------------------------------------------------------------------------------
@@ -97,8 +98,9 @@ atomicIncrement32:
 ; Param:
 ;     Input: ESP + 4: u32_atomic_t value to decrement
 atomicDecrement32:
+    mov  ecx, [esp + 4]
     mov  eax, -1
-    lock xadd dword [esp + 4], eax
+    lock xadd dword [ecx], eax
     ret
 
 ;-------------------------------------------------------------------------------

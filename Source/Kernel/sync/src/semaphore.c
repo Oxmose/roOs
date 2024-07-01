@@ -26,6 +26,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <panic.h>        /* Kernel panic */
 #include <kqueue.h>       /* Kernel queue */
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definitions */
@@ -51,6 +52,9 @@
 
 /** @brief Current module name */
 #define MODULE_NAME "SEMAPHORE"
+
+/** @brief Defines the maximal semaphore wake value */
+#define SEMAPHORE_MAX_LEVEL 0x7FFFFFFF
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -79,7 +83,24 @@ typedef struct
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Assert macro used by the semaphore to ensure correctness of
+ * execution.
+ *
+ * @details Assert macro used by the semaphore to ensure correctness of
+ * execution. Due to the critical nature of the semaphore, any error
+ * generates a kernel panic.
+ *
+ * @param[in] COND The condition that should be true.
+ * @param[in] MSG The message to display in case of kernel panic.
+ * @param[in] ERROR The error code to use in case of kernel panic.
+ */
+#define SEMAPHORE_ASSERT(COND, MSG, ERROR) {                \
+    if((COND) == FALSE)                                     \
+    {                                                       \
+        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+    }                                                       \
+}
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -145,6 +166,20 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     }
 
     /* Setup the semaphore */
+    pSem->pWaitingList = kQueueCreate(FALSE);
+    if(pSem->pWaitingList == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_INIT_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           kInitLevel,
+                           kFlags,
+                           OS_ERR_NO_MORE_MEMORY);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
     if((kFlags & SEMAPHORE_FLAG_BINARY) == SEMAPHORE_FLAG_BINARY)
     {
         if(kInitLevel != 0)
@@ -161,20 +196,6 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
         pSem->level = kInitLevel;
     }
     pSem->flags = kFlags;
-    pSem->pWaitingList = kQueueCreate(FALSE);
-    if(pSem->pWaitingList == NULL)
-    {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_INIT_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           kInitLevel,
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY);
-        return OS_ERR_NO_MORE_MEMORY;
-    }
-
     SPINLOCK_INIT(pSem->lock);
     pSem->isInit = TRUE;
 
@@ -216,7 +237,7 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
         return OS_ERR_NULL_POINTER;
     }
 
-    if(pSem->isInit == FALSE)
+    if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
         KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                            TRACE_SEMAPHORE_DESTROY_EXIT,
@@ -264,7 +285,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
 {
     OS_RETURN_E      error;
     uint32_t         intState;
-    kqueue_node_t*   pSemNode;
+    kqueue_node_t    semNode;
     kernel_thread_t* pCurThread;
     semaphore_data_t data;
 
@@ -324,20 +345,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     /* Create a new queue node */
     data.pThread = pCurThread;
     data.status = SEMAPHORE_DESTROYED;
-    pSemNode = kQueueCreateNode(&data, FALSE);
-    if(pSemNode == NULL)
-    {
-        spinlockRelease(&pSem->lock);
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_WAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_NO_MORE_MEMORY);
-        return OS_ERR_NO_MORE_MEMORY;
-    }
+    kQueueInitNode(&semNode, &data);
 
     /* Add the node to the queue, if no flags are defined for the queuing
      * discipline, default to FIFO
@@ -345,24 +353,27 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     if((pSem->flags & SEMAPHORE_FLAG_QUEUING_PRIO) ==
        SEMAPHORE_FLAG_QUEUING_PRIO)
     {
-        kQueuePushPrio(pSemNode, pSem->pWaitingList, pCurThread->priority);
+        kQueuePushPrio(&semNode, pSem->pWaitingList, pCurThread->priority);
     }
     else
     {
-        kQueuePush(pSemNode, pSem->pWaitingList);
+        kQueuePush(&semNode, pSem->pWaitingList);
     }
+
+    /* Set the thread as waiting */
+    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_SEMAPHORE);
 
     /* Release the semaphore lock */
     spinlockRelease(&pSem->lock);
 
-    /* Set the therad as waiting */
-    pCurThread->state             = THREAD_STATE_WAITING;
-    pCurThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
-    pCurThread->resourceBlockType = THREAD_WAIT_RESOURCE_SEMAPHORE;
-
     /* Schedule */
     schedSchedule();
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    /* Ensure the node was released */
+    SEMAPHORE_ASSERT(semNode.enlisted == FALSE,
+                     "Failed to delist semaphore node",
+                     OS_ERR_UNAUTHORIZED_ACTION);
 
     /* We are back from scheduling, check if the semaphore is still alive */
     if(data.status == SEMAPHORE_DESTROYED)
@@ -435,8 +446,9 @@ OS_RETURN_E semPost(semaphore_t* pSem)
         /* We do not need to release a waiting thread, increase the semaphore
          * level.
          */
-        if((pSem->flags & SEMAPHORE_FLAG_BINARY) != SEMAPHORE_FLAG_BINARY ||
-           pSem->level <= 0)
+        if(((pSem->flags & SEMAPHORE_FLAG_BINARY) != SEMAPHORE_FLAG_BINARY ||
+            pSem->level <= 0) &&
+            pSem->level < SEMAPHORE_MAX_LEVEL)
         {
             ++pSem->level;
         }
@@ -458,6 +470,7 @@ OS_RETURN_E semPost(semaphore_t* pSem)
 OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
 {
     OS_RETURN_E error;
+    uint32_t    intState;
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_TRYWAIT_ENTRY,
@@ -470,10 +483,9 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
     {
         KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                            TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                           4,
+                           3,
                            KERNEL_TRACE_HIGH(pSem),
                            KERNEL_TRACE_LOW(pSem),
-                           -1,
                            OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
@@ -482,14 +494,14 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
     {
         KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                            TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                           4,
+                           3,
                            KERNEL_TRACE_HIGH(pSem),
                            KERNEL_TRACE_LOW(pSem),
-                           -1,
                            OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     spinlockAcquire(&pSem->lock);
     if(pValue != NULL)
     {
@@ -507,13 +519,13 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
         error = OS_ERR_BLOCKED;
     }
     spinlockRelease(&pSem->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                       4,
+                       3,
                        KERNEL_TRACE_HIGH(pSem),
                        KERNEL_TRACE_LOW(pSem),
-                       pSem->level,
                        error);
 
     return error;

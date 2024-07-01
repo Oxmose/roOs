@@ -74,9 +74,10 @@ typedef enum
 {
     /** @brief Thread is waiting on a futex */
     THREAD_WAIT_RESOURCE_FUTEX,
-
     /** @brief Thread is waiting on a semapore */
     THREAD_WAIT_RESOURCE_SEMAPHORE,
+    /** @brief Thread is waiting on a mutex */
+    THREAD_WAIT_RESOURCE_MUTEX,
 } THREAD_WAIT_RESOURCE_TYPE_E;
 
 /** @brief Defines the possitble return state of a thread. */
@@ -208,6 +209,9 @@ typedef struct kernel_thread_t
 
     /** @brief Thread's CPU affinity */
     uint64_t affinity;
+
+    /** @brief Thread's currently mapped CPU */
+    uint8_t schedCpu;
 
     /** @brief Parent thread */
     struct kernel_thread_t* pParentThread;

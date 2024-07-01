@@ -2920,6 +2920,43 @@ event {
     };
 };
 
+event {
+    id = 372;
+    name = "Scheduler wait thread on resource entry";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t resource;
+    };
+};
+
+event {
+    id = 373;
+    name = "Scheduler wait thread on resource exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t resource;
+    };
+};
+
+event {
+    id = 374;
+    name = "Scheduler update priority entry";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t newPrio;
+    };
+};
+
+event {
+    id = 375;
+    name = "Scheduler update priority exit";
+    fields := struct {
+        uint32_t threadId;
+        uint32_t threadPrio;
+        uint32_t newPrio;
+    };
+};
+
 /********************************* Futex */
 event {
     id = 344;
@@ -3096,7 +3133,104 @@ event {
     fields := struct {
         xuint32_t semAddrHigh;
         xuint32_t semAddrLow;
-        uint32_t level;
+        uint32_t returnCode;
+    };
+};
+
+/********************************* Mutex */
+event {
+    id = 376;
+    name = "Mutex init entry";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+        xuint32_t flags;
+    };
+};
+
+event {
+    id = 377;
+    name = "Mutex init exit";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+        xuint32_t flags;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 378;
+    name = "Mutex destroy entry";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+    };
+};
+
+event {
+    id = 379;
+    name = "Mutex destroy exit";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 380;
+    name = "Mutex lock entry";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+    };
+};
+
+event {
+    id = 381;
+    name = "Mutex lock exit";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 382;
+    name = "Mutex unlock entry";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+    };
+};
+
+event {
+    id = 383;
+    name = "Mutex unlock exit";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 384;
+    name = "Mutex try lock entry";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
+    };
+};
+
+event {
+    id = 385;
+    name = "Mutex try lock exit";
+    fields := struct {
+        xuint32_t mutexAddrHigh;
+        xuint32_t mutexAddrLow;
         uint32_t returnCode;
     };
 };

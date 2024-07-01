@@ -432,6 +432,7 @@ static void _createIdleThreads(void)
 
         /* Set the thread's information */
         spIdleThread[i]->affinity      = (1ULL << i);
+        spIdleThread[i]->schedCpu      = i;
         spIdleThread[i]->tid           = atomicIncrement32(&sLastGivenTid);
         spIdleThread[i]->type          = THREAD_TYPE_KERNEL;
         spIdleThread[i]->priority      = KERNEL_LOWEST_PRIORITY;
@@ -846,7 +847,8 @@ void schedReleaseThread(kernel_thread_t* pThread)
                  OS_ERR_INCORRECT_VALUE);
 
     /* Update the thread state and push to queue */
-    pThread->state = THREAD_STATE_READY;
+    pThread->state    = THREAD_STATE_READY;
+    pThread->schedCpu = cpuId;
 
     KERNEL_CRITICAL_LOCK(sThreadTables[cpuId].lock);
 
@@ -1241,4 +1243,88 @@ double schedGetCpuLoad(const uint8_t kCpuId)
         return 0;
     }
 }
+
+void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource)
+{
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_WAIT_ON_RESOURCE_ENTRY,
+                       2,
+                       pThread->tid,
+                       kResource);
+
+    KERNEL_CRITICAL_LOCK(pThread->lock);
+
+    pThread->state             = THREAD_STATE_WAITING;
+    pThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
+    pThread->resourceBlockType = kResource;
+
+    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_WAIT_ON_RESOURCE_EXIT,
+                       2,
+                       pThread->tid,
+                       kResource);
+}
+
+void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
+{
+    uint8_t cpuId;
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_UPDATE_PRIORITY_ENTRY,
+                       2,
+                       pThread->tid,
+                       kPrio);
+
+    /* Check parameters */
+    if(kPrio > KERNEL_LOWEST_PRIORITY || kPrio == pThread->priority)
+    {
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_UPDATE_PRIORITY_EXIT,
+                           3,
+                           pThread->tid,
+                           pThread->priority,
+                           kPrio);
+        return;
+    }
+
+    KERNEL_CRITICAL_LOCK(pThread->lock);
+    /* Check if the thread is running, if it is not, we have to update the
+     * belonging table when ready
+     */
+    if(pThread->state == THREAD_STATE_READY)
+    {
+        cpuId = pThread->schedCpu;
+
+        /* Update the table */
+        KERNEL_CRITICAL_LOCK(sThreadTables[cpuId].lock);
+
+        kQueueRemove(sThreadTables[cpuId].pReadyList[pThread->priority],
+                     pThread->pThreadNode,
+                     TRUE);
+
+        kQueuePush(pThread->pThreadNode,
+                   sThreadTables[cpuId].pReadyList[kPrio]);
+
+        /* Update the highest priority */
+        if(sThreadTables[cpuId].highestPriority > kPrio)
+        {
+            sThreadTables[cpuId].highestPriority = kPrio;
+        }
+        KERNEL_CRITICAL_UNLOCK(sThreadTables[cpuId].lock);
+    }
+
+    pThread->priority = kPrio;
+    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_UPDATE_PRIORITY_EXIT,
+                       3,
+                       pThread->tid,
+                       pThread->priority,
+                       kPrio);
+}
+
 /************************************ EOF *************************************/

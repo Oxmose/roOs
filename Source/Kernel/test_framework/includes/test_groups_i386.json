@@ -50,5 +50,9 @@
     {
         "name": "Semaphore Tests Suite",
         "testname": "SEMAPHORE"
+    },
+    {
+        "name": "Mutex Tests Suite",
+        "testname": "MUTEX"
     }
 ]

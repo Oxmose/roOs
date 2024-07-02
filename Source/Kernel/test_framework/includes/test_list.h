@@ -40,10 +40,10 @@
 #define TEST_OS_VECTOR_ENABLED                    0
 #define TEST_OS_UHASHTABLE_ENABLED                0
 #define TEST_DEVTREE_ENABLED                      0
-#define TEST_FUTEX_ENABLED                        0
+#define TEST_FUTEX_ENABLED                        1
 #define TEST_SCHEDULER_ENABLED                    0
 #define TEST_SEMAPHORE_ENABLED                    0
-#define TEST_MUTEX_ENABLED                        1
+#define TEST_MUTEX_ENABLED                        0
 
 /*************************************************
  * TEST IDENTIFIERS
@@ -483,7 +483,7 @@
 #define TEST_MUTEX_JOIN_THREADS_ELEVATION(X) ((X) + 1 + TEST_MUTEX_CREATE_THREADS_ELEVATION(10))
 
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Mutex Tests Suite"
+#define TEST_FRAMEWORK_TEST_NAME "Futex Tests Suite"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

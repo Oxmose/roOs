@@ -1,6 +1,6 @@
 [
     {
-        "name": "Mutex Tests Suite",
-        "testname": "MUTEX"
+        "name": "Futex Tests Suite",
+        "testname": "FUTEX"
     }
 ]

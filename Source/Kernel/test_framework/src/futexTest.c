@@ -66,8 +66,8 @@ extern uhashtable_t* spFutexTable;
 /* None */
 
 /************************** Static global variables ***************************/
-static uint32_t orderWait = 0;
-static uint32_t orderVal  = 0;
+static volatile uint32_t orderWait = 0;
+static volatile uint32_t orderVal  = 0;
 static futex_t orderFutex;
 static futex_t multipleFutex;
 static volatile uint32_t multipleFutexValue = 0;
@@ -101,7 +101,7 @@ static void* testOrderRoutineWait(void* args)
     FUTEX_WAKE_REASON_E wakeReason;
 
     tid = (uint32_t)(uintptr_t)args;
-    timeWait = (uint64_t)(tid + 1) * 50000000;
+    timeWait = (uint64_t)(tid + 1) * 500000000;
 
     error = schedSleep(timeWait);
     TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_SLEEP(tid),
@@ -141,7 +141,7 @@ static void* testOrderRoutineWake(void* args)
     OS_RETURN_E error;
 
     tid = (uint32_t)(uintptr_t)args;
-    timeWait = (uint64_t)(tid + 1) * 500000000;
+    timeWait = (uint64_t)(tid + 11) * 500000000;
 
     kprintf("wake thread %d, sleeping %lluns\n", tid, timeWait);
     error = schedSleep(timeWait);
@@ -263,6 +263,7 @@ static void testOrder(void)
 
     orderFutex.pHandle = &orderWait;
     orderFutex.isAlive = TRUE;
+    orderVal = 0;
 
     /* Spawn the wait thread */
     for(i = 0; i < 10; ++i)

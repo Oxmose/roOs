@@ -77,6 +77,9 @@ typedef struct
 
     /** @brief The semaphore wait status */
     SEMAPHORE_WAIT_STATUS status;
+
+    /** @brief The semaphore associated to the data */
+    semaphore_t* pSem;
 } semaphore_data_t;
 
 /*******************************************************************************
@@ -106,7 +109,15 @@ typedef struct
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Releases a semaphore resource used by a thread.
+ *
+ * @details Releases a semaphore resource used by a thread. This prevents memory
+ * and resource leaks when killing a thread.
+ *
+ * @param[in] pResource The resource to release.
+ */
+static void _semaphoreReleaseResource(void* pResource);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -124,6 +135,45 @@ typedef struct
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _semaphoreReleaseResource(void* pResource)
+{
+    semaphore_data_t* pData;
+    kqueue_node_t*    pNode;
+    uint32_t          intState;
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_RELEASE_RESOURCE_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pResource),
+                       KERNEL_TRACE_LOW(pResource));
+
+    SEMAPHORE_ASSERT(pResource != NULL,
+                     "NULL Semaphore resource",
+                     OS_ERR_NULL_POINTER);
+
+    /* The inly resource we manage are waiting thread's mutex node */
+    pNode = pResource;
+    pData = pNode->pData;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    spinlockAcquire(&pData->pSem->lock);
+
+    /* Check if the node is enlisted */
+    if(pNode->pQueuePtr != NULL)
+    {
+        kQueueRemove(pData->pSem->pWaitingList, pNode, TRUE);
+    }
+
+    spinlockRelease(&pData->pSem->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                       TRACE_SEMAPHORE_RELEASE_RESOURCE_EXIT,
+                       2,
+                       KERNEL_TRACE_HIGH(pResource),
+                       KERNEL_TRACE_LOW(pResource));
+}
 
 OS_RETURN_E semInit(semaphore_t*   pSem,
                     const int32_t  kInitLevel,
@@ -199,8 +249,6 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     SPINLOCK_INIT(pSem->lock);
     pSem->isInit = TRUE;
 
-    /* TODO: Add the resource to the process */
-
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_INIT_EXIT,
                        5,
@@ -270,8 +318,6 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
     spinlockRelease(&pSem->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    /* TODO: Remove the resource to the process */
-
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_DESTROY_EXIT,
                        3,
@@ -283,11 +329,13 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
 
 OS_RETURN_E semWait(semaphore_t* pSem)
 {
-    OS_RETURN_E      error;
-    uint32_t         intState;
-    kqueue_node_t    semNode;
-    kernel_thread_t* pCurThread;
-    semaphore_data_t data;
+    OS_RETURN_E       error;
+    uint32_t          intState;
+    kqueue_node_t     semNode;
+    kernel_thread_t*  pCurThread;
+    semaphore_data_t  data;
+    thread_resource_t threadRes;
+    void*             pResourceHandle;
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_WAIT_ENTRY,
@@ -360,10 +408,27 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         kQueuePush(&semNode, pSem->pWaitingList);
     }
 
+    threadRes.pReleaseResource = _semaphoreReleaseResource;
+    threadRes.pResourceData    = &semNode;
+    pResourceHandle = schedThreadAddResource(&threadRes);
+    if(pResourceHandle == NULL)
+    {
+        kQueueRemove(pSem->pWaitingList, &semNode, TRUE);
+        spinlockRelease(&pSem->lock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
+                           TRACE_SEMAPHORE_WAIT_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pSem),
+                           KERNEL_TRACE_LOW(pSem),
+                           OS_ERR_INCORRECT_VALUE);
+
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread,
-                              THREAD_WAIT_RESOURCE_SEMAPHORE,
-                              &semNode);
+    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_SEMAPHORE);
 
     /* Release the semaphore lock */
     spinlockRelease(&pSem->lock);
@@ -373,9 +438,15 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     /* Ensure the node was released */
-    SEMAPHORE_ASSERT(semNode.enlisted == FALSE,
+    SEMAPHORE_ASSERT(semNode.pQueuePtr == NULL,
                      "Failed to delist semaphore node",
                      OS_ERR_UNAUTHORIZED_ACTION);
+
+    /* Release the resource */
+    error = schedThreadRemoveResource(pResourceHandle);
+    SEMAPHORE_ASSERT(error == OS_NO_ERR,
+                     "Failed to remove semaphore resource",
+                     error);
 
     /* We are back from scheduling, check if the semaphore is still alive */
     if(data.status == SEMAPHORE_DESTROYED)
@@ -532,9 +603,5 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
 
     return error;
 }
-
-/* TODO: Add a semaphore cancel when we remove a thread to avoid having an
- * invalid semaphore_data_t on destroy / post
- */
 
 /************************************ EOF *************************************/

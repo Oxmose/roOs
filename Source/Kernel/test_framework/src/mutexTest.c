@@ -328,6 +328,7 @@ static void* testElevationRoutine(void* args)
         while(elevationMutex.pWaitingList->size == 0){
 
         }
+        schedSleep(1000000);
 
         kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
 
@@ -340,6 +341,9 @@ static void* testElevationRoutine(void* args)
         while(elevationMutex.pWaitingList->size == 1){
 
         }
+        schedSleep(1000000);
+
+        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
 
         TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(1),
                                pCurThread->priority == 7,
@@ -347,19 +351,18 @@ static void* testElevationRoutine(void* args)
                                pCurThread->priority,
                                TEST_MUTEX_ENABLED);
 
-        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
-
         while(elevationMutex.pWaitingList->size == 2){
 
         }
+        schedSleep(1000000);
 
+        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
         TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(2),
                                pCurThread->priority == 7,
                                7,
                                pCurThread->priority,
                                TEST_MUTEX_ENABLED);
 
-        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
 
 
         error = mutexUnlock(&elevationMutex);
@@ -379,7 +382,7 @@ static void* testElevationRoutine(void* args)
     }
     else if(prio == 12)
     {
-        schedSleep(100000000);
+        schedSleep(200000000);
 
         error = mutexLock(&elevationMutex);
         TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(1),
@@ -413,7 +416,7 @@ static void* testElevationRoutine(void* args)
     }
     else if(prio == 9)
     {
-        schedSleep(3000000000);
+        schedSleep(6000000000);
 
         error = mutexLock(&elevationMutex);
         TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(2),
@@ -447,7 +450,7 @@ static void* testElevationRoutine(void* args)
     }
     else if(prio == 7)
     {
-        schedSleep(2000000000);
+        schedSleep(4000000000);
 
         error = mutexLock(&elevationMutex);
         TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(3),

@@ -258,12 +258,9 @@ double schedGetCpuLoad(const uint8_t kCpuId);
  *
  * @param[out] pThread The thread to set to waiting on resource state.
  * @param[in] kResource The type of waiting resource.
- * @param[in] pResourceData The resource data that can be defined by the
- * blocking resource.
  */
 void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
-                               const THREAD_WAIT_RESOURCE_TYPE_E kResource,
-                               void*                             pResourceData);
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource);
 
 /**
  * @brief Updates the thread's priority.
@@ -275,6 +272,31 @@ void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
  * @param[in] kPrio The new priority to set.
  */
 void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
+
+/**
+ * @brief Adds a resource to the thread's resource queue.
+ *
+ * @details Adds a resource to the thread's resource queue. The resource will
+ * be freed when the thread is killed or exits.
+ *
+ * @param[in] kpResource The thread's resource to add.
+ *
+ * @return The handle to the added thread resource is returned.
+ */
+void* schedThreadAddResource(const thread_resource_t* kpResource);
+
+/**
+ * @brief Removes a resource from the thread's resource queue.
+ *
+ * @details Removes a resource from the thread's resource queue. The resource
+ * release function is not called in that case, the resource is simply
+ * removed from the resource queue.
+ *
+ * @param[in] pResourceHandle The handle to the resource to be removed.
+ *
+ * @return The function return the error or success status.
+ */
+OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

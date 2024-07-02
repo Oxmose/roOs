@@ -145,6 +145,7 @@ static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 void futexLibInit(void)
 {
+
     OS_RETURN_E err;
 
     KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
@@ -271,8 +272,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
 
         /* Set thread as waiting */
         schedWaitThreadOnResource(waiting.pWaitingThread,
-                                  THREAD_WAIT_RESOURCE_FUTEX,
-                                  &waitingNode);
+                                  THREAD_WAIT_RESOURCE_FUTEX);
 
         KERNEL_CRITICAL_LOCK(pFutexData->lock);
 
@@ -284,41 +284,35 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         /* Request schedule */
         schedSchedule();
 
-        waiting.pWaitingThread->pBlockingResource = NULL;
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
     /* Check the new value, maybe we were woken up by a spurious event */
-    } while(pFutex->isAlive == TRUE &&
-            *(pFutex->pHandle) == kWaitValue &&
-            waiting.wakeReason != FUTEX_WAKEUP_CANCEL);
+    } while(pFutex->isAlive == TRUE && *(pFutex->pHandle) == kWaitValue);
 
-    /* Check if we were canceled */
-    if(waiting.wakeReason != FUTEX_WAKEUP_CANCEL)
+
+    KERNEL_CRITICAL_LOCK(sLock);
+
+    /* Release the resource */
+    --pFutexData->nbWaitingThreads;
+
+    /* See if we should remove the futex */
+    if(pFutex->isAlive == FALSE && 0 == pFutexData->nbWaitingThreads)
     {
-        KERNEL_CRITICAL_LOCK(sLock);
+        error = uhashtableRemove(spFutexTable, identifier, (void**)&pFutexData);
+        KERNEL_CRITICAL_UNLOCK(sLock);
 
-        /* Release the resource */
-        --pFutexData->nbWaitingThreads;
+        FUTEX_ASSERT(error == OS_NO_ERR, "Failed to remove futex", error);
+        kQueueDestroy(&pFutexData->pWaitingThreads);
 
-        /* See if we should remove the futex */
-        if(pFutex->isAlive == FALSE && 0 == pFutexData->nbWaitingThreads)
-        {
-            error = uhashtableRemove(spFutexTable, identifier, (void**)&pFutexData);
-            KERNEL_CRITICAL_UNLOCK(sLock);
-
-            FUTEX_ASSERT(error == OS_NO_ERR, "Failed to remove futex", error);
-            kQueueDestroy(&pFutexData->pWaitingThreads);
-
-            /* Destroy the data */
-            kfree(pFutexData);
-        }
-        else
-        {
-            KERNEL_CRITICAL_UNLOCK(sLock);
-        }
+        /* Destroy the data */
+        kfree(pFutexData);
+    }
+    else
+    {
+        KERNEL_CRITICAL_UNLOCK(sLock);
     }
 
     /* Ensure the node was released */
-    FUTEX_ASSERT(waitingNode.enlisted == FALSE,
+    FUTEX_ASSERT(waitingNode.pQueuePtr == NULL,
                  "Failed to delist futex node",
                  OS_ERR_UNAUTHORIZED_ACTION);
 
@@ -459,161 +453,6 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
                        OS_NO_ERR);
 
     return OS_NO_ERR;
-}
-
-OS_RETURN_E futexCancelWait(futex_t*         pFutex,
-                            kernel_thread_t* pThread,
-                            const bool_t     kReschedule)
-{
-    OS_RETURN_E      error;
-    futex_data_t*    pFutexData;
-    futex_waiting_t* pWaiting;
-    kqueue_node_t*   pFutexThreadNode;
-    uintptr_t        identifier;
-
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_CANCEL_WAIT_ENTRY,
-                       5,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread),
-                       kReschedule);
-
-    /* Check parameters */
-    if(pFutex == NULL || pFutex->pHandle == NULL || pThread == NULL)
-    {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                           6,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           kReschedule,
-                           OS_ERR_NULL_POINTER);
-        return OS_ERR_NULL_POINTER;
-    }
-
-    /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
-    if(identifier == MEMMGR_PHYS_ADDR_ERROR)
-    {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                           6,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           kReschedule,
-                           OS_ERR_INCORRECT_VALUE);
-        return OS_ERR_INCORRECT_VALUE;
-    }
-
-    KERNEL_CRITICAL_LOCK(sLock);
-
-    /* Check if the handle exists */
-    error = uhashtableGet(spFutexTable, identifier, (void**)&pFutexData);
-    if(error == OS_NO_ERR)
-    {
-        /* Check thread state */
-        KERNEL_CRITICAL_LOCK(pThread->lock);
-        if(pThread->blockType != THREAD_WAIT_TYPE_RESOURCE ||
-           pThread->resourceBlockType != THREAD_WAIT_RESOURCE_FUTEX ||
-           pThread->pBlockingResource == NULL)
-        {
-            KERNEL_CRITICAL_UNLOCK(pThread->lock);
-            KERNEL_CRITICAL_UNLOCK(sLock);
-            KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                               TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                               6,
-                               KERNEL_TRACE_HIGH(pFutex),
-                               KERNEL_TRACE_LOW(pFutex),
-                               KERNEL_TRACE_HIGH(pThread),
-                               KERNEL_TRACE_LOW(pThread),
-                               kReschedule,
-                               OS_ERR_INCORRECT_VALUE);
-            return OS_ERR_INCORRECT_VALUE;
-        }
-        pFutexThreadNode = pThread->pBlockingResource;
-        KERNEL_CRITICAL_UNLOCK(pThread->lock);
-
-        /* Check if we are enlisted*/
-        if(pFutexThreadNode->enlisted == FALSE)
-        {
-            KERNEL_CRITICAL_UNLOCK(sLock);
-            KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                               TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                               6,
-                               KERNEL_TRACE_HIGH(pFutex),
-                               KERNEL_TRACE_LOW(pFutex),
-                               KERNEL_TRACE_HIGH(pThread),
-                               KERNEL_TRACE_LOW(pThread),
-                               kReschedule,
-                               OS_ERR_NOT_BLOCKED);
-            return OS_ERR_NOT_BLOCKED;
-        }
-        /* Check if this is the correct ID */
-        pWaiting = pFutexThreadNode->pData;
-        if(pWaiting->identifier != identifier)
-        {
-            KERNEL_CRITICAL_UNLOCK(sLock);
-            KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                               TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                               6,
-                               KERNEL_TRACE_HIGH(pFutex),
-                               KERNEL_TRACE_LOW(pFutex),
-                               KERNEL_TRACE_HIGH(pThread),
-                               KERNEL_TRACE_LOW(pThread),
-                               kReschedule,
-                               OS_ERR_NOT_BLOCKED);
-            return OS_ERR_NOT_BLOCKED;
-        }
-
-        KERNEL_CRITICAL_LOCK(pFutexData->lock);
-        kQueueRemove(pFutexData->pWaitingThreads, pFutexThreadNode, TRUE);
-        KERNEL_CRITICAL_UNLOCK(pFutexData->lock);
-
-        /* Release the resource */
-        --pFutexData->nbWaitingThreads;
-
-        /* See if we should remove the futex */
-        if(pFutex->isAlive == FALSE && 0 == pFutexData->nbWaitingThreads)
-        {
-            error = uhashtableRemove(spFutexTable,
-                                     identifier,
-                                     (void**)&pFutexData);
-            KERNEL_CRITICAL_UNLOCK(sLock);
-
-            FUTEX_ASSERT(error == OS_NO_ERR, "Failed to remove futex", error);
-            kQueueDestroy(&pFutexData->pWaitingThreads);
-
-            /* Destroy the data */
-            kfree(pFutexData);
-        }
-
-        /* Reschedule if needed */
-        if(kReschedule == TRUE)
-        {
-            pWaiting->wakeReason = FUTEX_WAKEUP_CANCEL;
-            schedReleaseThread(pWaiting->pWaitingThread);
-        }
-    }
-
-    KERNEL_CRITICAL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_CANCEL_WAIT_EXIT,
-                       6,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread),
-                       kReschedule,
-                       error);
-
-    return error;
 }
 
 /************************************ EOF *************************************/

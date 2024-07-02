@@ -380,11 +380,14 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
 
         if(pJoiningThread->state == THREAD_STATE_JOINING)
         {
+            KERNEL_CRITICAL_UNLOCK(pCurThread->pJoiningThread->lock);
             /* Release the joining thread */
-            pJoiningThread->state = THREAD_STATE_READY;
             schedReleaseThread(pJoiningThread);
         }
-        KERNEL_CRITICAL_UNLOCK(pCurThread->pJoiningThread->lock);
+        else
+        {
+            KERNEL_CRITICAL_UNLOCK(pCurThread->pJoiningThread->lock);
+        }
     }
 
     KERNEL_CRITICAL_UNLOCK(pCurThread->lock);
@@ -440,6 +443,12 @@ static void _createIdleThreads(void)
         spIdleThread[i]->pEntryPoint   = _idleRoutine;
         spIdleThread[i]->pParentThread = NULL;
         memcpy(spIdleThread[i]->pName, "IDLE", 5);
+
+        /* Init lock */
+        KERNEL_SPINLOCK_INIT(spIdleThread[i]->lock);
+
+        /* Set the thread's resources */
+        spIdleThread[i]->pThreadResources = kQueueCreate(TRUE);
 
         /* Set the thread's stack for both interrupt and main */
         spIdleThread[i]->stackEnd = cpuCreateKernelStack(KERNEL_STACK_SIZE);
@@ -568,12 +577,31 @@ static void _updateSleepingThreads(void)
 
 static void _schedCleanThread(kernel_thread_t* pThread)
 {
+    kqueue_node_t*     pRes;
+    kqueue_t*          pResQueue;
+    thread_resource_t* pResourceInfo;
+
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_CLEAN_THREAD_ENTRY,
                        1,
                        pThread->tid);
 
     KERNEL_CRITICAL_LOCK(pThread->lock);
+
+    /* Clear the resources */
+    pResQueue = pThread->pThreadResources;
+    pRes = kQueuePop(pResQueue);
+    while(pRes != NULL)
+    {
+        /* Release the resource */
+        pResourceInfo = pRes->pData;
+        pResourceInfo->pReleaseResource(pResourceInfo->pResourceData);
+
+        kQueueDestroyNode(&pRes);
+
+        pRes = kQueuePop(pResQueue);
+    }
+    kQueueDestroy((kqueue_t**)&pThread->pThreadResources);
 
     /* Destroy the kernel stack */
     cpuDestroyKernelStack(pThread->kernelStackEnd,
@@ -591,6 +619,7 @@ static void _schedCleanThread(kernel_thread_t* pThread)
 
     /* Free the thread */
     kfree(pThread);
+
 
     /* Decrement thread count */
     atomicDecrement32(&sThreadCount);
@@ -846,6 +875,21 @@ void schedReleaseThread(kernel_thread_t* pThread)
                  OS_ERR_INCORRECT_VALUE);
 
     /* Update the thread state and push to queue */
+    KERNEL_CRITICAL_LOCK(pThread->lock);
+
+    /* We do not add back zombie threads */
+    if(pThread->state == THREAD_STATE_ZOMBIE)
+    {
+        KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_RELEASE_THREAD_EXIT,
+                           2,
+                           pThread->tid,
+                           cpuId);
+        return;
+    }
+
     pThread->state    = THREAD_STATE_READY;
     pThread->schedCpu = cpuId;
 
@@ -860,6 +904,7 @@ void schedReleaseThread(kernel_thread_t* pThread)
     }
 
     KERNEL_CRITICAL_UNLOCK(sThreadTables[cpuId].lock);
+    KERNEL_CRITICAL_UNLOCK(pThread->lock);
 
     KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -1050,6 +1095,14 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     /* Set the node node */
     pNewThread->pThreadNode = pNewNode;
 
+    /* Set the thread's resources */
+    pNewThread->pThreadResources = kQueueCreate(FALSE);
+    if(pNewThread->pThreadResources == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+
     /* Initialize the lock */
     KERNEL_SPINLOCK_INIT(pNewThread->lock);
 
@@ -1074,6 +1127,11 @@ SCHED_CREATE_KTHREAD_END:
             {
                 cpuDestroyVirtualCPU((uintptr_t)pNewThread->pVCpu);
             }
+            if(pNewThread->pThreadResources != NULL)
+            {
+                kQueueDestroy((kqueue_t**)&pNewThread->pThreadResources);
+            }
+
             kfree(pNewThread);
         }
         if(pNewNode != NULL)
@@ -1174,10 +1232,11 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
         --sZombieThreadsTable.threadCount;
         KERNEL_CRITICAL_UNLOCK(sZombieThreadsTable.lock);
 
-        /* Clean the thread */
         KERNEL_CRITICAL_UNLOCK(pThread->lock);
-        _schedCleanThread(pThread);
         KERNEL_CRITICAL_UNLOCK(pCurThread->lock);
+
+        /* Clean the thread */
+        _schedCleanThread(pThread);
 
         KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                            TRACE_SHEDULER_JOIN_THREAD_EXIT,
@@ -1244,8 +1303,7 @@ double schedGetCpuLoad(const uint8_t kCpuId)
 }
 
 void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
-                               const THREAD_WAIT_RESOURCE_TYPE_E kResource,
-                               void*                             pResourceData)
+                               const THREAD_WAIT_RESOURCE_TYPE_E kResource)
 {
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_WAIT_ON_RESOURCE_ENTRY,
@@ -1256,9 +1314,7 @@ void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
     KERNEL_CRITICAL_LOCK(pThread->lock);
 
     pThread->state             = THREAD_STATE_WAITING;
-    pThread->blockType         = THREAD_WAIT_TYPE_RESOURCE;
     pThread->resourceBlockType = kResource;
-    pThread->pBlockingResource = pResourceData;
 
     KERNEL_CRITICAL_UNLOCK(pThread->lock);
 
@@ -1326,6 +1382,116 @@ void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
                        pThread->tid,
                        pThread->priority,
                        kPrio);
+}
+
+void* schedThreadAddResource(const thread_resource_t* kpResource)
+{
+    kernel_thread_t* pThread;
+    kqueue_node_t*   pNewNode;
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_THREAD_ADD_RESOURCE_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(kpResource),
+                       KERNEL_TRACE_LOW(kpResource));
+
+    /* Check the parameters */
+    if(kpResource == NULL || kpResource->pReleaseResource == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
+                           4,
+                           KERNEL_TRACE_HIGH(kpResource),
+                           KERNEL_TRACE_LOW(kpResource),
+                           KERNEL_TRACE_HIGH(NULL),
+                           KERNEL_TRACE_LOW(NULL));
+        return NULL;
+    }
+
+    /* Create the new node for the resource */
+    pNewNode = kQueueCreateNode((void*)kpResource, FALSE);
+    if(pNewNode == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
+                           4,
+                           KERNEL_TRACE_HIGH(kpResource),
+                           KERNEL_TRACE_LOW(kpResource),
+                           KERNEL_TRACE_HIGH(NULL),
+                           KERNEL_TRACE_LOW(NULL));
+        return NULL;
+    }
+
+    /* Add the node to the thread's queue */
+    pThread = schedGetCurrentThread();
+    KERNEL_CRITICAL_LOCK(pThread->lock);
+    kQueuePush(pNewNode, pThread->pThreadResources);
+    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
+                       4,
+                       KERNEL_TRACE_HIGH(kpResource),
+                       KERNEL_TRACE_LOW(kpResource),
+                       KERNEL_TRACE_HIGH(pNewNode),
+                       KERNEL_TRACE_LOW(pNewNode));
+
+    return pNewNode;
+}
+
+OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle)
+{
+    kernel_thread_t* pThread;
+    kqueue_node_t*   pNode;
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pResourceHandle),
+                       KERNEL_TRACE_LOW(pResourceHandle));
+
+    /* Check the parameters */
+    if(pResourceHandle == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pResourceHandle),
+                           KERNEL_TRACE_LOW(pResourceHandle),
+                           OS_ERR_NULL_POINTER);
+        return OS_ERR_NULL_POINTER;
+    }
+
+    pNode = pResourceHandle;
+    pThread = schedGetCurrentThread();
+
+    KERNEL_CRITICAL_LOCK(pThread->lock);
+
+    /* Check the handle validity */
+    if(pNode->pQueuePtr != pThread->pThreadResources)
+    {
+        KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                           TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pResourceHandle),
+                           KERNEL_TRACE_LOW(pResourceHandle),
+                           OS_ERR_INCORRECT_VALUE);
+
+        return OS_ERR_INCORRECT_VALUE;
+    }
+    kQueueRemove(pThread->pThreadResources, pNode, TRUE);
+    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+
+
+    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
+                       TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
+                       3,
+                       KERNEL_TRACE_HIGH(pResourceHandle),
+                       KERNEL_TRACE_LOW(pResourceHandle),
+                       OS_NO_ERR);
+    return OS_NO_ERR;
 }
 
 /************************************ EOF *************************************/

@@ -78,6 +78,9 @@ typedef struct
 
     /** @brief The mutex wait status */
     MUTEX_WAIT_STATUS status;
+
+    /** @brief The mutex associated to the data */
+    mutex_t* pMutex;
 } mutex_data_t;
 
 /*******************************************************************************
@@ -107,7 +110,15 @@ typedef struct
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Releases a mutex resource used by a thread.
+ *
+ * @details Releases a mutex resource used by a thread. This prevents memory
+ * and resource leaks when killing a thread.
+ *
+ * @param[in] pResource The resource to release.
+ */
+static void _mutexReleaseResource(void* pResource);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -125,6 +136,43 @@ typedef struct
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+static void _mutexReleaseResource(void* pResource)
+{
+    mutex_data_t*  pData;
+    kqueue_node_t* pNode;
+    uint32_t       intState;
+
+    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
+                       TRACE_MUTEX_RELEASE_RESOURCE_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pResource),
+                       KERNEL_TRACE_LOW(pResource));
+
+    MUTEX_ASSERT(pResource != NULL, "NULL Mutex resource", OS_ERR_NULL_POINTER);
+
+    /* The inly resource we manage are waiting thread's mutex node */
+    pNode = pResource;
+    pData = pNode->pData;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    spinlockAcquire(&pData->pMutex->lock);
+
+    /* Check if the node is enlisted */
+    if(pNode->pQueuePtr != NULL)
+    {
+        kQueueRemove(pData->pMutex->pWaitingList, pNode, TRUE);
+    }
+
+    spinlockRelease(&pData->pMutex->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
+                       TRACE_MUTEX_RELEASE_RESOURCE_EXIT,
+                       2,
+                       KERNEL_TRACE_HIGH(pResource),
+                       KERNEL_TRACE_LOW(pResource));
+}
+
 OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
 {
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -178,8 +226,6 @@ OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
     pMutex->lockState = 1;
     SPINLOCK_INIT(pMutex->lock);
     pMutex->isInit = TRUE;
-
-    /* TODO: Add the resource to the process */
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_INIT_EXIT,
@@ -249,8 +295,6 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
     spinlockRelease(&pMutex->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    /* TODO: Remove the resource to the process */
-
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_DESTROY_EXIT,
                        3,
@@ -263,11 +307,13 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
 
 OS_RETURN_E mutexLock(mutex_t* pMutex)
 {
-    OS_RETURN_E      error;
-    uint32_t         intState;
-    kqueue_node_t    mutexNode;
-    kernel_thread_t* pCurThread;
-    mutex_data_t     data;
+    OS_RETURN_E       error;
+    uint32_t          intState;
+    kqueue_node_t     mutexNode;
+    kernel_thread_t*  pCurThread;
+    mutex_data_t      data;
+    thread_resource_t threadRes;
+    void*             pResourceHandle;
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_LOCK_ENTRY,
@@ -322,7 +368,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         return OS_NO_ERR;
     }
     else if((pMutex->flags & MUTEX_FLAG_RECURSIVE) == MUTEX_FLAG_RECURSIVE &&
-            pCurThread->tid == pMutex->pAcquiredThread->tid)
+            pCurThread == pMutex->pAcquiredThread)
     {
         /* If the mutex is recursive, allow the lock */
         if(pMutex->lockState > MUTEX_MAX_RECURSIVENESS)
@@ -349,16 +395,9 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
 
     /* Create a new queue node */
     data.pThread = pCurThread;
-    data.status = MUTEX_DESTROYED;
+    data.pMutex  = pMutex;
+    data.status  = MUTEX_DESTROYED;
     kQueueInitNode(&mutexNode, &data);
-
-    /* If priority elevation is enabled, elevate if needed */
-    if((pMutex->flags & MUTEX_FLAG_PRIO_ELEVATION) == MUTEX_FLAG_PRIO_ELEVATION
-       &&
-       pMutex->pAcquiredThread->priority > pCurThread->priority)
-    {
-        schedUpdatePriority(pMutex->pAcquiredThread, pCurThread->priority);
-    }
 
     /* Add the node to the queue, if no flags are defined for the queuing
      * discipline, default to FIFO.
@@ -372,10 +411,36 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         kQueuePush(&mutexNode, pMutex->pWaitingList);
     }
 
+    /* Add the resource to the thread so it can be removed on kill */
+    threadRes.pReleaseResource = _mutexReleaseResource;
+    threadRes.pResourceData    = &mutexNode;
+    pResourceHandle = schedThreadAddResource(&threadRes);
+    if(pResourceHandle == NULL)
+    {
+        kQueueRemove(pMutex->pWaitingList, &mutexNode, TRUE);
+        spinlockRelease(&pMutex->lock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
+                           TRACE_MUTEX_LOCK_EXIT,
+                           3,
+                           KERNEL_TRACE_HIGH(pMutex),
+                           KERNEL_TRACE_LOW(pMutex),
+                           OS_ERR_INCORRECT_VALUE);
+
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread,
-                              THREAD_WAIT_RESOURCE_MUTEX,
-                              &mutexNode);
+    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_MUTEX);
+
+    /* If priority elevation is enabled, elevate if needed */
+    if((pMutex->flags & MUTEX_FLAG_PRIO_ELEVATION) == MUTEX_FLAG_PRIO_ELEVATION
+       &&
+       pMutex->pAcquiredThread->priority > pCurThread->priority)
+    {
+        schedUpdatePriority(pMutex->pAcquiredThread, pCurThread->priority);
+    }
 
     /* Release the mutex lock */
     spinlockRelease(&pMutex->lock);
@@ -385,9 +450,13 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     /* Ensure the node was released */
-    MUTEX_ASSERT(mutexNode.enlisted == FALSE,
+    MUTEX_ASSERT(mutexNode.pQueuePtr == NULL,
                  "Failed to delist mutex node",
                  OS_ERR_UNAUTHORIZED_ACTION);
+
+    /* Release the resource */
+    error = schedThreadRemoveResource(pResourceHandle);
+    MUTEX_ASSERT(error == OS_NO_ERR, "Failed to remove mutex resource", error);
 
     /* We are back from scheduling, check if the mutex is still alive */
     if(data.status == MUTEX_DESTROYED)
@@ -610,9 +679,5 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
 
     return error;
 }
-
-/* TODO: Add a mutex cancel when we remove a thread to avoid having an
- * invalid mutex_data_t on destroy / post
- */
 
 /************************************ EOF *************************************/

@@ -493,6 +493,16 @@ typedef enum
     TRACE_MUTEX_TRYLOCK_ENTRY                       = 384,
     TRACE_MUTEX_TRYLOCK_EXIT                        = 385,
 
+    TRACE_SHEDULER_THREAD_ADD_RESOURCE_ENTRY        = 386,
+    TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT         = 387,
+    TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_ENTRY     = 388,
+    TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT      = 389,
+
+    TRACE_SEMAPHORE_RELEASE_RESOURCE_ENTRY          = 390,
+    TRACE_SEMAPHORE_RELEASE_RESOURCE_EXIT           = 391,
+
+    TRACE_MUTEX_RELEASE_RESOURCE_ENTRY              = 392,
+    TRACE_MUTEX_RELEASE_RESOURCE_EXIT               = 393,
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

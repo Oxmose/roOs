@@ -192,7 +192,7 @@ void kQueueDestroyNode(kqueue_node_t** ppNode)
                   "Tried to delete a NULL node",
                   OS_ERR_NULL_POINTER);
 
-    KQUEUE_ASSERT((*ppNode)->enlisted == FALSE,
+    KQUEUE_ASSERT((*ppNode)->pQueuePtr == NULL,
                   "Tried to delete an enlisted node",
                   OS_ERR_UNAUTHORIZED_ACTION);
 
@@ -305,7 +305,7 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
     }
 
     ++pQueue->size;
-    pNode->enlisted = TRUE;
+    pNode->pQueuePtr = pQueue;
 
 
     KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
@@ -402,7 +402,7 @@ void kQueuePushPrio(kqueue_node_t* pNode,
         }
     }
     ++pQueue->size;
-    pNode->enlisted = TRUE;
+    pNode->pQueuePtr = pQueue;
 
     KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
                    pNode->pNext == NULL ||
@@ -485,7 +485,8 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 
     pNode->pNext = NULL;
     pNode->pPrev = NULL;
-    pNode->enlisted = FALSE;
+
+    pNode->pQueuePtr = NULL;
 
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 
@@ -627,7 +628,7 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
     pNode->pNext = NULL;
     pNode->pPrev = NULL;
 
-    pNode->enlisted = FALSE;
+    pNode->pQueuePtr = NULL;
 
     KERNEL_CRITICAL_UNLOCK(pQueue->lock);
 

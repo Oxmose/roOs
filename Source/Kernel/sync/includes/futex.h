@@ -135,26 +135,6 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
  */
 OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount);
 
-/**
- * @brief Cancels a wait on a futex for a given thread.
- *
- * @details Cancels a wait on a futex for a given thread. The futex and the
- * node of the futes waiting list are passed to the function, which releases the
- * node from the waiting list and frees the resources.
- *
- * @param[out] pFutex The futex for which the wait should be canceled.
- * @param[out] pThread The thread waiting on the futex.
- * @param[in] kReschedule Tells if the thread that was waiting on the futex
- * should be rescheduled.
- *
- * @return The success or error status is returned.
- *
- * @warning Canceling on a destroyed futex produces undefined behavior.
- */
-OS_RETURN_E futexCancelWait(futex_t*         pFutex,
-                            kernel_thread_t* pThread,
-                            const bool_t     kReschedule);
-
 #endif /* #ifndef __SYNC_FUTEX_H_ */
 
 /************************************ EOF *************************************/

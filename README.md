@@ -17,41 +17,13 @@
 | Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
 
 ## Supported Architectures
-### I386 SoC
-Status: Work in progress
-#### Supported Processing:
-* Single-Core
-* Multi-Core
-#### Supported Drivers:
-* PIC
-* IO-APIC
-* Local APIC
-* ACPI
-* Serial Ports
-* RTC
-* PIT
-* Local APIC Timers
-* TSC
-* VGA Text 80x25
 
-
-### X64 SoC
-Status: Work in progress
-#### Supported Processing:
-* Single-Core
-* Multi-Core
-#### Supported Drivers:
-* PIC
-* IO-APIC
-* Local APIC
-* ACPI
-* Serial Ports
-* RTC
-* PIT
-* Local APIC Timers
-* TSC
-* VGA Text 80x25
-
+| i386                                           | x64                          |
+|------------------------------------------------|------------------------------|
+| **Status**<br>Work in Progress                 | **Status**<br>Work in Progress |
+| **Supported Processing**<br>Multicore, Singlecore | **Supported Processing**<br>Multicore, Singlecore |
+| **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25 | **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25 |
+| | |
 
 ## Supported General Features
 ### File Device Tree
@@ -100,7 +72,7 @@ You can see the planned tasks / features in the project's kanban on GitHub: http
 UTK has a test suite allowing extensible testing. Using internal memory test buffers, the testing framework allows validating the system's correct behavior.
 Tests can be added as new features are developed.
 
-## Build and run
+## Build and Run
 To build UTK, choose the architecture you want and execute.
 Architecture list to use in the TARGET flag:
 

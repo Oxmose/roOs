@@ -32,6 +32,7 @@
         "core_mgt.h": "c",
         "kqueue.h": "c",
         "spinlock.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "mutex": "c"
     }
 }

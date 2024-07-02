@@ -69,9 +69,7 @@ extern uhashtable_t* spFutexTable;
 static uint32_t orderWait = 0;
 static uint32_t orderVal  = 0;
 static futex_t orderFutex;
-static futex_t cancelFutex;
 static futex_t multipleFutex;
-static kernel_thread_t* pCancelThread[2];
 static volatile uint32_t multipleFutexValue = 0;
 static volatile uint32_t spinlock = 0;
 static volatile uint32_t returnedThreads = 0;
@@ -80,15 +78,11 @@ static volatile uint32_t returnedThreads = 0;
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-static void* testCancelWaitSched(void* args);
-static void* testCancelWaitNoSched(void* args);
-static void* testCancelWake(void* args);
 static void* testOrderRoutineWait(void* args);
 static void* testOrderRoutineWake(void* args);
 static void* testWaitMultiple(void* args);
 static void* testWaitSameHandleValue(void* args);
 static void* testWaitReleaseResources(void* args);
-static void testCancel(void);
 static void testOrder(void);
 static void testMultiple(void);
 static void testSameHandleValue(void);
@@ -98,91 +92,6 @@ static void* testThread(void* args);
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-static void* testCancelWaitNoSched(void* args)
-{
-    OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E reason;
-
-    (void)args;
-
-    pCancelThread[0] = schedGetCurrentThread();
-
-    kprintf("Wait cancel no sched waiting 0x%p\n", pCancelThread[0]);
-    error = futexWait(&cancelFutex, 0, &reason);
-    kprintf("Wait Cancel thread reason: %d\n", reason);
-
-    /* Should never come back as we are canceled no resched */
-    (void)error;
-    TEST_POINT_ASSERT_BYTE(TEST_FUTEX_CANCEL_WAIT0,
-                           FALSE,
-                           FALSE,
-                           TRUE,
-                           TEST_FUTEX_ENABLED);
-
-    return NULL;
-}
-
-static void* testCancelWaitSched(void* args)
-{
-    OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E reason;
-
-    (void)args;
-
-    pCancelThread[1] = schedGetCurrentThread();
-
-    kprintf("Wait cancel sched waiting 0x%p\n", pCancelThread[1]);
-    error = futexWait(&cancelFutex, 0, &reason);
-    kprintf("Wait Cancel thread reason: %d\n", reason);
-
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_WAIT1,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_CANCEL_WAIT2,
-                           reason == FUTEX_WAKEUP_CANCEL,
-                           reason,
-                           FUTEX_WAKEUP_CANCEL,
-                           TEST_FUTEX_ENABLED);
-
-    return NULL;
-}
-
-static void* testCancelWake(void* args)
-{
-
-    uint64_t timeWait;
-    OS_RETURN_E error;
-
-    (void)args;
-    timeWait = 500000000;
-    error = schedSleep(timeWait);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_SLEEP2,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    kprintf("Wake Cancel thread waited %lluns\n", timeWait);
-
-    kprintf("Cancel 0x%p\n", pCancelThread[0]);
-    error = futexCancelWait(&cancelFutex, pCancelThread[0], FALSE);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_WAKE0,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    kprintf("Cancel 0x%p\n", pCancelThread[1]);
-    error = futexCancelWait(&cancelFutex, pCancelThread[1], TRUE);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_WAKE1,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-
-    return NULL;
-}
 
 static void* testOrderRoutineWait(void* args)
 {
@@ -343,97 +252,6 @@ static void* testWaitReleaseResources(void* args)
     spinlockRelease(&spinlock);
 
     return NULL;
-}
-
-static void testCancel(void)
-{
-    kernel_thread_t* pWaitThreadNoSched;
-    kernel_thread_t* pWaitThreadSched;
-    kernel_thread_t* pWakeThread;
-    OS_RETURN_E error;
-
-    orderWait = 0;
-    cancelFutex.pHandle = &orderWait;
-    cancelFutex.isAlive = TRUE;
-
-    error = schedCreateKernelThread(&pWaitThreadNoSched,
-                                    0,
-                                    "FUTEX_WAIT_CANCEL_TEST",
-                                    0x1000,
-                                    1,
-                                    testCancelWaitNoSched,
-                                    NULL);
-
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_CREATE_THREADS0,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    if(error != OS_NO_ERR)
-    {
-        goto FUTEX_TEST_END;
-    }
-    error = schedCreateKernelThread(&pWaitThreadSched,
-                                    0,
-                                    "FUTEX_WAIT_CANCEL_TEST",
-                                    0x1000,
-                                    1,
-                                    testCancelWaitSched,
-                                    NULL);
-
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_CREATE_THREADS1,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    if(error != OS_NO_ERR)
-    {
-        goto FUTEX_TEST_END;
-    }
-    error = schedCreateKernelThread(&pWakeThread,
-                                    0,
-                                    "FUTEX_WAIT_CANCEL_TEST",
-                                    0x1000,
-                                    1,
-                                    testCancelWake,
-                                    NULL);
-
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_CREATE_THREADS2,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    if(error != OS_NO_ERR)
-    {
-        goto FUTEX_TEST_END;
-    }
-
-    error = schedJoinThread(pWaitThreadSched, NULL, NULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_JOIN_THREADS0,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    if(error != OS_NO_ERR)
-    {
-        goto FUTEX_TEST_END;
-    }
-
-    error = schedJoinThread(pWakeThread, NULL, NULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CANCEL_JOIN_THREADS2,
-                            error == OS_NO_ERR,
-                            OS_NO_ERR,
-                            error,
-                            TEST_FUTEX_ENABLED);
-    if(error != OS_NO_ERR)
-    {
-        goto FUTEX_TEST_END;
-    }
-
-    return;
-
-FUTEX_TEST_END:
-    TEST_FRAMEWORK_END();
 }
 
 static void testOrder(void)
@@ -924,15 +742,13 @@ static void* testThread(void* args)
 {
     (void)args;
 
-    (void)testOrder;//();
+    testOrder();
     kprintf("Order Test Done\n");
-    (void)testCancel;//();
-    kprintf("Cancel Test Done\n");
-    (void)testMultiple;//();
+    testMultiple();
     kprintf("Multiple Test Done\n");
     testSameHandleValue();
     kprintf("Same Handle Test Done\n");
-    (void)testReleaseResources;//();
+    testReleaseResources();
     kprintf("Release Test Done\n");
 
     TEST_FRAMEWORK_END();

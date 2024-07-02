@@ -2957,6 +2957,45 @@ event {
     };
 };
 
+event {
+    id = 386;
+    name = "Scheduler add thread resource entry";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
+    };
+};
+
+event {
+    id = 387;
+    name = "Scheduler add thread resource exit";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
+        xuint32_t handleAddrHigh;
+        xuint32_t handleAddrLow;
+    };
+};
+
+event {
+    id = 388;
+    name = "Scheduler remove thread resource entry";
+    fields := struct {
+        xuint32_t handleAddrHigh;
+        xuint32_t handleAddrLow;
+    };
+};
+
+event {
+    id = 389;
+    name = "Scheduler remove thread resource exit";
+    fields := struct {
+        xuint32_t handleAddrHigh;
+        xuint32_t handleAddrLow;
+        uint32_t returnCode;
+    };
+};
+
 /********************************* Futex */
 event {
     id = 344;
@@ -3137,6 +3176,24 @@ event {
     };
 };
 
+event {
+    id = 390;
+    name = "Semaphore release resource entry";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
+    };
+};
+
+event {
+    id = 391;
+    name = "Semaphore release resource exit";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
+    };
+};
+
 /********************************* Mutex */
 event {
     id = 376;
@@ -3232,5 +3289,23 @@ event {
         xuint32_t mutexAddrHigh;
         xuint32_t mutexAddrLow;
         uint32_t returnCode;
+    };
+};
+
+event {
+    id = 392;
+    name = "Mutex release resource entry";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
+    };
+};
+
+event {
+    id = 393;
+    name = "Mutex release resource exit";
+    fields := struct {
+        xuint32_t resAddrHigh;
+        xuint32_t resAddrLow;
     };
 };

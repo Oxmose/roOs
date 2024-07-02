@@ -50,7 +50,7 @@ typedef struct
     spinlock_t lock;
 
     /** @brief The interrupt state when acquiring the lock */
-    uint8_t intState[MAX_CPU_COUNT];
+    volatile uint8_t intState[MAX_CPU_COUNT];
 } kernel_spinlock_t;
 
 /*******************************************************************************

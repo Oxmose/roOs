@@ -48,8 +48,8 @@ typedef struct kqueue_node
     /** @brief Previous node in the queue. */
     struct kqueue_node* pPrev;
 
-    /** @brief Tell if the node is present in a queue or stands alone. */
-    volatile bool_t enlisted;
+    /** @brief Pointer to the node's queue, NULL is not enlisted. */
+    volatile void* pQueuePtr;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
     volatile uint64_t priority;

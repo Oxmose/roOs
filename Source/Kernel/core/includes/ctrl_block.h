@@ -33,7 +33,7 @@
 
 /* The afinity is defined as a 64 bits bitmask */
 #if MAX_CPU_COUNT > 64
-#error "Affinity cannot manage enough processor"
+#error "Affinity cannot handle enough processor"
 #endif
 
 /** @brief Maximal thead's name length. */
@@ -59,15 +59,6 @@ typedef enum
     /** @brief Thread's scheduling state: waiting. */
     THREAD_STATE_WAITING,
 } THREAD_STATE_E;
-
-/** @brief Thread waiting types. */
-typedef enum
-{
-    /** @brief The thread is waiting to acquire a resource (e.g mutex, sem). */
-    THREAD_WAIT_TYPE_RESOURCE,
-    /** @brief The thread is waiting to acquire an IO entry. */
-    THREAD_WAIT_TYPE_IO
-} THREAD_WAIT_TYPE_E;
 
 /** @brief Defines the type of waiting resource */
 typedef enum
@@ -110,6 +101,25 @@ typedef enum
     /** @brief User thread type, created by the kernel for the user. */
     THREAD_TYPE_USER
 } THREAD_TYPE_E;
+
+/**
+ * @brief Defines a thread resource type.
+ */
+typedef struct
+{
+    /** @brief Data used by the release resource function. */
+    void* pResourceData;
+
+    /**
+     * @brief Release resource function.
+     *
+     * @details Release resource function. This function shall release the
+     * memory and resources used by the resource.
+     *
+     * @param[in] pResourceData The resource data used by the release function.
+     */
+    void (*pReleaseResource)(void* pResourceData);
+} thread_resource_t;
 
 /** @brief This is the representation of the thread for the kernel. */
 typedef struct kernel_thread_t
@@ -193,17 +203,6 @@ typedef struct kernel_thread_t
     /** @brief Thread's current state. */
     THREAD_STATE_E state;
 
-    /** @brief Thread's wait type. This is inly relevant when the thread's state
-     * is THREAD_STATE_WAITING.
-     */
-    THREAD_WAIT_TYPE_E blockType;
-
-    /** @brief Type of resource the thread is blocked on. */
-    THREAD_WAIT_RESOURCE_TYPE_E resourceBlockType;
-
-    /** @brief Blocking resource */
-    void* pBlockingResource;
-
     /** @brief Associated queue node in the scheduler */
     void* pThreadNode;
 
@@ -221,6 +220,15 @@ typedef struct kernel_thread_t
 
     /** @brief Currently joined thread */
     struct kernel_thread_t* pJoinedThread;
+
+    /**************************************
+     * Resources management
+     *************************************/
+    /** @brief Type of resource the thread is blocked on. */
+    THREAD_WAIT_RESOURCE_TYPE_E resourceBlockType;
+
+    /** @brief Resource queue pointer */
+    void* pThreadResources;
 
     /** @brief The thread's structure lock */
     kernel_spinlock_t lock;

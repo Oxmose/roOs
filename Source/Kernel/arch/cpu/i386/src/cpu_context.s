@@ -86,7 +86,7 @@ cpuSaveContext:
 
         ; Save CPU state before calling interrupt
         mov ebx, esp       ; ESP before int save
-        add ebx, 20
+        add ebx, 32
         mov [eax+20], ebx
 
         mov [eax+24], ebp
@@ -129,6 +129,7 @@ cpuRestoreContext:
         mov esp, [eax+20]
 
         ; Restore the interrupt context
+        sub esp, 12
         mov ebx, [eax+8]  ; EIP
         mov [esp], ebx
         mov ebx, [eax+12]  ; CS

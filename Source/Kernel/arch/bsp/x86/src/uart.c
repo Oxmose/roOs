@@ -264,7 +264,7 @@ typedef struct
 #define UART_ASSERT(COND, MSG, ERROR) {                     \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -676,6 +676,11 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
                               uint16_t           kPort,
                               const uint8_t      kData)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_WRITE_ENTRY,
+                       2,
+                       kPort,
+                       kData);
     /* Wait for empty transmit */
     KERNEL_CRITICAL_LOCK(*pLock);
     while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
@@ -690,11 +695,18 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
         _cpuOutB(kData, kPort);
     }
     KERNEL_CRITICAL_UNLOCK(*pLock);
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_WRITE_EXIT,
+                       2,
+                       kPort,
+                       kData);
 }
 
 void _uartClear(void* pDrvCtrl)
 {
     uint8_t i;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_CLEAR_ENTRY, 0);
 
     /* On 80x25 screen, just print 25 line feed. */
     for(i = 0; i < 25; ++i)
@@ -703,6 +715,8 @@ void _uartClear(void* pDrvCtrl)
                    GET_CONTROLER(pDrvCtrl)->cpuCommPort,
                    '\n');
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_CLEAR_EXIT, 0);
 }
 
 void _uartScroll(void*                    pDrvCtrl,
@@ -710,6 +724,12 @@ void _uartScroll(void*                    pDrvCtrl,
                  const uint32_t           kLines)
 {
     uint32_t i;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SCROLL_ENTRY,
+                       2,
+                       kDirection,
+                       kLines);
 
     if(kDirection == SCROLL_DOWN)
     {
@@ -721,12 +741,24 @@ void _uartScroll(void*                    pDrvCtrl,
                        '\n');
         }
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SCROLL_EXIT,
+                       2,
+                       kDirection,
+                       kLines);
 }
 
 void _uartPutString(void* pDrvCtrl, const char* kpString)
 {
     size_t i;
     size_t stringLen;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_PUTSTRING_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(kpString),
+                       KERNEL_TRACE_LOW(kpString));
 
     stringLen = strlen(kpString);
 
@@ -736,13 +768,29 @@ void _uartPutString(void* pDrvCtrl, const char* kpString)
                    GET_CONTROLER(pDrvCtrl)->cpuCommPort,
                    kpString[i]);
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_PUTSTRING_EXIT,
+                       2,
+                       KERNEL_TRACE_HIGH(kpString),
+                       KERNEL_TRACE_LOW(kpString));
 }
 
 void _uartPutChar(void* pDrvCtrl, const char kCharacter)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_PUTCHAR_ENTRY,
+                       1,
+                       kCharacter);
+
     _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
                GET_CONTROLER(pDrvCtrl)->cpuCommPort,
                kCharacter);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_PUTCHAR_EXIT,
+                       1,
+                       kCharacter);
 }
 
 static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
@@ -807,10 +855,24 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     OS_RETURN_E error;
     size_t      availableSpace;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_INTERRUPT_HANDLER_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(pCurrentThread),
+                       KERNEL_TRACE_LOW(pCurrentThread));
+
     (void)pCurrentThread;
 
     if(spInputCtrl == NULL)
     {
+        /* Set EOI */
+        interruptIRQSetEOI(spInputCtrl->irqNumber);
+
+        KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                           TRACE_X86_UART_INTERRUPT_HANDLER_EXIT,
+                           2,
+                           KERNEL_TRACE_HIGH(pCurrentThread),
+                           KERNEL_TRACE_LOW(pCurrentThread));
         return;
     }
 
@@ -850,15 +912,22 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
                 UART_INPUT_BUFFER_SIZE;
         }
 
+        spinlockRelease(&spInputCtrl->inputBufferLock);
+
         /* Post the semaphore */
         error = semPost(&spInputCtrl->inputBufferSem);
         UART_ASSERT(error == OS_NO_ERR, "Failed to post UART semaphore", error);
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
     }
 
     /* Set EOI */
     interruptIRQSetEOI(spInputCtrl->irqNumber);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_INTERRUPT_HANDLER_EXIT,
+                       2,
+                       KERNEL_TRACE_HIGH(pCurrentThread),
+                       KERNEL_TRACE_LOW(pCurrentThread));
 }
 
 static ssize_t _uartRead(void*        pDrvCtrl,
@@ -871,14 +940,25 @@ static ssize_t _uartRead(void*        pDrvCtrl,
     size_t      usedSpace;
     size_t      i;
 
-    if(pDrvCtrl != spInputCtrl || spInputCtrl == NULL)
-    {
-        return -1;
-    }
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_READ_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer),
+                       KERNEL_TRACE_HIGH(kBufferSize),
+                       KERNEL_TRACE_LOW(kBufferSize));
 
-    /* Check parameter */
-    if(pBuffer == NULL)
+    if(pDrvCtrl != spInputCtrl || spInputCtrl == NULL || pBuffer == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                           TRACE_X86_UART_READ_EXIT,
+                           6,
+                           KERNEL_TRACE_HIGH(pBuffer),
+                           KERNEL_TRACE_LOW(pBuffer),
+                           KERNEL_TRACE_HIGH(kBufferSize),
+                           KERNEL_TRACE_LOW(kBufferSize),
+                           KERNEL_TRACE_HIGH(0),
+                           KERNEL_TRACE_LOW(-1));
         return -1;
     }
 
@@ -923,6 +1003,8 @@ static ssize_t _uartRead(void*        pDrvCtrl,
         toRead -= bytesToRead;
         usedSpace -= bytesToRead;
 
+        spinlockRelease(&spInputCtrl->inputBufferLock);
+
         /* If we can still read data, post the semaphore, we read what we had to
          * since we used
          * bytesToRead = MIN(toRead, spInputCtrl->inputBufferCursor)
@@ -935,14 +1017,28 @@ static ssize_t _uartRead(void*        pDrvCtrl,
                         error);
         }
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
     }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_READ_EXIT,
+                       6,
+                       KERNEL_TRACE_HIGH(pBuffer),
+                       KERNEL_TRACE_LOW(pBuffer),
+                       KERNEL_TRACE_HIGH(kBufferSize),
+                       KERNEL_TRACE_LOW(kBufferSize),
+                       KERNEL_TRACE_HIGH(kBufferSize),
+                       KERNEL_TRACE_LOW(kBufferSize));
 
     return kBufferSize;
 }
 
 static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
+                       TRACE_X86_UART_SET_ECHO,
+                       1,
+                       kEnable);
+
     GET_CONTROLER(pDrvCtrl)->echo = kEnable;
 }
 

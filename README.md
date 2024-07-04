@@ -51,6 +51,10 @@
 * Spinlocks
 * Kernel critical section by disabling interrupts
 
+### Communication
+* Signals, not really POSIX signals but still signals
+* Inter-processor interrupts
+
 ### Scheduler
 * Priority based scheduler (Round Robin for all the threads having the same priority)
 * Kernel threads

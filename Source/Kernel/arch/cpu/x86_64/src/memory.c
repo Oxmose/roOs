@@ -22,14 +22,15 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <x86cpu.h>        /* X86 CPU API*/
 #include <kheap.h>         /* Kernel heap */
 #include <panic.h>         /* Kernel PANIC */
+#include <x86cpu.h>        /* X86 CPU API*/
 #include <string.h>        /* Memory manipulation */
 #include <stdint.h>        /* Standard int types */
 #include <stddef.h>        /* Standard definitions */
 #include <kqueue.h>        /* Kernel queue structure */
 #include <kerror.h>        /* Kernel error types */
+#include <signal.h>        /* Thread signals */
 #include <devtree.h>       /* FDT library */
 #include <critical.h>      /* Kernel lock */
 #include <core_mgt.h>      /* Core manager */
@@ -177,7 +178,7 @@ typedef struct
 #define MEM_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -632,11 +633,12 @@ static void _printKernelMap(void)
 
 static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
 {
-    uintptr_t faultAddress;
-    uintptr_t physAddr;
-    uint32_t  errorCode;
-    uint32_t  flags;
+    uintptr_t   faultAddress;
+    uintptr_t   physAddr;
+    uint32_t    errorCode;
+    uint32_t    flags;
     bool_t      staleEntry;
+    OS_RETURN_E error;
 
     /* Get the fault address and error code */
     __asm__ __volatile__ ("mov %%cr2, %0" : "=r"(faultAddress));
@@ -707,9 +709,14 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
         }
     }
 
-    /* TODO: Terminate thread, set reason page fault and reason data the address,
-     * also getthe reason code in the interrupt info */
-    kernelPanicHandler(pCurrentThread);
+    /* Set reason page fault and reason data the address,
+     * also get the reason code in the interrupt info */
+    pCurrentThread->errorTable.exceptionId  = PAGE_FAULT_EXC_LINE;
+    pCurrentThread->errorTable.segfaultAddr = faultAddress;
+    pCurrentThread->errorTable.instAddr =
+        cpuGetContextIP(pCurrentThread->pVCpu);
+    error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
+    MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
 
     KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                        TRACE_X86_MEMMGR_PAGE_FAULT_EXIT,

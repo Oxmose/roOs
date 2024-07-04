@@ -445,6 +445,137 @@ event {
     };
 };
 
+
+event {
+    id = 394;
+    name = "x86 UART driver write entry";
+    fields := struct {
+        xuint32_t port;
+        xuint32_t data;
+    };
+};
+
+event {
+    id = 395;
+    name = "x86 UART driver write exit";
+    fields := struct {
+        xuint32_t port;
+        xuint32_t data;
+    };
+};
+
+event {
+    id = 396;
+    name = "x86 UART driver clear entry";
+};
+
+event {
+    id = 397;
+    name = "x86 UART driver clear exit";
+};
+
+event {
+    id = 398;
+    name = "x86 UART driver scroll entry";
+    fields := struct {
+        xuint32_t direction;
+        xuint32_t lines;
+    };
+};
+
+event {
+    id = 399;
+    name = "x86 UART driver scroll exit";
+    fields := struct {
+        xuint32_t direction;
+        xuint32_t lines;
+    };
+};
+
+event {
+    id = 400;
+    name = "x86 UART driver put string entry";
+    fields := struct {
+        xuint32_t stringPtrHigh;
+        xuint32_t stringPtrLow;
+    };
+};
+
+event {
+    id = 401;
+    name = "x86 UART driver put string exit";
+    fields := struct {
+        xuint32_t stringPtrHigh;
+        xuint32_t stringPtrLow;
+    };
+};
+
+event {
+    id = 402;
+    name = "x86 UART driver put char entry";
+    fields := struct {
+        char character;
+    };
+};
+
+event {
+    id = 403;
+    name = "x86 UART driver put char exit";
+    fields := struct {
+        char character;
+    };
+};
+
+event {
+    id = 404;
+    name = "x86 UART driver interrupt handler entry";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+    };
+};
+
+event {
+    id = 405;
+    name = "x86 UART driver interrupt handler exit";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+    };
+};
+
+event {
+    id = 406;
+    name = "x86 UART driver read entry";
+    fields := struct {
+        xuint32_t bufferHigh;
+        xuint32_t bufferLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+}
+
+event {
+    id = 407;
+    name = "x86 UART driver read exit";
+    fields := struct {
+        xuint32_t bufferHigh;
+        xuint32_t bufferLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t readHigh;
+        xuint32_t readLow;
+    };
+};
+
+event {
+    id = 408;
+    name = "x86 UART driver set echo";
+    fields := struct {
+        xuint32_t enabled;
+    };
+};
+
 /********************************* X86 VGA TEXT */
 
 event {
@@ -681,6 +812,127 @@ event {
     name = "x86 CPU AP Init exit";
 };
 
+event {
+    id = 451;
+    name = "x86 CPU create kernel stack entry";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+};
+
+event {
+    id = 452;
+    name = "x86 CPU create kernel stack exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t stackHigh;
+        xuint32_t stackLow;
+    };
+};
+
+event {
+    id = 453;
+    name = "x86 CPU destroy kernel stack entry";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t stackHigh;
+        xuint32_t stackLow;
+    };
+};
+
+event {
+    id = 454;
+    name = "x86 CPU destroy kernel stack exit";
+    fields := struct {
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t stackHigh;
+        xuint32_t stackLow;
+    };
+};
+
+
+event {
+    id = 455;
+    name = "x86 CPU create VCPU entry";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        xuint32_t entryPointHigh;
+        xuint32_t entryPointLow;
+    };
+};
+
+event {
+    id = 456;
+    name = "x86 CPU create VCPU exit";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        xuint32_t entryPointHigh;
+        xuint32_t entryPointLow;
+        xuint32_t vcpuHigh;
+        xuint32_t vcpuLow;
+    };
+};
+
+event {
+    id = 457;
+    name = "x86 CPU destroy VCPU entry";
+    fields := struct {
+        xuint32_t vcpuHigh;
+        xuint32_t vcpuLow;
+    };
+};
+
+event {
+    id = 458;
+    name = "x86 CPU destroy VCPU exit";
+    fields := struct {
+        xuint32_t vcpuHigh;
+        xuint32_t vcpuLow;
+    };
+};
+
+event {
+    id = 459;
+    name = "x86 CPU redirect execution entry";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        xuint32_t instructionHigh;
+        xuint32_t instructionLow;
+    };
+};
+
+event {
+    id = 460;
+    name = "x86 CPU redirect execution exit";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        xuint32_t instructionHigh;
+        xuint32_t instructionLow;
+    };
+};
+
+event {
+    id = 461;
+    name = "x86 CPU register exceptions entry";
+};
+
+event {
+    id = 462;
+    name = "x86 CPU register exceptions exit";
+};
+
+event {
+    id = 463;
+    name = "x86 CPU manage thread exception";
+};
 
 /********************************* Driver manager */
 
@@ -789,6 +1041,342 @@ event {
     fields := struct {
         uint32_t exceptionLine;
         uint32_t returnCode;
+    };
+};
+
+event {
+    id = 408;
+    name = "Exception manager division by zero entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 409;
+    name = "Exception manager division by zero exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 411;
+    name = "Exception manager invalid instruction entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 412;
+    name = "Exception manager invalid instruction exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 413;
+    name = "Exception manager debug entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 414;
+    name = "Exception manager debug exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 415;
+    name = "Exception manager breakpoint entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 416;
+    name = "Exception manager breakpoint exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 417;
+    name = "Exception manager overflow entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 418;
+    name = "Exception manager overflow exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 419;
+    name = "Exception manager bound range exceeded entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 420;
+    name = "Exception manager bound range exceeded exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 421;
+    name = "Exception manager dev not available entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 422;
+    name = "Exception manager dev not available exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 423;
+    name = "Exception manager double fault entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 424;
+    name = "Exception manager double fault exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 425;
+    name = "Exception manager coprocessor segment overrun entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 426;
+    name = "Exception manager coprocessor segment overrun exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 427;
+    name = "Exception manager invalid TSS entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 428;
+    name = "Exception manager invalid TSS exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 429;
+    name = "Exception manager segment not present entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 430;
+    name = "Exception manager segment not present exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 431;
+    name = "Exception manager stack segment entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 432;
+    name = "Exception manager stack segment exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 433;
+    name = "Exception manager general protection fault entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 434;
+    name = "Exception manager general protection fault exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 435;
+    name = "Exception manager alignement check entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 436;
+    name = "Exception manager alignement check exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 437;
+    name = "Exception manager machine check entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 438;
+    name = "Exception manager machine check exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 439;
+    name = "Exception manager SIMD FP entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 440;
+    name = "Exception manager SIMD FP exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 441;
+    name = "Exception manager virtualization entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 442;
+    name = "Exception manager virtualization exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 443;
+    name = "Exception manager control protection entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 444;
+    name = "Exception manager control protection exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 445;
+    name = "Exception manager hypervisor injection entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 446;
+    name = "Exception manager hypervisor injection exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 447;
+    name = "Exception manager VMM communication entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 448;
+    name = "Exception manager VMM communication exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 449;
+    name = "Exception manager security entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 450;
+    name = "Exception manager security exit";
+    fields := struct {
+        uint32_t threadId;
     };
 };
 
@@ -2996,6 +3584,27 @@ event {
     };
 };
 
+event {
+    id = 464;
+    name = "Scheduler terminate thread entry";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        uint32_t cause;
+    };
+};
+
+event {
+    id = 466;
+    name = "Scheduler terminate thread exit";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        uint32_t cause;
+        uint32_t returnCode;
+    };
+};
+
 /********************************* Futex */
 event {
     id = 344;
@@ -3307,5 +3916,214 @@ event {
     fields := struct {
         xuint32_t resAddrHigh;
         xuint32_t resAddrLow;
+    };
+};
+
+/********************************* Signal */
+
+event {
+    id = 466;
+    name = "Signal handle kill entry";
+};
+
+event {
+    id = 467;
+    name = "Signal handle kill exit";
+};
+
+event {
+    id = 468;
+    name = "Signal handle segfault entry";
+};
+
+event {
+    id = 469;
+    name = "Signal handle segfault exit";
+};
+
+event {
+    id = 470;
+    name = "Signal handle FPE entry";
+};
+
+event {
+    id = 471;
+    name = "Signal handle FPE exit";
+};
+
+event {
+    id = 472;
+    name = "Signal handle illegal instruction entry";
+};
+
+event {
+    id = 473;
+    name = "Signal handle illegal instruction exit";
+};
+
+event {
+    id = 474;
+    name = "Signal handle exception entry";
+};
+
+event {
+    id = 475;
+    name = "Signal handle exception exit";
+};
+
+event {
+    id = 476;
+    name = "Signal init therad signals entry";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+    };
+};
+
+event {
+    id = 477;
+    name = "Signal init thread signals exit";
+    fields := struct {
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+    };
+};
+
+event {
+    id = 478;
+    name = "Signal manage thread signals entry";
+    fields := struct {
+        xuint32_t threadId;
+        xuint32_t signals;
+    };
+};
+
+event {
+    id = 479;
+    name = "Signal manage thread signals exit";
+    fields := struct {
+        xuint32_t threadId;
+        xuint32_t signals;
+    };
+};
+
+event {
+    id = 480;
+    name = "Signal register signals entry";
+    fields := struct {
+        uint32_t signal;
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+    };
+};
+
+event {
+    id = 481;
+    name = "Signal register signals exit";
+    fields := struct {
+        uint32_t signal;
+        xuint32_t handlerHigh;
+        xuint32_t handlerLow;
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 482;
+    name = "Signal signal thread entry";
+    fields := struct {
+        uint32_t signal;
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+    };
+};
+
+event {
+    id = 483;
+    name = "Signal signal thread exit";
+    fields := struct {
+        uint32_t signal;
+        xuint32_t threadHigh;
+        xuint32_t threadLow;
+        uint32_t returnCode;
+    };
+};
+
+/********************************* X86 Keyboard */
+event {
+    id = 484;
+    name = "x86 Keyboard driver attach entry";
+};
+
+event {
+    id = 485;
+    name = "x86 Keyboard driver attach exit";
+    fields := struct {
+        uint32_t returnCode;
+    };
+};
+
+event {
+    id = 486;
+    name = "x86 Keyboard driver interrupt handler entry";
+    fields := struct {
+        xuint32_t currentThreadHigh;
+        xuint32_t currentThreadLow;
+    };
+};
+event {
+    id = 487;
+    name = "x86 Keyboard driver interrupt handler exit";
+    fields := struct {
+        xuint32_t currentThreadHigh;
+        xuint32_t currentThreadLow;
+    };
+};
+
+event {
+    id = 488;
+    name = "x86 Keyboard driver read entry";
+    fields := struct {
+        xuint32_t bufferHigh;
+        xuint32_t bufferLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+    };
+}
+
+event {
+    id = 489;
+    name = "x86 Keyboard driver read exit";
+    fields := struct {
+        xuint32_t bufferHigh;
+        xuint32_t bufferLow;
+        xuint32_t sizeHigh;
+        xuint32_t sizeLow;
+        xuint32_t readHigh;
+        xuint32_t readLow;
+    };
+};
+
+event {
+    id = 490;
+    name = "x86 Keyboard driver set echo";
+    fields := struct {
+        xuint32_t enabled;
+    };
+};
+
+event {
+    id = 491;
+    name = "x86 Keyboard driver manage keycode entry";
+    fields := struct {
+        xuint32_t keyCode;
+    };
+};
+
+event {
+    id = 492;
+    name = "x86 Keyboard driver manage keycode exit";
+    fields := struct {
+        xuint32_t keyCode;
     };
 };

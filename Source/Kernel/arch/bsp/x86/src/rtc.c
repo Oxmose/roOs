@@ -151,7 +151,7 @@ typedef struct
 #define RTC_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -543,8 +543,7 @@ static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
 
     PANIC(OS_ERR_UNAUTHORIZED_ACTION,
           MODULE_NAME,
-          "RTC Dummy handler called",
-          TRUE);
+          "RTC Dummy handler called");
 
     return;
 }

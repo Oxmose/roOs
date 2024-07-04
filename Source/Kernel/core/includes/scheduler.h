@@ -26,6 +26,7 @@
 
 #include <stdint.h>     /* Standard int definitions */
 #include <kerror.h>     /* Kernel error codes */
+#include <signal.h>     /* Thread signals */
 #include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
@@ -104,21 +105,6 @@ void schedScheduleNoInt(void);
 void schedSchedule(void);
 
 /**
- * @brief Calls the scheduler dispatch function.
- *
- * @details Calls the scheduler. This function will select the next thread to
- * schedule and execute it.
- *
- * @param[in] pThread Unused.
- *
- * @warning The current thread's context must be saved before calling this
- * function. Usually, this function is only called in interrupt handlers after
- * the thread's context was saved.
- */
-
-void schedScheduleHandler(kernel_thread_t* pThread);
-
-/**
  * @brief Releases a thread to the scheduler.
  *
  * @details Releases a thread to the scheduler. This function is used to
@@ -126,8 +112,12 @@ void schedScheduleHandler(kernel_thread_t* pThread);
  * semaphore.
  *
  * @param[in] pThread The thread to release.
+ * @param[in] kIsLocked Tells if the thread lock is already acquired.
+ * @param[in] kState The release state.
  */
-void schedReleaseThread(kernel_thread_t* pThread);
+void schedReleaseThread(kernel_thread_t*     pThread,
+                        const bool_t         kIsLocked,
+                        const THREAD_STATE_E kState);
 
 /**
  * @brief Puts the calling thread to sleep.
@@ -163,15 +153,6 @@ size_t schedGetThreadCount(void);
  * @return A handle to the current running thread is returned.
  */
 kernel_thread_t* schedGetCurrentThread(void);
-
-/**
- * @brief Returns the TID of the current executing thread.
- *
- * @details Returns the TID of the current executing thread.
- *
- * @returns The TID of the current executing thread.
- */
-int32_t schedGetTid(void);
 
 /**
  * @brief Creates a new kernel thread in the thread table.
@@ -256,11 +237,9 @@ double schedGetCpuLoad(const uint8_t kCpuId);
  * operation is called, the thread is simply put in waiting state, waiting on a
  * resource of the type passed as parameter.
  *
- * @param[out] pThread The thread to set to waiting on resource state.
  * @param[in] kResource The type of waiting resource.
  */
-void schedWaitThreadOnResource(kernel_thread_t*                  pThread,
-                               const THREAD_WAIT_RESOURCE_TYPE_E kResource);
+void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource);
 
 /**
  * @brief Updates the thread's priority.
@@ -294,9 +273,40 @@ void* schedThreadAddResource(const thread_resource_t* kpResource);
  *
  * @param[in] pResourceHandle The handle to the resource to be removed.
  *
- * @return The function return the error or success status.
+ * @return The function returnsthe error or success status.
  */
 OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle);
+
+/**
+ * @brief Terminates a thread.
+ *
+ * @details Terminates a thread. The thread will terminate itself the next time
+ * it is scheduled. The termination is done through signals.
+ *
+ * @param[in] pThread The thread to terminate.
+ * @param[in] kCause The termination cause to set.
+ *
+ * @return The function returnsthe error or success status.
+ */
+OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
+                                 const THREAD_TERMINATE_CAUSE_E kCause);
+
+/**
+ * @brief Thread's exit point.
+ *
+ * @details Exit point of a thread. The function will release the resources of
+ * the thread and manage its children. Put the thread
+ * in a THREAD_STATE_ZOMBIE state. If an other thread is already joining the
+ * active thread, then the joining thread will switch from blocked to ready
+ * state.
+ *
+ * @param[in] kCause The thread termination cause.
+ * @param[in] kRetState The thread return state.
+ * @param[in] pRetVal The thread return value.
+ */
+void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
+                     const THREAD_RETURN_STATE_E    kRetState,
+                     void*                          pRetVal);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

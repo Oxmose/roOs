@@ -153,7 +153,7 @@ typedef struct
 #define LAPICT_ASSERT(COND, MSG, ERROR) {                   \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -656,8 +656,7 @@ static void _lapicTimerDummyHandler(kernel_thread_t* pCurrThread)
 
     PANIC(OS_ERR_UNAUTHORIZED_ACTION,
           MODULE_NAME,
-          "LAPIC Timer Dummy handler called",
-          TRUE);
+          "LAPIC Timer Dummy handler called");
 
     return;
 }
@@ -671,14 +670,13 @@ static void _lapicTimerEnable(void* pDrvCtrl)
 
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
 
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
     cpuId = cpuGetId();
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_ENABLE_ENTRY,
                        1,
                        pLAPICTimerCtrl->disabledNesting[cpuId]);
-
-
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] > 0)
     {
@@ -724,13 +722,13 @@ static void _lapicTimerDisable(void* pDrvCtrl)
 
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
 
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
     cpuId = cpuGetId();
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
                        TRACE_X86_LAPIC_TIMER_DISABLE_ENTRY,
                        1,
                        pLAPICTimerCtrl->disabledNesting[cpuId]);
-
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] < UINT32_MAX)
     {

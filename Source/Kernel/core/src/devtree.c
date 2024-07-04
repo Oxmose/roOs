@@ -418,8 +418,7 @@ static void _applyActionPhandle(fdt_node_t*     pNode,
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate new handle",
-              TRUE);
+              "Failed to allocate new handle");
     }
 
     pNewHandle->id    = FDTTOCPU32(*pProperty->pCells);
@@ -554,8 +553,7 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate new property",
-              TRUE);
+              "Failed to allocate new property");
     }
     memset(pProperty, 0, sizeof(fdt_property_t));
 
@@ -573,8 +571,7 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate new string",
-              TRUE);
+              "Failed to allocate new string");
     }
     memcpy(pProperty->pName, pName, length);
     pProperty->pName[length] = 0;
@@ -587,8 +584,7 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
         {
             PANIC(OS_ERR_NO_MORE_MEMORY,
                 MODULE_NAME,
-                "Failed to allocate new property cells",
-                TRUE);
+                "Failed to allocate new property cells");
         }
         memcpy(pProperty->pCells,
                sFdtDesc.pStructs + *pOffset,
@@ -653,8 +649,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate new node",
-              TRUE);
+              "Failed to allocate new node");
     }
     memset(pNode, 0, sizeof(fdt_node_t));
 
@@ -670,8 +665,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate new string",
-              TRUE);
+              "Failed to allocate new string");
     }
     memcpy(pNode->pName, pInitName, length);
     pNode->pName[length] = 0;
@@ -735,8 +729,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
                         {
                             PANIC(OS_ERR_NO_MORE_MEMORY,
                                 MODULE_NAME,
-                                "Failed to allocate new memory node",
-                                TRUE);
+                                "Failed to allocate new memory node");
                         }
                         pMemNode->baseAddress =
                             *(((uintptr_t*)pProperty->pCells) + i);
@@ -775,8 +768,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
                         {
                             PANIC(OS_ERR_NO_MORE_MEMORY,
                                 MODULE_NAME,
-                                "Failed to allocate new memory node",
-                                TRUE);
+                                "Failed to allocate new memory node");
                         }
                         pMemNode->baseAddress =
                             *((uintptr_t*)pProperty->pCells);
@@ -869,8 +861,7 @@ static void _parseReservedMemory(void)
         {
             PANIC(OS_ERR_NO_MORE_MEMORY,
                   MODULE_NAME,
-                  "Failed to allocate new reserved memory node",
-                  TRUE);
+                  "Failed to allocate new reserved memory node");
         }
 
         pNode->baseAddress = startAddr;
@@ -947,10 +938,7 @@ void fdtInit(const uintptr_t kStartAddr)
     /* Check magic */
     if(FDTTOCPU32(pHeader->magic) != FDT_MAGIC_NUMBER)
     {
-        PANIC(OS_ERR_INCORRECT_VALUE,
-              MODULE_NAME,
-              "Invalid FDT magic",
-              TRUE);
+        PANIC(OS_ERR_INCORRECT_VALUE, MODULE_NAME, "Invalid FDT magic");
     }
 
     memset(&sFdtDesc, 0, sizeof(fdt_descriptor_t));

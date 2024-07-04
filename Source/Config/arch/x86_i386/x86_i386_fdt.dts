@@ -172,7 +172,13 @@
             resolution = <80 25>;
         };
 
-        stdindev: uart0 {
+        stdindev: keyboard {
+            compatible = "x86,x86-generic-keyboard";
+            comm = <0x64 0x60>;
+            interrupts = <1 1>; /* 0: is IRQ; 1: IRQ line */
+        };
+
+        uart0 {
             compatible = "x86,x86-generic-serial";
             comm = <0x3F8>;
             baudrate = <115200>;

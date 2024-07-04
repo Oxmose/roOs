@@ -30,6 +30,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <devtree.h>      /* Device tree library */
 #include <console.h>      /* Console service */
+#include <critical.h>     /* Critical sections */
 #include <drivermgr.h>    /* Driver manager */
 #include <ctrl_block.h>   /* Thread's control block */
 #include <interrupts.h>   /* Interrupt manager */
@@ -90,11 +91,11 @@
  * @param[in] MSG The message to display in case of kernel panic.
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
-#define CORE_MGT_ASSERT(COND, MSG, ERROR) {                    \
-    if((COND) == FALSE)                                      \
-    {                                                        \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);                \
-    }                                                        \
+#define CORE_MGT_ASSERT(COND, MSG, ERROR) {                 \
+    if((COND) == FALSE)                                     \
+    {                                                       \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
+    }                                                       \
 }
 
 /*******************************************************************************
@@ -154,12 +155,17 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
     ipi_params_t params;
     uint8_t      cpuId;
+    uint32_t     intState;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     cpuId = cpuGetId();
 
     /* Get the parameter and unlock the ipi parameters lock */
     params = sIpiParameters[cpuId];
     spinlockRelease(&sIpiParametersLocks[cpuId]);
+
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     /* Dispatch */
     switch(params.function)
@@ -173,8 +179,7 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
         default:
             PANIC(OS_ERR_INCORRECT_VALUE,
                   MODULE_NAME,
-                  "Unknown IPI function",
-                  TRUE);
+                  "Unknown IPI function");
     }
 
     interruptIRQSetEOI(sIpiInterruptLine);
@@ -300,9 +305,10 @@ void coreMgtApInit(const uint8_t kCpuId)
 
 void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
 {
-    uint8_t i;
-    uint8_t destCpuId;
-    uint8_t srcCpuId;
+    uint8_t  i;
+    uint8_t  destCpuId;
+    uint8_t  srcCpuId;
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CORE_MGT_SEND_IPI_ENTRY,
@@ -349,6 +355,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
     else if((kFlags & CORE_MGT_IPI_BROADCAST_TO_OTHER) ==
             CORE_MGT_IPI_BROADCAST_TO_OTHER)
     {
+        KERNEL_ENTER_CRITICAL_LOCAL(intState);
         /* Send to all excepted the caller */
         srcCpuId = cpuGetId();
         for(i = 0; i < MAX_CPU_COUNT; ++i)
@@ -360,6 +367,7 @@ void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
                 kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
             }
         }
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,

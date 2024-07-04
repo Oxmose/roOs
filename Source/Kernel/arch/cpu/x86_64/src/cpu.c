@@ -27,10 +27,12 @@
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
 #include <memory.h>        /* Memory management */
+#include <signal.h>        /* Thread signals */
 #include <core_mgt.h>      /* Core management */
 #include <x86memory.h>     /* X86 memory definitions */
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
+#include <exceptions.h>    /* Exception manager */
 #include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* Interrupt manager */
 
@@ -584,7 +586,7 @@ typedef struct cpu_tss_entry
 #define CPU_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -2274,9 +2276,638 @@ static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
                             const uint8_t    kType,
                             const uint32_t   kFlags);
 
+/**
+ * @brief Handles a division by zero exception.
+ *
+ * @details Handles a divide by zero exception raised by the cpu. The thread
+ * will be signaled.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the division
+ * by zero.
+ */
+static void _fpExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an invalid instruction exception.
+ *
+ * @details Handles an invalid instruction exception raised by the cpu. The
+ * thread will be signaled.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _invalidInstructionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a debug CPU exception.
+ *
+ * @details Handles a debug CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _debugExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a breakpoint CPU exception.
+ *
+ * @details Handles a breakpoint CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an overflow CPU exception.
+ *
+ * @details Handles a overflow CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _overflowExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a bound range exceeded CPU exception.
+ *
+ * @details Handles a bound range exceeded CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a device not available CPU exception.
+ *
+ * @details Handles a device not available CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a double fault CPU exception.
+ *
+ * @details Handles a double fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _doubleFaultHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a coprocessor segment overrun CPU exception.
+ *
+ * @details Handles a coprocessor segment overrun CPU exception raised by the
+ * cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an invalid TSS CPU exception.
+ *
+ * @details Handles an invalid TSS CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a segment not present CPU exception.
+ *
+ * @details Handles a segment not present CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a stack segment fault CPU exception.
+ *
+ * @details Handles a stack segment fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a general protection fault CPU exception.
+ *
+ * @details Handles a general protection fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an alignement check CPU exception.
+ *
+ * @details Handles an alignement check CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a machine check CPU exception.
+ *
+ * @details Handles a machine check CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _mahineCheckExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a SIMD floating point CPU exception.
+ *
+ * @details Handles a SIMD floating point CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a virtualization CPU exception.
+ *
+ * @details Handles a virtualization CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a control protection CPU exception.
+ *
+ * @details Handles a control protection CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an hypervisor injection CPU exception.
+ *
+ * @details Handles an hypervisor injection CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a VMM communication CPU exception.
+ *
+ * @details Handles a VMM communication CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a security CPU exception.
+ *
+ * @details Handles a security CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ */
+static void _securityExceptionHandler(kernel_thread_t* pCurrThread);
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DIVBYZERO_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = DIVISION_BY_ZERO_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
+    CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DIVBYZERO_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _invalidInstructionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_INVALID_INSTRUCTION_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = INVALID_INSTRUCTION_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_ILL);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal invalid instruction",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_INVALID_INSTRUCTION_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _debugExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DEBUG_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = DEBUG_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DEBUG_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_BREAKPOINT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = BREAKPOINT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_BREAKPOINT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _overflowExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_OVERFLOW_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = OVERFLOW_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_OVERFLOW_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_BOUNDRANGE_EXCEEDED_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = BOUND_RANGE_EXCEEDED_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_BOUNDRANGE_EXCEEDED_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DEV_NOT_AVAIL_EXCE_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = DEVICE_NOT_AVAILABLE_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DEV_NOT_AVAIL_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _doubleFaultHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DOUBLE_FAULT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = DOUBLE_FAULT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_DOUBLE_FAULT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_COPROC_SEGMENT_OVERRUN_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = COPROC_SEGMENT_OVERRUN_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_COPROC_SEGMENT_OVERRUN_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_INVALID_TSS_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = INVALID_TSS_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_INVALID_TSS_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SEGMENT_NOT_PRESENT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = SEGMENT_NOT_PRESENT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SEGMENT_NOT_PRESENT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_STACK_SEGMENT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = STACK_SEGMENT_FAULT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_STACK_SEGMENT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_GENERAL_PROTECTION_FAULT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = GENERAL_PROTECTION_FAULT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_GENERAL_PROTECTION_FAULT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_ALIGNEMENT_CHECK_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = ALIGNEMENT_CHECK_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_ALIGNEMENT_CHECK_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _mahineCheckExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_MACHINE_CHECK_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = MACHINE_CHECK_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_MACHINE_CHECK_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SIMD_FP_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = SIMD_FLOATING_POINT_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
+    CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SIMD_FP_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_VIRTUALIZATION_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = VIRTUALIZATION_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_VIRTUALIZATION_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_CONTROL_PROT_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = CONTROL_PROTECTION_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_CONTROL_PROT_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_HYPERVISOR_INJECTION_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = HYPERVISOR_INJECTION_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_HYPERVISOR_INJECTION_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_VMM_COMM_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = VMM_COMMUNICATION_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_VMM_COMM_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
+
+static void _securityExceptionHandler(kernel_thread_t* pCurrThread)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SECURITY_EXC_ENTRY,
+                       (uint32_t)pCurrThread->tid);
+
+    pCurrThread->errorTable.exceptionId = SECURITY_EXC_LINE;
+    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to signal exception",
+               error);
+
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                       TRACE_EXCEPTION_SECURITY_EXC_EXIT,
+                       (uint32_t)pCurrThread->tid);
+}
 
 static void _formatGDTEntry(uint64_t*      pEntry,
                             const uint32_t kBase,
@@ -3663,7 +4294,12 @@ uint32_t cpuGetContextIntState(const void* kpVCpu)
 
 uint32_t cpuGetContextIntNumber(const void* kpVCpu)
 {
-    return  ((virtual_cpu_t*)kpVCpu)->intContext.intId;
+    return ((virtual_cpu_t*)kpVCpu)->intContext.intId;
+}
+
+uintptr_t cpuGetContextIP(const void* kpVCpu)
+{
+    return ((virtual_cpu_t*)kpVCpu)->intContext.rip;
 }
 
 const cpu_interrupt_config_t* cpuGetInterruptConfig(void)
@@ -3771,6 +4407,12 @@ uintptr_t cpuCreateKernelStack(const size_t kStackSize)
     uintptr_t stackAddr;
     uintptr_t newSize;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_CREATE_KERNEL_STACK_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(kStackSize),
+                       KERNEL_TRACE_LOW(kStackSize));
+
     /* Align stack on 4K */
     newSize = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
 
@@ -3786,6 +4428,14 @@ uintptr_t cpuCreateKernelStack(const size_t kStackSize)
     /* Set end address and align on 16 bytes */
     stackAddr = (stackAddr + newSize - 0xFULL);
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_CREATE_KERNEL_STACK_EXIT,
+                       4,
+                       KERNEL_TRACE_HIGH(kStackSize),
+                       KERNEL_TRACE_LOW(kStackSize),
+                       KERNEL_TRACE_HIGH(stackAddr),
+                       KERNEL_TRACE_LOW(stackAddr));
+
     return stackAddr;
 }
 
@@ -3795,11 +4445,27 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
     uintptr_t baseAddress;
     size_t    actualSize;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_DESTROY_KERNEL_STACK_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(kStackSize),
+                       KERNEL_TRACE_LOW(kStackSize),
+                       KERNEL_TRACE_HIGH(kStackEndAddr),
+                       KERNEL_TRACE_LOW(kStackEndAddr));
+
     /* Get the actual base address */
     actualSize  = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
     baseAddress = kStackEndAddr + 0xFULL - kStackSize;
 
     memoryKernelUnmapStack(baseAddress, actualSize);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_DESTROY_KERNEL_STACK_EXIT,
+                       4,
+                       KERNEL_TRACE_HIGH(kStackSize),
+                       KERNEL_TRACE_LOW(kStackSize),
+                       KERNEL_TRACE_HIGH(kStackEndAddr),
+                       KERNEL_TRACE_LOW(kStackEndAddr));
 }
 
 uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
@@ -3807,10 +4473,28 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
 {
     virtual_cpu_t* pVCpu;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_CREATE_VCPU_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
+                       KERNEL_TRACE_HIGH(kEntryPoint),
+                       KERNEL_TRACE_LOW(kEntryPoint));
+
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
     if(pVCpu == NULL)
     {
+        KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                           TRACE_X86_CPU_CREATE_VCPU_EXIT,
+                           6,
+                           KERNEL_TRACE_HIGH(pThread),
+                           KERNEL_TRACE_LOW(pThread),
+                           KERNEL_TRACE_HIGH(kEntryPoint),
+                           KERNEL_TRACE_LOW(kEntryPoint),
+                           KERNEL_TRACE_HIGH(NULL),
+                           KERNEL_TRACE_LOW(NULL));
+
         return 0;
     }
 
@@ -3846,16 +4530,226 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->cpuState.es  = KERNEL_DS_64;
     pVCpu->cpuState.ds  = KERNEL_DS_64;
 
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_CREATE_VCPU_EXIT,
+                       6,
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
+                       KERNEL_TRACE_HIGH(kEntryPoint),
+                       KERNEL_TRACE_LOW(kEntryPoint),
+                       KERNEL_TRACE_HIGH(pVCpu),
+                       KERNEL_TRACE_LOW(pVCpu));
+
     return (uintptr_t)pVCpu;
 }
 
 void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
 {
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_DESTROY_VCPU_ENTRY,
+                       2,
+                       KERNEL_TRACE_HIGH(kVCpuAddress),
+                       KERNEL_TRACE_LOW(kVCpuAddress));
     CPU_ASSERT(kVCpuAddress != (uintptr_t)NULL,
                "Destroying a NULL vCPU",
                OS_ERR_NULL_POINTER);
 
     kfree((void*)kVCpuAddress);
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_DESTROY_VCPU_EXIT,
+                       2,
+                       KERNEL_TRACE_HIGH(kVCpuAddress),
+                       KERNEL_TRACE_LOW(kVCpuAddress));
+}
+
+void cpuRedirectExecution(kernel_thread_t* pThread, void* instructionAddr)
+{
+    virtual_cpu_t* pVCpu;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_REDIRECT_EXEC_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
+                       KERNEL_TRACE_HIGH(instructionAddr),
+                       KERNEL_TRACE_LOW(instructionAddr));
+
+    /* Get vCPU */
+    pVCpu = pThread->pVCpu;
+
+    /* Prepare the stack for return from execution flow
+     * We add the actual pre-context save rip
+     */
+    pVCpu->cpuState.rsp -= sizeof(uint64_t);
+    *(uint64_t*)(pVCpu->cpuState.rsp) = pVCpu->intContext.rip;
+
+    /* Set the new RIP */
+    pVCpu->intContext.rip = (uint64_t)instructionAddr;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_REDIRECT_EXEC_EXIT,
+                       4,
+                       KERNEL_TRACE_HIGH(pThread),
+                       KERNEL_TRACE_LOW(pThread),
+                       KERNEL_TRACE_HIGH(instructionAddr),
+                       KERNEL_TRACE_LOW(instructionAddr));
+}
+
+OS_RETURN_E cpuRegisterExceptions(void)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_REGISTER_EXC_ENTRY,
+                       0);
+
+    error = exceptionRegister(DIVISION_BY_ZERO_EXC_LINE, _fpExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(DEBUG_EXC_LINE, _debugExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(BREAKPOINT_EXC_LINE, _breakpointExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(OVERFLOW_EXC_LINE, _overflowExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(BOUND_RANGE_EXCEEDED_EXC_LINE,
+                              _boundRangeExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(INVALID_INSTRUCTION_EXC_LINE,
+                              _invalidInstructionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(DEVICE_NOT_AVAILABLE_EXC_LINE,
+                              _deviceNotAvailableExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(DOUBLE_FAULT_EXC_LINE, _doubleFaultHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(COPROC_SEGMENT_OVERRUN_EXC_LINE,
+                              _coprocSegmentOverrunExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(INVALID_TSS_EXC_LINE,
+                              _invalidTSSExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(SEGMENT_NOT_PRESENT_EXC_LINE,
+                              _segmentNotPresentExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(STACK_SEGMENT_FAULT_EXC_LINE,
+                              _stackSegmentFaultExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(GENERAL_PROTECTION_FAULT_EXC_LINE,
+                              _generalProtectionExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(X87_FLOATING_POINT_EXC_LINE,
+                              _fpExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(ALIGNEMENT_CHECK_EXC_LINE,
+                              _alignementCheckExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(MACHINE_CHECK_EXC_LINE,
+                              _mahineCheckExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(SIMD_FLOATING_POINT_EXC_LINE,
+                              _simdFpExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(VIRTUALIZATION_EXC_LINE,
+                              _virtualizationExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(CONTROL_PROTECTION_EXC_LINE,
+                              _controlProtectionExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(HYPERVISOR_INJECTION_EXC_LINE,
+                              _hypervisorInjectionExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(VMM_COMMUNICATION_EXC_LINE,
+                              _vmmCommunicationExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+    error = exceptionRegister(SECURITY_EXC_LINE,
+                              _securityExceptionHandler);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_REGISTER_EXC_EXIT,
+                       0);
+
+    return error;
+}
+
+void cpuManageThreadException(kernel_thread_t* pThread)
+{
+    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
+                       TRACE_X86_CPU_MANAGE_THREAD_EXC,
+                       0);
+    (void)pThread;
+
+    /* Nothing to do at the moment, kill the thread */
+    schedThreadExit(THREAD_TERMINATE_CAUSE_PANIC,
+                    THREAD_RETURN_STATE_KILLED,
+                    NULL);
 }
 
 #if MAX_CPU_COUNT > 1

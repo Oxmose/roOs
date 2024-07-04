@@ -148,7 +148,7 @@ typedef struct io_apic_controler_t
 #define IOAPIC_ASSERT(COND, MSG, ERROR) {                   \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -382,6 +382,9 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
             goto ATTACH_END;
         }
         memset(pNewDrvCtrl, 0, sizeof(io_apic_controler_t));
+        /* Link IO APIC controller */
+        pNewDrvCtrl->pNext = spDrvCtrl;
+        spDrvCtrl = pNewDrvCtrl;
 
         /* Set the spinlock and driver */
         KERNEL_SPINLOCK_INIT(pNewDrvCtrl->lock);
@@ -415,10 +418,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
                                 IOAPIC_VERSION_SHIFT;
         pNewDrvCtrl->gsil = pNewDrvCtrl->gsil + 1 +
             ((ioapicVerRegister & IOAPIC_REDIR_MASK) >> IOAPIC_REDIR_SHIFT);
-
-        /* Link IO APIC controller */
-        pNewDrvCtrl->pNext = spDrvCtrl;
-        spDrvCtrl = pNewDrvCtrl;
 
         KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
                      MODULE_NAME,

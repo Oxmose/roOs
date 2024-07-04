@@ -9,7 +9,7 @@
  *
  * @brief Kernel control block structures definitions.
  *
- * @details ernel control block structures definitions. The files contains all
+ * @details Kernel control block structures definitions. The files contains all
  *  the data relative to the objects management in the system (thread structure,
  * thread state, etc.).
  *
@@ -26,7 +26,6 @@
 #include <stdint.h>   /* Generic int types */
 #include <stddef.h>   /* Standard definition type */
 #include <atomic.h>   /* Critical sections spinlock */
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -38,6 +37,9 @@
 
 /** @brief Maximal thead's name length. */
 #define THREAD_NAME_MAX_LENGTH 32
+
+/** @brief Maximal number of signals a thread can support */
+#define THREAD_MAX_SIGNALS 32
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -88,7 +90,13 @@ typedef enum
     /** @brief The thread was killed because of a division by zero. */
     THREAD_TERMINATE_CAUSE_DIV_BY_ZERO,
     /** @brief The thread was killed by a panic condition. */
-    THREAD_TERMINATE_CAUSE_PANIC
+    THREAD_TERMINATE_CAUSE_PANIC,
+    /** @brief The thread was killed by another thread */
+    THREAD_TERMINATE_CAUSE_KILLED,
+    /** @brief The thread was killed due to an illegal instruction */
+    THREAD_TERMINATE_CAUSE_ILLEGAL_INSTRUCTION,
+    /** @brief The thread was killed due to a segmentation fault */
+    THREAD_TERMINATE_CAUSE_SEGFAULT,
 } THREAD_TERMINATE_CAUSE_E;
 
 /**
@@ -120,6 +128,21 @@ typedef struct
      */
     void (*pReleaseResource)(void* pResourceData);
 } thread_resource_t;
+
+/**
+ * @brief Defines a thread error information table.
+ */
+typedef struct
+{
+    /** @brief Error information defined by segfault: address */
+    uintptr_t segfaultAddr;
+
+    /** @brief Error information defined by exceptions: type of exception */
+    uint32_t exceptionId;
+
+    /** @brief Error information defined error: address of the error */
+    uintptr_t instAddr;
+} thread_error_table_t;
 
 /** @brief This is the representation of the thread for the kernel. */
 typedef struct kernel_thread_t
@@ -201,7 +224,10 @@ typedef struct kernel_thread_t
     uint8_t priority;
 
     /** @brief Thread's current state. */
-    THREAD_STATE_E state;
+    THREAD_STATE_E currentState;
+
+    /** @brief Thread's next state. */
+    THREAD_STATE_E nextState;
 
     /** @brief Associated queue node in the scheduler */
     void* pThreadNode;
@@ -220,6 +246,19 @@ typedef struct kernel_thread_t
 
     /** @brief Currently joined thread */
     struct kernel_thread_t* pJoinedThread;
+
+    /**************************************
+     * Signals
+     *************************************/
+
+    /** @brief Last signals sent to the thread */
+    uint32_t signal;
+
+    /** @brief Thread's signal handlers table */
+    void* signalHandlers[THREAD_MAX_SIGNALS];
+
+    /** @brief Thread's error table */
+    thread_error_table_t errorTable;
 
     /**************************************
      * Resources management

@@ -123,7 +123,7 @@ typedef struct
 #define VGA_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 

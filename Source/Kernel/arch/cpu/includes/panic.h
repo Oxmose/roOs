@@ -52,19 +52,9 @@
  * @param[in] MODULE The module that generated the panic. Can be empty when not
  * relevant.
  * @param[in] MSG The panic message used for kernel panic.
- * @param[in] IS_KERNEL Set to TRUE for a kernel panic or false for a process
- * panic.
  */
-#define PANIC(ERROR, MODULE, MSG, IS_KERNEL) {                          \
-    if(IS_KERNEL == TRUE)                                               \
-    {                                                                   \
-        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);            \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        /* TODO: processPanic(ERROR);  */                               \
-        kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);            \
-    }                                                                   \
+#define PANIC(ERROR, MODULE, MSG) {                                 \
+    kernelPanic(ERROR, MODULE, MSG, __FILE__, __LINE__);            \
 }
 
 /*******************************************************************************

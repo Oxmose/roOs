@@ -118,7 +118,7 @@ typedef struct
 #define PIT_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -447,8 +447,7 @@ static void _pitDummyHandler(kernel_thread_t* pCurrThread)
 
     PANIC(OS_ERR_UNAUTHORIZED_ACTION,
           MODULE_NAME,
-          "PIT Dummy handler called",
-          TRUE);
+          "PIT Dummy handler called");
 
     return;
 }

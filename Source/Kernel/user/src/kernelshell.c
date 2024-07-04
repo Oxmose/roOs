@@ -25,6 +25,7 @@
 /* Included headers */
 #include <cpu.h>          /* CPU API*/
 #include <string.h>       /* String manipulation */
+#include <signal.h>       /* Signals */
 #include <console.h>      /* Console driver */
 #include <time_mgt.h>     /* Time manager */
 #include <scheduler.h>    /* Scheduler services */
@@ -81,7 +82,7 @@ static void _shellExecuteCommand(void)
 {
     size_t cursor;
     char   command[SHELL_INPUT_BUFFER_SIZE + 1];
-    
+
     if(sInputBufferCursor == 0)
     {
         return;
@@ -105,13 +106,13 @@ static void _shellExecuteCommand(void)
     {
         ++cursor;
     }
-   
+
     if(strcmp(command, "hello") == 0)
     {
         kprintf("Hi! I am UTK :)\n");
         kprintf("Your arguments are: %s\n", sInputBuffer + cursor);
     }
-    else 
+    else
     {
         kprintf("Unknown command: %s\n", command);
     }
@@ -119,7 +120,7 @@ static void _shellExecuteCommand(void)
 
 static void _shellGetCommand(void)
 {
-    
+
     char readChar;
 
     sInputBufferCursor = 0;
@@ -135,7 +136,7 @@ static void _shellGetCommand(void)
             kprintf("\n");
             break;
         }
-        else if(readChar == 0x7F)
+        else if(readChar == 0x7F || readChar == '\b')
         {
             if(sInputBufferCursor > 0)
             {

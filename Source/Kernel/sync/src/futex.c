@@ -112,7 +112,7 @@ typedef struct
 #define FUTEX_ASSERT(COND, MSG, ERROR) {                    \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -271,8 +271,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
         /* Set thread as waiting */
-        schedWaitThreadOnResource(waiting.pWaitingThread,
-                                  THREAD_WAIT_RESOURCE_FUTEX);
+        schedWaitThreadOnResource(THREAD_WAIT_RESOURCE_FUTEX);
 
         KERNEL_CRITICAL_LOCK(pFutexData->lock);
 
@@ -433,7 +432,7 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
             kQueueRemove(pFutexData->pWaitingThreads,
                          pSaveNode,
                          TRUE);
-            schedReleaseThread(pThread);
+            schedReleaseThread(pThread, FALSE, THREAD_STATE_READY);
         }
         else
         {

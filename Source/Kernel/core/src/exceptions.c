@@ -24,14 +24,12 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <cpu.h>           /* CPU management */
 #include <panic.h>         /* Kernel panic */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definitions */
 #include <string.h>        /* String manipulation */
 #include <critical.h>      /* Critical sections */
-#include <scheduler.h>     /* Kernel scheduler */
-#include <kerneloutput.h>  /* Kernel output methods */
+#include <kerneloutput.h>  /* Kernel output */
 
 /* Configuration files */
 #include <config.h>
@@ -54,6 +52,9 @@
 
 /** @brief Divide by zero exception line. */
 #define DIV_BY_ZERO_LINE 0x00
+
+/** @brief Illegal instruction exception line. */
+#define INVALID_INSTRUCTION_LINE 0x6
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -80,7 +81,7 @@
 #define EXC_ASSERT(COND, MSG, ERROR) {                      \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -88,16 +89,7 @@
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-/**
- * @brief Handle a division by zero exception.
- *
- * @details Handles a divide by zero exception raised by the cpu. The thread
- * will just be killed.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the division
- * by zero.
- */
-static void _divByZeroHandler(kernel_thread_t* pCurrThread);
+/* None */
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -125,17 +117,6 @@ static uint32_t sMinExceptionNumber;
  * FUNCTIONS
  ******************************************************************************/
 
-static void _divByZeroHandler(kernel_thread_t* pCurrThread)
-{
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                       TRACE_EXCEPTION_DIVBYZERO,
-                       (uint32_t)pCurrThread->tid);
-
-    /* TODO: Kill the process */
-    (void)pCurrThread;
-    PANIC(OS_ERR_INCORRECT_VALUE, MODULE_NAME, "Div by zero in kernel", TRUE);
-}
-
 void exceptionInit(void)
 {
     OS_RETURN_E                   err;
@@ -151,8 +132,7 @@ void exceptionInit(void)
     sMinExceptionNumber = kpCpuIntConfig->minExceptionLine;
     sMaxExceptionNumber = kpCpuIntConfig->maxExceptionLine;
 
-    /* Register the division by zero handler */
-    err = exceptionRegister(DIV_BY_ZERO_LINE, _divByZeroHandler);
+    err = cpuRegisterExceptions();
     EXC_ASSERT(err == OS_NO_ERR,
                "Could not initialize exception manager.",
                err);

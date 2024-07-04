@@ -242,10 +242,7 @@ void interruptMainHandler(void)
 
     /* Schedule, we will never return */
     schedScheduleNoInt();
-    PANIC(OS_ERR_UNAUTHORIZED_ACTION,
-          MODULE_NAME,
-          "Schedule returned",
-          TRUE);
+    PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule returned");
 }
 
 void interruptInit(void)
@@ -272,8 +269,7 @@ void interruptInit(void)
     {
         PANIC(OS_ERR_NO_MORE_MEMORY,
               MODULE_NAME,
-              "Failed to allocate interrupt table.",
-              TRUE);
+              "Failed to allocate interrupt table.");
     }
     memset(pKernelInterruptHandlerTable,
            0,
@@ -322,8 +318,7 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
     {
         PANIC(OS_ERR_UNAUTHORIZED_ACTION,
               MODULE_NAME,
-              "Only one interrupt driver can be registered.",
-              TRUE);
+              "Only one interrupt driver can be registered.");
     }
 
     sInterruptDriver = *kpDriver;

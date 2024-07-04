@@ -121,6 +121,17 @@ uint32_t cpuGetContextIntState(const void* kpVCpu);
 uint32_t cpuGetContextIntNumber(const void* kpVCpu);
 
 /**
+ * @brief Returns the last instruction pointer registered for the virtual CPU.
+ *
+ * @details Returns the last instruction pointer registered for the virtual CPU.
+ *
+ * @param[in] kpVCpu The virtual CPU to extract the information from.
+ *
+ * @return The current saved instruction pointer.
+ */
+uintptr_t cpuGetContextIP(const void* kpVCpu);
+
+/**
  * @brief Returns the CPU's interrupt configuration.
  *
  * @details Returns the CPU's interrupt configuration. The configuration is
@@ -232,6 +243,37 @@ void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress);
  * @param[in] kpThread The thread of which the CPU should restore the context.
  */
 void cpuRestoreContext(const kernel_thread_t* kpThread);
+
+/**
+ * @brief Redirects the execution flow of a virtual CPU.
+ *
+ * @details Redirects the execution flow of a virtual CPU. The actual execution
+ * of the new flow is done only on the next context restore.
+ *
+ * @param[in] pThread The thread for which the redirection is done.
+ * @param[in] instructionAddr The address to which the execution flow is done.
+ */
+void cpuRedirectExecution(kernel_thread_t* pThread, void* instructionAddr);
+
+/**
+ * @brief Registers the CPU exceptions.
+ *
+ * @details Registers the CPU exceptions. Since CPUs can have different
+ * exceptions, its is up to the CPU to manage its own.
+ *
+ * @return The success or error state is returned.
+ */
+OS_RETURN_E cpuRegisterExceptions(void);
+
+/**
+ * @brief Manages exception occuring during thread execution.
+ *
+ * @details Manages exception occuring during thread execution. Exception are
+ * signaled and then handled once the signal handler is executing.
+ *
+ * @param[in] pThread The thread to manage the exceptions of.
+ */
+void cpuManageThreadException(kernel_thread_t* pThread);
 
 #endif /* #ifndef __CPU_H_ */
 

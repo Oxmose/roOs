@@ -203,7 +203,7 @@ typedef struct lapic_controler_t
 #define LAPIC_ASSERT(COND, MSG, ERROR) {                    \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 

@@ -102,7 +102,7 @@ typedef struct
 #define MUTEX_ASSERT(COND, MSG, ERROR) {                    \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -286,7 +286,7 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
         pData = pWaitNode->pData;
         pData->status = MUTEX_DESTROYED;
 
-        schedReleaseThread(pData->pThread);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
         pWaitNode = kQueuePop(pMutex->pWaitingList);
     }
 
@@ -432,7 +432,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     }
 
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_MUTEX);
+    schedWaitThreadOnResource(THREAD_WAIT_RESOURCE_MUTEX);
 
     /* If priority elevation is enabled, elevate if needed */
     if((pMutex->flags & MUTEX_FLAG_PRIO_ELEVATION) == MUTEX_FLAG_PRIO_ELEVATION
@@ -584,7 +584,7 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
                     schedUpdatePriority(pData->pThread, highPrio);
                 }
             }
-            schedReleaseThread(pData->pThread);
+            schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
         }
         else
         {

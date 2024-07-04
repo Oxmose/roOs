@@ -33,6 +33,7 @@
         "kqueue.h": "c",
         "spinlock.h": "c",
         "stdlib.h": "c",
-        "mutex": "c"
+        "mutex": "c",
+        "scheduler.h": "c"
     }
 }

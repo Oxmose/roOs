@@ -101,7 +101,7 @@ typedef struct
 #define SEMAPHORE_ASSERT(COND, MSG, ERROR) {                \
     if((COND) == FALSE)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
 
@@ -309,7 +309,7 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
         pData = pWaitNode->pData;
         pData->status = SEMAPHORE_DESTROYED;
 
-        schedReleaseThread(pData->pThread);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
         pWaitNode = kQueuePop(pSem->pWaitingList);
     }
 
@@ -428,7 +428,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     }
 
     /* Set the thread as waiting */
-    schedWaitThreadOnResource(pCurThread, THREAD_WAIT_RESOURCE_SEMAPHORE);
+    schedWaitThreadOnResource(THREAD_WAIT_RESOURCE_SEMAPHORE);
 
     /* Release the semaphore lock */
     spinlockRelease(&pSem->lock);
@@ -512,7 +512,7 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     {
         pData = pWaitNode->pData;
         pData->status = SEMAPHORE_POSTED;
-        schedReleaseThread(pData->pThread);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
     }
     else
     {

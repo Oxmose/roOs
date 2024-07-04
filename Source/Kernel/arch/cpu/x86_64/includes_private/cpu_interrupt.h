@@ -56,8 +56,56 @@
 /** @brief Defines the IPI interrupt line. */
 #define IPI_INT_LINE 0x23
 
+/** @brief Defines the division by zero exception line */
+#define DIVISION_BY_ZERO_EXC_LINE 0x00
+/** @brief Defines debug exception line */
+#define DEBUG_EXC_LINE 0x01
+/** @brief Defines NMI interrupt exception line */
+#define NMI_INTERRUPT_EXC_LINE 0x02
+/** @brief Defines breakpoint exception line */
+#define BREAKPOINT_EXC_LINE 0x03
+/** @brief Defines overflow exception line */
+#define OVERFLOW_EXC_LINE 0x04
+/** @brief Defines bound range exceeded exception line */
+#define BOUND_RANGE_EXCEEDED_EXC_LINE 0x05
+/** @brief Defines invalid instruction exception line */
+#define INVALID_INSTRUCTION_EXC_LINE 0x06
+/** @brief Defines device not available exception line */
+#define DEVICE_NOT_AVAILABLE_EXC_LINE 0x07
+/** @brief Defines double fault exception line */
+#define DOUBLE_FAULT_EXC_LINE 0x08
+/** @brief Defines coprocessor segment overrun exception line */
+#define COPROC_SEGMENT_OVERRUN_EXC_LINE 0x09
+/** @brief Defines invalid TSS exception line */
+#define INVALID_TSS_EXC_LINE 0x0A
+/** @brief Defines segment not present exception line */
+#define SEGMENT_NOT_PRESENT_EXC_LINE 0x0B
+/** @brief Defines stack segment fault exception line */
+#define STACK_SEGMENT_FAULT_EXC_LINE 0x0C
+/** @brief Defines general protection fault exception line */
+#define GENERAL_PROTECTION_FAULT_EXC_LINE 0x0D
 /** @brief Defines the page fault exception line */
-#define PAGE_FAULT_EXC_LINE 0xE
+#define PAGE_FAULT_EXC_LINE 0x0E
+/** @brief Defines x87 floating point exception line */
+#define X87_FLOATING_POINT_EXC_LINE 0x10
+/** @brief Defines alignement check exception line */
+#define ALIGNEMENT_CHECK_EXC_LINE 0x11
+/** @brief Defines machine check exception line */
+#define MACHINE_CHECK_EXC_LINE 0x12
+/** @brief Defines SIMD floating point exception line */
+#define SIMD_FLOATING_POINT_EXC_LINE 0x13
+/** @brief Defines virtualization exception line */
+#define VIRTUALIZATION_EXC_LINE 0x14
+/** @brief Defines control protection exception line */
+#define CONTROL_PROTECTION_EXC_LINE 0x15
+/** @brief Defines hypervisor injection exception line */
+#define HYPERVISOR_INJECTION_EXC_LINE 0x1C
+/** @brief Defines VMM communication exception line */
+#define VMM_COMMUNICATION_EXC_LINE 0x1D
+/** @brief Defines security exception line */
+#define SECURITY_EXC_LINE 0x1E
+
+
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

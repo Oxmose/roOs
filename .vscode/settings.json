@@ -34,6 +34,11 @@
         "spinlock.h": "c",
         "stdlib.h": "c",
         "mutex": "c",
-        "scheduler.h": "c"
+        "scheduler.h": "c",
+        "array": "c",
+        "chrono": "c",
+        "functional": "c",
+        "utility": "c",
+        "interruptdeftestc": "c"
     }
 }

@@ -131,7 +131,7 @@ typedef struct
     uint32_t disabledNesting;
 
     /** @brief Driver's lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } rtc_controler_t;
 
 /*******************************************************************************
@@ -339,7 +339,7 @@ static void _rtcAckowledgeInt(void* pDrvCtrl);
 /** @brief RTC driver instance. */
 static driver_t sX86RTCDriver = {
     .pName         = "X86 RTC Driver",
-    .pDescription  = "X86 Real Time Clock Driver for UTK",
+    .pDescription  = "X86 Real Time Clock Driver for roOs",
     .pCompatible   = "x86,x86-rtc",
     .pVersion      = "2.0",
     .pDriverAttach = _rtcAttach
@@ -372,7 +372,7 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(rtc_controler_t));
-    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
+    SPINLOCK_INIT(pDrvCtrl->lock);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -559,7 +559,7 @@ static void _rtcEnable(void* pDrvCtrl)
                        1,
                        pRtcCtrl->disabledNesting);
 
-    KERNEL_CRITICAL_LOCK(pRtcCtrl->lock);
+    KERNEL_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting > 0)
     {
@@ -576,7 +576,7 @@ static void _rtcEnable(void* pDrvCtrl)
         interruptIRQSetMask(pRtcCtrl->irqNumber, TRUE);
     }
 
-    KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
+    KERNEL_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_ENABLE_EXIT,
@@ -595,7 +595,7 @@ static void _rtcDisable(void* pDrvCtrl)
                        1,
                        pRtcCtrl->disabledNesting);
 
-    KERNEL_CRITICAL_LOCK(pRtcCtrl->lock);
+    KERNEL_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting < UINT32_MAX)
     {
@@ -608,7 +608,7 @@ static void _rtcDisable(void* pDrvCtrl)
                  pRtcCtrl->disabledNesting);
     interruptIRQSetMask(pRtcCtrl->irqNumber, FALSE);
 
-    KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
+    KERNEL_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_DISABLE_EXIT,
@@ -700,7 +700,7 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
         rate = 3;
     }
 
-    KERNEL_CRITICAL_LOCK(pRtcCtrl->lock);
+    KERNEL_LOCK(pRtcCtrl->lock);
 
     /* Set clock frequency */
      /* Init CMOS IRQ8 rate */
@@ -711,7 +711,7 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
 
     pRtcCtrl->selectedFrequency = (pRtcCtrl->quartzFrequency >> (rate - 1));
 
-    KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
+    KERNEL_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -773,13 +773,9 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
 
     _rtcDisable(pDrvCtrl);
 
-    KERNEL_CRITICAL_LOCK(pRtcCtrl->lock);
-
     err = interruptIRQRegister(pRtcCtrl->irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
-
         KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                            TRACE_X86_RTC_SET_HANDLER_EXIT,
                            3,
@@ -789,8 +785,6 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
 
         return err;
     }
-
-    KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "New RTC handler set (0x%p)",
                  pHandler);
@@ -867,7 +861,7 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
     commPort = pRtcCtrl->cpuCommPort;
     dataPort = pRtcCtrl->cpuDataPort;
 
-    KERNEL_CRITICAL_LOCK(pRtcCtrl->lock);
+    KERNEL_LOCK(pRtcCtrl->lock);
 
     /* Select CMOS seconds register and read */
     _cpuOutB(CMOS_SECONDS_REGISTER, commPort);
@@ -946,7 +940,7 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
                        4)
                        + 1) % 7 + 1;
 
-    KERNEL_CRITICAL_UNLOCK(pRtcCtrl->lock);
+    KERNEL_UNLOCK(pRtcCtrl->lock);
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
                        TRACE_X86_RTC_UPDATETIME_EXIT,

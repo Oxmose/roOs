@@ -64,7 +64,7 @@
 /************************* Imported global variables **************************/
 extern kqueue_t* spPhysMemList;
 
-extern kernel_spinlock_t sPhyMemListLock;
+extern spinlock_t sPhyMemListLock;
 
 /************************* Exported global variables **************************/
 /* None */

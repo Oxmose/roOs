@@ -43,21 +43,6 @@
  ******************************************************************************/
 
 /**
- * @brief Gets the kernel local critical section state.
- *
- * @param[out] INT_STATE The critical state at section's entrance.
- *
- * @details Gets the kernel local critical section state.
- */
-#define KERNEL_GET_CRITICAL_LOCAL(INT_STATE) {                      \
-    INT_STATE = cpuGeIntState();                                    \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,              \
-                       TRACE_CPU_GET_CRITICAL,                      \
-                       1,                                           \
-                       INT_STATE);                                  \
-}
-
-/**
  * @brief Enters a local critical section in the kernel.
  *
  * @param[out] INT_STATE The local critical state at section's entrance.
@@ -96,13 +81,13 @@
  *
  * @param[in, out] LOCK The lock to lock.
 */
-#define KERNEL_CRITICAL_LOCK(LOCK) {                            \
-    KERNEL_ENTER_CRITICAL_LOCAL((LOCK).intState[cpuGetId()]);   \
-    spinlockAcquire(&((LOCK).lock));                            \
+#define KERNEL_LOCK(LOCK) {                                     \
+    while(&LOCK == NULL){} \
+    spinlockAcquire(&(LOCK));                                   \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
                        TRACE_CPU_SPINLOCK_LOCK,                 \
                        1,                                       \
-                       (LOCK).lock);                            \
+                       LOCK);                                   \
 }
 
 /**
@@ -112,9 +97,9 @@
  *
  * @param[out] LOCK The lock to unlock.
 */
-#define KERNEL_CRITICAL_UNLOCK(LOCK) {                          \
-    spinlockRelease(&((LOCK).lock));                            \
-    KERNEL_EXIT_CRITICAL_LOCAL((LOCK).intState[cpuGetId()]);    \
+#define KERNEL_UNLOCK(LOCK) {                                   \
+    while(&LOCK == NULL){} \
+    spinlockRelease(&(LOCK));                                   \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
                        TRACE_CPU_SPINLOCK_UNLOCK,               \
                        1,                                       \

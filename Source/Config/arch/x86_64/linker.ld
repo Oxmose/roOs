@@ -1,5 +1,5 @@
 /*******************************************************************************
- * UTK linker file for x86 i386 target
+ * roOs linker file for x86 i386 target
  *
  * Created: 29/03/2023
  *
@@ -86,10 +86,10 @@ SECTIONS
         *(.rodata)
         *(.rodata*)
     } > KERNEL_RO_DATA
-    .utk_driver_tbl ALIGN(4K) : AT(ADDR(.utk_driver_tbl) - KERNEL_MEM_OFFSET)
+    .roos_driver_tbl ALIGN(4K) : AT(ADDR(.roos_driver_tbl) - KERNEL_MEM_OFFSET)
     {
         _START_DRV_TABLE_ADDR = .;
-        *(.utk_driver_tbl)
+        *(.roos_driver_tbl)
         QUAD(0x0);
         _END_DRV_TABLE_ADDR = .;
     } > KERNEL_RO_DATA

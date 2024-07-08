@@ -1,5 +1,5 @@
 ################################################################################
-# UTK Makefile
+# roOs Makefile
 #
 # Created: 29/03/2023
 #
@@ -18,7 +18,7 @@ CONFIG_DIR= ./Config
 
 BUILD_DIR = build
 
-KERNEL = UTK
+KERNEL = roOs
 
 .PHONY: all
 all: init build_modules build_kernel

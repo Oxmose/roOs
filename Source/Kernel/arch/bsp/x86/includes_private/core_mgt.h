@@ -32,37 +32,13 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief CPU IPI send flag: send to all CPUs but the calling one. */
-#define CORE_MGT_IPI_BROADCAST_TO_OTHER 0x100
-
-/** @brief CPU IPI send flag: send to all CPUs including the calling one. */
-#define CORE_MGT_IPI_BROADCAST_TO_ALL 0x300
-
-/** @brief CPU IPI send flag: send to a specific CPU using its id. */
-#define CORE_MGT_IPI_SEND_TO(X) ((X) & 0xFF)
-
+/* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/** @brief Defines the IPI functions */
-typedef enum
-{
-    /** @brief Panic function */
-    IPI_FUNC_PANIC = 0,
-    /** @brief TLB invalidation function */
-    IPI_FUNC_TLB_INVAL = 1,
-} IPI_FUNCTION_E;
-
-/** @brief Defines the IPI parameters structure. */
-typedef struct
-{
-    /** @brief IPI function to be used. */
-    IPI_FUNCTION_E function;
-    /** @brief Data for the function to be used */
-    void* pData;
-} ipi_params_t;
+/* None */
 
 /*******************************************************************************
  * MACROS
@@ -129,17 +105,6 @@ void coreMgtInit(void);
  * @warning This function should only be called by initializing CPUs / cores.
  */
 void coreMgtApInit(const uint8_t kCpuId);
-
-/**
- * @brief Sends an IPI to the cores.
- *
- * @details Sends an IPI to the cores. The flags define the nature of the
- * IPI, if it should be broadcasted, including the calling core, etc.
- *
- * @param[in] kFlags The flags to use, see IPI flags definition.
- * @param[in] kpParams The IPI parameters to use.
- */
-void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
 
 #endif /* #ifndef __X86_CORE_MGT_ */
 

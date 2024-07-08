@@ -1,8 +1,8 @@
-name: UTK CI Plan
-run-name: ${{ github.actor }} | UTK Build and Testing
+name: roOs CI Plan
+run-name: ${{ github.actor }} | roOs Build and Testing
 on: [push]
 jobs:
-  UTK_Unit_Testing:
+  roOs_Unit_Testing:
     runs-on: ubuntu-latest
     steps:
       - name: Initialization

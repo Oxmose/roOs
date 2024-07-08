@@ -232,7 +232,7 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
 
     /* Init the structure */
     memset(pNewQueue, 0, sizeof(kqueue_t));
-    KERNEL_SPINLOCK_INIT(pNewQueue->lock);
+    SPINLOCK_INIT(pNewQueue->lock);
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_CREATE_EXIT,
@@ -266,6 +266,8 @@ void kQueueDestroy(kqueue_t** ppQueue)
 
 void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
                        4,
@@ -284,7 +286,8 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_LOCK(pQueue->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pQueue->lock);
 
     /* If this queue is empty */
     if(pQueue->pHead == NULL)
@@ -314,7 +317,8 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+    KERNEL_UNLOCK(pQueue->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,
@@ -336,6 +340,7 @@ void kQueuePushPrio(kqueue_node_t* pNode,
                     const uint64_t kPriority)
 {
     kqueue_node_t* pCursor;
+    uint32_t       intState;
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
@@ -356,7 +361,8 @@ void kQueuePushPrio(kqueue_node_t* pNode,
                   "Cannot push with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_LOCK(pQueue->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pQueue->lock);
 
     pNode->priority = kPriority;
 
@@ -410,7 +416,8 @@ void kQueuePushPrio(kqueue_node_t* pNode,
                   "Cycle detected in KQueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+    KERNEL_UNLOCK(pQueue->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, MODULE_NAME,
                  "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
@@ -428,6 +435,7 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 {
     kqueue_node_t* pNode;
+    uint32_t       intState;
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_POP_ENTRY,
@@ -444,12 +452,14 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
                   "Cannot pop NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_LOCK(pQueue->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pQueue->lock);
 
     /* If this queue is empty */
     if(pQueue->pHead == NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+        KERNEL_UNLOCK(pQueue->lock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                            TRACE_KQUEUE_QUEUE_POP_EXIT,
@@ -488,7 +498,8 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 
     pNode->pQueuePtr = NULL;
 
-    KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+    KERNEL_UNLOCK(pQueue->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_POP_EXIT,
@@ -504,6 +515,7 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 {
     kqueue_node_t* pNode;
+    uint32_t       intState;
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_FIND_ENTRY,
@@ -523,7 +535,8 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
                   "Cannot find in NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_LOCK(pQueue->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pQueue->lock);
 
     /* Search for the data */
     pNode = pQueue->pHead;
@@ -538,7 +551,8 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
                  pNode,
                  pQueue);
 
-    KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+    KERNEL_UNLOCK(pQueue->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_FIND_EXIT,
@@ -556,6 +570,7 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 {
     kqueue_node_t* pCursor;
+    uint32_t       intState;
 
     KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                        TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
@@ -575,7 +590,8 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
                   "Cannot remove with NULL knode or NULL kqueue",
                   OS_ERR_NULL_POINTER);
 
-    KERNEL_CRITICAL_LOCK(pQueue->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pQueue->lock);
 
     /* Search for node in the queue*/
     pCursor = pQueue->pHead;
@@ -590,7 +606,8 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     if(pCursor == NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+        KERNEL_UNLOCK(pQueue->lock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
                            TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
@@ -630,7 +647,8 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     pNode->pQueuePtr = NULL;
 
-    KERNEL_CRITICAL_UNLOCK(pQueue->lock);
+    KERNEL_UNLOCK(pQueue->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
                  MODULE_NAME,

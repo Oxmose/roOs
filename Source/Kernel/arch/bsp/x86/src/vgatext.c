@@ -102,7 +102,7 @@ typedef struct
     size_t framebufferSize;
 
     /** @brief Driver's lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } vga_controler_t;
 
 
@@ -234,6 +234,22 @@ static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer);
  */
 static void _vgaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer);
 
+
+/**
+ * @brief Scrolls in the desired direction of lines_count lines.
+ *
+ * @details The function will scroll of lines_count line in the desired
+ * direction.
+ *
+ * @param[in, out] pCtrl The VGA driver controler to use.
+ * @param[in] kDirection The direction to whoch the console
+ * should be scrolled.
+ * @param[in] kLines The number of lines to scroll.
+ */
+static void _vgaScrollSafe(vga_controler_t*         pCtrl,
+                           const SCROLL_DIRECTION_E kDirection,
+                           const uint32_t           kLines);
+
 /**
  * @brief Scrolls in the desired direction of lines_count lines.
  *
@@ -300,6 +316,21 @@ static void _vgaPutString(void* pDriverCtrl, const char* kpString);
  */
 static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
 
+/**
+ * @brief Places the cursor to the selected coordinates given as parameters.
+ *
+ * @details Places the screen cursor to the coordinated described with the
+ * parameters. The function will check the boundaries or the position parameters
+ * before setting the cursor position.
+ *
+ * @param[in, out] pDriverCtrl The VGA driver controler to use.
+ * @param[in] kLine The line index where to place the cursor.
+ * @param[in] column The column index where to place the cursor.
+ */
+static inline void _vgaPutCursorSafe(vga_controler_t* pCtrl,
+                                     const uint32_t   kLine,
+                                     const uint32_t   kColumn);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -314,7 +345,7 @@ static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
 /** @brief VGA driver instance. */
 static driver_t sX86VGADriver = {
     .pName         = "X86 VGA driver",
-    .pDescription  = "X86 VGA driver for UTK",
+    .pDescription  = "X86 VGA driver for roOs",
     .pCompatible   = "x86,x86-vga-text",
     .pVersion      = "2.0",
     .pDriverAttach = _vgaConsoleAttach
@@ -353,7 +384,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vga_controler_t));
-    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
+    SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -500,6 +531,35 @@ ATTACH_END:
     return retCode;
 }
 
+static inline void _vgaPutCursorSafe(vga_controler_t* pCtrl,
+                                     const uint32_t   kLine,
+                                     const uint32_t   kColumn)
+{
+    uint16_t cursorPosition;
+
+    /* Checks the values of line and column */
+    if(kLine > pCtrl->lineCount ||
+       kColumn > pCtrl->columnCount)
+    {
+        return;
+    }
+
+    /* Set new cursor position */
+    pCtrl->screenCursor.x = kColumn;
+    pCtrl->screenCursor.y = kLine;
+
+    /* Display new position on screen */
+    cursorPosition = kColumn + kLine * pCtrl->columnCount;
+
+    /* Send low part to the screen */
+    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_LOW, pCtrl->cpuCommPort);
+    _cpuOutB((int8_t)(cursorPosition & 0x00FF), pCtrl->cpuDataPort);
+
+    /* Send high part to the screen */
+    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_HIGH, pCtrl->cpuCommPort);
+    _cpuOutB((int8_t)((cursorPosition & 0xFF00) >> 8), pCtrl->cpuDataPort);
+}
+
 
 static inline void _vgaPrintChar(void*          pDriverCtrl,
                                  const uint32_t kLine,
@@ -532,13 +592,15 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
+    KERNEL_LOCK(pCtrl->lock);
+
     /* If character is a normal ASCII character */
     if(kCharacter > 31 && kCharacter < 127)
     {
          /* Manage end of line cursor position */
         if((uint8_t)pCtrl->screenCursor.x > pCtrl->columnCount - 1)
         {
-            _vgaPutCursor(pDriverCtrl, pCtrl->screenCursor.y + 1, 0);
+            _vgaPutCursorSafe(pDriverCtrl, pCtrl->screenCursor.y + 1, 0);
             pCtrl->pLastColumns[pCtrl->screenCursor.y] =
                 pCtrl->screenCursor.x;
         }
@@ -546,15 +608,15 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
         /* Manage end of screen cursor position */
         if((uint8_t)pCtrl->screenCursor.y >= pCtrl->lineCount)
         {
-            _vgaScroll(pDriverCtrl, SCROLL_DOWN, 1);
+            _vgaScrollSafe(pDriverCtrl, SCROLL_DOWN, 1);
 
         }
         else
         {
             /* Move cursor */
-            _vgaPutCursor(pDriverCtrl,
-                          pCtrl->screenCursor.y,
-                          pCtrl->screenCursor.x);
+            _vgaPutCursorSafe(pDriverCtrl,
+                              pCtrl->screenCursor.y,
+                              pCtrl->screenCursor.x);
             pCtrl->pLastColumns[pCtrl->screenCursor.y] =
                 pCtrl->screenCursor.x;
         }
@@ -574,15 +636,15 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
             case '\b':
                 if(pCtrl->screenCursor.x > 0)
                 {
-                    _vgaPutCursor(pDriverCtrl,
-                                  pCtrl->screenCursor.y,
-                                  pCtrl->screenCursor.x - 1);
+                    _vgaPutCursorSafe(pDriverCtrl,
+                                      pCtrl->screenCursor.y,
+                                      pCtrl->screenCursor.x - 1);
                 }
                 else if(pCtrl->screenCursor.y > 0)
                 {
-                    _vgaPutCursor(pDriverCtrl,
-                                  pCtrl->screenCursor.y - 1,
-                                  pCtrl->pLastColumns[pCtrl->screenCursor.y]);
+                    _vgaPutCursorSafe(pDriverCtrl,
+                                      pCtrl->screenCursor.y - 1,
+                                      pCtrl->pLastColumns[pCtrl->screenCursor.y]);
                 }
                 break;
             /* Tab */
@@ -590,16 +652,16 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 if((uint8_t)pCtrl->screenCursor.x + 8 <
                    pCtrl->columnCount - 1)
                 {
-                    _vgaPutCursor(pDriverCtrl,
-                                  pCtrl->screenCursor.y,
-                                  pCtrl->screenCursor.x  +
-                                  (8 - pCtrl->screenCursor.x % 8));
+                    _vgaPutCursorSafe(pDriverCtrl,
+                                      pCtrl->screenCursor.y,
+                                      pCtrl->screenCursor.x  +
+                                      (8 - pCtrl->screenCursor.x % 8));
                 }
                 else
                 {
-                    _vgaPutCursor(pDriverCtrl,
-                                  pCtrl->screenCursor.y,
-                                  pCtrl->columnCount - 1);
+                    _vgaPutCursorSafe(pDriverCtrl,
+                                      pCtrl->screenCursor.y,
+                                      pCtrl->columnCount - 1);
                 }
                 pCtrl->pLastColumns[pCtrl->screenCursor.y] =
                     pCtrl->screenCursor.x;
@@ -608,22 +670,25 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
             case '\n':
                 if((uint8_t)pCtrl->screenCursor.y < pCtrl->lineCount - 1)
                 {
-                    _vgaPutCursor(pDriverCtrl, pCtrl->screenCursor.y + 1, 0);
+                    _vgaPutCursorSafe(pDriverCtrl,
+                                      pCtrl->screenCursor.y + 1,
+                                      0);
                     pCtrl->pLastColumns[pCtrl->screenCursor.y] =
                         pCtrl->screenCursor.x;
                 }
                 else
                 {
-                    _vgaScroll(pDriverCtrl, SCROLL_DOWN, 1);
+                    _vgaScrollSafe(pDriverCtrl, SCROLL_DOWN, 1);
                 }
                 break;
             /* Clear screen */
             case '\f':
-                _vgaClearFramebuffer(pDriverCtrl);
+                /* Clear all screen */
+                memset(pCtrl->pFramebuffer, 0, pCtrl->framebufferSize);
                 break;
             /* Line return */
             case '\r':
-                _vgaPutCursor(pDriverCtrl, pCtrl->screenCursor.y, 0);
+                _vgaPutCursorSafe(pDriverCtrl, pCtrl->screenCursor.y, 0);
                 pCtrl->pLastColumns[pCtrl->screenCursor.y] =
                     pCtrl->screenCursor.x;
                 break;
@@ -632,6 +697,8 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 break;
         }
     }
+
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaClearFramebuffer(void* pDriverCtrl)
@@ -640,59 +707,42 @@ static void _vgaClearFramebuffer(void* pDriverCtrl)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
+    KERNEL_LOCK(pCtrl->lock);
+
     /* Clear all screen */
     memset(pCtrl->pFramebuffer, 0, pCtrl->framebufferSize);
+
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaPutCursor(void*          pDriverCtrl,
                           const uint32_t kLine,
                           const uint32_t kColumn)
 {
-    int16_t          cursorPosition;
     vga_controler_t* pCtrl;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    /* Checks the values of line and column */
-    if(kLine > pCtrl->lineCount ||
-       kColumn > pCtrl->columnCount)
-    {
-        return;
-    }
+    KERNEL_LOCK(pCtrl->lock);
 
-    KERNEL_CRITICAL_LOCK(pCtrl->lock);
+    _vgaPutCursorSafe(pCtrl, kLine, kColumn);
 
-    /* Set new cursor position */
-    pCtrl->screenCursor.x = kColumn;
-    pCtrl->screenCursor.y = kLine;
-
-    /* Display new position on screen */
-    cursorPosition = kColumn + kLine * pCtrl->columnCount;
-
-    /* Send low part to the screen */
-    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_LOW, pCtrl->cpuCommPort);
-    _cpuOutB((int8_t)(cursorPosition & 0x00FF), pCtrl->cpuDataPort);
-
-    /* Send high part to the screen */
-    _cpuOutB(VGA_CONSOLE_CURSOR_COMM_HIGH, pCtrl->cpuCommPort);
-    _cpuOutB((int8_t)((cursorPosition & 0xFF00) >> 8), pCtrl->cpuDataPort);
-
-    KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
 {
     vga_controler_t* pCtrl;
 
-    pCtrl = GET_CONTROLER(pDriverCtrl);
-
     if(pBuffer != NULL)
     {
-        KERNEL_CRITICAL_LOCK(pCtrl->lock);
+        pCtrl = GET_CONTROLER(pDriverCtrl);
+
+        KERNEL_LOCK(pCtrl->lock);
         /* Save cursor attributes */
         pBuffer->x = pCtrl->screenCursor.x;
         pBuffer->y = pCtrl->screenCursor.y;
-        KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
+        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 
@@ -702,24 +752,25 @@ static void _vgaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
+    KERNEL_LOCK(pCtrl->lock);
+
     if(kpBuffer->x >= pCtrl->columnCount || kpBuffer->y >= pCtrl->lineCount)
     {
+        KERNEL_UNLOCK(pCtrl->lock);
         return;
     }
     /* Restore cursor attributes */
-    _vgaPutCursor(pDriverCtrl, kpBuffer->y, kpBuffer->x);
+    _vgaPutCursorSafe(pDriverCtrl, kpBuffer->y, kpBuffer->x);
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
-static void _vgaScroll(void*                    pDriverCtrl,
-                       const SCROLL_DIRECTION_E kDirection,
-                       const uint32_t           kLines)
+static void _vgaScrollSafe(vga_controler_t*         pCtrl,
+                           const SCROLL_DIRECTION_E kDirection,
+                           const uint32_t           kLines)
 {
-    uint8_t          toScroll;
-    uint8_t          i;
-    uint8_t          j;
-    vga_controler_t* pCtrl;
-
-    pCtrl = GET_CONTROLER(pDriverCtrl);
+    uint8_t toScroll;
+    uint8_t i;
+    uint8_t j;
 
     if(pCtrl->lineCount < kLines)
     {
@@ -729,8 +780,6 @@ static void _vgaScroll(void*                    pDriverCtrl,
     {
         toScroll = kLines;
     }
-
-    KERNEL_CRITICAL_LOCK(pCtrl->lock);
 
     /* Select scroll direction */
     if(kDirection == SCROLL_DOWN)
@@ -749,19 +798,30 @@ static void _vgaScroll(void*                    pDriverCtrl,
             pCtrl->pLastColumns[pCtrl->lineCount - 1] = 0;
         }
         /* Clear last line */
-        KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
         for(i = 0; i < pCtrl->columnCount; ++i)
         {
-            _vgaPrintChar(pDriverCtrl, pCtrl->lineCount - 1, i, ' ');
+            _vgaPrintChar(pCtrl, pCtrl->lineCount - 1, i, ' ');
         }
-    }
-    else
-    {
-        KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
-    }
 
-    /* Replace cursor */
-    _vgaPutCursor(pDriverCtrl, pCtrl->lineCount - toScroll, 0);
+        /* Replace cursor */
+        _vgaPutCursorSafe(pCtrl, pCtrl->lineCount - toScroll, 0);
+
+    }
+}
+
+static void _vgaScroll(void*                    pDriverCtrl,
+                       const SCROLL_DIRECTION_E kDirection,
+                       const uint32_t           kLines)
+{
+    vga_controler_t* pCtrl;
+
+    pCtrl = GET_CONTROLER(pDriverCtrl);
+
+    KERNEL_LOCK(pCtrl->lock);
+
+    _vgaScrollSafe(pCtrl, kDirection, kLines);
+
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
@@ -770,25 +830,26 @@ static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_CRITICAL_LOCK(pCtrl->lock);
+    KERNEL_LOCK(pCtrl->lock);
     pCtrl->screenScheme.foreground = kpColorScheme->foreground;
     pCtrl->screenScheme.background = kpColorScheme->background;
-    KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
+    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
 {
     vga_controler_t* pCtrl;
 
-    pCtrl = GET_CONTROLER(pDriverCtrl);
 
     if(pBuffer != NULL)
     {
-        KERNEL_CRITICAL_LOCK(pCtrl->lock);
+        pCtrl = GET_CONTROLER(pDriverCtrl);
+
+        KERNEL_LOCK(pCtrl->lock);
         /* Save color scheme into buffer */
         pBuffer->foreground = pCtrl->screenScheme.foreground;
         pBuffer->background = pCtrl->screenScheme.background;
-        KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
+        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 

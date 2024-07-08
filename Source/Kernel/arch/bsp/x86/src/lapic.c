@@ -179,7 +179,7 @@ typedef struct lapic_controler_t
     uint32_t spuriousIntLine;
 
     /** @brief Driver's lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 
     /** @brief List of present LAPICs from the ACPI. */
     const lapic_node_t* pLapicList;
@@ -337,7 +337,7 @@ extern uint8_t _START_LOW_AP_STARTUP_ADDR;
 static driver_t sX86LAPICDriver = {
     .pName         = "X86 Local APIC Driver",
     .pDescription  = "X86 Local Advanced Programable Interrupt Controler Driver"
-                     " for UTK",
+                     " for roOs",
     .pCompatible   = "x86,x86-lapic",
     .pVersion      = "2.0",
     .pDriverAttach = _lapicAttach
@@ -388,7 +388,7 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     retCode = OS_NO_ERR;
 
     /* Init the driver lock */
-    KERNEL_SPINLOCK_INIT(sDrvCtrl.lock);
+    SPINLOCK_INIT(sDrvCtrl.lock);
 
     /* Get the cpu's spurious int line */
     sDrvCtrl.spuriousIntLine = cpuGetInterruptConfig()->spuriousInterruptLine;
@@ -589,6 +589,7 @@ static void _lapicStartCpu(const uint8_t kLapicId)
         KERNEL_ERROR("Failed to startup CPU with LAPIC ID %d\n", kLapicId);
     }
 
+
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_START_CPU_EXIT,
                        2,
@@ -598,6 +599,7 @@ static void _lapicStartCpu(const uint8_t kLapicId)
 
 static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
 {
+    uint32_t intState;
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_SEND_IPI_ENTRY,
@@ -616,7 +618,8 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
         return;
     }
 
-    KERNEL_CRITICAL_LOCK(sDrvCtrl.lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(sDrvCtrl.lock);
 
     /* Send IPI */
     _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
@@ -627,7 +630,8 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
     /* Wait for pending sends */
     while ((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
 
-    KERNEL_CRITICAL_UNLOCK(sDrvCtrl.lock);
+    KERNEL_UNLOCK(sDrvCtrl.lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_SEND_IPI_EXIT,

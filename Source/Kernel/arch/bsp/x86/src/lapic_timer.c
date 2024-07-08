@@ -346,7 +346,7 @@ static inline void _lapicTimerWrite(const uintptr_t kBaseAddr,
 /** @brief LAPIC Timer driver instance. */
 static driver_t sX86LAPICTDriver = {
     .pName         = "X86 LAPIC Timer Driver",
-    .pDescription  = "X86 LAPIC Timer Driver for UTK",
+    .pDescription  = "X86 LAPIC Timer Driver for roOs",
     .pCompatible   = "x86,x86-lapic-timer",
     .pVersion      = "1.0",
     .pDriverAttach = _lapicTimerAttach

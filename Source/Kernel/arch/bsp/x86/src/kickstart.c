@@ -133,7 +133,7 @@ void kickstart(void)
     uartDebugInit();
 #endif
 
-    KERNEL_INFO("UTK Kickstart\n");
+    KERNEL_INFO("roOs Kickstart\n");
     /* Initialize the scheduler */
 
     /* Validate architecture */
@@ -168,9 +168,14 @@ void kickstart(void)
     schedInit();
     KERNEL_SUCCESS("Scheduler initialized\n");
 
+    /* Init the defered interrupt servicing */
+    interruptDeferInit();
+    KERNEL_SUCCESS("Defered interrupts initialized\n");
+
     /* Add cpu, excpetion and interrupt related tests here */
     TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
     TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
+    TEST_POINT_FUNCTION_CALL(interruptDefferTest, TEST_DEF_INTERRUPT_ENABLED);
 
     /* Init the futex library */
     futexLibInit();
@@ -198,6 +203,7 @@ void kickstart(void)
     TEST_POINT_FUNCTION_CALL(semaphoreTest, TEST_SEMAPHORE_ENABLED);
     TEST_POINT_FUNCTION_CALL(mutexTest, TEST_MUTEX_ENABLED);
     TEST_POINT_FUNCTION_CALL(panicTest, TEST_PANIC_ENABLED);
+    TEST_POINT_FUNCTION_CALL(signalTest, TEST_SIGNAL_ENABLED);
 
 #ifndef _TESTING_FRAMEWORK_ENABLED
     /* Initialize the user functions */
@@ -208,7 +214,7 @@ void kickstart(void)
     KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 
     /* Call first schedule */
-    schedScheduleNoInt();
+    schedScheduleNoInt(TRUE);
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

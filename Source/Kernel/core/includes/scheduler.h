@@ -44,7 +44,31 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the thread information structure */
+typedef struct
+{
+    /** @brief Thread's identifier. */
+    int32_t tid;
+
+    /** @brief Thread's name. */
+    char pName[THREAD_NAME_MAX_LENGTH + 1];
+
+    /** @brief Thread's type. */
+    THREAD_TYPE_E type;
+
+    /** @brief Thread's current priority. */
+    uint8_t priority;
+
+    /** @brief Thread's current state. */
+    THREAD_STATE_E currentState;
+
+    /** @brief Thread's CPU affinity */
+    uint64_t affinity;
+
+    /** @brief Thread's currently mapped CPU */
+    uint8_t schedCpu;
+} thread_info_t;
+
 
 /*******************************************************************************
  * MACROS
@@ -87,12 +111,14 @@ void schedInit(void);
  * @details Calls the scheduler. This function will select the next thread to
  * schedule and execute it.
  *
+ * @param[in] kForceSwitch For the current task to be switched.
+ *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
  * the thread's context was saved. Use schedSchedule to save the context.
  */
 
-void schedScheduleNoInt(void);
+void schedScheduleNoInt(const bool_t kForceSwitch);
 
 /**
  * @brief Calls the scheduler dispatch function by generating an interrupt.
@@ -114,10 +140,13 @@ void schedSchedule(void);
  * @param[in] pThread The thread to release.
  * @param[in] kIsLocked Tells if the thread lock is already acquired.
  * @param[in] kState The release state.
+ * @param[in] kSchedSameCpu Request schedule is a more prioritary thread can be
+ * awaken on the same CPU.
  */
 void schedReleaseThread(kernel_thread_t*     pThread,
                         const bool_t         kIsLocked,
-                        const THREAD_STATE_E kState);
+                        const THREAD_STATE_E kState,
+                        const bool_t         kSchedSameCpu);
 
 /**
  * @brief Puts the calling thread to sleep.
@@ -228,7 +257,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
  * @return The CPU load in percent is returned. If the CPU does not exists, 0
  * is returned.
  */
-double schedGetCpuLoad(const uint8_t kCpuId);
+uint64_t schedGetCpuLoad(const uint8_t kCpuId);
 
 /**
  * @brief Sets the thread's state to waiting on a resource.
@@ -307,6 +336,38 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
 void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
                      const THREAD_RETURN_STATE_E    kRetState,
                      void*                          pRetVal);
+
+/**
+ * @brief Fills the thread table given as parameter with up to kTableSize
+ * threads executing in the system.
+ *
+ * @details Fills the thread table given as parameter with up to kTableSize
+ * threads executing in the system. The function returns the number of
+ * threads that were actually filled in the table.
+ *
+ * @param[out] pThreadTable The table to fill.
+ * @param[in] kTableSize The size of the table in number of entries.
+ *
+ * @return The function returns the number of threads that were filled in the
+ * table.
+ */
+size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize);
+
+/**
+ * @brief Disables preemption for the current thread.
+ *
+ * @details Disables preemption for the current thread. Interrupts are still
+ * handled but the thread is not switched.
+ */
+void schedDisablePreemption(void);
+
+/**
+ * @brief Enables preemption for the current thread.
+ *
+ * @details Enables preemption for the current thread. The thread might be
+ * switched.
+ */
+void schedEnablePreemption(void);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

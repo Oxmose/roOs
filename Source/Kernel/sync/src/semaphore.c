@@ -157,7 +157,7 @@ static void _semaphoreReleaseResource(void* pResource)
     pData = pNode->pData;
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pData->pSem->lock);
+    KERNEL_LOCK(pData->pSem->lock);
 
     /* Check if the node is enlisted */
     if(pNode->pQueuePtr != NULL)
@@ -165,7 +165,7 @@ static void _semaphoreReleaseResource(void* pResource)
         kQueueRemove(pData->pSem->pWaitingList, pNode, TRUE);
     }
 
-    spinlockRelease(&pData->pSem->lock);
+    KERNEL_UNLOCK(pData->pSem->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -298,7 +298,7 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
 
     /* Clear the semaphore and wakeup all threads */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pSem->lock);
+    KERNEL_LOCK(pSem->lock);
 
     pSem->isInit = FALSE;
 
@@ -309,13 +309,17 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
         pData = pWaitNode->pData;
         pData->status = SEMAPHORE_DESTROYED;
 
-        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY, FALSE);
         pWaitNode = kQueuePop(pSem->pWaitingList);
     }
 
     kQueueDestroy(&pSem->pWaitingList);
 
-    spinlockRelease(&pSem->lock);
+    KERNEL_UNLOCK(pSem->lock);
+
+    /* Schedule in case more prioritary thread were scheduled */
+    schedSchedule();
+
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -368,13 +372,13 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     }
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pSem->lock);
+    KERNEL_LOCK(pSem->lock);
 
     if(pSem->level > 0)
     {
         /* Acquire one value */
         --pSem->level;
-        spinlockRelease(&pSem->lock);
+        KERNEL_UNLOCK(pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -414,7 +418,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     if(pResourceHandle == NULL)
     {
         kQueueRemove(pSem->pWaitingList, &semNode, TRUE);
-        spinlockRelease(&pSem->lock);
+        KERNEL_UNLOCK(pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -431,7 +435,7 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     schedWaitThreadOnResource(THREAD_WAIT_RESOURCE_SEMAPHORE);
 
     /* Release the semaphore lock */
-    spinlockRelease(&pSem->lock);
+    KERNEL_UNLOCK(pSem->lock);
 
     /* Schedule */
     schedSchedule();
@@ -504,7 +508,7 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     }
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pSem->lock);
+    KERNEL_LOCK(pSem->lock);
     pWaitNode = kQueuePop(pSem->pWaitingList);
 
     /* If we need to release a thread */
@@ -512,7 +516,8 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     {
         pData = pWaitNode->pData;
         pData->status = SEMAPHORE_POSTED;
-        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
+        KERNEL_UNLOCK(pSem->lock);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY, TRUE);
     }
     else
     {
@@ -525,9 +530,8 @@ OS_RETURN_E semPost(semaphore_t* pSem)
         {
             ++pSem->level;
         }
+        KERNEL_UNLOCK(pSem->lock);
     }
-
-    spinlockRelease(&pSem->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -575,7 +579,7 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
     }
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pSem->lock);
+    KERNEL_LOCK(pSem->lock);
     if(pValue != NULL)
     {
         *pValue = pSem->level;
@@ -591,7 +595,7 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
     {
         error = OS_ERR_BLOCKED;
     }
-    spinlockRelease(&pSem->lock);
+    KERNEL_UNLOCK(pSem->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,

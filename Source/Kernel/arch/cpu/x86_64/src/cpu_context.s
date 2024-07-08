@@ -22,7 +22,40 @@
 ; DEFINES
 ;-------------------------------------------------------------------------------
 
-; None
+; The following define shall correspond to the first TSS entry in the GDT
+%define FIRST_GDT_TSS_SEGMENT 0x30
+
+; The following defines shall correspond to the virtual CPU context
+%define VCPU_OFF_INT 0x00
+%define VCPU_OFF_ERR 0x08
+%define VCPU_OFF_RIP 0x10
+%define VCPU_OFF_CS  0x18
+%define VCPU_OFF_FLG 0x20
+%define VCPU_OFF_RSP 0x28
+%define VCPU_OFF_RBP 0x30
+%define VCPU_OFF_RDI 0x38
+%define VCPU_OFF_RSI 0x40
+%define VCPU_OFF_RDX 0x48
+%define VCPU_OFF_RCX 0x50
+%define VCPU_OFF_RBX 0x58
+%define VCPU_OFF_RAX 0x60
+%define VCPU_OFF_R8  0x68
+%define VCPU_OFF_R9  0x70
+%define VCPU_OFF_R10 0x78
+%define VCPU_OFF_R11 0x80
+%define VCPU_OFF_R12 0x88
+%define VCPU_OFF_R13 0x90
+%define VCPU_OFF_R14 0x98
+%define VCPU_OFF_R15 0xA0
+%define VCPU_OFF_SS  0xA8
+%define VCPU_OFF_GS  0xB0
+%define VCPU_OFF_FS  0xB8
+%define VCPU_OFF_ES  0xC0
+%define VCPU_OFF_DS  0xC8
+%define VCPU_OFF_FXD 0xD0
+
+%define VCPU_OFF_SAVED 0x2E0
+
 
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE
@@ -43,9 +76,9 @@ extern kernelPanic
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-
 global cpuSaveContext
 global cpuRestoreContext
+global cpuGetId
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -53,117 +86,144 @@ global cpuRestoreContext
 
 section .text
 cpuSaveContext:
-        ; At entry, RIP was pushed by the call to this function
+    ; Save a bit of context
+    push rax
+    push rbx
+    push rdx
 
-        ; Save a bit of context
-        push rax
-        push rbx
-        push rdx
+    ; Get the current thread handle and VCPU
+    mov rbx, 8
+    call cpuGetId
+    mul rbx
+    mov rbx, pCurrentThreadsPtr
+    add rax, rbx
+    mov rax, [rax]
+    mov rax, [rax]
 
-        ; Get the current thread handle and VCPU
-        mov rax, 8
-        mov rbx, gs ; GS stores the CPU id
-        mul rbx
-        mov rbx, pCurrentThreadsPtr
-        add rax, rbx
-        mov rax, [rax]
-        mov rax, [rax]
+    ; Restore RDX used with mul
+    pop rdx
 
-        ; Restore RDX used with mul
-        pop rdx
+    ; Save the interrupt context
+    mov rbx, [rsp + 24]               ; Int id
+    mov [rax + VCPU_OFF_INT], rbx
+    mov rbx, [rsp + 32]               ; Int code
+    mov [rax + VCPU_OFF_ERR], rbx
+    mov rbx, [rsp + 40]               ; RIP
+    mov [rax + VCPU_OFF_RIP], rbx
+    mov rbx, [rsp + 48]               ; CS
+    mov [rax + VCPU_OFF_CS], rbx
+    mov rbx, [rsp + 56]               ; RFLAGS
+    mov [rax + VCPU_OFF_FLG], rbx
+    mov rbx, [rsp + 64]               ; RSP
+    mov [rax + VCPU_OFF_RSP], rbx
+    mov rbx, [rsp + 72]               ; SS
+    mov [rax + VCPU_OFF_SS], rbx
 
-        ; Save the interrupt context
-        mov rbx, [rsp+24]  ; Int id
-        mov [rax], rbx
-        mov rbx, [rsp+32]  ; Int code
-        mov [rax+8], rbx
-        mov rbx, [rsp+40]  ; RIP
-        mov [rax+16], rbx
-        mov rbx, [rsp+48]  ; CS
-        mov [rax+24], rbx
-        mov rbx, [rsp+56]  ; RFLAGS
-        mov [rax+32], rbx
-        mov rbx, [rsp+64]  ; RSP
-        mov [rax+40], rbx
-        mov rbx, [rsp+72]  ; SS
-        mov [rax+168], rbx
+    mov [rax + VCPU_OFF_RBP], rbp
+    mov [rax + VCPU_OFF_RDI], rdi
+    mov [rax + VCPU_OFF_RSI], rsi
+    mov [rax + VCPU_OFF_RDX], rdx
+    mov [rax + VCPU_OFF_RCX], rcx
+    pop rbx                         ; restore prelude rbx
+    mov [rax + VCPU_OFF_RBX], rbx
+    pop rbx                         ; restore prelude rax
+    mov [rax + VCPU_OFF_RAX], rbx
 
-        mov [rax+48], rbp
-        mov [rax+56], rdi
-        mov [rax+64], rsi
-        mov [rax+72], rdx
-        mov [rax+80], rcx
+    mov [rax + VCPU_OFF_R8],  r8
+    mov [rax + VCPU_OFF_R9],  r9
+    mov [rax + VCPU_OFF_R10], r10
+    mov [rax + VCPU_OFF_R11], r11
+    mov [rax + VCPU_OFF_R12], r12
+    mov [rax + VCPU_OFF_R13], r13
+    mov [rax + VCPU_OFF_R14], r14
+    mov [rax + VCPU_OFF_R15], r15
 
-        pop rbx             ; restore prelude rbx
-        mov [rax+88], rbx
-        pop rbx             ; restore prelude rax
-        mov [rax+96], rbx
+    mov [rax + VCPU_OFF_GS], gs
+    mov [rax + VCPU_OFF_FS], fs
+    mov [rax + VCPU_OFF_ES], es
+    mov [rax + VCPU_OFF_DS], ds
 
-        mov [rax+104], r8
-        mov [rax+112], r9
-        mov [rax+120], r10
-        mov [rax+128], r11
-        mov [rax+136], r12
-        mov [rax+144], r13
-        mov [rax+152], r14
-        mov [rax+160], r15
+    ; Save the FxData
+    mov rbx, rax
+    add rbx, VCPU_OFF_FXD
+    add rbx, 0xF                   ; ALIGN Region
+    and rbx, 0xFFFFFFFFFFFFFFF0    ; ALIGN Region
+    fxsave [rbx]
 
-        mov [rax+176], gs
-        mov [rax+184], fs
-        mov [rax+192], es
-        mov [rax+200], ds
+    ; Set the last context as saved
+    mov rbx, 1
+    mov [rax + VCPU_OFF_SAVED], rbx
 
-        ret
+    ret
 
 cpuRestoreContext:
-        ; The current thread is sent as parameter, load the VCPU
-        mov rax, [rdi]
+    ; The current thread is sent as parameter, load the VCPU
+    mov rax, [rdi]
 
-        ; Restore registers
-        mov ss, [rax+168]
-        ; mov gs, [rax+176]
-        mov fs, [rax+184]
-        mov es, [rax+192]
-        mov ds, [rax+200]
+    ; Set the last context as not been saved
+    mov rbx, 0
+    mov [rax + VCPU_OFF_SAVED], rbx
 
-        mov r8,  [rax+104]
-        mov r9,  [rax+112]
-        mov r10, [rax+120]
-        mov r11, [rax+128]
-        mov r12, [rax+136]
-        mov r13, [rax+144]
-        mov r14, [rax+152]
-        mov r15, [rax+160]
+    ; Restore the FxData
+    mov rbx, rax
+    add rbx, VCPU_OFF_FXD
+    add rbx, 0xF                   ; ALIGN Region
+    and rbx, 0xFFFFFFFFFFFFFFF0    ; ALIGN Region
+    fxrstor [rbx]
 
-        mov rbp, [rax+48]
-        mov rdi, [rax+56]
-        mov rsi, [rax+64]
-        mov rdx, [rax+72]
-        mov rcx, [rax+80]
+    ; Restore registers
+    mov gs, [rax + VCPU_OFF_GS]
+    mov fs, [rax + VCPU_OFF_FS]
+    mov es, [rax + VCPU_OFF_ES]
+    mov ds, [rax + VCPU_OFF_DS]
 
-        ; Restore stack pointer pre-int and make space of IRET pop data
-        mov rsp, [rax+40]
-        sub rsp, 40
+    mov r8,  [rax + VCPU_OFF_R8]
+    mov r9,  [rax + VCPU_OFF_R9]
+    mov r10, [rax + VCPU_OFF_R10]
+    mov r11, [rax + VCPU_OFF_R11]
+    mov r12, [rax + VCPU_OFF_R12]
+    mov r13, [rax + VCPU_OFF_R13]
+    mov r14, [rax + VCPU_OFF_R14]
+    mov r15, [rax + VCPU_OFF_R15]
 
-        ; Restore the interrupt context
-        mov rbx, [rax+16]  ; RIP
-        mov [rsp], rbx
-        mov rbx, [rax+24]  ; CS
-        mov [rsp+8], rbx
-        mov rbx, [rax+32]  ; RFLAGS
-        mov [rsp+16], rbx
+    mov rbp, [rax + VCPU_OFF_RBP]
+    mov rdi, [rax + VCPU_OFF_RDI]
+    mov rsi, [rax + VCPU_OFF_RSI]
+    mov rdx, [rax + VCPU_OFF_RDX]
+    mov rcx, [rax + VCPU_OFF_RCX]
 
-        ; Retore base RSP
-        mov rbx, rsp
-        add rbx, 40
-        mov [rsp+24], rbx  ; RSP
-        mov [rsp+32], ss   ; SS
+    ; Restore stack pointer pre-int and make space of IRET pop data
+    mov rsp, [rax + VCPU_OFF_RSP]
+    sub rsp, 40
 
-        mov rbx, [rax+88]
-        mov rax, [rax+96]
+    ; Restore the interrupt context
+    mov rbx, [rax + VCPU_OFF_RIP]  ; RIP
+    mov [rsp], rbx
+    mov rbx, [rax + VCPU_OFF_CS]  ; CS
+    mov [rsp + 8], rbx
+    mov rbx, [rax + VCPU_OFF_FLG]  ; RFLAGS
+    mov [rsp + 16], rbx
 
-        ; Return from interrupt
-        iretq
+    ; Retore base RSP
+    mov rbx, rsp
+    add rbx, 40
+    mov [rsp + 24], rbx  ; RSP
+    mov rbx, [rax + VCPU_OFF_SS]  ; SS
+    mov [rsp + 32], rbx
+
+    ; Restore RBX and RAX
+    mov rbx, [rax + VCPU_OFF_RBX]
+    mov rax, [rax + VCPU_OFF_RAX]
+
+    ; Return from interrupt
+    iretq
+
+cpuGetId:
+    ; Get the TSS segment
+    str rax
+    sub rax, FIRST_GDT_TSS_SEGMENT
+    shr rax, 4
+    ret
 
 ;-------------------------------------------------------------------------------
 ; DATA

@@ -40,7 +40,7 @@ TEST_TIMEOUT = 120
 
 def Validate(jsonTestsuite):
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
-    print(COLORS.OKCYAN + COLORS.BOLD + "| UTK Test Suite                                   |" + COLORS.ENDC)
+    print(COLORS.OKCYAN + COLORS.BOLD + "| roOs Test Suite                                  |" + COLORS.ENDC)
     print(COLORS.OKCYAN + COLORS.BOLD + "#--------------------------------------------------#" + COLORS.ENDC)
     print(COLORS.OKCYAN +"| Version: {:40s}|".format(jsonTestsuite["version"]) + COLORS.ENDC)
     print(COLORS.OKCYAN +"| Testname: {:39s}|".format(jsonTestsuite["name"]) + COLORS.ENDC)
@@ -173,7 +173,7 @@ def UpdateTestFile(filename, testGroup, testName):
 
 if __name__ == "__main__":
     print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#" + COLORS.ENDC)
-    print(COLORS.OKBLUE + COLORS.BOLD + "| UTK UNIT TEST FRAMEWORK                                                      |" + COLORS.ENDC)
+    print(COLORS.OKBLUE + COLORS.BOLD + "| roOs UNIT TEST FRAMEWORK                                                     |" + COLORS.ENDC)
     print(COLORS.OKBLUE + COLORS.BOLD + "#==============================================================================#"  + COLORS.ENDC)
     if len(sys.argv) != 5:
         print("Usage: {} target test_group_file test_list test_file_output".format(sys.argv[0]))

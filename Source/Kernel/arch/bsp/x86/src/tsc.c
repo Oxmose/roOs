@@ -28,7 +28,6 @@
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Generic int types */
 #include <kerror.h>       /* Kernel error */
-#include <critical.h>     /* Kernel critical locks */
 #include <time_mgt.h>     /* Timers manager */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
@@ -70,9 +69,6 @@ typedef struct
 
     /** @brief Offset time */
     int64_t offsetTime;
-
-    /** @brief Driver's lock */
-    kernel_spinlock_t lock;
 } tsc_controler_t;
 
 /*******************************************************************************
@@ -167,18 +163,6 @@ static OS_RETURN_E _tscRemoveHandler(void* pDrvCtrl);
  */
 static uint64_t _tscGetTimeNs(void* pDrvCtrl);
 
-/**
- * @brief Sets the time elasped in ns.
- *
- * @details Sets the time elasped in ns. The timer can be get with the
- * pGetTimeNs function.
- *
- * @param[in, out] pDrvCtrl The driver controler used by the registered
- * console driver.
- * @param[in] kTimeNS The time in nanoseconds to set.
- */
-static void _tscSetTimeNs(void* pDrvCtrl, const uint64_t kTimeNS);
-
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -193,7 +177,7 @@ static void _tscSetTimeNs(void* pDrvCtrl, const uint64_t kTimeNS);
 /** @brief TSC driver instance. */
 static driver_t sX86TSCDriver = {
     .pName         = "X86 TSC Driver",
-    .pDescription  = "X86 Timestamp Counter for UTK",
+    .pDescription  = "X86 Timestamp Counter for roOs",
     .pCompatible   = "x86,x86-tsc",
     .pVersion      = "1.0",
     .pDriverAttach = _tscAttach
@@ -224,7 +208,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(tsc_controler_t));
-    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -235,7 +218,7 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
 
     pTimerDrv->pGetFrequency  = _tscGetFrequency;
     pTimerDrv->pGetTimeNs     = _tscGetTimeNs;
-    pTimerDrv->pSetTimeNs     = _tscSetTimeNs;
+    pTimerDrv->pSetTimeNs     = NULL;
     pTimerDrv->pGetDate       = NULL;
     pTimerDrv->pGetDaytime    = NULL;
     pTimerDrv->pEnable        = _tscEnable;
@@ -378,42 +361,7 @@ static uint64_t _tscGetTimeNs(void* pDrvCtrl)
     /* Return to ns and apply offset */
     time /= 1000;
 
-    KERNEL_CRITICAL_LOCK(pTscCtrl->lock);
-
-    time -= pTscCtrl->offsetTime;
-
-    KERNEL_CRITICAL_UNLOCK(pTscCtrl->lock);
-
     return time;
-}
-
-static void _tscSetTimeNs(void* pDrvCtrl, const uint64_t kTimeNS)
-{
-    tsc_controler_t* pTscCtrl;
-    uint64_t         currTime;
-
-    pTscCtrl = GET_CONTROLER(pDrvCtrl);
-
-    currTime = _tscGetTimeNs(pDrvCtrl);
-
-    KERNEL_CRITICAL_LOCK(pTscCtrl->lock);
-
-    if(currTime > kTimeNS)
-    {
-        pTscCtrl->offsetTime = currTime - kTimeNS;
-    }
-    else
-    {
-        pTscCtrl->offsetTime = -(kTimeNS - currTime);
-    }
-
-    KERNEL_CRITICAL_UNLOCK(pTscCtrl->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_SET_TIME_NS,
-                       2,
-                       (uint32_t)(kTimeNS >> 32),
-                       (uint32_t)(kTimeNS));
 }
 
 #ifdef _TRACING_ENABLED

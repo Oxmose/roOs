@@ -26,17 +26,19 @@
 #include <acpi.h>         /* ACPI structures */
 #include <panic.h>        /* Kernel panic */
 #include <lapic.h>        /* LAPIC driver */
+#include <kheap.h>        /* Kernel heap */
+#include <kqueue.h>       /* Kernel queues */
 #include <x86cpu.h>       /* CPU management */
 #include <stdint.h>       /* Generic int types */
 #include <devtree.h>      /* Device tree library */
 #include <console.h>      /* Console service */
 #include <critical.h>     /* Critical sections */
 #include <drivermgr.h>    /* Driver manager */
+#include <scheduler.h>    /* Kernel scheduler */
 #include <ctrl_block.h>   /* Thread's control block */
 #include <interrupts.h>   /* Interrupt manager */
 #include <lapic_timer.h>  /* LAPIC timer driver */
 #include <kerneloutput.h> /* Kernel output methods */
-
 /* Configuration files */
 #include <config.h>
 
@@ -67,7 +69,7 @@
 #define LAPIC_FLAG_CAPABLE 0x2
 
 /** @brief IPI send flag CPU mask */
-#define CORE_MGT_IPI_SEND_TO_CPU_MASK (CORE_MGT_IPI_SEND_TO(0xFFFFFFFF));
+#define CPU_IPI_SEND_TO_CPU_MASK (CPU_IPI_SEND_TO(0xFFFFFFFF));
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -139,10 +141,7 @@ static const lapic_timer_driver_t* kspLapicTimerDriver = NULL;
 static uint32_t sIpiInterruptLine;
 
 /** @brief Stores the IPI parameters */
-static ipi_params_t sIpiParameters[MAX_CPU_COUNT];
-
-/** @brief Stores the IPI parameters locks */
-static spinlock_t sIpiParametersLocks[MAX_CPU_COUNT];
+static kqueue_t* sIpiParametersList[MAX_CPU_COUNT];
 
 #endif /* #if MAX_CPU_COUNT > 1 */
 
@@ -153,19 +152,23 @@ static spinlock_t sIpiParametersLocks[MAX_CPU_COUNT];
 #if MAX_CPU_COUNT > 1
 static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
-    ipi_params_t params;
-    uint8_t      cpuId;
-    uint32_t     intState;
+    kqueue_node_t* pNode;
+    ipi_params_t   params;
+    uint8_t        cpuId;
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    interruptIRQSetEOI(sIpiInterruptLine);
 
     cpuId = cpuGetId();
 
-    /* Get the parameter and unlock the ipi parameters lock */
-    params = sIpiParameters[cpuId];
-    spinlockRelease(&sIpiParametersLocks[cpuId]);
+    /* Get the parameters */
+    pNode = kQueuePop(sIpiParametersList[cpuId]);
+    CORE_MGT_ASSERT(pNode != NULL,
+                    "IPI without parameters",
+                    OS_ERR_UNAUTHORIZED_ACTION);
 
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+    params = *((ipi_params_t*)pNode->pData);
+    kfree(pNode->pData);
+    kQueueDestroyNode(&pNode);
 
     /* Dispatch */
     switch(params.function)
@@ -176,13 +179,15 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
         case IPI_FUNC_TLB_INVAL:
             cpuInvalidateTlbEntry((uintptr_t)params.pData);
             break;
+        case IPI_FUNC_SCHEDULE:
+            /* Request a schedule */
+            pCurrThread->requestSchedule = TRUE;
+            break;
         default:
             PANIC(OS_ERR_INCORRECT_VALUE,
                   MODULE_NAME,
                   "Unknown IPI function");
     }
-
-    interruptIRQSetEOI(sIpiInterruptLine);
 }
 
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)
@@ -243,7 +248,7 @@ void coreMgtInit(void)
     /* Initializes the IPI parameters locks */
     for(i = 0; i < MAX_CPU_COUNT; ++i)
     {
-        SPINLOCK_INIT(sIpiParametersLocks[i]);
+        sIpiParametersList[i] = kQueueCreate(TRUE);
     }
 
     /* Init the current core information */
@@ -298,17 +303,20 @@ void coreMgtApInit(const uint8_t kCpuId)
         kspLapicTimerDriver->pInitApCore(kCpuId);
     }
 
+
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CORE_MGT_AP_INIT_EXIT,
                        0);
 }
 
-void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
+void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
 {
-    uint8_t  i;
-    uint8_t  destCpuId;
-    uint8_t  srcCpuId;
-    uint32_t intState;
+    uint8_t        i;
+    uint8_t        destCpuId;
+    uint8_t        srcCpuId;
+    uint32_t       intState;
+    kqueue_node_t* pNode;
+    ipi_params_t*  pParams;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CORE_MGT_SEND_IPI_ENTRY,
@@ -326,49 +334,69 @@ void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
         return;
     }
 
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
     /* Check if we should only send to one CPU */
-    if((kFlags & CORE_MGT_IPI_BROADCAST_TO_OTHER) == 0 &&
-       (kFlags & CORE_MGT_IPI_BROADCAST_TO_ALL) == 0)
+    if((kFlags & CPU_IPI_BROADCAST_TO_OTHER) == 0 &&
+       (kFlags & CPU_IPI_BROADCAST_TO_ALL) == 0)
     {
         /* Get the core to send to */
-        destCpuId = kFlags & CORE_MGT_IPI_SEND_TO_CPU_MASK;
+        destCpuId = kFlags & CPU_IPI_SEND_TO_CPU_MASK;
 
         /* Check if in bounds */
-        if(destCpuId < MAX_CPU_COUNT)
+        if(destCpuId < _bootedCPUCount)
         {
-            spinlockAcquire(&sIpiParametersLocks[destCpuId]);
-            sIpiParameters[destCpuId] = *kpParams;
+            pParams = kmalloc(sizeof(ipi_params_t));
+            CORE_MGT_ASSERT(pParams != NULL,
+                            "Failed to allocate IPI parameters",
+                            OS_ERR_NO_MORE_MEMORY);
+            *pParams = *kpParams;
+            pNode = kQueueCreateNode(pParams, TRUE);
+            kQueuePush(pNode, sIpiParametersList[destCpuId]);
+
             kspLapicDriver->pSendIPI(sCoreIds[destCpuId], sIpiInterruptLine);
         }
     }
-    else if((kFlags & CORE_MGT_IPI_BROADCAST_TO_ALL) ==
-            CORE_MGT_IPI_BROADCAST_TO_ALL)
+    else if((kFlags & CPU_IPI_BROADCAST_TO_ALL) ==
+            CPU_IPI_BROADCAST_TO_ALL)
     {
         /* Send to all */
-        for(i = 0; i < MAX_CPU_COUNT; ++i)
+        for(i = 0; i < _bootedCPUCount; ++i)
         {
-            spinlockAcquire(&sIpiParametersLocks[i]);
-            sIpiParameters[i] = *kpParams;
+            pParams = kmalloc(sizeof(ipi_params_t));
+            CORE_MGT_ASSERT(pParams != NULL,
+                            "Failed to allocate IPI parameters",
+                            OS_ERR_NO_MORE_MEMORY);
+            *pParams = *kpParams;
+            pNode = kQueueCreateNode(pParams, TRUE);
+            kQueuePush(pNode, sIpiParametersList[i]);
+
             kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
         }
     }
-    else if((kFlags & CORE_MGT_IPI_BROADCAST_TO_OTHER) ==
-            CORE_MGT_IPI_BROADCAST_TO_OTHER)
+    else if((kFlags & CPU_IPI_BROADCAST_TO_OTHER) ==
+            CPU_IPI_BROADCAST_TO_OTHER)
     {
-        KERNEL_ENTER_CRITICAL_LOCAL(intState);
         /* Send to all excepted the caller */
         srcCpuId = cpuGetId();
-        for(i = 0; i < MAX_CPU_COUNT; ++i)
+        for(i = 0; i < _bootedCPUCount; ++i)
         {
             if(i != srcCpuId)
             {
-                spinlockAcquire(&sIpiParametersLocks[i]);
-                sIpiParameters[i] = *kpParams;
+                pParams = kmalloc(sizeof(ipi_params_t));
+                CORE_MGT_ASSERT(pParams != NULL,
+                                "Failed to allocate IPI parameters",
+                                OS_ERR_NO_MORE_MEMORY);
+                *pParams = *kpParams;
+                pNode = kQueueCreateNode(pParams, TRUE);
+                kQueuePush(pNode, sIpiParametersList[i]);
+
                 kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
             }
         }
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
     }
+
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT,
@@ -401,7 +429,7 @@ void coreMgtApInit(const uint8_t kCpuId)
     return;
 }
 
-void coreMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
+void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
 {
     (void)kFlags;
     (void)kpParams;

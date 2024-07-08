@@ -8,7 +8,7 @@ trace {
     packet.header := struct {
         integer {
             size = 32;
-        } utk_magic;
+        } roos_magic;
         integer {
             size = 32;
         } trace_version;
@@ -1535,6 +1535,69 @@ event {
     name = "Interrupt manager set IRQ EOI";
     fields := struct {
         uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 112;
+    name = "Interrupt manager set IRQ EOI";
+    fields := struct {
+        uint32_t irqNumber;
+    };
+};
+
+event {
+    id = 499;
+    name = "Interrupt manager executed defered function entry";
+    fields := struct {
+        uint32_t errorCode;
+    };
+};
+
+event {
+    id = 500;
+    name = "Interrupt manager executed defered function exit";
+    fields := struct {
+        uint32_t errorCode;
+    };
+};
+
+event {
+    id = 501;
+    name = "Interrupt manager initialize defered entry";
+    fields := struct {
+        uint32_t errorCode;
+    };
+};
+
+event {
+    id = 502;
+    name = "Interrupt manager initialize defered exit";
+    fields := struct {
+        uint32_t errorCode;
+    };
+};
+
+event {
+    id = 503;
+    name = "Interrupt manager add defered ISR entry";
+    fields := struct {
+        xuint32_t routineHigh;
+        xuint32_t routineLow;
+        xuint32_t argsHigh;
+        xuint32_t argsLow;
+    };
+};
+
+event {
+    id = 504;
+    name = "Interrupt manager add defered ISR exit";
+    fields := struct {
+        xuint32_t routineHigh;
+        xuint32_t routineLow;
+        xuint32_t argsHigh;
+        xuint32_t argsLow;
+        uint32_t returnCode;
     };
 };
 
@@ -3602,6 +3665,51 @@ event {
         xuint32_t threadLow;
         uint32_t cause;
         uint32_t returnCode;
+    };
+};
+
+event {
+    id = 493;
+    name = "Scheduler get threads entry";
+};
+
+event {
+    id = 494;
+    name = "Scheduler get threads exit";
+    fields := struct {
+        uint32_t threadCount;
+    };
+};
+
+event {
+    id = 495;
+    name = "Scheduler disable preemption entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 496;
+    name = "Scheduler disable preemption exit";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 497;
+    name = "Scheduler enable preemption entry";
+    fields := struct {
+        uint32_t threadId;
+    };
+};
+
+event {
+    id = 498;
+    name = "Scheduler enable preemption exit";
+    fields := struct {
+        uint32_t threadId;
     };
 };
 

@@ -244,7 +244,7 @@ typedef struct
     bool_t echo;
 
     /** @brief Driver's lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } uart_controler_t;
 
 /*******************************************************************************
@@ -329,7 +329,7 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
  * @param[in] kPort The desired port to write the data to.
  * @param[in] kData The byte to write to the uart port.
  */
-static inline void _uartWrite(kernel_spinlock_t* pLock,
+static inline void _uartWrite(spinlock_t* pLock,
                               const uint16_t     kPort,
                               const uint8_t      kData);
 
@@ -447,7 +447,7 @@ static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable);
 /** @brief UART driver instance. */
 static driver_t sX86UARTDriver = {
     .pName         = "X86 UART Driver",
-    .pDescription  = "X86 UART Driver for UTK",
+    .pDescription  = "X86 UART Driver for roOs",
     .pCompatible   = "x86,x86-generic-serial",
     .pVersion      = "2.1",
     .pDriverAttach = _uartAttach
@@ -488,7 +488,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(uart_controler_t));
-    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
+    SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -672,17 +672,20 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
     _cpuOutB(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
 }
 
-static inline void _uartWrite(kernel_spinlock_t* pLock,
+static inline void _uartWrite(spinlock_t*        pLock,
                               uint16_t           kPort,
                               const uint8_t      kData)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
                        TRACE_X86_UART_WRITE_ENTRY,
                        2,
                        kPort,
                        kData);
     /* Wait for empty transmit */
-    KERNEL_CRITICAL_LOCK(*pLock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(*pLock);
     while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
     if(kData == '\n')
     {
@@ -694,7 +697,8 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
     {
         _cpuOutB(kData, kPort);
     }
-    KERNEL_CRITICAL_UNLOCK(*pLock);
+    KERNEL_UNLOCK(*pLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
     KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
                        TRACE_X86_UART_WRITE_EXIT,
                        2,
@@ -1044,7 +1048,7 @@ static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
 
 #if DEBUG_LOG_UART
 
-static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
+static spinlock_t sLock = SPINLOCK_INIT_VALUE;
 
 void uartDebugInit(void)
 {

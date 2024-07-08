@@ -30,24 +30,24 @@
 %define VCPU_OFF_INT 0x00
 %define VCPU_OFF_ERR 0x04
 %define VCPU_OFF_EIP 0x08
-%define VCPU_OFF_CS  0x0C
-%define VCPU_OFF_FLG 0x10
-%define VCPU_OFF_ESP 0x14
-%define VCPU_OFF_EBP 0x18
-%define VCPU_OFF_EDI 0x1C
-%define VCPU_OFF_ESI 0x20
-%define VCPU_OFF_EDX 0x24
-%define VCPU_OFF_ECX 0x28
-%define VCPU_OFF_EBX 0x2C
-%define VCPU_OFF_EAX 0x30
-%define VCPU_OFF_SS  0x34
-%define VCPU_OFF_GS  0x38
-%define VCPU_OFF_FS  0x3C
-%define VCPU_OFF_ES  0x40
-%define VCPU_OFF_DS  0x44
-%define VCPU_OFF_FXD 0x48
+%define VCPU_OFF_CS  0x10
+%define VCPU_OFF_FLG 0x14
+%define VCPU_OFF_ESP 0x18
+%define VCPU_OFF_EBP 0x20
+%define VCPU_OFF_EDI 0x24
+%define VCPU_OFF_ESI 0x28
+%define VCPU_OFF_EDX 0x30
+%define VCPU_OFF_ECX 0x34
+%define VCPU_OFF_EBX 0x38
+%define VCPU_OFF_EAX 0x40
+%define VCPU_OFF_SS  0x44
+%define VCPU_OFF_GS  0x48
+%define VCPU_OFF_FS  0x50
+%define VCPU_OFF_ES  0x54
+%define VCPU_OFF_DS  0x58
+%define VCPU_OFF_FXD 0x60
 
-%define VCPU_OFF_SAVED 0x258
+%define VCPU_OFF_SAVED 0x270
 
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE

@@ -92,9 +92,6 @@ __stackInit:
     mov rbx, _bootedCPUCount
     mov [rbx], rax
 
-    ; GS contains the CPU id
-    mov rax, 0
-    mov gs, rax
     call kickstart
 
 __kinitx64End:

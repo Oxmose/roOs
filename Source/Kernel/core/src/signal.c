@@ -133,10 +133,10 @@ static void* spInitSignalHandler[THREAD_MAX_SIGNALS] = {
     NULL,                               // THREAD_SIGNAL_USR1
     _handleSignalSegFault,              // THREAD_SIGNAL_SEGV
     NULL,                               // THREAD_SIGNAL_USR2
+    NULL,
+    NULL,
+    NULL,
     _handleSignalException,             // THREAD_SIGNAL_EXC
-    NULL,
-    NULL,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -190,6 +190,7 @@ static void _handleSignalSegFault(void)
                  pThread->tid,
                  pThread->errorTable.segfaultAddr,
                  pThread->errorTable.instAddr);
+
     /* We are terminating ourselves just go to the exit point */
     schedThreadExit(THREAD_TERMINATE_CAUSE_SEGFAULT,
                     THREAD_RETURN_STATE_KILLED,
@@ -338,6 +339,7 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
                            void                  (*pHandler)(void))
 {
     kernel_thread_t* pThread;
+    uint32_t         intState;
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_REGISTER_SIGNAL_ENTRY,
@@ -373,9 +375,11 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
     pThread = schedGetCurrentThread();
 
     /* Register the handler in the table */
-    KERNEL_CRITICAL_LOCK(pThread->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pThread->lock);
     pThread->signalHandlers[kSignal] = (void*)pHandler;
-    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+    KERNEL_UNLOCK(pThread->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_REGISTER_SIGNAL_EXIT,
@@ -391,6 +395,7 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
                          const THREAD_SIGNAL_E kSignal)
 {
     OS_RETURN_E error;
+    uint32_t    intState;
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_SIGNAL_THREAD_ENTRY,
@@ -423,7 +428,8 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    KERNEL_CRITICAL_LOCK(pThread->lock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pThread->lock);
     if(pThread->currentState != THREAD_STATE_ZOMBIE &&
        pThread->signalHandlers[kSignal] != NULL)
     {
@@ -434,7 +440,8 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
     {
         error = OS_ERR_NO_SUCH_ID;
     }
-    KERNEL_CRITICAL_UNLOCK(pThread->lock);
+    KERNEL_UNLOCK(pThread->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_SIGNAL_THREAD_EXIT,

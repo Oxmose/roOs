@@ -26,11 +26,13 @@
 #include <cpu.h>            /* CPU management */
 #include <panic.h>          /* Kernel panic */
 #include <kheap.h>          /* Kernel heap */
+#include <kqueue.h>         /* Kernel queue */
 #include <stdint.h>         /* Generic int types */
 #include <stddef.h>         /* Standard definitions */
 #include <string.h>         /* String manipulation */
 #include <critical.h>       /* Critical sections */
 #include <scheduler.h>      /* Kernel scheduler */
+#include <semaphore.h>      /* Kernel semaphores */
 #include <kerneloutput.h>   /* Kernel output methods */
 
 /* Configuration files */
@@ -52,17 +54,55 @@
 /** @brief Current module's name */
 #define MODULE_NAME "INTERRUPTS"
 
+/** @brief Defered interrupt thread priority */
+#define DEFERED_INTERRUPT_THREAD_PRIO KERNEL_HIGHEST_PRIORITY
+
+/** @brief Defered interrupt thread stack size  */
+#define DEFERED_INTERRUPT_THREAD_STACK_SIZE 0x1000
+
+/** @brief Defered interrupt thread cpu affinity set */
+#define DEFERED_INTERRUPT_THREAD_AFFINITY 0
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the defered interrupt jobs */
+typedef struct
+{
+    /**
+     * @brief The routine to call on a defered interrupt.
+     *
+     * @param[in, out] args The arguments to pass to the defered routine.
+     */
+    void (*jobRoutine)(void* args);
+
+    /**
+     * @brief The arguments to pass to the defered routine.
+     */
+    void* args;
+} interrupt_defered_job;
 
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Asserts a condition and generates a kernel panic in case of failure.
+ *
+ * @details Asserts a condition and generates a kernel panic in case of failure.
+ *
+ * @param[in] COND The condition to verify.
+ * @param[in] MSG The message to print in case of error.
+ * @param[in] ERROR The error code.
+ *
+*/
+#define INTERRUPT_ASSERT(COND, MSG, ERROR) {                \
+    if((COND) == FALSE)                                     \
+    {                                                       \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
+    }                                                       \
+}
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -108,6 +148,16 @@ static int32_t _initDriverGetIrqIntLine(const uint32_t kIrqNumber);
  */
 static void _spuriousHandler(void);
 
+/**
+ * @brief Executes defered intrrupts functions.
+ *
+ * @details  Executes defered intrrupts functions. The routine waits for a new
+ * function to execute before waking up.
+ *
+ * @param[in] args Unused.
+ */
+static void* _interruptDeferedRoutine(void* args);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -122,7 +172,7 @@ static void _spuriousHandler(void);
 custom_handler_t* pKernelInterruptHandlerTable;
 
 /** @brief Table lock */
-kernel_spinlock_t kernelInterruptHandlerTableLock;
+spinlock_t kernelInterruptHandlerTableLock;
 
 /************************** Static global variables ***************************/
 /** @brief The current interrupt driver to be used by the kernel. */
@@ -135,6 +185,15 @@ static u32_atomic_t sSpuriousIntCount;
 
 /** @brief Stores the CPU's interrupt configuration. */
 static const cpu_interrupt_config_t* kspCpuInterruptConfig;
+
+/** @brief Defered interrupt thread */
+static kernel_thread_t* spDeferedIntThread;
+
+/** @brief Defered interrupt function queue */
+static kqueue_t* spDeferedIntQueue;
+
+/** @brief Defered interrupt semaphore */
+static semaphore_t sDefereIntQueueSem;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -176,6 +235,63 @@ static void _spuriousHandler(void)
     return;
 }
 
+static void* _interruptDeferedRoutine(void* args)
+{
+    OS_RETURN_E            error;
+    kqueue_node_t*         pJobNode;
+    interrupt_defered_job* pJob;
+
+    (void)args;
+
+    while(TRUE)
+    {
+        /* Wait for a new job */
+        error = semWait(&sDefereIntQueueSem);
+
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                           TRACE_INTERRUPT_DEFERED_ENTRY,
+                           1,
+                           error);
+
+        if(error == OS_NO_ERR)
+        {
+            pJobNode = kQueuePop(spDeferedIntQueue);
+            if(pJobNode != NULL)
+            {
+                pJob = pJobNode->pData;
+
+                if(pJob->jobRoutine != NULL)
+                {
+                    pJob->jobRoutine(pJob->args);
+                    kfree(pJobNode->pData);
+                }
+                else
+                {
+                    KERNEL_ERROR("Tried to execute a NULL interrupt job\n");
+                }
+
+                /* Destroy the node */
+                kQueueDestroyNode(&pJobNode);
+            }
+            else
+            {
+                KERNEL_ERROR("Poped a NULL interrupt job\n");
+            }
+        }
+        else
+        {
+            KERNEL_ERROR("Failed to wait on defered interrupt semaphore\n");
+        }
+
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                           TRACE_INTERRUPT_DEFERED_EXIT,
+                           1,
+                           error);
+    }
+
+    return NULL;
+}
+
 void interruptMainHandler(void)
 {
     custom_handler_t handler;
@@ -210,7 +326,7 @@ void interruptMainHandler(void)
                            intId,
                            2);
         /* Schedule, we will never return */
-        schedScheduleNoInt();
+        schedScheduleNoInt(FALSE);
     }
 
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
@@ -241,7 +357,7 @@ void interruptMainHandler(void)
                        0);
 
     /* Schedule, we will never return */
-    schedScheduleNoInt();
+    schedScheduleNoInt(FALSE);
     PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule returned");
 }
 
@@ -253,7 +369,7 @@ void interruptInit(void)
                  MODULE_NAME,
                  "Initializing interrupt manager.");
 
-    KERNEL_SPINLOCK_INIT(kernelInterruptHandlerTableLock);
+    SPINLOCK_INIT(kernelInterruptHandlerTableLock);
 
     /* Get the CPU interrupt configuration */
     kspCpuInterruptConfig = cpuGetInterruptConfig();
@@ -314,12 +430,10 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
     }
 
     /* We can only set one interrupt manager*/
-    if(sInterruptDriver.pGetIrqInterruptLine != _initDriverGetIrqIntLine)
-    {
-        PANIC(OS_ERR_UNAUTHORIZED_ACTION,
-              MODULE_NAME,
-              "Only one interrupt driver can be registered.");
-    }
+    INTERRUPT_ASSERT(sInterruptDriver.pGetIrqInterruptLine ==
+                     _initDriverGetIrqIntLine,
+                     "Only one interrupt driver can be registered.",
+                     OS_ERR_UNAUTHORIZED_ACTION)
 
     sInterruptDriver = *kpDriver;
 
@@ -341,6 +455,8 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
                               custom_handler_t handler)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REGISTER_ENTRY,
                        3,
@@ -375,11 +491,14 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
         return OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_CRITICAL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(kernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kInterruptLine] != NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
         KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                            TRACE_INTERRUPT_REGISTER_EXIT,
                            4,
@@ -399,7 +518,8 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
                  kInterruptLine,
                  handler);
 
-    KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REGISTER_EXIT,
@@ -414,6 +534,8 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
 
 OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REMOVE_ENTRY,
                        1,
@@ -431,11 +553,13 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
-    KERNEL_CRITICAL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(kernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kInterruptLine] == NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                            TRACE_INTERRUPT_REMOVE_EXIT,
@@ -451,7 +575,8 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Removed interrupt %u handle", kInterruptLine);
 
-    KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REMOVE_EXIT,
@@ -558,11 +683,6 @@ uint32_t interruptDisable(void)
 
     prevState = cpuGeIntState();
 
-    if(prevState == 0)
-    {
-        return 0;
-    }
-
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                     TRACE_INTERRUPT_INTERRUPT_DISABLE,
                     1,
@@ -606,5 +726,126 @@ void interruptIRQSetEOI(const uint32_t kIrqNumber)
 
     sInterruptDriver.pSetIrqEOI(kIrqNumber);
 }
+
+void interruptDeferInit(void)
+{
+    OS_RETURN_E error;
+
+    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                       TRACE_INTERRUPT_DEFER_INIT_ENTRY,
+                       0);
+
+    /* Create the defered interrupts queue */
+    spDeferedIntQueue = kQueueCreate(TRUE);
+
+    error = semInit(&sDefereIntQueueSem, 0, SEMAPHORE_FLAG_QUEUING_PRIO);
+    INTERRUPT_ASSERT(error == OS_NO_ERR,
+                     "Failed to create defered interrupt semaphore",
+                     error);
+
+    /* Create the defered interrupts thread */
+    error = schedCreateKernelThread(&spDeferedIntThread,
+                                    DEFERED_INTERRUPT_THREAD_PRIO,
+                                    "defISR",
+                                    DEFERED_INTERRUPT_THREAD_STACK_SIZE,
+                                    DEFERED_INTERRUPT_THREAD_AFFINITY,
+                                    _interruptDeferedRoutine,
+                                    NULL);
+    INTERRUPT_ASSERT(error == OS_NO_ERR,
+                     "Failed to create defered interrupt thread",
+                     error);
+    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                       TRACE_INTERRUPT_DEFER_INIT_EXIT,
+                       0);
+}
+
+OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
+{
+    kqueue_node_t*         pNewNode;
+    interrupt_defered_job* pDefererJob;
+    OS_RETURN_E            error;
+
+    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                       TRACE_INTERRUPT_ADD_DEFER_ENTRY,
+                       4,
+                       KERNEL_TRACE_HIGH(pRoutine),
+                       KERNEL_TRACE_LOW(pRoutine),
+                       KERNEL_TRACE_HIGH(pArgs),
+                       KERNEL_TRACE_LOW(pArgs));
+
+    if(pRoutine == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pRoutine),
+                           KERNEL_TRACE_LOW(pRoutine),
+                           KERNEL_TRACE_HIGH(pArgs),
+                           KERNEL_TRACE_LOW(pArgs),
+                           OS_ERR_NULL_POINTER);
+
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Create defered job */
+    pDefererJob = kmalloc(sizeof(interrupt_defered_job));
+    if(pDefererJob == NULL)
+    {
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pRoutine),
+                           KERNEL_TRACE_LOW(pRoutine),
+                           KERNEL_TRACE_HIGH(pArgs),
+                           KERNEL_TRACE_LOW(pArgs),
+                           OS_ERR_NO_MORE_MEMORY);
+
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    pDefererJob->jobRoutine = pRoutine;
+    pDefererJob->args       = pArgs;
+
+    /* Create defered node */
+    pNewNode = kQueueCreateNode(pDefererJob, FALSE);
+    if(pNewNode == NULL)
+    {
+        kfree(pDefererJob);
+
+        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
+                           5,
+                           KERNEL_TRACE_HIGH(pRoutine),
+                           KERNEL_TRACE_LOW(pRoutine),
+                           KERNEL_TRACE_HIGH(pArgs),
+                           KERNEL_TRACE_LOW(pArgs),
+                           OS_ERR_NO_MORE_MEMORY);
+
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Push to defered queue */
+    kQueuePush(pNewNode, spDeferedIntQueue);
+
+    /* Notify the defered thread */
+    error = semPost(&sDefereIntQueueSem);
+    if(error != OS_NO_ERR)
+    {
+        kQueueRemove(spDeferedIntQueue, pNewNode, TRUE);
+        kQueueDestroyNode(&pNewNode);
+        kfree(pDefererJob);
+    }
+
+    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
+                       TRACE_INTERRUPT_ADD_DEFER_EXIT,
+                       5,
+                       KERNEL_TRACE_HIGH(pRoutine),
+                       KERNEL_TRACE_LOW(pRoutine),
+                       KERNEL_TRACE_HIGH(pArgs),
+                       KERNEL_TRACE_LOW(pArgs),
+                       error);
+
+    return error;
+}
+
 
 /************************************ EOF *************************************/

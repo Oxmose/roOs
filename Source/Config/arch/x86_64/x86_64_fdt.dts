@@ -1,7 +1,7 @@
 /dts-v1/;
 
 / {
-    compatible = "utk,utk-fdt-v1";
+    compatible = "roOs,roOs-fdt-v1";
 
     #address-cells = <2>;
     #size-cells = <2>;

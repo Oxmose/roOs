@@ -9,7 +9,7 @@
  *
  * @brief Kernel error definitions.
  *
- * @details Kernel error definitions. Contains the UTK error codes definition.
+ * @details Kernel error definitions. Contains the roOs error codes definition.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/

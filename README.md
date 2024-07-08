@@ -1,20 +1,20 @@
 
 <p  align="center">
 
-<img  src="https://github.com/Oxmose/UTK-Reboot/raw/main/Doc/logo/utk_logo.png"  width="300">
+<img  src="https://github.com/Oxmose/roOs/Doc/logo/roos_logo.png"  width="300">
 
 </p>
 
-## UTK - Utility Kernel
-* UTK is a kernel created for training and educational purposes. It is the result of multiple hours of work to better understand the underlying concepts related to operating systems.
+## roOs - Kangaroo Kernel
+* roOs is a kernel created for training and educational purposes. It is the result of multiple hours of work to better understand the underlying concepts related to operating systems.
 * The kernel is designed around real-time operating systems concepts and will not be intended to perform as a general-purpose operating system.
 
-## UTK Build status
+## Build status
 
 | Status | Main | Dev |
 | --- | --- | --- |
-| CI | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=main)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) | [![UTK CI Plan](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml/badge.svg?branch=dev)](https://github.com/Oxmose/nUTK/actions/workflows/github-action-qemu.yml) |
-| Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/nUTK/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
+| CI | [![roOs CI Plan](https://github.com/Oxmose/roOs/actions/workflows/github-action-qemu.yml/badge.svg?branch=main)](https://github.com/Oxmose/roOs/actions/workflows/github-action-qemu.yml) | [![roOs CI Plan](https://github.com/Oxmose/roOs/actions/workflows/github-action-qemu.yml/badge.svg?branch=dev)](https://github.com/Oxmose/roOs/actions/workflows/github-action-qemu.yml) |
+| Codacy | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/roOs/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d02a03d7f40a4a0e8b6821c6be95aa31)](https://app.codacy.com/gh/Oxmose/roOs/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) |
 
 ## Supported Architectures
 
@@ -22,14 +22,14 @@
 |------------------------------------------------|------------------------------|
 | **Status**<br>Work in Progress                 | **Status**<br>Work in Progress |
 | **Supported Processing**<br>Multicore, Singlecore | **Supported Processing**<br>Multicore, Singlecore |
-| **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25 | **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25 |
+| **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard | **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard |
 | | |
 
 ## Supported General Features
 ### File Device Tree
 * FDT is used to setup the system and discover drivers
 * FDT handles used for drivers inter-operability
-* Configuration (stdin, stdout, interrupts) in FDT
+* Configuration (stdin, stdout, interrupts, etc.) in FDT
 
 ### Driver Management
 * Easy-to-use driver system
@@ -73,11 +73,11 @@
 You can see the planned tasks / features in the project's kanban on GitHub: https://github.com/users/Oxmose/projects/2
 
 ## Testing
-UTK has a test suite allowing extensible testing. Using internal memory test buffers, the testing framework allows validating the system's correct behavior.
+roOs has a test suite allowing extensible testing. Using internal memory test buffers, the testing framework allows validating the system's correct behavior.
 Tests can be added as new features are developed.
 
 ## Build and Run
-To build UTK, choose the architecture you want and execute.
+To build roOs, choose the architecture you want and execute.
 Architecture list to use in the TARGET flag:
 
 * x86_i386

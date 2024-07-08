@@ -132,14 +132,14 @@ void devtreeTest(void)
     pkNode = fdtGetRoot();
     pProp = fdtGetProp(pkNode, "compatible", &propLen);
     TEST_POINT_ASSERT_UINT(TEST_DEVTREE_GETPROP0,
-                           propLen - 1 == (size_t)strlen("utk,utk-fdt-v1"),
-                           (size_t)strlen("utk,utk-fdt-v1"),
+                           propLen - 1 == (size_t)strlen("roOs,roOs-fdt-v1"),
+                           (size_t)strlen("roOs,roOs-fdt-v1"),
                            propLen - 1,
                            TEST_DEVTREE_ENABLED);
     TEST_POINT_ASSERT_BYTE(TEST_DEVTREE_GETPROP1,
-                           strcmp("utk,utk-fdt-v1", pProp) == 0,
+                           strcmp("roOs,roOs-fdt-v1", pProp) == 0,
                            0,
-                           strcmp("utk,utk-fdt-v1", pProp) == 0,
+                           strcmp("roOs,roOs-fdt-v1", pProp) == 0,
                            TEST_DEVTREE_ENABLED);
 
 

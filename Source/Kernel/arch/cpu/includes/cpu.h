@@ -33,7 +33,15 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+
+/** @brief CPU IPI send flag: send to all CPUs but the calling one. */
+#define CPU_IPI_BROADCAST_TO_OTHER 0x100
+
+/** @brief CPU IPI send flag: send to all CPUs including the calling one. */
+#define CPU_IPI_BROADCAST_TO_ALL 0x300
+
+/** @brief CPU IPI send flag: send to a specific CPU using its id. */
+#define CPU_IPI_SEND_TO(X) ((X) & 0xFF)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -61,6 +69,26 @@ typedef struct
     /** @brief IPI interrupt line id */
     uint32_t ipiInterruptLine;
 } cpu_interrupt_config_t;
+
+/** @brief Defines the IPI functions */
+typedef enum
+{
+    /** @brief Panic function */
+    IPI_FUNC_PANIC = 0,
+    /** @brief TLB invalidation function */
+    IPI_FUNC_TLB_INVAL = 1,
+    /** @brief Scheduler call function */
+    IPI_FUNC_SCHEDULE = 2,
+} IPI_FUNCTION_E;
+
+/** @brief Defines the IPI parameters structure. */
+typedef struct
+{
+    /** @brief IPI function to be used. */
+    IPI_FUNCTION_E function;
+    /** @brief Data for the function to be used */
+    void* pData;
+} ipi_params_t;
 
 /*******************************************************************************
  * MACROS
@@ -149,9 +177,9 @@ const cpu_interrupt_config_t* cpuGetInterruptConfig(void);
 void cpuInit(void);
 
 /**
- * @brief Checks the architecture's feature and requirements for UTK.
+ * @brief Checks the architecture's feature and requirements for roOs.
  *
- * @details Checks the architecture's feature and requirements for UTK. If a
+ * @details Checks the architecture's feature and requirements for roOs. If a
  * requirement is not met, a kernel panic is raised.
  */
 void cpuValidateArchitecture(void);
@@ -274,6 +302,30 @@ OS_RETURN_E cpuRegisterExceptions(void);
  * @param[in] pThread The thread to manage the exceptions of.
  */
 void cpuManageThreadException(kernel_thread_t* pThread);
+
+/**
+ * @brief Sends an IPI to the cores.
+ *
+ * @details Sends an IPI to the cores. The flags define the nature of the
+ * IPI, if it should be broadcasted, including the calling core, etc.
+ *
+ * @param[in] kFlags The flags to use, see IPI flags definition.
+ * @param[in] kpParams The IPI parameters to use.
+ */
+void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
+
+
+/**
+ * @brief Tells if the VCPU had is latest context saved.
+ *
+ * @details Tells if the VCPU had is latest context saved. This is refering
+ * to the VCPU's context out of interrupts.
+ *
+ * @param[in] pkVCpu The VCPU to check.
+ *
+ * @return Returns TRUE is the last VCPU's context was saved, FALSE otherwise.
+ */
+bool_t cpuIsVCPUSaved(const void* pkVCpu);
 
 #endif /* #ifndef __CPU_H_ */
 

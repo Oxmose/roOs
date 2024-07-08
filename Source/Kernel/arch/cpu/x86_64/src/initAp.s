@@ -138,12 +138,19 @@ __kinitApPM:
 
 [bits 64]
 __kinitApPM64bEntry:
+    ; Set Segments
+    mov ax, DATA64
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
     ; Get our CPU id based on the booted CPU count and update booted CPU count
-    mov ecx, [_bootedCPUCount]
-    mov gs, ecx ; GS stores teh CPU ID
-    mov eax, ecx
-    add eax, 1
-    mov [_bootedCPUCount], eax
+    mov rcx, [_bootedCPUCount]
+    mov rax, rcx
+    add rax, 1
+    mov [_bootedCPUCount], rax
 
     ; Set the stack base on the CPU id
     mov rbx, KERNEL_STACK_SIZE

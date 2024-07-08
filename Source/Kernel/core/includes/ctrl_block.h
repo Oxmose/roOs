@@ -238,6 +238,12 @@ typedef struct kernel_thread_t
     /** @brief Thread's currently mapped CPU */
     uint8_t schedCpu;
 
+    /** @brief Tells if the thread should be scheduled */
+    bool_t requestSchedule;
+
+    /** @brief Tells if the thread has preemption disabled */
+    bool_t preemptionDisabled;
+
     /** @brief Parent thread */
     struct kernel_thread_t* pParentThread;
 
@@ -246,6 +252,9 @@ typedef struct kernel_thread_t
 
     /** @brief Currently joined thread */
     struct kernel_thread_t* pJoinedThread;
+
+    /** @brief Information node in the thread information table */
+    void* pInfoNode;
 
     /**************************************
      * Signals
@@ -270,7 +279,7 @@ typedef struct kernel_thread_t
     void* pThreadResources;
 
     /** @brief The thread's structure lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } kernel_thread_t;
 
 /*******************************************************************************

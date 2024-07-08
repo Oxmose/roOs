@@ -126,7 +126,7 @@ typedef struct
     bool_t echo;
 
     /** @brief Driver's lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } kbd_controler_t;
 
 /*******************************************************************************
@@ -233,7 +233,7 @@ static char _manageKeycode(const int8_t kKey);
 /** @brief Keyboard driver instance. */
 static driver_t sX86KeyboardDriver = {
     .pName         = "X86 Keyboard Driver",
-    .pDescription  = "X86 Keyboard Driver for UTK",
+    .pDescription  = "X86 Keyboard Driver for roOs",
     .pCompatible   = "x86,x86-generic-keyboard",
     .pVersion      = "2.0",
     .pDriverAttach = _kbdAttach
@@ -450,7 +450,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(kbd_controler_t));
-    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
+    SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)

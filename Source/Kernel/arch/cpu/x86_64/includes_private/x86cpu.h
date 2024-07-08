@@ -33,8 +33,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief CPU flags interrupt enabled flag. */
-#define CPU_RFLAGS_IF 0x000000200
+/** @brief FX data region size, increased with padding for alignement */
+#define FXDATA_REGION_SIZE 528
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -114,6 +114,12 @@ typedef struct
 
     /** @brief Virtual CPU context */
     cpu_state_t cpuState;
+
+    /** @brief FXSAVE / FXRSTORE data region */
+    uint8_t fxData[FXDATA_REGION_SIZE];
+
+    /** @brief Last context save status */
+    uint64_t isContextSaved;
 } __attribute__((packed)) virtual_cpu_t;
 
 /*******************************************************************************

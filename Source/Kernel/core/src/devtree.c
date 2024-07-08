@@ -11,7 +11,7 @@
  *
  * @brief Device file tree driver.
  *
- * @details  This file provides the device file tree driver used by UTK.
+ * @details  This file provides the device file tree driver used by roOs.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/

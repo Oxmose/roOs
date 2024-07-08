@@ -56,6 +56,8 @@ typedef enum
     THREAD_SIGNAL_USR2 = 12,
     /** @brief Signal: unknown exception occured */
     THREAD_SIGNAL_EXC  = 16,
+
+    THREAD_SIGNAL_MAX_VALUE
 } THREAD_SIGNAL_E;
 
 #if (THREAD_MAX_SIGNALS < THREAD_SIGNAL_MAX_VALUE)

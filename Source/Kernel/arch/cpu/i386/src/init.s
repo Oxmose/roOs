@@ -161,9 +161,6 @@ __kinitHigh:
     mov eax, 1
     mov [_bootedCPUCount], eax
 
-    ; GS contains the CPU id
-    mov eax, 0
-    mov gs, eax
     call kickstart
 
 __kinitEnd:

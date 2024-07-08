@@ -301,7 +301,7 @@ __kinitKernelErrorEnd:
 section .data
 
 _noLMMessage:
-    db "Your system is not 64 bits compatible, use the 32 bits version of UTK"
+    db "Your system is not 64 bits compatible, use the 32 bits version of roOs"
     db 0
 
 ;-------------------------------------------------------------------------------

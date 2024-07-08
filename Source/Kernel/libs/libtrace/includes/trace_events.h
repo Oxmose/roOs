@@ -609,6 +609,20 @@ typedef enum
     TRACE_X86_KEYBOARD_MANAGE_KEYCODE_EXIT                              = 491,
     TRACE_X86_KEYBOARD_MANAGE_KEYCODE_ENTRY                             = 492,
 
+    TRACE_SHEDULER_GET_THREADS_ENTRY                                    = 493,
+    TRACE_SHEDULER_GET_THREADS_EXIT                                     = 494,
+    TRACE_SHEDULER_DISABLE_PREEMT_ENTRY                                 = 495,
+    TRACE_SHEDULER_DISABLE_PREEMT_EXIT                                  = 496,
+    TRACE_SHEDULER_ENABLE_PREEMT_ENTRY                                  = 497,
+    TRACE_SHEDULER_ENABLE_PREEMT_EXIT                                   = 498,
+
+    TRACE_INTERRUPT_DEFERED_ENTRY                                       = 499,
+    TRACE_INTERRUPT_DEFERED_EXIT                                        = 500,
+    TRACE_INTERRUPT_DEFER_INIT_ENTRY                                    = 501,
+    TRACE_INTERRUPT_DEFER_INIT_EXIT                                     = 502,
+    TRACE_INTERRUPT_ADD_DEFER_ENTRY                                     = 503,
+    TRACE_INTERRUPT_ADD_DEFER_EXIT                                      = 504,
+
 } TRACE_EVENT_E;
 /*******************************************************************************
  * MACROS

@@ -101,7 +101,7 @@
 extern custom_handler_t* pKernelInterruptHandlerTable;
 
 /** @brief Interrupt table lock */
-extern kernel_spinlock_t kernelInterruptHandlerTableLock;
+extern spinlock_t kernelInterruptHandlerTableLock;
 
 /************************* Exported global variables **************************/
 /* None */
@@ -143,6 +143,8 @@ void exceptionInit(void)
 OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
                               custom_handler_t handler)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                        TRACE_EXCEPTION_REGISTER_ENTRY,
                        3,
@@ -177,12 +179,13 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
         return OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_CRITICAL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(kernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kExceptionLine] != NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
-
+        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REGISTER_EXIT,
                            4,
@@ -202,21 +205,24 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
                  kExceptionLine,
                  handler);
 
-    KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kExceptionLine,
-                           OS_NO_ERR);
+    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
+                        TRACE_EXCEPTION_REGISTER_EXIT,
+                        4,
+                        KERNEL_TRACE_HIGH(handler),
+                        KERNEL_TRACE_LOW(handler),
+                        kExceptionLine,
+                        OS_NO_ERR);
 
     return OS_NO_ERR;
 }
 
 OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
 {
+    uint32_t intState;
+
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                        TRACE_EXCEPTION_REMOVE_ENTRY,
                        1,
@@ -234,11 +240,13 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
-    KERNEL_CRITICAL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(kernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kExceptionLine] == NULL)
     {
-        KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                            TRACE_EXCEPTION_REMOVE_EXIT,
@@ -256,7 +264,8 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
                  "Removed exception %u handle",
                  kExceptionLine);
 
-    KERNEL_CRITICAL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
                        TRACE_EXCEPTION_REMOVE_EXIT,

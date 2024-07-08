@@ -99,6 +99,9 @@ typedef struct
 
     /** @brief Keeps track on the PIT enabled state. */
     uint32_t disabledNesting;
+
+    /** @brief The driver's lock */
+    spinlock_t lock;
 } pit_controler_t;
 
 /*******************************************************************************
@@ -262,7 +265,7 @@ static void _pitAckInterrupt(void* pDrvCtrl);
 /** @brief PIT driver instance. */
 static driver_t sX86PITDriver = {
     .pName         = "X86 PIT Driver",
-    .pDescription  = "X86 Programable Interval Timer Driver for UTK",
+    .pDescription  = "X86 Programable Interval Timer Driver for roOs",
     .pCompatible   = "x86,x86-pit",
     .pVersion      = "2.0",
     .pDriverAttach = _pitAttach
@@ -395,6 +398,9 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
 
+    /* Init lock */
+    SPINLOCK_INIT(pDrvCtrl->lock);
+
     /* Init system times */
     pDrvCtrl->disabledNesting = 1;
 
@@ -465,6 +471,7 @@ static void _pitEnable(void* pDrvCtrl)
                        pPitCtrl->disabledNesting);
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting > 0)
     {
@@ -479,6 +486,7 @@ static void _pitEnable(void* pDrvCtrl)
         interruptIRQSetMask(pPitCtrl->irqNumber, TRUE);
     }
 
+    KERNEL_UNLOCK(pPitCtrl->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
@@ -500,17 +508,20 @@ static void _pitDisable(void* pDrvCtrl)
                        pPitCtrl->disabledNesting);
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting < UINT32_MAX)
     {
         ++pPitCtrl->disabledNesting;
     }
 
+    KERNEL_UNLOCK(pPitCtrl->lock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
     KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "Disable (nesting %d)",
                  pPitCtrl->disabledNesting);
     interruptIRQSetMask(pPitCtrl->irqNumber, FALSE);
 
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_DISABLE_EXIT,
@@ -545,6 +556,7 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
     }
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pPitCtrl->lock);
 
     pPitCtrl->selectedFrequency = kFreq;
 
@@ -559,6 +571,7 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
                  "New PIT frequency set (%d)",
                  kFreq);
 
+    KERNEL_UNLOCK(pPitCtrl->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
@@ -591,8 +604,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 {
     OS_RETURN_E      err;
     pit_controler_t* pPitCtrl;
-    uint32_t         intState;
-
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_HANDLER_ENTRY,
@@ -615,12 +626,9 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
     _pitDisable(pDrvCtrl);
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-
     err = interruptIRQRegister(pPitCtrl->irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                            TRACE_X86_PIT_SET_HANDLER_EXIT,
@@ -631,8 +639,6 @@ static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
 
         return err;
     }
-
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED,
                  MODULE_NAME,

@@ -155,7 +155,7 @@ static void _mutexReleaseResource(void* pResource)
     pData = pNode->pData;
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pData->pMutex->lock);
+    KERNEL_LOCK(pData->pMutex->lock);
 
     /* Check if the node is enlisted */
     if(pNode->pQueuePtr != NULL)
@@ -163,7 +163,7 @@ static void _mutexReleaseResource(void* pResource)
         kQueueRemove(pData->pMutex->pWaitingList, pNode, TRUE);
     }
 
-    spinlockRelease(&pData->pMutex->lock);
+    KERNEL_LOCK(pData->pMutex->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -275,7 +275,7 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
 
     /* Clear the mutex and wakeup all threads */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pMutex->lock);
+    KERNEL_LOCK(pMutex->lock);
 
     pMutex->isInit = FALSE;
 
@@ -286,13 +286,17 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
         pData = pWaitNode->pData;
         pData->status = MUTEX_DESTROYED;
 
-        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
+        schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY, FALSE);
         pWaitNode = kQueuePop(pMutex->pWaitingList);
     }
 
     kQueueDestroy(&pMutex->pWaitingList);
 
-    spinlockRelease(&pMutex->lock);
+    KERNEL_UNLOCK(pMutex->lock);
+
+    /* Schedule in case more prioritary thread were scheduled */
+    schedSchedule();
+
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -347,7 +351,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     pCurThread = schedGetCurrentThread();
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pMutex->lock);
+    KERNEL_LOCK(pMutex->lock);
 
     if(pMutex->lockState > 0)
     {
@@ -355,7 +359,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         pMutex->lockState = 0;
         pMutex->pAcquiredThread = pCurThread;
         pMutex->acquiredThreadPriority = pCurThread->priority;
-        spinlockRelease(&pMutex->lock);
+        KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -381,7 +385,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
             error = OS_ERR_OUT_OF_BOUND;
         }
 
-        spinlockRelease(&pMutex->lock);
+        KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -418,7 +422,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     if(pResourceHandle == NULL)
     {
         kQueueRemove(pMutex->pWaitingList, &mutexNode, TRUE);
-        spinlockRelease(&pMutex->lock);
+        KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -443,7 +447,7 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     }
 
     /* Release the mutex lock */
-    spinlockRelease(&pMutex->lock);
+    KERNEL_UNLOCK(pMutex->lock);
 
     /* Schedule */
     schedSchedule();
@@ -521,12 +525,12 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
 
     /* Clear the mutex and wakeup waiting thread */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pMutex->lock);
+    KERNEL_LOCK(pMutex->lock);
 
     /* Only the owner can unlock the mutex */
     if(pCurThread != pMutex->pAcquiredThread)
     {
-        spinlockRelease(&pMutex->lock);
+        KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -584,19 +588,20 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
                     schedUpdatePriority(pData->pThread, highPrio);
                 }
             }
-            schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY);
+            KERNEL_UNLOCK(pMutex->lock);
+            schedReleaseThread(pData->pThread, FALSE, THREAD_STATE_READY, TRUE);
         }
         else
         {
             pMutex->lockState = 1;
+            KERNEL_UNLOCK(pMutex->lock);
         }
     }
     else
     {
         ++pMutex->lockState;
+        KERNEL_UNLOCK(pMutex->lock);
     }
-
-    spinlockRelease(&pMutex->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -645,7 +650,7 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
     }
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    spinlockAcquire(&pMutex->lock);
+    KERNEL_LOCK(pMutex->lock);
 
     if(pLockState != NULL)
     {
@@ -667,7 +672,7 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
         error = OS_ERR_BLOCKED;
     }
 
-    spinlockRelease(&pMutex->lock);
+    KERNEL_UNLOCK(pMutex->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,

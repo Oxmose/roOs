@@ -171,7 +171,7 @@ static kqueue_t* spAuxTimersQueue = NULL;
 static volatile uint64_t sActiveWait[MAX_CPU_COUNT] = {0};
 
 /** @brief Auxiliary timers list lock */
-static kernel_spinlock_t auxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
+static spinlock_t auxTimersListLock = SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -179,7 +179,6 @@ static kernel_spinlock_t auxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
-    (void)pCurrThread;
 
     uint8_t cpuId;
 
@@ -209,6 +208,8 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
         }
     }
 
+    /* The main time triggered, we need to schedule the thread */
+    pCurrThread->requestSchedule = TRUE;
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_EXIT,
@@ -281,7 +282,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         return OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_CRITICAL_LOCK(auxTimersListLock);
+    KERNEL_LOCK(auxTimersListLock);
 
     /* Create queue is it does not exist */
     if(spAuxTimersQueue == NULL)
@@ -292,7 +293,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     /* Add the timer to the queue */
     kQueuePush(pNewNode, spAuxTimersQueue);
 
-    KERNEL_CRITICAL_UNLOCK(auxTimersListLock);
+    KERNEL_UNLOCK(auxTimersListLock);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_EXIT,

@@ -147,7 +147,7 @@ static const char* skpPanicModule = NULL;
 static const char* skpPanicMsg = NULL;
 
 /** @brief Panic lock */
-static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
+static spinlock_t sLock = SPINLOCK_INIT_VALUE;
 
 /** @brief Panic delivered flag */
 static bool_t sDelivered = FALSE;
@@ -526,20 +526,24 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     interruptDisable();
 
-    KERNEL_CRITICAL_LOCK(sLock);
+    KERNEL_LOCK(sLock);
 
-    if(sDelivered)
+    if(sDelivered == TRUE)
     {
-        KERNEL_CRITICAL_UNLOCK(sLock);
+        KERNEL_UNLOCK(sLock);
         goto PANIC_END;
     }
+
+    sDelivered = TRUE;
+    KERNEL_UNLOCK(sLock);
 
     cpuId = cpuGetId();
 
     /* Send IPI to all other cores and tell that the panic was delivered */
     sDelivered = TRUE;
     ipiParams.function = IPI_FUNC_PANIC;
-    coreMgtSendIpi(CORE_MGT_IPI_BROADCAST_TO_OTHER, &ipiParams);
+    (void)ipiParams;
+    //cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams);
 
     pThreadVCpu = pCurrThread->pVCpu;
 
@@ -576,7 +580,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
             uptime % 1000,
             pCurrThread->pName,
             pCurrThread->tid,
-            "UTK_KERNEL", // TODO: Process name
+            "ROOS_KERNEL", // TODO: Process name
             0); // TODO: Process ID
 
     if(skpPanicFile != NULL)
@@ -601,8 +605,6 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     consoleScheme.vgaColor   = TRUE;
 
     consoleSetColorScheme(&consoleScheme);
-
-    KERNEL_CRITICAL_UNLOCK(sLock);
 
     TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
                             TRUE,

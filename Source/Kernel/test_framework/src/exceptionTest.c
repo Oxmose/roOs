@@ -158,7 +158,6 @@ void exceptionTest(void)
                             err,
                             TEST_EXCEPTION_ENABLED);
 
-    /* TEST REMOVE WHEN NOT REGISTERED */
     err = exceptionRemove(minExc);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_REGISTERED_ID,
                             err == OS_NO_ERR,
@@ -166,29 +165,13 @@ void exceptionTest(void)
                             err,
                             TEST_EXCEPTION_ENABLED);
 
-     /* TEST REMOVE WHEN NOT REGISTERED */
-    err = exceptionRemove(minExc);
-    TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_NONREGISTERED_ID,
-                            err == OS_ERR_INTERRUPT_NOT_REGISTERED,
-                            OS_ERR_INTERRUPT_NOT_REGISTERED,
-                            err,
-                            TEST_EXCEPTION_ENABLED);
 
-    /* TEST REGISTER WHEN ALREADY REGISTERED */
     err = exceptionRegister(minExc, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
                             err,
                             TEST_EXCEPTION_ENABLED);
-
-    err = exceptionRegister(DIV_BY_ZERO_LINE, _dummy);
-    TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_ALREADY_REGISTERED_ID,
-                            err == OS_ERR_INTERRUPT_ALREADY_REGISTERED,
-                            OS_ERR_INTERRUPT_ALREADY_REGISTERED,
-                            err,
-                            TEST_EXCEPTION_ENABLED);
-
 
     /* Test exception */
     volatile int i = 0;

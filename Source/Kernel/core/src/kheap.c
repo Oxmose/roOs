@@ -79,7 +79,7 @@ static uintptr_t head;
 static uintptr_t limit;
 
 /** @brief Heap lock */
-static kernel_spinlock_t sLock;
+static spinlock_t sLock;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -90,7 +90,7 @@ void kHeapInit(void)
     head  = (uintptr_t)&_KERNEL_HEAP_BASE;
     limit = head + (uintptr_t)&_KERNEL_HEAP_SIZE;
 
-    KERNEL_SPINLOCK_INIT(sLock);
+    SPINLOCK_INIT(sLock);
 
     TEST_POINT_FUNCTION_CALL(kheapTtest, TEST_KHEAP_ENABLED);
 
@@ -100,9 +100,10 @@ void kHeapInit(void)
 
 void* kmalloc(size_t size)
 {
-    void* retVal;
-
-    KERNEL_CRITICAL_LOCK(sLock);
+    void*    retVal;
+    uint32_t intState;
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(sLock);
 
     if(head + size <= limit)
     {
@@ -114,7 +115,8 @@ void* kmalloc(size_t size)
         retVal = NULL;
     }
 
-    KERNEL_CRITICAL_UNLOCK(sLock);
+    KERNEL_UNLOCK(sLock);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     return retVal;
 }

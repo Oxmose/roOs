@@ -26,7 +26,7 @@
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definition types */
 #include <string.h>       /* Memory manipulation */
-#include <kerror.h>       /* UTK error types */
+#include <kerror.h>       /* Kernel error types */
 #include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* Device tree service */
 #include <drivermgr.h>    /* Driver manager */
@@ -765,7 +765,8 @@ uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber);
 /** @brief ACPI driver instance. */
 static driver_t sX86ACPIDriver = {
     .pName         = "X86 ACPI Driver",
-    .pDescription  = "X86 Advanced Configuration and Power Interface Driver for UTK",
+    .pDescription  = "X86 Advanced Configuration and Power Interface Driver for"
+                     " roOs",
     .pCompatible   = "x86,x86-acpi",
     .pVersion      = "2.0",
     .pDriverAttach = _acpiAttach

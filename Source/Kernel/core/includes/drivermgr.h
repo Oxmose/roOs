@@ -74,8 +74,8 @@ typedef struct
  *
  * @param[in] DRIVER The driver to add to the driver table.
  */
-#define DRIVERMGR_REG(DRIVER)                                                 \
-    driver_t* DRVENT_##DRIVER __attribute__ ((section (".utk_driver_tbl"))) = \
+#define DRIVERMGR_REG(DRIVER)                                                  \
+    driver_t* DRVENT_##DRIVER __attribute__ ((section (".roos_driver_tbl"))) = \
         &DRIVER;
 
 /*******************************************************************************

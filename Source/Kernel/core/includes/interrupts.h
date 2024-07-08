@@ -282,6 +282,27 @@ void interruptIRQSetMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  */
 void interruptIRQSetEOI(const uint32_t kIrqNumber);
 
+/**
+ * @brief Initializes the defered interrupt mechanism.
+ *
+ * @details Initializes the defered interrupt mechanism. The defered interrupt
+ * thread is spawned and started.
+ */
+void interruptDeferInit(void);
+
+/**
+ * @brief Adds a defered interrupt routine.
+ *
+ * @details Adds a defered interrupt routine. The routine will be executed with
+ * its arguments the next time the defered interrupt thread is scheduled.
+ *
+ * @param[in] pRoutine The routine to execute in the defered interrupt thread.
+ * @param[in] pArgs The arguments to pass to the defered routine.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs);
+
 #endif /* #ifndef __CORE_INTERRUPTS_H_ */
 
 /************************************ EOF *************************************/

@@ -29,6 +29,7 @@
 #include <memory.h>        /* Memory management */
 #include <signal.h>        /* Thread signals */
 #include <core_mgt.h>      /* Core management */
+#include <critical.h>      /* Kernel critical section */
 #include <x86memory.h>     /* X86 memory definitions */
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
@@ -489,6 +490,9 @@
 #define SIG_VORTEX_ECX    0x436f5320
 /** @brief CPUID Vendor signature Vortex EDX. */
 #define SIG_VORTEX_EDX    0x36387865
+
+/** @brief CPU flags interrupt enabled flag. */
+#define CPU_RFLAGS_IF 0x000000200
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -1903,7 +1907,11 @@ extern uint8_t physAddressWidth;
 extern uint8_t virtAddressWidth;
 
 /************************* Exported global variables **************************/
-/* None */
+/** @brief Stores the current CPU fxData regions */
+virtual_cpu_t* pLastSSESaveVCPU[MAX_CPU_COUNT] = {NULL};
+
+/** @brief Stores the index of the first TSS segment */
+uint32_t firstTssSegmentIdx;
 
 /************************** Static global variables ***************************/
 /** @brief CPU GDT space in memory. */
@@ -3072,8 +3080,8 @@ static void _setupGDT(void)
     __asm__ __volatile__("movw %w0,%%ds\n\t"
                          "movw %w0,%%es\n\t"
                          "movw %w0,%%fs\n\t"
-                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
-                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64), "r" (0));
+                         "movw %w0,%%gs\n\t"
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64));
 
     __asm__ __volatile__("mov %0, %%rax\n\t"
                          "push %%rax\n\t"
@@ -3139,6 +3147,7 @@ static void _setupTSS(void)
                         KERNEL_STACK_SIZE * (i + 1) - sizeof(uint64_t) * 2;
         sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
     }
+    firstTssSegmentIdx = TSS_SEGMENT;
 
     /* Load TSS */
     __asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
@@ -4340,8 +4349,8 @@ void cpuApInit(const uint8_t kCpuId)
     __asm__ __volatile__("movw %w0,%%ds\n\t"
                          "movw %w0,%%es\n\t"
                          "movw %w0,%%fs\n\t"
-                         "movw %w1,%%gs\n\t" // GS stores the CPU Id
-                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64), "r" (kCpuId));
+                         "movw %w0,%%gs\n\t"
+                         "movw %w0,%%ss\n\t" :: "r" (KERNEL_DS_64));
     __asm__ __volatile__("mov %0, %%rax\n\t"
                          "push %%rax\n\t"
                          "movabs $new_gdt_seg_ap, %%rax\n\t"
@@ -4386,7 +4395,7 @@ void cpuApInit(const uint8_t kCpuId)
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    schedScheduleNoInt();
+    schedScheduleNoInt(TRUE);
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
@@ -4525,10 +4534,12 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->cpuState.r14 = 0;
     pVCpu->cpuState.r15 = 0;
     pVCpu->cpuState.ss  = KERNEL_DS_64;
-    pVCpu->cpuState.gs  = 0;
+    pVCpu->cpuState.gs  = KERNEL_DS_64;
     pVCpu->cpuState.fs  = KERNEL_DS_64;
     pVCpu->cpuState.es  = KERNEL_DS_64;
     pVCpu->cpuState.ds  = KERNEL_DS_64;
+
+    pVCpu->isContextSaved = TRUE;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CREATE_VCPU_EXIT,
@@ -4752,19 +4763,9 @@ void cpuManageThreadException(kernel_thread_t* pThread)
                     NULL);
 }
 
-#if MAX_CPU_COUNT > 1
-uint8_t cpuGetId(void)
+bool_t cpuIsVCPUSaved(const void* pkVCpu)
 {
-    uint32_t cpuId;
-    /* On x86, GS stores the CPU Id assigned at boot */
-    __asm__ __volatile__ ("mov %%gs, %0" : "=r"(cpuId));
-    return cpuId & 0xFF;
+    return ((virtual_cpu_t*)pkVCpu)->isContextSaved != 0;
 }
-#else
-uint8_t cpuGetId(void)
-{
-    return 0;
-}
-#endif /* MAX_CPU_COUNT > 1 */
 
 /************************************ EOF *************************************/

@@ -121,7 +121,7 @@ typedef struct
     kqueue_t* pQueue;
 
     /** @brief The memory list lock */
-    kernel_spinlock_t lock;
+    spinlock_t lock;
 } mem_list_t;
 
 /*******************************************************************************
@@ -454,7 +454,7 @@ static size_t sKernelPhysicalMemBoundsCount;
 static uintptr_t* spKernelPageDir = (uintptr_t*)&_kernelPGDir;
 
 /** @brief Memory manager main lock */
-static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
+static spinlock_t sLock = SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -633,7 +633,7 @@ static void _addBlock(mem_list_t*  pList,
                  baseAddress,
                  limit);
 
-    KERNEL_CRITICAL_LOCK(pList->lock);
+    KERNEL_LOCK(pList->lock);
 
     /* Try to merge the new block, the list is ordered by base address asc */
     pCursor = pList->pQueue->pHead;
@@ -755,7 +755,7 @@ static void _addBlock(mem_list_t*  pList,
                      limit);
     }
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_UNLOCK(pList->lock);
 }
 
 static void _removeBlock(mem_list_t*  pList,
@@ -786,7 +786,7 @@ static void _removeBlock(mem_list_t*  pList,
                  baseAddress,
                  limit);
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_UNLOCK(pList->lock);
 
     /* Try to find all the regions that might be impacted */
     pCursor = pList->pQueue->pHead;
@@ -910,7 +910,7 @@ static void _removeBlock(mem_list_t*  pList,
         }
     }
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_UNLOCK(pList->lock);
 }
 
 static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
@@ -925,7 +925,7 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
 
     retBlock = 0;
 
-    KERNEL_CRITICAL_LOCK(pList->lock);
+    KERNEL_LOCK(pList->lock);
 
     /* Walk the list until we find a valid block */
     pCursor = pList->pQueue->pHead;
@@ -970,7 +970,7 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
         pCursor = pCursor->pNext;
     }
 
-    KERNEL_CRITICAL_UNLOCK(pList->lock);
+    KERNEL_UNLOCK(pList->lock);
 
     return retBlock;
 }
@@ -1020,7 +1020,7 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
     pPgDirRecurEntry = (uintptr_t*)KERNEL_RECUR_PG_DIR_BASE;
     currVirtAddr = kVirtualAddress;
 
-    KERNEL_CRITICAL_LOCK(sLock);
+    KERNEL_LOCK(sLock);
     while(pageCount != 0)
     {
         /* Get entry indexes */
@@ -1061,7 +1061,7 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
             }
         }
     }
-    KERNEL_CRITICAL_UNLOCK(sLock);
+    KERNEL_UNLOCK(sLock);
 
     return isMapped;
 }
@@ -1171,7 +1171,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     currPhysAdd  = kPhysicalAddress;
     pPgDirRecurEntry = (uintptr_t*)KERNEL_RECUR_PG_DIR_BASE;
 
-    KERNEL_CRITICAL_LOCK(sLock);
+    KERNEL_LOCK(sLock);
     while(toMap != 0)
     {
         /* Get entry indexes */
@@ -1217,7 +1217,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
             ++pgTableEntry;
         } while(toMap > 0 && pgTableEntry != KERNEL_PGDIR_ENTRY_COUNT - 1);
     }
-    KERNEL_CRITICAL_UNLOCK(sLock);
+    KERNEL_UNLOCK(sLock);
 
     return OS_NO_ERR;
 }
@@ -1247,7 +1247,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     currVirtAddr = kVirtualAddress;
     pPgDirRecurEntry = (uintptr_t*)KERNEL_RECUR_PG_DIR_BASE;
 
-    KERNEL_CRITICAL_LOCK(sLock);
+    KERNEL_LOCK(sLock);
     while(toUnmap != 0)
     {
         /* Get entry indexes */
@@ -1335,7 +1335,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
             }
         }
     }
-    KERNEL_CRITICAL_UNLOCK(sLock);
+    KERNEL_UNLOCK(sLock);
 
     return OS_NO_ERR;
 }
@@ -1671,13 +1671,13 @@ void memoryMgrInit(void)
     MEM_ASSERT(sPhysMemList.pQueue != NULL,
                "Failed to create the physical memory list.",
                OS_ERR_NULL_POINTER);
-    KERNEL_SPINLOCK_INIT(sPhysMemList.lock);
+    SPINLOCK_INIT(sPhysMemList.lock);
 
     sKernelFreePagesList.pQueue = kQueueCreate();
     MEM_ASSERT(sKernelFreePagesList.pQueue != NULL,
                "Failed to create the free page list.",
                OS_ERR_NULL_POINTER);
-    KERNEL_SPINLOCK_INIT(sKernelFreePagesList.lock);
+    SPINLOCK_INIT(sKernelFreePagesList.lock);
 
     /* Detect the memory */
     _memoryMgrDetectMemory();

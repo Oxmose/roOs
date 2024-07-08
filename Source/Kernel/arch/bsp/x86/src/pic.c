@@ -237,7 +237,7 @@ static int32_t _picGetInterruptLine(const uint32_t kIrqNumber);
 /** @brief PIC driver instance. */
 static driver_t sX86PICDriver = {
     .pName         = "X86 PIC Driver",
-    .pDescription  = "X86 Programable Interrupt Controler Driver for UTK",
+    .pDescription  = "X86 Programable Interrupt Controler Driver for roOs",
     .pCompatible   = "x86,x86-pic",
     .pVersion      = "2.0",
     .pDriverAttach = _picAttach

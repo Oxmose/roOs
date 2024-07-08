@@ -35,7 +35,6 @@
 #include <kerror.h>       /* Kernel error */
 #include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* FDT driver */
-#include <critical.h>     /* Kernel critical locks */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
 #include <kerneloutput.h> /* Kernel output manager */
@@ -122,9 +121,6 @@ typedef struct io_apic_controler_t
 
     /** @brief Last IRQ handled by the current IO-APIC. */
     uint8_t gsil;
-
-    /** @brief Controler's lock */
-    kernel_spinlock_t lock;
 
     /** @brief On system with multiple IO-APICs link to the next */
     struct io_apic_controler_t* pNext;
@@ -264,7 +260,8 @@ static inline void _ioapicWrite(const io_apic_controler_t* kpCtrl,
 /** @brief PIC driver instance. */
 static driver_t sX86IOAPICDriver = {
     .pName         = "X86 IO-APIC Driver",
-    .pDescription  = "X86 Advanced Programable Interrupt Controler Driver for UTK",
+    .pDescription  = "X86 Advanced Programable Interrupt Controler Driver for"
+                     " roOs",
     .pCompatible   = "x86,x86-io-apic",
     .pVersion      = "2.0",
     .pDriverAttach = _ioapicAttach
@@ -385,9 +382,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
         /* Link IO APIC controller */
         pNewDrvCtrl->pNext = spDrvCtrl;
         spDrvCtrl = pNewDrvCtrl;
-
-        /* Set the spinlock and driver */
-        KERNEL_SPINLOCK_INIT(pNewDrvCtrl->lock);
 
         /* Map the IO APIC */
         ioApicPhysAddr = kpIOAPICNode->ioApic.ioApicAddr & ~PAGE_SIZE_MASK;
@@ -551,8 +545,6 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
     /* Update the IRQ for the table */
     remapIrq = kIrqNumber - pCtrl->gsib;
 
-    KERNEL_CRITICAL_LOCK(pCtrl->lock);
-
     /* Set the mask, IO APIC uses physical destination only to core 0 */
     entryLow = _ioapicGetInterruptLine(kIrqNumber);
     if(kEnabled == FALSE)
@@ -564,8 +556,6 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
         entryLow  &= ~(1 << 16);
     }
     _ioapicWrite(pCtrl, IOREDTBLXL(remapIrq), entryLow);
-
-    KERNEL_CRITICAL_UNLOCK(pCtrl->lock);
 
     KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
                  MODULE_NAME,

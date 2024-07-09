@@ -122,6 +122,21 @@ typedef struct
     uint64_t isContextSaved;
 } __attribute__((packed)) virtual_cpu_t;
 
+/** @brief BIOS call CPU abstraction. Used to store the CPU registers value. */
+typedef struct
+{
+    /** @brief CPU ax register */
+    uint16_t ax;
+    /** @brief CPU bx register */
+    uint16_t bx;
+    /** @brief CPU cx register */
+    uint16_t cx;
+    /** @brief CPU ax register */
+    uint16_t dx;
+    /** @brief CPU flags register */
+    uint16_t flags;
+} __attribute__((__packed__)) bios_int_regs_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -353,6 +368,20 @@ void cpuSetPageDirectory(const uintptr_t kNewPgDir);
  * invalidate.
  */
 void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress);
+
+/**
+ * @brief Issue a bios interrupt.
+ *
+ * @details Switch the CPU to real mode and raise an interrupt. This interrupt
+ * should be handled by the BIOS IVT.
+ *
+ * @param[in, out] pRegs The array containing the registers values for the call.
+ * @param[in] kIntNumber The interrupt number to raise.
+ *
+ * @return OS_NO_ERR is returned in case of success. Otherwise an error code is
+ * returned.
+ */
+void cpuBiosCall(bios_int_regs_t* pRegs, const uint8_t kIntNumber);
 
 #endif /* #ifndef __X8664_X86_CPU_H_ */
 

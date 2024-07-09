@@ -19,8 +19,9 @@ KERNEL_MEM_OFFSET = 0xE0000000;
 /* Memory map */
 MEMORY
 {
-    LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 256
-    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 256
+    LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 1K
+    BIOS_CALL_REGION        (rwx)   :   ORIGIN = 0x00009000,    LENGTH = 1K
+    LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 1K
 
     KERNEL_CODE             (rx)    :   ORIGIN = 0xE0101000,    LENGTH = 128K
     KERNEL_RO_DATA          (r)     :   ORIGIN = 0xE0121000,    LENGTH = 64K
@@ -48,6 +49,17 @@ SECTIONS
         *(.low_ap_startup_code)
         _END_LOW_AP_STARTUP_ADDR = .;
     } > LOW_AP_STARTUP_CODE
+
+    /* Contains the bios call code and data */
+    . = ORIGIN(BIOS_CALL_REGION);
+    .bios_call_region ALIGN(4K) :
+    {
+        _START_BIOS_CALL_ADDR = .;
+        *(.bios_call_code)
+        . = ALIGN(16);
+        *(.bios_call_data)
+        _END_BIOS_CALL_ADDR = .;
+    } > BIOS_CALL_REGION
 
     /* Contains the startup code used by grub to bootstrap the kernel */
     . = ORIGIN(LOW_STARTUP_CODE);

@@ -459,6 +459,10 @@ static void _memoryMgrInitPaging(void);
 extern uint8_t _START_LOW_AP_STARTUP_ADDR;
 /** @brief Kernel symbols mapping: High AP startup address start. */
 extern uint8_t _END_LOW_AP_STARTUP_ADDR;
+/** @brief Kernel symbols mapping: Bios call region address start. */
+extern uint8_t _START_BIOS_CALL_ADDR;
+/** @brief Kernel symbols mapping: Bios call region address end. */
+extern uint8_t _END_BIOS_CALL_ADDR;
 /** @brief Kernel symbols mapping: Low startup address start. */
 extern uint8_t _START_LOW_STARTUP_ADDR;
 /** @brief Kernel symbols mapping: Low startup address end. */
@@ -2403,6 +2407,11 @@ static void _memoryMgrInitPaging(void)
                               (uintptr_t)&_START_LOW_AP_STARTUP_ADDR,
                               (uintptr_t)&_END_LOW_AP_STARTUP_ADDR,
                               MEMMGR_MAP_RO | MEMMGR_MAP_EXEC);
+    _memoryMgrMapKernelRegion(&kernelSectionStart,
+                              &kernelSectionEnd,
+                              (uintptr_t)&_START_BIOS_CALL_ADDR,
+                              (uintptr_t)&_END_BIOS_CALL_ADDR,
+                              MEMMGR_MAP_RW | MEMMGR_MAP_EXEC);
     _memoryMgrMapKernelRegion(&kernelSectionStart,
                               &kernelSectionEnd,
                               (uintptr_t)&_START_TEXT_ADDR,

@@ -284,7 +284,7 @@ static void testMutualExc(void)
                                         0,
                                         "SEM_MUTUALEXC_TEST",
                                         0x1000,
-                                        (1ULL << (i % MAX_CPU_COUNT)),
+                                        (1ULL << (i % SOC_CPU_COUNT)),
                                         testMutualExcRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -363,7 +363,7 @@ static void testOrder(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_ORDER_TEST",
                                         0x1000,
-                                        (1ULL << (i % MAX_CPU_COUNT)),
+                                        (1ULL << (i % SOC_CPU_COUNT)),
                                         tesOrderRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -436,7 +436,7 @@ static void testFifo(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_FIFO_TEST",
                                         0x1000,
-                                        (1ULL << (i % MAX_CPU_COUNT)),
+                                        (1ULL << (i % SOC_CPU_COUNT)),
                                         testFifoRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -514,7 +514,7 @@ static void testDestroy(void)
                                         0,
                                         "SEM_CANCEL_TEST",
                                         0x1000,
-                                        (1ULL << (i % MAX_CPU_COUNT)),
+                                        (1ULL << (i % SOC_CPU_COUNT)),
                                         testCancelRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -591,7 +591,7 @@ static void testTrypend(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_TRYPEND_TEST",
                                         0x1000,
-                                        (1ULL << (i % MAX_CPU_COUNT)),
+                                        (1ULL << (i % SOC_CPU_COUNT)),
                                         testTrypendRoutine,
                                         (void*)(uintptr_t)i);
 

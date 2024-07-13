@@ -31,7 +31,7 @@
  ******************************************************************************/
 
 /* The afinity is defined as a 64 bits bitmask */
-#if MAX_CPU_COUNT > 64
+#if SOC_CPU_COUNT > 64
 #error "Affinity cannot handle enough processor"
 #endif
 
@@ -142,6 +142,9 @@ typedef struct
 
     /** @brief Error information defined error: address of the error */
     uintptr_t instAddr;
+
+    /** @brief Stores the virtual CPU at the moment of the error */
+    void* pExecVCpu;
 } thread_error_table_t;
 
 /** @brief This is the representation of the thread for the kernel. */
@@ -151,6 +154,12 @@ typedef struct kernel_thread_t
      * structure for easy interface with assembly.
      */
     void* pVCpu;
+
+    /** @brief Thread's regular virtual CPU context */
+    void* pThreadVCpu;
+
+    /** @brief Thread's signal virtual CPU context */
+    void* pSignalVCpu;
 
     /**************************************
      * Thread properties

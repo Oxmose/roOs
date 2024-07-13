@@ -424,13 +424,15 @@ static const key_mapper_t ksQwertyMap = {
  ******************************************************************************/
 static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*   kpUintProp;
-    size_t            propLen;
-    OS_RETURN_E       retCode;
-    kbd_controler_t*  pDrvCtrl;
-    console_driver_t* pConsoleDrv;
-    bool_t            isSemInit;
-    bool_t            isInputBufferSet;
+    const uint32_t*    kpUintProp;
+    size_t             propLen;
+    OS_RETURN_E        retCode;
+    kbd_controler_t*   pDrvCtrl;
+    console_driver_t*  pConsoleDrv;
+    bool_t             isSemInit;
+    bool_t             isInputBufferSet;
+    kgeneric_driver_t* pGenericDriver;
+
 
     KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
                        TRACE_X86_KEYBOARD_ATTACH_ENTRY,
@@ -438,11 +440,19 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
 
     pDrvCtrl    = NULL;
     pConsoleDrv = NULL;
+    pGenericDriver = NULL;
 
     isSemInit        = FALSE;
     isInputBufferSet = FALSE;
 
     /* Init structures */
+    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
+    if(pGenericDriver == NULL)
+    {
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
     pDrvCtrl = kmalloc(sizeof(kbd_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -458,6 +468,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
+    memset(pConsoleDrv, 0, sizeof(console_driver_t));
     pConsoleDrv->outputDriver.pClear           = NULL;
     pConsoleDrv->outputDriver.pPutCursor       = NULL;
     pConsoleDrv->outputDriver.pSaveCursor      = NULL;
@@ -467,10 +478,13 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->outputDriver.pSaveColorScheme = NULL;
     pConsoleDrv->outputDriver.pPutString       = NULL;
     pConsoleDrv->outputDriver.pPutChar         = NULL;
+    pConsoleDrv->outputDriver.pFlush           = NULL;
     pConsoleDrv->outputDriver.pDriverCtrl      = NULL;
     pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
     pConsoleDrv->inputDriver.pRead             = _kbdRead;
     pConsoleDrv->inputDriver.pEcho             = _kbdSetEcho;
+
+    pGenericDriver->pConsoleDriver = pConsoleDrv;
 
     /* Get the keyboard CPU communication ports */
     kpUintProp = fdtGetProp(pkFdtNode, KBD_FDT_COMM_PROP, &propLen);
@@ -539,7 +553,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     spInputCtrl = pDrvCtrl;
 
     /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pConsoleDrv);
+    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
 
 ATTACH_END:
 
@@ -560,6 +574,10 @@ ATTACH_END:
         if(pConsoleDrv != NULL)
         {
             kfree(pConsoleDrv);
+        }
+        if(pGenericDriver != NULL)
+        {
+            kfree(pGenericDriver);
         }
     }
 
@@ -597,6 +615,9 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 
     /* Check is we received a data */
     data = _manageKeycode(_cpuInB(spInputCtrl->cpuDataPort));
+
+    /* Set EOI */
+    interruptIRQSetEOI(spInputCtrl->irqNumber);
 
     if(data != 0)
     {
@@ -640,9 +661,6 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
                    error);
 
     }
-
-    /* Set EOI */
-    interruptIRQSetEOI(spInputCtrl->irqNumber);
 
     KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
                        TRACE_X86_KEYBOARD_INT_HANDLER_EXIT,

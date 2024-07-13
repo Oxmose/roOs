@@ -263,15 +263,14 @@ void _schedScheduleHandler(kernel_thread_t* pThread);
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/** @brief Stores the number of booted CPUs defined by the CPU */
-extern volatile uint32_t _bootedCPUCount;
+/* None */
 
 /************************* Exported global variables **************************/
 /**
  * @brief Pointers to the current kernel thread. One per CPU.
  * Used in assembly code
  */
-kernel_thread_t* pCurrentThreadsPtr[MAX_CPU_COUNT] = {NULL};
+kernel_thread_t* pCurrentThreadsPtr[SOC_CPU_COUNT] = {NULL};
 
 /************************** Static global variables ***************************/
 /** @brief The last TID given by the kernel. */
@@ -281,22 +280,22 @@ static u32_atomic_t sLastGivenTid;
 static u32_atomic_t sThreadCount;
 
 /** @brief Count of the number of times the scheduler was called per CPU. */
-static uint64_t sScheduleCount[MAX_CPU_COUNT];
+static uint64_t sScheduleCount[SOC_CPU_COUNT];
 
 /** @brief Stores the thread tables for all CPUs */
-static thread_table_t sThreadTables[MAX_CPU_COUNT];
+static thread_table_t sThreadTables[SOC_CPU_COUNT];
 
 /** @brief Stores the list of sleeping threads */
-static thread_general_table_t sSleepingThreadsTable[MAX_CPU_COUNT];
+static thread_general_table_t sSleepingThreadsTable[SOC_CPU_COUNT];
 
 /** @brief Stores the list of zombie threads */
 static thread_general_table_t sZombieThreadsTable;
 
 /** @brief Pointers to the idle threads allocated per CPU. */
-static kernel_thread_t* spIdleThread[MAX_CPU_COUNT];
+static kernel_thread_t* spIdleThread[SOC_CPU_COUNT];
 
 /** @brief The number of time IDLE was scheduled during the last window. */
-static uint64_t sIdleSchedCount[MAX_CPU_COUNT];
+static uint64_t sIdleSchedCount[SOC_CPU_COUNT];
 
 /** @brief Stores the thread's information table */
 static kqueue_t* spThreadList;
@@ -305,13 +304,13 @@ static kqueue_t* spThreadList;
 static spinlock_t sThreadListLock;
 
 /** @brief Stores the calculated CPU load for the last window */
-static uint64_t sCpuLoad[MAX_CPU_COUNT];
+static uint64_t sCpuLoad[SOC_CPU_COUNT];
 
 /** @brief Stores the scheduler interrupt line */
 static uint32_t sSchedulerInterruptLine;
 
 /** @brief Tells if the scheduler was forced at least once */
-static bool_t sFirstSched[MAX_CPU_COUNT] = {FALSE};
+static bool_t sFirstSched[SOC_CPU_COUNT] = {FALSE};
 
 /*******************************************************************************
  * FUNCTIONS
@@ -331,6 +330,7 @@ static void* _idleRoutine(void* pArgs)
                 pCurrentThreadsPtr[cpuId]->tid,
                 cpuId,
                 cpuGetId());
+
     while(TRUE)
     {
         interruptRestore(1);
@@ -459,7 +459,7 @@ static void _createIdleThreads(void)
                        TRACE_SHEDULER_CREATE_IDLE_THREADS_ENTRY,
                        0);
 
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         /* Allocate new structure */
         spIdleThread[i] = kmalloc(sizeof(kernel_thread_t));
@@ -502,11 +502,21 @@ static void _createIdleThreads(void)
         spIdleThread[i]->kernelStackSize = KERNEL_STACK_SIZE;
 
         /* Allocate the vCPU */
-        spIdleThread[i]->pVCpu = (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                                            spIdleThread[i]);
-        SCHED_ASSERT(spIdleThread[i]->pVCpu != NULL,
+        spIdleThread[i]->pThreadVCpu =
+                                  (void*)cpuCreateVirtualCPU(_threadEntryPoint,
+                                                             spIdleThread[i]);
+        SCHED_ASSERT(spIdleThread[i]->pThreadVCpu != NULL,
                      "Failed to allocate IDLE thread VCPU",
                      OS_ERR_NO_MORE_MEMORY);
+        spIdleThread[i]->pSignalVCpu =
+                                  (void*)cpuCreateVirtualCPU(NULL,
+                                                             spIdleThread[i]);
+        SCHED_ASSERT(spIdleThread[i]->pSignalVCpu != NULL,
+                     "Failed to allocate IDLE thread signal VCPU",
+                     OS_ERR_NO_MORE_MEMORY);
+
+        /* Set the current vCPU as the regular thread vCPU */
+        spIdleThread[i]->pVCpu = spIdleThread[i]->pThreadVCpu;
 
         /* Set idle to READY */
         spIdleThread[i]->currentState  = THREAD_STATE_RUNNING;
@@ -682,8 +692,9 @@ static void _schedCleanThread(kernel_thread_t* pThread)
 
     /* TODO: Destroy the regular stack */
 
-    /* Destroy the virutal CPU */
-    cpuDestroyVirtualCPU((uintptr_t)pThread->pVCpu);
+    /* Destroy the virutal CPUs */
+    cpuDestroyVirtualCPU((uintptr_t)pThread->pThreadVCpu);
+    cpuDestroyVirtualCPU((uintptr_t)pThread->pSignalVCpu);
 
     /* Clear the active thread node, it should not be in any queue */
     kQueueDestroyNode((kqueue_node_t**)&pThread->pThreadNode);
@@ -726,12 +737,12 @@ void schedInit(void)
     /* Init values */
     sLastGivenTid = 0;
     sThreadCount  = 0;
-    memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * MAX_CPU_COUNT);
-    memset(sScheduleCount, 0, sizeof(uint64_t) * MAX_CPU_COUNT);
-    memset(sIdleSchedCount, 0, sizeof(uint64_t) * MAX_CPU_COUNT);
+    memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * SOC_CPU_COUNT);
+    memset(sScheduleCount, 0, sizeof(uint64_t) * SOC_CPU_COUNT);
+    memset(sIdleSchedCount, 0, sizeof(uint64_t) * SOC_CPU_COUNT);
 
     /* Initialize the thread table */
-    for(j = 0; j < MAX_CPU_COUNT; ++j)
+    for(j = 0; j < SOC_CPU_COUNT; ++j)
     {
         sThreadTables[j].highestPriority = KERNEL_LOWEST_PRIORITY;
         sThreadTables[j].threadCount     = 0;
@@ -759,7 +770,7 @@ void schedInit(void)
     _createIdleThreads();
 
     /* Set idle as current thread for all CPUs */
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         pCurrentThreadsPtr[i] = spIdleThread[i];
     }
@@ -790,12 +801,13 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
     thread_table_t*  pCurrentTable;
     kernel_thread_t* pThread;
 
+
     KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
                        TRACE_SHEDULER_SCHEDULE_ENTRY,
                        1,
                        schedGetCurrentThread()->tid);
 
-    SCHED_ASSERT(cpuGeIntState() == 0,
+    SCHED_ASSERT(cpuGetIntState() == 0,
                  "Called scheduler no int with interrupt enabled",
                  OS_ERR_UNAUTHORIZED_ACTION);
 
@@ -897,8 +909,7 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
                        1,
                        pCurrentThreadsPtr[cpuId]->tid);
 
-
-    /* We should never comme back */
+    /* We should never come back */
     cpuRestoreContext(pThread);
 
     SCHED_ASSERT(FALSE,
@@ -936,11 +947,11 @@ void schedReleaseThread(kernel_thread_t*     pThread,
 
     /* Get the CPU list to release to */
     lastCpuLoad = 1000.0;
-    cpuId       = _bootedCPUCount;
+    cpuId       = SOC_CPU_COUNT;
 
     if(pThread->affinity != 0)
     {
-        for(i = 0; i < _bootedCPUCount; ++i)
+        for(i = 0; i < SOC_CPU_COUNT; ++i)
         {
             if(((1ULL << i) & pThread->affinity) != 0)
             {
@@ -954,7 +965,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
     }
     else
     {
-        for(i = 0; i < _bootedCPUCount; ++i)
+        for(i = 0; i < SOC_CPU_COUNT; ++i)
         {
             if(lastCpuLoad > sCpuLoad[i])
             {
@@ -964,7 +975,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
         }
     }
 
-    SCHED_ASSERT(cpuId != _bootedCPUCount,
+    SCHED_ASSERT(cpuId != SOC_CPU_COUNT,
                  "Failed to find a CPU to relase the thread",
                  OS_ERR_INCORRECT_VALUE);
 
@@ -1016,6 +1027,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
     {
         KERNEL_UNLOCK(pThread->lock);
     }
+
     if(sFirstSched[cpuId] == TRUE && requestSched != -1)
     {
         if(requestSched == cpuGetId())
@@ -1037,9 +1049,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
         {
             /* Request schedule on other CPU */
             ipiParams.function = IPI_FUNC_SCHEDULE;
-            //cpuMgtSendIpi(CPU_IPI_SEND_TO(requestSched), &ipiParams);
-            (void)ipiParams;
-            /* TODO: Fix the issue */
+            cpuMgtSendIpi(CPU_IPI_SEND_TO(requestSched), &ipiParams);
         }
     }
     KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
@@ -1178,7 +1188,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     }
 
     /* Validate parameters */
-    if((kAffinitySet >> _bootedCPUCount) != 0 ||
+    if((kAffinitySet >> SOC_CPU_COUNT) != 0 ||
         kPriority > KERNEL_LOWEST_PRIORITY ||
         ppThread == NULL ||
         pRoutine == NULL ||
@@ -1217,14 +1227,24 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pNewThread->kernelStackEnd  = pNewThread->stackEnd;
     pNewThread->kernelStackSize = kStackSize;
 
-    /* Allocate the vCPU */
-    pNewThread->pVCpu = (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                                   pNewThread);
-    if(pNewThread->pVCpu == NULL)
+    /* Allocate the vCPUs */
+    pNewThread->pThreadVCpu = (void*)cpuCreateVirtualCPU(_threadEntryPoint,
+                                                         pNewThread);
+    if(pNewThread->pThreadVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
         goto SCHED_CREATE_KTHREAD_END;
     }
+    pNewThread->pSignalVCpu = (void*)cpuCreateVirtualCPU(NULL,
+                                                         pNewThread);
+    if(pNewThread->pSignalVCpu == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+
+    /* Set the current vCPU as the regular thread vCPU */
+    pNewThread->pVCpu = pNewThread->pThreadVCpu;
 
     /* Set thread to READY */
     pNewThread->currentState  = THREAD_STATE_READY;
@@ -1288,9 +1308,13 @@ SCHED_CREATE_KTHREAD_END:
                                       pNewThread->kernelStackSize);
 
             }
-            if(pNewThread->pVCpu != NULL)
+            if(pNewThread->pThreadVCpu != NULL)
             {
-                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pVCpu);
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pThreadVCpu);
+            }
+            if(pNewThread->pSignalVCpu != NULL)
+            {
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
             }
             if(pNewThread->pThreadResources != NULL)
             {
@@ -1371,7 +1395,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
     }
 
     /* Check if we are not joining idle */
-    for(cpuId = 0; cpuId < MAX_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
     {
         if(pThread == spIdleThread[cpuId] || pCurThread == spIdleThread[cpuId])
         {
@@ -1487,7 +1511,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
 
 uint64_t schedGetCpuLoad(const uint8_t kCpuId)
 {
-    if(kCpuId < _bootedCPUCount)
+    if(kCpuId < SOC_CPU_COUNT)
     {
         return sCpuLoad[kCpuId];
     }
@@ -1736,7 +1760,7 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     }
 
     /* Cannot terminate idle thread */
-    for(cpuId = 0; cpuId < MAX_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
     {
         if(pThread == spIdleThread[cpuId])
         {

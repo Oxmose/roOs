@@ -1420,7 +1420,7 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
                          ((lapic_t*)madtEntry)->lapicId,
                          ((lapic_t*)madtEntry)->flags);
 
-            if(sDrvCtrl.detectedCPUCount < MAX_CPU_COUNT)
+            if(sDrvCtrl.detectedCPUCount < SOC_CPU_COUNT)
             {
                 /* Create new LAPIC node */
                 pLapicNode = kmalloc(sizeof(lapic_node_t));
@@ -1440,7 +1440,7 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
             else
             {
                 KERNEL_INFO("Exceeded CPU count (%u), ignoring CPU %d\n",
-                            MAX_CPU_COUNT,
+                            SOC_CPU_COUNT,
                             ((lapic_t*)madtEntry)->cpuId);
             }
         }

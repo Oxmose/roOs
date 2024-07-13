@@ -24,8 +24,10 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <kerror.h>  /* Kernel error codes */
-#include <devtree.h> /* FDT library */
+#include <kerror.h>   /* Kernel error codes */
+#include <devtree.h>  /* FDT library */
+#include <console.h>  /* Console driver */
+#include <graphics.h> /* Graphics driver*/
 
 /*******************************************************************************
  * CONSTANTS
@@ -62,6 +64,17 @@ typedef struct
      */
     OS_RETURN_E (*pDriverAttach)(const fdt_node_t* pkFdtNode);
 } driver_t;
+
+/** @brief Define a generic driver structure used by the system */
+typedef struct
+{
+    /** @brief Pointer to the console driver */
+    console_driver_t* pConsoleDriver;
+
+    /** @brief Pointer to the graphics driver */
+    graphics_driver_t* pGraphicsDriver;
+} kgeneric_driver_t;
+
 
 /*******************************************************************************
  * MACROS

@@ -135,6 +135,28 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
                       OS_RETURN_E*   pError);
 
 /**
+ * @brief Maps a physical memory region in the kernel address space.
+ *
+ * @details Maps a physical memory region in the kernel address space. The
+ * function allocated free memory frames to the kernel and creates a new
+ * mapping. The size must be aligned on page boundaries. If not, the mapping
+ * fails and NULL is returned.
+ *
+ * @param[in] kSize The size of the region to map in bytes. Must be aligned on
+ * page boundaries.
+ * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
+ * infomation.
+ * @param[out] pError The error buffer to store the operation's result. If NULL,
+ * does not set the error value.
+ *
+ * @return The function returns the virtual base address of the mapped region.
+ * NULL is returned on error.
+ */
+void* memoryKernelAllocate(const size_t   kSize,
+                           const uint32_t kFlags,
+                           OS_RETURN_E*   pError);
+
+/**
  * @brief Unmaps a virtual region (memory or hardware) from the kernel address
  * space.
  *
@@ -153,11 +175,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
  *
  * @return The function returns the virtual base address of the mapped region.
  * NULL is returned on error.
- *
-  * @warning The mapping does not release the physical address to the free
- * free memory. Thus, if the user wants to ensure this memory region to be
- * used later memoryFreeFrames must be used when using physical memory. This
- * does not apply to hardware mapping.
  */
 OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
 

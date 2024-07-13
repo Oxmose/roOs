@@ -115,7 +115,7 @@ typedef struct
     /** @brief Virtual CPU context */
     cpu_state_t cpuState;
 
-    /** @brief FXSAVE / FXRSTORE data region */
+    /** @brief FXSAVE / FXRSTOR data region */
     uint8_t fxData[FXDATA_REGION_SIZE];
 
     /** @brief Last context save status */
@@ -373,15 +373,34 @@ void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress);
  * @brief Issue a bios interrupt.
  *
  * @details Switch the CPU to real mode and raise an interrupt. This interrupt
- * should be handled by the BIOS IVT.
+ * should be handled by the BIOS IVT. This function is not thread safe.
  *
  * @param[in, out] pRegs The array containing the registers values for the call.
  * @param[in] kIntNumber The interrupt number to raise.
- *
- * @return OS_NO_ERR is returned in case of success. Otherwise an error code is
- * returned.
+ * @param[out] pBuffer The buffer used to receive the generated data is any.
+ * @param[in] kBufferSize The size of the data buffer.
+ * @param[out] pInitialDataLocation In the case data were to be copied in the
+ * buffer, this parameter is set with the initial location of the data before
+ * the copy.
  */
-void cpuBiosCall(bios_int_regs_t* pRegs, const uint8_t kIntNumber);
+void cpuBiosCall(bios_int_regs_t* pRegs,
+                 const uint8_t    kIntNumber,
+                 void*            pBuffer,
+                 const size_t     kBufferSize,
+                 uint32_t*        pInitialDataLocation);
+
+/**
+ * @brief CPU Redirection handler entry point.
+ *
+ * @details CPU Redirection handler entry point. This function is put on the
+ * RIP of a thread that needs execution redirection. In this function, the
+ * stack is used (at RSP) to get the address of the function to be called by
+ * the handler.
+ *
+ * @warning Never call this function directly, this function is only used to be
+ * put in the thread's VCPU along with the stack modification that it requires.
+ */
+void cpuSignalHandler(void);
 
 #endif /* #ifndef __X8664_X86_CPU_H_ */
 

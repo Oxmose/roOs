@@ -92,9 +92,6 @@ typedef struct
     /** @brief Stores the curent screen's cursor settings. */
     cursor_t screenCursor;
 
-    /** @brief Column index of the last printed character for each line. */
-    uint8_t* pLastColumns;
-
     /** @brief VGA frame buffer address. */
     uint16_t* pFramebuffer;
 
@@ -369,14 +366,24 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     size_t            frameBufferPhysSize;
     void*             mappedFrameBufferAddr;
 
+    kgeneric_driver_t* pGenericDriver;
+
     KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
                        TRACE_X86_VGA_TEXT_ATTACH_ENTRY,
                        0);
 
     pDrvCtrl    = NULL;
     pConsoleDrv = NULL;
+    pGenericDriver = NULL;
 
     /* Init structures */
+    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
+    if(pGenericDriver == NULL)
+    {
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
     pDrvCtrl = kmalloc(sizeof(vga_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -392,6 +399,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
+    memset(pConsoleDrv, 0, sizeof(console_driver_t));
     pConsoleDrv->outputDriver.pClear           = _vgaClearFramebuffer;
     pConsoleDrv->outputDriver.pPutCursor       = _vgaPutCursor;
     pConsoleDrv->outputDriver.pSaveCursor      = _vgaSaveCursor;
@@ -401,10 +409,13 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pConsoleDrv->outputDriver.pSaveColorScheme = _vgaSaveScheme;
     pConsoleDrv->outputDriver.pPutString       = _vgaPutString;
     pConsoleDrv->outputDriver.pPutChar         = _vgaPutChar;
+    pConsoleDrv->outputDriver.pFlush           = NULL;
     pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
     pConsoleDrv->inputDriver.pRead             = NULL;
     pConsoleDrv->inputDriver.pEcho             = NULL;
     pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
+
+    pGenericDriver->pConsoleDriver = pConsoleDrv;
 
     /* Get the VGA framebuffer address */
     ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_REG_PROP, &propLen);
@@ -486,23 +497,13 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
                  "Resolution: %dx%d",
                  pDrvCtrl->columnCount, pDrvCtrl->lineCount);
 
-    /* Init last columns manager */
-    pDrvCtrl->pLastColumns =
-        (uint8_t*)kmalloc(pDrvCtrl->lineCount * sizeof(uint8_t));
-    if(pDrvCtrl->pLastColumns == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pDrvCtrl->pLastColumns, 0, pDrvCtrl->lineCount * sizeof(uint8_t));
-
     /* Set initial scheme */
     initScheme.background = BG_BLACK;
     initScheme.foreground = FG_WHITE;
     _vgaSetScheme(pDrvCtrl, &initScheme);
 
     /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pConsoleDrv);
+    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
 
     KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA driver initialized");
 
@@ -511,15 +512,15 @@ ATTACH_END:
     {
         if(pDrvCtrl != NULL)
         {
-            if(pDrvCtrl->pLastColumns != NULL)
-            {
-                kfree(pDrvCtrl->pLastColumns);
-            }
             kfree(pDrvCtrl);
         }
         if(pConsoleDrv != NULL)
         {
             kfree(pConsoleDrv);
+        }
+        if(pGenericDriver != NULL)
+        {
+            kfree(pGenericDriver);
         }
     }
 
@@ -597,12 +598,10 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
     /* If character is a normal ASCII character */
     if(kCharacter > 31 && kCharacter < 127)
     {
-         /* Manage end of line cursor position */
+        /* Manage end of line cursor position */
         if((uint8_t)pCtrl->screenCursor.x > pCtrl->columnCount - 1)
         {
             _vgaPutCursorSafe(pDriverCtrl, pCtrl->screenCursor.y + 1, 0);
-            pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                pCtrl->screenCursor.x;
         }
 
         /* Manage end of screen cursor position */
@@ -617,8 +616,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
             _vgaPutCursorSafe(pDriverCtrl,
                               pCtrl->screenCursor.y,
                               pCtrl->screenCursor.x);
-            pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                pCtrl->screenCursor.x;
         }
 
         /* Display character and move cursor */
@@ -644,7 +641,7 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 {
                     _vgaPutCursorSafe(pDriverCtrl,
                                       pCtrl->screenCursor.y - 1,
-                                      pCtrl->pLastColumns[pCtrl->screenCursor.y]);
+                                      pCtrl->columnCount - 1);
                 }
                 break;
             /* Tab */
@@ -663,8 +660,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                                       pCtrl->screenCursor.y,
                                       pCtrl->columnCount - 1);
                 }
-                pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                    pCtrl->screenCursor.x;
                 break;
             /* Line feed */
             case '\n':
@@ -673,8 +668,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                     _vgaPutCursorSafe(pDriverCtrl,
                                       pCtrl->screenCursor.y + 1,
                                       0);
-                    pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                        pCtrl->screenCursor.x;
                 }
                 else
                 {
@@ -689,8 +682,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
             /* Line return */
             case '\r':
                 _vgaPutCursorSafe(pDriverCtrl, pCtrl->screenCursor.y, 0);
-                pCtrl->pLastColumns[pCtrl->screenCursor.y] =
-                    pCtrl->screenCursor.x;
                 break;
             /* Undefined */
             default:
@@ -793,9 +784,7 @@ static void _vgaScrollSafe(vga_controler_t*         pCtrl,
                 memmove(GET_FRAME_BUFFER_AT(pCtrl, i, 0),
                         GET_FRAME_BUFFER_AT(pCtrl, i + 1, 0),
                         sizeof(uint16_t) * pCtrl->columnCount);
-                pCtrl->pLastColumns[i] = pCtrl->pLastColumns[i+1];
             }
-            pCtrl->pLastColumns[pCtrl->lineCount - 1] = 0;
         }
         /* Clear last line */
         for(i = 0; i < pCtrl->columnCount; ++i)
@@ -805,7 +794,6 @@ static void _vgaScrollSafe(vga_controler_t*         pCtrl,
 
         /* Replace cursor */
         _vgaPutCursorSafe(pCtrl, pCtrl->lineCount - toScroll, 0);
-
     }
 }
 

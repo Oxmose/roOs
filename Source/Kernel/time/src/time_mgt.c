@@ -162,13 +162,13 @@ static kernel_timer_t sSysLifetimeTimer = {
 /** @brief Stores the number of main kernel's timer tick since the
  * initialization of the time manager.
  */
-static uint64_t sSysTickCount[MAX_CPU_COUNT] = {0};
+static uint64_t sSysTickCount[SOC_CPU_COUNT] = {0};
 
 /** @brief Auxiliary timers list */
 static kqueue_t* spAuxTimersQueue = NULL;
 
 /** @brief Active wait counter per CPU. */
-static volatile uint64_t sActiveWait[MAX_CPU_COUNT] = {0};
+static volatile uint64_t sActiveWait[SOC_CPU_COUNT] = {0};
 
 /** @brief Auxiliary timers list lock */
 static spinlock_t auxTimersListLock = SPINLOCK_INIT_VALUE;
@@ -401,7 +401,7 @@ uint64_t timeGetUptime(void)
     {
         /* Get the highest time tick */
         maxTick = 0;
-        for(i = 0; i < MAX_CPU_COUNT; ++i)
+        for(i = 0; i < SOC_CPU_COUNT; ++i)
         {
             if(maxTick < sSysTickCount[i])
             {
@@ -459,7 +459,7 @@ uint64_t timeGetTicks(const uint8_t kCpuId)
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_GET_TICKS,
                        0);
-    if(kCpuId < MAX_CPU_COUNT)
+    if(kCpuId < SOC_CPU_COUNT)
     {
         return sSysTickCount[kCpuId];
     }

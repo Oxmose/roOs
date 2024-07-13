@@ -8,7 +8,7 @@
 ;
 ; Version: 1.0
 ;
-; CPU context manager for i386
+; CPU context manager for x64
 ; Allows saving and restoring the CPU context.
 ;
 ;
@@ -71,7 +71,7 @@ extern pCurrentThreadsPtr
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
-extern kernelPanic
+extern schedScheduleNoInt
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -79,12 +79,13 @@ extern kernelPanic
 global cpuSaveContext
 global cpuRestoreContext
 global cpuGetId
+global cpuSignalHandler
 
 ;-------------------------------------------------------------------------------
 ; CODE
 ;-------------------------------------------------------------------------------
-
 section .text
+
 cpuSaveContext:
     ; Save a bit of context
     push rax
@@ -92,8 +93,8 @@ cpuSaveContext:
     push rdx
 
     ; Get the current thread handle and VCPU
-    mov rbx, 8
     call cpuGetId
+    mov rbx, 8
     mul rbx
     mov rbx, pCurrentThreadsPtr
     add rax, rbx
@@ -224,6 +225,42 @@ cpuGetId:
     sub rax, FIRST_GDT_TSS_SEGMENT
     shr rax, 4
     ret
+
+cpuSignalHandler:
+    ; Get the function to execute
+    pop rax
+
+    ; Force stack alignement
+    and rsp, 0xFFFFFFFFFFFFFFF0
+
+    ; Call signal handler
+    call rax
+
+    ; We are finished now, update the context to the regular thread context
+    cli
+
+    ; Get the current thread handle
+    call cpuGetId
+    mov rbx, 8
+    mul rbx
+    mov rbx, pCurrentThreadsPtr
+    add rax, rbx
+    mov rbx, [rax]
+
+    ; RBX contains the pointer to the current VCPU, replace with the regular
+    ; VCPU at RBX + 8
+    mov rax, rbx
+    add rax, 8
+    mov rax, [rax]
+    mov [rbx], rax
+
+    call schedScheduleNoInt
+
+cpuSignalHandlerLoop:
+    ; We should never come back
+    cli
+    hlt
+    jmp cpuSignalHandlerLoop
 
 ;-------------------------------------------------------------------------------
 ; DATA

@@ -20,6 +20,7 @@
 ;-------------------------------------------------------------------------------
 
 %define BIOS_CALL_STACK_SIZE 10
+%define BIOS_CALL_DATA_SIZE 0x1000
 %define CODERM 0x0000
 %define DATARM 0x0000
 %define CODE32 0x0008
@@ -38,8 +39,6 @@
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
-extern spinlockAcquire
-extern spinlockRelease
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -55,20 +54,17 @@ section .bios_call_code
 ; Bios Call function
 ;
 ; Param:
-;     Input: ESP + 12: The interrupt number to raise
-;            ESP + 8: The address of the register array used for the call
+;     Input: ESP + 4: The address of the register array used for the call
+;            ESP + 8: The interrupt number to raise
+;            ESP + 12: The buffer to receive produced data
+;            ESP + 16: The size for the buffer to receive produced data
+;            ESP + 20: The initial data location pointer
 
 [bits 32]
 cpuBiosCall:
     ; Save flags and disable interrupts
     pushf
     cli
-
-    ; Lock spinlock
-    mov eax, __biosCallLock
-    push eax
-    call spinlockAcquire
-    pop eax
 
     ; Save all context
     push eax
@@ -79,12 +75,39 @@ cpuBiosCall:
     push edi
     push ebp
 
-    ; Get the interrupt number and set it in the code directly
+    mov eax, [esp + 36]
+    mov [__savedRegPointer], eax
     mov eax, [esp + 44]
+    mov [__savedBufferAddr], eax
+    mov eax, [esp + 48]
+    mov [__savedBufferSize], eax
+    mov eax, [esp + 52]
+    mov [__savedInitialLocationPtr], eax
+
+    mov ecx, [esp + 48]
+    cmp ecx, 0
+    je _biosCallDataToCopyEnd
+
+    ; Check the maximal size
+    cmp ecx, BIOS_CALL_DATA_SIZE
+    jbe _biosCallDataToCopy
+
+    ; If greater, we copy the max size
+    mov ecx, BIOS_CALL_DATA_SIZE
+
+_biosCallDataToCopy:
+    ; Copy the pre-call data
+    mov esi, [esp + 44]
+    mov edi, __savedDataBuffer
+    rep movsb
+
+_biosCallDataToCopyEnd:
+    ; Get the interrupt number and set it in the code directly
+    mov eax, [esp + 40]
     mov [_biosCallIntIssue], al
 
     ; Copy the data to the 16bits stack
-    mov esi, [esp + 40]
+    mov esi, [esp + 36]
     mov edi, __16BitsStackEnd
     mov ecx, BIOS_CALL_STACK_SIZE
     sub edi, ecx
@@ -95,15 +118,15 @@ cpuBiosCall:
     sgdt [__savedGDTPointer]
     sidt [__savedIDTPointer]
 
-    ; Disable paging
-    mov eax, cr0
-    and eax, 0x7FFEFFFF
-    mov cr0, eax
-
     ; Move to 16 bits stack
     mov esp, __16BitsStackEnd
     sub esp, BIOS_CALL_STACK_SIZE
     mov ebp, 0
+
+    ; Disable paging
+    mov eax, cr0
+    and eax, 0x7FFEFFFF
+    mov cr0, eax
 
     ; Load the 16bit Real Mode GDT
     lgdt [_gdt16Ptr]
@@ -137,6 +160,10 @@ _biosCallRealMode:
     mov fs, ax
     mov gs, ax
 
+    ; Set destination register for data
+    lea ax, [__savedDataBuffer]
+    mov di, ax
+
     ; Get the registers
     pop ax
     pop bx
@@ -146,13 +173,18 @@ _biosCallRealMode:
     db 0xCD  ; INT OPCODE
 _biosCallIntIssue:
     db 0x00
+    nop
+    nop
+    nop
+    nop
 
     ; Save the registers and flags
-    push ax
-    push bx
-    push cx
-    push dx
+    add sp, 2
     pushf
+    push dx
+    push cx
+    push bx
+    push ax
 
     ; Enable protected mode
     mov  eax, cr0
@@ -183,10 +215,35 @@ _biosCallProtecteMode:
 
     ; Copy the data to the 16bits stack
     mov esi, __16BitsStackEnd
-    mov edi, [esp + 40]
+    mov edi, [__savedRegPointer]
     mov ecx, BIOS_CALL_STACK_SIZE
     sub esi, ecx
     rep movsb
+
+    ; Check if some data need to be copied from the save data area
+    mov ecx, [__savedBufferSize]
+    cmp ecx, 0
+    je _biosCallEnd
+
+    ; Check the maximal size
+    cmp ecx, BIOS_CALL_DATA_SIZE
+    jbe _biosCallDataFromCopy
+
+    ; If greater, we copy the max size
+    mov ecx, BIOS_CALL_DATA_SIZE
+
+_biosCallDataFromCopy:
+    ; Copy the produced data
+    mov esi, __savedDataBuffer
+    mov edi, [__savedBufferAddr]
+    rep movsb
+
+    ; Copy the initial data location
+    mov eax, [__savedInitialLocationPtr]
+    lea ebx, [__savedDataBuffer]
+    mov [eax], ebx
+
+_biosCallEnd:
 
     ; Restore all context
     pop ebp
@@ -195,12 +252,6 @@ _biosCallProtecteMode:
     pop edx
     pop ecx
     pop ebx
-    pop eax
-
-    ; Release spinlock
-    mov eax, __biosCallLock
-    push eax
-    call spinlockRelease
     pop eax
 
     ; Restore flags
@@ -258,18 +309,36 @@ __16BitsStack:
     times 0x200 db 0x00 ; 512B stack
 __16BitsStackEnd:
 
-__biosCallLock:
-    dd 0x00000000
-
 __savedStackPointer:
     dd 0x00000000
 
 __savedIDTPointer:
     dd 0x00000000
     dd 0x00000000
+    dd 0x00000000
 
 __savedGDTPointer:
     dd 0x00000000
     dd 0x00000000
+    dd 0x00000000
+
+__savedRegPointer:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedBufferAddr:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedBufferSize:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedInitialLocationPtr:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedDataBuffer:
+    times BIOS_CALL_DATA_SIZE db 0x00 ; Saved data
 
 ;************************************ EOF **************************************

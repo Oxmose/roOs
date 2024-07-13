@@ -719,6 +719,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     pCurrentThread->errorTable.segfaultAddr = faultAddress;
     pCurrentThread->errorTable.instAddr =
         cpuGetContextIP(pCurrentThread->pVCpu);
+    pCurrentThread->errorTable.pExecVCpu = pCurrentThread->pVCpu;
     error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
     MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
 
@@ -1700,7 +1701,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
                     --toMap;
                     ++pmlEntry[0];
                 } while(toMap > 0 &&
-                        pmlEntry[0] != KERNEL_PGDIR_ENTRY_COUNT - 1);
+                        pmlEntry[0] != KERNEL_PGDIR_ENTRY_COUNT);
             }
         }
     }
@@ -1720,6 +1721,8 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
 
     return OS_NO_ERR;
 }
+
+
 
 static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                    const size_t    kPageCount)
@@ -1908,6 +1911,9 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     /* If present, unmap */
                     if((pRecurTableEntry[pmlEntry[0]] & PAGE_FLAG_PRESENT) != 0)
                     {
+                        /* TODO: Once we have reference count, free the frame
+                         * if needed */
+
                         /* Set mapping and invalidate */
                         pRecurTableEntry[pmlEntry[0]] = 0;
                         cpuInvalidateTlbEntry(currVirtAddr);
@@ -1921,7 +1927,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     --toUnmap;
                     ++pmlEntry[0];
                 } while(toUnmap > 0 &&
-                        pmlEntry[0] != KERNEL_PGDIR_ENTRY_COUNT - 1);
+                        pmlEntry[0] != KERNEL_PGDIR_ENTRY_COUNT);
 
                 /* Check if we can clean this directory entries */
                 offset = pmlEntry[0];
@@ -2635,6 +2641,160 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
                            8,
                            (uint32_t)((uintptr_t)kPhysicalAddress >> 32),
                            (uint32_t)(uintptr_t)kPhysicalAddress,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           OS_NO_ERR,
+                           (uint32_t)(kernelPages >> 32),
+                           (uint32_t)kernelPages);
+        return (void*)kernelPages;
+    }
+}
+
+void* memoryKernelAllocate(const size_t   kSize,
+                           const uint32_t kFlags,
+                           OS_RETURN_E*   pError)
+{
+    uintptr_t   kernelPages;
+    uintptr_t   kernelFrames;
+    size_t      pageCount;
+    OS_RETURN_E error;
+    uint32_t    intState;
+
+    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                       TRACE_X86_MEMMGR_KERNELALLOCATE_ENTRY,
+                       3,
+                       (uint32_t)(kSize >> 32),
+                       (uint32_t)kSize,
+                       kFlags);
+
+    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Allocating address %dB | Flags: 0x%x",
+                 kSize,
+                 kFlags);
+
+    /* Check size */
+    if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
+    {
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_INCORRECT_VALUE;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           OS_ERR_INCORRECT_VALUE,
+                           (uint32_t)(uintptr_t)NULL,
+                           (uint32_t)(uintptr_t)NULL);
+        return NULL;
+    }
+
+    /* Check flags */
+    if((kFlags & MEMMGR_MAP_HARDWARE) == MEMMGR_MAP_HARDWARE)
+    {
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_INCORRECT_VALUE;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           OS_ERR_INCORRECT_VALUE,
+                           (uint32_t)(uintptr_t)NULL,
+                           (uint32_t)(uintptr_t)NULL);
+        return NULL;
+    }
+
+    pageCount = kSize / KERNEL_PAGE_SIZE;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
+    /* Allocate pages */
+    kernelPages = _allocateKernelPages(pageCount);
+    if(kernelPages == 0)
+    {
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_NO_MORE_MEMORY;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           OS_ERR_NO_MORE_MEMORY,
+                           (uint32_t)(uintptr_t)NULL,
+                           (uint32_t)(uintptr_t)NULL);
+        return NULL;
+    }
+
+    /* Allocate frames */
+    kernelFrames = _allocateFrames(pageCount);
+    if(kernelFrames == 0)
+    {
+        _releaseKernelPages(kernelPages, pageCount);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_NO_MORE_MEMORY;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           OS_ERR_NO_MORE_MEMORY,
+                           (uint32_t)(uintptr_t)NULL,
+                           (uint32_t)(uintptr_t)NULL);
+        return NULL;
+    }
+
+    /* Apply mapping */
+    error = _memoryMgrMap(kernelPages,
+                          kernelFrames,
+                          pageCount,
+                          kFlags | MEMMGR_MAP_KERNEL | PAGE_FLAG_GLOBAL);
+    if(error != OS_NO_ERR)
+    {
+        _releaseFrames(kernelFrames, pageCount);
+        _releaseKernelPages(kernelPages, pageCount);
+
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        if(pError != NULL)
+        {
+            *pError = error;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
+                           (uint32_t)(kSize >> 32),
+                           (uint32_t)kSize,
+                           kFlags,
+                           error,
+                           (uint32_t)(uintptr_t)NULL,
+                           (uint32_t)(uintptr_t)NULL);
+        return NULL;
+    }
+    else
+    {
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        if(pError != NULL)
+        {
+            *pError = OS_NO_ERR;
+        }
+        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
+                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
+                           6,
                            (uint32_t)(kSize >> 32),
                            (uint32_t)kSize,
                            kFlags,

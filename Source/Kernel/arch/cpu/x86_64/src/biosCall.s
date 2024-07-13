@@ -20,6 +20,7 @@
 ;-------------------------------------------------------------------------------
 
 %define BIOS_CALL_STACK_SIZE 10
+%define BIOS_CALL_DATA_SIZE 0x1000
 %define CODERM 0x0000
 %define DATARM 0x0000
 %define CODE64 0x0008
@@ -40,8 +41,6 @@
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
-extern spinlockAcquire
-extern spinlockRelease
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -59,18 +58,15 @@ section .bios_call_code
 ; Param:
 ;     Input: RSI: The interrupt number to raise
 ;            RDI: The address of the register array used for the call
+;            RDX: The buffer to receive produced data
+;            RCX: The size for the buffer to receive produced data
+;            R8: The initial data location pointer
 
 [bits 64]
 cpuBiosCall:
     ; Save flags and disable interrupts
     pushf
     cli
-
-    ; Lock spinlock
-    push rdi
-    mov rdi, __biosCallLock
-    call spinlockAcquire
-    pop rdi
 
     ; Save all context
     push rax
@@ -80,7 +76,33 @@ cpuBiosCall:
     push rsi
     push rdi
     push rbp
+    push r8
 
+    mov [__savedBufferAddr], rdx
+    mov [__savedBufferSize], rcx
+    mov [__savedInitialLocationPtr], r8
+
+    cmp rcx, 0
+    je _biosCallDataToCopyEnd
+
+    ; Check the maximal size
+    cmp rcx, BIOS_CALL_DATA_SIZE
+    jbe _biosCallDataToCopy
+
+    ; If greater, we copy the max size
+    mov rcx, BIOS_CALL_DATA_SIZE
+
+_biosCallDataToCopy:
+    ; Copy the pre-call data
+    push rdi
+    push rsi
+    mov rsi, rdx
+    mov rdi, __savedDataBuffer
+    rep movsb
+    pop rsi
+    pop rdi
+
+_biosCallDataToCopyEnd:
     ; Get the interrupt number and set it in the code directly
     mov [_biosCallIntIssue], si
 
@@ -142,6 +164,10 @@ _biosCallRealMode:
     mov fs, ax
     mov gs, ax
 
+    ; Set destination register for data
+    lea ax, [__savedDataBuffer]
+    mov di, ax
+
     ; Get the registers
     pop ax
     pop bx
@@ -151,13 +177,18 @@ _biosCallRealMode:
     db 0xCD  ; INT OPCODE
 _biosCallIntIssue:
     db 0x00
+    nop
+    nop
+    nop
+    nop
 
     ; Save the registers and flags
-    push ax
-    push bx
-    push cx
-    push dx
+    add sp, 2
     pushf
+    push dx
+    push cx
+    push bx
+    push ax
 
     ; Enable protected mode
     mov  eax, cr0
@@ -205,7 +236,32 @@ _biosCallLongMode:
     sub rsi, rcx
     rep movsb
 
+    ; Check if some data need to be copied from the save data area
+    mov rcx, [__savedBufferSize]
+    cmp rcx, 0
+    je _biosCallEnd
+
+    ; Check the maximal size
+    cmp rcx, BIOS_CALL_DATA_SIZE
+    jbe _biosCallDataFromCopy
+
+    ; If greater, we copy the max size
+    mov rcx, BIOS_CALL_DATA_SIZE
+
+_biosCallDataFromCopy:
+    ; Copy the produced data
+    mov rsi, __savedDataBuffer
+    mov rdi, [__savedBufferAddr]
+    rep movsb
+
+    ; Copy the initial data location
+    mov rax, [__savedInitialLocationPtr]
+    lea ebx, [__savedDataBuffer]
+    mov [rax], ebx
+
+_biosCallEnd:
     ; Restore all context
+    pop r8
     pop rbp
     pop rdi
     pop rsi
@@ -213,10 +269,6 @@ _biosCallLongMode:
     pop rcx
     pop rbx
     pop rax
-
-    ; Release spinlock
-    mov rdi, __biosCallLock
-    call spinlockRelease
 
     ; Restore flags
     popf
@@ -287,9 +339,6 @@ __16BitsStack:
     times 0x200 db 0x00 ; 512B stack
 __16BitsStackEnd:
 
-__biosCallLock:
-    dd 0x00000000
-
 __savedStackPointer:
     dd 0x00000000
     dd 0x00000000
@@ -297,13 +346,32 @@ __savedStackPointer:
 __savedIDTPointer:
     dd 0x00000000
     dd 0x00000000
+    dd 0x00000000
 
 __savedGDTPointer:
+    dd 0x00000000
     dd 0x00000000
     dd 0x00000000
 
 __savedRegPointer:
     dd 0x00000000
     dd 0x00000000
+
+__savedBufferAddr:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedBufferSize:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedInitialLocationPtr:
+    dd 0x00000000
+    dd 0x00000000
+
+__savedDataBuffer:
+    times BIOS_CALL_DATA_SIZE db 0x00 ; Saved data
+
+
 
 ;************************************ EOF **************************************

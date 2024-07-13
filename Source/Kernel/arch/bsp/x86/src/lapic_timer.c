@@ -116,7 +116,7 @@ typedef struct
     uint8_t interruptNumber;
 
     /** @brief LAPIC Timer internal frequency. One per CPU */
-    uint32_t internalFrequency[MAX_CPU_COUNT];
+    uint32_t internalFrequency[SOC_CPU_COUNT];
 
     /** @brief Selected interrupt frequency. */
     uint32_t selectedFrequency;
@@ -125,7 +125,7 @@ typedef struct
     uint32_t divider;
 
     /** @brief Keeps track on the LAPIC Timer enabled state. One per CPU */
-    uint32_t disabledNesting[MAX_CPU_COUNT];
+    uint32_t disabledNesting[SOC_CPU_COUNT];
 
     /** @brief LAPIC base addresss */
     uintptr_t lapicBaseAddress;
@@ -398,12 +398,8 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-
+    memset(pTimerDrv, 0, sizeof(kernel_timer_t));
     pTimerDrv->pGetFrequency  = _lapicTimerGetFrequency;
-    pTimerDrv->pGetTimeNs     = NULL;
-    pTimerDrv->pSetTimeNs     = NULL;
-    pTimerDrv->pGetDate       = NULL;
-    pTimerDrv->pGetDaytime    = NULL;
     pTimerDrv->pEnable        = _lapicTimerEnable;
     pTimerDrv->pDisable       = _lapicTimerDisable;
     pTimerDrv->pSetHandler    = _lapicTimerSetHandler;

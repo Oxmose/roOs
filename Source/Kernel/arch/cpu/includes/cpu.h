@@ -191,7 +191,7 @@ void cpuValidateArchitecture(void);
  *
  * @return The CPU current interrupt state: 1 if enabled, 0 otherwise.
  */
-uint32_t cpuGeIntState(void);
+uint32_t cpuGetIntState(void);
 
 /** @brief Clears interupt bit which results in disabling interrupts. */
 void cpuClearInterrupt(void);
@@ -273,15 +273,18 @@ void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress);
 void cpuRestoreContext(const kernel_thread_t* kpThread);
 
 /**
- * @brief Redirects the execution flow of a virtual CPU.
+ * @brief Redirects the execution flow of a thread to a signal.
  *
- * @details Redirects the execution flow of a virtual CPU. The actual execution
- * of the new flow is done only on the next context restore.
+ * @details Redirects the execution flow of a thread to a signal. The actual
+ * execution of the new flow is done only on the next context restore.
  *
  * @param[in] pThread The thread for which the redirection is done.
  * @param[in] instructionAddr The address to which the execution flow is done.
+ *
+ * @warning This function shall only be called in the scheduler it is restoring
+ * the thread's context.
  */
-void cpuRedirectExecution(kernel_thread_t* pThread, void* instructionAddr);
+void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr);
 
 /**
  * @brief Registers the CPU exceptions.
@@ -327,6 +330,15 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
  */
 bool_t cpuIsVCPUSaved(const void* pkVCpu);
 
+/**
+ * @brief Prints the virtual CPU stack trace.
+ *
+ * @details Prints the virtual CPU stack trace. This will print the stack
+ * trace to the console.
+ *
+ * @param[in] pkVCpu The VCPU to use.
+ */
+void cpuPrintStackTrace(const void* pkVCpu);
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

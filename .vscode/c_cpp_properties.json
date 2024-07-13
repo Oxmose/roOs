@@ -7,7 +7,7 @@
             ],
             "defines": [
                 "_TESTING_FRAMEWORK_ENABLED",
-                "MAX_CPU_COUNT=4"
+                "SOC_CPU_COUNT=4"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",

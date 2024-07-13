@@ -43,9 +43,9 @@
 #define TEST_FUTEX_ENABLED                        0
 #define TEST_SCHEDULER_ENABLED                    0
 #define TEST_SEMAPHORE_ENABLED                    0
-#define TEST_MUTEX_ENABLED                        0
+#define TEST_MUTEX_ENABLED                        1
 #define TEST_DEF_INTERRUPT_ENABLED                0
-#define TEST_SIGNAL_ENABLED                       1
+#define TEST_SIGNAL_ENABLED                       0
 
 /*************************************************
  * TEST IDENTIFIERS
@@ -518,7 +518,7 @@
 #define TEST_SIGNAL_REGISTER(X) ((X) + 16024)
 
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Signals Tests Suite"
+#define TEST_FRAMEWORK_TEST_NAME "Mutex Tests Suite"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

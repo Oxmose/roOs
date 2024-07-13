@@ -25,7 +25,7 @@
 #define KERNEL_STACK_SIZE 0x1000
 
 /* Maximal number of CPU supported by the architecture */
-#define MAX_CPU_COUNT 6
+#define SOC_CPU_COUNT 4
 
 /* Kernel log level */
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL
@@ -69,4 +69,5 @@
 #define LAPICT_DEBUG_ENABLED 0
 #define CORE_MGT_DEBUG_ENABLED 0
 #define MEMORY_MGR_DEBUG_ENABLED 0
+#define VESA_DEBUG_ENABLED 0
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

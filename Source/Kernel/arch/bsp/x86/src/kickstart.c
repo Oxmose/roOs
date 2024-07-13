@@ -31,6 +31,7 @@
 #include <memory.h>        /* Memory manager */
 #include <devtree.h>       /* Device tree manager */
 #include <console.h>       /* Kernel console */
+#include <graphics.h>      /* Graphics manager */
 #include <userinit.h>      /* User initialization */
 #include <core_mgt.h>      /* Core manager */
 #include <drivermgr.h>     /* Driver manager */
@@ -188,6 +189,10 @@ void kickstart(void)
     /* Init the console */
     consoleInit();
     KERNEL_SUCCESS("Console initialized\n");
+
+    /* Init the graphics manager */
+    graphicsInit();
+    KERNEL_SUCCESS("Graphics manager initialized\n");
 
     /* Now that devices are configured, start the core manager, in charge of
      * starting other cores if needed. After calling this function all the

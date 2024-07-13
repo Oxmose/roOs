@@ -184,12 +184,14 @@ static void _handleSignalSegFault(void)
 
     pThread = schedGetCurrentThread();
 
-    KERNEL_ERROR("Segfault type %d: %s (%d) accessing 0x%p at 0x%p\n",
+    KERNEL_ERROR("Segfault | Type %d: %s (%d) accessing 0x%p at 0x%p\n",
                  pThread->errorTable.exceptionId,
                  pThread->pName,
                  pThread->tid,
                  pThread->errorTable.segfaultAddr,
                  pThread->errorTable.instAddr);
+    cpuPrintStackTrace(pThread->errorTable.pExecVCpu);
+
 
     /* We are terminating ourselves just go to the exit point */
     schedThreadExit(THREAD_TERMINATE_CAUSE_SEGFAULT,
@@ -318,13 +320,14 @@ void signalManage(kernel_thread_t* pThread)
     /* Highest priority is 0 */
     for(i = THREAD_MAX_SIGNALS - 1; i >= 0; --i)
     {
-        /* Grab each signals */
+        /* Find the next signal to handle */
         if(((1ULL << i) & pThread->signal) != 0 &&
            pThread->signalHandlers[i] != NULL)
         {
             /* Redirect execution and clear signal */
-            cpuRedirectExecution(pThread, pThread->signalHandlers[i]);
+            cpuRequestSignal(pThread, pThread->signalHandlers[i]);
             pThread->signal &= ~(1ULL << i);
+            break;
         }
     }
 

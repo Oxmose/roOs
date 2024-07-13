@@ -56,6 +56,8 @@ typedef struct
     void (*pPutc)(const char);
     /** @brief The handler used to print string. */
     void (*pPuts)(const char*);
+    /** @brief The handler used to flush the output. */
+    void (*pFlush)(void);
 } output_t;
 
 /*******************************************************************************
@@ -188,8 +190,9 @@ static inline void _toBufferChar(const char kCharacter);
 /************************** Static global variables ***************************/
 /** @brief Stores the current output type. */
 static output_t sCurrentOutput = {
-    .pPutc = consolePutChar,
-    .pPuts = consolePutString
+    .pPutc  = consolePutChar,
+    .pPuts  = consolePutString,
+    .pFlush = consoleFlush
 };
 
 /** @brief Stores the current buffer size */
@@ -546,6 +549,7 @@ void kprintfPanic(const char* kpFmt, ...)
     /* Flush */
     spBuffer[sBufferSize] = 0;
     sCurrentOutput.pPuts(spBuffer);
+    sCurrentOutput.pFlush();
     sBufferSize = 0;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,

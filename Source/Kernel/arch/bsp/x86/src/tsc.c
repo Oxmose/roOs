@@ -215,17 +215,14 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
+    memset(pTimerDrv, 0, sizeof(kernel_timer_t));
 
     pTimerDrv->pGetFrequency  = _tscGetFrequency;
     pTimerDrv->pGetTimeNs     = _tscGetTimeNs;
-    pTimerDrv->pSetTimeNs     = NULL;
-    pTimerDrv->pGetDate       = NULL;
-    pTimerDrv->pGetDaytime    = NULL;
     pTimerDrv->pEnable        = _tscEnable;
     pTimerDrv->pDisable       = _tscDisable;
     pTimerDrv->pSetHandler    = _tscSetHandler;
     pTimerDrv->pRemoveHandler = _tscRemoveHandler;
-    pTimerDrv->pTickManager   = NULL;
     pTimerDrv->pDriverCtrl    = pDrvCtrl;
 
     /* Get frequency */

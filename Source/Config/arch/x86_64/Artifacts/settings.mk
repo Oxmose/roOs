@@ -23,7 +23,6 @@ else
 	AR = ar
 endif
 
-
 LINKER_FILE = ../../Config/arch/x86_64/linker.ld
 
 DEBUG_FLAGS = -O0 -g
@@ -33,7 +32,7 @@ CFLAGS = -std=c11 -nostdinc -fno-builtin -nostdlib -fno-stack-protector \
          -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -fno-pie \
 		 -no-pie -MD -ffreestanding -Wno-address-of-packed-member \
 		 -fno-omit-frame-pointer -Wmissing-prototypes -mcmodel=kernel \
-		 -Wunused-result
+		 -Wunused-result -mno-red-zone
 
 TESTS_FLAGS = -D_TESTING_FRAMEWORK_ENABLED
 

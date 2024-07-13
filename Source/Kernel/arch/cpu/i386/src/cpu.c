@@ -52,8 +52,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-#if MAX_CPU_COUNT <= 0
-#error "MAX_CPU_COUNT must be greater or equal to 1"
+#if SOC_CPU_COUNT <= 0
+#error "SOC_CPU_COUNT must be greater or equal to 1"
 #endif
 
 /** @brief Current module name */
@@ -71,7 +71,7 @@
 #define TSS_SEGMENT 0x28
 
 /** @brief Number of entries in the kernel's GDT. */
-#define GDT_ENTRY_COUNT (5 + MAX_CPU_COUNT)
+#define GDT_ENTRY_COUNT (5 + SOC_CPU_COUNT)
 
 /** @brief Kernel's 32 bits code segment base address. */
 #define KERNEL_CODE_SEGMENT_BASE_32  0x00000000
@@ -1927,7 +1927,7 @@ static uint64_t sIDT[IDT_ENTRY_COUNT]      __attribute__((aligned(8)));
 static idt_ptr_t sIDTPtr                   __attribute__((aligned(8)));
 
 /** @brief CPU TSS structures */
-static cpu_tss_entry_t sTSS[MAX_CPU_COUNT] __attribute__((aligned(8)));
+static cpu_tss_entry_t sTSS[SOC_CPU_COUNT] __attribute__((aligned(8)));
 
 /** @brief Stores the CPU interrupt handlers entry point */
 static uintptr_t sIntHandlerTable[IDT_ENTRY_COUNT] = {
@@ -2420,7 +2420,7 @@ static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
  */
-static void _mahineCheckExceptionHandler(kernel_thread_t* pCurrThread);
+static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a SIMD floating point CPU exception.
@@ -2496,6 +2496,7 @@ static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = DIVISION_BY_ZERO_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 
@@ -2514,6 +2515,7 @@ static void _invalidInstructionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = INVALID_INSTRUCTION_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_ILL);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal invalid instruction",
@@ -2534,6 +2536,7 @@ static void _debugExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = DEBUG_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2554,6 +2557,7 @@ static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = BREAKPOINT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2574,6 +2578,7 @@ static void _overflowExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = OVERFLOW_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2594,6 +2599,7 @@ static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = BOUND_RANGE_EXCEEDED_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2614,6 +2620,7 @@ static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = DEVICE_NOT_AVAILABLE_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2634,6 +2641,7 @@ static void _doubleFaultHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = DOUBLE_FAULT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2654,6 +2662,7 @@ static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = COPROC_SEGMENT_OVERRUN_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2674,6 +2683,7 @@ static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = INVALID_TSS_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2694,6 +2704,7 @@ static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = SEGMENT_NOT_PRESENT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2714,6 +2725,7 @@ static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = STACK_SEGMENT_FAULT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2734,6 +2746,7 @@ static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = GENERAL_PROTECTION_FAULT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2754,6 +2767,7 @@ static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = ALIGNEMENT_CHECK_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_SEGV);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2764,7 +2778,7 @@ static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
                        (uint32_t)pCurrThread->tid);
 }
 
-static void _mahineCheckExceptionHandler(kernel_thread_t* pCurrThread)
+static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2774,6 +2788,7 @@ static void _mahineCheckExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = MACHINE_CHECK_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2794,6 +2809,7 @@ static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = SIMD_FLOATING_POINT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 
@@ -2812,6 +2828,7 @@ static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = VIRTUALIZATION_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2832,6 +2849,7 @@ static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = CONTROL_PROTECTION_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2852,6 +2870,7 @@ static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = HYPERVISOR_INJECTION_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2872,6 +2891,7 @@ static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = VMM_COMMUNICATION_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -2892,6 +2912,7 @@ static void _securityExceptionHandler(kernel_thread_t* pCurrThread)
 
     pCurrThread->errorTable.exceptionId = SECURITY_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
+    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
@@ -3029,7 +3050,7 @@ static void _setupGDT(void)
                     userDataSegType,
                     userDataSegFlags);
 
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         _formatGDTEntry(&sGDT[(TSS_SEGMENT + i * 0x08) / 8],
                         (uintptr_t)&sTSS[i],
@@ -3103,10 +3124,10 @@ static void _setupTSS(void)
     KERNEL_DEBUG(CPU_DEBUG_ENABLED, MODULE_NAME, "Setting TSS");
 
     /* Blank the TSS */
-    memset(sTSS, 0, sizeof(cpu_tss_entry_t) * MAX_CPU_COUNT);
+    memset(sTSS, 0, sizeof(cpu_tss_entry_t) * SOC_CPU_COUNT);
 
     /* Set basic values */
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         sTSS[i].ss0 = KERNEL_DS_32;
         sTSS[i].esp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
@@ -4250,7 +4271,7 @@ const cpu_interrupt_config_t* cpuGetInterruptConfig(void)
     return &ksInterruptConfig;
 }
 
-uint32_t cpuGeIntState(void)
+uint32_t cpuGetIntState(void)
 {
     return ((_cpuSaveFlags() & CPU_EFLAGS_IF) != 0);
 }
@@ -4356,16 +4377,10 @@ uintptr_t cpuCreateKernelStack(const size_t kStackSize)
     newSize = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
 
     /* Request to map the stack */
-    stackAddr = (uintptr_t)memoryKernelMapStack(kStackSize);
+    stackAddr = (uintptr_t)memoryKernelMapStack(newSize);
 
-    /* Check value */
-    if(stackAddr == 0)
-    {
-        return 0;
-    }
-
-    /* Set end address and align on 16 bytes */
-    stackAddr = (stackAddr + newSize - 0xFULL);
+    /* Update to point to the end of the stack */
+    stackAddr += newSize;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_CREATE_KERNEL_STACK_EXIT,
@@ -4394,7 +4409,7 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
 
     /* Get the actual base address */
     actualSize  = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
-    baseAddress = kStackEndAddr + 0xFULL - kStackSize;
+    baseAddress = kStackEndAddr - kStackSize;
 
     memoryKernelUnmapStack(baseAddress, actualSize);
 
@@ -4445,8 +4460,17 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->intContext.eflags    = KERNEL_THREAD_INIT_EFLAGS;
 
     /* Setup stack pointers */
-    pVCpu->cpuState.esp = pThread->kernelStackEnd;
+    pVCpu->cpuState.esp = pThread->kernelStackEnd - 0x8;
     pVCpu->cpuState.ebp = 0;
+
+    /* On entry, we expect to have EBP aligned before pushing the return
+     * address, thus when simulating the push, wi should ensure that the
+     * stack is aligned on 16bytes + 8
+     */
+    if((pVCpu->cpuState.ebp & 0xF) != 0x8)
+    {
+        pVCpu->cpuState.ebp = ((pVCpu->cpuState.ebp - 0x8) & 0xFFFFFFF0) | 0x8;
+    }
 
     /* Setup the CPU state */
     pVCpu->cpuState.edi = 0;
@@ -4496,9 +4520,10 @@ void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
                        KERNEL_TRACE_LOW(kVCpuAddress));
 }
 
-void cpuRedirectExecution(kernel_thread_t* pThread, void* instructionAddr)
+void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
 {
     virtual_cpu_t* pVCpu;
+    virtual_cpu_t* pThreadVCpu;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_REDIRECT_EXEC_ENTRY,
@@ -4508,17 +4533,27 @@ void cpuRedirectExecution(kernel_thread_t* pThread, void* instructionAddr)
                        KERNEL_TRACE_HIGH(instructionAddr),
                        KERNEL_TRACE_LOW(instructionAddr));
 
-    /* Get vCPU */
+    /* Exchange the vCPU to the signal vCPU */
+    pThread->pVCpu = pThread->pSignalVCpu;
     pVCpu = pThread->pVCpu;
+    pThreadVCpu = pThread->pThreadVCpu;
 
-    /* Prepare the stack for return from execution flow
-     * We add the actual pre-context save eip
+    /* Redirect execution to the CPU redirection handler
+     * Copy the thread's regular state.
      */
-    pVCpu->cpuState.esp -= sizeof(uint32_t);
-    *(uint32_t*)(pVCpu->cpuState.esp) = pVCpu->intContext.eip;
+    pVCpu->intContext.eip    = (uint32_t)cpuSignalHandler;
+    pVCpu->intContext.cs     = pThreadVCpu->intContext.cs;
+    pVCpu->intContext.eflags = pThreadVCpu->intContext.eflags;
 
-    /* Set the new EIP */
-    pVCpu->intContext.eip = (uint32_t)instructionAddr;
+    /* Prepare the cpu state
+     * TODO: This could be an issue when we will have processes with red zone
+     * in that case, try to bypass the red zone.
+     */
+    memcpy(&pVCpu->cpuState, &pThreadVCpu->cpuState, sizeof(cpu_state_t));
+
+    /* Put the function to call on the stack */
+    pVCpu->cpuState.esp -= sizeof(uint32_t);
+    *(uint64_t*)(pVCpu->cpuState.esp) = (uint32_t)instructionAddr;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_REDIRECT_EXEC_EXIT,
@@ -4623,7 +4658,7 @@ OS_RETURN_E cpuRegisterExceptions(void)
         return error;
     }
     error = exceptionRegister(MACHINE_CHECK_EXC_LINE,
-                              _mahineCheckExceptionHandler);
+                              _machineCheckExceptionHandler);
     if(error != OS_NO_ERR)
     {
         return error;
@@ -4688,6 +4723,38 @@ void cpuManageThreadException(kernel_thread_t* pThread)
 bool_t cpuIsVCPUSaved(const void* pkVCpu)
 {
     return ((virtual_cpu_t*)pkVCpu)->isContextSaved != 0;
+}
+
+void cpuPrintStackTrace(const void* pkVCpu)
+{
+    size_t    i;
+    uintptr_t callAddr;
+    uintptr_t* lastEBP;
+
+    lastEBP = (uintptr_t*)((virtual_cpu_t*)pkVCpu)->cpuState.ebp;
+
+    /* Get the return address */
+    kprintf("Last RBP: 0x%p\n", lastEBP);
+
+    for(i = 0; i < 10 && lastEBP != NULL; ++i)
+    {
+        callAddr = *(lastEBP + 1);
+
+        if(callAddr == 0x0) break;
+
+        if(i != 0 && i % 4 == 0)
+        {
+            kprintf("\n");
+        }
+        else if(i != 0)
+        {
+            kprintf(" | ");
+        }
+
+        kprintf("[%u] 0x%p", i, callAddr);
+        lastEBP  = (uintptr_t*)*lastEBP;
+    }
+    kprintfFlush();
 }
 
 /************************************ EOF *************************************/

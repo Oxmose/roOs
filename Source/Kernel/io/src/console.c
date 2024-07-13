@@ -103,10 +103,11 @@ static console_driver_t sConsoleDriver = {NULL};
 
 void consoleInit(void)
 {
-    const fdt_node_t* kpConsoleNode;
-    const uint32_t*   kpUintProp;
-    size_t            propLen;
-    console_driver_t* pConsDriver;
+    const fdt_node_t*  kpConsoleNode;
+    const uint32_t*    kpUintProp;
+    size_t             propLen;
+    console_driver_t*  pConsDriver;
+    kgeneric_driver_t* pGenDriver;
 
     KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_ENTRY, 0);
 
@@ -124,10 +125,15 @@ void consoleInit(void)
                             &propLen);
     if(kpUintProp != NULL && propLen == sizeof(uint32_t))
     {
-        pConsDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
-        if(pConsDriver != NULL && pConsDriver->inputDriver.pDriverCtrl != NULL)
+        pGenDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+        if(pGenDriver != NULL)
         {
-            sConsoleDriver.inputDriver = pConsDriver->inputDriver;
+            pConsDriver = pGenDriver->pConsoleDriver;
+            if(pConsDriver != NULL &&
+               pConsDriver->inputDriver.pDriverCtrl != NULL)
+            {
+                sConsoleDriver.inputDriver = pConsDriver->inputDriver;
+            }
         }
     }
 
@@ -137,10 +143,16 @@ void consoleInit(void)
                             &propLen);
     if(kpUintProp != NULL && propLen == sizeof(uint32_t))
     {
-        pConsDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
-        if(pConsDriver != NULL && pConsDriver->outputDriver.pDriverCtrl != NULL)
+        pGenDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+
+        if(pGenDriver != NULL)
         {
-            sConsoleDriver.outputDriver = pConsDriver->outputDriver;
+            pConsDriver = pGenDriver->pConsoleDriver;
+            if(pConsDriver != NULL &&
+               pConsDriver->outputDriver.pDriverCtrl != NULL)
+            {
+                sConsoleDriver.outputDriver = pConsDriver->outputDriver;
+            }
         }
     }
 
@@ -377,6 +389,21 @@ void consoleEcho(const bool_t kEnable)
                        TRACE_CONS_ECHO_EXIT,
                        1,
                        kEnable);
+}
+
+void consoleFlush(void)
+{
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_FLUSH_ENTRY,
+                       0);
+
+    EXEC_IF_SET(sConsoleDriver,
+                outputDriver.pFlush,
+                sConsoleDriver.outputDriver.pDriverCtrl);
+
+    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
+                       TRACE_CONS_FLUSH_EXIT,
+                       0);
 }
 
 /************************************ EOF *************************************/

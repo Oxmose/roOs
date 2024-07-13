@@ -25,10 +25,13 @@
 /* Included headers */
 #include <cpu.h>          /* CPU API*/
 #include <kheap.h>        /* Kernel Heap */
+#include <signal.h>       /* Signal manager */
 #include <string.h>       /* String manipulation */
 #include <signal.h>       /* Signals */
 #include <console.h>      /* Console driver */
+#include <graphics.h>     /* Graphics driver */
 #include <time_mgt.h>     /* Time manager */
+#include <semaphore.h>    /* Semaphore service */
 #include <scheduler.h>    /* Scheduler services */
 #include <kerneloutput.h> /* Kernel output */
 
@@ -61,6 +64,8 @@
  ******************************************************************************/
 static void _shellDummyDefered(void* args);
 static void _shellDisplayThreads(void);
+static void _shellSignalSelf(void);
+static void _shellSignalHandler(void);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -78,9 +83,45 @@ static void* _shellEntry(void* args);
 /************************** Static global variables ***************************/
 static char sInputBuffer[SHELL_INPUT_BUFFER_SIZE + 1];
 static size_t sInputBufferCursor;
+static spinlock_t sSignalLock = SPINLOCK_INIT_VALUE;
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _shellSignalHandler(void)
+{
+    kprintf("Hey! I'm the kernel shell signal handler (thread %d)\n",
+            schedGetCurrentThread()->tid);
+
+    spinlockRelease(&sSignalLock);
+}
+
+static void _shellSignalSelf(void)
+{
+    OS_RETURN_E error;
+
+    spinlockAcquire(&sSignalLock);
+
+    error = signalRegister(THREAD_SIGNAL_USR1, _shellSignalHandler);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to register signal handler with error %d\n", error);
+        return;
+    }
+
+    error = signalThread(schedGetCurrentThread(), THREAD_SIGNAL_USR1);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to signal self %d\n", error);
+        return;
+    }
+
+    spinlockAcquire(&sSignalLock);
+    spinlockRelease(&sSignalLock);
+
+    kprintf("Kernel shell is back from signaling\n");
+}
 
 static void _shellDummyDefered(void* args)
 {
@@ -94,6 +135,7 @@ static void _shellDisplayThreads(void)
     size_t         threadCount;
     size_t         i;
     uint32_t       j;
+    size_t         prio;
     thread_info_t* pThreadTable;
 
     threadCount = schedGetThreadCount();
@@ -108,59 +150,66 @@ static void _shellDisplayThreads(void)
     kprintf("#------------------------------------------------------------------------#\n");
     kprintf("| PID  | NAME                           | TYPE   | PRIO | STATE    | CPU |\n");
     kprintf("#------------------------------------------------------------------------#\n");
-    for(i = 0; i < threadCount; ++i)
+    for(prio = KERNEL_HIGHEST_PRIORITY; prio <= KERNEL_LOWEST_PRIORITY; ++prio)
     {
-        kprintf("| % 4d | %s", pThreadTable[i].tid, pThreadTable[i].pName);
-        for(j = 0;
-            j < THREAD_NAME_MAX_LENGTH - strlen(pThreadTable[i].pName) - 1;
-            ++j)
+        for(i = 0; i < threadCount; ++i)
         {
-            kprintf(" ");
-        }
-        switch(pThreadTable[i].type)
-        {
-            case THREAD_TYPE_KERNEL:
-                kprintf("| KERNEL |");
-                break;
-            case THREAD_TYPE_USER:
-                kprintf("| USER   |");
-                break;
-            default:
-                kprintf("| NONE   |");
-                break;
-        }
-        kprintf("  % 3d |", pThreadTable[i].priority);
-        switch(pThreadTable[i].currentState)
-        {
-            case THREAD_STATE_RUNNING:
-                kprintf(" RUNNING  |");
-                break;
-            case THREAD_STATE_READY:
-                kprintf(" READY    |");
-                break;
-            case THREAD_STATE_SLEEPING:
-                kprintf(" SLEEPING |");
-                break;
-            case THREAD_STATE_ZOMBIE:
-                kprintf(" ZOMBIE   |");
-                break;
-            case THREAD_STATE_JOINING:
-                kprintf(" JOINING  |");
-                break;
-            case THREAD_STATE_WAITING:
-                kprintf(" WAITING  |");
-                break;
-            default:
-                kprintf(" UNKNOWN  |");
-                break;
-        }
-        if(pThreadTable[i].currentState == THREAD_STATE_RUNNING)
-        {
-            kprintf(" % 3d |\n", pThreadTable[i].schedCpu);
-        }
-        else
-        {
-            kprintf("   * |\n", pThreadTable[i].schedCpu);
+            if(pThreadTable[i].priority != prio)
+            {
+                continue;
+            }
+            kprintf("| % 4d | %s", pThreadTable[i].tid, pThreadTable[i].pName);
+            for(j = 0;
+                j < THREAD_NAME_MAX_LENGTH - strlen(pThreadTable[i].pName) - 1;
+                ++j)
+            {
+                kprintf(" ");
+            }
+            switch(pThreadTable[i].type)
+            {
+                case THREAD_TYPE_KERNEL:
+                    kprintf("| KERNEL |");
+                    break;
+                case THREAD_TYPE_USER:
+                    kprintf("| USER   |");
+                    break;
+                default:
+                    kprintf("| NONE   |");
+                    break;
+            }
+            kprintf("  % 3d |", pThreadTable[i].priority);
+            switch(pThreadTable[i].currentState)
+            {
+                case THREAD_STATE_RUNNING:
+                    kprintf(" RUNNING  |");
+                    break;
+                case THREAD_STATE_READY:
+                    kprintf(" READY    |");
+                    break;
+                case THREAD_STATE_SLEEPING:
+                    kprintf(" SLEEPING |");
+                    break;
+                case THREAD_STATE_ZOMBIE:
+                    kprintf(" ZOMBIE   |");
+                    break;
+                case THREAD_STATE_JOINING:
+                    kprintf(" JOINING  |");
+                    break;
+                case THREAD_STATE_WAITING:
+                    kprintf(" WAITING  |");
+                    break;
+                default:
+                    kprintf(" UNKNOWN  |");
+                    break;
+            }
+            if(pThreadTable[i].currentState == THREAD_STATE_RUNNING)
+            {
+                kprintf(" % 3d |\n", pThreadTable[i].schedCpu);
+            }
+            else
+            {
+                kprintf("   * |\n", pThreadTable[i].schedCpu);
+            }
         }
     }
     kprintf("#------------------------------------------------------------------------#\n");
@@ -213,6 +262,10 @@ static void _shellExecuteCommand(void)
             kprintf("Failed to defer with error %d\n", error);
         }
     }
+    else if(strcmp(command, "signalSelf") == 0)
+    {
+        _shellSignalSelf();
+    }
     else
     {
         kprintf("Unknown command: %s\n", command);
@@ -261,6 +314,9 @@ static void* _shellEntry(void* args)
 {
     (void)args;
 
+    /* Wait for all the system to be up */
+    schedSleep(100000000);
+
     /* Clear the console */
     consoleClear();
     consolePutCursor(0, 0);
@@ -287,7 +343,7 @@ void kernelShellInit(void)
                                     1,
                                     "kernelShell",
                                     0x1000,
-                                    2,
+                                    0x2,
                                     _shellEntry,
                                     NULL);
     if(error != OS_NO_ERR)

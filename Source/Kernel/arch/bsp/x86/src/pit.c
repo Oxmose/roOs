@@ -303,12 +303,9 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
+    memset(pTimerDrv, 0, sizeof(kernel_timer_t));
 
     pTimerDrv->pGetFrequency  = _pitGetFrequency;
-    pTimerDrv->pGetTimeNs     = NULL;
-    pTimerDrv->pSetTimeNs     = NULL;
-    pTimerDrv->pGetDate       = NULL;
-    pTimerDrv->pGetDaytime    = NULL;
     pTimerDrv->pEnable        = _pitEnable;
     pTimerDrv->pDisable       = _pitDisable;
     pTimerDrv->pSetHandler    = _pitSetHandler;

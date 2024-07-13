@@ -269,6 +269,16 @@ typedef struct
     void (*pPutChar)(void* pDriverCtrl, const char kCharacter);
 
     /**
+     * ­@brief Flushes the console output.
+     *
+     * @details The function will request a flush to the console output driver.
+     *
+     * @param[in, out] pDriverCtrl The driver controler used by the registered
+     * console driver.
+     */
+    void (*pFlush)(void* pDriverCtrl);
+
+    /**
      * @brief Contains a pointer to the driver controler, set by the driver
      * at the moment of the initialization of this structure.
      */
@@ -297,11 +307,11 @@ typedef struct
 
     /**
      * @brief Enables or disables the input echo for the console input driver.
-     * 
+     *
      * @details Enables or disables the input evho for the console input driver. If the
      * driver supports echoing its input, the echo is enabled, otherwise not action
      * is taken.
-     * 
+     *
      * @param[in] pDriverCtrl The driver to be used.
      * @param kEnable Tells if the echo should be enabled or disabled.
      */
@@ -467,14 +477,22 @@ ssize_t consoleRead(char* pBuffer, size_t kBufferSize);
 
 /**
  * @brief Enables or disables the input echo for the console input driver.
- * 
+ *
  * @details Enables or disables the input evho for the console input driver. If the
  * driver supports echoing its input, the echo is enabled, otherwise not action
  * is taken.
- * 
+ *
  * @param kEnable Tells if the echo should be enabled or disabled.
  */
 void consoleEcho(const bool_t kEnable);
+
+/**
+ * ­@brief Flushes the console output.
+ *
+ * @details The function will request a flush to the console output driver.
+ *
+ */
+void consoleFlush(void);
 
 #endif /* #ifndef __IO_CONSOLE_H_ */
 

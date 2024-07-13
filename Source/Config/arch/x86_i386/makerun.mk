@@ -10,7 +10,7 @@
 ################################################################################
 
 QEMUOPTS = -cpu coreduo,-syscall,-lm -d guest_errors -rtc base=localtime -m 256M \
-           -smp 8 -serial stdio
+           -smp 4 -serial stdio
 
 QEMU = qemu-system-i386
 

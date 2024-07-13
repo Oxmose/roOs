@@ -63,9 +63,7 @@ extern pCurrentThreadsPtr
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
-extern kernelPanic
-extern firstTssSegmentIdx
-extern _bootedCPUCount
+extern schedScheduleNoInt
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -73,23 +71,22 @@ extern _bootedCPUCount
 global cpuSaveContext
 global cpuRestoreContext
 global cpuGetId
+global cpuSignalHandler
 
 ;-------------------------------------------------------------------------------
 ; CODE
 ;-------------------------------------------------------------------------------
-
 section .text
-cpuSaveContext:
-    ; At entry, EIP was pushed by the call to this function
 
+cpuSaveContext:
     ; Save a bit of context
     push eax
     push ebx
     push edx
 
     ; Get the current thread handle and VCPU
-    mov ebx, 4
     call cpuGetId
+    mov ebx, 4
     mul ebx
     mov ebx, pCurrentThreadsPtr
     add eax, ebx
@@ -197,6 +194,42 @@ cpuGetId:
     sub eax, FIRST_GDT_TSS_SEGMENT
     shr eax, 3
     ret
+
+cpuSignalHandler:
+    ; Get the function to execute
+    pop eax
+
+    ; Force stack alignement
+    and esp, 0xFFFFFFF0
+
+    ; Call signal handler
+    call eax
+
+    ; We are finished now, update the context to the regular thread context
+    cli
+
+    ; Get the current thread handle
+    call cpuGetId
+    mov ebx, 4
+    mul ebx
+    mov ebx, pCurrentThreadsPtr
+    add eax, ebx
+    mov ebx, [eax]
+
+    ; RBX contains the pointer to the current VCPU, replace with the regular
+    ; VCPU at eBX + 4
+    mov eax, ebx
+    add eax, 4
+    mov eax, [eax]
+    mov [ebx], eax
+
+    call schedScheduleNoInt
+
+cpuSignalHandlerLoop:
+    ; We should never come back
+    cli
+    hlt
+    jmp cpuSignalHandlerLoop
 
 ;-------------------------------------------------------------------------------
 ; DATA

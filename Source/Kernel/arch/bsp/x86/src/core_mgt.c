@@ -55,8 +55,8 @@
  * CONSTANTS
  ******************************************************************************/
 
-#if MAX_CPU_COUNT <= 0
-#error "MAX_CPU_COUNT must be greater or equal to 1"
+#if SOC_CPU_COUNT <= 0
+#error "SOC_CPU_COUNT must be greater or equal to 1"
 #endif
 
 /** @brief Current module name */
@@ -104,7 +104,7 @@
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-#if MAX_CPU_COUNT > 1
+#if SOC_CPU_COUNT > 1
 /**
  * @brief IPI interrupt handler.
  *
@@ -129,7 +129,7 @@ extern volatile uint32_t _bootedCPUCount;
 /************************** Static global variables ***************************/
 
 /** @brief Stores the translated CPU identifiers */
-static uint8_t sCoreIds[MAX_CPU_COUNT] = {0};
+static uint8_t sCoreIds[SOC_CPU_COUNT] = {0};
 
 /** @brief Stores the LAPIC driver instance */
 static const lapic_driver_t* kspLapicDriver = NULL;
@@ -141,15 +141,15 @@ static const lapic_timer_driver_t* kspLapicTimerDriver = NULL;
 static uint32_t sIpiInterruptLine;
 
 /** @brief Stores the IPI parameters */
-static kqueue_t* sIpiParametersList[MAX_CPU_COUNT];
+static kqueue_t* sIpiParametersList[SOC_CPU_COUNT];
 
-#endif /* #if MAX_CPU_COUNT > 1 */
+#endif /* #if SOC_CPU_COUNT > 1 */
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-#if MAX_CPU_COUNT > 1
+#if SOC_CPU_COUNT > 1
 static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
     kqueue_node_t* pNode;
@@ -246,7 +246,7 @@ void coreMgtInit(void)
                     error);
 
     /* Initializes the IPI parameters locks */
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         sIpiParametersList[i] = kQueueCreate(TRUE);
     }
@@ -405,7 +405,7 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
                        kpParams->function);
 }
 
-#else /* MAX_CPU_COUNT > 1 */
+#else /* SOC_CPU_COUNT > 1 */
 
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)
 {
@@ -435,6 +435,6 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
     (void)kpParams;
 }
 
-#endif /* MAX_CPU_COUNT > 1 */
+#endif /* SOC_CPU_COUNT > 1 */
 
 /************************************ EOF *************************************/

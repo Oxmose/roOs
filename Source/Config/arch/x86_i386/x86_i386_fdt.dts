@@ -165,11 +165,18 @@
             };
         };
 
-        stdoutdev: vga@B8000 {
+        vgatext: vga@B8000 {
             compatible = "x86,x86-vga-text";
             reg = <0xB8000 0xFA0>;
             comm = <0x3D4 0x3D5>;
             resolution = <80 25>;
+        };
+
+        stdoutdev: vesa {
+            compatible = "x86,x86-vesa";
+            resolution = <1280 720>;
+            depth = <32>;
+            refresh-rate = <30>;
         };
 
         stdindev: keyboard {
@@ -206,6 +213,10 @@
 
     console {
         inputdev = <&stdindev>;
+        outputdev = <&stdoutdev>;
+    };
+
+    graphics {
         outputdev = <&stdoutdev>;
     };
 };

@@ -358,7 +358,7 @@ void interruptMainHandler(void)
 
     /* Schedule, we will never return */
     schedScheduleNoInt(FALSE);
-    PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule returned");
+    PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule int returned");
 }
 
 void interruptInit(void)
@@ -681,7 +681,7 @@ uint32_t interruptDisable(void)
 {
     uint32_t prevState;
 
-    prevState = cpuGeIntState();
+    prevState = cpuGetIntState();
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                     TRACE_INTERRUPT_INTERRUPT_DISABLE,

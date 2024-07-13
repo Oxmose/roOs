@@ -20,22 +20,22 @@ KERNEL_MEM_OFFSET = 0xE0000000;
 MEMORY
 {
     LOW_AP_STARTUP_CODE     (rx)    :   ORIGIN = 0x00008000,    LENGTH = 1K
-    BIOS_CALL_REGION        (rwx)   :   ORIGIN = 0x00009000,    LENGTH = 1K
+    BIOS_CALL_REGION        (rwx)   :   ORIGIN = 0x00009000,    LENGTH = 28K
     LOW_STARTUP_CODE        (rx)    :   ORIGIN = 0x00100000,    LENGTH = 1K
 
     KERNEL_CODE             (rx)    :   ORIGIN = 0xE0101000,    LENGTH = 128K
-    KERNEL_RO_DATA          (r)     :   ORIGIN = 0xE0121000,    LENGTH = 64K
-    KERNEL_RW_DATA          (rw)    :   ORIGIN = 0xE0131000,    LENGTH = 64K
+    KERNEL_RO_DATA          (r)     :   ORIGIN = 0xE0121000,    LENGTH = 128K
+    KERNEL_RW_DATA          (rw)    :   ORIGIN = 0xE0141000,    LENGTH = 64K
 
     /* 1 page / frame left blank to catch overflow */
-    KERNEL_STACKS           (rw)    :   ORIGIN = 0xE0142000,    LENGTH = 32K
+    KERNEL_STACKS           (rw)    :   ORIGIN = 0xE0152000,    LENGTH = 32K
     /* 1 page / frame left blank to catch overflow */
-    KERNEL_HEAP             (rw)    :   ORIGIN = 0xE014B000,    LENGTH = 2M
+    KERNEL_HEAP             (rw)    :   ORIGIN = 0xE015B000,    LENGTH = 2M
     /* 1 page / frame left blank to catch overflow */
-    KERNEL_END_PAGE         (r)     :   ORIGIN = 0xE034C000,    LENGTH = 1K
+    KERNEL_END_PAGE         (r)     :   ORIGIN = 0xE035C000,    LENGTH = 1K
 
-    KERNEL_TRACE_BUFFER     (rw)    :   ORIGIN = 0xE034C000,    LENGTH = 128K
-    KERNEL_TEST_BUFFER      (rw)    :   ORIGIN = 0xE036C000,    LENGTH = 256K
+    KERNEL_TRACE_BUFFER     (rw)    :   ORIGIN = 0xE035C000,    LENGTH = 128K
+    KERNEL_TEST_BUFFER      (rw)    :   ORIGIN = 0xE037C000,    LENGTH = 256K
 }
 
 /* Memory layout */

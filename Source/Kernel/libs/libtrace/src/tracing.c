@@ -90,10 +90,10 @@ extern size_t _KERNEL_TRACE_BUFFER_SIZE;
 /************************** Static global variables ***************************/
 
 /** @brief Trace buffer sCursor */
-static size_t sCursor[MAX_CPU_COUNT] = {0};
+static size_t sCursor[SOC_CPU_COUNT] = {0};
 
 /** @brief Tracing lock */
-static volatile uint32_t sTraceLock[MAX_CPU_COUNT] = {0};
+static volatile uint32_t sTraceLock[SOC_CPU_COUNT] = {0};
 
 /** @brief Tells if the tracing was sEnabled. */
 static bool_t sEnabled = FALSE;
@@ -115,8 +115,8 @@ static void _kernelTraceInit(void)
     size_t  offset;
     uint32_t i;
 
-    sTraceBufferSize = ((size_t)&_KERNEL_TRACE_BUFFER_SIZE) / MAX_CPU_COUNT;
-    for(i = 0; i < MAX_CPU_COUNT; ++i)
+    sTraceBufferSize = ((size_t)&_KERNEL_TRACE_BUFFER_SIZE) / SOC_CPU_COUNT;
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
         /* Init the buffer */
         offset = i * sTraceBufferSize;

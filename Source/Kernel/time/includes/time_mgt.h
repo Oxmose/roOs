@@ -262,6 +262,15 @@ typedef struct
 OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
                             const TIMER_TYPE_E    kType);
 
+/** 
+ * @brief Initializes the time manager.
+ * 
+ * @details Initializes the time manager. The timers will be added based on the
+ * FDT configuration. This time manager should be initialized after all drivers
+ * were attached.
+ */
+void timeInit(void);
+
 /**
  * @brief Returns the current uptime.
  *

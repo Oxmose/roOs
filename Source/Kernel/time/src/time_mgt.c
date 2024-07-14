@@ -243,8 +243,7 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 
 static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
 {
-    kernel_timer_t* pTimerCopy;
-    kqueue_node_t*  pNewNode;
+    kqueue_node_t* pNewNode;
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_ENTRY,
@@ -252,27 +251,10 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
                        KERNEL_TRACE_HIGH(kpTimer),
                        KERNEL_TRACE_LOW(kpTimer));
 
-    /* Copy the timer */
-    pTimerCopy = kmalloc(sizeof(kernel_timer_t));
-    if(pTimerCopy == NULL)
-    {
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(kpTimer),
-                           KERNEL_TRACE_LOW(kpTimer),
-                           OS_ERR_NO_MORE_MEMORY);
-
-        return OS_ERR_NO_MORE_MEMORY;
-    }
-    *pTimerCopy = *kpTimer;
-
     /* Create the new node */
-    pNewNode = kQueueCreateNode(pTimerCopy, FALSE);
+    pNewNode = kQueueCreateNode(kpTimer, FALSE);
     if(pNewNode == NULL)
     {
-        kfree(pTimerCopy);
-
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                            TRACE_TIME_MGT_ADD_AUX_EXIT,
                            3,
@@ -303,6 +285,11 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
                        OS_NO_ERR);
     return OS_NO_ERR;
 }
+
+void timeInit(void)
+[
+    
+]
 
 OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
                             const TIMER_TYPE_E    kType)

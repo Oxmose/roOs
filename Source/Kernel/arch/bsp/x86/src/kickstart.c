@@ -186,6 +186,10 @@ void kickstart(void)
     driverManagerInit();
     KERNEL_SUCCESS("Drivers initialized\n");
 
+    /* Init the time manager */
+    timeInit();
+    KERNEL_SUCCESS("Time manager initialized\n");
+
     /* Init the console */
     consoleInit();
     KERNEL_SUCCESS("Console initialized\n");
@@ -199,6 +203,7 @@ void kickstart(void)
      * running cores excepted this one have their interrupt enabled.
      */
     coreMgtInit();
+    KERNEL_SUCCESS("Core manager initialized\n");
 
     /* Add library and core tests here */
     TEST_POINT_FUNCTION_CALL(kqueueTest, TEST_OS_KQUEUE_ENABLED);

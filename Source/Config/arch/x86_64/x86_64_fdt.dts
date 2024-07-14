@@ -125,7 +125,7 @@
          * schedule and system ticks
          */
         timers {
-            pit {
+            auxtimer0: pit {
                 compatible = "x86,x86-pit";
                 interrupts = <1 0>; /* 0: is IRQ; 1: IRQ line */
                 comm = <0x34 0x40>;
@@ -135,7 +135,13 @@
                 is-aux;
             };
 
-            rtc {
+            auxtimer1: hpet {
+                compatible = "x86,x86-hpet";
+                interrupts = <1 0>; /* 0: is IRQ; 1: IRQ line */
+                freq = <500>;
+            };
+
+            rtctimer: rtc {
                 compatible = "x86,x86-rtc";
                 interrupts = <1 8>; /* 0: is IRQ; 1: IRQ line */
                 comm = <0x70 0x71>;
@@ -145,13 +151,13 @@
                 is-rtc;
             };
 
-            basetime: tsc {
+            lifetimer: tsc {
                 compatible = "x86,x86-tsc";
                 freq = <3600000000>;
                 is-lifetime;
             };
 
-            lapic-timer {
+            maintimer = lapic-timer {
                 compatible = "x86,x86-lapic-timer";
                 interrupts = <0 0x21>; /* 0: is not IRQ; 1: Int line */
                 freq = <500>;
@@ -159,7 +165,7 @@
                 /* The current hardware has a fixed-rate TSC that is the most
                  * precise way to measure time.
                  */
-                base-timer = <&basetime>;
+                base-timer = <&lifetimer>;
                 lapic-node = <&lapic>;
                 is-main;
             };
@@ -219,4 +225,13 @@
     graphics {
         outputdev = <&stdoutdev>;
     };
+
+    timeconfig {
+        main = <&maintimer>;
+        rtc = <&rtctimer>;
+        lifetime = <&lifetimer>;
+        aux = <&auxtimeer0 &auxtimer1>;
+    };
+
+    timers
 };

@@ -190,7 +190,7 @@ static void _handleSignalSegFault(void)
                  pThread->tid,
                  pThread->errorTable.segfaultAddr,
                  pThread->errorTable.instAddr);
-    cpuPrintStackTrace(pThread->errorTable.pExecVCpu);
+    cpuCoreDump(pThread->errorTable.pExecVCpu);
 
 
     /* We are terminating ourselves just go to the exit point */

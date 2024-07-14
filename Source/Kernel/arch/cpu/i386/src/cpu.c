@@ -4451,6 +4451,7 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
 
         return 0;
     }
+    memset(pVCpu, 0, sizeof(virtual_cpu_t));
 
     /* Setup the interrupt context */
     pVCpu->intContext.intId     = 0;
@@ -4720,18 +4721,65 @@ void cpuManageThreadException(kernel_thread_t* pThread)
                     NULL);
 }
 
-bool_t cpuIsVCPUSaved(const void* pkVCpu)
+bool_t cpuIsVCPUSaved(const void* kpVCpu)
 {
-    return ((virtual_cpu_t*)pkVCpu)->isContextSaved != 0;
+    return ((virtual_cpu_t*)kpVCpu)->isContextSaved != 0;
 }
 
-void cpuPrintStackTrace(const void* pkVCpu)
+void cpuCoreDump(const void* kpVCpu)
 {
     size_t    i;
     uintptr_t callAddr;
     uintptr_t* lastEBP;
+    const cpu_state_t*   cpuState;
+    const int_context_t* intState;
+    uint32_t CR0;
+    uint32_t CR2;
+    uint32_t CR3;
+    uint32_t CR4;
 
-    lastEBP = (uintptr_t*)((virtual_cpu_t*)pkVCpu)->cpuState.ebp;
+    intState = &((virtual_cpu_t*)kpVCpu)->intContext;
+    cpuState = &((virtual_cpu_t*)kpVCpu)->cpuState;
+
+    __asm__ __volatile__ (
+        "mov %%cr0, %%eax\n\t"
+        "mov %%eax, %0\n\t"
+        "mov %%cr2, %%eax\n\t"
+        "mov %%eax, %1\n\t"
+        "mov %%cr3, %%eax\n\t"
+        "mov %%eax, %2\n\t"
+        "mov %%cr4, %%eax\n\t"
+        "mov %%eax, %3\n\t"
+    : "=m" (CR0), "=m" (CR2), "=m" (CR3), "=m" (CR4)
+    : /* no input */
+    : "%eax"
+    );
+
+    kprintfPanic("EAX: 0x%p | EBX: 0x%p | ECX: 0x%p | EDX: 0x%p  \n",
+                  cpuState->eax,
+                  cpuState->ebx,
+                  cpuState->ecx,
+                  cpuState->edx);
+    kprintfPanic("ESI: 0x%p | EDI: 0x%p | EBP: 0x%p | ESP: 0x%p  \n",
+                  cpuState->esi,
+                  cpuState->edi,
+                  cpuState->ebp,
+                  cpuState->esp);
+    kprintfPanic("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p | CR4: 0x%p  \n",
+                  CR0,
+                  CR2,
+                  CR3,
+                  CR4);
+    kprintfPanic("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
+                  "FS: 0x%04X | GS: 0x%04X\n",
+                  intState->cs & 0xFFFF,
+                  cpuState->ds & 0xFFFF,
+                  cpuState->ss & 0xFFFF,
+                  cpuState->es & 0xFFFF ,
+                  cpuState->fs & 0xFFFF ,
+                  cpuState->gs & 0xFFFF);
+
+    lastEBP = (uintptr_t*)((virtual_cpu_t*)kpVCpu)->cpuState.ebp;
 
     /* Get the return address */
     kprintf("Last RBP: 0x%p\n", lastEBP);

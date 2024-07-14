@@ -1052,6 +1052,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
             cpuMgtSendIpi(CPU_IPI_SEND_TO(requestSched), &ipiParams);
         }
     }
+
     KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Mapped thread %d to CPU %d",
@@ -1171,22 +1172,6 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pThreadInfo  = NULL;
     error        = OS_NO_ERR;
 
-    /* Allocate new structure */
-    pNewThread = kmalloc(sizeof(kernel_thread_t));
-    if(pNewThread == NULL)
-    {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
-    }
-
-    /* Create a new node for the threads lists */
-    pNewNode = kQueueCreateNode(pNewThread, FALSE);
-    if(pNewNode == NULL)
-    {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
-    }
-
     /* Validate parameters */
     if((kAffinitySet >> SOC_CPU_COUNT) != 0 ||
         kPriority > KERNEL_LOWEST_PRIORITY ||
@@ -1199,7 +1184,22 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
         goto SCHED_CREATE_KTHREAD_END;
     }
 
+    /* Allocate new structure */
+    pNewThread = kmalloc(sizeof(kernel_thread_t));
+    if(pNewThread == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_CREATE_KTHREAD_END;
+    }
     memset(pNewThread, 0, sizeof(kernel_thread_t));
+
+    /* Create a new node for the threads lists */
+    pNewNode = kQueueCreateNode(pNewThread, FALSE);
+    if(pNewNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_CREATE_KTHREAD_END;
+    }
 
     /* Set the thread's information */
     pNewThread->affinity           = kAffinitySet;

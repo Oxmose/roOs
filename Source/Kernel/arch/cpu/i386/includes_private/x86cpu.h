@@ -118,6 +118,8 @@ typedef struct
     uint16_t dx;
     /** @brief CPU flags register */
     uint16_t flags;
+    /** @brief Padding */
+    uint8_t pad[6];
 } __attribute__((__packed__)) bios_int_regs_t;
 
 /*******************************************************************************

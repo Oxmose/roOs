@@ -174,7 +174,7 @@
 
         stdoutdev: vesa {
             compatible = "x86,x86-vesa";
-            resolution = <1280 720>;
+            resolution = <1280 1024>;
             depth = <32>;
             refresh-rate = <30>;
         };

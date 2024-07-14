@@ -19,7 +19,7 @@
 ; DEFINES
 ;-------------------------------------------------------------------------------
 
-%define BIOS_CALL_STACK_SIZE 10
+%define BIOS_CALL_STACK_SIZE 16
 %define BIOS_CALL_DATA_SIZE 0x1000
 %define CODERM 0x0000
 %define DATARM 0x0000
@@ -244,7 +244,6 @@ _biosCallDataFromCopy:
     mov [eax], ebx
 
 _biosCallEnd:
-
     ; Restore all context
     pop ebp
     pop edi
@@ -262,7 +261,7 @@ _biosCallEnd:
 ; DATA
 ;-------------------------------------------------------------------------------
 section .bios_call_data
-
+align 16
 ; Temporary GDT for Bios Calls
 _gdt16:
     .null:
@@ -300,11 +299,13 @@ _gdt16Ptr:                                 ; GDT pointer for 16bit access
     dw _gdt16Ptr - _gdt16 - 1              ; GDT limit
     dd _gdt16                              ; GDT base address
 
+align 16
 ; BIOS IVT pointer
 _idt16Ptr:
     dw 0x03FF                              ; IVT limit
     dd 0x00000000                          ; IVT base address
 
+align 16
 __16BitsStack:
     times 0x200 db 0x00 ; 512B stack
 __16BitsStackEnd:

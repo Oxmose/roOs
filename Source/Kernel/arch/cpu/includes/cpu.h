@@ -324,21 +324,21 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
  * @details Tells if the VCPU had is latest context saved. This is refering
  * to the VCPU's context out of interrupts.
  *
- * @param[in] pkVCpu The VCPU to check.
+ * @param[in] kpVCpu The VCPU to check.
  *
  * @return Returns TRUE is the last VCPU's context was saved, FALSE otherwise.
  */
-bool_t cpuIsVCPUSaved(const void* pkVCpu);
+bool_t cpuIsVCPUSaved(const void* kpVCpu);
 
 /**
- * @brief Prints the virtual CPU stack trace.
+ * @brief Prints the virtual CPU core dump.
  *
- * @details Prints the virtual CPU stack trace. This will print the stack
+ * @details Prints the virtual CPU core dump. This will print the stack
  * trace to the console.
  *
- * @param[in] pkVCpu The VCPU to use.
+ * @param[in] kpVCpu The VCPU to use.
  */
-void cpuPrintStackTrace(const void* pkVCpu);
+void cpuCoreDump(const void* kpVCpu);
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

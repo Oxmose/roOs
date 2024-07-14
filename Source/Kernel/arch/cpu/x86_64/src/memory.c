@@ -1332,6 +1332,14 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
                     (uintptr_t*)KERNEL_RECUR_PML2_DIR_BASE(pmlEntry[3],
                                                             pmlEntry[2]);
             }
+            else if(j == 0)
+            {
+                pRecurTableEntry =
+                    (uintptr_t*)KERNEL_RECUR_PML1_DIR_BASE(pmlEntry[3],
+                                                           pmlEntry[2],
+                                                           pmlEntry[1]);
+            }
+
 
             if((pRecurTableEntry[pmlEntry[j]] & PAGE_FLAG_PRESENT) == 0)
             {
@@ -1532,11 +1540,12 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
 
     KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
-                 "Mapping 0x%p to 0x%p, HW (%d) MEM(%d)",
+                 "Mapping 0x%p to 0x%p, HW (%d) MEM(%d), Virt: 0x%p",
                  kPhysicalAddress,
                  kPhysicalAddress + kPageCount * KERNEL_PAGE_SIZE,
                  isHardware,
-                 isMemory);
+                 isMemory,
+                 kVirtualAddress);
 
     /* Check if the mapping already exists, check if we need to update one or
      * more page directory entries
@@ -1544,6 +1553,10 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     isMapped = _memoryMgrIsMapped(kVirtualAddress, kPageCount);
     if(isMapped == TRUE)
     {
+
+        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Already mapped");
         KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
                            TRACE_X86_MEMMGR_MAP_EXIT,
                            8,

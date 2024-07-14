@@ -1356,6 +1356,10 @@ static void* _vesaDisplayRoutine(void* pDrvCtrl)
         {
             schedSleep(period - elapsed);
         }
+        else
+        {
+            schedSleep(period);
+        }
     }
 
     return NULL;

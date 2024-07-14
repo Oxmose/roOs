@@ -4518,6 +4518,7 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
 
         return 0;
     }
+    memset(pVCpu, 0, sizeof(virtual_cpu_t));
 
     /* Setup the interrupt context */
     pVCpu->intContext.intId     = 0;
@@ -4797,18 +4798,76 @@ void cpuManageThreadException(kernel_thread_t* pThread)
                     NULL);
 }
 
-bool_t cpuIsVCPUSaved(const void* pkVCpu)
+bool_t cpuIsVCPUSaved(const void* kpVCpu)
 {
-    return ((virtual_cpu_t*)pkVCpu)->isContextSaved != 0;
+    return ((virtual_cpu_t*)kpVCpu)->isContextSaved != 0;
 }
 
-void cpuPrintStackTrace(const void* pkVCpu)
+void cpuCoreDump(const void* kpVCpu)
 {
     size_t    i;
     uintptr_t callAddr;
     uintptr_t* lastRBP;
+    const cpu_state_t*   cpuState;
+    const int_context_t* intState;
+    uint64_t CR0;
+    uint64_t CR2;
+    uint64_t CR3;
+    uint64_t CR4;
 
-    lastRBP = (uintptr_t*)((virtual_cpu_t*)pkVCpu)->cpuState.rbp;
+    intState = &((virtual_cpu_t*)kpVCpu)->intContext;
+    cpuState = &((virtual_cpu_t*)kpVCpu)->cpuState;
+
+    __asm__ __volatile__ (
+        "mov %%cr0, %%rax\n\t"
+        "mov %%rax, %0\n\t"
+        "mov %%cr2, %%rax\n\t"
+        "mov %%rax, %1\n\t"
+        "mov %%cr3, %%rax\n\t"
+        "mov %%rax, %2\n\t"
+        "mov %%cr4, %%rax\n\t"
+        "mov %%rax, %3\n\t"
+    : "=m" (CR0), "=m" (CR2), "=m" (CR3), "=m" (CR4)
+    : /* no input */
+    : "%rax"
+    );
+
+    kprintfPanic("RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
+                  cpuState->rax,
+                  cpuState->rbx,
+                  cpuState->rcx);
+    kprintfPanic("RDX: 0x%p | RSI: 0x%p | RDI: 0x%p \n",
+                  cpuState->rdx,
+                  cpuState->rsi,
+                  cpuState->rdi);
+    kprintfPanic("RBP: 0x%p | RSP: 0x%p | R8:  0x%p\n",
+                  cpuState->rbp,
+                  cpuState->rsp,
+                  cpuState->r8);
+    kprintfPanic("R9:  0x%p | R10: 0x%p | R11: 0x%p\n",
+                  cpuState->r9,
+                  cpuState->r10,
+                  cpuState->r11);
+    kprintfPanic("R12: 0x%p | R13: 0x%p | R14: 0x%p\n",
+                  cpuState->r12,
+                  cpuState->r13,
+                  cpuState->r14);
+    kprintfPanic("R15: 0x%p\n", cpuState->r15);
+    kprintfPanic("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p\nCR4: 0x%p\n",
+                  CR0, CR2,
+                  CR3,
+                  CR4);
+    kprintfPanic("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
+                  "FS: 0x%04X | GS: 0x%04X\n",
+                    intState->cs & 0xFFFF,
+                    cpuState->ds & 0xFFFF,
+                    cpuState->ss & 0xFFFF,
+                    cpuState->es & 0xFFFF ,
+                    cpuState->fs & 0xFFFF ,
+                    cpuState->gs & 0xFFFF);
+
+
+    lastRBP = (uintptr_t*)((virtual_cpu_t*)kpVCpu)->cpuState.rbp;
 
     /* Get the return address */
     kprintf("Last RBP: 0x%p\n", lastRBP);

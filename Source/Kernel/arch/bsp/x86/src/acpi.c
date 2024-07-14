@@ -1200,7 +1200,7 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
                                               MEMMGR_MAP_RO,
                                               &errCode);
         ACPI_ASSERT(errCode == OS_NO_ERR && descAddr != (uintptr_t)NULL,
-                    "Failed to map DT",
+                    "Failed to map DT x64",
                     errCode);
 
         _acpiParseDT((acpi_header_t*)

@@ -66,6 +66,7 @@ static void _shellDummyDefered(void* args);
 static void _shellDisplayThreads(void);
 static void _shellSignalSelf(void);
 static void _shellSignalHandler(void);
+static void _shellCtxSwitchTime(void);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -84,10 +85,135 @@ static void* _shellEntry(void* args);
 static char sInputBuffer[SHELL_INPUT_BUFFER_SIZE + 1];
 static size_t sInputBufferCursor;
 static spinlock_t sSignalLock = SPINLOCK_INIT_VALUE;
+static uint64_t sTimeSwitchStart[2];
+static uint64_t sTimeSwitchEnd[2];
+static volatile uint32_t threadStarted = 0;
+static spinlock_t threadStartedLock = SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void* _shellCtxSwitchRoutineAlone(void* args)
+{
+    int32_t tid;
+    uint64_t endTime;
+    uint32_t i;
+
+    tid = (int32_t)(uintptr_t)args;
+
+    for(i = 0; i < 1000000; ++i)
+    {
+        sTimeSwitchStart[tid] = timeGetUptime();
+        schedSchedule();
+        endTime = timeGetUptime();
+        sTimeSwitchEnd[tid] = (sTimeSwitchEnd[tid] * i +
+                               (endTime - sTimeSwitchStart[tid])) / (i + 1);
+    }
+
+    kprintf("Switch time no resched: %llu\n", sTimeSwitchEnd[tid]);
+
+    return NULL;
+}
+
+static void* _shellCtxSwitchRoutine(void* args)
+{
+    int32_t tid;
+    uint64_t endTime;
+    uint32_t i;
+
+    tid = (int32_t)(uintptr_t)args;
+    spinlockAcquire(&threadStartedLock);
+    ++threadStarted;
+    spinlockRelease(&threadStartedLock);
+    while(threadStarted != 2) {}
+    for(i = 0; i < 100000; ++i)
+    {
+        sTimeSwitchStart[tid] = timeGetUptime();
+        schedSchedule();
+        endTime = timeGetUptime();
+        sTimeSwitchEnd[(tid + 1) % 2] = (sTimeSwitchEnd[(tid + 1) % 2] * i +
+                               (endTime - sTimeSwitchStart[(tid + 1) % 2])) / (i + 1);
+    }
+
+    kprintf("Switch time resched: %llu\n", sTimeSwitchEnd[(tid + 1) % 2]);
+
+    return NULL;
+}
+
+static void _shellCtxSwitchTime(void)
+{
+    kernel_thread_t* pShellThread[2];
+    OS_RETURN_E      error;
+
+    memset(sTimeSwitchStart, 0, sizeof(sTimeSwitchStart));
+    memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
+    threadStarted = 0;
+
+    error = schedCreateKernelThread(&pShellThread[0],
+                                    KERNEL_LOWEST_PRIORITY - 1,
+                                    "kernelShellTime",
+                                    0x1000,
+                                    0x8,
+                                    _shellCtxSwitchRoutineAlone,
+                                    (void*)0);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+
+    error = schedJoinThread(pShellThread[0], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+        return;
+    }
+
+    memset(sTimeSwitchStart, 0, sizeof(sTimeSwitchStart));
+    memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
+    threadStarted = 0;
+
+    /* We don't keep the kernel shell thread handle, it the child of the main
+     * kernel thread (IDLE) and will be fully destroyed on exit, without need
+     * of join.
+     */
+    error = schedCreateKernelThread(&pShellThread[0],
+                                    KERNEL_LOWEST_PRIORITY - 1,
+                                    "kernelShellTime0",
+                                    0x1000,
+                                    0x8,
+                                    _shellCtxSwitchRoutine,
+                                    (void*)0);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+    error = schedCreateKernelThread(&pShellThread[1],
+                                    KERNEL_LOWEST_PRIORITY - 1,
+                                    "kernelShellTime1",
+                                    0x1000,
+                                    0x8,
+                                    _shellCtxSwitchRoutine,
+                                    (void*)1);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+
+    error = schedJoinThread(pShellThread[0], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+    }
+    error = schedJoinThread(pShellThread[1], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+    }
+}
 
 static void _shellSignalHandler(void)
 {
@@ -265,6 +391,10 @@ static void _shellExecuteCommand(void)
     else if(strcmp(command, "signalSelf") == 0)
     {
         _shellSignalSelf();
+    }
+    else if(strcmp(command, "timeCtxSw") == 0)
+    {
+        _shellCtxSwitchTime();
     }
     else
     {

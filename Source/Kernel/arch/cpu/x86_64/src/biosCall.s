@@ -19,7 +19,7 @@
 ; DEFINES
 ;-------------------------------------------------------------------------------
 
-%define BIOS_CALL_STACK_SIZE 10
+%define BIOS_CALL_STACK_SIZE 16
 %define BIOS_CALL_DATA_SIZE 0x1000
 %define CODERM 0x0000
 %define DATARM 0x0000
@@ -120,21 +120,34 @@ _biosCallDataToCopyEnd:
     sidt [__savedIDTPointer]
 
     ; Move to 16 bits stack
-    mov esp, __16BitsStackEnd
-    sub esp, BIOS_CALL_STACK_SIZE
-    mov ebp, 0
-
-    ; Disable paging
-    mov rax, cr0
-    and rax, 0x7FFEFFFF
-    mov cr0, rax
+    mov rsp, __16BitsStackEnd
+    sub rsp, BIOS_CALL_STACK_SIZE
+    mov rbp, 0
 
     ; Load the 16bit Real Mode GDT
     lgdt [_gdt16Ptr]
-    lea rax, [_biosCall16BitsGdtSetup]
-    push CODE16
+    lea rax, [_biosCall32BitsGdtSetup]
+    push CODE32
     push rax
     retfq
+
+_biosCall32BitsGdtSetup:
+[bits 32]
+    mov eax, DATA32
+    mov ds, eax
+    mov es, eax
+    mov ss, eax
+    mov fs, eax
+    mov gs, eax
+
+    ; Disable paging
+    mov eax, cr0
+    and eax, 0x7FFEFFFF
+    mov cr0, eax
+
+    ; Jump to 16 bits
+    jmp word CODE16:_biosCall16BitsGdtSetup
+
 
 _biosCall16BitsGdtSetup:
 [bits 16]
@@ -278,7 +291,7 @@ _biosCallEnd:
 ; DATA
 ;-------------------------------------------------------------------------------
 section .bios_call_data
-
+align 16
 ; Temporary GDT for Bios Calls
 _gdt16:
     .null:
@@ -295,46 +308,49 @@ _gdt16:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x92
+        db 0x93
         db 0xCF
         db 0x00
     .code32:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x9A
+        db 0x9B
         db 0xCF
         db 0x00
     .data32:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x92
+        db 0x93
         db 0xCF
         db 0x00
     .code16:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x9A
+        db 0x9B
         db 0x0F
         db 0x00
     .data16:
         dw 0xFFFF
         dw 0x0000
         db 0x00
-        db 0x92
+        db 0x93
         db 0x0F
         db 0x00
 _gdt16Ptr:                                 ; GDT pointer for 16bit access
     dw _gdt16Ptr - _gdt16 - 1              ; GDT limit
     dd _gdt16                              ; GDT base address
+    dd 0x00000000
 
+align 16
 ; BIOS IVT pointer
 _idt16Ptr:
     dw 0x03FF                              ; IVT limit
     dd 0x00000000                          ; IVT base address
 
+align 16
 __16BitsStack:
     times 0x200 db 0x00 ; 512B stack
 __16BitsStackEnd:
@@ -371,7 +387,5 @@ __savedInitialLocationPtr:
 
 __savedDataBuffer:
     times BIOS_CALL_DATA_SIZE db 0x00 ; Saved data
-
-
 
 ;************************************ EOF **************************************

@@ -34,6 +34,7 @@
 #include <graphics.h>      /* Graphics manager */
 #include <userinit.h>      /* User initialization */
 #include <core_mgt.h>      /* Core manager */
+#include <time_mgt.h>      /* Time manager */
 #include <drivermgr.h>     /* Driver manager */
 #include <scheduler.h>     /* Kernel scheduler */
 #include <interrupts.h>    /* Interrupt manager */
@@ -169,13 +170,13 @@ void kickstart(void)
     schedInit();
     KERNEL_SUCCESS("Scheduler initialized\n");
 
+    /* Add cpu, exception and interrupt related tests here */
+    TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
+    TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
+
     /* Init the defered interrupt servicing */
     interruptDeferInit();
     KERNEL_SUCCESS("Defered interrupts initialized\n");
-
-    /* Add cpu, excpetion and interrupt related tests here */
-    TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
-    TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
     TEST_POINT_FUNCTION_CALL(interruptDefferTest, TEST_DEF_INTERRUPT_ENABLED);
 
     /* Init the futex library */

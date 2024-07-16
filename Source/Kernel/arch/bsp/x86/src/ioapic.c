@@ -394,7 +394,7 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
                                                 MEMMGR_MAP_KERNEL   |
                                                 MEMMGR_MAP_RW,
                                                 &retCode);
-        if(pNewDrvCtrl->baseAddr == (uintptr_t)NULL || retCode != OS_NO_ERR)
+        if(retCode != OS_NO_ERR)
         {
             goto ATTACH_END;
         }

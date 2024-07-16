@@ -60,8 +60,6 @@
 #define PIT_FDT_SELFREQ_PROP    "freq"
 /** @brief FDT property for frequency range */
 #define PIT_FDT_FREQRANGE_PROP  "freq-range"
-/** @brief FDT property for main timer */
-#define PIT_FDT_ISMAIN_PROP     "is-main"
 
 /** @brief PIT set tick frequency divider command. */
 #define PIT_COMM_SET_FREQ 0x43
@@ -101,7 +99,7 @@ typedef struct
     uint32_t disabledNesting;
 
     /** @brief The driver's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } pit_controler_t;
 
 /*******************************************************************************
@@ -396,7 +394,7 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Init lock */
-    SPINLOCK_INIT(pDrvCtrl->lock);
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     /* Init system times */
     pDrvCtrl->disabledNesting = 1;
@@ -404,23 +402,8 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode)
     /* Set PIT frequency */
     _pitSetFrequency(pDrvCtrl, pDrvCtrl->selectedFrequency);
 
-    /* Check if we should register as main timer */
-    if(fdtGetProp(pkFdtNode, PIT_FDT_ISMAIN_PROP, &propLen) != NULL)
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, MAIN_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-    else
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
+    /* Set the API driver */
+    retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
@@ -433,6 +416,7 @@ ATTACH_END:
         {
             kfree(pTimerDrv);
         }
+        driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
@@ -458,7 +442,6 @@ static void _pitDummyHandler(kernel_thread_t* pCurrThread)
 static void _pitEnable(void* pDrvCtrl)
 {
     pit_controler_t* pPitCtrl;
-    uint32_t         intState;
 
     pPitCtrl = GET_CONTROLER(pDrvCtrl);
 
@@ -467,7 +450,6 @@ static void _pitEnable(void* pDrvCtrl)
                        1,
                        pPitCtrl->disabledNesting);
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting > 0)
@@ -484,7 +466,6 @@ static void _pitEnable(void* pDrvCtrl)
     }
 
     KERNEL_UNLOCK(pPitCtrl->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_ENABLE_EXIT,
@@ -494,7 +475,6 @@ static void _pitEnable(void* pDrvCtrl)
 
 static void _pitDisable(void* pDrvCtrl)
 {
-    uint32_t         intState;
     pit_controler_t* pPitCtrl;
 
     pPitCtrl = GET_CONTROLER(pDrvCtrl);
@@ -504,7 +484,6 @@ static void _pitDisable(void* pDrvCtrl)
                        1,
                        pPitCtrl->disabledNesting);
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pPitCtrl->lock);
 
     if(pPitCtrl->disabledNesting < UINT32_MAX)
@@ -513,7 +492,6 @@ static void _pitDisable(void* pDrvCtrl)
     }
 
     KERNEL_UNLOCK(pPitCtrl->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_DEBUG(PIT_DEBUG_ENABLED, MODULE_NAME, "Disable (nesting %d)",
                  pPitCtrl->disabledNesting);
@@ -531,7 +509,6 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
 {
     uint16_t         tickFreq;
     pit_controler_t* pPitCtrl;
-    uint32_t         intState;
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_FREQUENCY_ENTRY,
@@ -552,7 +529,6 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pPitCtrl->lock);
 
     pPitCtrl->selectedFrequency = kFreq;
@@ -569,7 +545,6 @@ static void _pitSetFrequency(void* pDrvCtrl, const uint32_t kFreq)
                  kFreq);
 
     KERNEL_UNLOCK(pPitCtrl->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_PIT_ENABLED,
                        TRACE_X86_PIT_SET_FREQUENCY_EXIT,

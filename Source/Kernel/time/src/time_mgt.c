@@ -25,10 +25,13 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
 #include <stdint.h>        /* Generic int types */
 #include <kerror.h>        /* Kernel error codes */
 #include <kqueue.h>        /* Kernel queues */
+#include <devtree.h>       /* Device tree lib */
+#include <drivermgr.h>     /* Driver manager */
 #include <interrupts.h>    /* Interrupt manager */
 #include <kerneloutput.h>  /* Kernel outputs */
 
@@ -48,6 +51,18 @@
 /** @brief Current module name */
 #define MODULE_NAME "TIME MGT"
 
+/** @brief FDT Time node, time configuration node name */
+#define FDT_TIMECONFIG_NODE_NAME "timeconfig"
+/** @brief FDT Time node, main timer pHandle */
+#define FDT_TIMECONFIG_MAIN_PROP "main"
+/** @brief FDT Time node, RTC timer pHandle */
+#define FDT_TIMECONFIG_RTC_PROP "rtc"
+/** @brief FDT Time node, lifetime timer pHandle */
+#define FDT_TIMECONFIG_LIFETIME_PROP "lifetime"
+/** @brief FDT Time node, aux timer pHandles */
+#define FDT_TIMECONFIG_AUX_PROP "aux"
+
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -58,7 +73,24 @@
  * MACROS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Assert macro used by the Time manager to ensure correctness of
+ * execution.
+ *
+ * @details Assert macro used by the Time manager to ensure correctness of
+ * execution. Due to the critical nature of the Time manager, any error
+ * generates a kernel panic.
+ *
+ * @param[in] COND The condition that should be true.
+ * @param[in] MSG The message to display in case of kernel panic.
+ * @param[in] ERROR The error code to use in case of kernel panic.
+ */
+#define TIME_ASSERT(COND, MSG, ERROR) {                     \
+    if((COND) == FALSE)                                     \
+    {                                                       \
+        PANIC(ERROR, MODULE_NAME, MSG);                     \
+    }                                                       \
+}
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
@@ -171,7 +203,7 @@ static kqueue_t* spAuxTimersQueue = NULL;
 static volatile uint64_t sActiveWait[SOC_CPU_COUNT] = {0};
 
 /** @brief Auxiliary timers list lock */
-static spinlock_t auxTimersListLock = SPINLOCK_INIT_VALUE;
+static kernel_spinlock_t sAuxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -179,15 +211,19 @@ static spinlock_t auxTimersListLock = SPINLOCK_INIT_VALUE;
 
 static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
-
     uint8_t cpuId;
+
+    cpuId = cpuGetId();
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_MAIN_HANDLER_ENTRY,
                        1,
                        (uint32_t)pCurrThread->tid);
 
-    cpuId = cpuGetId();
+
+    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
+                 MODULE_NAME,
+                 "Time manager main handler");
 
     /* Add a tick count */
     ++sSysTickCount[cpuId];
@@ -251,8 +287,28 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
                        KERNEL_TRACE_HIGH(kpTimer),
                        KERNEL_TRACE_LOW(kpTimer));
 
+    KERNEL_LOCK(sAuxTimersListLock);
+
+    /* Create queue is it does not exist */
+    if(spAuxTimersQueue == NULL)
+    {
+        spAuxTimersQueue = kQueueCreate(FALSE);
+        if(spAuxTimersQueue == NULL)
+        {
+            KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
+                               TRACE_TIME_MGT_ADD_AUX_EXIT,
+                               3,
+                               KERNEL_TRACE_HIGH(kpTimer),
+                               KERNEL_TRACE_LOW(kpTimer),
+                               OS_ERR_NO_MORE_MEMORY);
+            return OS_ERR_NO_MORE_MEMORY;
+        }
+    }
+
+    KERNEL_UNLOCK(sAuxTimersListLock);
+
     /* Create the new node */
-    pNewNode = kQueueCreateNode(kpTimer, FALSE);
+    pNewNode = kQueueCreateNode((void*)kpTimer, FALSE);
     if(pNewNode == NULL)
     {
         KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
@@ -260,22 +316,12 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
                            3,
                            KERNEL_TRACE_HIGH(kpTimer),
                            KERNEL_TRACE_LOW(kpTimer),
-                           OS_ERR_NULL_POINTER);
-        return OS_ERR_NULL_POINTER;
-    }
-
-    KERNEL_LOCK(auxTimersListLock);
-
-    /* Create queue is it does not exist */
-    if(spAuxTimersQueue == NULL)
-    {
-        spAuxTimersQueue = kQueueCreate(TRUE);
+                           OS_ERR_NO_MORE_MEMORY);
+        return OS_ERR_NO_MORE_MEMORY;
     }
 
     /* Add the timer to the queue */
     kQueuePush(pNewNode, spAuxTimersQueue);
-
-    KERNEL_UNLOCK(auxTimersListLock);
 
     KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
                        TRACE_TIME_MGT_ADD_AUX_EXIT,
@@ -287,83 +333,142 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
 }
 
 void timeInit(void)
-[
-    
-]
-
-OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
-                            const TIMER_TYPE_E    kType)
 {
-    OS_RETURN_E retCode;
+    OS_RETURN_E           retCode;
+    const fdt_node_t*     kpTimerNode;
+    const uint32_t*       kpUintProp;
+    size_t                propLen;
+    size_t                i;
+    const kernel_timer_t* kpTimer;
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_TIMER_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(kpTimer),
-                       KERNEL_TRACE_LOW(kpTimer),
-                       kType);
+    /* Get the FDT timers node */
+    kpTimerNode = fdtGetNodeByName(FDT_TIMECONFIG_NODE_NAME);
+    TIME_ASSERT(kpTimerNode != NULL,
+                "The FDT must contain a timer configurartion.",
+                OS_ERR_INCORRECT_VALUE);
 
-    /* Check the main timer integrity */
-    if(kpTimer == NULL ||
-       kpTimer->pGetFrequency == NULL ||
-       kpTimer->pEnable == NULL ||
-       kpTimer->pDisable == NULL ||
-       kpTimer->pSetHandler == NULL ||
-       kpTimer->pRemoveHandler == NULL)
+    /* Get the main timer driver */
+    kpUintProp = fdtGetProp(kpTimerNode,
+                            FDT_TIMECONFIG_MAIN_PROP,
+                            &propLen);
+    TIME_ASSERT(kpUintProp != NULL && propLen == sizeof(uint32_t),
+                "The FDT time configuration must contain on and only one main.",
+                OS_ERR_INCORRECT_VALUE);
 
+    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Adding main timer");
+    kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+    TIME_ASSERT(kpTimer != NULL &&
+                kpTimer->pGetFrequency != NULL &&
+                kpTimer->pEnable != NULL &&
+                kpTimer->pDisable != NULL &&
+                kpTimer->pSetHandler != NULL &&
+                kpTimer->pRemoveHandler != NULL &&
+                kpTimer->pDriverCtrl != NULL,
+                "Invalid main timer driver",
+                OS_ERR_NULL_POINTER);
+    sSysMainTimer = *kpTimer;
+    retCode = sSysMainTimer.pSetHandler(sSysMainTimer.pDriverCtrl,
+                                        _mainTimerHandler);
+    TIME_ASSERT(retCode == OS_NO_ERR,
+                "Failed to setup the main timer",
+                retCode);
+    sSysMainTimer.pEnable(sSysMainTimer.pDriverCtrl);
+
+    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Added main timer");
+
+    /* Get the RTC driver */
+    kpUintProp = fdtGetProp(kpTimerNode,
+                            FDT_TIMECONFIG_RTC_PROP,
+                            &propLen);
+    if(kpUintProp != NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_TIMER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(kpTimer),
-                           KERNEL_TRACE_LOW(kpTimer),
-                           kType,
-                           OS_ERR_NULL_POINTER);
+        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Adding RTC timer");
+        TIME_ASSERT(kpUintProp != NULL && propLen == sizeof(uint32_t),
+                    "The FDT time configuration must contain at most one RTC.",
+                    OS_ERR_INCORRECT_VALUE);
 
-        return OS_ERR_NULL_POINTER;
-    }
-
-    retCode = OS_NO_ERR;
-
-    switch(kType)
-    {
-        case MAIN_TIMER:
-            sSysMainTimer = *kpTimer;
-            retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
-                                           _mainTimerHandler);
-            break;
-        case RTC_TIMER:
-            sSysRtcTimer = *kpTimer;
-            retCode = kpTimer->pSetHandler(kpTimer->pDriverCtrl,
+        kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+        TIME_ASSERT(kpTimer != NULL &&
+                    kpTimer->pEnable != NULL &&
+                    kpTimer->pDisable != NULL &&
+                    kpTimer->pGetDaytime != NULL &&
+                    kpTimer->pGetDate != NULL &&
+                    kpTimer->pDriverCtrl != NULL,
+                    "Invalid RTC timer driver",
+                    OS_ERR_NULL_POINTER);
+        sSysRtcTimer = *kpTimer;
+        retCode = sSysRtcTimer.pSetHandler(sSysRtcTimer.pDriverCtrl,
                                            _rtcTimerHandler);
-            break;
-        case LIFETIME_TIMER:
-            sSysLifetimeTimer = *kpTimer;
-            break;
-        case AUX_TIMER:
-            retCode = _timeMgtAddAuxTimer(kpTimer);
-            break;
-        default:
-            retCode = OS_ERR_NOT_SUPPORTED;
+        TIME_ASSERT(retCode == OS_NO_ERR,
+                    "Failed to setup the RTC timer",
+                    retCode);
+        sSysRtcTimer.pEnable(sSysRtcTimer.pDriverCtrl);
+
+        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Added RTC timer");
     }
 
-    /* The auxiliary timers will be enable on demand, as they might generate
-     * unhandled interrupts.
-     */
-    if(retCode == OS_NO_ERR && kType != AUX_TIMER)
+
+    /* Get the lifetime driver */
+    kpUintProp = fdtGetProp(kpTimerNode,
+                            FDT_TIMECONFIG_LIFETIME_PROP,
+                            &propLen);
+    if(kpUintProp != NULL)
     {
-        kpTimer->pEnable(kpTimer->pDriverCtrl);
+        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "Adding lifetime timer");
+
+        TIME_ASSERT(kpUintProp != NULL && propLen == sizeof(uint32_t),
+                    "The FDT time configuration must contain at most one "
+                    "lifetime.",
+                    OS_ERR_INCORRECT_VALUE);
+
+        kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+        TIME_ASSERT(kpTimer != NULL &&
+                    kpTimer->pGetTimeNs != NULL &&
+                    kpTimer->pEnable != NULL &&
+                    kpTimer->pDisable != NULL &&
+                    kpTimer->pDriverCtrl != NULL,
+                    "Invalid lifetime timer driver",
+                    OS_ERR_NULL_POINTER);
+        sSysLifetimeTimer = *kpTimer;
+        sSysLifetimeTimer.pEnable(sSysLifetimeTimer.pDriverCtrl);
+
+        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
+                     MODULE_NAME,
+                     "Added lifetime timer");
     }
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_TIMER_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(kpTimer),
-                       KERNEL_TRACE_LOW(kpTimer),
-                       kType,
-                       retCode);
+    /* Get other auxiliary timers */
+    kpUintProp = fdtGetProp(kpTimerNode,
+                            FDT_TIMECONFIG_AUX_PROP,
+                            &propLen);
+    if(kpUintProp != NULL)
+    {
+        for(i = 0; i < propLen / sizeof(uint32_t); ++i)
+        {
+            KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
+                         MODULE_NAME,
+                         "Adding aux timer %d",
+                         i);
 
-    return retCode;
+            kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
+            TIME_ASSERT(kpTimer != NULL &&
+                        kpTimer->pEnable != NULL &&
+                        kpTimer->pDisable != NULL &&
+                        kpTimer->pDriverCtrl != NULL,
+                        "Invalid aux timer driver",
+                        OS_ERR_NULL_POINTER);
+            retCode = _timeMgtAddAuxTimer(kpTimer);
+            TIME_ASSERT(retCode == OS_NO_ERR,
+                        "Failed to add auxiliary timer",
+                        retCode);
+            KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
+                         MODULE_NAME,
+                         "Added aux timer %d",
+                         i);
+        }
+    }
 }
 
 uint64_t timeGetUptime(void)

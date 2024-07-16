@@ -318,7 +318,7 @@ void signalManage(kernel_thread_t* pThread)
     }
 
     /* Highest priority is 0 */
-    for(i = THREAD_MAX_SIGNALS - 1; i >= 0; --i)
+    for(i = 0; i < THREAD_MAX_SIGNALS; ++i)
     {
         /* Find the next signal to handle */
         if(((1ULL << i) & pThread->signal) != 0 &&
@@ -342,7 +342,6 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
                            void                  (*pHandler)(void))
 {
     kernel_thread_t* pThread;
-    uint32_t         intState;
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_REGISTER_SIGNAL_ENTRY,
@@ -378,11 +377,9 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
     pThread = schedGetCurrentThread();
 
     /* Register the handler in the table */
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pThread->lock);
     pThread->signalHandlers[kSignal] = (void*)pHandler;
     KERNEL_UNLOCK(pThread->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_REGISTER_SIGNAL_EXIT,
@@ -398,7 +395,6 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
                          const THREAD_SIGNAL_E kSignal)
 {
     OS_RETURN_E error;
-    uint32_t    intState;
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_SIGNAL_THREAD_ENTRY,
@@ -431,20 +427,24 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pThread->lock);
-    if(pThread->currentState != THREAD_STATE_ZOMBIE &&
-       pThread->signalHandlers[kSignal] != NULL)
+    if(pThread->currentState != THREAD_STATE_ZOMBIE)
     {
-        pThread->signal |= (1ULL << kSignal);
-        error = OS_NO_ERR;
+        if(pThread->signalHandlers[kSignal] != NULL)
+        {
+            pThread->signal |= (1ULL << kSignal);
+            error = OS_NO_ERR;
+        }
+        else
+        {
+            error = OS_ERR_INCORRECT_VALUE;
+        }
     }
     else
     {
         error = OS_ERR_NO_SUCH_ID;
     }
     KERNEL_UNLOCK(pThread->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
                        TRACE_SIGNAL_SIGNAL_THREAD_EXIT,

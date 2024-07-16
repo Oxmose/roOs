@@ -179,7 +179,7 @@ typedef struct lapic_controler_t
     uint32_t spuriousIntLine;
 
     /** @brief Driver's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 
     /** @brief List of present LAPICs from the ACPI. */
     const lapic_node_t* pLapicList;
@@ -388,7 +388,7 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     retCode = OS_NO_ERR;
 
     /* Init the driver lock */
-    SPINLOCK_INIT(sDrvCtrl.lock);
+    KERNEL_SPINLOCK_INIT(sDrvCtrl.lock);
 
     /* Get the cpu's spurious int line */
     sDrvCtrl.spuriousIntLine = cpuGetInterruptConfig()->spuriousInterruptLine;
@@ -599,8 +599,6 @@ static void _lapicStartCpu(const uint8_t kLapicId)
 
 static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
 {
-    uint32_t intState;
-
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_SEND_IPI_ENTRY,
                        2,
@@ -618,7 +616,6 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sDrvCtrl.lock);
 
     /* Send IPI */
@@ -631,7 +628,6 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
     while ((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
 
     KERNEL_UNLOCK(sDrvCtrl.lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
                        TRACE_X86_LAPIC_SEND_IPI_EXIT,

@@ -66,7 +66,7 @@ typedef struct
     uint32_t flags;
 
     /** @brief Semaphore lock. */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } semaphore_t;
 
 /*******************************************************************************

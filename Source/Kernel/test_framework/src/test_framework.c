@@ -158,7 +158,7 @@ test_item_t null_test_item = {
 };
 
 /** @brief Test spinlock */
-static spinlock_t sLock;
+static kernel_spinlock_t sLock;
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -260,7 +260,7 @@ void _killQemu(void)
 
 void testFrameworkInit(void)
 {
-    SPINLOCK_INIT(sLock);
+    KERNEL_SPINLOCK_INIT(sLock);
     memoryPoolHead = &_KERNEL_TEST_BUFFER_BASE;
 }
 

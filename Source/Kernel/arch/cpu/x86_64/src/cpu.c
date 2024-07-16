@@ -4341,17 +4341,17 @@ uint32_t cpuGetIntState(void)
 
 void cpuClearInterrupt(void)
 {
-    __asm__ __volatile__("cli":::"memory");
+    __asm__ __volatile__("cli\n\tmfence\n\t":::"memory");
 }
 
 void cpuSetInterrupt(void)
 {
-    __asm__ __volatile__("sti":::"memory");
+    __asm__ __volatile__("mfence\n\tsti\n\t":::"memory");
 }
 
 void cpuHalt(void)
 {
-    __asm__ __volatile__ ("hlt":::"memory");
+    __asm__ __volatile__ ("mfence\n\thlt\n\t":::"memory");
 }
 
 void cpuApInit(const uint8_t kCpuId)

@@ -74,7 +74,7 @@ typedef struct
     volatile uintptr_t nbWaitingThreads;
 
     /** @brief The futex data lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } futex_data_t;
 
 /** @brief Futex waiting thread structure */
@@ -137,7 +137,7 @@ typedef struct
 static uhashtable_t* spFutexTable = NULL;
 
 /** @brief Futex table lock */
-static spinlock_t sLock = SPINLOCK_INIT_VALUE;
+static kernel_spinlock_t sLock;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -155,6 +155,8 @@ void futexLibInit(void)
     /* Create the futex hashtable */
     spFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
     FUTEX_ASSERT(err == OS_NO_ERR, "Could not initialize futex table", err);
+
+    KERNEL_SPINLOCK_INIT(sLock);
 
     TEST_POINT_FUNCTION_CALL(futexTest, TEST_FUTEX_ENABLED);
 
@@ -247,7 +249,7 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
                      OS_ERR_NO_MORE_MEMORY);
 
         pFutexData->nbWaitingThreads = 0;
-        SPINLOCK_INIT(pFutexData->lock);
+        KERNEL_SPINLOCK_INIT(pFutexData->lock);
 
         error = uhashtableSet(spFutexTable, identifier, (void*)pFutexData);
         FUTEX_ASSERT(error == OS_NO_ERR, "Failed to create futex", error);

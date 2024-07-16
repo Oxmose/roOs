@@ -552,7 +552,7 @@
 void panicTest(void);
 void interruptTest(void);
 void exceptionTest(void);
-void kheapTtest(void);
+void kheapTest(void);
 void queueTest(void);
 void kqueueTest(void);
 void vectorTest(void);

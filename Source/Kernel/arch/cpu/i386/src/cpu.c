@@ -4554,7 +4554,7 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
 
     /* Put the function to call on the stack */
     pVCpu->cpuState.esp -= sizeof(uint32_t);
-    *(uint64_t*)(pVCpu->cpuState.esp) = (uint32_t)instructionAddr;
+    *(uint32_t*)(pVCpu->cpuState.esp) = (uint32_t)instructionAddr;
 
     KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
                        TRACE_X86_CPU_REDIRECT_EXEC_EXIT,

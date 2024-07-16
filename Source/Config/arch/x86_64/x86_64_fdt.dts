@@ -93,35 +93,35 @@
         };
 
         /* PIT capabilities (global, synchronized, interrupt):
-         *    * is-main
-         *    * is-aux (or blank)
+         *    * main
+         *    * aux
          *
          * RTC capabilities (global, synchronized, interrupt):
-         *    * is-rtc
-         *    * is-aux (or blank)
+         *    * rtc
+         *    * aux
          *
          * TSC capabilities (per CPU, unsinchronized, no interrupt):
-         *    * is-lifetime
-         *    * is-aux (or blank)
+         *    * lifetime
+         *    * aux
          *
          * HPET capabilities (global, synchronized, interrupt):
-         *    * is-main
-         *    * is-lifetime
-         *    * is-aux (or blank)
+         *    * main
+         *    * lifetime
+         *    * aux
          *
          * LAPIC-Timer capabilities (per CPU, unsynchronized, interrupt):
-         *    * is-main
-         *    * is-aux (or blank)
+         *    * main
+         *    * aux
          *    * Note: the LAPIC timer needs a base timer to calibrate its
          *            frequency. The base timerneeds to support returning the
          *            current time in nanoseconds and must be as precise as
          *            possible.
          *
-         * Set PIT as is-main for compatibility, low precision but synchronized
+         * Set PIT as main for compatibility, low precision but synchronized
          * schedule and system ticks
-         * Set HPET to is-main for global schedule and system ticks
+         * Set HPET to main for global schedule and system ticks
          * synchronization over all CPUS.
-         * Set LAPIC-Timers as is-main for more precise but unsynchronized
+         * Set LAPIC-Timers as main for more precise but unsynchronized
          * schedule and system ticks
          */
         timers {
@@ -132,13 +132,13 @@
                 qartz-freq = <0x1234DD>;
                 freq = <500>;
                 freq-range = <20 8000>;
-                is-aux;
             };
 
             auxtimer1: hpet {
                 compatible = "x86,x86-hpet";
-                interrupts = <1 0>; /* 0: is IRQ; 1: IRQ line */
-                freq = <500>;
+                interrupts = <1 20>; /* 0: is IRQ; 1: IRQ line */
+                freq = <5000>;
+                acpi-node = <&acpi>;
             };
 
             rtctimer: rtc {
@@ -148,16 +148,14 @@
                 qartz-freq = <32768>;
                 freq = <2>;
                 freq-range = <2 8192>;
-                is-rtc;
             };
 
             lifetimer: tsc {
                 compatible = "x86,x86-tsc";
                 freq = <3600000000>;
-                is-lifetime;
             };
 
-            maintimer = lapic-timer {
+            maintimer: lapic-timer {
                 compatible = "x86,x86-lapic-timer";
                 interrupts = <0 0x21>; /* 0: is not IRQ; 1: Int line */
                 freq = <500>;
@@ -167,7 +165,6 @@
                  */
                 base-timer = <&lifetimer>;
                 lapic-node = <&lapic>;
-                is-main;
             };
         };
 
@@ -230,8 +227,6 @@
         main = <&maintimer>;
         rtc = <&rtctimer>;
         lifetime = <&lifetimer>;
-        aux = <&auxtimeer0 &auxtimer1>;
+        aux = <&auxtimer0 &auxtimer1>;
     };
-
-    timers
 };

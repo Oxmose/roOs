@@ -70,7 +70,7 @@ typedef struct
     uint32_t flags;
 
     /** @brief Mutex lock. */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 
     /** @brief Acquired thread's initial priority */
     uint8_t acquiredThreadPriority;

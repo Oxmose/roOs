@@ -536,22 +536,22 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     interruptDisable();
 
-    KERNEL_LOCK(sLock);
+    spinlockAcquire(&sLock);
 
     if(sDelivered == TRUE)
     {
-        KERNEL_UNLOCK(sLock);
+        spinlockRelease(&sLock);
         goto PANIC_END;
     }
 
     sDelivered = TRUE;
-    KERNEL_UNLOCK(sLock);
+    spinlockRelease(&sLock);
 
     cpuId = cpuGetId();
 
     /* Send IPI to all other cores and tell that the panic was delivered */
     ipiParams.function = IPI_FUNC_PANIC;
-    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams);
+    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, FALSE);
 
     pThreadVCpu = pCurrThread->pVCpu;
 
@@ -624,11 +624,6 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 #if TEST_PANIC_ENABLED
     TEST_FRAMEWORK_END();
 #endif
-    while(1)
-    {
-        interruptDisable();
-        cpuHalt();
-    }
 
 PANIC_END:
     /* We will never return from interrupt */

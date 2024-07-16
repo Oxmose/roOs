@@ -51,8 +51,6 @@
 
 /** @brief FDT property for frequency */
 #define TSC_FDT_SELFREQ_PROP    "freq"
-/** @brief FDT property for litetime timer */
-#define TSC_FDT_ISLIFETIME_PROP     "is-lifetime"
 
 /** @brief Current module name */
 #define MODULE_NAME "X86 TSC"
@@ -112,7 +110,6 @@ static void _tscEnable(void* pDrvCtrl);
  * @param[in, out] pDrvCtrl Unused.
  */
 static void _tscDisable(void* pDrvCtrl);
-
 
 /**
  * @brief Returns the TSC count frequency in Hz.
@@ -234,27 +231,7 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->frequency = FDTTOCPU32(*kpUintProp);
 
-    /* Check if we should register as lifetime timer */
-    if(fdtGetProp(pkFdtNode, TSC_FDT_ISLIFETIME_PROP, &propLen) != NULL)
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, LIFETIME_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-    else
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-
-    /* Set the API driver as the TSC can be used to calibrate other
-     * drivers
-     */
+    /* Set the API driver */
     retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
 
 ATTACH_END:
@@ -268,6 +245,7 @@ ATTACH_END:
         {
             kfree(pTimerDrv);
         }
+        driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,

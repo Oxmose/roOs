@@ -136,11 +136,11 @@ static void _mutexReleaseResource(void* pResource);
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
 static void _mutexReleaseResource(void* pResource)
 {
     mutex_data_t*  pData;
     kqueue_node_t* pNode;
-    uint32_t       intState;
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_RELEASE_RESOURCE_ENTRY,
@@ -154,7 +154,6 @@ static void _mutexReleaseResource(void* pResource)
     pNode = pResource;
     pData = pNode->pData;
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pData->pMutex->lock);
 
     /* Check if the node is enlisted */
@@ -163,8 +162,7 @@ static void _mutexReleaseResource(void* pResource)
         kQueueRemove(pData->pMutex->pWaitingList, pNode, TRUE);
     }
 
-    KERNEL_LOCK(pData->pMutex->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+    KERNEL_UNLOCK(pData->pMutex->lock);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_RELEASE_RESOURCE_EXIT,
@@ -224,7 +222,7 @@ OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
 
     pMutex->flags = kFlags;
     pMutex->lockState = 1;
-    SPINLOCK_INIT(pMutex->lock);
+    KERNEL_SPINLOCK_INIT(pMutex->lock);
     pMutex->isInit = TRUE;
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -273,8 +271,9 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    /* Clear the mutex and wakeup all threads */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
+    /* Clear the mutex and wakeup all threads */
     KERNEL_LOCK(pMutex->lock);
 
     pMutex->isInit = FALSE;
@@ -480,7 +479,6 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
                        error);
 
     return error;
-
 }
 
 OS_RETURN_E mutexUnlock(mutex_t* pMutex)
@@ -617,7 +615,6 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
 OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
 {
     OS_RETURN_E      error;
-    uint32_t         intState;
     kernel_thread_t* pCurThread;
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
@@ -649,7 +646,6 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pMutex->lock);
 
     if(pLockState != NULL)
@@ -673,7 +669,6 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
     }
 
     KERNEL_UNLOCK(pMutex->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
                        TRACE_MUTEX_TRYLOCK_EXIT,

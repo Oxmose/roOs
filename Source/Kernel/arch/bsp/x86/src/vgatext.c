@@ -97,9 +97,6 @@ typedef struct
 
     /** @brief Size in bytes of the framebuffer. */
     size_t framebufferSize;
-
-    /** @brief Driver's lock */
-    spinlock_t lock;
 } vga_controler_t;
 
 
@@ -391,7 +388,6 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vga_controler_t));
-    SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -593,8 +589,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     /* If character is a normal ASCII character */
     if(kCharacter > 31 && kCharacter < 127)
     {
@@ -688,8 +682,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter)
                 break;
         }
     }
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaClearFramebuffer(void* pDriverCtrl)
@@ -698,12 +690,8 @@ static void _vgaClearFramebuffer(void* pDriverCtrl)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     /* Clear all screen */
     memset(pCtrl->pFramebuffer, 0, pCtrl->framebufferSize);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaPutCursor(void*          pDriverCtrl,
@@ -714,11 +702,7 @@ static void _vgaPutCursor(void*          pDriverCtrl,
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     _vgaPutCursorSafe(pCtrl, kLine, kColumn);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
@@ -729,11 +713,9 @@ static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
     {
         pCtrl = GET_CONTROLER(pDriverCtrl);
 
-        KERNEL_LOCK(pCtrl->lock);
         /* Save cursor attributes */
         pBuffer->x = pCtrl->screenCursor.x;
         pBuffer->y = pCtrl->screenCursor.y;
-        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 
@@ -743,16 +725,12 @@ static void _vgaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     if(kpBuffer->x >= pCtrl->columnCount || kpBuffer->y >= pCtrl->lineCount)
     {
-        KERNEL_UNLOCK(pCtrl->lock);
         return;
     }
     /* Restore cursor attributes */
     _vgaPutCursorSafe(pDriverCtrl, kpBuffer->y, kpBuffer->x);
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaScrollSafe(vga_controler_t*         pCtrl,
@@ -805,11 +783,7 @@ static void _vgaScroll(void*                    pDriverCtrl,
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     _vgaScrollSafe(pCtrl, kDirection, kLines);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
@@ -818,10 +792,8 @@ static void _vgaSetScheme(void* pDriverCtrl, const colorscheme_t* kpColorScheme)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
     pCtrl->screenScheme.foreground = kpColorScheme->foreground;
     pCtrl->screenScheme.background = kpColorScheme->background;
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
@@ -833,11 +805,9 @@ static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
     {
         pCtrl = GET_CONTROLER(pDriverCtrl);
 
-        KERNEL_LOCK(pCtrl->lock);
         /* Save color scheme into buffer */
         pBuffer->foreground = pCtrl->screenScheme.foreground;
         pBuffer->background = pCtrl->screenScheme.background;
-        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 

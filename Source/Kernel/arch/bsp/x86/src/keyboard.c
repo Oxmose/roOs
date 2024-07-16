@@ -111,7 +111,7 @@ typedef struct
     uint8_t* pInputBuffer;
 
     /** @brief Input buffer lock */
-    spinlock_t inputBufferLock;
+    kernel_spinlock_t inputBufferLock;
 
     /** @brief Input buffer semaphore */
     semaphore_t inputBufferSem;
@@ -126,7 +126,7 @@ typedef struct
     bool_t echo;
 
     /** @brief Driver's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } kbd_controler_t;
 
 /*******************************************************************************
@@ -460,7 +460,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(kbd_controler_t));
-    SPINLOCK_INIT(pDrvCtrl->lock);
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -523,7 +523,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     isInputBufferSet = TRUE;
-    SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
 
     retCode = semInit(&pDrvCtrl->inputBufferSem,
                       0,
@@ -627,7 +627,7 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
         }
 
         /* Try to add the new data to the buffer */
-        spinlockAcquire(&spInputCtrl->inputBufferLock);
+        KERNEL_LOCK(spInputCtrl->inputBufferLock);
 
         if(spInputCtrl->inputBufferEndCursor >=
            spInputCtrl->inputBufferStartCursor)
@@ -652,7 +652,7 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
                 KBD_INPUT_BUFFER_SIZE;
         }
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
+        KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* Post the semaphore */
         error = semPost(&spInputCtrl->inputBufferSem);
@@ -710,7 +710,7 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
                    "Failed to wait keyboard semaphore",
                    error);
 
-        spinlockAcquire(&spInputCtrl->inputBufferLock);
+        KERNEL_LOCK(spInputCtrl->inputBufferLock);
 
         if(spInputCtrl->inputBufferEndCursor >=
            spInputCtrl->inputBufferStartCursor)
@@ -742,7 +742,7 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
         toRead -= bytesToRead;
         usedSpace -= bytesToRead;
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
+        KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* If we can still read data, post the semaphore, we read what we had to
          * since we used

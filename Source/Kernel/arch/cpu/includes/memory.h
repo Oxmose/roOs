@@ -192,7 +192,7 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
  * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
  */
 uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
-                               uint32_t* pFlags);
+                               uint32_t*       pFlags);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

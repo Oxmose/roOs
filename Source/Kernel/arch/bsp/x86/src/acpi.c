@@ -739,6 +739,17 @@ uint8_t _acpiGetIOAPICCount(void);
 const io_apic_node_t* _acpiGetIOAPICList(void);
 
 /**
+ * @brief Returns the list of detected HPETs.
+ *
+ * @details Returns the list of detected HPETs. This list should not be
+ * modified and is generated during the attach of the ACPI while parsing
+ * its tables.
+ *
+ * @return The list of detected HPETs descritors is returned.
+ */
+const hpet_node_t* _acpiGetHPETList(void);
+
+/**
  * @brief Checks if the IRQ has been remaped in the IO-APIC structure.
  *
  * @details Checks if the IRQ has been remaped in the IO-APIC structure. This
@@ -791,6 +802,7 @@ static acpi_driver_t sAPIDriver = {
     .pGetLAPICBaseAddress = _acpiGetLAPICBaseAddress,
     .pGetIOAPICCount      = _acpiGetIOAPICCount,
     .pGetIOAPICList       = _acpiGetIOAPICList,
+    .pGetHPETList         = _acpiGetHPETList,
     .pGetRemapedIrq       = _acpiGetRemapedIrq,
 };
 
@@ -1614,6 +1626,11 @@ uint8_t _acpiGetIOAPICCount(void)
 const io_apic_node_t* _acpiGetIOAPICList(void)
 {
     return sDrvCtrl.pIoApicList;
+}
+
+const hpet_node_t* _acpiGetHPETList(void)
+{
+    return sDrvCtrl.pHpetList;
 }
 
 uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)

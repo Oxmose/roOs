@@ -202,7 +202,7 @@ static size_t sBufferSize = 0;
 static char spBuffer[KPRINTF_BUFFER_SIZE + 1];
 
 /** @brief Kernel output lock */
-static spinlock_t sLock = SPINLOCK_INIT_VALUE;
+static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -562,7 +562,6 @@ void kprintfPanic(const char* kpFmt, ...)
 void kprintf(const char* kpFmt, ...)
 {
     __builtin_va_list args;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_ENTRY,
@@ -580,7 +579,6 @@ void kprintf(const char* kpFmt, ...)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     /* Prtinf format string */
@@ -589,7 +587,6 @@ void kprintf(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTF_EXIT,
@@ -603,7 +600,6 @@ void kprintfError(const char* kpFmt, ...)
     __builtin_va_list args;
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_ENTRY,
@@ -622,7 +618,6 @@ void kprintfError(const char* kpFmt, ...)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     newScheme.foreground = FG_RED;
@@ -647,7 +642,6 @@ void kprintfError(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFERROR_EXIT,
@@ -661,7 +655,6 @@ void kprintfSuccess(const char* kpFmt, ...)
     __builtin_va_list args;
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_ENTRY,
@@ -679,7 +672,6 @@ void kprintfSuccess(const char* kpFmt, ...)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     newScheme.foreground = FG_GREEN;
@@ -704,7 +696,6 @@ void kprintfSuccess(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
@@ -718,7 +709,6 @@ void kprintfInfo(const char* kpFmt, ...)
     __builtin_va_list args;
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_ENTRY,
@@ -737,7 +727,6 @@ void kprintfInfo(const char* kpFmt, ...)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     newScheme.foreground = FG_CYAN;
@@ -762,7 +751,6 @@ void kprintfInfo(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFINFO_EXIT,
@@ -777,7 +765,6 @@ void kprintfDebug(const char* kpFmt, ...)
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
     uint64_t          uptime;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFDEBUG_ENTRY,
@@ -795,7 +782,6 @@ void kprintfDebug(const char* kpFmt, ...)
         return;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     newScheme.foreground = FG_YELLOW;
@@ -826,7 +812,6 @@ void kprintfDebug(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
@@ -837,13 +822,10 @@ void kprintfDebug(const char* kpFmt, ...)
 
 void kprintfFlush(void)
 {
-    uint32_t intState;
-
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFFLUSH_ENTRY,
                        0);
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(sLock);
 
     spBuffer[sBufferSize] = 0;
@@ -851,7 +833,6 @@ void kprintfFlush(void)
     sBufferSize = 0;
 
     KERNEL_UNLOCK(sLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
                        TRACE_KOUTPUT_KPRINTFFLUSH_EXIT,

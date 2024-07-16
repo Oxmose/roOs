@@ -62,6 +62,7 @@
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
+static void _shellTimeTest(void);
 static void _shellDummyDefered(void* args);
 static void _shellDisplayThreads(void);
 static void _shellSignalSelf(void);
@@ -93,6 +94,30 @@ static spinlock_t threadStartedLock = SPINLOCK_INIT_VALUE;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _shellTimeTest(void)
+{
+    uint32_t i;
+    uint64_t time;
+    uint64_t s;
+    uint64_t ms;
+    uint64_t us;
+    uint64_t ns;
+    uint64_t oldTime = timeGetUptime();
+    uint64_t tmp;
+    for(i = 0; i < 1000; ++i)
+    {
+        cpuHalt();
+        tmp = timeGetUptime();
+        time = tmp - oldTime;
+        oldTime = tmp;
+        s = time / 1000000000;
+        ms = (time % 1000000000) / 1000000;
+        us = (time % 1000000) / 1000;
+        ns = (time % 1000);
+        kprintf("Time: %llu | %llu.%llu.%llu.%llu\n", time, s, ms, us, ns);
+    }
+}
 
 static void* _shellCtxSwitchRoutineAlone(void* args)
 {
@@ -396,6 +421,10 @@ static void _shellExecuteCommand(void)
     {
         _shellCtxSwitchTime();
     }
+    else if(strcmp(command, "timePrec") == 0)
+    {
+        _shellTimeTest();
+    }
     else
     {
         kprintf("Unknown command: %s\n", command);
@@ -470,7 +499,7 @@ void kernelShellInit(void)
      * of join.
      */
     error = schedCreateKernelThread(&pShellThread,
-                                    1,
+                                    0,
                                     "kernelShell",
                                     0x1000,
                                     0x2,

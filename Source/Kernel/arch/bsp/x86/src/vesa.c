@@ -250,9 +250,6 @@ typedef struct
 
     /** @brief The back buffer pointer */
     void* pBack;
-
-    /** @brief Buffers lock */
-    spinlock_t lock;
 } double_buffer_t;
 
 /** @brief x86 VESA driver controler. */
@@ -289,10 +286,7 @@ typedef struct
     kernel_thread_t* pDisplayThread;
 
     /** @brief Refresh rate */
-    uint8_t refreshRate;
-
-    /** @brief Driver's lock */
-    spinlock_t lock;
+    uint32_t refreshRate;
 } vesa_controler_t;
 
 
@@ -768,8 +762,6 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vesa_controler_t));
-    SPINLOCK_INIT(pDrvCtrl->lock);
-    SPINLOCK_INIT(pDrvCtrl->videoBuffer.lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -1310,8 +1302,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
 
     return OS_NO_ERR;
 }
-#include <uart.h>
-#include <stdlib.h>
+
 static void* _vesaDisplayRoutine(void* pDrvCtrl)
 {
     vesa_controler_t* pCtrl;
@@ -1418,8 +1409,6 @@ static inline void _vesaPrintChar(vesa_controler_t* pCtrl,
     uint32_t          pixel;
     uint32_t          mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
 
-    KERNEL_LOCK(pCtrl->videoBuffer.lock);
-
     x = pCtrl->screenCursor.x * VESA_TEXT_CHAR_WIDTH;
     y = pCtrl->screenCursor.y * VESA_TEXT_CHAR_HEIGHT;
 
@@ -1437,7 +1426,6 @@ static inline void _vesaPrintChar(vesa_controler_t* pCtrl,
                           pixel);
         }
     }
-    KERNEL_UNLOCK(pCtrl->videoBuffer.lock);
 }
 
 static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
@@ -1446,8 +1434,6 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
     uint32_t          i;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
-
-    KERNEL_LOCK(pCtrl->lock);
 
     _vesaClearCursor(pCtrl);
 
@@ -1512,11 +1498,9 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
             /* Clear screen */
             case '\f':
                 /* Clear all screen */
-                KERNEL_LOCK(pCtrl->videoBuffer.lock);
                 memset(pCtrl->videoBuffer.pBack,
                        0,
                        pCtrl->videoBuffer.framebufferSize);
-                KERNEL_UNLOCK(pCtrl->videoBuffer.lock);
                 break;
             /* Line return */
             case '\r':
@@ -1529,8 +1513,6 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
     }
 
     _vesaPrintCursor(pCtrl);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaClearFramebuffer(void* pDriverCtrl)
@@ -1539,15 +1521,10 @@ static void _vesaClearFramebuffer(void* pDriverCtrl)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
     /* Clear all screen */
-    KERNEL_LOCK(pCtrl->videoBuffer.lock);
     memset(pCtrl->videoBuffer.pBack,
            0,
            pCtrl->videoBuffer.framebufferSize);
-    KERNEL_UNLOCK(pCtrl->videoBuffer.lock);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaPutCursor(void*          pDriverCtrl,
@@ -1558,15 +1535,11 @@ static void _vesaPutCursor(void*          pDriverCtrl,
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     _vesaClearCursor(pCtrl);
 
     _vesaPutCursorSafe(pCtrl, kLine, kColumn);
 
     _vesaPrintCursor(pCtrl);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
@@ -1577,11 +1550,9 @@ static void _vesaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
     {
         pCtrl = GET_CONTROLER(pDriverCtrl);
 
-        KERNEL_LOCK(pCtrl->lock);
         /* Save cursor attributes */
         pBuffer->x = pCtrl->screenCursor.x;
         pBuffer->y = pCtrl->screenCursor.y;
-        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 
@@ -1591,16 +1562,12 @@ static void _vesaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     if(kpBuffer->x >= pCtrl->columnCount || kpBuffer->y >= pCtrl->lineCount)
     {
-        KERNEL_UNLOCK(pCtrl->lock);
         return;
     }
     /* Restore cursor attributes */
     _vesaPutCursorSafe(pDriverCtrl, kpBuffer->y, kpBuffer->x);
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaScrollSafe(vesa_controler_t*        pCtrl,
@@ -1622,7 +1589,6 @@ static void _vesaScrollSafe(vesa_controler_t*        pCtrl,
     /* Select scroll direction */
     if(kDirection == SCROLL_DOWN)
     {
-        KERNEL_LOCK(pCtrl->videoBuffer.lock);
         pCtrl->scrollOffset += (pCtrl->pCurrentMode->bytePerScanLine *
                                 VESA_TEXT_CHAR_HEIGHT * toScroll);
         pCtrl->scrollOffset %= pCtrl->videoBuffer.framebufferSize;
@@ -1635,7 +1601,6 @@ static void _vesaScrollSafe(vesa_controler_t*        pCtrl,
         memset(pToClear,
                0,
                VESA_TEXT_CHAR_HEIGHT * pCtrl->pCurrentMode->bytePerScanLine);
-        KERNEL_UNLOCK(pCtrl->videoBuffer.lock);
 
         /* Replace cursor */
         _vesaPutCursorSafe(pCtrl, pCtrl->lineCount - toScroll, 0);
@@ -1650,11 +1615,7 @@ static void _vesaScroll(void*                    pDriverCtrl,
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
-
     _vesaScrollSafe(pCtrl, kDirection, kLines);
-
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaSetScheme(void*                pDriverCtrl,
@@ -1664,10 +1625,8 @@ static void _vesaSetScheme(void*                pDriverCtrl,
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    KERNEL_LOCK(pCtrl->lock);
     pCtrl->screenScheme.foreground = kpColorScheme->foreground;
     pCtrl->screenScheme.background = kpColorScheme->background;
-    KERNEL_UNLOCK(pCtrl->lock);
 }
 
 static void _vesaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
@@ -1679,11 +1638,9 @@ static void _vesaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
     {
         pCtrl = GET_CONTROLER(pDriverCtrl);
 
-        KERNEL_LOCK(pCtrl->lock);
         /* Save color scheme into buffer */
         pBuffer->foreground = pCtrl->screenScheme.foreground;
         pBuffer->background = pCtrl->screenScheme.background;
-        KERNEL_UNLOCK(pCtrl->lock);
     }
 }
 
@@ -1783,9 +1740,7 @@ static OS_RETURN_E _vesaDrawPixel(void*          pCtrl,
 
     pControler = GET_CONTROLER(pCtrl);
 
-    KERNEL_LOCK(pControler->lock);
     _vesaPutPixel(pControler, kX, kY, kRGBPixel);
-    KERNEL_UNLOCK(pControler->lock);
 
     return OS_NO_ERR;
 }

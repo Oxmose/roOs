@@ -53,7 +53,7 @@ section .text
 spinlockAcquire:
 __pauseSpinlockEntry:
     lock bts dword [rdi], 0
-    jc   __pauseSpinlockPause
+    jc   __pauseSpinlockEntry
     ret
 
 __pauseSpinlockPause:

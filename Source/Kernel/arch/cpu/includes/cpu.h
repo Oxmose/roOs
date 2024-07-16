@@ -313,9 +313,14 @@ void cpuManageThreadException(kernel_thread_t* pThread);
  * IPI, if it should be broadcasted, including the calling core, etc.
  *
  * @param[in] kFlags The flags to use, see IPI flags definition.
- * @param[in] kpParams The IPI parameters to use.
+ * @param[in] pParams The IPI parameters to use.
+ * @param[in] kAllocateParam Tells if the parameters should be duplicated, in
+ * the advent the IPI is received once the current parameters structure was
+ * destroyed.
  */
-void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams);
+void cpuMgtSendIpi(const uint32_t kFlags,
+                   ipi_params_t*  pParams,
+                   const bool_t   kAllocateParam);
 
 
 /**

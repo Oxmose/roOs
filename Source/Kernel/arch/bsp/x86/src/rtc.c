@@ -60,8 +60,6 @@
 #define RTC_FDT_SELFREQ_PROP    "freq"
 /** @brief FDT property for frequency range */
 #define RTC_FDT_FREQRANGE_PROP  "freq-range"
-/** @brief FDT property for main timer */
-#define RTC_FDT_ISRTC_PROP      "is-rtc"
 
 /** @brief Initial RTC rate */
 #define RTC_INIT_RATE 10
@@ -131,7 +129,7 @@ typedef struct
     uint32_t disabledNesting;
 
     /** @brief Driver's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } rtc_controler_t;
 
 /*******************************************************************************
@@ -372,7 +370,7 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(rtc_controler_t));
-    SPINLOCK_INIT(pDrvCtrl->lock);
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -495,23 +493,8 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     /* Just dummy read register C to unlock interrupt */
     _rtcAckowledgeInt(pDrvCtrl);
 
-    /* Check if we should register as main timer */
-    if(fdtGetProp(pkFdtNode, RTC_FDT_ISRTC_PROP, &propLen) != NULL)
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, RTC_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-    else
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
+    /* Set the API driver */
+    retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
@@ -524,6 +507,7 @@ ATTACH_END:
         {
             kfree(pTimerDrv);
         }
+        driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,

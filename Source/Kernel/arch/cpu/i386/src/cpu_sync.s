@@ -51,14 +51,12 @@ section .text
 ;     Input: ESP + 4: Address of the lock
 
 spinlockAcquire:
-    push eax
-    mov  eax, [esp + 8]
+    mov  eax, [esp + 4]
 
 __pauseSpinlockEntry:
     lock bts dword [eax], 0
     jc   __pauseSpinlockPause
 
-    pop eax
     ret
 
 __pauseSpinlockPause:
@@ -74,10 +72,8 @@ __pauseSpinlockPause:
 ;     Input: ESP + 4: Address of the lock
 
 spinlockRelease:
-    push eax
-    mov  eax, [esp + 8]
+    mov  eax, [esp + 4]
     mov  dword [eax], 0
-    pop  eax
     ret
 
 
@@ -87,9 +83,9 @@ spinlockRelease:
 ; Param:
 ;     Input: ESP + 4: u32_atomic_t value to increment
 atomicIncrement32:
-    mov  ecx, [esp + 4]
+    mov  edx, [esp + 4]
     mov  eax, 1
-    lock xadd dword [ecx], eax
+    lock xadd dword [edx], eax
     ret
 
 ;-------------------------------------------------------------------------------
@@ -98,9 +94,9 @@ atomicIncrement32:
 ; Param:
 ;     Input: ESP + 4: u32_atomic_t value to decrement
 atomicDecrement32:
-    mov  ecx, [esp + 4]
+    mov  edx, [esp + 4]
     mov  eax, -1
-    lock xadd dword [ecx], eax
+    lock xadd dword [edx], eax
     ret
 
 ;-------------------------------------------------------------------------------

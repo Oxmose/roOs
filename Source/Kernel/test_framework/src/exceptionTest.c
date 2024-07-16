@@ -82,6 +82,7 @@
 
 static void _end(void)
 {
+    kprintf("In end\n");
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER1_ID,
                             TRUE,
                             TRUE,
@@ -93,11 +94,9 @@ static void _end(void)
 static void _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
-#ifdef ARCH_32_BITS
-    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.eip = (uintptr_t)_end;
-#else
-    ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.rip = (uintptr_t)_end;
-#endif
+    cpuRequestSignal(curr_thread, _end);
+
+    kprintf("Got exc\n");
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,
                             TRUE,
@@ -126,6 +125,8 @@ void exceptionTest(void)
                             err,
                             TEST_EXCEPTION_ENABLED);
 
+    kprintf("add < min %d\n", err);
+
     /* TEST REGISTER > MAX */
     err = exceptionRegister(maxExc + 1, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_MAX_ID,
@@ -133,6 +134,8 @@ void exceptionTest(void)
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             err,
                             TEST_EXCEPTION_ENABLED);
+
+    kprintf("add > max %d\n", err);
 
     /* TEST REMOVE < MIN */
     err = exceptionRemove(minExc - 1);
@@ -142,6 +145,8 @@ void exceptionTest(void)
                             err,
                             TEST_EXCEPTION_ENABLED);
 
+    kprintf("rem < min %d\n", err);
+
     /* TEST REMOVE > MAX */
     err = exceptionRemove(maxExc + 1);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_MAX_ID,
@@ -149,6 +154,8 @@ void exceptionTest(void)
                             OR_ERR_UNAUTHORIZED_INTERRUPT_LINE,
                             err,
                             TEST_EXCEPTION_ENABLED);
+
+    kprintf("rem > max %d\n", err);
 
     /* TEST NULL HANDLER */
     err = exceptionRegister(minExc, NULL);
@@ -158,13 +165,15 @@ void exceptionTest(void)
                             err,
                             TEST_EXCEPTION_ENABLED);
 
+    kprintf("add NULL %d\n", err);
+
     err = exceptionRemove(minExc);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REMOVE_REGISTERED_ID,
                             err == OS_NO_ERR,
                             OS_NO_ERR,
                             err,
                             TEST_EXCEPTION_ENABLED);
-
+    kprintf("rem min %d\n", err);
 
     err = exceptionRegister(minExc, _dummy);
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_REGISTER_ID,
@@ -172,7 +181,7 @@ void exceptionTest(void)
                             OS_NO_ERR,
                             err,
                             TEST_EXCEPTION_ENABLED);
-
+    kprintf("add min %d\n", err);
     /* Test exception */
     volatile int i = 0;
     volatile int m = 5 / i;

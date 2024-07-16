@@ -104,7 +104,7 @@ typedef struct
     /** @brief Page protection attribute */
     uint8_t pageProtection;
 
-    /** @brief HPET base adderss */
+    /** @brief HPET base address */
     uintptr_t address;
 
     /** @brief Address space identifier */
@@ -212,6 +212,17 @@ typedef struct
      * @return The list of detected IO-APICs descriptors is returned.
      */
     const io_apic_node_t* (*pGetIOAPICList)(void);
+
+    /**
+     * @brief Returns the list of detected HPETs.
+     *
+     * @details Returns the list of detected HPETs. This list should not be
+     * modified and is generated during the attach of the ACPI while parsing
+     * its tables.
+     *
+     * @return The list of detected HPETs descriptors is returned.
+     */
+    const hpet_node_t* (*pGetHPETList)(void);
 
     /**
      * @brief Checks if the IRQ has been remaped in the IO-APIC structure.

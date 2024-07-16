@@ -140,7 +140,6 @@ static void _semaphoreReleaseResource(void* pResource)
 {
     semaphore_data_t* pData;
     kqueue_node_t*    pNode;
-    uint32_t          intState;
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_RELEASE_RESOURCE_ENTRY,
@@ -156,7 +155,6 @@ static void _semaphoreReleaseResource(void* pResource)
     pNode = pResource;
     pData = pNode->pData;
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pData->pSem->lock);
 
     /* Check if the node is enlisted */
@@ -166,7 +164,6 @@ static void _semaphoreReleaseResource(void* pResource)
     }
 
     KERNEL_UNLOCK(pData->pSem->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_RELEASE_RESOURCE_EXIT,
@@ -246,7 +243,7 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
         pSem->level = kInitLevel;
     }
     pSem->flags = kFlags;
-    SPINLOCK_INIT(pSem->lock);
+    KERNEL_SPINLOCK_INIT(pSem->lock);
     pSem->isInit = TRUE;
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
@@ -346,7 +343,6 @@ OS_RETURN_E semWait(semaphore_t* pSem)
                        2,
                        KERNEL_TRACE_HIGH(pSem),
                        KERNEL_TRACE_LOW(pSem));
-
 
     /* Check parameters */
     if(pSem == NULL)
@@ -547,7 +543,6 @@ OS_RETURN_E semPost(semaphore_t* pSem)
 OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
 {
     OS_RETURN_E error;
-    uint32_t    intState;
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_TRYWAIT_ENTRY,
@@ -578,7 +573,6 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pSem->lock);
     if(pValue != NULL)
     {
@@ -596,7 +590,6 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
         error = OS_ERR_BLOCKED;
     }
     KERNEL_UNLOCK(pSem->lock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
                        TRACE_SEMAPHORE_TRYWAIT_EXIT,

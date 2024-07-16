@@ -43,11 +43,24 @@ typedef volatile uint32_t u32_atomic_t;
 /** @brief Defines a regular spinlock. */
 typedef volatile uint32_t spinlock_t;
 
+/**
+ * @brief Defines a kernel spinlock, used to disable interrupts and lock a
+ * spinlock.
+ */
+typedef struct
+{
+    /** @brief The main spinlock */
+    spinlock_t lock;
+
+    /** @brief Stores the interrupt state at the moment of the lock */
+    uint32_t interruptState;
+} kernel_spinlock_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
 
-/** @brief Kernel spinlock initializer */
+/** @brief Regular spinlock initializer */
 #define SPINLOCK_INIT_VALUE 0
 
 /**
@@ -59,6 +72,20 @@ typedef volatile uint32_t spinlock_t;
 */
 #define SPINLOCK_INIT(LOCK) {   \
     LOCK = SPINLOCK_INIT_VALUE; \
+}
+
+/** @brief Kernel spinlock initializer */
+#define KERNEL_SPINLOCK_INIT_VALUE {0}
+
+/**
+ * @brief Initializes a kernel spinlock.
+ *
+ * @details Initializes a kernel spinlock.
+ *
+ * @param[out] LOCK The lock to initialize.
+*/
+#define KERNEL_SPINLOCK_INIT(LOCK) {        \
+    LOCK.lock = SPINLOCK_INIT_VALUE;        \
 }
 
 /*******************************************************************************

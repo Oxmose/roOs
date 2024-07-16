@@ -172,7 +172,7 @@ static void* _interruptDeferedRoutine(void* args);
 custom_handler_t* pKernelInterruptHandlerTable;
 
 /** @brief Table lock */
-spinlock_t kernelInterruptHandlerTableLock;
+kernel_spinlock_t sKernelInterruptHandlerTableLock;
 
 /************************** Static global variables ***************************/
 /** @brief The current interrupt driver to be used by the kernel. */
@@ -369,7 +369,7 @@ void interruptInit(void)
                  MODULE_NAME,
                  "Initializing interrupt manager.");
 
-    SPINLOCK_INIT(kernelInterruptHandlerTableLock);
+    KERNEL_SPINLOCK_INIT(sKernelInterruptHandlerTableLock);
 
     /* Get the CPU interrupt configuration */
     kspCpuInterruptConfig = cpuGetInterruptConfig();
@@ -455,8 +455,6 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
                               custom_handler_t handler)
 {
-    uint32_t intState;
-
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REGISTER_ENTRY,
                        3,
@@ -491,13 +489,11 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
         return OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    KERNEL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_LOCK(sKernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kInterruptLine] != NULL)
     {
-        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
         KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                            TRACE_INTERRUPT_REGISTER_EXIT,
@@ -518,8 +514,7 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
                  kInterruptLine,
                  handler);
 
-    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+    KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REGISTER_EXIT,
@@ -534,8 +529,6 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
 
 OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
 {
-    uint32_t intState;
-
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REMOVE_ENTRY,
                        1,
@@ -553,13 +546,11 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    KERNEL_LOCK(kernelInterruptHandlerTableLock);
+    KERNEL_LOCK(sKernelInterruptHandlerTableLock);
 
     if(pKernelInterruptHandlerTable[kInterruptLine] == NULL)
     {
-        KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
         KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                            TRACE_INTERRUPT_REMOVE_EXIT,
@@ -575,8 +566,7 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
                  "Removed interrupt %u handle", kInterruptLine);
 
-    KERNEL_UNLOCK(kernelInterruptHandlerTableLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+    KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
     KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
                        TRACE_INTERRUPT_REMOVE_EXIT,

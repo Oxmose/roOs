@@ -167,7 +167,6 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
                     OS_ERR_UNAUTHORIZED_ACTION);
 
     params = *((ipi_params_t*)pNode->pData);
-    kfree(pNode->pData);
     kQueueDestroyNode(&pNode);
 
     /* Dispatch */
@@ -309,7 +308,9 @@ void coreMgtApInit(const uint8_t kCpuId)
                        0);
 }
 
-void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
+void cpuMgtSendIpi(const uint32_t kFlags,
+                   ipi_params_t*  kpParams,
+                   const bool_t   kAllocateParam)
 {
     uint8_t        i;
     uint8_t        destCpuId;
@@ -346,11 +347,18 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
         /* Check if in bounds */
         if(destCpuId < _bootedCPUCount)
         {
-            pParams = kmalloc(sizeof(ipi_params_t));
-            CORE_MGT_ASSERT(pParams != NULL,
-                            "Failed to allocate IPI parameters",
-                            OS_ERR_NO_MORE_MEMORY);
-            *pParams = *kpParams;
+            if(kAllocateParam == TRUE)
+            {
+                pParams = kmalloc(sizeof(ipi_params_t));
+                CORE_MGT_ASSERT(pParams != NULL,
+                                "Failed to allocate IPI parameters",
+                                OS_ERR_NO_MORE_MEMORY);
+                *pParams = *kpParams;
+            }
+            else
+            {
+                pParams = kpParams;
+            }
             pNode = kQueueCreateNode(pParams, TRUE);
             kQueuePush(pNode, sIpiParametersList[destCpuId]);
 
@@ -363,11 +371,18 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
         /* Send to all */
         for(i = 0; i < _bootedCPUCount; ++i)
         {
-            pParams = kmalloc(sizeof(ipi_params_t));
-            CORE_MGT_ASSERT(pParams != NULL,
-                            "Failed to allocate IPI parameters",
-                            OS_ERR_NO_MORE_MEMORY);
-            *pParams = *kpParams;
+            if(kAllocateParam == TRUE)
+            {
+                pParams = kmalloc(sizeof(ipi_params_t));
+                CORE_MGT_ASSERT(pParams != NULL,
+                                "Failed to allocate IPI parameters",
+                                OS_ERR_NO_MORE_MEMORY);
+                *pParams = *kpParams;
+            }
+            else
+            {
+                pParams = kpParams;
+            }
             pNode = kQueueCreateNode(pParams, TRUE);
             kQueuePush(pNode, sIpiParametersList[i]);
 
@@ -383,11 +398,18 @@ void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
         {
             if(i != srcCpuId)
             {
-                pParams = kmalloc(sizeof(ipi_params_t));
-                CORE_MGT_ASSERT(pParams != NULL,
-                                "Failed to allocate IPI parameters",
-                                OS_ERR_NO_MORE_MEMORY);
-                *pParams = *kpParams;
+                if(kAllocateParam == TRUE)
+                {
+                    pParams = kmalloc(sizeof(ipi_params_t));
+                    CORE_MGT_ASSERT(pParams != NULL,
+                                    "Failed to allocate IPI parameters",
+                                    OS_ERR_NO_MORE_MEMORY);
+                    *pParams = *kpParams;
+                }
+                else
+                {
+                    pParams = kpParams;
+                }
                 pNode = kQueueCreateNode(pParams, TRUE);
                 kQueuePush(pNode, sIpiParametersList[i]);
 
@@ -429,7 +451,9 @@ void coreMgtApInit(const uint8_t kCpuId)
     return;
 }
 
-void cpuMgtSendIpi(const uint32_t kFlags, const ipi_params_t* kpParams)
+void cpuMgtSendIpi(const uint32_t kFlags,
+                   ipi_params_t*  pParams,
+                   const bool_t   kAllocateParam)
 {
     (void)kFlags;
     (void)kpParams;

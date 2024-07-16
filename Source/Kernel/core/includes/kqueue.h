@@ -70,7 +70,7 @@ typedef struct
     volatile size_t size;
 
     /** @brief Queue's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } kqueue_t;
 
 /*******************************************************************************

@@ -23,9 +23,10 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h>   /* Generic int types */
-#include <stddef.h>   /* Standard definition type */
-#include <atomic.h>   /* Critical sections spinlock */
+#include <stdint.h> /* Generic int types */
+#include <stddef.h> /* Standard definition type */
+#include <atomic.h> /* Critical sections spinlock */
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -288,7 +289,7 @@ typedef struct kernel_thread_t
     void* pThreadResources;
 
     /** @brief The thread's structure lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } kernel_thread_t;
 
 /*******************************************************************************

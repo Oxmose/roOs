@@ -25,6 +25,7 @@
  ******************************************************************************/
 
 #include <interrupts.h> /* Interrupts management */
+#include <atomic.h>     /* Atomic sturctures */
 
 /*******************************************************************************
  * CONSTANTS
@@ -67,11 +68,11 @@
  * interrupt state.
  */
 #define KERNEL_EXIT_CRITICAL_LOCAL(INT_STATE) {                 \
-    interruptRestore(INT_STATE);                                \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
                        TRACE_CPU_EXIT_CRITICAL,                 \
                        1,                                       \
                        INT_STATE);                              \
+    interruptRestore(INT_STATE);                                \
 }
 
 /**
@@ -82,12 +83,11 @@
  * @param[in, out] LOCK The lock to lock.
 */
 #define KERNEL_LOCK(LOCK) {                                     \
-    while(&LOCK == NULL){} \
-    spinlockAcquire(&(LOCK));                                   \
+    KernelLock(&(LOCK));                                        \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
                        TRACE_CPU_SPINLOCK_LOCK,                 \
                        1,                                       \
-                       LOCK);                                   \
+                       ((LOCK).lock));                          \
 }
 
 /**
@@ -98,12 +98,11 @@
  * @param[out] LOCK The lock to unlock.
 */
 #define KERNEL_UNLOCK(LOCK) {                                   \
-    while(&LOCK == NULL){} \
-    spinlockRelease(&(LOCK));                                   \
     KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
                        TRACE_CPU_SPINLOCK_UNLOCK,               \
                        1,                                       \
-                       LOCK);                                   \
+                       ((LOCK).lock));                          \
+    KernelUnlock(&(LOCK));                                      \
 }
 
 /*******************************************************************************
@@ -123,7 +122,23 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Locks a kernel spinlock.
+ *
+ * @details Locks a kernel spinlock. This function is safe in kernel mode.
+ *
+ * @param[in, out] pLock The pointer to the lock to lock.
+*/
+void KernelLock(kernel_spinlock_t* pLock);
+
+/**
+ * @brief Unlocks a kernel spinlock.
+ *
+ * @details Unlocks a kernel spinlock. This function is safe in kernel mode.
+ *
+ * @param[out] pLock The pointer to the lock to unlock.
+*/
+void KernelUnlock(kernel_spinlock_t* pLock);
 
 #endif /* #ifndef __CPU_CRITICAL_H_ */
 

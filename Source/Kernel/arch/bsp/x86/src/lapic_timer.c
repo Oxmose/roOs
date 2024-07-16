@@ -59,8 +59,6 @@
 #define LAPICT_FDT_SELFREQ_PROP "freq"
 /** @brief FDT property for frequency divider */
 #define LAPICT_FDT_DIVIDER_PROP "bus-freq-divider"
-/** @brief FDT property for main timer */
-#define LAPICT_FDT_ISMAIN_PROP  "is-main"
 /** @brief FDT property for base-timer */
 #define LAPICT_TIMER_FDT_BASE_TIMER_PROP "base-timer"
 /** @brief FDT property for LAPIC */
@@ -528,26 +526,11 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     /* Set interrupt EOI */
     _lapicTimerAckInterrupt(pDrvCtrl);
 
-    /* Check if we should register as main timer */
-    if(fdtGetProp(pkFdtNode, LAPICT_FDT_ISMAIN_PROP, &propLen) != NULL)
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, MAIN_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-    else
-    {
-        retCode = timeMgtAddTimer(pTimerDrv, AUX_TIMER);
-        if(retCode != OS_NO_ERR)
-        {
-            goto ATTACH_END;
-        }
-    }
-
     /* Register the driver in the core manager */
     coreMgtRegLapicTimerDriver(&sAPIDriver);
+
+    /* Set the API driver */
+    retCode = driverManagerSetDeviceData(pkFdtNode, pTimerDrv);
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
@@ -560,6 +543,7 @@ ATTACH_END:
         {
             kfree(pTimerDrv);
         }
+        driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
     KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,

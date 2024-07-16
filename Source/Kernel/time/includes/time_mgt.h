@@ -246,25 +246,8 @@ typedef struct
  ******************************************************************************/
 
 /**
- * @brief Adds a timer to the manager.
- *
- * @details Adds a timer to the managerr. Set the basic time structures
- * and interrupts.
- *
- * @param[in] kpTimer The timer to add.
- * @param[in] kType The timer type..
- *
- * @warning All the interrupt managers and timer sources drivers must be
- * initialized before using this function.
- *
- * @return The success state or the error code.
- */
-OS_RETURN_E timeMgtAddTimer(const kernel_timer_t* kpTimer,
-                            const TIMER_TYPE_E    kType);
-
-/** 
  * @brief Initializes the time manager.
- * 
+ *
  * @details Initializes the time manager. The timers will be added based on the
  * FDT configuration. This time manager should be initialized after all drivers
  * were attached.

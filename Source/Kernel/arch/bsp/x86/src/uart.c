@@ -232,7 +232,7 @@ typedef struct
     uint8_t* pInputBuffer;
 
     /** @brief Input buffer lock */
-    spinlock_t inputBufferLock;
+    kernel_spinlock_t inputBufferLock;
 
     /** @brief Input buffer semaphore */
     semaphore_t inputBufferSem;
@@ -244,7 +244,7 @@ typedef struct
     bool_t echo;
 
     /** @brief Driver's lock */
-    spinlock_t lock;
+    kernel_spinlock_t lock;
 } uart_controler_t;
 
 /*******************************************************************************
@@ -329,7 +329,7 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
  * @param[in] kPort The desired port to write the data to.
  * @param[in] kData The byte to write to the uart port.
  */
-static inline void _uartWrite(spinlock_t* pLock,
+static inline void _uartWrite(kernel_spinlock_t* pLock,
                               const uint16_t     kPort,
                               const uint8_t      kData);
 
@@ -495,7 +495,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(uart_controler_t));
-    SPINLOCK_INIT(pDrvCtrl->lock);
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
 
     pConsoleDrv = kmalloc(sizeof(console_driver_t));
     if(pConsoleDrv == NULL)
@@ -572,7 +572,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
             goto ATTACH_END;
         }
         isInputBufferSet = TRUE;
-        SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
+        KERNEL_SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
 
         retCode = semInit(&pDrvCtrl->inputBufferSem,
                           0,
@@ -687,19 +687,17 @@ static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
     _cpuOutB(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
 }
 
-static inline void _uartWrite(spinlock_t*        pLock,
+static inline void _uartWrite(kernel_spinlock_t* pLock,
                               uint16_t           kPort,
                               const uint8_t      kData)
 {
-    uint32_t intState;
-
     KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
                        TRACE_X86_UART_WRITE_ENTRY,
                        2,
                        kPort,
                        kData);
+
     /* Wait for empty transmit */
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(*pLock);
     while((_cpuInB(SERIAL_LINE_STATUS_PORT(kPort)) & 0x20) == 0){}
     if(kData == '\n')
@@ -713,7 +711,7 @@ static inline void _uartWrite(spinlock_t*        pLock,
         _cpuOutB(kData, kPort);
     }
     KERNEL_UNLOCK(*pLock);
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
     KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
                        TRACE_X86_UART_WRITE_EXIT,
                        2,
@@ -906,7 +904,7 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
         }
 
         /* Try to add the new data to the buffer */
-        spinlockAcquire(&spInputCtrl->inputBufferLock);
+        KERNEL_LOCK(spInputCtrl->inputBufferLock);
 
         if(spInputCtrl->inputBufferEndCursor >=
            spInputCtrl->inputBufferStartCursor)
@@ -931,7 +929,7 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
                 UART_INPUT_BUFFER_SIZE;
         }
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
+        KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* Post the semaphore */
         error = semPost(&spInputCtrl->inputBufferSem);
@@ -990,7 +988,7 @@ static ssize_t _uartRead(void*        pDrvCtrl,
                     "Failed to wait UART semaphore",
                     error);
 
-        spinlockAcquire(&spInputCtrl->inputBufferLock);
+        KERNEL_LOCK(spInputCtrl->inputBufferLock);
 
         if(spInputCtrl->inputBufferEndCursor >=
            spInputCtrl->inputBufferStartCursor)
@@ -1022,7 +1020,7 @@ static ssize_t _uartRead(void*        pDrvCtrl,
         toRead -= bytesToRead;
         usedSpace -= bytesToRead;
 
-        spinlockRelease(&spInputCtrl->inputBufferLock);
+        KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* If we can still read data, post the semaphore, we read what we had to
          * since we used
@@ -1063,7 +1061,7 @@ static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
 
 #if DEBUG_LOG_UART
 
-static spinlock_t sLock = SPINLOCK_INIT_VALUE;
+static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 void uartDebugInit(void)
 {

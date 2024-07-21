@@ -22,19 +22,17 @@
  ******************************************************************************/
 
 /* Includes */
+#include <syslog.h>       /* Kernel syslog */
 #include <kerror.h>       /* Kernel error codes */
 #include <string.h>       /* String manipulation */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* FDT library */
-#include <kerneloutput.h> /* Kernel output services */
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
 #include <drivermgr.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -134,10 +132,13 @@ static void _walkFdtNodes(const fdt_node_t* pkNode)
         kpCompatible = fdtGetProp(pkNode, COMPATIBLE_PROP_NAME, &propLen);
         if(kpCompatible != NULL && propLen > 0)
         {
-            KERNEL_DEBUG(DEVMGR_DEBUG_ENABLED,
-                        MODULE_NAME,
-                        "Detected %s",
-                        kpCompatible);
+
+#if DEVMGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Detected %s",
+                   kpCompatible);
+#endif
 
             /* Get the head of the registered drivers section */
             driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
@@ -151,19 +152,31 @@ static void _walkFdtNodes(const fdt_node_t* pkNode)
                     retCode = pDriver->pDriverAttach(pkNode);
                     if(retCode == OS_NO_ERR)
                     {
-                        KERNEL_SUCCESS("%s attached successfully.\n",
-                                       pDriver->pName);
+                        syslog(SYSLOG_LEVEL_INFO,
+                               MODULE_NAME,
+                               "%s attached successfully.",
+                               pDriver->pName);
                     }
                     else
                     {
-                        KERNEL_ERROR("Failed to attach driver %s. Error %d\n",
-                                    pDriver->pName,
-                                    retCode);
+                        syslog(SYSLOG_LEVEL_ERROR,
+                               MODULE_NAME,
+                               "Failed to attach driver %s. Error %d",
+                               pDriver->pName,
+                               retCode);
                     }
                     break;
                 }
                 driverTableCursor += sizeof(uintptr_t);
                 pDriver = *(driver_t**)driverTableCursor;
+            }
+
+            if(pDriver == NULL)
+            {
+                syslog(SYSLOG_LEVEL_ERROR,
+                       MODULE_NAME,
+                       "Driver for %s not found",
+                       kpCompatible);
             }
         }
     }
@@ -179,50 +192,37 @@ void driverManagerInit(void)
     driver_t*         pDriver;
     uintptr_t         driverTableCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_ENTRY, 0);
-
     /* Display list of registered drivers */
     driverTableCursor = (uintptr_t)&_START_DRV_TABLE_ADDR;
     pDriver = *(driver_t**)driverTableCursor;
-    KERNEL_INFO("List of registered drivers\n");
+
     while(pDriver != NULL)
     {
-        KERNEL_INFO("%s - %s\n",
+        syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "%s - %s",
                     pDriver->pName,
                     pDriver->pDescription);
         driverTableCursor += sizeof(uintptr_t);
         pDriver = *(driver_t**)driverTableCursor;
     }
 
-    KERNEL_INFO("------------------------\n");
-
     /* Get the FDT root node and walk it to register drivers */
     kpFdtRootNode = fdtGetRoot();
     if(kpFdtRootNode == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_EXIT, -1);
-        KERNEL_ERROR("Failed to get FDT root node in driver manager.\n");
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to get FDT root node in driver manager.");
         return;
     }
 
     /* Perform the registration */
     _walkFdtNodes(kpFdtRootNode);
-
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED, TRACE_DRV_MGR_INIT_EXIT, 0);
 }
 
 OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
                                        void*             pData)
 {
     OS_RETURN_E retCode;
-
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_SETDEVDATA_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pkFdtNode),
-                       KERNEL_TRACE_LOW(pkFdtNode),
-                       KERNEL_TRACE_HIGH(pData),
-                       KERNEL_TRACE_LOW(pData));
 
     /* Check parameters */
     if(pkFdtNode != NULL)
@@ -238,15 +238,6 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
         retCode = OS_ERR_NULL_POINTER;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_SETDEVDATA_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pkFdtNode),
-                       KERNEL_TRACE_LOW(pkFdtNode),
-                       KERNEL_TRACE_HIGH(pData),
-                       KERNEL_TRACE_LOW(pData),
-                       retCode);
-
     return retCode;
 }
 
@@ -255,11 +246,6 @@ void* driverManagerGetDeviceData(const uint32_t kHandle)
     void*             pDevData;
     const fdt_node_t* kpNode;
 
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_GETDEVDATA_ENTRY,
-                       1,
-                       kHandle);
-
     /* Get the node and return the device data */
     pDevData = NULL;
     kpNode = fdtGetNodeByHandle(kHandle);
@@ -267,13 +253,6 @@ void* driverManagerGetDeviceData(const uint32_t kHandle)
     {
         pDevData = kpNode->pDevData;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_DRVMGR_ENABLED,
-                       TRACE_DRV_MGR_GETDEVDATA_EXIT,
-                       3,
-                       kHandle,
-                       KERNEL_TRACE_HIGH(pDevData),
-                       KERNEL_TRACE_LOW(pDevData));
 
     return pDevData;
 }

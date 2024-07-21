@@ -1,45 +1,46 @@
 ################################################################################
 # roOs Makefile
 #
-# Created: 23/05/2020
+# Created: 18/07/2024
 #
 # Author: Alexy Torres Aurora Dugo
 #
-# Library module makefile. This makefile is used to compile the library module.
+# Filesystem module makefile. This makefile is used to compile the
+# filesystem module.
 ################################################################################
 
 # Dependencies
 include dependencies.mk
-include ../../ARTIFACTS/settings.mk
+include ../ARTIFACTS/settings.mk
 
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 # Variables definitions
-SRC_DIR    = src
-BUILD_DIR  = build
-INC_DIR    = includes
-BIN_DIR    = bin
-ARTIFACTS_DIR     = ../../ARTIFACTS
+SRC_DIR       = src
+BUILD_DIR     = build
+INC_DIR       = includes
+BIN_DIR       = bin
+ARTIFACTS_DIR = ../ARTIFACTS
 
 C_SRCS = $(call rwildcard,$(SRC_DIR),*.c)
 A_SRCS = $(call rwildcard,$(SRC_DIR),*.s)
 C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-A_OBJS = $(A_SRCS:$(SRC_DIR)/%.S=$(BUILD_DIR)/%.o)
+A_OBJS = $(A_SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/%.o)
 
 .PHONY: all
 all: init module
 
 init:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
-	@echo "\e[1m\e[34m| Compiling libtrace module\e[22m\e[39m"
+	@echo "\e[1m\e[34m| Compiling FS module\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BIN_DIR)
 
 module: compile_asm compile_cc
-	@$(AR) r $(BIN_DIR)/libtrace.a $(BUILD_DIR)/*.o
-	@echo "\e[1m\e[92m=> Generated libtrace module\e[22m\e[39m"
+	@$(AR) r $(BIN_DIR)/libfs.a $(BUILD_DIR)/*.o
+	@echo "\e[1m\e[92m=> Generated FS module\e[22m\e[39m"
 	@echo "\e[1m\e[92m--------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 # Assembly sources compilation
@@ -59,7 +60,7 @@ endif
 	@echo  "\e[32m  $< \e[22m\e[39m=> \e[1m\e[94m$@\e[22m\e[39m"
 	$(CC) $(CFLAGS) $< -o $@ -I $(INC_DIR) $(DEP_INCLUDES) -I $(ARTIFACTS_DIR)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@echo  "\e[32m  $< \e[22m\e[39m=> \e[1m\e[94m$@\e[22m\e[39m"
 	$(AS) $(ASFLAGS) $< -o $@ -I $(INC_DIR) $(DEP_INCLUDES) -I $(ARTIFACTS_DIR)
 
@@ -67,7 +68,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
 clean:
 	$(RM) -rf $(BUILD_DIR) $(BIN_DIR)
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
-	@echo "\e[1m\e[34m| Cleaned libtrace module\e[22m\e[39m"
+	@echo "\e[1m\e[34m| Cleaned FS module\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
 # Check header files modifications

@@ -31,13 +31,13 @@
 #include <string.h>       /* String manipualtion */
 #include <kerror.h>       /* Kernel error */
 #include <memory.h>       /* Memory manager */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* FDT driver */
 #include <core_mgt.h>     /* X86 CPUs core manager */
 #include <time_mgt.h>     /* Timed waits */
 #include <critical.h>     /* Kernel critical locks */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -47,9 +47,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -336,8 +333,7 @@ extern uint8_t _START_LOW_AP_STARTUP_ADDR;
 /** @brief PIC driver instance. */
 static driver_t sX86LAPICDriver = {
     .pName         = "X86 Local APIC Driver",
-    .pDescription  = "X86 Local Advanced Programable Interrupt Controler Driver"
-                     " for roOs",
+    .pDescription  = "X86 LAPIC Driver for roOs",
     .pCompatible   = "x86,x86-lapic",
     .pVersion      = "2.0",
     .pDriverAttach = _lapicAttach
@@ -381,10 +377,6 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     const lapic_node_t*  kpLAPICNode;
 #endif
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_ATTACH_ENTRY,
-                       0);
-
     retCode = OS_NO_ERR;
 
     /* Init the driver lock */
@@ -427,13 +419,14 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     sDrvCtrl.baseAddr |= skpACPIDriver->pGetLAPICBaseAddress() & PAGE_SIZE_MASK;
     sDrvCtrl.mappingSize = toMap;
 
-    /* Get the LAPICs */
-    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Attaching %d LAPICs with base address 0x%p (0x%p)",
-                 skpACPIDriver->pGetLAPICCount(),
-                 sDrvCtrl.baseAddr,
-                 skpACPIDriver->pGetLAPICBaseAddress());
+#if LAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Attaching %d LAPICs with base address 0x%p (0x%p)",
+           skpACPIDriver->pGetLAPICCount(),
+           sDrvCtrl.baseAddr,
+           skpACPIDriver->pGetLAPICBaseAddress());
+#endif
 
     /* Get the LAPIC list */
     sDrvCtrl.pLapicList = skpACPIDriver->pGetLAPICList();
@@ -452,11 +445,12 @@ static OS_RETURN_E _lapicAttach(const fdt_node_t* pkFdtNode)
     kpLAPICNode = sDrvCtrl.pLapicList;
     while(kpLAPICNode != NULL)
     {
-        KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Attaching LAPIC with ID %d at CPU %d",
-                     kpLAPICNode->lapic.lapicId,
-                     kpLAPICNode->lapic.cpuId);
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Attaching LAPIC with ID %d at CPU %d",
+               kpLAPICNode->lapic.lapicId,
+               kpLAPICNode->lapic.cpuId);
+
         /* Go to next */
         kpLAPICNode = kpLAPICNode->pNext;
     }
@@ -476,18 +470,15 @@ ATTACH_END:
         if(memoryKernelUnmap((void*)sDrvCtrl.baseAddr,
                              sDrvCtrl.mappingSize))
         {
-            KERNEL_ERROR("Failed to unmap IO-APIC memory\n");
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to unmap IO-APIC memory");
         }
     }
 
-    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "LAPIC Initialization end");
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
+#if LAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "LAPIC Initialization end");
+#endif
 
     return retCode;
 }
@@ -497,17 +488,7 @@ static void _lapicSetIrqEOI(const uint32_t kInterruptLine)
     /* Interrupt line is not used by LAPIC */
     (void)kInterruptLine;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_SET_IRQ_EOI_ENTRY,
-                       1,
-                       kInterruptLine);
-
     _lapicWrite(LAPIC_EOI, 0);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_SET_IRQ_EOI_EXIT,
-                       1,
-                       kInterruptLine);
 }
 
 static uintptr_t _lapicGetBaseAddress(void)
@@ -526,16 +507,12 @@ static void _lapicStartCpu(const uint8_t kLapicId)
     uint8_t tryCount;
     uint8_t oldBootedCpuCount;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_START_CPU_ENTRY,
-                       2,
-                       kLapicId,
-                       _bootedCPUCount);
-
-    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Starting CPU with LAPIC id %d",
-                 kLapicId);
+#if LAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Starting CPU with LAPIC id %d",
+           kLapicId);
+#endif
 
     /* Send the INIT IPI */
     _lapicWrite(LAPIC_ICRHI, kLapicId << ICR_DESTINATION_SHIFT);
@@ -551,12 +528,16 @@ static void _lapicStartCpu(const uint8_t kLapicId)
 
     tryCount = 0;
     oldBootedCpuCount = _bootedCPUCount;
-    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Booted CPU count: %d | Startup at page 0x%0x (0x%p)",
-                 oldBootedCpuCount,
-                 LAPIC_STARTUP_ADDR(&_START_LOW_AP_STARTUP_ADDR),
-                 &_START_LOW_AP_STARTUP_ADDR);
+
+#if LAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Booted CPU count: %d | Startup at page 0x%0x (0x%p)",
+           oldBootedCpuCount,
+           LAPIC_STARTUP_ADDR(&_START_LOW_AP_STARTUP_ADDR),
+           &_START_LOW_AP_STARTUP_ADDR);
+#endif
+
     do
     {
         /* Send the STARTUP IPI */
@@ -579,40 +560,28 @@ static void _lapicStartCpu(const uint8_t kLapicId)
         ++tryCount;
     } while(tryCount < 2);
 
-    KERNEL_DEBUG(LAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "New booted CPU count: %d",
-                 _bootedCPUCount);
+#if LAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "New booted CPU count: %d",
+           _bootedCPUCount);
+#endif
 
     if(oldBootedCpuCount == _bootedCPUCount)
     {
-        KERNEL_ERROR("Failed to startup CPU with LAPIC ID %d\n", kLapicId);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to startup CPU with LAPIC ID %d",
+               kLapicId);
     }
-
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_START_CPU_EXIT,
-                       2,
-                       kLapicId,
-                       _bootedCPUCount);
 }
 
 static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_SEND_IPI_ENTRY,
-                       2,
-                       kLapicId,
-                       kVector);
 
     /* Check if init */
     if(sDrvCtrl.baseAddr == 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                           TRACE_X86_LAPIC_SEND_IPI_EXIT,
-                           2,
-                           kLapicId,
-                           kVector);
         return;
     }
 
@@ -628,12 +597,6 @@ static void _lapicSendIPI(const uint8_t kLapicId, const uint8_t kVector)
     while ((_lapicRead(LAPIC_ICRLO) & ICR_SEND_PENDING) != 0){}
 
     KERNEL_UNLOCK(sDrvCtrl.lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_SEND_IPI_EXIT,
-                       2,
-                       kLapicId,
-                       kVector);
 }
 
 static const lapic_node_t* _lapicGetLAPICList(void)
@@ -643,9 +606,6 @@ static const lapic_node_t* _lapicGetLAPICList(void)
 
 static void _lapicInitApCore(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_INIT_AP_CORE_ENTRY,
-                       0);
 
     /* We are in a secondary core (AP core), just setup interrupts */
     _lapicWrite(LAPIC_TPR, 0);
@@ -659,10 +619,6 @@ static void _lapicInitApCore(void)
 
     /* Set EOI */
     _lapicWrite(LAPIC_EOI, 0);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_ENABLED,
-                       TRACE_X86_LAPIC_INIT_AP_CORE_EXIT,
-                       0);
 }
 
 static inline uint32_t _lapicRead(const uint32_t kRegister)

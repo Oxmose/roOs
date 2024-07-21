@@ -30,12 +30,12 @@
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Generic int types */
 #include <kerror.h>       /* Kernel error */
+#include <syslog.h>       /* Kernel Syslog */
 #include <memory.h>       /* Memory manager */
 #include <critical.h>     /* Kernel critical locks */
 #include <time_mgt.h>     /* Timers manager */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -45,9 +45,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -299,12 +296,6 @@ static OS_RETURN_E _hpetAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pTimerDrv, 0, sizeof(kernel_timer_t));
-# if 0
-    pTimerDrv->pGetFrequency  = _hpetGetFrequency;
-    pTimerDrv->pSetHandler    = _hpetSetHandler;
-    pTimerDrv->pRemoveHandler = _hpetRemoveHandler;
-    pTimerDrv->pTickManager   = _hpetAckInterrupt;
-#endif
     pTimerDrv->pEnable        = _hpetEnable;
     pTimerDrv->pDisable       = _hpetDisable;
     pTimerDrv->pGetTimeNs     = _hpetGetTimeNs;
@@ -319,10 +310,12 @@ static OS_RETURN_E _hpetAttach(const fdt_node_t* pkFdtNode)
     }
     sDrvCtrl.interruptNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(HPET_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Interrupt: %d",
-                 sDrvCtrl.interruptNumber);
+#if HPET_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Interrupt: %d",
+           sDrvCtrl.interruptNumber);
+#endif
 
     /* Get selected frequency */
     kpUintProp = fdtGetProp(pkFdtNode, HPET_FDT_FREQ_PROP, &propLen);
@@ -353,9 +346,10 @@ ATTACH_END:
         driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
-    KERNEL_DEBUG(HPET_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "HPET Initialization end");
+#if HPET_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "HPET Initialization end");
+#endif
+
     return retCode;
 }
 
@@ -438,17 +432,20 @@ static OS_RETURN_E _hpetInit(hpet_ctrl_t*      pCtrl,
                                HPET_CAPABILITIES_COUNT_MASK) >>
                                HPET_CAPABILITIES_COUNT_SHIFT;
     ++pCtrl->comparatorsCount;
-    KERNEL_DEBUG(HPET_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "============ HPET\n"
-                 "\tBase Period: %dfs\n"
-                 "\tCounter Size: %d\n"
-                 "\tComparators Count: %d\n"
-                 "\tConfiguration: 0x%llx\n",
-                 pCtrl->basePeriod,
-                 pCtrl->countIs64Bits ? 64 : 32,
-                 pCtrl->comparatorsCount,
-                 pCtrl->pRegisters->configuration);
+
+#if HPET_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "============ HPET\n"
+           "\tBase Period: %dfs\n"
+           "\tCounter Size: %d\n"
+           "\tComparators Count: %d\n"
+           "\tConfiguration: 0x%llx",
+           pCtrl->basePeriod,
+           pCtrl->countIs64Bits ? 64 : 32,
+           pCtrl->comparatorsCount,
+           pCtrl->pRegisters->configuration);
+#endif
 
 INIT_END:
     return retCode;

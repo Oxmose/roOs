@@ -28,6 +28,7 @@
 #include <signal.h>       /* Signal manager */
 #include <string.h>       /* String manipulation */
 #include <signal.h>       /* Signals */
+#include <syslog.h>       /* Syslog services */
 #include <console.h>      /* Console driver */
 #include <graphics.h>     /* Graphics driver */
 #include <time_mgt.h>     /* Time manager */
@@ -51,7 +52,12 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+typedef struct
+{
+    const char* pCommandName;
+    const char* pDescription;
+    void (*pFunc)(void);
+} command_t;
 
 /*******************************************************************************
  * MACROS
@@ -62,12 +68,15 @@
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
+static void _shellSyslog(void);
 static void _shellTimeTest(void);
 static void _shellDummyDefered(void* args);
+static void _shellDefer(void);
 static void _shellDisplayThreads(void);
 static void _shellSignalSelf(void);
 static void _shellSignalHandler(void);
 static void _shellCtxSwitchTime(void);
+static void _shellHelp(void);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -91,9 +100,56 @@ static uint64_t sTimeSwitchEnd[2];
 static volatile uint32_t threadStarted = 0;
 static spinlock_t threadStartedLock = SPINLOCK_INIT_VALUE;
 
+static const command_t sCommands[] = {
+    {"tasks", "Display the current threads", _shellDisplayThreads},
+    {"deferIsr", "Defer a test ISR", _shellDefer},
+    {"signalSelf", "Signal the Shell", _shellSignalSelf},
+    {"timeCtxSw", "Get the average context switch time", _shellCtxSwitchTime},
+    {"timePrec", "Timer precision test", _shellTimeTest},
+    {"syslog", "Syslog test", _shellSyslog},
+    {"help", "Display this help", _shellHelp},
+    {NULL, NULL, NULL}
+};
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _shellHelp(void)
+{
+    size_t i;
+
+    for(i = 0; sCommands[i].pCommandName != NULL; ++i)
+    {
+        kprintf("%s - %s\n",
+                sCommands[i].pCommandName,
+                sCommands[i].pDescription);
+    }
+}
+
+static void _shellSyslog(void)
+{
+    syslog(SYSLOG_LEVEL_CRITICAL,
+           "SHELL",
+           "This is a critical message from TID %d",
+           schedGetCurrentThread()->tid);
+    syslog(SYSLOG_LEVEL_ERROR,
+           "SHELL",
+           "This is an error message from TID %d",
+           schedGetCurrentThread()->tid);
+    syslog(SYSLOG_LEVEL_WARNING,
+           "SHELL",
+           "This is a warning message from TID %d",
+           schedGetCurrentThread()->tid);
+    syslog(SYSLOG_LEVEL_INFO,
+           "SHELL",
+           "This is an info message from TID %d",
+           schedGetCurrentThread()->tid);
+    syslog(SYSLOG_LEVEL_DEBUG,
+           "SHELL",
+           "This is a debug message from TID %d",
+           schedGetCurrentThread()->tid);
+}
 
 static void _shellTimeTest(void)
 {
@@ -281,6 +337,17 @@ static void _shellDummyDefered(void* args)
             schedGetCurrentThread()->tid);
 }
 
+static void _shellDefer(void)
+{
+    OS_RETURN_E error;
+
+    error = interruptDeferIsr(_shellDummyDefered, (void*)42);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to defer with error %d\n", error);
+    }
+}
+
 static void _shellDisplayThreads(void)
 {
     size_t         threadCount;
@@ -368,9 +435,8 @@ static void _shellDisplayThreads(void)
 
 static void _shellExecuteCommand(void)
 {
-    OS_RETURN_E error;
-    size_t      cursor;
-    char        command[SHELL_INPUT_BUFFER_SIZE + 1];
+    size_t cursor;
+    char   command[SHELL_INPUT_BUFFER_SIZE + 1];
 
     if(sInputBufferCursor == 0)
     {
@@ -396,36 +462,18 @@ static void _shellExecuteCommand(void)
         ++cursor;
     }
 
-    if(strcmp(command, "hello") == 0)
+    size_t i;
+
+    for(i = 0; sCommands[i].pCommandName != NULL; ++i)
     {
-        kprintf("Hi! I am roOs :)\n");
-        kprintf("Your arguments are: %s\n", sInputBuffer + cursor);
-    }
-    else if(strcmp(command, "tasks") == 0)
-    {
-        _shellDisplayThreads();
-    }
-    else if(strcmp(command, "deferIsr") == 0)
-    {
-        error = interruptDeferIsr(_shellDummyDefered, (void*)42);
-        if(error != OS_NO_ERR)
+        if(strcmp(command, sCommands[i].pCommandName) == 0)
         {
-            kprintf("Failed to defer with error %d\n", error);
+            sCommands[i].pFunc();
+            break;
         }
     }
-    else if(strcmp(command, "signalSelf") == 0)
-    {
-        _shellSignalSelf();
-    }
-    else if(strcmp(command, "timeCtxSw") == 0)
-    {
-        _shellCtxSwitchTime();
-    }
-    else if(strcmp(command, "timePrec") == 0)
-    {
-        _shellTimeTest();
-    }
-    else
+
+    if(sCommands[i].pCommandName == NULL)
     {
         kprintf("Unknown command: %s\n", command);
     }
@@ -433,52 +481,55 @@ static void _shellExecuteCommand(void)
 
 static void _shellGetCommand(void)
 {
-
-    char readChar;
+    ssize_t readCount;
+    char    readChar;
 
     sInputBufferCursor = 0;
     kprintf("> ");
     kprintfFlush();
-    consoleEcho(FALSE);
     while(TRUE)
     {
-        consoleRead(&readChar, 1);
-
-        if(readChar == 0xD || readChar == 0xA)
+        readCount = consoleRead(&readChar, 1);
+        if(readCount > 0)
         {
-            kprintf("\n");
-            break;
-        }
-        else if(readChar == 0x7F || readChar == '\b')
-        {
-            if(sInputBufferCursor > 0)
+            if(readChar == 0xD || readChar == 0xA)
             {
-                --sInputBufferCursor;
-                kprintf("\b \b");
+                kprintf("\n");
+                break;
+            }
+            else if(readChar == 0x7F || readChar == '\b')
+            {
+                if(sInputBufferCursor > 0)
+                {
+                    --sInputBufferCursor;
+                    kprintf("\b \b");
+                    kprintfFlush();
+                }
+            }
+            else if(sInputBufferCursor < SHELL_INPUT_BUFFER_SIZE)
+            {
+                sInputBuffer[sInputBufferCursor] = readChar;
+                ++sInputBufferCursor;
+                kprintf("%c", readChar);
                 kprintfFlush();
             }
-        }
-        else if(sInputBufferCursor < SHELL_INPUT_BUFFER_SIZE)
-        {
-            sInputBuffer[sInputBufferCursor] = readChar;
-            ++sInputBufferCursor;
-            kprintf("%c", readChar);
-            kprintfFlush();
         }
     }
     sInputBuffer[sInputBufferCursor] = 0;
 }
+
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
 
 static void* _shellEntry(void* args)
 {
     (void)args;
 
     /* Wait for all the system to be up */
-    schedSleep(100000000);
+    schedSleep(2000000000);
 
-    /* Clear the console */
-    consoleClear();
-    consolePutCursor(0, 0);
+    kprintf("\n");
+
 
     while(TRUE)
     {
@@ -507,7 +558,10 @@ void kernelShellInit(void)
                                     NULL);
     if(error != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to start the kernel shell. Error %d\n", error);
+        syslog(SYSLOG_LEVEL_ERROR,
+               "SHELL",
+               "Failed to start the kernel shell. Error %d",
+               error);
     }
 }
 

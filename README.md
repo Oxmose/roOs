@@ -61,13 +61,12 @@
 * Updateable priorities
 * Sleep capable
 
-### Kernel Tracing
-* Manual trace generation
-* Trace-Compass compatible trace stream generation
-
 ### Libraries
 * Embedded LibC
 * Structures Libraries (Vector, HashTable, Queues, etc.)
+
+### Virtual File System
+* Character-based driver support
 
 ## Roadmap
 You can see the planned tasks / features in the project's kanban on GitHub: https://github.com/users/Oxmose/projects/2

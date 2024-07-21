@@ -28,8 +28,8 @@
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definitions */
 #include <string.h>        /* String manipulation */
+#include <syslog.h>        /* Kernel Syslog */
 #include <critical.h>      /* Critical sections */
-#include <kerneloutput.h>  /* Kernel output */
 
 /* Configuration files */
 #include <config.h>
@@ -39,9 +39,6 @@
 
 /* Header file */
 #include <exceptions.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -122,10 +119,9 @@ void exceptionInit(void)
     OS_RETURN_E                   err;
     const cpu_interrupt_config_t* kpCpuIntConfig;
 
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED, TRACE_EXCEPTION_INIT_ENTRY, 0);
-
-    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED, "EXCEPTIONS",
-                 "Initializing exception manager.");
+#if EXCEPTIONS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Initializing exception manager.");
+#endif
 
     /* Get the CPU exception bounds */
     kpCpuIntConfig = cpuGetInterruptConfig();
@@ -136,43 +132,21 @@ void exceptionInit(void)
     EXC_ASSERT(err == OS_NO_ERR,
                "Could not initialize exception manager.",
                err);
-
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED, TRACE_EXCEPTION_INIT_EXIT, 0);
 }
 
 OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
                               custom_handler_t handler)
 {
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                       TRACE_EXCEPTION_REGISTER_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(handler),
-                       KERNEL_TRACE_LOW(handler),
-                       kExceptionLine);
 
     if(kExceptionLine < sMinExceptionNumber ||
        kExceptionLine > sMaxExceptionNumber)
     {
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kExceptionLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
     if(handler == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kExceptionLine,
-                           OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
@@ -183,53 +157,30 @@ OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kExceptionLine,
-                           OS_ERR_INTERRUPT_ALREADY_REGISTERED);
-
-        return OS_ERR_INTERRUPT_ALREADY_REGISTERED;
+        return OS_ERR_ALREADY_EXIST;
     }
 
     pKernelInterruptHandlerTable[kExceptionLine] = handler;
 
-    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED,
-                 "EXCEPTIONS",
-                 "Added exception %u handler at 0x%p",
-                 kExceptionLine,
-                 handler);
+#if EXCEPTIONS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Added exception %d handler at 0x%p",
+           kExceptionLine,
+           handler);
+#endif
 
     KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
-
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                        TRACE_EXCEPTION_REGISTER_EXIT,
-                        4,
-                        KERNEL_TRACE_HIGH(handler),
-                        KERNEL_TRACE_LOW(handler),
-                        kExceptionLine,
-                        OS_NO_ERR);
 
     return OS_NO_ERR;
 }
 
 OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
 {
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                       TRACE_EXCEPTION_REMOVE_ENTRY,
-                       1,
-                       kExceptionLine);
 
     if(kExceptionLine < sMinExceptionNumber ||
        kExceptionLine > sMaxExceptionNumber)
     {
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REMOVE_EXIT,
-                           2,
-                           kExceptionLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
@@ -240,29 +191,19 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                           TRACE_EXCEPTION_REMOVE_EXIT,
-                           2,
-                           kExceptionLine,
-                           OS_ERR_INTERRUPT_NOT_REGISTERED);
-
         return OS_ERR_INTERRUPT_NOT_REGISTERED;
     }
 
     pKernelInterruptHandlerTable[kExceptionLine] = NULL;
 
-    KERNEL_DEBUG(EXCEPTIONS_DEBUG_ENABLED,
-                 "EXCEPTIONS",
-                 "Removed exception %u handle",
-                 kExceptionLine);
+#if EXCEPTIONS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Removed exception %d handle",
+           kExceptionLine);
+#endif
 
     KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
-
-    KERNEL_TRACE_EVENT(TRACE_EXCEPTION_ENABLED,
-                       TRACE_EXCEPTION_REMOVE_EXIT,
-                       2,
-                       kExceptionLine,
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }

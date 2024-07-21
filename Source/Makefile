@@ -53,6 +53,7 @@ endif
 	@make -C $(SOURCE_DIR)/libs
 	@make -C $(SOURCE_DIR)/user
 	@make -C $(SOURCE_DIR)/sync
+	@make -C $(SOURCE_DIR)/fs
 
 ifeq ($(TESTS), TRUE)
 	# Build the tests module
@@ -95,6 +96,7 @@ endif
 	@make -C $(SOURCE_DIR)/libs clean
 	@make -C $(SOURCE_DIR)/user clean
 	@make -C $(SOURCE_DIR)/sync clean
+	@make -C $(SOURCE_DIR)/fs clean
 	@make -C $(SOURCE_DIR)/test_framework clean
 
 	# Clean kernel build directory

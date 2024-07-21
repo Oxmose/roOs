@@ -145,196 +145,16 @@ typedef struct
     bool_t vgaColor;
 } colorscheme_t;
 
-/**
- * @brief The kernel's console output driver abstraction.
- */
+/** @brief Defines the IOCTL arguments for a scroll operation. */
 typedef struct
 {
-    /**
-     * @brief Clears the console, the background color is set to black.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     */
-    void (*pClear)(void* pDriverCtrl);
+    /** @brief Scroll direction */
+    SCROLL_DIRECTION_E direction;
 
-    /**
-     * @brief Places the cursor to the coordinates given as parameters.
-     *
-     * @details The function places the console cursor at the desired coordinates
-     * based on the line and column parameter.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kLine The line index where to place the cursor.
-     * @param[in] kColumn The column index where to place the cursor.
-     */
-    void (*pPutCursor)(void*          pDriverCtrl,
-                       const uint32_t kLine,
-                       const uint32_t kColumn);
+    /** @brief Scroll count */
+    uint32_t lineCount;
 
-    /**
-     * @brief Saves the cursor attributes in the buffer given as paramter.
-     *
-     * @details Fills the buffer given s parameter with the current value of the
-     * cursor.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[out] pBuffer The cursor buffer in which the current
-     * cursor position is going to be saved.
-     */
-    void (*pSaveCursor)(void* pDriverCtrl, cursor_t* pBuffer);
-
-    /**
-     * @brief Restores the cursor attributes from the buffer given as parameter.
-     *
-     * @details The function will restores the cursor attributes from the buffer
-     * given as parameter.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] pBuffer The buffer containing the cursor's
-     * attributes.
-     */
-    void (*pRestoreCursor)(void* pDriverCtrl, const cursor_t* pBuffer);
-
-    /**
-     * @brief Scrolls in the desired direction of lines_count lines.
-     *
-     * @details The function will use the driver to scroll of lines_count line
-     * in the desired direction.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kDirection The direction to which the
-     * console should be scrolled.
-     * @param[in] kLines The number of lines to scroll.
-     */
-    void (*pScroll)(void*                    pDriverCtrl,
-                    const SCROLL_DIRECTION_E kDirection,
-                    const uint32_t           kLines);
-
-    /**
-     * @brief Sets the color scheme of the console.
-     *
-     * @details Replaces the curent color scheme used t output data with the new
-     * one given as parameter.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kpColorScheme The new color scheme to apply
-     * to the console.
-     */
-    void (*pSetColorScheme)(void*                pDriverCtrl,
-                            const colorscheme_t* kpColorScheme);
-
-    /**
-     * @brief Saves the color scheme in the buffer given as parameter.
-     *
-     * @details Fills the buffer given as parameter with the current console's
-     * color scheme value.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[out] pBuffer The buffer that will receive the
-     * current color scheme used by the console.
-     */
-    void (*pSaveColorScheme)(void* pDriverCtrl, colorscheme_t* pBuffer);
-
-    /**
-     * ­@brief Put a string to console.
-     *
-     * @details The function will display the string given as parameter to the
-     * console using the selected driver.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kpString The string to display on the console.
-     *
-     * @warning kpString must be NULL terminated.
-     */
-    void (*pPutString)(void* pDriverCtrl, const char* kpString);
-
-    /**
-     * ­@brief Put a character to console.
-     *
-     * @details The function will display the character given as parameter to
-     * the console using the selected driver.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     * @param[in] kCharacter The char to display on the console.
-     */
-    void (*pPutChar)(void* pDriverCtrl, const char kCharacter);
-
-    /**
-     * ­@brief Flushes the console output.
-     *
-     * @details The function will request a flush to the console output driver.
-     *
-     * @param[in, out] pDriverCtrl The driver controler used by the registered
-     * console driver.
-     */
-    void (*pFlush)(void* pDriverCtrl);
-
-    /**
-     * @brief Contains a pointer to the driver controler, set by the driver
-     * at the moment of the initialization of this structure.
-     */
-    void* pDriverCtrl;
-} console_output_driver_t;
-
-/**
- * @brief The kernel's console input driver abstraction.
- */
-typedef struct
-{
-    /**
-     * @brief Reads data from the console input buffer.
-     *
-     * @details Reads data from the console input buffer. The function returns
-     * the number of bytes read. If the buffer is empty, the function is
-     * blocking until the buffer is filled with the required number of bytes.
-     *
-     * @param[in] pDriverCtrl The driver to be used.
-     * @param[out] pBuffer The buffer used to receive data.
-     * @param[in] kBufferSize The number of bytes to read.
-     *
-     * @return The function returns the number of bytes read or -1 on error.
-     */
-    ssize_t (*pRead)(void* pDriverCtrl, char* pBuffer, size_t kBufferSize);
-
-    /**
-     * @brief Enables or disables the input echo for the console input driver.
-     *
-     * @details Enables or disables the input evho for the console input driver. If the
-     * driver supports echoing its input, the echo is enabled, otherwise not action
-     * is taken.
-     *
-     * @param[in] pDriverCtrl The driver to be used.
-     * @param kEnable Tells if the echo should be enabled or disabled.
-     */
-    void (*pEcho)(void* pDriverCtrl, const bool_t kEnable);
-
-    /**
-     * @brief Contains a pointer to the driver controler, set by the driver
-     * at the moment of the initialization of this structure.
-     */
-    void* pDriverCtrl;
-} console_input_driver_t;
-
-/**
- * @brief The kernel's console complete driver abstraction.
- */
-typedef struct
-{
-    /** @brief The console input driver */
-    console_input_driver_t inputDriver;
-
-    /** @brief The console output driver */
-    console_output_driver_t outputDriver;
-} console_driver_t;
+} cons_ioctl_args_scroll_t;
 
 /*******************************************************************************
  * MACROS
@@ -474,17 +294,6 @@ void consolePutChar(const char kCharacter);
  * @return The function returns the number of bytes read or -1 on error.
  */
 ssize_t consoleRead(char* pBuffer, size_t kBufferSize);
-
-/**
- * @brief Enables or disables the input echo for the console input driver.
- *
- * @details Enables or disables the input evho for the console input driver. If the
- * driver supports echoing its input, the echo is enabled, otherwise not action
- * is taken.
- *
- * @param kEnable Tells if the echo should be enabled or disabled.
- */
-void consoleEcho(const bool_t kEnable);
 
 /**
  * ­@brief Flushes the console output.

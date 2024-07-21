@@ -181,7 +181,7 @@ typedef struct
      * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the timer interrupt
      *   line is not allowed.
      * - OS_ERR_NULL_POINTER is returned if the pointer to the handler is NULL.
-     * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
+     * - OS_ERR_ALREADY_EXIST is returned if a handler is already
      *   registered for the timer.
      */
     OS_RETURN_E (*pSetHandler)(void* pDriverCtrl,
@@ -271,6 +271,15 @@ uint64_t timeGetUptime(void);
  * @return The current daytime from RTC.
  */
 time_t timeGetDayTime(void);
+
+/**
+ * @brief Returns the current date from RTC.
+ *
+ * @details Return the current date from RTC.
+ *
+ * @return The current date from RTC.
+ */
+date_t timeGetDate(void);
 
 /**
  * @brief Returns the number of CPU's ticks since the CPU started.

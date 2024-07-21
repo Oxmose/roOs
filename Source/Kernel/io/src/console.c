@@ -23,11 +23,14 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>       /* Virtual Filesystem */
+#include <ioctl.h>     /* IOCTL commands */
+#include <string.h>    /* String manipulation */
 #include <stdint.h>    /* Generic int types and bool_t */
 #include <stddef.h>    /* Standard definition */
+#include <syslog.h>    /* Syslog service */
 #include <kerror.h>    /* Kernel error codes */
 #include <devtree.h>   /* Device tree manager */
-#include <drivermgr.h> /* Driver manager */
 
 #if DEBUG_LOG_UART
 #include <uart.h>   /* Include the UART for debug */
@@ -39,12 +42,12 @@
 /* Header file */
 #include <console.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
+
+/** @brief Defines the current module name */
+#define MODULE_NAME "CONS"
 
 /** @brief FDT console node name */
 #define FDT_CONSOLE_NODE_NAME "console"
@@ -94,8 +97,11 @@
 /* None */
 
 /************************** Static global variables ***************************/
-/** @brief Stores the currently selected driver */
-static console_driver_t sConsoleDriver = {NULL};
+/** @brief Stores the stdin file descriptor */
+static int32_t sStdinFd = -1;
+
+/** @brief Stores the stdout file descriptor */
+static int32_t sStdoutFd = -1;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -103,307 +109,167 @@ static console_driver_t sConsoleDriver = {NULL};
 
 void consoleInit(void)
 {
-    const fdt_node_t*  kpConsoleNode;
-    const uint32_t*    kpUintProp;
-    size_t             propLen;
-    console_driver_t*  pConsDriver;
-    kgeneric_driver_t* pGenDriver;
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_ENTRY, 0);
+    const fdt_node_t* kpConsoleNode;
+    const char*       kpStrProp;
+    size_t            propLen;
 
     /* Get the FDT console node */
     kpConsoleNode = fdtGetNodeByName(FDT_CONSOLE_NODE_NAME);
     if(kpConsoleNode == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_EXIT, 1, -1);
         return;
     }
 
-    /* Get the input driver */
-    kpUintProp = fdtGetProp(kpConsoleNode,
-                            FDT_CONSOLE_INPUT_DEV_PROP,
-                            &propLen);
-    if(kpUintProp != NULL && propLen == sizeof(uint32_t))
+    /* Get the input device */
+    kpStrProp = fdtGetProp(kpConsoleNode,
+                           FDT_CONSOLE_INPUT_DEV_PROP,
+                           &propLen);
+    if(kpStrProp != NULL && propLen > 0)
     {
-        pGenDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
-        if(pGenDriver != NULL)
+        sStdinFd = vfsOpen(kpStrProp, O_RDONLY, 0);
+        if(sStdinFd < 0)
         {
-            pConsDriver = pGenDriver->pConsoleDriver;
-            if(pConsDriver != NULL &&
-               pConsDriver->inputDriver.pDriverCtrl != NULL)
-            {
-                sConsoleDriver.inputDriver = pConsDriver->inputDriver;
-            }
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to open stdin device");
         }
     }
 
-    /* Get the output driver */
-    kpUintProp = fdtGetProp(kpConsoleNode,
-                            FDT_CONSOLE_OUTPUT_DEV_PROP,
-                            &propLen);
-    if(kpUintProp != NULL && propLen == sizeof(uint32_t))
+    /* Get the output device */
+    kpStrProp = fdtGetProp(kpConsoleNode,
+                           FDT_CONSOLE_OUTPUT_DEV_PROP,
+                           &propLen);
+    if(kpStrProp != NULL && propLen > 0)
     {
-        pGenDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
-
-        if(pGenDriver != NULL)
+        sStdoutFd = vfsOpen(kpStrProp, O_RDWR, 0);
+        if(sStdoutFd < 0)
         {
-            pConsDriver = pGenDriver->pConsoleDriver;
-            if(pConsDriver != NULL &&
-               pConsDriver->outputDriver.pDriverCtrl != NULL)
-            {
-                sConsoleDriver.outputDriver = pConsDriver->outputDriver;
-            }
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to open stdout device");
         }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_INIT_EXIT, 1, 0);
 }
 
 void consoleClear(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_CLEAR_ENTRY, 0);
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pClear,
-                sConsoleDriver.outputDriver.pDriverCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED, TRACE_CONS_CLEAR_EXIT, 0);
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_CLEAR, NULL);
+    }
 }
 
 void consolePutCursor(const uint32_t kLine, const uint32_t kColumn)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_CURSOR_ENTRY,
-                       2,
-                       kLine,
-                       kColumn);
+    cursor_t cursor;
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pPutCursor,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                kLine,
-                kColumn);
+    if(sStdoutFd >= 0)
+    {
+        cursor.x = kColumn;
+        cursor.y = kLine;
 
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_CURSOR_EXIT,
-                       2,
-                       kLine,
-                       kColumn);
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_RESTORE_CURSOR, &cursor);
+    }
 }
 
 void consoleSaveCursor(cursor_t* pBuffer)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_CURSOR_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer));
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pSaveCursor,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                pBuffer);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_CURSOR_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer));
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_SAVE_CURSOR, pBuffer);
+    }
 }
 
 void consoleRestoreCursor(const cursor_t* pkBuffer)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_RESTORE_CURSOR_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pkBuffer),
-                       KERNEL_TRACE_LOW(pkBuffer));
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pRestoreCursor,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                pkBuffer);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_RESTORE_CURSOR_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pkBuffer),
-                       KERNEL_TRACE_LOW(pkBuffer));
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_RESTORE_CURSOR, (void*)&pkBuffer);
+    }
 }
 
 void consoleSroll(const SCROLL_DIRECTION_E kDirection, const uint32_t kLines)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SCROLL_ENTRY,
-                       2,
-                       kDirection,
-                       kLines);
+    cons_ioctl_args_scroll_t args;
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pScroll,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                kDirection,
-                kLines);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SCROLL_EXIT,
-                       2,
-                       kDirection,
-                       kLines);
+    if(sStdoutFd >= 0)
+    {
+        args.direction = kDirection;
+        args.lineCount = kLines;
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_SCROLL, &args);
+    }
 }
 
 void consoleSetColorScheme(const colorscheme_t* pkColorScheme)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_COLORSCHEME_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pkColorScheme),
-                       KERNEL_TRACE_LOW(pkColorScheme));
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pSetColorScheme,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                pkColorScheme);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SET_COLORSCHEME_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pkColorScheme),
-                       KERNEL_TRACE_LOW(pkColorScheme));
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd,
+                 VFS_IOCTL_CONS_SET_COLORSCHEME,
+                 (void*)pkColorScheme);
+    }
 }
 
 void consoleSaveColorScheme(colorscheme_t* pBuffer)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_COLORSCHEME_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer));
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pSaveColorScheme,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                pBuffer);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_SAVE_COLORSCHEME_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer));
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_SAVE_COLORSCHEME, pBuffer);
+    }
 }
 
 void consolePutString(const char* pkString)
 {
 
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_STRING_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pkString),
-                       KERNEL_TRACE_LOW(pkString));
-
 #if DEBUG_LOG_UART
     uartDebugPutString(pkString);
 #endif
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pPutString,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                pkString);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_STRING_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pkString),
-                       KERNEL_TRACE_LOW(pkString));
+    if(sStdoutFd >= 0)
+    {
+        vfsWrite(sStdoutFd, pkString, strlen(pkString));
+    }
 }
 
 void consolePutChar(const char kCharacter)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_CHAR_ENTRY,
-                       1,
-                       kCharacter);
 
 #if DEBUG_LOG_UART
     uartDebugPutChar(kCharacter);
 #endif
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pPutChar,
-                sConsoleDriver.outputDriver.pDriverCtrl,
-                kCharacter);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_PUT_CHAR_EXIT,
-                       1,
-                       kCharacter);
+    if(sStdoutFd >= 0)
+    {
+        vfsWrite(sStdoutFd, (void*)&kCharacter, 1);
+    }
 }
 
 ssize_t consoleRead(char* pBuffer, size_t kBufferSize)
 {
     ssize_t retVal;
 
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_READ_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize));
-
-    if(sConsoleDriver.inputDriver.pRead != NULL)
+    if(sStdinFd >= 0)
     {
-        retVal = sConsoleDriver.inputDriver.pRead(
-                                         sConsoleDriver.inputDriver.pDriverCtrl,
-                                         pBuffer,
-                                         kBufferSize);
+        retVal = vfsRead(sStdinFd, pBuffer, kBufferSize);
     }
     else
     {
         retVal = -1;
     }
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_READ_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize),
-                       KERNEL_TRACE_HIGH(retVal),
-                       KERNEL_TRACE_LOW(retVal));
 
     return retVal;
 }
 
-void consoleEcho(const bool_t kEnable)
-{
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_ECHO_ENTRY,
-                       1,
-                       kEnable);
-
-    EXEC_IF_SET(sConsoleDriver,
-                inputDriver.pEcho,
-                sConsoleDriver.inputDriver.pDriverCtrl,
-                kEnable);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_ECHO_EXIT,
-                       1,
-                       kEnable);
-}
-
 void consoleFlush(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_FLUSH_ENTRY,
-                       0);
 
-    EXEC_IF_SET(sConsoleDriver,
-                outputDriver.pFlush,
-                sConsoleDriver.outputDriver.pDriverCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_CONS_ENABLED,
-                       TRACE_CONS_FLUSH_EXIT,
-                       0);
+    if(sStdoutFd >= 0)
+    {
+        vfsIOCTL(sStdoutFd, VFS_IOCTL_CONS_FLUSH, NULL);
+    }
 }
 
 /************************************ EOF *************************************/

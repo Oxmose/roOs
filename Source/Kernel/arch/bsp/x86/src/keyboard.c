@@ -22,6 +22,8 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>       /* Virtual File System*/
+#include <ioctl.h>     /* IOCTL commands */
 #include <panic.h>     /* Kernel panic */
 #include <kheap.h>     /* Memory allocation */
 #include <x86cpu.h>    /* CPU port manipulation */
@@ -29,7 +31,6 @@
 #include <string.h>    /* String manipualtion */
 #include <kerror.h>    /* Kernel error */
 #include <devtree.h>   /* Device tree */
-#include <console.h>   /* Console driver manager */
 #include <critical.h>  /* Kernel locks */
 #include <drivermgr.h> /* Driver manager service */
 #include <semaphore.h> /* Kernel semaphores */
@@ -40,9 +41,6 @@
 /* Header file */
 #include <keyboard.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -51,9 +49,11 @@
 #define MODULE_NAME "X86 Keyboard"
 
 /** @brief FDT property for comm ports */
-#define KBD_FDT_COMM_PROP   "comm"
+#define KBD_FDT_COMM_PROP "comm"
 /** @brief FDT property for interrupt  */
 #define KBD_FDT_INT_PROP "interrupts"
+/** @brief FDT property for device path */
+#define KBD_FDT_DEVICE_PROP "device"
 
 /** @brief Cast a pointer to a keyboard driver controler */
 #define GET_CONTROLER(PTR) ((kbd_controler_t*)PTR)
@@ -119,11 +119,8 @@ typedef struct
     /** @brief Keyboard state flags */
     uint32_t flags;
 
-    /**
-     * @brief Tells if the driver shall output all its received data to the
-     * console.
-     */
-    bool_t echo;
+    /** @brief Stores the VFS driver */
+    vfs_driver_t vfsDriver;
 
     /** @brief Driver's lock */
     kernel_spinlock_t lock;
@@ -196,17 +193,6 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
                         const size_t kBufferSize);
 
 /**
- * @brief Enables or disables the input echo for the keyboard driver.
- *
- * @details Enables or disables the input evho for the keyboard driver. When
- * enabled, the keyboard driver will echo all characters it receives as input.
- *
- * @param[in] pDrvCtrl The driver to be used.
- * @param kEnable Tells if the echo should be enabled or disabled.
- */
-static void _kbdSetEcho(void* pDrvCtrl, const bool_t kEnable);
-
-/**
  * @brief Parses a keyboard keycode.
  *
  * @details Parses the keycode given as parameter and execute the corresponding
@@ -218,6 +204,58 @@ static void _kbdSetEcho(void* pDrvCtrl, const bool_t kEnable);
  * returned, otherwise, the NULL character is returned.
  */
 static char _manageKeycode(const int8_t kKey);
+
+/**
+ * @brief Keyboard VFS open hook.
+ *
+ * @details Keyboard VFS open hook. This function returns a handle to control the
+ * keyboard driver through VFS.
+ *
+ * @param[in, out] pDrvCtrl The keyboard driver that was registered in the VFS.
+ * @param[in] kpPath The path in the keyboard driver mount point.
+ * @param[in] flags The open flags, must be O_RDONLY.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _kbdVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode);
+
+/**
+ * @brief Keyboard VFS close hook.
+ *
+ * @details Keyboard VFS close hook. This function closes a handle that was
+ * created when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The keyboard driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _kbdVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief Keyboard VFS read hook.
+ *
+ * @details Keyboard VFS read hook. This function reads a string from the
+ * keyboard.
+ *
+ * @param[in, out] pDrvCtrl The keyboard driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[out] kpBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _kbdVfsRead(void*  pDrvCtrl,
+                           void*  pHandle,
+                           void*  kpBuffer,
+                           size_t count);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -287,7 +325,7 @@ static const key_mapper_t ksQwertyMap = {
         'l',
         ';',
         0,   // MOD `           // 40
-        0,   // TODO
+        0,
         KEY_LSHIFT,   // LEFT SHIFT
         '<',
         'z',
@@ -301,7 +339,7 @@ static const key_mapper_t ksQwertyMap = {
         '.',
         0, // é
         KEY_RSHIFT,    // RIGHT SHIFT
-        0,   // TODO
+        0,
         0,     // ALT left / right
         ' ',
         0,
@@ -374,7 +412,7 @@ static const key_mapper_t ksQwertyMap = {
         'L',
         ':',
         0,   // MOD `           // 40
-        0,   // TODO
+        0,
         KEY_LSHIFT,   // LEFT SHIFT
         '>',
         'Z',
@@ -388,7 +426,7 @@ static const key_mapper_t ksQwertyMap = {
         '.',
         0, // É
         KEY_RSHIFT,    // RIGHT SHIFT
-        0,   // TODO
+        0,
         0,     // ALT left / right
         ' ',
         0,
@@ -424,35 +462,19 @@ static const key_mapper_t ksQwertyMap = {
  ******************************************************************************/
 static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*    kpUintProp;
-    size_t             propLen;
-    OS_RETURN_E        retCode;
-    kbd_controler_t*   pDrvCtrl;
-    console_driver_t*  pConsoleDrv;
-    bool_t             isSemInit;
-    bool_t             isInputBufferSet;
-    kgeneric_driver_t* pGenericDriver;
-
-
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_ATTACH_ENTRY,
-                       0);
-
-    pDrvCtrl    = NULL;
-    pConsoleDrv = NULL;
-    pGenericDriver = NULL;
+    const uint32_t*  kpUintProp;
+    const char*      kpStrProp;
+    size_t           propLen;
+    OS_RETURN_E      retCode;
+    OS_RETURN_E      error;
+    kbd_controler_t* pDrvCtrl;
+    bool_t           isSemInit;
+    bool_t           isInputBufferSet;
 
     isSemInit        = FALSE;
     isInputBufferSet = FALSE;
 
     /* Init structures */
-    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
-    if(pGenericDriver == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
     pDrvCtrl = kmalloc(sizeof(kbd_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -460,31 +482,8 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(kbd_controler_t));
+    pDrvCtrl->vfsDriver = VFS_DRIVER_INVALID;
     KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
-
-    pConsoleDrv = kmalloc(sizeof(console_driver_t));
-    if(pConsoleDrv == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pConsoleDrv, 0, sizeof(console_driver_t));
-    pConsoleDrv->outputDriver.pClear           = NULL;
-    pConsoleDrv->outputDriver.pPutCursor       = NULL;
-    pConsoleDrv->outputDriver.pSaveCursor      = NULL;
-    pConsoleDrv->outputDriver.pRestoreCursor   = NULL;
-    pConsoleDrv->outputDriver.pScroll          = NULL;
-    pConsoleDrv->outputDriver.pSetColorScheme  = NULL;
-    pConsoleDrv->outputDriver.pSaveColorScheme = NULL;
-    pConsoleDrv->outputDriver.pPutString       = NULL;
-    pConsoleDrv->outputDriver.pPutChar         = NULL;
-    pConsoleDrv->outputDriver.pFlush           = NULL;
-    pConsoleDrv->outputDriver.pDriverCtrl      = NULL;
-    pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
-    pConsoleDrv->inputDriver.pRead             = _kbdRead;
-    pConsoleDrv->inputDriver.pEcho             = _kbdSetEcho;
-
-    pGenericDriver->pConsoleDriver = pConsoleDrv;
 
     /* Get the keyboard CPU communication ports */
     kpUintProp = fdtGetProp(pkFdtNode, KBD_FDT_COMM_PROP, &propLen);
@@ -507,11 +506,9 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     /* Check that we are the only input port */
     if(spInputCtrl != NULL)
     {
-        retCode = OS_ERR_INTERRUPT_ALREADY_REGISTERED;
+        retCode = OS_ERR_ALREADY_EXIST;
         goto ATTACH_END;
     }
-
-    pDrvCtrl->echo = FALSE;
 
     /* Init buffer */
     pDrvCtrl->inputBufferStartCursor = 0;
@@ -552,8 +549,28 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     /* Set the input driver */
     spInputCtrl = pDrvCtrl;
 
-    /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
+    /* Get the device path */
+    kpStrProp = fdtGetProp(pkFdtNode, KBD_FDT_DEVICE_PROP, &propLen);
+    if(kpStrProp == NULL || propLen  == 0)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+
+    /* Register the driver */
+    pDrvCtrl->vfsDriver = vfsRegisterDriver(kpStrProp,
+                                            pDrvCtrl,
+                                            _kbdVfsOpen,
+                                            _kbdVfsClose,
+                                            _kbdVfsRead,
+                                            NULL,
+                                            NULL,
+                                            NULL);
+    if(pDrvCtrl->vfsDriver == VFS_DRIVER_INVALID)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
 
 ATTACH_END:
 
@@ -569,22 +586,20 @@ ATTACH_END:
         }
         if(pDrvCtrl != NULL)
         {
+            if(pDrvCtrl->vfsDriver != VFS_DRIVER_INVALID)
+            {
+                error = vfsUnregisterDriver(&pDrvCtrl->vfsDriver);
+                if(error != OS_NO_ERR)
+                {
+                    PANIC(error,
+                          MODULE_NAME,
+                          "Failed to unregister VFS driver");
+                }
+            }
+
             kfree(pDrvCtrl);
         }
-        if(pConsoleDrv != NULL)
-        {
-            kfree(pConsoleDrv);
-        }
-        if(pGenericDriver != NULL)
-        {
-            kfree(pGenericDriver);
-        }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
 
     return retCode;
 }
@@ -595,21 +610,10 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
     OS_RETURN_E error;
     size_t      availableSpace;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_INT_HANDLER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pCurrentThread),
-                       KERNEL_TRACE_LOW(pCurrentThread));
-
     (void)pCurrentThread;
 
     if(spInputCtrl == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                           TRACE_X86_KEYBOARD_INT_HANDLER_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(pCurrentThread),
-                           KERNEL_TRACE_LOW(pCurrentThread));
         return;
     }
 
@@ -621,11 +625,6 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 
     if(data != 0)
     {
-        if(spInputCtrl->echo == TRUE)
-        {
-            consolePutChar(data);
-        }
-
         /* Try to add the new data to the buffer */
         KERNEL_LOCK(spInputCtrl->inputBufferLock);
 
@@ -661,12 +660,6 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
                    error);
 
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_INT_HANDLER_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pCurrentThread),
-                       KERNEL_TRACE_LOW(pCurrentThread));
 }
 
 static ssize_t _kbdRead(void*        pDrvCtrl,
@@ -679,25 +672,8 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
     size_t      usedSpace;
     size_t      i;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_READ_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize));
-
     if(pDrvCtrl != spInputCtrl || spInputCtrl == NULL || pBuffer == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                           TRACE_X86_KEYBOARD_READ_EXIT,
-                           6,
-                           KERNEL_TRACE_HIGH(pBuffer),
-                           KERNEL_TRACE_LOW(pBuffer),
-                           KERNEL_TRACE_HIGH(kBufferSize),
-                           KERNEL_TRACE_LOW(kBufferSize),
-                           KERNEL_TRACE_HIGH(0),
-                           KERNEL_TRACE_LOW(-1));
         return -1;
     }
 
@@ -757,27 +733,8 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
         }
 
     }
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_READ_EXIT,
-                       6,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize));
 
     return kBufferSize;
-}
-
-static void _kbdSetEcho(void* pDrvCtrl, const bool_t kEnable)
-{
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_SET_ECHO,
-                       1,
-                       kEnable);
-
-    GET_CONTROLER(pDrvCtrl)->echo = kEnable;
 }
 
 static char _manageKeycode(const int8_t kKey)
@@ -785,11 +742,6 @@ static char _manageKeycode(const int8_t kKey)
     char   retChar;
     bool_t mod;
     bool_t shifted;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_MANAGE_KEYCODE_ENTRY,
-                       1,
-                       kKey);
 
     retChar = 0;
 
@@ -843,12 +795,50 @@ static char _manageKeycode(const int8_t kKey)
         }
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_KEYBOARD_ENABLED,
-                       TRACE_X86_KEYBOARD_MANAGE_KEYCODE_EXIT,
-                       1,
-                       kKey);
-
     return retChar;
+}
+
+static void* _kbdVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode)
+{
+    (void)pDrvCtrl;
+    (void)mode;
+
+    /* The path must be empty */
+    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    {
+        return (void*)-1;
+    }
+
+    /* The flags must be O_RDONLY */
+    if(flags != O_RDONLY)
+    {
+        return (void*)-1;
+    }
+
+    /* We don't need a handle, return NULL */
+    return NULL;
+}
+
+static int32_t _kbdVfsClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+
+    /* Nothing to do */
+    return 0;
+}
+
+static ssize_t _kbdVfsRead(void*  pDrvCtrl,
+                           void*  pHandle,
+                           void*  pBuffer,
+                           size_t count)
+{
+    (void)pHandle;
+
+    return _kbdRead(pDrvCtrl, pBuffer, count);
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

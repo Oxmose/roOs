@@ -211,7 +211,7 @@ if __name__ == "__main__":
                 error += 1
                 continue
 
-            retValue = os.system("make target={} TESTS=TRUE >> /dev/null".format(target, group["name"], target))
+            retValue = os.system("make target={} TESTS=TRUE STK_PROT=TRUE >> /dev/null".format(target, group["name"], target))
             if retValue != 0:
                 error += 1
                 continue

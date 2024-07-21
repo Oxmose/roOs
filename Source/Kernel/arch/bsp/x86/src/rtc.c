@@ -28,11 +28,11 @@
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Generic int types */
 #include <kerror.h>       /* Kernel error */
+#include <syslog.h>       /* Kernel Syslog */
 #include <critical.h>     /* Kernel critical locks */
 #include <time_mgt.h>     /* Timers manager */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -42,9 +42,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -248,7 +245,7 @@ static uint32_t _rtcGetFrequency(void* pDrvCtrl);
  * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the RTC interrupt line
  *   is not allowed.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the handler is NULL.
- * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
+ * - OS_ERR_ALREADY_EXIST is returned if a handler is already
  *   registered for the RTC.
  */
 static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
@@ -357,8 +354,6 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     rtc_controler_t* pDrvCtrl;
     kernel_timer_t*  pTimerDrv;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED, TRACE_X86_RTC_ATTACH_ENTRY, 0);
-
     pDrvCtrl  = NULL;
     pTimerDrv = NULL;
 
@@ -399,10 +394,12 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "IRQ: %d",
-                 pDrvCtrl->irqNumber);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "IRQ: %d",
+           pDrvCtrl->irqNumber);
+#endif
 
     /* Get communication ports */
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_COMM_PROP, &propLen);
@@ -414,11 +411,13 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
     pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "COMM: 0x%x | DATA: 0x%x",
-                 pDrvCtrl->cpuCommPort,
-                 pDrvCtrl->cpuDataPort);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "COMM: 0x%x | DATA: 0x%x",
+           pDrvCtrl->cpuCommPort,
+           pDrvCtrl->cpuDataPort);
+#endif
 
     /* Get quartz frequency */
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_QUARTZ_PROP, &propLen);
@@ -429,10 +428,12 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->quartzFrequency = FDTTOCPU32(*kpUintProp);
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Quartz Frequency: %dHz",
-                 pDrvCtrl->quartzFrequency);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Quartz Frequency: %dHz",
+           pDrvCtrl->quartzFrequency);
+#endif
 
     /* Get selected frequency */
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_SELFREQ_PROP, &propLen);
@@ -443,10 +444,12 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->selectedFrequency = FDTTOCPU32(*kpUintProp);
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Selected Frequency: %dHz",
-                 pDrvCtrl->selectedFrequency);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Selected Frequency: %dHz",
+           pDrvCtrl->selectedFrequency);
+#endif
 
     /* Get the frequency range */
     kpUintProp = fdtGetProp(pkFdtNode, RTC_FDT_FREQRANGE_PROP, &propLen);
@@ -458,11 +461,13 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->frequencyLow  = (uint32_t)FDTTOCPU32(*kpUintProp);
     pDrvCtrl->frequencyHigh = (uint32_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Frequency Range: %dHz / %dHz",
-                 pDrvCtrl->frequencyLow,
-                 pDrvCtrl->frequencyHigh);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Frequency Range: %dHz / %dHz",
+           pDrvCtrl->frequencyLow,
+           pDrvCtrl->frequencyHigh);
+#endif
 
     /* Check if frequency is within bounds */
     if(pDrvCtrl->frequencyLow > pDrvCtrl->selectedFrequency ||
@@ -510,12 +515,9 @@ ATTACH_END:
         driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
-
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "RTC Initialized");
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "RTC Initialized");
+#endif
     return retCode;
 
 }
@@ -537,11 +539,6 @@ static void _rtcEnable(void* pDrvCtrl)
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_ENABLE_ENTRY,
-                       1,
-                       pRtcCtrl->disabledNesting);
-
     KERNEL_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting > 0)
@@ -549,22 +546,20 @@ static void _rtcEnable(void* pDrvCtrl)
         --pRtcCtrl->disabledNesting;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Enable RTC (nesting %d, freq %d)",
-                 pRtcCtrl->disabledNesting,
-                 pRtcCtrl->selectedFrequency);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Enable RTC (nesting %d, freq %d)",
+           pRtcCtrl->disabledNesting,
+           pRtcCtrl->selectedFrequency);
+#endif
+
     if(pRtcCtrl->disabledNesting == 0 && pRtcCtrl->selectedFrequency != 0)
     {
         interruptIRQSetMask(pRtcCtrl->irqNumber, TRUE);
     }
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_ENABLE_EXIT,
-                       1,
-                       pRtcCtrl->disabledNesting);
 }
 
 static void _rtcDisable(void* pDrvCtrl)
@@ -573,11 +568,6 @@ static void _rtcDisable(void* pDrvCtrl)
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_DISABLE_ENTRY,
-                       1,
-                       pRtcCtrl->disabledNesting);
-
     KERNEL_LOCK(pRtcCtrl->lock);
 
     if(pRtcCtrl->disabledNesting < UINT32_MAX)
@@ -585,18 +575,16 @@ static void _rtcDisable(void* pDrvCtrl)
         ++pRtcCtrl->disabledNesting;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Disable RTC (nesting %d)",
-                 pRtcCtrl->disabledNesting);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Disable RTC (nesting %d)",
+           pRtcCtrl->disabledNesting);
+#endif
+
     interruptIRQSetMask(pRtcCtrl->irqNumber, FALSE);
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_DISABLE_EXIT,
-                       1,
-                       pRtcCtrl->disabledNesting);
 }
 
 static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
@@ -607,25 +595,17 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_SET_FREQUENCY_ENTRY,
-                       1,
-                       kFrequency);
-
     if(kFrequency < pRtcCtrl->frequencyLow ||
        kFrequency > pRtcCtrl->frequencyHigh)
     {
 
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_FREQUENCY_EXIT,
-                           2,
-                           kFrequency,
-                           (uint32_t)pRtcCtrl->selectedFrequency);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "RTC timer frequency out of bound %u not in [%u:%u]",
+               kFrequency,
+               pRtcCtrl->frequencyLow,
+               pRtcCtrl->frequencyHigh);
 
-        KERNEL_ERROR("RTC timer frequency out of bound %u not in [%u:%u]\n",
-                     kFrequency,
-                     pRtcCtrl->frequencyLow,
-                     pRtcCtrl->frequencyHigh);
         return;
     }
 
@@ -696,34 +676,20 @@ static void _rtcSetFrequency(void* pDrvCtrl, const uint32_t kFrequency)
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "New RTC rate set (%d: %dHz)",
-                 rate,
-                 pRtcCtrl->selectedFrequency);
-
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_SET_FREQUENCY_EXIT,
-                       2,
-                       kFrequency,
-                       (uint32_t)pRtcCtrl->selectedFrequency);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "New RTC rate set (%d: %dHz)",
+           rate,
+           pRtcCtrl->selectedFrequency);
+#endif
 }
 
 static uint32_t _rtcGetFrequency(void* pDrvCtrl)
 {
     rtc_controler_t* pRtcCtrl;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_FREQUENCY_ENTRY,
-                       0);
-
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_FREQUENCY_EXIT,
-                       1,
-                       pRtcCtrl->selectedFrequency);
 
     return pRtcCtrl->selectedFrequency;
 }
@@ -734,20 +700,8 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     OS_RETURN_E      err;
     rtc_controler_t* pRtcCtrl;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_SET_HANDLER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler));
-
     if(pHandler == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           (uint32_t)OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
@@ -759,37 +713,30 @@ static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
     err = interruptIRQRegister(pRtcCtrl->irqNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                           TRACE_X86_RTC_SET_HANDLER_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           (uint32_t)err);
 
         return err;
     }
 
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "New RTC handler set (0x%p)",
-                 pHandler);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "New RTC handler set (0x%p)",
+           pHandler);
+#endif
 
     _rtcEnable(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_SET_HANDLER_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler),
-                       (uint32_t)err);
 
     return err;
 }
 
 static OS_RETURN_E _rtcRemoveHandler(void* pDrvCtrl)
 {
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Default RTC handler set 0x%p",
-                 _rtcDummyHandler);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED, TRACE_X86_RTC_REMOVE_HANDLER, 0);
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Default RTC handler set 0x%p",
+           _rtcDummyHandler);
+#endif
 
     return _rtcSetHandler(pDrvCtrl, _rtcDummyHandler);
 }
@@ -798,15 +745,7 @@ static time_t _rtcGetDaytime(void* pDrvCtrl)
 {
     time_t retTime;
     date_t retDate;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_DAYTIME_ENTRY,
-                       0);
     _rtcUpdateTime(pDrvCtrl, &retDate, &retTime);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_DAYTIME_EXIT,
-                       0);
     return retTime;
 }
 
@@ -815,15 +754,7 @@ static date_t _rtcGetDate(void* pDrvCtrl)
     time_t retTime;
     date_t retDate;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_DATE_ENTRY,
-                       0);
-
     _rtcUpdateTime(pDrvCtrl, &retDate, &retTime);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_GET_DATE_EXIT,
-                       0);
 
     return retDate;
 }
@@ -835,10 +766,6 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
     uint16_t         commPort;
     uint16_t         dataPort;
     rtc_controler_t* pRtcCtrl;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_UPDATETIME_ENTRY,
-                       0);
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
     commPort = pRtcCtrl->cpuCommPort;
@@ -925,11 +852,9 @@ static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED,
-                       TRACE_X86_RTC_UPDATETIME_EXIT,
-                       0);
-
-    KERNEL_DEBUG(RTC_DEBUG_ENABLED, MODULE_NAME, "Updated RTC");
+#if RTC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Updated RTC");
+#endif
 }
 
 static void _rtcAckowledgeInt(void* pDrvCtrl)
@@ -937,8 +862,6 @@ static void _rtcAckowledgeInt(void* pDrvCtrl)
     rtc_controler_t* pRtcCtrl;
 
     pRtcCtrl = GET_CONTROLER(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_RTC_ENABLED, TRACE_X86_RTC_ACK_INTERRUPT, 0);
 
     /* Clear C Register */
     _cpuOutB(CMOS_REG_C, pRtcCtrl->cpuCommPort);

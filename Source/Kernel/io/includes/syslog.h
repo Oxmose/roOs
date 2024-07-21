@@ -1,24 +1,24 @@
 /*******************************************************************************
- * @file graphics.h
+ * @file syslog.h
  *
- * @see graphics.c
+ * @see syslog.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 10/07/2024
+ * @date 16/07/2024
  *
  * @version 1.0
  *
- * @brief Graphics display drivers abtraction.
+ * @brief System log services.
  *
- * @details  Graphics display drivers abtraction. This module allows to write
- * to a screen using a graphic driver.
+ * @details System log services. This module provides the access to the syslog
+ * services.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __IO_GRAPHICS_H_
-#define __IO_GRAPHICS_H_
+#ifndef __IO_SYSLOG_H_
+#define __IO_SYSLOG_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -38,18 +38,22 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/** @brief Defines the IOCTL arguments for a draw pixel operation. */
-typedef struct
+/** @brief Defines the system log criticality levels */
+typedef enum
 {
-    /** @brief X position */
-    uint32_t x;
-
-    /** @brief Y position */
-    uint32_t y;
-
-    /** @brief RGB pixel value */
-    uint32_t rgbPixel;
-} graph_ioctl_args_drawpixel;
+    /** @brief Syslog level: critical */
+    SYSLOG_LEVEL_CRITICAL = 0,
+    /** @brief Syslog level: error */
+    SYSLOG_LEVEL_ERROR = 1,
+    /** @brief Syslog level: warning */
+    SYSLOG_LEVEL_WARNING = 2,
+    /** @brief Syslog level: info */
+    SYSLOG_LEVEL_INFO = 3,
+    /** @brief Syslog level: debug */
+    SYSLOG_LEVEL_DEBUG = 4,
+    /** @brief Defines the maximal syslog level */
+    SYSLOG_LEVEL_MAX
+} SYSLOG_LEVEL_E;
 
 /*******************************************************************************
  * MACROS
@@ -76,30 +80,38 @@ typedef struct
 
 
 /**
- * @brief Initializes the graphics library.
+ * @brief Initializes the syslog.
  *
- * @details Initializes the graphics library. On error, this function fails
- * silently.
+ * @details Initializes the syslog. Creates syslog queue and related structures.
  */
-void graphicsInit(void);
+void syslogInit(void);
 
 /**
- * @brief Draws a 32bits color pixel to the graphics controller.
+ * @brief Starts the syslog service.
  *
- * @details Draws a 32bits color pixel to the graphics controller. The driver
- * handles the overflow and might not print the pixel if the parameters are
- * invalid.
- *
- * @param[in] x The horizontal position where to draw the pixel.
- * @param[in] y The vertical position where to draw the pixel.
- * @param[in] rgbPixel The 32bits color pixel to draw.
- *
- * @return The success or error status is returned.
+ * @details Starts the syslog service. Creates the thread that will save or
+ * display the logs.
  */
-OS_RETURN_E graphicsDrawPixel(const uint32_t kX,
-                              const uint32_t kY,
-                              const uint32_t kRGBPixel);
+void syslogStart(void);
 
-#endif /* #ifndef __IO_GRAPHICS_H_ */
+/**
+ * @brief Logs a message to the system logs.
+ *
+ * @details Logs a message to the system logs. The message will be copied and
+ * saved to the syslog buffer and output when needed.
+ *
+ * @param[in] kLevel The log criticality level.
+ * @param[in] kpModule The log module name.
+ * @param[in] kpMessage The formated message.
+ * @param[in] ... Additional arguments for the formated message
+ *
+ * @return The success or error state is returned.
+ */
+OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
+                   const char*          kpModule,
+                   const char*          kpMessage,
+                   ...);
+
+#endif /* #ifndef __IO_SYSLOG_H_ */
 
 /************************************ EOF *************************************/

@@ -24,11 +24,14 @@
 
 /* Included headers */
 #include <cpu.h>           /* CPU manager */
+#include <vfs.h>           /* Virtual File System */
 #include <uart.h>          /* UART driver */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
 #include <futex.h>         /* Futex library */
+#include <syslog.h>        /* Syslog services */
 #include <memory.h>        /* Memory manager */
+#include <syslog.h>        /* Kernel Syslog */
 #include <devtree.h>       /* Device tree manager */
 #include <console.h>       /* Kernel console */
 #include <graphics.h>      /* Graphics manager */
@@ -39,16 +42,12 @@
 #include <scheduler.h>     /* Kernel scheduler */
 #include <interrupts.h>    /* Interrupt manager */
 #include <exceptions.h>    /* Exception manager */
-#include <kerneloutput.h>  /* Kernel logger */
 
 /* Configuration files */
 #include <config.h>
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /* Header file */
 /* None */
@@ -122,10 +121,19 @@ extern uintptr_t _KERNEL_DEV_TREE_BASE;
  ******************************************************************************/
 void kickstart(void)
 {
+    uint32_t highPart;
+    uint32_t lowPart;
+    uint64_t entryTime;
+
+    /* Get time */
+    __asm__ __volatile__ ("rdtsc" : "=a"(lowPart), "=d"(highPart));
+    entryTime = 1000000000000UL / 3600000000 *
+           (((uint64_t)highPart << 32) | (uint64_t)lowPart);
+
+    /* Return to ns and apply offset */
+    entryTime /= 1000;
     /* Start testing framework */
     TEST_FRAMEWORK_START();
-
-    KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_ENTRY, 0);
 
     /* Ensure interrupts are disabled */
     interruptDisable();
@@ -135,76 +143,89 @@ void kickstart(void)
     uartDebugInit();
 #endif
 
-    KERNEL_INFO("roOs Kickstart\n");
-    /* Initialize the scheduler */
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "roOs Kickstart");
 
-    /* Validate architecture */
-    cpuValidateArchitecture();
-    KERNEL_SUCCESS("Architecture validated\n");
 
     /* Initialize kernel heap */
     kHeapInit();
-    KERNEL_SUCCESS("Kernel heap initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Kernel heap initialized");
+
+    /* Init the system logger */
+    syslogInit();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Syslog initialized");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Start time: %lluns", entryTime);
+
+    /* Validate architecture */
+    cpuValidateArchitecture();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
 
     /* Initialize the CPU */
     cpuInit();
-    KERNEL_SUCCESS("CPU initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU initialized");
 
     /* Initialize interrupts manager */
     interruptInit();
-    KERNEL_SUCCESS("Interrupt manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Interrupt manager initialized");
 
     /* Initialize exceptions manager */
     exceptionInit();
-    KERNEL_SUCCESS("Exception manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Exception manager initialized");
 
     /* Init FDT */
     fdtInit((uintptr_t)&_KERNEL_DEV_TREE_BASE);
-    KERNEL_SUCCESS("FDT initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "FDT initialized");
 
     /* Initialize the memory manager */
     memoryMgrInit();
-    KERNEL_SUCCESS("Memory manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Memory manager initialized");
 
     /* Init the scheduler */
     schedInit();
-    KERNEL_SUCCESS("Scheduler initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Scheduler initialized");
 
     /* Add cpu, exception and interrupt related tests here */
     TEST_POINT_FUNCTION_CALL(interruptTest, TEST_INTERRUPT_ENABLED);
     TEST_POINT_FUNCTION_CALL(exceptionTest, TEST_EXCEPTION_ENABLED);
 
+    /* Start the system logger */
+    syslogStart();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Syslog started");
+
     /* Init the defered interrupt servicing */
     interruptDeferInit();
-    KERNEL_SUCCESS("Defered interrupts initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Defered interrupts initialized");
     TEST_POINT_FUNCTION_CALL(interruptDefferTest, TEST_DEF_INTERRUPT_ENABLED);
 
     /* Init the futex library */
     futexLibInit();
-    KERNEL_SUCCESS("Futex library initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Futex library initialized");
+
+    /* Init the VFS driver */
+    vfsInit();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "VFS initialized");
 
     /* Init device manager */
     driverManagerInit();
-    KERNEL_SUCCESS("Drivers initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Drivers initialized");
 
     /* Init the time manager */
     timeInit();
-    KERNEL_SUCCESS("Time manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Time manager initialized");
 
     /* Init the console */
     consoleInit();
-    KERNEL_SUCCESS("Console initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Console initialized");
 
     /* Init the graphics manager */
     graphicsInit();
-    KERNEL_SUCCESS("Graphics manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Graphics manager initialized");
 
     /* Now that devices are configured, start the core manager, in charge of
      * starting other cores if needed. After calling this function all the
      * running cores excepted this one have their interrupt enabled.
      */
     coreMgtInit();
-    KERNEL_SUCCESS("Core manager initialized\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Core manager initialized");
 
     /* Add library and core tests here */
     TEST_POINT_FUNCTION_CALL(kqueueTest, TEST_OS_KQUEUE_ENABLED);
@@ -219,10 +240,8 @@ void kickstart(void)
 #ifndef _TESTING_FRAMEWORK_ENABLED
     /* Initialize the user functions */
     userInit();
-    KERNEL_SUCCESS("User initialization done\n");
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "User initialization done");
 #endif
-
-    KERNEL_TRACE_EVENT(TRACE_KICKSTART_ENABLED, TRACE_KICKSTART_EXIT, 0);
 
     /* Call first schedule */
     schedScheduleNoInt(TRUE);

@@ -43,9 +43,6 @@
 /* Unit test header */
 #include <test_framework.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -141,12 +138,6 @@ static void _semaphoreReleaseResource(void* pResource)
     semaphore_data_t* pData;
     kqueue_node_t*    pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_RELEASE_RESOURCE_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pResource),
-                       KERNEL_TRACE_LOW(pResource));
-
     SEMAPHORE_ASSERT(pResource != NULL,
                      "NULL Semaphore resource",
                      OS_ERR_NULL_POINTER);
@@ -164,51 +155,22 @@ static void _semaphoreReleaseResource(void* pResource)
     }
 
     KERNEL_UNLOCK(pData->pSem->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_RELEASE_RESOURCE_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pResource),
-                       KERNEL_TRACE_LOW(pResource));
 }
 
 OS_RETURN_E semInit(semaphore_t*   pSem,
                     const int32_t  kInitLevel,
                     const uint32_t kFlags)
 {
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_INIT_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       kInitLevel,
-                       kFlags);
 
     /* Check parameters */
     if(pSem == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_INIT_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           kInitLevel,
-                           kFlags,
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if((kFlags & SEMAPHORE_FLAG_QUEUING_FIFO) == SEMAPHORE_FLAG_QUEUING_FIFO &&
        (kFlags & SEMAPHORE_FLAG_QUEUING_PRIO) == SEMAPHORE_FLAG_QUEUING_PRIO)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_INIT_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           kInitLevel,
-                           kFlags,
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -216,14 +178,6 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     pSem->pWaitingList = kQueueCreate(FALSE);
     if(pSem->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_INIT_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           kInitLevel,
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
@@ -246,15 +200,6 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
     KERNEL_SPINLOCK_INIT(pSem->lock);
     pSem->isInit = TRUE;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_INIT_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       kInitLevel,
-                       kFlags,
-                       OS_ERR_NO_MORE_MEMORY);
-
     return OS_NO_ERR;
 }
 
@@ -264,32 +209,14 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
     kqueue_node_t*    pWaitNode;
     semaphore_data_t* pData;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_DESTROY_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem));
-
     /* Check parameters */
     if(pSem == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_DESTROY_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_DESTROY_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -318,13 +245,6 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
     schedSchedule();
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_DESTROY_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -338,32 +258,14 @@ OS_RETURN_E semWait(semaphore_t* pSem)
     thread_resource_t threadRes;
     void*             pResourceHandle;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_WAIT_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem));
-
     /* Check parameters */
     if(pSem == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_WAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_WAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -376,13 +278,6 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         --pSem->level;
         KERNEL_UNLOCK(pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_WAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_NO_ERR);
 
         return OS_NO_ERR;
     }
@@ -416,13 +311,6 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         kQueueRemove(pSem->pWaitingList, &semNode, TRUE);
         KERNEL_UNLOCK(pSem->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_WAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_INCORRECT_VALUE);
 
         return OS_ERR_INCORRECT_VALUE;
     }
@@ -458,13 +346,6 @@ OS_RETURN_E semWait(semaphore_t* pSem)
         error = OS_NO_ERR;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_WAIT_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       error);
-
     return error;
 }
 
@@ -474,32 +355,14 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     semaphore_data_t* pData;
     uint32_t          intState;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_POST_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem));
-
     /* Check parameters */
     if(pSem == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_POST_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE || pSem->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_POST_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -530,13 +393,6 @@ OS_RETURN_E semPost(semaphore_t* pSem)
     }
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_POST_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -544,32 +400,14 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
 {
     OS_RETURN_E error;
 
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_TRYWAIT_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem));
-
     /* Check parameters */
     if(pSem == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pSem->isInit == FALSE)
     {
-        KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                           TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pSem),
-                           KERNEL_TRACE_LOW(pSem),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -590,13 +428,6 @@ OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue)
         error = OS_ERR_BLOCKED;
     }
     KERNEL_UNLOCK(pSem->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SEMAPHORE_ENABLED,
-                       TRACE_SEMAPHORE_TRYWAIT_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pSem),
-                       KERNEL_TRACE_LOW(pSem),
-                       error);
 
     return error;
 }

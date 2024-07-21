@@ -2,12 +2,12 @@ DEP_INCLUDES =  -I ../../../libs/libc/includes
 DEP_INCLUDES += -I ../../../libs/libapi/includes
 DEP_INCLUDES += -I ../../../io/includes
 DEP_INCLUDES += -I ../../../core/includes
-DEP_INCLUDES += -I ../../../libs/libtrace/includes
 DEP_INCLUDES += -I ../../../test_framework/includes
 DEP_INCLUDES += -I ../../../time/includes
 DEP_INCLUDES += -I ../../../sync/includes
 DEP_INCLUDES += -I ../../cpu/includes
 DEP_INCLUDES += -I ../../../user/includes
+DEP_INCLUDES += -I ../../../fs/includes
 
 ifeq ($(target_cpu), i386)
 	DEP_INCLUDES += -I ../../cpu/i386/includes_private

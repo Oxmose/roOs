@@ -35,9 +35,6 @@
 /* Unit test header */
 #include <test_framework.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -89,8 +86,6 @@ void KernelLock(kernel_spinlock_t* pLock)
 
 void KernelUnlock(kernel_spinlock_t* pLock)
 {
-    while(pLock->lock == 0){} // TODO: Remove
-
     /* Unlock the spinlock and restore the interrupt state */
     spinlockRelease(&pLock->lock);
     interruptRestore(pLock->interruptState);

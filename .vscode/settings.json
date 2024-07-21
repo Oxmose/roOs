@@ -26,7 +26,6 @@
         "critical.h": "c",
         "ioapic.h": "c",
         "*.c_no": "c",
-        "tracing.h": "c",
         "x86memory.h": "c",
         "x86cpu.h": "c",
         "core_mgt.h": "c",
@@ -39,6 +38,7 @@
         "chrono": "c",
         "functional": "c",
         "utility": "c",
-        "interruptdeftestc": "c"
+        "interruptdeftestc": "c",
+        "interrupts.h": "c"
     }
 }

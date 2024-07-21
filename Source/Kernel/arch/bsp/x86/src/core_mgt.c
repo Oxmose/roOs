@@ -30,6 +30,7 @@
 #include <kqueue.h>       /* Kernel queues */
 #include <x86cpu.h>       /* CPU management */
 #include <stdint.h>       /* Generic int types */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* Device tree library */
 #include <console.h>      /* Console service */
 #include <critical.h>     /* Critical sections */
@@ -38,7 +39,6 @@
 #include <ctrl_block.h>   /* Thread's control block */
 #include <interrupts.h>   /* Interrupt manager */
 #include <lapic_timer.h>  /* LAPIC timer driver */
-#include <kerneloutput.h> /* Kernel output methods */
 /* Configuration files */
 #include <config.h>
 
@@ -47,9 +47,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -115,6 +112,20 @@
  */
 static void _ipiInterruptHandler(kernel_thread_t* pCurrThread);
 
+/**
+ * @brief Attaches the Core Manager driver to the system.
+ *
+ * @details Attaches the Core Manager driver to the system. This function will
+ * use the FDT to initialize the Core Manager hardware and retreive the Core
+ * Manager parameters.
+ *
+ * @param[in] pkFdtNode The FDT node with the compatible declared
+ * by the driver.
+ *
+ * @return The success state or the error code.
+ */
+static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -145,9 +156,37 @@ static kqueue_t* sIpiParametersList[SOC_CPU_COUNT];
 
 #endif /* #if SOC_CPU_COUNT > 1 */
 
+/** @brief CPU driver instance. */
+static driver_t sX86CPUDriver = {
+    .pName         = "X86 CPU Driver",
+    .pDescription  = "X86 CPU Driver for roOs",
+    .pCompatible   = "generic,i386",
+    .pVersion      = "1.0",
+    .pDriverAttach = _coreMgtAttach
+};
+
+/** @brief Stores the number of detected CPUs from the FDT */
+static uint32_t sCpuFromFDTCount = 0;
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode)
+{
+    (void)pkFdtNode;
+
+    if(sCpuFromFDTCount < SOC_CPU_COUNT)
+    {
+        ++sCpuFromFDTCount;
+    }
+    else
+    {
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    return OS_NO_ERR;
+}
 
 #if SOC_CPU_COUNT > 1
 static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
@@ -206,31 +245,23 @@ void coreMgtInit(void)
     const lapic_node_t*           kpLapicNode;
     const cpu_interrupt_config_t* kpCpuIntConfig;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_INIT_ENTRY,
-                       0);
-
     /* Check if the LAPIC driver was registered */
     if(kspLapicDriver == NULL)
     {
-        KERNEL_ERROR("LAPIC driver was not registered to core manager.\n"
-                     "Continuing with one core.\n");
-        KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                           TRACE_X86_CPU_CORE_MGT_INIT_EXIT,
-                           1,
-                           -1);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "LAPIC driver was not registered to core manager.\n"
+               "Continuing with one core.");
         return;
     }
 
     if(_bootedCPUCount != 1)
     {
-        KERNEL_ERROR("Multiple booted CPU count (%d). Core manager must be "
-                     "initialized with only one core running.\n",
-                     _bootedCPUCount);
-        KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                           TRACE_X86_CPU_CORE_MGT_INIT_EXIT,
-                           1,
-                           -1);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Multiple booted CPU count (%d). Core manager must be "
+               "initialized with only one core running.",
+               _bootedCPUCount);
         return;
     }
 
@@ -255,16 +286,19 @@ void coreMgtInit(void)
 
     /* Check if we need to enable more cores */
     kpLapicNode = kspLapicDriver->pGetLAPICList();
-    while(kpLapicNode != NULL)
+    while(kpLapicNode != NULL && _bootedCPUCount < sCpuFromFDTCount)
     {
         /* If not self */
         if(sCoreIds[0] != kpLapicNode->lapic.lapicId)
         {
-            KERNEL_DEBUG(CORE_MGT_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "CPU With LAPIC id %d flags: 0x%x",
-                         kpLapicNode->lapic.lapicId,
-                         kpLapicNode->lapic.flags);
+
+#if CORE_MGT_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "CPU With LAPIC id %d flags: 0x%x",
+                   kpLapicNode->lapic.lapicId,
+                   kpLapicNode->lapic.flags);
+#endif
 
             /* Check if core can be started */
             if((kpLapicNode->lapic.flags & LAPIC_FLAG_ENABLED) != 0)
@@ -277,18 +311,10 @@ void coreMgtInit(void)
         /* Go to next */
         kpLapicNode = kpLapicNode->pNext;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_INIT_EXIT,
-                       1,
-                       0);
 }
 
 void coreMgtApInit(const uint8_t kCpuId)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_AP_INIT_ENTRY,
-                       0);
 
     /* Init our LAPIC ID */
     sCoreIds[kCpuId] = kspLapicDriver->pGetLAPICId();
@@ -301,11 +327,6 @@ void coreMgtApInit(const uint8_t kCpuId)
     {
         kspLapicTimerDriver->pInitApCore(kCpuId);
     }
-
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_AP_INIT_EXIT,
-                       0);
 }
 
 void cpuMgtSendIpi(const uint32_t kFlags,
@@ -319,19 +340,8 @@ void cpuMgtSendIpi(const uint32_t kFlags,
     kqueue_node_t* pNode;
     ipi_params_t*  pParams;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_SEND_IPI_ENTRY,
-                       2,
-                       kFlags,
-                       kpParams->function);
-
     if(kspLapicDriver == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                           TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT,
-                           2,
-                           kFlags,
-                           kpParams->function);
         return;
     }
 
@@ -419,12 +429,6 @@ void cpuMgtSendIpi(const uint32_t kFlags,
     }
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_X86_CPU_CORE_MGT_SEND_IPI_EXIT,
-                       2,
-                       kFlags,
-                       kpParams->function);
 }
 
 #else /* SOC_CPU_COUNT > 1 */
@@ -460,5 +464,8 @@ void cpuMgtSendIpi(const uint32_t kFlags,
 }
 
 #endif /* SOC_CPU_COUNT > 1 */
+
+/***************************** DRIVER REGISTRATION ****************************/
+DRIVERMGR_REG(sX86CPUDriver);
 
 /************************************ EOF *************************************/

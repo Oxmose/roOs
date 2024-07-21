@@ -50,9 +50,6 @@
 #endif
 #endif
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -148,10 +145,6 @@ void futexLibInit(void)
 
     OS_RETURN_E err;
 
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_INIT_ENTRY,
-                       0);
-
     /* Create the futex hashtable */
     spFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &err);
     FUTEX_ASSERT(err == OS_NO_ERR, "Could not initialize futex table", err);
@@ -159,10 +152,6 @@ void futexLibInit(void)
     KERNEL_SPINLOCK_INIT(sLock);
 
     TEST_POINT_FUNCTION_CALL(futexTest, TEST_FUTEX_ENABLED);
-
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_INIT_EXIT,
-                       0);
 }
 
 OS_RETURN_E futexWait(futex_t*             pFutex,
@@ -176,23 +165,9 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
     futex_data_t*   pFutexData;
     uint32_t        intState;
 
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_WAIT_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       kWaitValue);
-
     /* Check parameters */
     if(pFutex == NULL || pFutex->pHandle == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           kWaitValue,
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -200,25 +175,11 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
     identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           kWaitValue,
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
     if(pFutex->isAlive != TRUE || *pFutex->pHandle != kWaitValue)
     {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           kWaitValue,
-                           OS_ERR_NOT_BLOCKED);
         return OS_ERR_NOT_BLOCKED;
     }
 
@@ -330,14 +291,6 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
         error = OS_NO_ERR;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_WAIT_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       kWaitValue,
-                       error);
-
     return error;
 }
 
@@ -353,25 +306,9 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     kernel_thread_t* pThread;
     uint32_t         intState;
 
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_WAKE_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       KERNEL_TRACE_HIGH(kWakeCount),
-                       KERNEL_TRACE_LOW(kWakeCount));
-
     /* Check parameters */
     if(pFutex == NULL || pFutex->pHandle == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAKE_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           KERNEL_TRACE_HIGH(kWakeCount),
-                           KERNEL_TRACE_LOW(kWakeCount),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -379,14 +316,6 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAKE_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           KERNEL_TRACE_HIGH(kWakeCount),
-                           KERNEL_TRACE_LOW(kWakeCount),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -398,14 +327,6 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     if(error != OS_NO_ERR)
     {
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-        KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                           TRACE_FUTEX_WAKE_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pFutex),
-                           KERNEL_TRACE_LOW(pFutex),
-                           KERNEL_TRACE_HIGH(kWakeCount),
-                           KERNEL_TRACE_LOW(kWakeCount),
-                           error);
         return error;
     }
 
@@ -449,15 +370,6 @@ OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount)
     schedSchedule();
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_FUTEX_ENABLED,
-                       TRACE_FUTEX_WAKE_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pFutex),
-                       KERNEL_TRACE_LOW(pFutex),
-                       KERNEL_TRACE_HIGH(kWakeCount),
-                       KERNEL_TRACE_LOW(kWakeCount),
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }

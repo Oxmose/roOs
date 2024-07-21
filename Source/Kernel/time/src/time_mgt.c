@@ -30,19 +30,16 @@
 #include <stdint.h>        /* Generic int types */
 #include <kerror.h>        /* Kernel error codes */
 #include <kqueue.h>        /* Kernel queues */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>       /* Device tree lib */
 #include <drivermgr.h>     /* Driver manager */
 #include <interrupts.h>    /* Interrupt manager */
-#include <kerneloutput.h>  /* Kernel outputs */
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
 #include <time_mgt.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -215,15 +212,9 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 
     cpuId = cpuGetId();
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_MAIN_HANDLER_ENTRY,
-                       1,
-                       (uint32_t)pCurrThread->tid);
-
-
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Time manager main handler");
+#if TIME_MGT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Time manager main handler");
+#endif
 
     /* Add a tick count */
     ++sSysTickCount[cpuId];
@@ -246,46 +237,25 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
 
     /* The main time triggered, we need to schedule the thread */
     pCurrThread->requestSchedule = TRUE;
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_MAIN_HANDLER_EXIT,
-                       1,
-                       (uint32_t)pCurrThread->tid);
 }
 
 static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_RTC_HANDLER_ENTRY,
-                       1,
-                       (uint32_t)pCurrThread->tid);
-
     if(sSysRtcTimer.pTickManager != NULL)
     {
         sSysRtcTimer.pTickManager(sSysRtcTimer.pDriverCtrl);
     }
 
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Time manager RTC handler");
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_RTC_HANDLER_EXIT,
-                       1,
-                       (uint32_t)pCurrThread->tid);
+#if TIME_MGT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Time manager RTC handler");
+#endif
 }
 
 static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
 {
     kqueue_node_t* pNewNode;
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_AUX_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpTimer),
-                       KERNEL_TRACE_LOW(kpTimer));
 
     KERNEL_LOCK(sAuxTimersListLock);
 
@@ -295,12 +265,6 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
         spAuxTimersQueue = kQueueCreate(FALSE);
         if(spAuxTimersQueue == NULL)
         {
-            KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                               TRACE_TIME_MGT_ADD_AUX_EXIT,
-                               3,
-                               KERNEL_TRACE_HIGH(kpTimer),
-                               KERNEL_TRACE_LOW(kpTimer),
-                               OS_ERR_NO_MORE_MEMORY);
             return OS_ERR_NO_MORE_MEMORY;
         }
     }
@@ -311,24 +275,11 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     pNewNode = kQueueCreateNode((void*)kpTimer, FALSE);
     if(pNewNode == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                           TRACE_TIME_MGT_ADD_AUX_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(kpTimer),
-                           KERNEL_TRACE_LOW(kpTimer),
-                           OS_ERR_NO_MORE_MEMORY);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
     /* Add the timer to the queue */
     kQueuePush(pNewNode, spAuxTimersQueue);
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_ADD_AUX_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(kpTimer),
-                       KERNEL_TRACE_LOW(kpTimer),
-                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -355,7 +306,6 @@ void timeInit(void)
                 "The FDT time configuration must contain on and only one main.",
                 OS_ERR_INCORRECT_VALUE);
 
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Adding main timer");
     kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
     TIME_ASSERT(kpTimer != NULL &&
                 kpTimer->pGetFrequency != NULL &&
@@ -374,7 +324,9 @@ void timeInit(void)
                 retCode);
     sSysMainTimer.pEnable(sSysMainTimer.pDriverCtrl);
 
-    KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Added main timer");
+#if TIME_MGT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Added main timer");
+#endif
 
     /* Get the RTC driver */
     kpUintProp = fdtGetProp(kpTimerNode,
@@ -382,7 +334,6 @@ void timeInit(void)
                             &propLen);
     if(kpUintProp != NULL)
     {
-        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Adding RTC timer");
         TIME_ASSERT(kpUintProp != NULL && propLen == sizeof(uint32_t),
                     "The FDT time configuration must contain at most one RTC.",
                     OS_ERR_INCORRECT_VALUE);
@@ -403,8 +354,10 @@ void timeInit(void)
                     "Failed to setup the RTC timer",
                     retCode);
         sSysRtcTimer.pEnable(sSysRtcTimer.pDriverCtrl);
+#if TIME_MGT_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Added RTC timer");
+#endif
 
-        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED, MODULE_NAME, "Added RTC timer");
     }
 
 
@@ -414,10 +367,6 @@ void timeInit(void)
                             &propLen);
     if(kpUintProp != NULL)
     {
-        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Adding lifetime timer");
-
         TIME_ASSERT(kpUintProp != NULL && propLen == sizeof(uint32_t),
                     "The FDT time configuration must contain at most one "
                     "lifetime.",
@@ -434,9 +383,9 @@ void timeInit(void)
         sSysLifetimeTimer = *kpTimer;
         sSysLifetimeTimer.pEnable(sSysLifetimeTimer.pDriverCtrl);
 
-        KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Added lifetime timer");
+#if TIME_MGT_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Added lifetime timer");
+#endif
     }
 
     /* Get other auxiliary timers */
@@ -447,11 +396,6 @@ void timeInit(void)
     {
         for(i = 0; i < propLen / sizeof(uint32_t); ++i)
         {
-            KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Adding aux timer %d",
-                         i);
-
             kpTimer = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
             TIME_ASSERT(kpTimer != NULL &&
                         kpTimer->pEnable != NULL &&
@@ -463,10 +407,10 @@ void timeInit(void)
             TIME_ASSERT(retCode == OS_NO_ERR,
                         "Failed to add auxiliary timer",
                         retCode);
-            KERNEL_DEBUG(TIME_MGT_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Added aux timer %d",
-                         i);
+
+#if TIME_MGT_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Added aux timer %d", i);
+#endif
         }
     }
 }
@@ -476,10 +420,6 @@ uint64_t timeGetUptime(void)
     uint64_t time;
     uint64_t maxTick;
     uint32_t i;
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_GET_UPTIME_ENTRY,
-                       0);
 
     if(sSysLifetimeTimer.pGetTimeNs != NULL)
     {
@@ -508,22 +448,12 @@ uint64_t timeGetUptime(void)
         time = 0;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_GET_UPTIME_EXIT,
-                       2,
-                       (uint32_t)(time >> 32),
-                       (uint32_t)time);
-
     return time;
 }
 
 time_t timeGetDayTime(void)
 {
     time_t time;
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_GET_DAYTIME_ENTRY,
-                       0);
 
     if(sSysRtcTimer.pGetDaytime != NULL)
     {
@@ -536,21 +466,30 @@ time_t timeGetDayTime(void)
         time.seconds = 0;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_GET_DAYTIME_EXIT,
-                       3,
-                       time.hours,
-                       time.minutes,
-                       time.seconds);
-
     return time;
+}
+
+date_t timeGetDate(void)
+{
+    date_t date;
+
+    if(sSysRtcTimer.pGetDaytime != NULL)
+    {
+        date = sSysRtcTimer.pGetDate(sSysRtcTimer.pDriverCtrl);
+    }
+    else
+    {
+        date.day     = 0;
+        date.month   = 0;
+        date.weekday = 0;
+        date.year    = 0;
+    }
+
+    return date;
 }
 
 uint64_t timeGetTicks(const uint8_t kCpuId)
 {
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_GET_TICKS,
-                       0);
     if(kCpuId < SOC_CPU_COUNT)
     {
         return sSysTickCount[kCpuId];
@@ -565,12 +504,6 @@ void timeWaitNoScheduler(const uint64_t ns)
 {
     uint64_t currTime;
     uint8_t  cpuId;
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
-                       2,
-                       (uint32_t)(ns >> 32),
-                       (uint32_t)ns);
 
     cpuId = cpuGetId();
 
@@ -594,7 +527,9 @@ void timeWaitNoScheduler(const uint64_t ns)
         }
         else
         {
-            KERNEL_ERROR("Failed to active wait, no time source present.\n");
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to active wait, no time source present.");
         }
     }
     else
@@ -604,12 +539,6 @@ void timeWaitNoScheduler(const uint64_t ns)
         while(sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl) <
               currTime + ns){}
     }
-
-    KERNEL_TRACE_EVENT(TRACE_TIME_MGT_ENABLED,
-                       TRACE_TIME_MGT_WAIT_NO_SCHED_ENTRY,
-                       2,
-                       (uint32_t)(ns >> 32),
-                       (uint32_t)ns);
 }
 
 /************************************ EOF *************************************/

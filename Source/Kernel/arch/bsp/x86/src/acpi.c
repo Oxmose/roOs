@@ -28,9 +28,9 @@
 #include <string.h>       /* Memory manipulation */
 #include <kerror.h>       /* Kernel error types */
 #include <memory.h>       /* Memory manager */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* Device tree service */
 #include <drivermgr.h>    /* Driver manager */
-#include <kerneloutput.h> /* Outputs */
 
 /* Configuration files */
 #include <config.h>
@@ -40,9 +40,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -776,8 +773,7 @@ uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber);
 /** @brief ACPI driver instance. */
 static driver_t sX86ACPIDriver = {
     .pName         = "X86 ACPI Driver",
-    .pDescription  = "X86 Advanced Configuration and Power Interface Driver for"
-                     " roOs",
+    .pDescription  = "X86 ACPI Driver for roOs",
     .pCompatible   = "x86,x86-acpi",
     .pVersion      = "2.0",
     .pDriverAttach = _acpiAttach
@@ -821,7 +817,7 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
     uintptr_t        mapBase;
     uint64_t         signature;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED, TRACE_X86_ACPI_ATTACH_ENTRY, 0);
+
 
     /* Get the reg: the range to search for the ACPI structure */
     pUintptrProp = fdtGetProp(pkFdtNode, ACPI_FDT_REGS_PROP, &propLen);
@@ -840,13 +836,13 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
 #else
     #error "Invalid architecture"
 #endif
-
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "ACPI Range start: 0x%p Range end: 0x%p",
-                 searchRangeStart,
-                 searchRangeEnd);
-
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "ACPI Range start: 0x%p Range end: 0x%p",
+           searchRangeStart,
+           searchRangeEnd);
+#endif
     /* Map the memory */
     mapBase = searchRangeStart & ~PAGE_SIZE_MASK;
     mapSize = ((searchRangeEnd - mapBase) + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
@@ -871,11 +867,12 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
          /* Checking the RSDP signature */
         if(signature == ACPI_RSDP_SIG)
         {
-            KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "RSDP found at 0x%p",
-                         searchRangeStart);
-
+#if ACPI_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "RSDP found at 0x%p",
+                   searchRangeStart);
+#endif
             /* Parse RSDP */
             _acpiParseRSDP((rsdp_descriptor_t*)searchRangeStart);
             break;
@@ -888,7 +885,9 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
     retCode = memoryKernelUnmap((void*)mapBase, mapSize);
     if(retCode != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to unmap ACPI memory\n");
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to unmap ACPI memory");
     }
 
     if(searchRangeStart >= searchRangeEnd)
@@ -902,12 +901,9 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
         retCode = driverManagerSetDeviceData(pkFdtNode, &sAPIDriver);
     }
 ATTACH_END:
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED, MODULE_NAME, "ACPI Initialization end");
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "ACPI Initialization end");
+#endif
 
     return retCode;
 }
@@ -921,21 +917,16 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     rsdp_descriptor_2_t* pExtendedRsdp;
     OS_RETURN_E          errCode;
 
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpRsdpDesc),
-                       KERNEL_TRACE_LOW(kpRsdpDesc));
-
     ACPI_ASSERT(kpRsdpDesc != NULL,
                 "Tried to parse a NULL RSDP",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing RSDP at 0x%p",
-                 kpRsdpDesc);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing RSDP at 0x%p",
+           kpRsdpDesc);
+#endif
 
     /* Verify checksum */
     sum = 0;
@@ -948,10 +939,12 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
                 "RSDP Checksum failed",
                 OS_ERR_INCORRECT_VALUE);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Revision %d detected",
-                 kpRsdpDesc->revision);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Revision %d detected",
+           kpRsdpDesc->revision);
+#endif
 
     /* ACPI version check */
     descAddr = (uintptr_t)NULL;
@@ -1050,12 +1043,6 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
                     "Failed to unmap RSDT",
                     errCode);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDP_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpRsdpDesc),
-                       KERNEL_TRACE_LOW(kpRsdpDesc));
 }
 
 static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
@@ -1069,20 +1056,16 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     int8_t         sum;
     acpi_header_t* pAddress;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDP_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpRrsdtPtr),
-                       KERNEL_TRACE_LOW(kpRrsdtPtr));
-
     ACPI_ASSERT(kpRrsdtPtr != NULL,
                 "Tried to parse a NULL RSDT",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing RSDT at 0x%p",
-                 kpRrsdtPtr);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing RSDT at 0x%p",
+           kpRrsdtPtr);
+#endif
 
     /* Verify checksum */
     sum = 0;
@@ -1106,11 +1089,13 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     while(rangeBegin < rangeEnd)
     {
         pAddress = (acpi_header_t*)(uintptr_t)(*(uint32_t*)rangeBegin);
-        KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Detected SDT at 0x%p",
-                     pAddress);
 
+#if ACPI_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Detected SDT at 0x%p",
+               pAddress);
+#endif
         /* Map pages */
         toMap = ((uintptr_t)pAddress & PAGE_SIZE_MASK) + sizeof(acpi_header_t);
         toMap = (toMap + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
@@ -1138,12 +1123,6 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
 
         rangeBegin += sizeof(uint32_t);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_RSDT_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpRrsdtPtr),
-                       KERNEL_TRACE_LOW(kpRrsdtPtr));
 }
 
 #ifdef ARCH_64_BITS
@@ -1158,21 +1137,13 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
     int8_t         sum;
     acpi_header_t* pAddress;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_XSDT_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpXsdtPtr),
-                       KERNEL_TRACE_LOW(kpXsdtPtr));
-
     ACPI_ASSERT(kpXsdtPtr != NULL,
                 "Tried to parse a NULL XSDT",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing XSDT at 0x%p",
-                 kpXsdtPtr);
-
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Parsing XSDT at 0x%p", kpXsdtPtr);
+#endif
     /* Verify checksum */
     sum = 0;
     for(i = 0; i < kpXsdtPtr->header.length; ++i)
@@ -1195,10 +1166,13 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
     while(rangeBegin < rangeEnd)
     {
         pAddress = (acpi_header_t*)(*(uint64_t*)rangeBegin);
-        KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Detected SDT at 0x%p",
-                     pAddress);
+
+#if ACPI_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Detected SDT at 0x%p",
+               pAddress);
+#endif
 
         /* Map pages */
         toMap = ((uintptr_t)pAddress & PAGE_SIZE_MASK) + sizeof(acpi_header_t);
@@ -1228,12 +1202,6 @@ static void _acpiParseXSDT(const xsdt_descriptor_t* kpXsdtPtr)
         rangeBegin += sizeof(uint64_t);
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_XSDT_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpXsdtPtr),
-                       KERNEL_TRACE_LOW(kpXsdtPtr));
-
 }
 #endif
 
@@ -1249,29 +1217,23 @@ static void _acpiParseDT(const acpi_header_t* kpHeader,
     char        pSigStr[5];
 #endif
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DT_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpHeader),
-                       KERNEL_TRACE_LOW(kpHeader));
-
     ACPI_ASSERT(kpHeader != NULL,
                 "Tried to parse a NULL DT",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing SDT at 0x%p",
-                 kpHeader);
-
 #if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing SDT at 0x%p",
+           kpHeader);
+
     memcpy(pSigStr, kpHeader->pSignature, 4);
     pSigStr[4] = 0;
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Signature: %s",
-                 pSigStr);
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Signature: %s",
+           pSigStr);
 #endif
 
     /* Map memory */
@@ -1302,27 +1264,21 @@ static void _acpiParseDT(const acpi_header_t* kpHeader,
     {
         _acpiParseHPET((acpi_hpet_desc_t*)descPtr);
     }
+#if ACPI_DEBUG_ENABLED
     else
     {
-#if ACPI_DEBUG_ENABLED
-        KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Signature not supported: %s",
-                     pSigStr);
-#endif
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Signature not supported: %s",
+               pSigStr);
     }
+#endif
 
     /* Unmap memory */
     errCode = memoryKernelUnmap((void*)descAddr, toMap);
     ACPI_ASSERT(errCode == OS_NO_ERR,
                 "Failed to unmap DT",
                 errCode);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_DT_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpHeader),
-                       KERNEL_TRACE_LOW(kpHeader));
 }
 
 static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
@@ -1330,20 +1286,16 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
     int32_t  sum;
     uint32_t i;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_FADT_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFadtPtr),
-                       KERNEL_TRACE_LOW(kpFadtPtr));
-
     ACPI_ASSERT(kpFadtPtr != NULL,
                 "Tried to parse a NULL FADT",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing FADT at 0x%p",
-                 kpFadtPtr);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing FADT at 0x%p",
+           kpFadtPtr);
+#endif
 
     /* Verify checksum */
     sum = 0;
@@ -1359,12 +1311,6 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
     ACPI_ASSERT(*((uint32_t*)kpFadtPtr->header.pSignature) == ACPI_FACP_SIG,
                 "FADT Signature comparison failed",
                 OS_ERR_INCORRECT_VALUE);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_FADT_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFadtPtr),
-                       KERNEL_TRACE_LOW(kpFadtPtr));
 }
 
 static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
@@ -1381,20 +1327,16 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
     int_override_node_t* pIntOverrideNode;
     int_override_node_t* pIntOverrideListCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_APIC_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpMadtPtr),
-                       KERNEL_TRACE_LOW(kpMadtPtr));
-
     ACPI_ASSERT(kpMadtPtr != NULL,
                 "Tried to parse a NULL APIC",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing APIC at 0x%p",
-                 kpMadtPtr);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing APIC at 0x%p",
+           kpMadtPtr);
+#endif
 
     /* Verify checksum */
     sum = 0;
@@ -1425,12 +1367,15 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
         /* Check entry type */
         if(pHeader->type == APIC_TYPE_LOCAL_APIC)
         {
-            KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Found LAPIC: CPU #%d | ID #%d | FLAGS %x",
-                         ((lapic_t*)madtEntry)->cpuId,
-                         ((lapic_t*)madtEntry)->lapicId,
-                         ((lapic_t*)madtEntry)->flags);
+
+#if ACPI_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Found LAPIC: CPU #%d | ID #%d | FLAGS %x",
+                   ((lapic_t*)madtEntry)->cpuId,
+                   ((lapic_t*)madtEntry)->lapicId,
+                   ((lapic_t*)madtEntry)->flags);
+#endif
 
             if(sDrvCtrl.detectedCPUCount < SOC_CPU_COUNT)
             {
@@ -1451,20 +1396,24 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
             }
             else
             {
-                KERNEL_INFO("Exceeded CPU count (%u), ignoring CPU %d\n",
-                            SOC_CPU_COUNT,
-                            ((lapic_t*)madtEntry)->cpuId);
+                syslog(SYSLOG_LEVEL_INFO,
+                       MODULE_NAME,
+                       "Exceeded CPU count (%u), ignoring CPU %d",
+                       SOC_CPU_COUNT,
+                       ((lapic_t*)madtEntry)->cpuId);
             }
         }
         else if(pHeader->type == APIC_TYPE_IO_APIC)
         {
-            KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Found IO-APIC ADDR 0x%p | ID #%d | GSIB %x",
-                         ((io_apic_t*)madtEntry)->ioApicAddr,
-                         ((io_apic_t*)madtEntry)->ioApicId,
-                         ((io_apic_t*)madtEntry)->globalSystemInterruptBase);
 
+#if ACPI_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Found IO-APIC ADDR 0x%p | ID #%d | GSIB %x",
+                   ((io_apic_t*)madtEntry)->ioApicAddr,
+                   ((io_apic_t*)madtEntry)->ioApicId,
+                   ((io_apic_t*)madtEntry)->globalSystemInterruptBase);
+#endif
             /* Create new IO APIC node */
             pIOApicNode = kmalloc(sizeof(io_apic_node_t));
             ACPI_ASSERT(pIOApicNode != NULL,
@@ -1484,11 +1433,14 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
         }
         else if(pHeader->type == APIC_TYPE_INTERRUPT_OVERRIDE)
         {
-            KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Found Interrupt override %d -> %d",
-                         ((apic_interrupt_override_t*)madtEntry)->source,
-                         ((apic_interrupt_override_t*)madtEntry)->interrupt);
+
+#if ACPI_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Found Interrupt override %d -> %d",
+                   ((apic_interrupt_override_t*)madtEntry)->source,
+                   ((apic_interrupt_override_t*)madtEntry)->interrupt);
+#endif
 
             /* Create new IO APIC node */
             pIntOverrideNode = kmalloc(sizeof(int_override_node_t));
@@ -1512,22 +1464,17 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
                         pIntOverrideNode);
             ++sDrvCtrl.detectedIntOverrideCount;
         }
+#if ACPI_DEBUG_ENABLED
         else
         {
-            KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Unknown APIC type %d",
-                         pHeader->type);
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Unknown APIC type %d",
+                   pHeader->type);
         }
-
+#endif
         madtEntry += pHeader->length;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_APIC_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpMadtPtr),
-                       KERNEL_TRACE_LOW(kpMadtPtr));
 }
 
 static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
@@ -1537,20 +1484,16 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     hpet_node_t* pHpetNode;
     hpet_node_t* pHpetListCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_HPET_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpHpetPtr),
-                       KERNEL_TRACE_LOW(kpHpetPtr));
-
     ACPI_ASSERT(kpHpetPtr != NULL,
                 "Tried to parse a NULL HPET",
                 OS_ERR_NULL_POINTER);
 
-    KERNEL_DEBUG(ACPI_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing HPET at 0x%p",
-                 kpHpetPtr);
+#if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing HPET at 0x%p",
+           kpHpetPtr);
+#endif
 
     /* Verify checksum */
     sum = 0;
@@ -1595,12 +1538,6 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     /* Link the node */
     ADD_TO_LIST(sDrvCtrl.pHpetList, pHpetListCursor, pHpetNode);
     ++sDrvCtrl.detectedHpetCount;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_PARSE_HPET_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpHpetPtr),
-                       KERNEL_TRACE_LOW(kpHpetPtr));
 }
 
 uint8_t _acpiGetLAPICCount(void)
@@ -1638,11 +1575,6 @@ uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)
     const int_override_node_t* kpOverride;
     uint32_t                   retValue;
 
-     KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                        TRACE_X86_ACPI_GET_REMAPED_IRQ_ENTRY,
-                        1,
-                        kIrqNumber);
-
     /* Search for the override */
     retValue = kIrqNumber;
     kpOverride = sDrvCtrl.pIntOverrideList;
@@ -1656,15 +1588,10 @@ uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)
         kpOverride = kpOverride->pNext;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_ACPI_ENABLED,
-                       TRACE_X86_ACPI_GET_REMAPED_IRQ_EXIT,
-                       2,
-                       kIrqNumber,
-                       retValue);
-
     /* If we did not find the interrupt, there is no redirection. */
     return retValue;
 }
+
 /***************************** DRIVER REGISTRATION ****************************/
 DRIVERMGR_REG(sX86ACPIDriver);
 

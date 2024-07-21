@@ -35,9 +35,6 @@
 /* Header file */
 #include <kerneloutput.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -250,12 +247,6 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     char     tmpSeq[128];
     char*    pArgsValue;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_FORMATER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpStr),
-                       KERNEL_TRACE_LOW(kpStr));
-
     modifier   = 0;
     lengthMod  = 4;
     paddingMod = 0;
@@ -411,32 +402,15 @@ static void _formater(const char* kpStr, __builtin_va_list args)
         padCharMod = ' ';
         modifier   = 0;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_FORMATER_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpStr),
-                       KERNEL_TRACE_LOW(kpStr));
 }
 
 static void _tagPrintf(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TAGPRINTF_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
 
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_TAGPRINTF_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
     /* Prtinf format string */
@@ -448,12 +422,6 @@ static void _tagPrintf(const char* kpFmt, ...)
     spBuffer[sBufferSize] = 0;
     sCurrentOutput.pPuts(spBuffer);
     sBufferSize = 0;
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TAGPRINTF_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 static inline void _toBufferStr(const char* kpString)
@@ -461,19 +429,8 @@ static inline void _toBufferStr(const char* kpString)
     size_t newSize;
     size_t i;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_STR_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpString),
-                       KERNEL_TRACE_LOW(kpString));
-
     if(kpString == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                          TRACE_KOUTPUT_TOBUFFER_STR_EXIT,
-                          2,
-                          KERNEL_TRACE_HIGH(kpString),
-                          KERNEL_TRACE_LOW(kpString));
         return;
     }
 
@@ -482,20 +439,10 @@ static inline void _toBufferStr(const char* kpString)
     {
         _toBufferChar(kpString[i]);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_STR_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpString),
-                       KERNEL_TRACE_LOW(kpString));
 }
 
 static inline void _toBufferChar(const char kCharacter)
 {
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_CHAR_ENTRY,
-                       1,
-                       kCharacter);
     /* Save until \n or size of reached */
     if(sBufferSize == KPRINTF_BUFFER_SIZE)
     {
@@ -515,29 +462,14 @@ static inline void _toBufferChar(const char kCharacter)
     {
         spBuffer[sBufferSize++] = kCharacter;
     }
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_TOBUFFER_CHAR_EXIT,
-                       1,
-                       kCharacter);
 }
 
 void kprintfPanic(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTF_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -551,31 +483,14 @@ void kprintfPanic(const char* kpFmt, ...)
     sCurrentOutput.pPuts(spBuffer);
     sCurrentOutput.pFlush();
     sBufferSize = 0;
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintf(const char* kpFmt, ...)
 {
     __builtin_va_list args;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTF_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -587,12 +502,6 @@ void kprintf(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTF_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfError(const char* kpFmt, ...)
@@ -601,19 +510,8 @@ void kprintfError(const char* kpFmt, ...)
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFERROR_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFERROR_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
 
         return;
     }
@@ -642,12 +540,6 @@ void kprintfError(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFERROR_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfSuccess(const char* kpFmt, ...)
@@ -656,19 +548,8 @@ void kprintfSuccess(const char* kpFmt, ...)
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFSUCCESS_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -696,12 +577,6 @@ void kprintfSuccess(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFSUCCESS_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfInfo(const char* kpFmt, ...)
@@ -710,20 +585,8 @@ void kprintfInfo(const char* kpFmt, ...)
     colorscheme_t     buffer;
     colorscheme_t     newScheme;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFINFO_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFINFO_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -751,12 +614,6 @@ void kprintfInfo(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFINFO_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfDebug(const char* kpFmt, ...)
@@ -766,19 +623,8 @@ void kprintfDebug(const char* kpFmt, ...)
     colorscheme_t     newScheme;
     uint64_t          uptime;
 
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFDEBUG_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
-
     if(kpFmt == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                           TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(kpFmt),
-                           KERNEL_TRACE_LOW(kpFmt));
         return;
     }
 
@@ -812,19 +658,10 @@ void kprintfDebug(const char* kpFmt, ...)
     __builtin_va_end(args);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFDEBUG_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpFmt),
-                       KERNEL_TRACE_LOW(kpFmt));
 }
 
 void kprintfFlush(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFFLUSH_ENTRY,
-                       0);
 
     KERNEL_LOCK(sLock);
 
@@ -833,10 +670,6 @@ void kprintfFlush(void)
     sBufferSize = 0;
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KOUTPUT_ENABLED,
-                       TRACE_KOUTPUT_KPRINTFFLUSH_EXIT,
-                       0);
 }
 
 /************************************ EOF *************************************/

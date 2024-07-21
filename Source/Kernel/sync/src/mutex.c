@@ -44,9 +44,6 @@
 /* Unit test header */
 #include <test_framework.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -142,12 +139,6 @@ static void _mutexReleaseResource(void* pResource)
     mutex_data_t*  pData;
     kqueue_node_t* pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_RELEASE_RESOURCE_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pResource),
-                       KERNEL_TRACE_LOW(pResource));
-
     MUTEX_ASSERT(pResource != NULL, "NULL Mutex resource", OS_ERR_NULL_POINTER);
 
     /* The inly resource we manage are waiting thread's mutex node */
@@ -163,46 +154,20 @@ static void _mutexReleaseResource(void* pResource)
     }
 
     KERNEL_UNLOCK(pData->pMutex->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_RELEASE_RESOURCE_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pResource),
-                       KERNEL_TRACE_LOW(pResource));
 }
 
 OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
 {
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_INIT_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       kFlags);
 
     /* Check parameters */
     if(pMutex == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_INIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           kFlags,
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if((kFlags & MUTEX_FLAG_QUEUING_FIFO) == MUTEX_FLAG_QUEUING_FIFO &&
        (kFlags & MUTEX_FLAG_QUEUING_PRIO) == MUTEX_FLAG_QUEUING_PRIO)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_INIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           kFlags,
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -210,13 +175,6 @@ OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
     pMutex->pWaitingList = kQueueCreate(FALSE);
     if(pMutex->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_INIT_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
@@ -224,14 +182,6 @@ OS_RETURN_E mutexInit(mutex_t* pMutex, const uint32_t kFlags)
     pMutex->lockState = 1;
     KERNEL_SPINLOCK_INIT(pMutex->lock);
     pMutex->isInit = TRUE;
-
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_INIT_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       kFlags,
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }
@@ -242,32 +192,14 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
     kqueue_node_t* pWaitNode;
     mutex_data_t*  pData;
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_DESTROY_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex));
-
     /* Check parameters */
     if(pMutex == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_DESTROY_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pMutex->isInit == FALSE || pMutex->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_DESTROY_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -298,13 +230,6 @@ OS_RETURN_E mutexDestroy(mutex_t* pMutex)
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_DESTROY_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -318,32 +243,14 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
     thread_resource_t threadRes;
     void*             pResourceHandle;
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_LOCK_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex));
-
     /* Check parameters */
     if(pMutex == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_LOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pMutex->isInit == FALSE || pMutex->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_LOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -360,13 +267,6 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         pMutex->acquiredThreadPriority = pCurThread->priority;
         KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_LOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_NO_ERR);
 
         return OS_NO_ERR;
     }
@@ -386,13 +286,6 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
 
         KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_LOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           error);
         return error;
     }
 
@@ -423,13 +316,6 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         kQueueRemove(pMutex->pWaitingList, &mutexNode, TRUE);
         KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_LOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_INCORRECT_VALUE);
 
         return OS_ERR_INCORRECT_VALUE;
     }
@@ -471,13 +357,6 @@ OS_RETURN_E mutexLock(mutex_t* pMutex)
         error = OS_NO_ERR;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_LOCK_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       error);
-
     return error;
 }
 
@@ -490,32 +369,14 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
     kernel_thread_t* pCurThread;
     uint8_t          highPrio;
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_UNLOCK_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex));
-
     /* Check parameters */
     if(pMutex == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_UNLOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pMutex->isInit == FALSE || pMutex->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_UNLOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -530,13 +391,6 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
     {
         KERNEL_UNLOCK(pMutex->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_UNLOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -602,13 +456,6 @@ OS_RETURN_E mutexUnlock(mutex_t* pMutex)
     }
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_UNLOCK_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -617,32 +464,14 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
     OS_RETURN_E      error;
     kernel_thread_t* pCurThread;
 
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_TRYLOCK_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex));
-
     /* Check parameters */
     if(pMutex == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_TRYLOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(pMutex->isInit == FALSE || pMutex->pWaitingList == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                           TRACE_MUTEX_TRYLOCK_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pMutex),
-                           KERNEL_TRACE_LOW(pMutex),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -669,13 +498,6 @@ OS_RETURN_E mutexTryLock(mutex_t* pMutex, int32_t* pLockState)
     }
 
     KERNEL_UNLOCK(pMutex->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_MUTEX_ENABLED,
-                       TRACE_MUTEX_TRYLOCK_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pMutex),
-                       KERNEL_TRACE_LOW(pMutex),
-                       error);
 
     return error;
 }

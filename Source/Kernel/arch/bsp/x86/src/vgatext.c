@@ -23,27 +23,26 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>           /* Virtual File System*/
+#include <ioctl.h>         /* IOCTL commands */
 #include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
-#include <x86cpu.h>       /* CPU port manipulation */
+#include <x86cpu.h>        /* CPU port manipulation */
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipualtion */
 #include <kerror.h>        /* Kernel error */
 #include <memory.h>        /* Memory manager */
+#include <syslog.h>        /* Kernel Syslog */
 #include <devtree.h>       /* Device tree */
 #include <console.h>       /* Console driver manager */
 #include <critical.h>      /* Kernel locks */
 #include <drivermgr.h>     /* Driver manager service */
-#include <kerneloutput.h>  /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
 #include <vgatext.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -63,6 +62,8 @@
 #define VGA_FDT_COMM_PROP   "comm"
 /** @brief FDT property for resolution */
 #define VGA_FDT_RES_PROP    "resolution"
+/** @brief FDT property for device path */
+#define VGA_FDT_DEVICE_PROP "device"
 
 /** @brief Cast a pointer to a VGA driver controler */
 #define GET_CONTROLER(PTR) ((vga_controler_t*)PTR)
@@ -94,6 +95,9 @@ typedef struct
 
     /** @brief VGA frame buffer address. */
     uint16_t* pFramebuffer;
+
+    /** @brief Stores the VFS driver */
+    vfs_driver_t vfsDriver;
 
     /** @brief Size in bytes of the framebuffer. */
     size_t framebufferSize;
@@ -190,21 +194,6 @@ static void _vgaProcessChar(void* pDriverCtrl, const char kCharacter);
 static void _vgaClearFramebuffer(void* pDriverCtrl);
 
 /**
- * @brief Places the cursor to the selected coordinates given as parameters.
- *
- * @details Places the screen cursor to the coordinated described with the
- * parameters. The function will check the boundaries or the position parameters
- * before setting the cursor position.
- *
- * @param[in, out] pDriverCtrl The VGA driver controler to use.
- * @param[in] kLine The line index where to place the cursor.
- * @param[in] column The column index where to place the cursor.
- */
-static void _vgaPutCursor(void*          pDriverCtrl,
-                          const uint32_t kLine,
-                          const uint32_t kColumn);
-
-/**
  * @brief Saves the cursor attributes in the buffer given as parameter.
  *
  * @details Fills the buffer given as parrameter with the current cursor
@@ -287,30 +276,6 @@ static void _vgaSetScheme(void*                pDriverCtrl,
 static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer);
 
 /**
- * ­@brief Put a string to screen.
- *
- * @details The function will display the string given as parameter to the
- * screen.
- *
- * @param[in, out] pDriverCtrl The VGA driver controler to use.
- * @param[in] kpString The string to display on the screen.
- *
- * @warning kpString must be NULL terminated.
- */
-static void _vgaPutString(void* pDriverCtrl, const char* kpString);
-
-/**
- * ­@brief Put a character to screen.
- *
- * @details The function will display the character given as parameter to the
- * screen.
- *
- * @param[in, out] pDriverCtrl The VGA driver controler to use.
- * @param[in] kCharacter The char to display on the screen.
- */
-static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
-
-/**
  * @brief Places the cursor to the selected coordinates given as parameters.
  *
  * @details Places the screen cursor to the coordinated described with the
@@ -324,6 +289,77 @@ static void _vgaPutChar(void* pDriverCtrl, const char kCharacter);
 static inline void _vgaPutCursorSafe(vga_controler_t* pCtrl,
                                      const uint32_t   kLine,
                                      const uint32_t   kColumn);
+
+/**
+ * @brief VGA VFS open hook.
+ *
+ * @details VGA VFS open hook. This function returns a handle to control the
+ * VGA driver through VFS.
+ *
+ * @param[in, out] pDrvCtrl The VGA driver that was registered in the VFS.
+ * @param[in] kpPath The path in the VGA driver mount point.
+ * @param[in] flags The open flags, must be O_RDWR.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _vgaVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode);
+
+/**
+ * @brief VGA VFS close hook.
+ *
+ * @details VGA VFS close hook. This function closes a handle that was created
+ * when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The VGA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vgaVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief VGA VFS write hook.
+ *
+ * @details VGA VFS write hook. This function writes a string to the VGA
+ * framebuffer.
+ *
+ * @param[in, out] pDrvCtrl The VGA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _vgaVfsWrite(void*       pDrvCtrl,
+                            void*       pHandle,
+                            const void* kpBuffer,
+                            size_t      count);
+
+/**
+ * @brief VGA VFS IOCTL hook.
+ *
+ * @details VGA VFS IOCTL hook. This function performs the IOCTL for the VGA
+ * driver.
+ *
+ * @param[in, out] pDrvCtrl The VGA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vgaVfsIOCTL(void*    pDriverData,
+                            void*    pHandle,
+                            uint32_t operation,
+                            void*    pArgs);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -352,35 +388,19 @@ static driver_t sX86VGADriver = {
 
 static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
 {
-    const uintptr_t*  ptrProp;
-    const uint32_t*   kpUintProp;
-    size_t            propLen;
-    OS_RETURN_E       retCode;
-    vga_controler_t*  pDrvCtrl;
-    console_driver_t* pConsoleDrv;
-    colorscheme_t     initScheme;
-    uintptr_t         frameBufferPhysAddr;
-    size_t            frameBufferPhysSize;
-    void*             mappedFrameBufferAddr;
-
-    kgeneric_driver_t* pGenericDriver;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_ATTACH_ENTRY,
-                       0);
-
-    pDrvCtrl    = NULL;
-    pConsoleDrv = NULL;
-    pGenericDriver = NULL;
+    const uintptr_t* ptrProp;
+    const uint32_t*  kpUintProp;
+    const char*      kpStrProp;
+    size_t           propLen;
+    OS_RETURN_E      retCode;
+    OS_RETURN_E      error;
+    vga_controler_t* pDrvCtrl;
+    colorscheme_t    initScheme;
+    uintptr_t        frameBufferPhysAddr;
+    size_t           frameBufferPhysSize;
+    void*            mappedFrameBufferAddr;
 
     /* Init structures */
-    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
-    if(pGenericDriver == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
     pDrvCtrl = kmalloc(sizeof(vga_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -388,30 +408,7 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vga_controler_t));
-
-    pConsoleDrv = kmalloc(sizeof(console_driver_t));
-    if(pConsoleDrv == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pConsoleDrv, 0, sizeof(console_driver_t));
-    pConsoleDrv->outputDriver.pClear           = _vgaClearFramebuffer;
-    pConsoleDrv->outputDriver.pPutCursor       = _vgaPutCursor;
-    pConsoleDrv->outputDriver.pSaveCursor      = _vgaSaveCursor;
-    pConsoleDrv->outputDriver.pRestoreCursor   = _vgaRestoreCursor;
-    pConsoleDrv->outputDriver.pScroll          = _vgaScroll;
-    pConsoleDrv->outputDriver.pSetColorScheme  = _vgaSetScheme;
-    pConsoleDrv->outputDriver.pSaveColorScheme = _vgaSaveScheme;
-    pConsoleDrv->outputDriver.pPutString       = _vgaPutString;
-    pConsoleDrv->outputDriver.pPutChar         = _vgaPutChar;
-    pConsoleDrv->outputDriver.pFlush           = NULL;
-    pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
-    pConsoleDrv->inputDriver.pRead             = NULL;
-    pConsoleDrv->inputDriver.pEcho             = NULL;
-    pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
-
-    pGenericDriver->pConsoleDriver = pConsoleDrv;
+    pDrvCtrl->vfsDriver = VFS_DRIVER_INVALID;
 
     /* Get the VGA framebuffer address */
     ptrProp = fdtGetProp(pkFdtNode, VGA_FDT_REG_PROP, &propLen);
@@ -445,14 +442,17 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
                                             MEMMGR_MAP_KERNEL   |
                                             MEMMGR_MAP_RW,
                                             &retCode);
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Framebuffer: 0x%p: 0x%p (0x%p) | Size: 0x%p (0x%p)",
-                 mappedFrameBufferAddr,
-                 pDrvCtrl->pFramebuffer,
-                 frameBufferPhysAddr,
-                 pDrvCtrl->framebufferSize,
-                 frameBufferPhysSize);
+
+#if VGA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Framebuffer: 0x%p: 0x%p (0x%p) | Size: 0x%p (0x%p)",
+           mappedFrameBufferAddr,
+           pDrvCtrl->pFramebuffer,
+           frameBufferPhysAddr,
+           pDrvCtrl->framebufferSize,
+           frameBufferPhysSize);
+#endif
 
     if(mappedFrameBufferAddr == NULL || retCode != OS_NO_ERR)
     {
@@ -472,11 +472,13 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->cpuCommPort = (uint16_t)FDTTOCPU32(*kpUintProp);
     pDrvCtrl->cpuDataPort = (uint16_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "COMM: 0x%x | DATA: 0x%x",
-                 pDrvCtrl->cpuCommPort,
-                 pDrvCtrl->cpuDataPort);
+#if VGA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "COMM: 0x%x | DATA: 0x%x",
+           pDrvCtrl->cpuCommPort,
+           pDrvCtrl->cpuDataPort);
+#endif
 
     /* Get the resolution */
     kpUintProp = fdtGetProp(pkFdtNode, VGA_FDT_RES_PROP, &propLen);
@@ -488,42 +490,63 @@ static OS_RETURN_E _vgaConsoleAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->columnCount = (uint8_t)FDTTOCPU32(*kpUintProp);
     pDrvCtrl->lineCount   = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Resolution: %dx%d",
-                 pDrvCtrl->columnCount, pDrvCtrl->lineCount);
+#if VGA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Resolution: %dx%d",
+           pDrvCtrl->columnCount, pDrvCtrl->lineCount);
+#endif
 
     /* Set initial scheme */
     initScheme.background = BG_BLACK;
     initScheme.foreground = FG_WHITE;
     _vgaSetScheme(pDrvCtrl, &initScheme);
 
-    /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
+    /* Get the device path */
+    kpStrProp = fdtGetProp(pkFdtNode, VGA_FDT_DEVICE_PROP, &propLen);
+    if(kpStrProp == NULL || propLen  == 0)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
 
-    KERNEL_DEBUG(VGA_DEBUG_ENABLED, MODULE_NAME, "VGA driver initialized");
+    /* Register the driver */
+    pDrvCtrl->vfsDriver = vfsRegisterDriver(kpStrProp,
+                                            pDrvCtrl,
+                                            _vgaVfsOpen,
+                                            _vgaVfsClose,
+                                            NULL,
+                                            _vgaVfsWrite,
+                                            NULL,
+                                            _vgaVfsIOCTL);
+    if(pDrvCtrl->vfsDriver == VFS_DRIVER_INVALID)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+
+#if VGA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "VGA driver initialized");
+#endif
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
         if(pDrvCtrl != NULL)
         {
+            if(pDrvCtrl->vfsDriver != VFS_DRIVER_INVALID)
+            {
+                error = vfsUnregisterDriver(&pDrvCtrl->vfsDriver);
+                if(error != OS_NO_ERR)
+                {
+                    PANIC(error,
+                          MODULE_NAME,
+                          "Failed to unregister VFS driver");
+                }
+            }
             kfree(pDrvCtrl);
         }
-        if(pConsoleDrv != NULL)
-        {
-            kfree(pConsoleDrv);
-        }
-        if(pGenericDriver != NULL)
-        {
-            kfree(pGenericDriver);
-        }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
 
     return retCode;
 }
@@ -694,17 +717,6 @@ static void _vgaClearFramebuffer(void* pDriverCtrl)
     memset(pCtrl->pFramebuffer, 0, pCtrl->framebufferSize);
 }
 
-static void _vgaPutCursor(void*          pDriverCtrl,
-                          const uint32_t kLine,
-                          const uint32_t kColumn)
-{
-    vga_controler_t* pCtrl;
-
-    pCtrl = GET_CONTROLER(pDriverCtrl);
-
-    _vgaPutCursorSafe(pCtrl, kLine, kColumn);
-}
-
 static void _vgaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
 {
     vga_controler_t* pCtrl;
@@ -811,41 +823,105 @@ static void _vgaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
     }
 }
 
-static void _vgaPutString(void* pDriverCtrl, const char* kpString)
+static void* _vgaVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode)
 {
-    size_t           i;
-    size_t           stringLen;
+    (void)pDrvCtrl;
+    (void)mode;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_PUT_STRING_ENTRY,
-                       0);
-
-    stringLen = strlen(kpString);
-
-    /* Output each character of the string */
-    for(i = 0; i < stringLen; ++i)
+    /* The path must be empty */
+    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
     {
-        _vgaProcessChar(pDriverCtrl, kpString[i]);
+        return (void*)-1;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_PUT_STRING_EXIT,
-                       2,
-                       (uint32_t)((uint64_t)stringLen >> 32),
-                       (uint32_t)(stringLen & 0xFFFFFFFF));
+    /* The flags must be O_RDWR */
+    if(flags != O_RDWR)
+    {
+        return (void*)-1;
+    }
+
+    /* We don't need a handle, return NULL */
+    return NULL;
 }
 
-static void _vgaPutChar(void* pDriverCtrl, const char kCharacter)
+static int32_t _vgaVfsClose(void* pDrvCtrl, void* pHandle)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_PUT_CHAR_ENTRY,
-                       0);
+    (void)pDrvCtrl;
+    (void)pHandle;
 
-    _vgaProcessChar(pDriverCtrl, kCharacter);
+    /* Nothing to do */
+    return 0;
+}
 
-    KERNEL_TRACE_EVENT(TRACE_X86_VGA_TEXT_ENABLED,
-                       TRACE_X86_VGA_TEXT_PUT_CHAR_EXIT,
-                       0);
+static ssize_t _vgaVfsWrite(void*       pDrvCtrl,
+                            void*       pHandle,
+                            const void* kpBuffer,
+                            size_t      count)
+{
+    const char* pCursor;
+    size_t      coutSave;
+
+    (void)pHandle;
+
+    pCursor = (char*)kpBuffer;
+
+    /* Output each character of the string */
+    coutSave = count;
+    while(pCursor != NULL && *pCursor != 0 && count > 0)
+    {
+        _vgaProcessChar(pDrvCtrl, *pCursor);
+        ++pCursor;
+        --count;
+    }
+
+    return coutSave - count;
+}
+
+static int32_t _vgaVfsIOCTL(void*    pDriverData,
+                            void*    pHandle,
+                            uint32_t operation,
+                            void*    pArgs)
+{
+    int32_t                   retVal;
+    cons_ioctl_args_scroll_t* pScrollArgs;
+
+    (void)pHandle;
+
+    /* Switch on the operation */
+    retVal = 0;
+    switch(operation)
+    {
+        case VFS_IOCTL_CONS_RESTORE_CURSOR:
+            _vgaRestoreCursor(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SAVE_CURSOR:
+            _vgaSaveCursor(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SCROLL:
+            pScrollArgs = pArgs;
+            _vgaScroll(pDriverData,
+                       pScrollArgs->direction,
+                       pScrollArgs->lineCount);
+            break;
+        case VFS_IOCTL_CONS_SET_COLORSCHEME:
+            _vgaSetScheme(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SAVE_COLORSCHEME:
+            _vgaSaveScheme(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_CLEAR:
+            _vgaClearFramebuffer(pDriverData);
+            break;
+        case VFS_IOCTL_CONS_FLUSH:
+            break;
+        default:
+            retVal = -1;
+    }
+
+    return retVal;
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

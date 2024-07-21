@@ -31,12 +31,12 @@
 #include <kqueue.h>        /* Kernel queue structure */
 #include <kerror.h>        /* Kernel error types */
 #include <signal.h>        /* Thread signals */
+#include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>       /* FDT library */
 #include <critical.h>      /* Kernel lock */
 #include <core_mgt.h>      /* Core manager */
 #include <x86memory.h>     /* I386 memory definitions */
 #include <exceptions.h>    /* Exception manager */
-#include <kerneloutput.h>  /* Kernel output */
 #include <cpu_interrupt.h> /* CPU interrupt settings */
 
 /* Configuration files */
@@ -52,9 +52,6 @@
 #define static
 #endif
 #endif
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -526,66 +523,69 @@ static void _printKernelMap(void)
     kqueue_node_t* pMemNode;
     mem_range_t*   pMemRange;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "=== Kernel memory layout");
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Startup AP  low 0x%p -> 0x%p | "PRIPTR"KB",
-                 &_START_LOW_AP_STARTUP_ADDR,
-                 &_END_LOW_AP_STARTUP_ADDR,
-                 ((uintptr_t)&_END_LOW_AP_STARTUP_ADDR -
-                 (uintptr_t)&_START_LOW_AP_STARTUP_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Startup low     0x%p -> 0x%p | "PRIPTR"KB",
-                 &_START_LOW_STARTUP_ADDR,
-                 &_END_LOW_STARTUP_ADDR,
-                 ((uintptr_t)&_END_LOW_STARTUP_ADDR -
-                 (uintptr_t)&_START_LOW_STARTUP_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Code            0x%p -> 0x%p | "PRIPTR"KB",
-                 &_START_TEXT_ADDR,
-                 &_END_TEXT_ADDR,
-                 ((uintptr_t)&_END_TEXT_ADDR -
-                 (uintptr_t)&_START_TEXT_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "RO-Data         0x%p -> 0x%p | "PRIPTR"KB",
-                 &_START_RO_DATA_ADDR,
-                 &_END_RO_DATA_ADDR,
-                 ((uintptr_t)&_END_RO_DATA_ADDR -
-                 (uintptr_t)&_START_RO_DATA_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "RW-Data         0x%p -> 0x%p | "PRIPTR"KB",
-                 &_START_RW_DATA_ADDR,
-                 &_END_RW_DATA_ADDR,
-                 ((uintptr_t)&_END_RW_DATA_ADDR -
-                 (uintptr_t)&_START_RW_DATA_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Stacks          0x%p -> 0x%p | "PRIPTR"KB",
-                 &_KERNEL_STACKS_BASE,
-                 &_KERNEL_STACKS_BASE + (uintptr_t)&_KERNEL_STACKS_SIZE,
-                 ((uintptr_t)&_KERNEL_STACKS_SIZE) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Heap            0x%p -> 0x%p | "PRIPTR"KB",
-                 &_KERNEL_HEAP_BASE,
-                 &_KERNEL_HEAP_BASE + (uintptr_t)&_KERNEL_HEAP_SIZE,
-                 ((uintptr_t)&_KERNEL_HEAP_SIZE) >> 10);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "=== Kernel memory layout");
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "Startup AP  low 0x%p -> 0x%p | "PRIPTR"KB",
+            &_START_LOW_AP_STARTUP_ADDR,
+            &_END_LOW_AP_STARTUP_ADDR,
+            ((uintptr_t)&_END_LOW_AP_STARTUP_ADDR -
+            (uintptr_t)&_START_LOW_AP_STARTUP_ADDR) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "Startup low     0x%p -> 0x%p | "PRIPTR"KB",
+            &_START_LOW_STARTUP_ADDR,
+            &_END_LOW_STARTUP_ADDR,
+            ((uintptr_t)&_END_LOW_STARTUP_ADDR -
+            (uintptr_t)&_START_LOW_STARTUP_ADDR) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "Code            0x%p -> 0x%p | "PRIPTR"KB",
+            &_START_TEXT_ADDR,
+            &_END_TEXT_ADDR,
+            ((uintptr_t)&_END_TEXT_ADDR -
+            (uintptr_t)&_START_TEXT_ADDR) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "RO-Data         0x%p -> 0x%p | "PRIPTR"KB",
+            &_START_RO_DATA_ADDR,
+            &_END_RO_DATA_ADDR,
+            ((uintptr_t)&_END_RO_DATA_ADDR -
+            (uintptr_t)&_START_RO_DATA_ADDR) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "RW-Data         0x%p -> 0x%p | "PRIPTR"KB",
+            &_START_RW_DATA_ADDR,
+            &_END_RW_DATA_ADDR,
+            ((uintptr_t)&_END_RW_DATA_ADDR -
+            (uintptr_t)&_START_RW_DATA_ADDR) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "Stacks          0x%p -> 0x%p | "PRIPTR"KB",
+            &_KERNEL_STACKS_BASE,
+            &_KERNEL_STACKS_BASE + (uintptr_t)&_KERNEL_STACKS_SIZE,
+            ((uintptr_t)&_KERNEL_STACKS_SIZE) >> 10);
+    syslog(SYSLOG_LEVEL_DEBUG,
+            MODULE_NAME,
+            "Heap            0x%p -> 0x%p | "PRIPTR"KB",
+            &_KERNEL_HEAP_BASE,
+            &_KERNEL_HEAP_BASE + (uintptr_t)&_KERNEL_HEAP_SIZE,
+            ((uintptr_t)&_KERNEL_HEAP_SIZE) >> 10);
+#endif
 
     pMemNode = sPhysMemList.pQueue->pHead;
     while(pMemNode != NULL)
     {
         pMemRange = (mem_range_t*)pMemNode->pData;
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Free physical memory regions 0x%p -> 0x%p",
-                     pMemRange->base,
-                     pMemRange->limit);
+
+#if MEMORY_MGR_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Free physical memory regions 0x%p -> 0x%p",
+               pMemRange->base,
+               pMemRange->limit);
+#endif
 
         pMemNode = pMemNode->pNext;
     }
@@ -594,11 +594,14 @@ static void _printKernelMap(void)
     while(pMemNode != NULL)
     {
         pMemRange = (mem_range_t*)pMemNode->pData;
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Free kernel virtual memory regions 0x%p -> 0x%p",
-                     pMemRange->base,
-                     pMemRange->limit);
+
+#if MEMORY_MGR_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Free kernel virtual memory regions 0x%p -> 0x%p",
+               pMemRange->base,
+               pMemRange->limit);
+#endif
 
         pMemNode = pMemNode->pNext;
     }
@@ -619,18 +622,13 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     __asm__ __volatile__ ("mov %%cr2, %0" : "=r"(faultAddress));
     errorCode = ((virtual_cpu_t*)pCurrentThread->pVCpu)->intContext.errorCode;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_PAGE_FAULT_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(faultAddress),
-                       KERNEL_TRACE_LOW(faultAddress),
-                       pCurrentThread->tid);
-
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Page fault: 0x%p | Code: %x\n",
-                 faultAddress,
-                 errorCode);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Page fault: 0x%p | Code: %x",
+           faultAddress,
+           errorCode);
+#endif
 
     /* Check if the fault occured because we hit a stale TLB entry */
     physAddr = memoryMgrGetPhysAddr(faultAddress, &flags);
@@ -662,11 +660,15 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
 
         if(staleEntry == TRUE)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Stale entry fault: 0x%p | Code: %x\n",
-                         faultAddress,
-                         errorCode);
+
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Stale entry fault: 0x%p | Code: %x",
+                   faultAddress,
+                   errorCode);
+#endif
+
             cpuInvalidateTlbEntry(faultAddress);
             return;
         }
@@ -681,13 +683,6 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     pCurrentThread->errorTable.pExecVCpu = pCurrentThread->pVCpu;
     error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
     MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_PAGE_FAULT_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(faultAddress),
-                       KERNEL_TRACE_LOW(faultAddress),
-                       pCurrentThread->tid);
 }
 
 static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
@@ -698,14 +693,6 @@ static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
     uintptr_t limit;
     size_t    bytesOutMem;
     size_t    i;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_CHECK_MEM_TYPE_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)kPhysicalAddress,
-                       0,
-                       (uint32_t)kSize);
 
     *pIsHardware = FALSE;
     *pIsMemory   = FALSE;
@@ -722,16 +709,6 @@ static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
     {
         *pIsMemory  = TRUE;
         *pIsHardware = TRUE;
-
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_CHECK_MEM_TYPE_EXIT,
-                           6,
-                           0,
-                           (uint32_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kSize,
-                           *pIsHardware,
-                           *pIsMemory);
         return;
     }
 
@@ -757,16 +734,6 @@ static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
 
     /* If we did not completely consume the range, we have hardware */
     *pIsHardware = (bytesOutMem != 0);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_CHECK_MEM_TYPE_EXIT,
-                       6,
-                       0,
-                       (uint32_t)kPhysicalAddress,
-                       0,
-                       (uint32_t)kSize,
-                       *pIsHardware,
-                       *pIsMemory);
 }
 
 static void _addBlock(mem_list_t*  pList,
@@ -781,21 +748,15 @@ static void _addBlock(mem_list_t*  pList,
     uintptr_t      limit;
     bool_t         merged;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_ADD_BLOCK_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)baseAddress,
-                       0,
-                       (uint32_t)kLength);
-
     limit = baseAddress + kLength;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Adding memory block 0x%p -> 0x%p",
-                 baseAddress,
-                 limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Adding memory block 0x%p -> 0x%p",
+           baseAddress,
+           limit);
+#endif
 
     MEM_ASSERT(pList != NULL,
                "Tried to add a memory block to a NULL list",
@@ -837,11 +798,14 @@ static void _addBlock(mem_list_t*  pList,
         /* If the new block is before but needs merging */
         if(baseAddress < pRange->base && limit == pRange->base)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Merging with block 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit);
+
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Merging with block 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit);
+#endif
 
             /* Extend left */
             pRange->base  = baseAddress;
@@ -851,11 +815,13 @@ static void _addBlock(mem_list_t*  pList,
         /* If the new block is after but needs merging */
         else if(baseAddress == pRange->limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Merging with block 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Merging with block 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit);
+#endif
 
             /* Check if next if not overlapping */
             if(pCursor->pNext != NULL)
@@ -928,22 +894,17 @@ static void _addBlock(mem_list_t*  pList,
                        pList->pQueue,
                        KERNEL_VIRTUAL_ADDR_MAX - baseAddress);
 
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Added new block 0x%p -> 0x%p",
-                     baseAddress,
-                     limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Added new block 0x%p -> 0x%p",
+               baseAddress,
+               limit);
+#endif
+
     }
 
     KERNEL_UNLOCK(pList->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_ADD_BLOCK_EXIT,
-                       4,
-                       0,
-                       (uint32_t)baseAddress,
-                       0,
-                       (uint32_t)kLength);
 }
 
 static void _removeBlock(mem_list_t*  pList,
@@ -957,14 +918,6 @@ static void _removeBlock(mem_list_t*  pList,
     uintptr_t      limit;
     uintptr_t      saveLimit;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_REMOVE_BLOCK_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)baseAddress,
-                       0,
-                       (uint32_t)kLength);
-
     MEM_ASSERT(pList != NULL,
                "Tried to remove a memory block from a NULL list",
                OS_ERR_NULL_POINTER);
@@ -976,11 +929,13 @@ static void _removeBlock(mem_list_t*  pList,
 
     limit = baseAddress + kLength;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Removing memory block 0x%p -> 0x%p",
-                 baseAddress,
-                 limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Removing memory block 0x%p -> 0x%p",
+           baseAddress,
+           limit);
+#endif
 
     KERNEL_LOCK(pList->lock);
 
@@ -996,11 +951,13 @@ static void _removeBlock(mem_list_t*  pList,
             pSaveCursor = pCursor;
             pCursor = pCursor->pNext;
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Removing block 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Removing block 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit);
+#endif
 
             /* Update the rest to remove */
             baseAddress = pRange->limit;
@@ -1017,13 +974,15 @@ static void _removeBlock(mem_list_t*  pList,
         else if(pRange->base < baseAddress && pRange->limit <= limit)
         {
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Reducing up block 0x%p -> 0x%p to 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit,
-                         pRange->base,
-                         baseAddress);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Reducing up block 0x%p -> 0x%p to 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit,
+                   pRange->base,
+                   baseAddress);
+#endif
 
             pRange->limit = baseAddress;
 
@@ -1041,13 +1000,15 @@ static void _removeBlock(mem_list_t*  pList,
         /* If down containted */
         else if(pRange->base >= baseAddress && pRange->limit > limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Reducing down block 0x%p -> 0x%p to 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit,
-                         limit,
-                         pRange->limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Reducing down block 0x%p -> 0x%p to 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit,
+                   limit,
+                   pRange->limit);
+#endif
 
             /* Update the rest to remove */
             pRange->base = limit;
@@ -1058,11 +1019,13 @@ static void _removeBlock(mem_list_t*  pList,
         /* If inside */
         else if(pRange->base < baseAddress && pRange->limit > limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Splitting block 0x%p -> 0x%p",
-                         pRange->base,
-                         pRange->limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Splitting block 0x%p -> 0x%p",
+                   pRange->base,
+                   pRange->limit);
+#endif
 
             /* Save next limit */
             saveLimit = pRange->limit;
@@ -1088,11 +1051,13 @@ static void _removeBlock(mem_list_t*  pList,
                            pList->pQueue,
                            KERNEL_VIRTUAL_ADDR_MAX - baseAddress);
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                        MODULE_NAME,
-                        "Added new block form removal 0x%p -> 0x%p",
-                        baseAddress,
-                        limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Added new block form removal 0x%p -> 0x%p",
+                   baseAddress,
+                   limit);
+#endif
 
             /* We are done*/
             limit = 0;
@@ -1104,14 +1069,6 @@ static void _removeBlock(mem_list_t*  pList,
     }
 
     KERNEL_UNLOCK(pList->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_REMOVE_BLOCK_EXIT,
-                       4,
-                       0,
-                       (uint32_t)baseAddress,
-                       0,
-                       (uint32_t)kLength);
 }
 
 static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
@@ -1119,12 +1076,6 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
     uintptr_t      retBlock;
     kqueue_node_t* pCursor;
     mem_range_t*   pRange;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_BLOCK_ENTRY,
-                       2,
-                       0,
-                       (uint32_t)kLength);
 
     MEM_ASSERT((kLength & PAGE_SIZE_MASK) == 0,
                "Tried to get a non aligned block",
@@ -1148,11 +1099,14 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
             /* Reduce the node or remove it */
             if(pRange->base + kLength == pRange->limit)
             {
-                KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                             MODULE_NAME,
-                             "Removing block after alloc 0x%p -> 0x%p",
-                             pRange->base,
-                             pRange->limit);
+
+#if MEMORY_MGR_DEBUG_ENABLED
+                syslog(SYSLOG_LEVEL_DEBUG,
+                       MODULE_NAME,
+                       "Removing block after alloc 0x%p -> 0x%p",
+                       pRange->base,
+                       pRange->limit);
+#endif
 
                 kfree(pCursor->pData);
                 kQueueRemove(pList->pQueue, pCursor, TRUE);
@@ -1160,14 +1114,16 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
             }
             else
             {
-                KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                             MODULE_NAME,
-                             "Reducing block after alloc 0x%p -> 0x%p to "
-                             "0x%p -> 0x%p",
-                             pRange->base,
-                             pRange->limit,
-                             pRange->base + kLength,
-                             pRange->limit);
+#if MEMORY_MGR_DEBUG_ENABLED
+                syslog(SYSLOG_LEVEL_DEBUG,
+                       MODULE_NAME,
+                       "Reducing block after alloc 0x%p -> 0x%p to "
+                       "0x%p -> 0x%p",
+                       pRange->base,
+                       pRange->limit,
+                       pRange->base + kLength,
+                       pRange->limit);
+#endif
                 pRange->base += kLength;
                 pCursor->priority = KERNEL_VIRTUAL_ADDR_MAX - pRange->base;
             }
@@ -1178,12 +1134,6 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
     }
 
     KERNEL_UNLOCK(pList->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_BLOCK_EXIT,
-                       2,
-                       0,
-                       (uint32_t)kLength);
 
     return retBlock;
 }
@@ -1224,14 +1174,6 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
     uintptr_t  currVirtAddr;
     uintptr_t* pPgDirRecurEntry;
     uintptr_t* pPgTableRecurEntry;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_IS_MAPPED_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)pageCount);
 
     MEM_ASSERT((kVirtualAddress & PAGE_SIZE_MASK) == 0,
                "Checking mapping for non aligned address",
@@ -1282,14 +1224,6 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
         }
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_IS_MAPPED_EXIT,
-                       4,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)pageCount);
-
     return isMapped;
 }
 
@@ -1312,33 +1246,11 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     uintptr_t* pPgTableRecurEntry;
     uintptr_t  newPgTableFrame;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_MAP_ENTRY,
-                       7,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kPhysicalAddress,
-                       0,
-                       (uint32_t)kPageCount,
-                       kFlags);
-
     /* Check the alignements */
     if((kVirtualAddress & PAGE_SIZE_MASK) != 0 ||
        (kPhysicalAddress & PAGE_SIZE_MASK) != 0 ||
        kPageCount == 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_MAP_EXIT,
-                           8,
-                           0,
-                           (uint32_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kPageCount,
-                           kFlags,
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -1353,28 +1265,19 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
        (isHardware ==TRUE &&
         (kFlags & MEMMGR_MAP_HARDWARE) != MEMMGR_MAP_HARDWARE))
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_MAP_EXIT,
-                           8,
-                           0,
-                           (uint32_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kPageCount,
-                           kFlags,
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Mapping 0x%p to 0x%p -> 0x%p, HW (%d) MEM(%d)",
-                 kPhysicalAddress,
-                 kPhysicalAddress + kPageCount * KERNEL_PAGE_SIZE,
-                 kVirtualAddress,
-                 isHardware,
-                 isMemory);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Mapping 0x%p to 0x%p -> 0x%p, HW (%d) MEM(%d)",
+           kPhysicalAddress,
+           kPhysicalAddress + kPageCount * KERNEL_PAGE_SIZE,
+           kVirtualAddress,
+           isHardware,
+           isMemory);
+#endif
 
     /* Check if the mapping already exists, check if we need to update one or
      * more page directory entries
@@ -1382,18 +1285,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     isMapped = _memoryMgrIsMapped(kVirtualAddress, kPageCount);
     if(isMapped == TRUE)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_MAP_EXIT,
-                           8,
-                           0,
-                           (uint32_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kPageCount,
-                           kFlags,
-                           OS_ERR_MAPPING_ALREADY_EXISTS);
-        return OS_ERR_MAPPING_ALREADY_EXISTS;
+        return OS_ERR_ALREADY_EXIST;
     }
 
     /* Get the flags */
@@ -1486,18 +1378,6 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
         } while(toMap > 0 && pgTableEntry != KERNEL_PGDIR_ENTRY_COUNT);
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_MAP_EXIT,
-                       8,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kPhysicalAddress,
-                       0,
-                       (uint32_t)kPageCount,
-                       kFlags,
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -1515,26 +1395,10 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     uintptr_t*   pPgTableRecurEntry;
     ipi_params_t ipiParams;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_UNMAP_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kPageCount);
-
     /* Check the alignements */
     if((kVirtualAddress & PAGE_SIZE_MASK) != 0 ||
        kPageCount == 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_UNMAP_EXIT,
-                           5,
-                           0,
-                           (uint32_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kPageCount,
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -1644,15 +1508,6 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
         }
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_UNMAP_EXIT,
-                       5,
-                       0,
-                       (uint32_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kPageCount,
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -1664,12 +1519,6 @@ static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
     uintptr_t* pPgTableRecurEntry;
     uint16_t   pgDirEntry;
     uint16_t   pgTableEntry;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_ENTRY,
-                       2,
-                       0,
-                       kVirtualAddress);
 
     retPhysAddr = MEMMGR_PHYS_ADDR_ERROR;
 
@@ -1728,14 +1577,6 @@ static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
         retPhysAddr |= kVirtualAddress & PAGE_SIZE_MASK;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_GET_PHYS_ADDR_EXIT,
-                       4,
-                       0,
-                       kVirtualAddress,
-                       0,
-                       retPhysAddr);
-
     return retPhysAddr;
 }
 
@@ -1751,10 +1592,6 @@ static void _memoryMgrDetectMemory(void)
     const fdt_mem_node_t* kpResMemNode;
     const fdt_mem_node_t* kpCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_DETECT_MEM_ENTRY,
-                       0);
-
     kpPhysMemNode = fdtGetMemory();
     MEM_ASSERT(kpPhysMemNode != NULL,
                "No physical memory detected in FDT",
@@ -1769,15 +1606,16 @@ static void _memoryMgrDetectMemory(void)
         size        = baseAddress - FDTTOCPU32(kpPhysMemNode->baseAddress);
         size        = ALIGN_DOWN(FDTTOCPU32(kpPhysMemNode->size) - size,
                                  KERNEL_PAGE_SIZE);
-
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Adding region 0x%p -> 0x%p | Aligned: 0x%p -> 0x%p",
-                     FDTTOCPU32(kpPhysMemNode->baseAddress),
-                     FDTTOCPU32(kpPhysMemNode->baseAddress) +
-                     FDTTOCPU32(kpPhysMemNode->size),
-                     baseAddress,
-                     baseAddress + size);
+#if MEMORY_MGR_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Adding region 0x%p -> 0x%p | Aligned: 0x%p -> 0x%p",
+               FDTTOCPU32(kpPhysMemNode->baseAddress),
+               FDTTOCPU32(kpPhysMemNode->baseAddress) +
+               FDTTOCPU32(kpPhysMemNode->size),
+               baseAddress,
+               baseAddress + size);
+#endif
 
         _addBlock(&sPhysMemList, baseAddress, size);
 
@@ -1793,11 +1631,13 @@ static void _memoryMgrDetectMemory(void)
                                  KERNEL_PAGE_SIZE);
         size = ALIGN_UP(FDTTOCPU32(kpCursor->size), KERNEL_PAGE_SIZE);
 
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Removing reserved region 0x%p -> 0x%p",
-                     baseAddress,
-                     baseAddress + size);
+#if MEMORY_MGR_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Removing reserved region 0x%p -> 0x%p",
+               baseAddress,
+               baseAddress + size);
+#endif
 
         _removeBlock(&sPhysMemList, baseAddress, size);
 
@@ -1852,19 +1692,11 @@ static void _memoryMgrDetectMemory(void)
         ++size;
         pMemNode = pMemNode->pNext;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_DETECT_MEM_EXIT,
-                       0);
 }
 
 static void _memoryMgrInitAddressTable(void)
 {
     uintptr_t kernelVirtEnd;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_ADDRTABLE_ENTRY,
-                       0);
 
     /* Initialize kernel pages */
     kernelVirtEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
@@ -1891,10 +1723,6 @@ static void _memoryMgrInitAddressTable(void)
     _addBlock(&sKernelFreePagesList,
               kernelVirtEnd,
               KERNEL_VIRTUAL_ADDR_MAX - kernelVirtEnd + 1);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_ADDRTABLE_EXIT,
-                       0);
 }
 
 static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
@@ -1910,15 +1738,6 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
     uintptr_t  kernelSectionEnd;
     uint16_t   pgDirEntry;
     uint16_t   pgTableEntry;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_MAP_KERNEL_ENTRY,
-                       5,
-                       0,
-                       (uint32_t)kRegionStartAddr,
-                       0,
-                       (uint32_t)kRegionEndAddr,
-                       kFlags);
 
     /* Align and check */
     kernelSectionStart = ALIGN_DOWN(kRegionStartAddr, KERNEL_PAGE_SIZE);
@@ -1998,25 +1817,12 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
 
         kernelSectionStart += KERNEL_PAGE_SIZE;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_MAP_KERNEL_EXIT,
-                       5,
-                       0,
-                       (uint32_t)kRegionStartAddr,
-                       0,
-                       (uint32_t)kRegionEndAddr,
-                       kFlags);
 }
 
 static void _memoryMgrInitPaging(void)
 {
     uintptr_t  kernelSectionStart;
     uintptr_t  kernelSectionEnd;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_MAPPING_ENTRY,
-                       0);
 
     kernelSectionStart = 0;
     kernelSectionEnd   = 0;
@@ -2104,19 +1910,11 @@ static void _memoryMgrInitPaging(void)
 
     /* Update the whole page table */
     cpuSetPageDirectory((uintptr_t)spKernelPageDir - KERNEL_MEM_OFFSET);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_MAPPING_EXIT,
-                       0);
 }
 
 void memoryMgrInit(void)
 {
     OS_RETURN_E error;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_ENTRY,
-                       0);
 
     /* Initialize structures */
     sPhysMemList.pQueue = kQueueCreate(TRUE);
@@ -2145,10 +1943,6 @@ void memoryMgrInit(void)
 #endif
 
     TEST_POINT_FUNCTION_CALL(memmgrTest, TEST_MEMMGR_ENABLED);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_INIT_EXIT,
-                       0);
 }
 
 void* memoryKernelMap(const void*    kPhysicalAddress,
@@ -2160,21 +1954,14 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
     size_t      pageCount;
     OS_RETURN_E error;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNELMAP_ENTRY,
-                       5,
-                       0,
-                       (uint32_t)(uintptr_t)kPhysicalAddress,
-                       0,
-                       (uint32_t)kSize,
-                       kFlags);
-
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Mapping physical address 0x%p (%dB) | Flags: 0x%x",
-                 kPhysicalAddress,
-                 kSize,
-                 kFlags);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Mapping physical address 0x%p (%dB) | Flags: 0x%x",
+           kPhysicalAddress,
+           kSize,
+           kFlags);
+#endif
 
     /* Check size */
     if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
@@ -2183,17 +1970,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
         {
             *pError = OS_ERR_INCORRECT_VALUE;
         }
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELMAP_EXIT,
-                           8,
-                           0,
-                           (uint32_t)(uintptr_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_INCORRECT_VALUE,
-                           0,
-                           0);
         return NULL;
     }
 
@@ -2209,17 +1985,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
         {
             *pError = OS_ERR_NO_MORE_MEMORY;
         }
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELMAP_EXIT,
-                           8,
-                           0,
-                           (uint32_t)(uintptr_t)kPhysicalAddress,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY,
-                           0,
-                           0);
         return NULL;
     }
 
@@ -2240,17 +2005,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
     {
         *pError = error;
     }
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                        TRACE_X86_MEMMGR_KERNELMAP_EXIT,
-                        8,
-                        0,
-                        (uint32_t)(uintptr_t)kPhysicalAddress,
-                        0,
-                        (uint32_t)kSize,
-                        kFlags,
-                        error,
-                        0,
-                        (uint32_t)kernelPages);
     return (void*)kernelPages;
 }
 
@@ -2263,18 +2017,13 @@ void* memoryKernelAllocate(const size_t   kSize,
     size_t      pageCount;
     OS_RETURN_E error;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNELALLOCATE_ENTRY,
-                       3,
-                       0,
-                       (uint32_t)kSize,
-                       kFlags);
-
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Allocating address %dB | Flags: 0x%x",
-                 kSize,
-                 kFlags);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Allocating address %dB | Flags: 0x%x",
+           kSize,
+           kFlags);
+#endif
 
     /* Check size */
     if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
@@ -2283,15 +2032,6 @@ void* memoryKernelAllocate(const size_t   kSize,
         {
             *pError = OS_ERR_INCORRECT_VALUE;
         }
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
-                           6,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_INCORRECT_VALUE,
-                           (uint32_t)(uintptr_t)NULL,
-                           (uint32_t)(uintptr_t)NULL);
         return NULL;
     }
 
@@ -2302,15 +2042,6 @@ void* memoryKernelAllocate(const size_t   kSize,
         {
             *pError = OS_ERR_INCORRECT_VALUE;
         }
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
-                           6,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_INCORRECT_VALUE,
-                           (uint32_t)(uintptr_t)NULL,
-                           (uint32_t)(uintptr_t)NULL);
         return NULL;
     }
 
@@ -2328,16 +2059,6 @@ void* memoryKernelAllocate(const size_t   kSize,
         {
             *pError = OS_ERR_NO_MORE_MEMORY;
         }
-
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
-                           6,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY,
-                           (uint32_t)(uintptr_t)NULL,
-                           (uint32_t)(uintptr_t)NULL);
         return NULL;
     }
 
@@ -2353,15 +2074,6 @@ void* memoryKernelAllocate(const size_t   kSize,
         {
             *pError = OS_ERR_NO_MORE_MEMORY;
         }
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
-                           6,
-                           0,
-                           (uint32_t)kSize,
-                           kFlags,
-                           OS_ERR_NO_MORE_MEMORY,
-                           (uint32_t)(uintptr_t)NULL,
-                           (uint32_t)(uintptr_t)NULL);
         return NULL;
     }
 
@@ -2383,16 +2095,6 @@ void* memoryKernelAllocate(const size_t   kSize,
     {
         *pError = error;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                        TRACE_X86_MEMMGR_KERNELALLOCATE_EXIT,
-                        6,
-                        0,
-                        (uint32_t)kSize,
-                        kFlags,
-                        error,
-                        0,
-                        (uint32_t)kernelPages);
     return (void*)kernelPages;
 }
 
@@ -2401,31 +2103,17 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
     size_t      pageCount;
     OS_RETURN_E error;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNELUNMAP_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)(uintptr_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kSize);
-
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Unmapping virtual address 0x%p (%dB)",
-                 kVirtualAddress,
-                 kSize);
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Unmapping virtual address 0x%p (%dB)",
+           kVirtualAddress,
+           kSize);
+#endif
 
     /* Check size */
     if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELUNMAP_ENTRY,
-                           5,
-                           0,
-                           (uint32_t)(uintptr_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kSize,
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -2435,14 +2123,6 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
     if((uintptr_t)kVirtualAddress < sKernelVirtualMemBounds.base ||
        (uintptr_t)kVirtualAddress >= sKernelVirtualMemBounds.limit)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                           TRACE_X86_MEMMGR_KERNELUNMAP_ENTRY,
-                           5,
-                           0,
-                           (uint32_t)(uintptr_t)kVirtualAddress,
-                           0,
-                           (uint32_t)kSize,
-                           OS_ERR_OUT_OF_BOUND);
         return OS_ERR_OUT_OF_BOUND;
     }
 
@@ -2459,15 +2139,6 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
 
     KERNEL_UNLOCK(sLock);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNELUNMAP_EXIT,
-                       5,
-                       0,
-                       (uint32_t)(uintptr_t)kVirtualAddress,
-                       0,
-                       (uint32_t)kSize,
-                       error);
-
     return error;
 }
 
@@ -2479,12 +2150,6 @@ void* memoryKernelMapStack(const size_t kSize)
     OS_RETURN_E error;
     uintptr_t   pageBaseAddress;
     uintptr_t   newFrame;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNEL_MAP_STACK_ENTRY,
-                       2,
-                       0,
-                       (uint32_t)kSize);
 
 
     /* Get the page count */
@@ -2548,14 +2213,6 @@ void* memoryKernelMapStack(const size_t kSize)
 
     KERNEL_UNLOCK(sLock);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNEL_MAP_STACK_EXIT,
-                       4,
-                       0,
-                       (uint32_t)kSize,
-                       0,
-                       (uint32_t)pageBaseAddress);
-
     return (void*)pageBaseAddress;
 }
 
@@ -2564,14 +2221,6 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     size_t    pageCount;
     size_t    i;
     uintptr_t frameAddr;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNEL_UNMAP_STACK_ENTRY,
-                       4,
-                       0,
-                       (uint32_t)kSize,
-                       0,
-                       (uint32_t)kBaseAddress);
 
     MEM_ASSERT((kBaseAddress & PAGE_SIZE_MASK) == 0 &&
                 (kSize & PAGE_SIZE_MASK) == 0 &&
@@ -2600,14 +2249,6 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     _releaseKernelPages(kBaseAddress, pageCount + 1);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_MEMMGR_ENABLED,
-                       TRACE_X86_MEMMGR_KERNEL_UNMAP_STACK_EXIT,
-                       4,
-                       0,
-                       (uint32_t)kSize,
-                       0,
-                       (uint32_t)kBaseAddress);
 }
 
 uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,

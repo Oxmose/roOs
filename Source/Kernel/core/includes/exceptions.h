@@ -92,7 +92,7 @@ void exceptionInit(void);
  * exception line is not allowed.
  * - OS_ERR_NULL_POINTER is returned if the pointer
  * to the handler is NULL.
- * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a
+ * - OS_ERR_ALREADY_EXIST is returned if a
  * handler is already registered for this exception line.
  */
 OS_RETURN_E exceptionRegister(const uint32_t   kExceptionLine,

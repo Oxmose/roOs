@@ -22,11 +22,14 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>       /* Virtual Filesystem */
+#include <ioctl.h>     /* IOCTL commands */
+#include <string.h>    /* String manipulation */
 #include <stdint.h>    /* Generic int types and bool_t */
 #include <stddef.h>    /* Standard definition */
+#include <syslog.h>    /* Syslog service */
 #include <kerror.h>    /* Kernel error codes */
 #include <devtree.h>   /* Device tree manager */
-#include <drivermgr.h> /* Driver manager */
 
 /* Configuration files */
 #include <config.h>
@@ -34,12 +37,12 @@
 /* Header file */
 #include <graphics.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
+
+/** @brief Defines the current module name */
+#define MODULE_NAME "GRAPHICS"
 
 /** @brief FDT graphics node name */
 #define FDT_GRAPHICS_NODE_NAME "graphics"
@@ -87,8 +90,8 @@
 /* None */
 
 /************************** Static global variables ***************************/
-/** @brief Stores the currently selected driver */
-static graphics_driver_t sDriver = {NULL};
+/** @brief Stores the graphic device file descriptor */
+static int32_t sGraphicDev = -1;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -96,62 +99,57 @@ static graphics_driver_t sDriver = {NULL};
 
 void graphicsInit(void)
 {
-    const fdt_node_t*  kpGraphicsNode;
-    const uint32_t*    kpUintProp;
-    size_t             propLen;
-    graphics_driver_t* pGraphicsDriver;
-    kgeneric_driver_t* pGenDriver;
-
-    KERNEL_TRACE_EVENT(TRACE_GRAPHICS_ENABLED, TRACE_GRAPHICS_INIT_ENTRY, 0);
+    const fdt_node_t* kpGraphicsNode;
+    const char*       kpStrProp;
+    size_t            propLen;
 
     /* Get the FDT graphics node */
     kpGraphicsNode = fdtGetNodeByName(FDT_GRAPHICS_NODE_NAME);
     if(kpGraphicsNode == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_GRAPHICS_ENABLED,
-                           TRACE_GRAPHICS_INIT_EXIT,
-                           1,
-                           -1);
         return;
     }
 
-    /* Get the output driver */
-    kpUintProp = fdtGetProp(kpGraphicsNode,
-                            FDT_GRAPHICS_OUTPUT_DEV_PROP,
-                            &propLen);
-    if(kpUintProp != NULL && propLen == sizeof(uint32_t))
+    kpStrProp = fdtGetProp(kpGraphicsNode,
+                           FDT_GRAPHICS_OUTPUT_DEV_PROP,
+                           &propLen);
+    if(kpStrProp != NULL && propLen > 0)
     {
-        pGenDriver = driverManagerGetDeviceData(FDTTOCPU32(*kpUintProp));
-
-        if(pGenDriver != NULL)
+        sGraphicDev = vfsOpen(kpStrProp, O_RDWR, 0);
+        if(sGraphicDev < 0)
         {
-            pGraphicsDriver = pGenDriver->pGraphicsDriver;
-            if(pGraphicsDriver != NULL && pGraphicsDriver->pDriverCtrl != NULL)
-            {
-                sDriver = *pGraphicsDriver;
-            }
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to open graphic device");
         }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_GRAPHICS_ENABLED, TRACE_GRAPHICS_INIT_EXIT, 1, 0);
 }
 
 OS_RETURN_E graphicsDrawPixel(const uint32_t kX,
                               const uint32_t kY,
                               const uint32_t kRGBPixel)
 {
-    OS_RETURN_E error;
+    int32_t                    retVal;
+    graph_ioctl_args_drawpixel ioctlArgs;
 
-    if(sDriver.pDrawPixel != NULL)
+    if(sGraphicDev >= 0)
     {
-        error = sDriver.pDrawPixel(sDriver.pDriverCtrl, kX, kY, kRGBPixel);
+        ioctlArgs.x = kX;
+        ioctlArgs.y = kY;
+        ioctlArgs.rgbPixel = kRGBPixel;
+        retVal = vfsIOCTL(sGraphicDev, VFS_IOCTL_GRAPH_DRAWPIXEL, &ioctlArgs);
     }
     else
     {
-        error = OS_ERR_NULL_POINTER;
+        return OS_ERR_NOT_SUPPORTED;
     }
 
-    return error;
+    if(retVal < 0)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    return OS_NO_ERR;
 }
 
 /************************************ EOF *************************************/

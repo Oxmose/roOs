@@ -32,6 +32,7 @@
 #include <kqueue.h>       /* Kernel queues */
 #include <memory.h>       /* Memory manager*/
 #include <atomic.h>       /* Spinlocks */
+#include <syslog.h>       /* Kernel Syslog */
 #include <signal.h>       /* Thread signals */
 #include <time_mgt.h>     /* Time management services */
 #include <critical.h>     /* Kernel critical */
@@ -47,9 +48,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -318,18 +316,16 @@ static bool_t sFirstSched[SOC_CPU_COUNT] = {FALSE};
 
 static void* _idleRoutine(void* pArgs)
 {
-    uint8_t cpuId;
+    (void)pArgs;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED, TRACE_SHEDULER_IDLE, 0);
 
-    cpuId = (uint8_t)(uintptr_t)pArgs;
-
-    KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "IDLE %d started on CPU %d (%d)",
-                 pCurrentThreadsPtr[cpuId]->tid,
-                 cpuId,
-                 cpuGetId());
+#if SCHED_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "IDLE %d started on CPU %d",
+           schedGetCurrentThread()->tid,
+           cpuGetId());
+#endif
 
     while(TRUE)
     {
@@ -347,11 +343,6 @@ static void _threadEntryPoint(void)
     void*            pThreadReturnValue;
     kernel_thread_t* pCurrThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_ENTRY_PT_ENTRY,
-                       1,
-                       schedGetCurrentThread()->tid);
-
     pCurrThread = schedGetCurrentThread();
 
     /* Set start time */
@@ -359,13 +350,6 @@ static void _threadEntryPoint(void)
 
     /* Call the thread routine */
     pThreadReturnValue = pCurrThread->pEntryPoint(pCurrThread->pArgs);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_ENTRY_PT_EXIT,
-                       3,
-                       pCurrThread->tid,
-                       (uint32_t)(((uint64_t)(uintptr_t)pThreadReturnValue) >> 32),
-                       (uint32_t)(uintptr_t)pThreadReturnValue);
 
     /* Call the exit function */
     _threadExitPoint(THREAD_TERMINATE_CORRECTLY,
@@ -380,13 +364,6 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
     kernel_thread_t* pJoiningThread;
     kernel_thread_t* pCurThread;
     uint32_t         intState;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_EXIT_PT_ENTRY,
-                       3,
-                       schedGetCurrentThread()->tid,
-                       kCause,
-                       kRetState);
 
     pCurThread = schedGetCurrentThread();
 
@@ -430,13 +407,6 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
 
     KERNEL_UNLOCK(pCurThread->lock);
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_EXIT_PT_EXIT,
-                       3,
-                       pCurrentThreadsPtr[cpuId]->tid,
-                       kCause,
-                       kRetState);
-
     /* Schedule thread, no need for interrupt, the context does not need to be
      * saved.
      */
@@ -454,10 +424,6 @@ static void _createIdleThreads(void)
     uint32_t                i;
     kqueue_node_t*          pNewNode;
     internal_thread_info_t* pInfoNode;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CREATE_IDLE_THREADS_ENTRY,
-                       0);
 
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
@@ -492,7 +458,6 @@ static void _createIdleThreads(void)
 
         /* Set the thread's stack for both interrupt and main */
         spIdleThread[i]->stackEnd = cpuCreateKernelStack(KERNEL_STACK_SIZE);
-        KERNEL_DEBUG(SCHED_DEBUG_ENABLED, MODULE_NAME, "Idle %d stack 0x%p\n", i, spIdleThread[i]->stackEnd);
         SCHED_ASSERT(spIdleThread[i]->stackEnd != (uintptr_t)NULL,
                      "Failed to allocate IDLE thread stack",
                      OS_ERR_NO_MORE_MEMORY);
@@ -547,10 +512,6 @@ static void _createIdleThreads(void)
         ++sThreadTables[i].threadCount;
         atomicIncrement32(&sThreadCount);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CREATE_IDLE_THREADS_EXIT,
-                       0);
 }
 
 static kernel_thread_t* _electNextThreadFromTable(thread_table_t* pTable)
@@ -558,10 +519,6 @@ static kernel_thread_t* _electNextThreadFromTable(thread_table_t* pTable)
     uint8_t        nextPrio;
     uint8_t        i;
     kqueue_node_t* pThreadNode;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_GET_NEXT_THREAD_FROM_TABLE_ENTRY,
-                       0);
 
     pThreadNode = NULL;
 
@@ -594,12 +551,6 @@ static kernel_thread_t* _electNextThreadFromTable(thread_table_t* pTable)
     KERNEL_UNLOCK(pTable->lock);
     KERNEL_LOCK(((kernel_thread_t*)pThreadNode->pData)->lock);
 
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_GET_NEXT_THREAD_FROM_TABLE_EXIT,
-                       1,
-                       ((kernel_thread_t*)pThreadNode->pData)->tid);
-
     return pThreadNode->pData;
 }
 
@@ -609,10 +560,6 @@ static void _updateSleepingThreads(void)
     kqueue_node_t* pThreadNode;
     kqueue_node_t* pCursor;
     uint8_t        cpuId;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_UPDATE_SLEEPING_THREADS_ENTRY,
-                       0);
 
     cpuId = cpuGetId();
 
@@ -649,10 +596,6 @@ static void _updateSleepingThreads(void)
         }
     }
     KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_UPDATE_SLEEPING_THREADS_EXIT,
-                       0);
 }
 
 static void _schedCleanThread(kernel_thread_t* pThread)
@@ -660,11 +603,6 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     kqueue_node_t*     pRes;
     kqueue_t*          pResQueue;
     thread_resource_t* pResourceInfo;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CLEAN_THREAD_ENTRY,
-                       1,
-                       pThread->tid);
 
     SCHED_ASSERT(pThread != schedGetCurrentThread(),
                  "Thread cannot clean themselves!",
@@ -712,11 +650,6 @@ static void _schedCleanThread(kernel_thread_t* pThread)
 
     /* Free the thread */
     kfree(pThread);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CLEAN_THREAD_EXIT,
-                       1,
-                       pThread->tid);
 }
 
 void _schedScheduleHandler(kernel_thread_t* pThread)
@@ -732,10 +665,6 @@ void schedInit(void)
     uint32_t    i;
     uint32_t    j;
     OS_RETURN_E error;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_INIT_ENTRY,
-                       0);
 
     /* Init values */
     sLastGivenTid = 0;
@@ -785,13 +714,9 @@ void schedInit(void)
                  "Failed to register scheduler interrupt",
                  error);
 
-    KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Scheduler initialization end");
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_INIT_EXIT,
-                       0);
+#if SCHED_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Scheduler initialization end");
+#endif
 
     TEST_POINT_FUNCTION_CALL(schedulerTest, TEST_SCHEDULER_ENABLED);
 }
@@ -803,12 +728,6 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
     uint8_t          nextPrio;
     thread_table_t*  pCurrentTable;
     kernel_thread_t* pThread;
-
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_SCHEDULE_ENTRY,
-                       1,
-                       schedGetCurrentThread()->tid);
 
     SCHED_ASSERT(cpuGetIntState() == 0,
                  "Called scheduler no int with interrupt enabled",
@@ -901,17 +820,14 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
 
     ++sScheduleCount[cpuId];
 
-    KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Selected thread %d for RUN on CPU %d (%d)",
-                 pThread->tid,
-                 cpuId,
-                 (uint32_t)sIdleSchedCount[cpuId]);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_SCHEDULE_EXIT,
-                       1,
-                       pCurrentThreadsPtr[cpuId]->tid);
+#if SCHED_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Selected thread %d for RUN on CPU %d (%d)",
+           pThread->tid,
+           cpuId,
+           (uint32_t)sIdleSchedCount[cpuId]);
+#endif
 
     /* We should never come back */
     cpuRestoreContext(pThread);
@@ -941,11 +857,6 @@ void schedReleaseThread(kernel_thread_t*     pThread,
     uint32_t     intState;
     int32_t      requestSched;
     ipi_params_t ipiParams;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_RELEASE_THREAD_ENTRY,
-                       1,
-                       pThread->tid);
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
@@ -998,12 +909,6 @@ void schedReleaseThread(kernel_thread_t*     pThread,
         }
 
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_RELEASE_THREAD_EXIT,
-                           2,
-                           pThread->tid,
-                           cpuId);
         return;
     }
 
@@ -1057,17 +962,13 @@ void schedReleaseThread(kernel_thread_t*     pThread,
         }
     }
 
-    KERNEL_DEBUG(SCHED_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Mapped thread %d to CPU %d",
-                 pThread->tid,
-                 cpuId);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_RELEASE_THREAD_EXIT,
-                       2,
-                       pThread->tid,
-                       cpuId);
+#if SCHED_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Mapped thread %d to CPU %d",
+           pThread->tid,
+           cpuId);
+#endif
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 }
@@ -1078,24 +979,10 @@ OS_RETURN_E schedSleep(const uint64_t kTimeNs)
     uint32_t         intState;
     uint8_t          cpuId;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_SLEEP_ENTRY,
-                       3,
-                       schedGetCurrentThread()->tid,
-                       kTimeNs >> 32,
-                       (uint32_t)kTimeNs);
-
     /* Check the current thread */
     pCurrThread = schedGetCurrentThread();
     if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_SLEEP_EXIT,
-                           4,
-                           pCurrThread->tid,
-                           kTimeNs >> 32,
-                           (uint32_t)kTimeNs,
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -1123,14 +1010,6 @@ OS_RETURN_E schedSleep(const uint64_t kTimeNs)
     /* Request scheduling */
     schedSchedule();
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_SLEEP_EXIT,
-                       4,
-                       pCurrThread->tid,
-                       kTimeNs >> 32,
-                       (uint32_t)kTimeNs,
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }
@@ -1164,12 +1043,6 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     kernel_thread_t*        pNewThread;
     kqueue_node_t*          pNewNode;
     OS_RETURN_E             error;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CREATE_THREAD_ENTRY,
-                       2,
-                       (uint32_t)(((uint64_t)(uintptr_t)ppThread) >> 32),
-                       (uint32_t)(uintptr_t)ppThread);
 
     pNewThread   = NULL;
     pNewNode     = NULL;
@@ -1347,14 +1220,6 @@ SCHED_CREATE_KTHREAD_END:
         *ppThread = pNewThread;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_CREATE_THREAD_EXIT,
-                       4,
-                       (uint32_t)(((uint64_t)(uintptr_t)ppThread) >> 32),
-                       (uint32_t)(uintptr_t)ppThread,
-                       pNewThread->tid,
-                       error);
-
     return error;
 }
 
@@ -1365,36 +1230,15 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
     kernel_thread_t* pCurThread;
     uint8_t          cpuId;
     uint32_t         intState;
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_JOIN_THREAD_ENTRY,
-                           1,
-                           -1);
     if(pThread == NULL)
     {
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                           2,
-                           -1,
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_JOIN_THREAD_ENTRY,
-                       1,
-                       pThread->tid);
 
     pCurThread = schedGetCurrentThread();
 
     if(pCurThread == pThread)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                           2,
-                           pThread->tid,
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -1403,11 +1247,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
     {
         if(pThread == spIdleThread[cpuId] || pCurThread == spIdleThread[cpuId])
         {
-            KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                            TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                            2,
-                            pThread->tid,
-                            OS_ERR_UNAUTHORIZED_ACTION);
             return OS_ERR_UNAUTHORIZED_ACTION;
         }
     }
@@ -1422,12 +1261,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
         KERNEL_UNLOCK(pCurThread->lock);
         KERNEL_UNLOCK(pThread->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                           2,
-                           pThread->tid,
-                           OS_ERR_UNAUTHORIZED_ACTION);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
@@ -1456,12 +1289,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
 
         /* Clean the thread */
         _schedCleanThread(pThread);
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                           2,
-                           pThread->tid,
-                           OS_NO_ERR);
 
         return OS_NO_ERR;
     }
@@ -1504,12 +1331,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
 
     _schedCleanThread(pThread);
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_JOIN_THREAD_EXIT,
-                       2,
-                       pThread->tid,
-                       OS_NO_ERR);
-
     return OS_NO_ERR;
 }
 
@@ -1529,12 +1350,6 @@ void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_WAIT_ON_RESOURCE_ENTRY,
-                       2,
-                       pThread->tid,
-                       kResource);
-
     pThread = schedGetCurrentThread();
 
     KERNEL_LOCK(pThread->lock);
@@ -1543,33 +1358,15 @@ void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource)
     pThread->resourceBlockType = kResource;
 
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_WAIT_ON_RESOURCE_EXIT,
-                       2,
-                       pThread->tid,
-                       kResource);
 }
 
 void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
 {
     uint8_t cpuId;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_UPDATE_PRIORITY_ENTRY,
-                       2,
-                       pThread->tid,
-                       kPrio);
-
     /* Check parameters */
     if(kPrio > KERNEL_LOWEST_PRIORITY || kPrio == pThread->priority)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_UPDATE_PRIORITY_EXIT,
-                           3,
-                           pThread->tid,
-                           pThread->priority,
-                           kPrio);
         return;
     }
 
@@ -1601,13 +1398,6 @@ void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
 
     pThread->priority = kPrio;
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_UPDATE_PRIORITY_EXIT,
-                       3,
-                       pThread->tid,
-                       pThread->priority,
-                       kPrio);
 }
 
 void* schedThreadAddResource(const thread_resource_t* kpResource)
@@ -1615,22 +1405,9 @@ void* schedThreadAddResource(const thread_resource_t* kpResource)
     kernel_thread_t* pThread;
     kqueue_node_t*   pNewNode;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_ADD_RESOURCE_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpResource),
-                       KERNEL_TRACE_LOW(kpResource));
-
     /* Check the parameters */
     if(kpResource == NULL || kpResource->pReleaseResource == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(kpResource),
-                           KERNEL_TRACE_LOW(kpResource),
-                           KERNEL_TRACE_HIGH(NULL),
-                           KERNEL_TRACE_LOW(NULL));
         return NULL;
     }
 
@@ -1642,27 +1419,12 @@ void* schedThreadAddResource(const thread_resource_t* kpResource)
     if(pNewNode == NULL)
     {
         KERNEL_UNLOCK(pThread->lock);
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(kpResource),
-                           KERNEL_TRACE_LOW(kpResource),
-                           KERNEL_TRACE_HIGH(NULL),
-                           KERNEL_TRACE_LOW(NULL));
         return NULL;
     }
 
     /* Add the node to the thread's queue */
     kQueuePush(pNewNode, pThread->pThreadResources);
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_ADD_RESOURCE_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(kpResource),
-                       KERNEL_TRACE_LOW(kpResource),
-                       KERNEL_TRACE_HIGH(pNewNode),
-                       KERNEL_TRACE_LOW(pNewNode));
 
     return pNewNode;
 }
@@ -1672,21 +1434,9 @@ OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle)
     kernel_thread_t* pThread;
     kqueue_node_t*   pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pResourceHandle),
-                       KERNEL_TRACE_LOW(pResourceHandle));
-
     /* Check the parameters */
     if(pResourceHandle == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pResourceHandle),
-                           KERNEL_TRACE_LOW(pResourceHandle),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -1700,26 +1450,12 @@ OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle)
     {
         KERNEL_UNLOCK(pThread->lock);
 
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pResourceHandle),
-                           KERNEL_TRACE_LOW(pResourceHandle),
-                           OS_ERR_INCORRECT_VALUE);
-
         return OS_ERR_INCORRECT_VALUE;
     }
     kQueueRemove(pThread->pThreadResources, pNode, TRUE);
     kQueueDestroyNode(&pNode);
 
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_THREAD_REMOVE_RESOURCE_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pResourceHandle),
-                       KERNEL_TRACE_LOW(pResourceHandle),
-                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -1730,22 +1466,8 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     OS_RETURN_E error;
     uint32_t    intState;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_TERMINATE_THREAD_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread),
-                       kCause);
-
     if(pThread == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_TERMINATE_THREAD_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           kCause,
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -1754,13 +1476,6 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     {
         if(pThread == spIdleThread[cpuId])
         {
-            KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                               TRACE_SHEDULER_TERMINATE_THREAD_EXIT,
-                               4,
-                               KERNEL_TRACE_HIGH(pThread),
-                               KERNEL_TRACE_LOW(pThread),
-                               kCause,
-                               OS_ERR_UNAUTHORIZED_ACTION);
             return OS_ERR_UNAUTHORIZED_ACTION;
         }
     }
@@ -1772,14 +1487,6 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     {
         KERNEL_UNLOCK(pThread->lock);
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_TERMINATE_THREAD_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           kCause,
-                           OS_ERR_NO_SUCH_ID);
         return OS_ERR_NO_SUCH_ID;
     }
 
@@ -1803,14 +1510,6 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_TERMINATE_THREAD_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread),
-                       kCause,
-                       error);
-
     return error;
 }
 
@@ -1827,16 +1526,8 @@ size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize)
     kqueue_node_t*          pNode;
     internal_thread_info_t* pInfo;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_GET_THREADS_ENTRY,
-                       0);
-
     if(pThreadTable == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                           TRACE_SHEDULER_GET_THREADS_EXIT,
-                           1,
-                           0);
         return 0;
     }
 
@@ -1858,11 +1549,6 @@ size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize)
     }
     KERNEL_UNLOCK(sThreadListLock);
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_GET_THREADS_EXIT,
-                       1,
-                       i);
-
     return i;
 }
 
@@ -1870,32 +1556,17 @@ void schedDisablePreemption(void)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_DISABLE_PREEMT_ENTRY,
-                       1,
-                       schedGetCurrentThread()->tid);
-
     pThread = schedGetCurrentThread();
     KERNEL_LOCK(pThread->lock);
 
     pThread->preemptionDisabled = TRUE;
 
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_DISABLE_PREEMT_EXIT,
-                       1,
-                       pthread->tid);
 }
 
 void schedEnablePreemption(void)
 {
     kernel_thread_t* pThread;
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_ENABLE_PREEMT_ENTRY,
-                       1,
-                       schedGetCurrentThread()->tid);
 
     pThread = schedGetCurrentThread();
     KERNEL_LOCK(pThread->lock);
@@ -1903,11 +1574,6 @@ void schedEnablePreemption(void)
     pThread->preemptionDisabled = FALSE;
 
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SCHEDULER_ENABLED,
-                       TRACE_SHEDULER_ENABLE_PREEMT_EXIT,
-                       1,
-                       pThread->tid);
 }
 
 /************************************ EOF *************************************/

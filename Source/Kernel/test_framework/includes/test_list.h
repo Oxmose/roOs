@@ -565,6 +565,7 @@ void semaphoreTest(void);
 void mutexTest(void);
 void interruptDefferTest(void);
 void signalTest(void);
+void vfsTest(void);
 
 #endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */
 

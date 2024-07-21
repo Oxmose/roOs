@@ -28,10 +28,10 @@
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Generic int types */
 #include <kerror.h>       /* Kernel error */
+#include <syslog.h>       /* Kernel Syslog */
 #include <time_mgt.h>     /* Timers manager */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -41,9 +41,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -192,8 +189,6 @@ static OS_RETURN_E _tscAttach(const fdt_node_t* pkFdtNode)
     tsc_controler_t* pDrvCtrl;
     kernel_timer_t*  pTimerDrv;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED, TRACE_X86_TSC_ATTACH_ENTRY, 0);
-
     pDrvCtrl  = NULL;
     pTimerDrv = NULL;
 
@@ -248,49 +243,28 @@ ATTACH_END:
         driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
+#if TSC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "TSC Initialization end");
+#endif
 
-    KERNEL_DEBUG(TSC_DEBUG_ENABLED, MODULE_NAME, "TSC Initialization end");
     return retCode;
 }
 
 static void _tscEnable(void* pDrvCtrl)
 {
     (void)pDrvCtrl;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_ENABLE,
-                       1,
-                       OS_ERR_NOT_SUPPORTED);
 }
 
 static void _tscDisable(void* pDrvCtrl)
 {
     (void)pDrvCtrl;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_DISABLE,
-                       1,
-                       OS_ERR_NOT_SUPPORTED);
 }
 
 static uint32_t _tscGetFrequency(void* pDrvCtrl)
 {
     tsc_controler_t* pTscCtrl;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_GET_FREQUENCY_ENTRY,
-                       0);
-
     pTscCtrl = GET_CONTROLER(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_GET_FREQUENCY_EXIT,
-                       1,
-                       pTscCtrl->frequency);
 
     return pTscCtrl->frequency;
 }
@@ -300,10 +274,6 @@ static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
 {
     (void)pDrvCtrl;
     (void)pHandler;
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_SET_HANDLER,
-                       1,
-                       OS_ERR_NOT_SUPPORTED);
 
     return OS_ERR_NOT_SUPPORTED;
 }
@@ -311,10 +281,6 @@ static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
 static OS_RETURN_E _tscRemoveHandler(void* pDrvCtrl)
 {
     (void)pDrvCtrl;
-    KERNEL_TRACE_EVENT(TRACE_X86_TSC_ENABLED,
-                       TRACE_X86_TSC_REMOVE_HANDLER,
-                       1,
-                       OS_ERR_NOT_SUPPORTED);
     return OS_ERR_NOT_SUPPORTED;
 }
 

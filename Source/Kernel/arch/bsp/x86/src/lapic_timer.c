@@ -30,12 +30,12 @@
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Generic int types */
 #include <kerror.h>       /* Kernel error */
+#include <syslog.h>       /* Kernel Syslog */
 #include <critical.h>     /* Kernel critical locks */
 #include <time_mgt.h>     /* Timers manager */
 #include <core_mgt.h>     /* Core manager */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -45,9 +45,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -261,7 +258,7 @@ static uint32_t _lapicTimerGetFrequency(void* pDrvCtrl);
  * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the LAPIC Timer
  * interrupt line is not allowed.
  * - OS_ERR_NULL_POINTER is returned if the pointer to the handler is NULL.
- * - OS_ERR_INTERRUPT_ALREADY_REGISTERED is returned if a handler is already
+ * - OS_ERR_ALREADY_EXIST is returned if a handler is already
  * registered for the LAPIC Timer.
  */
 static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
@@ -371,10 +368,6 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     kernel_timer_t*     pTimerDrv;
     lapic_driver_t*     pLapicDriver;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_ATTACH_ENTRY,
-                       0);
-
     pDrvCtrl  = NULL;
     pTimerDrv = NULL;
 
@@ -414,10 +407,12 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->interruptNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Interrupt: %d",
-                 pDrvCtrl->interruptNumber);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Interrupt: %d",
+           pDrvCtrl->interruptNumber);
+#endif
 
     /* Get selected frequency */
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_SELFREQ_PROP, &propLen);
@@ -467,10 +462,12 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
             goto ATTACH_END;
     }
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Selected Frequency: %dHz",
-                 pDrvCtrl->selectedFrequency);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Selected Frequency: %dHz",
+           pDrvCtrl->selectedFrequency);
+#endif
 
     /* Get the LAPIC pHandle */
     kpUintProp = fdtGetProp(pkFdtNode, LAPICT_FDT_LAPIC_NODE_PROP, &propLen);
@@ -546,14 +543,10 @@ ATTACH_END:
         driverManagerSetDeviceData(pkFdtNode, NULL);
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "LAPIC Timer Initialization end");
+#endif
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "LAPIC Timer Initialization end");
     return retCode;
 }
 
@@ -565,10 +558,6 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     uint32_t              lapicTimerCount;
     uintptr_t             kLapicBaseAddress;
     const kernel_timer_t* kpBaseTimer;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_CALIBRATE_ENTRY,
-                       0);
 
     kLapicBaseAddress = spDrvCtrl->lapicBaseAddress;
     kpBaseTimer = spDrvCtrl->kpBaseTimer;
@@ -596,11 +585,6 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     period = (endTime - startTime);
     if(period < lapicTimerCount)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_CALIBRATE_EXIT,
-                       2,
-                       0,
-                       OS_ERR_OUT_OF_BOUND);
         return OS_ERR_OUT_OF_BOUND;
     }
 
@@ -608,24 +592,20 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     spDrvCtrl->internalFrequency[kCpuId] =
         1000000000 / (period / lapicTimerCount);
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "LAPIC Timer calibration\n"
-                 "\tPeriod %lluns\n"
-                 "\tCount %d\n"
-                 "\tTick %lluns\n"
-                 "\tFrequency %u\n"
-                 "\tSelected counter initial value: %u\n",
-                 period,
-                 lapicTimerCount,
-                 period / (lapicTimerCount),
-                 spDrvCtrl->internalFrequency);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_CALIBRATE_EXIT,
-                       2,
-                       spDrvCtrl->internalFrequency,
-                       OS_NO_ERR);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "LAPIC Timer calibration\n"
+           "\tPeriod %lluns\n"
+           "\tCount %d\n"
+           "\tTick %lluns\n"
+           "\tFrequency %u\n"
+           "\tSelected counter initial value: %u",
+           period,
+           lapicTimerCount,
+           period / (lapicTimerCount),
+           spDrvCtrl->internalFrequency);
+#endif
 
     return OS_NO_ERR;
 }
@@ -653,20 +633,18 @@ static void _lapicTimerEnable(void* pDrvCtrl)
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     cpuId = cpuGetId();
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_ENABLE_ENTRY,
-                       1,
-                       pLAPICTimerCtrl->disabledNesting[cpuId]);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] > 0)
     {
         --pLAPICTimerCtrl->disabledNesting[cpuId];
     }
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Enable (nesting %d) on %d",
-                 pLAPICTimerCtrl->disabledNesting[cpuId], cpuId);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Enable (nesting %d) on %d",
+           pLAPICTimerCtrl->disabledNesting[cpuId], cpuId);
+#endif
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] == 0)
     {
@@ -687,11 +665,6 @@ static void _lapicTimerEnable(void* pDrvCtrl)
     }
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_ENABLE_EXIT,
-                       1,
-                       pLAPICTimerCtrl->disabledNesting[cpuId]);
 }
 
 static void _lapicTimerDisable(void* pDrvCtrl)
@@ -705,10 +678,6 @@ static void _lapicTimerDisable(void* pDrvCtrl)
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
     cpuId = cpuGetId();
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_DISABLE_ENTRY,
-                       1,
-                       pLAPICTimerCtrl->disabledNesting[cpuId]);
 
     if(pLAPICTimerCtrl->disabledNesting[cpuId] < UINT32_MAX)
     {
@@ -724,29 +693,17 @@ static void _lapicTimerDisable(void* pDrvCtrl)
     _lapicTimerWrite(pLAPICTimerCtrl->lapicBaseAddress, LAPIC_TICR, 0);
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_DISABLE_EXIT,
-                       1,
-                       pLAPICTimerCtrl->disabledNesting[cpuId]);
 }
 
 static void _lapicTimerSetFrequency(const uint32_t kFreq, const uint8_t kCpuId)
 {
     uint32_t            lapicInitCount;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_FREQUENCY_ENTRY,
-                       1,
-                       kFreq);
-
     if(kFreq == 0)
     {
-        KERNEL_ERROR("LAPIC Timer selected frequency is too low");
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_FREQUENCY_EXIT,
-                           1,
-                           -1);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "LAPIC Timer selected frequency is too low");
         return;
     }
 
@@ -754,12 +711,9 @@ static void _lapicTimerSetFrequency(const uint32_t kFreq, const uint8_t kCpuId)
 
     if(lapicInitCount == 0)
     {
-        KERNEL_ERROR("LAPIC Timer selected frequency is too high");
-
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_FREQUENCY_EXIT,
-                           1,
-                           -1);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "LAPIC Timer selected frequency is too high");
         return;
     }
 
@@ -769,11 +723,6 @@ static void _lapicTimerSetFrequency(const uint32_t kFreq, const uint8_t kCpuId)
                      LAPIC_TICR,
                      lapicInitCount);
     spDrvCtrl->selectedFrequency = kFreq;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_FREQUENCY_EXIT,
-                       1,
-                       kFreq);
 }
 
 static uint32_t _lapicTimerGetFrequency(void* pDrvCtrl)
@@ -781,11 +730,6 @@ static uint32_t _lapicTimerGetFrequency(void* pDrvCtrl)
     lapic_timer_ctrl_t* pLAPICTimerCtrl;
 
     pLAPICTimerCtrl = GET_CONTROLER(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_GET_FREQUENCY,
-                       1,
-                       pLAPICTimerCtrl->selectedFrequency);
 
     return pLAPICTimerCtrl->selectedFrequency;
 }
@@ -796,20 +740,8 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
     OS_RETURN_E         err;
     lapic_timer_ctrl_t* pLapicTimerCtrl;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_HANDLER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler));
-
     if(pHandler == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
@@ -820,43 +752,31 @@ static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
     err = interruptRegister(pLapicTimerCtrl->interruptNumber, pHandler);
     if(err != OS_NO_ERR)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                           TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           (uint32_t)err);
 
         return err;
     }
 
-    KERNEL_DEBUG(LAPICT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "New LAPIC TIMER handler set 0x%p",
-                 pHandler);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "New LAPIC TIMER handler set 0x%p",
+           pHandler);
+#endif
 
     _lapicTimerEnable(pDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_SET_HANDLER_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler),
-                       (uint32_t)err);
 
     return err;
 }
 
 static OS_RETURN_E _lapicTimerRemoveHandler(void* pDrvCtrl)
 {
-    KERNEL_DEBUG(PIT_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Default LAPCI Timer handler set 0x%p",
-                 _lapicTimerDummyHandler);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_REMOVE_HANDLER,
-                       0);
+#if LAPICT_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Default LAPCI Timer handler set 0x%p",
+           _lapicTimerDummyHandler);
+#endif
     return _lapicTimerSetHandler(pDrvCtrl, _lapicTimerDummyHandler);
 }
 
@@ -866,19 +786,12 @@ static void _lapicTimerAckInterrupt(void* pDrvCtrl)
 
     pLapicTimerCtrl = GET_CONTROLER(pDrvCtrl);
 
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_ACK_INTERRUPT,
-                       0);
-
     /* Set EOI */
     interruptIRQSetEOI(pLapicTimerCtrl->interruptNumber);
 }
 
 static void _lapicTimerInitApCore(const uint8_t kCpuId)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_INIT_AP_CORE_ENTRY,
-                       0);
 
     /* We are in a secondary core (AP core), just setup the counter as all
      * LAPIC timers should have the same frequency
@@ -899,10 +812,6 @@ static void _lapicTimerInitApCore(const uint8_t kCpuId)
 
     /* Set interrupt EOI */
     _lapicTimerAckInterrupt(spDrvCtrl);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_LAPIC_TIMER_ENABLED,
-                       TRACE_X86_LAPIC_TIMER_INIT_AP_CORE_EXIT,
-                       0);
 }
 
 static inline uint32_t _lapicTimerRead(const uintptr_t kBaseAddr,

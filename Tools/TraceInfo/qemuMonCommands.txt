@@ -1,7 +1,0 @@
-make clean && make target=x86_i386 TRACE=TRUE && make target=x86_i386 debug
-telnet 127.0.0.1 55550
-memsave 0xE034C000 131072 ../Tools/TraceInfo/output/trace_dump.bin
-memsave 0xE034C000 0x8000 ../Tools/TraceInfo/output/trace_dump_core0.bin
-memsave 0xE0354000 0x8000 ../Tools/TraceInfo/output/trace_dump_core1.bin
-memsave 0xE035C000 0x8000 ../Tools/TraceInfo/output/trace_dump_core2.bin
-memsave 0xE0364000 0x8000 ../Tools/TraceInfo/output/trace_dump_core3.bin

@@ -44,8 +44,8 @@ typedef enum
     OS_ERR_UNAUTHORIZED_ACTION             = 2,
     /** @brief Unauthorized interrupt line used. */
     OR_ERR_UNAUTHORIZED_INTERRUPT_LINE     = 3,
-    /** @brief Interrupt handler was already registered. */
-    OS_ERR_INTERRUPT_ALREADY_REGISTERED    = 4,
+    /** @brief The resource already exists. */
+    OS_ERR_ALREADY_EXIST                   = 4,
     /** @brief Interrupt is not registered. */
     OS_ERR_INTERRUPT_NOT_REGISTERED        = 5,
     /** @brief Unknown IRQ. */
@@ -58,18 +58,16 @@ typedef enum
     OS_ERR_OUT_OF_BOUND                    = 9,
     /** @brief Feature not supported */
     OS_ERR_NOT_SUPPORTED                   = 10,
-    /** @brief Memory mapping already exists */
-    OS_ERR_MAPPING_ALREADY_EXISTS          = 11,
     /** @brief Identifier not found */
-    OS_ERR_NO_SUCH_ID                      = 12,
+    OS_ERR_NO_SUCH_ID                      = 11,
     /** @brief The resource was destroyed */
-    OS_ERR_DESTROYED                       = 13,
+    OS_ERR_DESTROYED                       = 12,
     /** @brief The resource was not blocked */
-    OS_ERR_NOT_BLOCKED                     = 14,
+    OS_ERR_NOT_BLOCKED                     = 13,
     /** @brief The resource was blocked */
-    OS_ERR_BLOCKED                         = 15,
+    OS_ERR_BLOCKED                         = 14,
     /** @brief Page fault occured */
-    OS_ERR_PAGE_FAULT                      = 16,
+    OS_ERR_PAGE_FAULT                      = 15,
 } OS_RETURN_E;
 
 /*******************************************************************************

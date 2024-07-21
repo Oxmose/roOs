@@ -43,8 +43,17 @@
             reg = <0x0 0x0 0x0 0x100000>;
         };
         reservedacpi: acpimem@1 {
-            reg = <0x0 0xffe1000 0x0 0x001000>;
+            reg = <0x0 0xffe1000 0x0 0x1000>;
         };
+        reservedramfs: res-ramfs3DC000 {
+            reg = <0x0 0x003DC000 0x0 0x400000>;
+        };
+    };
+
+    ramfs@3DC000 {
+        compatible = "roOs,roOs-ramfs";
+        reg = <0x0 0x003DC000 0x0 0x400000>;
+        mount-pt = "/ramfs";
     };
 
     platform {
@@ -173,19 +182,22 @@
             reg = <0x0 0xB8000 0x0 0xFA0>;
             comm = <0x3D4 0x3D5>;
             resolution = <80 25>;
+            device = "/dev/vga-text";
         };
 
-        stdoutdev: vesa {
+        vesa: vesa {
             compatible = "x86,x86-vesa";
             resolution = <1280 1024>;
             depth = <32>;
             refresh-rate = <30>;
+            device = "/dev/vesa";
         };
 
-        stdindev: keyboard {
+        kdb: keyboard {
             compatible = "x86,x86-generic-keyboard";
             comm = <0x64 0x60>;
             interrupts = <1 1>; /* 0: is IRQ; 1: IRQ line */
+            device = "/dev/kbd";
         };
 
         uart0 {
@@ -193,34 +205,38 @@
             comm = <0x3F8>;
             baudrate = <115200>;
             interrupts = <1 4>; /* 0: is IRQ; 1: IRQ line */
+            device = "/dev/uart/0";
         };
 
         uart1 {
             compatible = "x86,x86-generic-serial";
             comm = <0x2F8>;
             baudrate = <115200>;
+            device = "/dev/uart/1";
         };
 
         uart2 {
             compatible = "x86,x86-generic-serial";
             comm = <0x3E8>;
             baudrate = <115200>;
+            device = "/dev/uart/2";
         };
 
         uart3 {
             compatible = "x86,x86-generic-serial";
             comm = <0x2E8>;
             baudrate = <115200>;
+            device = "/dev/uart/3";
         };
     };
 
     console {
-        inputdev = <&stdindev>;
-        outputdev = <&stdoutdev>;
+        inputdev = "/dev/kbd";
+        outputdev = "/dev/vesa";
     };
 
     graphics {
-        outputdev = <&stdoutdev>;
+        outputdev = "/dev/vesa";
     };
 
     timeconfig {

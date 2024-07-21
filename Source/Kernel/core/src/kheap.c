@@ -39,9 +39,6 @@
 /* Header file */
 #include <kheap.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 

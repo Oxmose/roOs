@@ -175,8 +175,8 @@ static void test_sw_interupts(void)
     err = interruptRegister(MIN_INTERRUPT_LINE,
                                                 incrementer_handler);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REG_ALREADY_REG_HANDLER0_ID,
-                            err == OS_ERR_INTERRUPT_ALREADY_REGISTERED,
-                            OS_ERR_INTERRUPT_ALREADY_REGISTERED,
+                            err == OS_ERR_ALREADY_EXIST,
+                            OS_ERR_ALREADY_EXIST,
                             err,
                             TEST_INTERRUPT_ENABLED);
 

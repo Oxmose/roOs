@@ -467,51 +467,51 @@ static void _printKernelMap(void)
     kqueue_node_t* pMemNode;
     mem_range_t*   pMemRange;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "=== Kernel memory layout");
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Startup AP  low 0x%p -> 0x%p | "PRIPTR"KB",
                  &_START_LOW_AP_STARTUP_ADDR,
                  &_END_LOW_AP_STARTUP_ADDR,
                  ((uintptr_t)&_END_LOW_AP_STARTUP_ADDR -
                  (uintptr_t)&_START_LOW_AP_STARTUP_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Startup low     0x%p -> 0x%p | "PRIPTR"KB",
                  &_START_LOW_STARTUP_ADDR,
                  &_END_LOW_STARTUP_ADDR,
                  ((uintptr_t)&_END_LOW_STARTUP_ADDR -
                  (uintptr_t)&_START_LOW_STARTUP_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Code            0x%p -> 0x%p | "PRIPTR"KB",
                  &_START_TEXT_ADDR,
                  &_END_TEXT_ADDR,
                  ((uintptr_t)&_END_TEXT_ADDR -
                  (uintptr_t)&_START_TEXT_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "RO-Data         0x%p -> 0x%p | "PRIPTR"KB",
                  &_START_RO_DATA_ADDR,
                  &_END_RO_DATA_ADDR,
                  ((uintptr_t)&_END_RO_DATA_ADDR -
                  (uintptr_t)&_START_RO_DATA_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "RW-Data         0x%p -> 0x%p | "PRIPTR"KB",
                  &_START_RW_DATA_ADDR,
                  &_END_RW_DATA_ADDR,
                  ((uintptr_t)&_END_RW_DATA_ADDR -
                  (uintptr_t)&_START_RW_DATA_ADDR) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Stacks          0x%p -> 0x%p | "PRIPTR"KB",
                  &_KERNEL_STACKS_BASE,
                  &_KERNEL_STACKS_BASE + (uintptr_t)&_KERNEL_STACKS_SIZE,
                  ((uintptr_t)&_KERNEL_STACKS_SIZE) >> 10);
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Heap            0x%p -> 0x%p | "PRIPTR"KB",
                  &_KERNEL_HEAP_BASE,
@@ -522,7 +522,7 @@ static void _printKernelMap(void)
     while(pMemNode != NULL)
     {
         pMemRange = (mem_range_t*)pMemNode->pData;
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Free physical memory regions 0x%p -> 0x%p",
                      pMemRange->base,
@@ -535,7 +535,7 @@ static void _printKernelMap(void)
     while(pMemNode != NULL)
     {
         pMemRange = (mem_range_t*)pMemNode->pData;
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Free kernel virtual memory regions 0x%p -> 0x%p",
                      pMemRange->base,
@@ -627,7 +627,7 @@ static void _addBlock(mem_list_t*  pList,
                OS_ERR_INCORRECT_VALUE);
 
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Adding memory block 0x%p -> 0x%p",
                  baseAddress,
@@ -654,7 +654,7 @@ static void _addBlock(mem_list_t*  pList,
         /* If the new block is before but needs merging */
         if(baseAddress < pRange->base && limit == pRange->base)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Merging with block 0x%p -> 0x%p",
                          pRange->base,
@@ -668,7 +668,7 @@ static void _addBlock(mem_list_t*  pList,
         /* If the new block is after but needs merging */
         else if(baseAddress == pRange->limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Merging with block 0x%p -> 0x%p",
                          pRange->base,
@@ -748,7 +748,7 @@ static void _addBlock(mem_list_t*  pList,
                        pList->pQueue,
                        KERNEL_VIRTUAL_ADDR_MAX - baseAddress);
 
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Added new block 0x%p -> 0x%p",
                      baseAddress,
@@ -780,7 +780,7 @@ static void _removeBlock(mem_list_t*  pList,
 
     limit = baseAddress + kLength;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Removing memory block 0x%p -> 0x%p",
                  baseAddress,
@@ -800,7 +800,7 @@ static void _removeBlock(mem_list_t*  pList,
             pSaveCursor = pCursor;
             pCursor = pCursor->pNext;
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Removing block 0x%p -> 0x%p",
                          pRange->base,
@@ -821,7 +821,7 @@ static void _removeBlock(mem_list_t*  pList,
         else if(pRange->base < baseAddress && pRange->limit <= limit)
         {
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Reducing up block 0x%p -> 0x%p to 0x%p -> 0x%p",
                          pRange->base,
@@ -845,7 +845,7 @@ static void _removeBlock(mem_list_t*  pList,
         /* If down containted */
         else if(pRange->base >= baseAddress && pRange->limit > limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Reducing down block 0x%p -> 0x%p to 0x%p -> 0x%p",
                          pRange->base,
@@ -862,7 +862,7 @@ static void _removeBlock(mem_list_t*  pList,
         /* If inside */
         else if(pRange->base < baseAddress && pRange->limit > limit)
         {
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                          MODULE_NAME,
                          "Splitting block 0x%p -> 0x%p",
                          pRange->base,
@@ -895,7 +895,7 @@ static void _removeBlock(mem_list_t*  pList,
                            pList->pQueue,
                            KERNEL_VIRTUAL_ADDR_MAX - baseAddress);
 
-            KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                         MODULE_NAME,
                         "Added new block form removal 0x%p -> 0x%p",
                         baseAddress,
@@ -941,7 +941,7 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
             /* Reduce the node or remove it */
             if(pRange->base + kLength == pRange->limit)
             {
-                KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                              MODULE_NAME,
                              "Removing block after alloc 0x%p -> 0x%p",
                              pRange->base,
@@ -953,7 +953,7 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
             }
             else
             {
-                KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+                syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                              MODULE_NAME,
                              "Reducing block after alloc 0x%p -> 0x%p to "
                              "0x%p -> 0x%p",
@@ -1103,7 +1103,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Mapping 0x%p to 0x%p, HW (%d) MEM(%d)",
                  kPhysicalAddress,
@@ -1124,7 +1124,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     isMapped = _memoryMgrIsMapped(kVirtualAddress, kPageCount);
     if(isMapped == TRUE)
     {
-        return OS_ERR_MAPPING_ALREADY_EXISTS;
+        return OS_ERR_ALREADY_EXIST;
     }
 
     /* Get the flags */
@@ -1367,7 +1367,7 @@ static void _memoryMgrDetectMemory(void)
         size        = ALIGN_DOWN(FDTTOCPU32(kpPhysMemNode->size) - size,
                                  KERNEL_PAGE_SIZE);
 
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Adding region 0x%p -> 0x%p | Aligned: 0x%p -> 0x%p",
                      FDTTOCPU32(kpPhysMemNode->baseAddress),
@@ -1390,7 +1390,7 @@ static void _memoryMgrDetectMemory(void)
                                  KERNEL_PAGE_SIZE);
         size = ALIGN_UP(FDTTOCPU32(kpCursor->size), KERNEL_PAGE_SIZE);
 
-        KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                      MODULE_NAME,
                      "Removing reserved region 0x%p -> 0x%p",
                      baseAddress,
@@ -1705,7 +1705,7 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
     size_t      pageCount;
     OS_RETURN_E error;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Mapping physical address 0x%p (%dB) | Flags: 0x%x",
                  kPhysicalAddress,
@@ -1764,7 +1764,7 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
     size_t      pageCount;
     OS_RETURN_E error;
 
-    KERNEL_DEBUG(MEMORY_MGR_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, MEMORY_MGR_DEBUG_ENABLED,
                  MODULE_NAME,
                  "Unmapping virtual address 0x%p (%dB)",
                  kVirtualAddress,

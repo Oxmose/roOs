@@ -31,7 +31,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <string.h>       /* String manipulation */
 #include <kerror.h>       /* Kernel errors definitions */
-#include <kerneloutput.h> /* Kernel output methods */
+#include <syslog.h>       /* Kernel Syslog */
 
 /* Configuration files */
 #include <config.h>
@@ -41,9 +41,6 @@
 
 /* Header file */
 #include <kqueue.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -108,12 +105,6 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
 {
     kqueue_node_t* pNewNode;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_CREATE_NODE_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pData),
-                       KERNEL_TRACE_LOW(pData));
-
     /* Create new node */
     pNewNode = kmalloc(sizeof(kqueue_node_t));
     if(pNewNode == NULL)
@@ -127,13 +118,6 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
         }
         else
         {
-            KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                               TRACE_KQUEUE_CREATE_NODE_EXIT,
-                               4,
-                               KERNEL_TRACE_HIGH(pData),
-                               KERNEL_TRACE_LOW(pData),
-                               KERNEL_TRACE_HIGH(pNewNode),
-                               KERNEL_TRACE_LOW(pNewNode));
             return NULL;
         }
     }
@@ -143,26 +127,11 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
     memset(pNewNode, 0, sizeof(kqueue_node_t));
     pNewNode->pData = pData;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_CREATE_NODE_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pData),
-                       KERNEL_TRACE_LOW(pData),
-                       KERNEL_TRACE_HIGH(pNewNode),
-                       KERNEL_TRACE_LOW(pNewNode));
-
     return pNewNode;
 }
 
 void kQueueInitNode(kqueue_node_t* pNode, void* pData)
 {
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_INIT_NODE_ENTRY,
-                       4,
-                       (uint32_t)(((uint64_t)(uintptr_t)pNode) >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)(((uint64_t)(uintptr_t)pData) >> 32),
-                       (uint32_t)(uintptr_t)pData);
 
     KQUEUE_ASSERT(pNode != NULL,
                   "Initializes a NULL node",
@@ -170,23 +139,10 @@ void kQueueInitNode(kqueue_node_t* pNode, void* pData)
 
     memset(pNode, 0, sizeof(kqueue_node_t));
     pNode->pData = pData;
-
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_INIT_NODE_EXIT,
-                       4,
-                       (uint32_t)(((uint64_t)(uintptr_t)pNode) >> 32),
-                       (uint32_t)(uintptr_t)pNode,
-                       (uint32_t)(((uint64_t)(uintptr_t)pData) >> 32),
-                       (uint32_t)(uintptr_t)pData);
 }
 
 void kQueueDestroyNode(kqueue_node_t** ppNode)
 {
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_DESTROY_NODE,
-                       2,
-                       KERNEL_TRACE_HIGH(ppNode),
-                       KERNEL_TRACE_LOW(ppNode));
 
     KQUEUE_ASSERT((ppNode != NULL && *ppNode != NULL),
                   "Tried to delete a NULL node",
@@ -204,10 +160,6 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
 {
     kqueue_t* pNewQueue;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_CREATE_ENTRY,
-                       0);
-
     /* Create new node */
     pNewQueue = kmalloc(sizeof(kqueue_t));
     if(pNewQueue == NULL)
@@ -221,11 +173,6 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
         }
         else
         {
-            KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                               TRACE_KQUEUE_QUEUE_CREATE_EXIT,
-                               2,
-                               KERNEL_TRACE_HIGH(pNewQueue),
-                               KERNEL_TRACE_LOW(pNewQueue));
             return NULL;
         }
     }
@@ -234,23 +181,11 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
     memset(pNewQueue, 0, sizeof(kqueue_t));
     KERNEL_SPINLOCK_INIT(pNewQueue->lock);
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_CREATE_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pNewQueue),
-                       KERNEL_TRACE_LOW(pNewQueue));
-
     return pNewQueue;
 }
 
 void kQueueDestroy(kqueue_t** ppQueue)
 {
-
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_DESTROY,
-                       2,
-                       KERNEL_TRACE_HIGH(ppQueue),
-                       KERNEL_TRACE_LOW(ppQueue));
 
     KQUEUE_ASSERT((ppQueue != NULL && *ppQueue != NULL),
                   "Tried to delete a NULL queue",
@@ -266,19 +201,14 @@ void kQueueDestroy(kqueue_t** ppQueue)
 
 void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 {
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue));
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue try push knode 0x%p in kqueue 0x%p",
-                 pNode,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue try push knode 0x%p in kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 
     KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
@@ -316,18 +246,13 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
 
     KERNEL_UNLOCK(pQueue->lock);
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue pushed knode 0x%p in kqueue 0x%p",
-                 pNode,
-                 pQueue);
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue));
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue pushed knode 0x%p in kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 }
 
 
@@ -337,20 +262,13 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 {
     kqueue_node_t* pCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_ENTRY,
-                       5,
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue),
-                       kPriority);
-
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue try push prio knode 0x%p in kqueue 0x%p",
-                 pNode,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue try push prio knode 0x%p in kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 
     KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot push with NULL knode or NULL kqueue",
@@ -412,33 +330,25 @@ void kQueuePushPrio(kqueue_node_t* pNode,
 
     KERNEL_UNLOCK(pQueue->lock);
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED, MODULE_NAME,
-                 "KQueue pushed knode 0x%p in kqueue 0x%p", pNode, pQueue);
-
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_PUSH_PRIO_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue),
-                       kPriority);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue pushed knode 0x%p in kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 }
 
 kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 {
     kqueue_node_t* pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_POP_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue));
-
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue try pop knode from kqueue 0x%p",
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue try pop knode from kqueue 0x%p",
+           pQueue);
+#endif
 
     KQUEUE_ASSERT(pQueue != NULL,
                   "Cannot pop NULL kqueue",
@@ -450,25 +360,19 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
     if(pQueue->pHead == NULL)
     {
         KERNEL_UNLOCK(pQueue->lock);
-
-        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                           TRACE_KQUEUE_QUEUE_POP_EXIT,
-                           4,
-                           NULL,
-                           NULL,
-                           KERNEL_TRACE_HIGH(pQueue),
-                           KERNEL_TRACE_LOW(pQueue));
         return NULL;
     }
 
     /* Dequeue the last item */
     pNode = pQueue->pTail;
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Pop knode 0x%p from kqueue 0x%p",
-                 pNode,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Pop knode 0x%p from kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 
     if(pNode->pPrev != NULL)
     {
@@ -490,14 +394,6 @@ kqueue_node_t* kQueuePop(kqueue_t* pQueue)
 
     KERNEL_UNLOCK(pQueue->lock);
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_POP_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue));
-
     return pNode;
 }
 
@@ -505,19 +401,13 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
 {
     kqueue_node_t* pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_FIND_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(kpData),
-                       KERNEL_TRACE_LOW(kpData),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue));
-
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue try find data 0x%p from kqueue 0x%p",
-                 kpData,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue try find data 0x%p from kqueue 0x%p",
+           kpData,
+           pQueue);
+#endif
 
     KQUEUE_ASSERT(pQueue != NULL,
                   "Cannot find in NULL kqueue",
@@ -532,23 +422,15 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
         pNode = pNode->pNext;
     }
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue found node 0x%p from kqueue 0x%p",
-                 pNode,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue found node 0x%p from kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 
     KERNEL_UNLOCK(pQueue->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_FIND_EXIT,
-                       6,
-                       KERNEL_TRACE_HIGH(kpData),
-                       KERNEL_TRACE_LOW(kpData),
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue),
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode));
 
     return pNode;
 }
@@ -557,19 +439,13 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 {
     kqueue_node_t* pCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_REMOVE_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue),
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode));
-
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue try renove knode 0x%p from kqueue 0x%p",
-                 pNode,
-                 pQueue);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue try renove knode 0x%p from kqueue 0x%p",
+           pNode,
+           pQueue);
+#endif
 
     KQUEUE_ASSERT((pNode != NULL && pQueue != NULL),
                   "Cannot remove with NULL knode or NULL kqueue",
@@ -591,15 +467,6 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
     if(pCursor == NULL)
     {
         KERNEL_UNLOCK(pQueue->lock);
-
-        KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                           TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pQueue),
-                           KERNEL_TRACE_LOW(pQueue),
-                           KERNEL_TRACE_HIGH(pNode),
-                           KERNEL_TRACE_LOW(pNode),
-                           1);
         return;
     }
 
@@ -632,19 +499,12 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     KERNEL_UNLOCK(pQueue->lock);
 
-    KERNEL_DEBUG(KQUEUE_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "KQueue renoved knode 0x%p from kqueue 0x%p",
-                 pNode, pQueue);
-
-    KERNEL_TRACE_EVENT(TRACE_KQUEUE_ENABLED,
-                       TRACE_KQUEUE_QUEUE_REMOVE_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pQueue),
-                       KERNEL_TRACE_LOW(pQueue),
-                       KERNEL_TRACE_HIGH(pNode),
-                       KERNEL_TRACE_LOW(pNode),
-                       0);
+#if KQUEUE_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "KQueue renoved knode 0x%p from kqueue 0x%p",
+           pNode, pQueue);
+#endif
 }
 
 /************************************ EOF *************************************/

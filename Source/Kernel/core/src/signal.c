@@ -27,6 +27,7 @@
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definitions */
 #include <kerror.h>       /* Kernel error codes */
+#include <syslog.h>       /* Kernel Syslog */
 #include <critical.h>     /* Critical sections */
 #include <scheduler.h>    /* Scheduler services */
 #include <kerneloutput.h> /* Kernel output */
@@ -39,9 +40,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -160,36 +158,28 @@ static void* spInitSignalHandler[THREAD_MAX_SIGNALS] = {
 
 static void _handleSignalKill(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_KILL_ENTRY,
-                       0);
 
     /* We are terminating ourselves just go to the exit point */
     schedThreadExit(schedGetCurrentThread()->terminateCause,
                     THREAD_RETURN_STATE_KILLED,
                     NULL);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_KILL_EXIT,
-                       0);
 }
 
 static void _handleSignalSegFault(void)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_SEGFAULT_ENTRY,
-                       0);
-
     pThread = schedGetCurrentThread();
 
-    KERNEL_ERROR("Segfault | Type %d: %s (%d) accessing 0x%p at 0x%p\n",
-                 pThread->errorTable.exceptionId,
-                 pThread->pName,
-                 pThread->tid,
-                 pThread->errorTable.segfaultAddr,
-                 pThread->errorTable.instAddr);
+    syslog(SYSLOG_LEVEL_ERROR,
+           MODULE_NAME,
+           "Segfault | Type %d: %s (%d) accessing 0x%p at 0x%p",
+           pThread->errorTable.exceptionId,
+           pThread->pName,
+           pThread->tid,
+           pThread->errorTable.segfaultAddr,
+           pThread->errorTable.instAddr);
+
     cpuCoreDump(pThread->errorTable.pExecVCpu);
 
 
@@ -197,89 +187,65 @@ static void _handleSignalSegFault(void)
     schedThreadExit(THREAD_TERMINATE_CAUSE_SEGFAULT,
                     THREAD_RETURN_STATE_KILLED,
                     NULL);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_SEGFAULT_EXIT,
-                       0);
 }
 
 static void _handleSignalFloatingPointExc(void)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_FPE_ENTRY,
-                       0);
-
     pThread = schedGetCurrentThread();
 
-    KERNEL_ERROR("Floating Point Exception: %s (%d) at 0x%p\n",
-                 pThread->pName,
-                 pThread->tid,
-                 pThread->errorTable.instAddr);
+    syslog(SYSLOG_LEVEL_ERROR,
+           MODULE_NAME,
+           "Floating Point Exception: %s (%d) at 0x%p",
+           pThread->pName,
+           pThread->tid,
+           pThread->errorTable.instAddr);
+
     /* We are terminating ourselves just go to the exit point */
     schedThreadExit(THREAD_TERMINATE_CAUSE_DIV_BY_ZERO,
                     THREAD_RETURN_STATE_KILLED,
                     NULL);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_FPE_EXIT,
-                       0);
 }
 
 static void _handleSignalIllegalInstructionExc(void)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_ILLEGAL_INST_ENTRY,
-                       0);
-
     pThread = schedGetCurrentThread();
 
-    KERNEL_ERROR("Illegal Instruction Exception: %s (%d) at 0x%p\n",
-                 pThread->pName,
-                 pThread->tid,
-                 pThread->errorTable.instAddr);
+    syslog(SYSLOG_LEVEL_ERROR,
+           MODULE_NAME,
+           "Illegal Instruction Exception: %s (%d) at 0x%p",
+           pThread->pName,
+           pThread->tid,
+           pThread->errorTable.instAddr);
+
     /* We are terminating ourselves just go to the exit point */
     schedThreadExit(THREAD_TERMINATE_CAUSE_ILLEGAL_INSTRUCTION,
                     THREAD_RETURN_STATE_KILLED,
                     NULL);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_ILLEGAL_INST_EXIT,
-                       0);
 }
 
 static void _handleSignalException(void)
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_EXCEPTION_ENTRY,
-                       0);
-
     pThread = schedGetCurrentThread();
 
-    KERNEL_ERROR("CPU Exception %d: %s (%d) at 0x%p\n",
-                 pThread->errorTable.exceptionId,
-                 pThread->pName,
-                 pThread->tid,
-                 pThread->errorTable.instAddr);
-    cpuManageThreadException(pThread);
+    syslog(SYSLOG_LEVEL_ERROR,
+           MODULE_NAME,
+           "CPU Exception %d: %s (%d) at 0x%p",
+           pThread->errorTable.exceptionId,
+           pThread->pName,
+           pThread->tid,
+           pThread->errorTable.instAddr);
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_HANDLE_EXCEPTION_EXIT,
-                       0);
+    cpuManageThreadException(pThread);
 }
 
 void signalInitSignals(kernel_thread_t* pThread)
 {
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_INIT_SIGNALS_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread));
 
     /* Reset signal mask */
     pThread->signal = 0;
@@ -288,32 +254,15 @@ void signalInitSignals(kernel_thread_t* pThread)
     memcpy(pThread->signalHandlers,
            spInitSignalHandler,
            sizeof(void*) * THREAD_MAX_SIGNALS);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_INIT_SIGNALS_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread));
 }
 
 void signalManage(kernel_thread_t* pThread)
 {
     int32_t i;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_MANAGE_SIGNALS_ENTRY,
-                       2,
-                       pThread->tid,
-                       pThread->signal);
-
     /* Check for no signals */
     if(pThread->signal == 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                           TRACE_SIGNAL_MANAGE_SIGNALS_EXIT,
-                           2,
-                           pThread->tid,
-                           pThread->signal);
         return;
     }
 
@@ -330,12 +279,6 @@ void signalManage(kernel_thread_t* pThread)
             break;
         }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_MANAGE_SIGNALS_EXIT,
-                       2,
-                       pThread->tid,
-                       pThread->signal);
 }
 
 OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
@@ -343,34 +286,13 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
 {
     kernel_thread_t* pThread;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_REGISTER_SIGNAL_ENTRY,
-                       3,
-                       kSignal,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler));
-
     if(pHandler == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                           TRACE_SIGNAL_REGISTER_SIGNAL_EXIT,
-                           4,
-                           kSignal,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(kSignal >= THREAD_MAX_SIGNALS)
     {
-        KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                           TRACE_SIGNAL_REGISTER_SIGNAL_EXIT,
-                           4,
-                           kSignal,
-                           KERNEL_TRACE_HIGH(pHandler),
-                           KERNEL_TRACE_LOW(pHandler),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -380,14 +302,6 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
     KERNEL_LOCK(pThread->lock);
     pThread->signalHandlers[kSignal] = (void*)pHandler;
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_REGISTER_SIGNAL_EXIT,
-                       4,
-                       kSignal,
-                       KERNEL_TRACE_HIGH(pHandler),
-                       KERNEL_TRACE_LOW(pHandler),
-                       OS_NO_ERR);
     return OS_NO_ERR;
 }
 
@@ -396,34 +310,13 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
 {
     OS_RETURN_E error;
 
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_SIGNAL_THREAD_ENTRY,
-                       3,
-                       kSignal,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread));
-
     if(pThread == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                           TRACE_SIGNAL_SIGNAL_THREAD_EXIT,
-                           4,
-                           kSignal,
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           OS_ERR_NULL_POINTER);
         return OS_ERR_NULL_POINTER;
     }
 
     if(kSignal >= THREAD_MAX_SIGNALS)
     {
-        KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                           TRACE_SIGNAL_SIGNAL_THREAD_EXIT,
-                           4,
-                           kSignal,
-                           KERNEL_TRACE_HIGH(pThread),
-                           KERNEL_TRACE_LOW(pThread),
-                           OS_ERR_INCORRECT_VALUE);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -445,14 +338,6 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
         error = OS_ERR_NO_SUCH_ID;
     }
     KERNEL_UNLOCK(pThread->lock);
-
-    KERNEL_TRACE_EVENT(TRACE_SIGNAL_ENABLED,
-                       TRACE_SIGNAL_SIGNAL_THREAD_EXIT,
-                       4,
-                       kSignal,
-                       KERNEL_TRACE_HIGH(pThread),
-                       KERNEL_TRACE_LOW(pThread),
-                       error);
 
     return error;
 }

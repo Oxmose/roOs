@@ -27,7 +27,7 @@
 #include <stdint.h>       /* Standard int types and bool_t */
 #include <kerror.h>       /* Kernel error codes */
 #include <string.h>       /* Memory manipulation */
-#include <kerneloutput.h> /* Kernel logging */
+#include <syslog.h>       /* Kernel Syslog */
 
 /* Configuration files */
 #include <config.h>
@@ -37,9 +37,6 @@
 
 /* Header file */
 #include <devtree.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -350,7 +347,6 @@ static specprop_table_t sSpecPropTable = {
 
 static inline void _linkNode(fdt_node_t* pNode, fdt_node_t* pLinkNode)
 {
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_LINK_NODE_ENTRY, 0);
 
     while(pNode->pNextNode != NULL)
     {
@@ -358,14 +354,11 @@ static inline void _linkNode(fdt_node_t* pNode, fdt_node_t* pLinkNode)
     }
     pLinkNode->pNextNode = NULL;
     pNode->pNextNode     = pLinkNode;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_LINK_NODE_EXIT, 0);
 }
 
 static inline void _linkProperty(fdt_property_t* pProp,
                                  fdt_property_t* pLinkProp)
 {
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_LINK_PROP_ENTRY, 0);
 
     while(pProp->pNextProp != NULL)
     {
@@ -373,14 +366,11 @@ static inline void _linkProperty(fdt_property_t* pProp,
     }
     pLinkProp->pNextProp = NULL;
     pProp->pNextProp     = pLinkProp;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_LINK_PROP_EXIT, 0);
 }
 
 static inline const void* _fdtInternalReadProp(const fdt_property_t* kpProperty,
                                                size_t*               pReadSize)
 {
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_READ_PROP_ENTRY, 0);
 
     if(kpProperty == NULL)
     {
@@ -388,9 +378,6 @@ static inline const void* _fdtInternalReadProp(const fdt_property_t* kpProperty,
         {
             *pReadSize = 0;
         }
-        KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                           TRACE_DEVTREE_READ_PROP_EXIT,
-                           0);
         return NULL;
     }
 
@@ -399,8 +386,6 @@ static inline const void* _fdtInternalReadProp(const fdt_property_t* kpProperty,
         *pReadSize = kpProperty->length;
     }
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_READ_PROP_EXIT, 0);
-
     return kpProperty->pCells;
 }
 
@@ -408,10 +393,6 @@ static void _applyActionPhandle(fdt_node_t*     pNode,
                                 fdt_property_t* pProperty)
 {
     phandle_t* pNewHandle;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_PHANDLE_ENTRY,
-                       0);
 
     pNewHandle = kmalloc(sizeof(phandle_t));
     if(pNewHandle == NULL)
@@ -426,15 +407,13 @@ static void _applyActionPhandle(fdt_node_t*     pNode,
     pNewHandle->pNext = sFdtDesc.pHandleList;
     sFdtDesc.pHandleList = pNewHandle;
 
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Added new handle for %s: %d",
-                 pNode->pName,
-                 pNewHandle->id);
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_PHANDLE_EXIT,
-                       0);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Added new handle for %s: %d",
+           pNode->pName,
+           pNewHandle->id);
+#endif
 }
 
 static void _applyActionAddressCells(fdt_node_t*     pNode,
@@ -442,10 +421,6 @@ static void _applyActionAddressCells(fdt_node_t*     pNode,
 {
     size_t          propertySize;
     const uint32_t* pPropertyPtr;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_ADDRCELLS_ENTRY,
-                       0);
 
     propertySize = sizeof(uint32_t);
     pPropertyPtr = _fdtInternalReadProp(pProperty, &propertySize);
@@ -455,16 +430,17 @@ static void _applyActionAddressCells(fdt_node_t*     pNode,
     }
     else
     {
-        KERNEL_ERROR("Incorrect read size in address-cells property\n");
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Incorrect read size in address-cells property");
     }
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Address size is now %d",
-                 pNode->addrCells);
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_ADDRCELLS_EXIT,
-                       0);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Address size is now %d",
+           pNode->addrCells);
+#endif
 }
 
 static void _applyActionSizeCells(fdt_node_t*     pNode,
@@ -472,10 +448,6 @@ static void _applyActionSizeCells(fdt_node_t*     pNode,
 {
     size_t          propertySize;
     const uint32_t* pPropertyPtr;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_SIZECELLS_ENTRY,
-                       0);
 
     propertySize = sizeof(uint32_t);
     pPropertyPtr = _fdtInternalReadProp(pProperty, &propertySize);
@@ -485,27 +457,23 @@ static void _applyActionSizeCells(fdt_node_t*     pNode,
     }
     else
     {
-        KERNEL_ERROR("Incorrect read size in size-cells property\n");
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Incorrect read size in size-cells property");
     }
 
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Size size is now %d",
-                 pNode->sizeCells);
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_ACTION_SIZECELLS_EXIT,
-                       0);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Size size is now %d",
+           pNode->sizeCells);
+#endif
 }
 
 static void _applyPropertyAction(fdt_node_t* pNode, fdt_property_t* pProperty)
 {
     size_t i;
     size_t propNameLength;
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_APPLY_PROP_ACTION_ENTRY,
-                       0);
 
     propNameLength = strlen(pProperty->pName);
 
@@ -519,10 +487,6 @@ static void _applyPropertyAction(fdt_node_t* pNode, fdt_property_t* pProperty)
             sSpecPropTable.pSpecProps[i].pAction(pNode, pProperty);
         }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_APPLY_PROP_ACTION_EXIT,
-                       0);
 }
 
 static fdt_property_t* _parseProperty(uint32_t*   pOffset,
@@ -533,16 +497,9 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
     size_t          length;
     const uint32_t* pInitProperty;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_PROP_ENTRY,
-                       0);
-
     /* Check if start property */
     if(FDTTOCPU32(sFdtDesc.pStructs[*pOffset]) != FDT_PROP)
     {
-        KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                           TRACE_DEVTREE_PARSE_PROP_EXIT,
-                           0);
         return NULL;
     }
     ++(*pOffset);
@@ -595,19 +552,17 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
         pProperty->pCells = NULL;
     }
 
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Read property %s of length %u",
-                 pProperty->pName,
-                 pProperty->length);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Read property %s of length %u",
+           pProperty->pName,
+           pProperty->length);
+#endif
 
     *pOffset += ALIGN(pProperty->length, FDT_CELL_SIZE) / FDT_CELL_SIZE;
 
     _applyPropertyAction(pNode, pProperty);
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_PROP_EXIT,
-                       0);
 
     return pProperty;
 }
@@ -628,16 +583,9 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
     size_t          i;
     bool_t          isResMem;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_NODE_ENTRY,
-                       0);
-
     /* Check if start node */
     if(FDTTOCPU32(sFdtDesc.pStructs[*pOffset]) != FDT_BEGIN_NODE)
     {
-        KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                           TRACE_DEVTREE_PARSE_NODE_EXIT,
-                           0);
         return NULL;
     }
 
@@ -672,7 +620,9 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
 
     isResMem = (strcmp(pNode->pName, "reserved-memory") == 0);
 
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED, MODULE_NAME, "Read node %s", pNode->pName);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Read node %s", pNode->pName);
+#endif
 
     /* Update offset */
     *pOffset += ALIGN(length + 1, FDT_CELL_SIZE) / FDT_CELL_SIZE;
@@ -738,11 +688,14 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
 
                         pMemNode->pNextNode = NULL;
 
-                        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                                    MODULE_NAME,
-                                    "Adding memory region at 0x%p of size 0x%x",
-                                    pMemNode->baseAddress,
-                                    pMemNode->size);
+#if DTB_DEBUG_ENABLED
+                        syslog(SYSLOG_LEVEL_DEBUG,
+                               MODULE_NAME,
+                               "Adding memory region at 0x%p of size 0x%x",
+                               pMemNode->baseAddress,
+                               pMemNode->size);
+#endif
+
                         if(sFdtDesc.pFirstMemoryNode != NULL)
                         {
                             pMemNodeCursor = sFdtDesc.pFirstMemoryNode;
@@ -777,12 +730,15 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
 
                         pMemNode->pNextNode = NULL;
 
-                        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                                    MODULE_NAME,
-                                    "Adding reserved memory region at 0x%p of "
-                                    "size 0x%x",
-                                    pMemNode->baseAddress,
-                                    pMemNode->size);
+#if DTB_DEBUG_ENABLED
+                        syslog(SYSLOG_LEVEL_DEBUG,
+                               MODULE_NAME,
+                               "Adding reserved memory region at 0x%p of "
+                               "size 0x%x",
+                               pMemNode->baseAddress,
+                               pMemNode->size);
+#endif
+
                         if(sFdtDesc.pFirstReservedMemoryNode != NULL)
                         {
                             pMemNodeCursor = sFdtDesc.pFirstReservedMemoryNode;
@@ -805,22 +761,15 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
             ++(*pOffset);
             if(cursor == FDT_END_NODE)
             {
-                KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                                   TRACE_DEVTREE_PARSE_NODE_EXIT,
-                                   0);
                 return pNode;
             }
         }
     }
 
-    KERNEL_ERROR("Unexpected end of node\n");
+    syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, "Unexpected end of node");
 
     kfree(pNode->pName);
     kfree(pNode);
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_NODE_EXIT,
-                       0);
 
     return NULL;
 }
@@ -833,29 +782,31 @@ static void _parseReservedMemory(void)
     fdt_mem_node_t* pNode;
     fdt_mem_node_t* pNodeCursor;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_RESERVED_MEM_ENTRY,
-                       0);
-
     /* Register the first node */
     pCursor = (uint64_t*)sFdtDesc.pResMemory;
     startAddr = (uintptr_t)FDTTOCPU64(pCursor[0]);
     size      = (uintptr_t)FDTTOCPU64(pCursor[1]);
 
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Parsing reserved memory regions at 0x%p with 0x%p 0x%p",
-                 sFdtDesc.pResMemory,
-                 startAddr,
-                 size);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Parsing reserved memory regions at 0x%p with 0x%p 0x%p",
+           sFdtDesc.pResMemory,
+           startAddr,
+           size);
+#endif
 
     while(startAddr != 0 && size != 0)
     {
-        KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Adding reserved memory region at 0x%p of size 0x%x",
-                     startAddr,
-                     size);
+
+#if DTB_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Adding reserved memory region at 0x%p of size 0x%x",
+               startAddr,
+               size);
+#endif
+
         pNode = kmalloc(sizeof(fdt_mem_node_t));
         if(pNode == NULL)
         {
@@ -887,10 +838,6 @@ static void _parseReservedMemory(void)
         startAddr = (uintptr_t)FDTTOCPU64(pCursor[0]);
         size      = (uintptr_t)FDTTOCPU64(pCursor[1]);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_PARSE_RESERVED_MEM_EXIT,
-                       0);
 }
 
 static const fdt_node_t* _findFdtNode(const fdt_node_t* kpRootNode,
@@ -926,12 +873,12 @@ void fdtInit(const uintptr_t kStartAddr)
     const fdt_header_t* pHeader;
     fdt_node_t*         pNode;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_INIT_ENTRY, 0);
-
-    KERNEL_DEBUG(DTB_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Initializing device tree from 0x%p",
-                 kStartAddr);
+#if DTB_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Initializing device tree from 0x%p",
+           kStartAddr);
+#endif
 
     pHeader = (fdt_header_t*)kStartAddr;
 
@@ -976,8 +923,6 @@ void fdtInit(const uintptr_t kStartAddr)
     }
 
     TEST_POINT_FUNCTION_CALL(devtreeTest, TEST_DEVTREE_ENABLED);
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_INIT_EXIT, 0);
 }
 
 const void* fdtGetProp(const fdt_node_t* pkFdtNode,
@@ -987,17 +932,12 @@ const void* fdtGetProp(const fdt_node_t* pkFdtNode,
     const fdt_property_t* pProp;
     void*                 retVal;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_GET_PROP_ENTRY, 0);
-
     if(pkFdtNode == NULL || pkName == NULL)
     {
         if(pReadSize != NULL)
         {
             *pReadSize = 0;
         }
-        KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                           TRACE_DEVTREE_GET_PROP_EXIT,
-                           0);
         return NULL;
     }
 
@@ -1031,8 +971,6 @@ const void* fdtGetProp(const fdt_node_t* pkFdtNode,
 
         pProp = pProp->pNextProp;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_GET_PROP_EXIT, 0);
 
     return retVal;
 }
@@ -1085,24 +1023,15 @@ const fdt_node_t* fdtGetNodeByHandle(const uint32_t kHandleId)
 {
     const phandle_t* pHandle;
 
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                       TRACE_DEVTREE_GET_HANDLE_ENTRY,
-                       0);
-
     pHandle = sFdtDesc.pHandleList;
     while(pHandle != NULL)
     {
         if(pHandle->id == kHandleId)
         {
-            KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED,
-                               TRACE_DEVTREE_GET_HANDLE_EXIT,
-                               0);
             return (fdt_node_t*)pHandle->pLink;
         }
         pHandle = pHandle->pNext;
     }
-
-    KERNEL_TRACE_EVENT(TRACE_DEVTREE_ENABLED, TRACE_DEVTREE_GET_PROP_EXIT, 0);
 
     return NULL;
 }

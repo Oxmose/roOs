@@ -45,9 +45,6 @@
 /* Unit test header */
 #include <test_framework.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -442,12 +439,6 @@ static void _panicNoSched(void)
     uint64_t       uptime;
     uintptr_t*     lastRBP;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_CPU_KERNEL_PANIC_HANDLER,
-                       2,
-                       0,
-                       sPanicCode);
-
     interruptDisable();
 
     cpuId = cpuGetId();
@@ -527,12 +518,6 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     time_t         currTime;
     uint64_t       uptime;
     ipi_params_t   ipiParams;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_CPU_KERNEL_PANIC_HANDLER,
-                       2,
-                       ((virtual_cpu_t*)(pCurrThread->pVCpu))->intContext.intId,
-                       sPanicCode);
 
     interruptDisable();
 
@@ -640,11 +625,6 @@ void kernelPanic(const uint32_t kErrorCode,
                  const char*    kpFile,
                  const size_t   kLine)
 {
-
-    KERNEL_TRACE_EVENT(TRACE_X86_CPU_ENABLED,
-                       TRACE_CPU_KERNEL_PANIC,
-                       1,
-                       kErrorCode);
 
     /* We don't need interrupt anymore */
     interruptDisable();

@@ -452,8 +452,6 @@ void kHeapInit(void)
     uint32_t     len;
     int32_t      n;
 
-    /* TODO: Add trace event here */
-
     void*    pMem      = &_KERNEL_HEAP_BASE;
     uint32_t size      = (uint32_t)(uintptr_t)&_KERNEL_HEAP_SIZE;
     int8_t*  pMemStart = (int8_t*)
@@ -492,9 +490,7 @@ void kHeapInit(void)
 
     sInit = TRUE;
 
-    /* TODO: Add trace event here */
-
-    KERNEL_DEBUG(KHEAP_DEBUG_ENABLED, "KHEAP",
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED, "KHEAP",
                  "Kernel Heap Initialized at 0x%p", pMemStart);
 
     TEST_POINT_FUNCTION_CALL(kheapTest, TEST_KHEAP_ENABLED);
@@ -508,14 +504,7 @@ void* kmalloc(size_t size)
     size_t       size2;
     size_t       len;
 
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_MALLOC_ENTRY,
-                       3,
-                       (uint32_t)((uint64_t)size >> 32),
-                       (uint32_t)size,
-                       sMemFree);
-
-    KERNEL_DEBUG(KHEAP_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
                  "KHEAP",
                  "Kheap allocating %uB (%uB free, %uB used)",
                  size,
@@ -524,14 +513,6 @@ void* kmalloc(size_t size)
 
     if(sInit == FALSE || size == 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                           TRACE_KHEAP_MALLOC_EXIT,
-                           3,
-                           (uint32_t)((uint64_t)size >> 32),
-                           (uint32_t)size,
-                           NULL,
-                           NULL,
-                           sMemFree);
         return NULL;
     }
 
@@ -558,14 +539,6 @@ void* kmalloc(size_t size)
         if (n >= NUM_SIZES)
         {
             KERNEL_UNLOCK(sLock);
-            KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                               TRACE_KHEAP_MALLOC_EXIT,
-                               5,
-                               (uint32_t)((uint64_t)size >> 32),
-                               (uint32_t)size,
-                               NULL,
-                               NULL,
-                               sMemFree);
             return NULL;
         }
     }
@@ -595,7 +568,7 @@ void* kmalloc(size_t size)
 
     sMemFree -= size2;
 
-    KERNEL_DEBUG(KHEAP_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
                  "KHEAP",
                  "Kheap allocated 0x%p -> %uB (%uB free, %uB used)",
                  pChunk->pData,
@@ -604,15 +577,6 @@ void* kmalloc(size_t size)
                  sKheapInitFree - sMemFree);
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_MALLOC_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(size),
-                       KERNEL_TRACE_LOW(size),
-                       KERNEL_TRACE_HIGH(pChunk->pData),
-                       KERNEL_TRACE_LOW(pChunk->pData)
-                       sMemFree);
 
     return pChunk->pData;
 }
@@ -627,22 +591,8 @@ void kfree(void* ptr)
     uint32_t     used;
 #endif
 
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_FREE_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(ptr),
-                       KERNEL_TRACE_LOW(ptr),
-                       sMemFree);
-
     if(sInit == FALSE || ptr == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                           TRACE_KHEAP_FREE_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(ptr),
-                           KERNEL_TRACE_LOW(ptr),
-                           -1,
-                           sMemFree);
         return;
     }
 
@@ -681,7 +631,7 @@ void kfree(void* ptr)
         _pushFree(pChunk);
     }
 #if KHEAP_DEBUG_ENABLED
-    KERNEL_DEBUG(KHEAP_DEBUG_ENABLED,
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
                  "KHEAP",
                  "[KHEAP] Kheap freed 0x%p -> %uB",
                  ptr,
@@ -689,14 +639,6 @@ void kfree(void* ptr)
 #endif
 
     KERNEL_UNLOCK(sLock);
-
-    KERNEL_TRACE_EVENT(TRACE_KHEAP_ENABLED,
-                       TRACE_KHEAP_FREE_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(ptr),
-                       KERNEL_TRACE_LOW(ptr),
-                       KERNEL_TRACE_HIGH(sMemFree),
-                       KERNEL_TRACE_LOW(sMemFree));
 }
 
 uint32_t kHeapGetFree(void)

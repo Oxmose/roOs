@@ -32,12 +32,12 @@
 #include <kheap.h>        /* Kernel heap */
 #include <stdint.h>       /* Generic int types */
 #include <string.h>       /* String manipualtion */
+#include <syslog.h>       /* Kernel Syslog */
 #include <kerror.h>       /* Kernel error */
 #include <memory.h>       /* Memory manager */
 #include <devtree.h>      /* FDT driver */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
@@ -47,9 +47,6 @@
 
 /* Unit test header */
 #include <test_framework.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -260,8 +257,7 @@ static inline void _ioapicWrite(const io_apic_controler_t* kpCtrl,
 /** @brief PIC driver instance. */
 static driver_t sX86IOAPICDriver = {
     .pName         = "X86 IO-APIC Driver",
-    .pDescription  = "X86 Advanced Programable Interrupt Controler Driver for"
-                     " roOs",
+    .pDescription  = "X86 IO-APIC Driver for roOs",
     .pCompatible   = "x86,x86-io-apic",
     .pVersion      = "2.0",
     .pDriverAttach = _ioapicAttach
@@ -303,10 +299,6 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     uint32_t              ioapicVerRegister;
     uintptr_t             ioApicPhysAddr;
     size_t                toMap;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_ATTACH_ENTRY,
-                       0);
 
     retCode = OS_NO_ERR;
 
@@ -357,21 +349,24 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
     /* Set IRQ EOI for delegated by the LAPIC */
     sIOAPICDriver.pSetIrqEOI = pLapicDriver->pSetIrqEOI;
 
-    /* Get the IOAPICs */
-    KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Attaching %d IOAPICs",
-                  skpACPIDriver->pGetIOAPICCount());
+#if IOAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Attaching %d IOAPICs",
+           skpACPIDriver->pGetIOAPICCount());
+#endif
 
+    /* Get the IOAPICs */
     kpIOAPICNode = skpACPIDriver->pGetIOAPICList();
     while(kpIOAPICNode != NULL)
     {
-        KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Attaching IOAPIC with ID %d at 0x%p",
-                     kpIOAPICNode->ioApic.ioApicId,
-                     kpIOAPICNode->ioApic.ioApicAddr);
-
+#if IOAPIC_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Attaching IOAPIC with ID %d at 0x%p",
+               kpIOAPICNode->ioApic.ioApicId,
+               kpIOAPICNode->ioApic.ioApicAddr);
+#endif
         pNewDrvCtrl = kmalloc(sizeof(io_apic_controler_t));
         if(pNewDrvCtrl == NULL)
         {
@@ -413,22 +408,24 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
         pNewDrvCtrl->gsil = pNewDrvCtrl->gsil + 1 +
             ((ioapicVerRegister & IOAPIC_REDIR_MASK) >> IOAPIC_REDIR_SHIFT);
 
-        KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "IOAPIC ID %d:\n"
-                     "\tPhysical Address: 0x%p\n"
-                     "\tVirtual Address: 0x%p\n"
-                     "\tIdentifier: %d\n"
-                     "\tVersion: %d\n"
-                     "\tMin IRQ: %d\n"
-                     "\tIRQ Limit: %d\n",
-                     pNewDrvCtrl->identifier,
-                     kpIOAPICNode->ioApic.ioApicAddr,
-                     pNewDrvCtrl->baseAddr,
-                     pNewDrvCtrl->identifier,
-                     pNewDrvCtrl->version,
-                     pNewDrvCtrl->gsib,
-                     pNewDrvCtrl->gsil);
+#if IOAPIC_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "IOAPIC ID %d:\n"
+               "\tPhysical Address: 0x%p\n"
+               "\tVirtual Address: 0x%p\n"
+               "\tIdentifier: %d\n"
+               "\tVersion: %d\n"
+               "\tMin IRQ: %d\n"
+               "\tIRQ Limit: %d",
+               pNewDrvCtrl->identifier,
+               kpIOAPICNode->ioApic.ioApicAddr,
+               pNewDrvCtrl->baseAddr,
+               pNewDrvCtrl->identifier,
+               pNewDrvCtrl->version,
+               pNewDrvCtrl->gsib,
+               pNewDrvCtrl->gsil);
+#endif
 
         /* Disable all IRQ for this  IOAPIC */
         for(i = pNewDrvCtrl->gsib; i < pNewDrvCtrl->gsil; ++i)
@@ -462,21 +459,20 @@ ATTACH_END:
                 if(memoryKernelUnmap((void*)spDrvCtrl->baseAddr,
                                      spDrvCtrl->mappingSize))
                 {
-                    KERNEL_ERROR("Failed to unmap IO-APIC memory\n");
+                    syslog(SYSLOG_LEVEL_ERROR,
+                           MODULE_NAME,
+                           "Failed to unmap IO-APIC memory");
                 }
             }
             spDrvCtrl = pNewDrvCtrl;
         }
     }
 
-    KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "IO-APIC Initialization end");
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
+#if IOAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "IO-APIC Initialization end");
+#endif
 
     return retCode;
 }
@@ -486,17 +482,13 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
     uint32_t             remapIrq;
     io_apic_controler_t* pCtrl;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_ENTRY,
-                       2,
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
-
-    KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Request to mask IRQ %d: %d",
-                 kIrqNumber,
-                 (uint32_t)kEnabled);
+#if IOAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Request to mask IRQ %d: %d",
+           kIrqNumber,
+           (uint32_t)kEnabled);
+#endif
 
     /* Get the remapped IRQ */
     remapIrq = skpACPIDriver->pGetRemapedIrq(kIrqNumber);
@@ -515,12 +507,6 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
     IOAPIC_ASSERT(pCtrl != NULL, "No such IRQ", OS_ERR_NO_SUCH_IRQ);
 
     _ioapicSetIrqMaskFor(pCtrl, remapIrq, kEnabled);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_EXIT,
-                       2,
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
 }
 
 static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
@@ -529,14 +515,6 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
 {
     uint32_t entryLow;
     uint32_t remapIrq;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pCtrl),
-                       KERNEL_TRACE_LOW(pCtrl),
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
 
     IOAPIC_ASSERT(kIrqNumber >= pCtrl->gsib && kIrqNumber < pCtrl->gsil,
                   "No such IRQ for current IOAPIC",
@@ -557,30 +535,19 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
     }
     _ioapicWrite(pCtrl, IOREDTBLXL(remapIrq), entryLow);
 
-    KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Mask IRQ %d (%d): %d",
-                 kIrqNumber,
-                 remapIrq,
-                 (uint32_t)kEnabled);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_SET_IRQ_MASK_FOR_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(pCtrl),
-                       KERNEL_TRACE_LOW(pCtrl),
-                       kIrqNumber,
-                       (uint32_t)kEnabled);
+#if IOAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Mask IRQ %d (%d): %d",
+           kIrqNumber,
+           remapIrq,
+           (uint32_t)kEnabled);
+#endif
 }
 
 static INTERRUPT_TYPE_E _ioapicHandleSpurious(const uint32_t kIntNumber)
 {
     INTERRUPT_TYPE_E intType;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_HANDLE_SPURIOUS_ENTRY,
-                       1,
-                       kIntNumber);
 
     intType = INTERRUPT_TYPE_REGULAR;
 
@@ -591,17 +558,13 @@ static INTERRUPT_TYPE_E _ioapicHandleSpurious(const uint32_t kIntNumber)
         intType = INTERRUPT_TYPE_SPURIOUS;
     }
 
-    KERNEL_DEBUG(IOAPIC_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Spurious IRQ ? %d : %d",
-                 kIntNumber,
-                 intType);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_HANDLE_SPURIOUS_EXIT,
-                       2,
-                       kIntNumber,
-                       intType);
+#if IOAPIC_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Spurious IRQ ? %d : %d",
+           kIntNumber,
+           intType);
+#endif
 
     return intType;
 }
@@ -610,18 +573,7 @@ static int32_t _ioapicGetInterruptLine(const uint32_t kIrqNumber)
 {
     uint32_t remapIrq;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_GET_INT_LINE_ENTRY,
-                       1,
-                       kIrqNumber);
-
     remapIrq = skpACPIDriver->pGetRemapedIrq(kIrqNumber);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_IOAPIC_ENABLED,
-                       TRACE_X86_IOAPIC_GET_INT_LINE_EXIT,
-                       2,
-                       kIrqNumber,
-                       sIntOffset + remapIrq);
 
     return sIntOffset + remapIrq;
 }

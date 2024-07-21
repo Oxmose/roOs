@@ -23,29 +23,28 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>           /* Virtual File System*/
+#include <ioctl.h>         /* IOCTL commands */
 #include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
-#include <x86cpu.h>       /* CPU port manipulation */
+#include <x86cpu.h>        /* CPU port manipulation */
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipualtion */
 #include <kerror.h>        /* Kernel error */
 #include <memory.h>        /* Memory manager */
+#include <syslog.h>        /* Kernel Syslog */
 #include <devtree.h>       /* Device tree */
 #include <console.h>       /* Console driver manager */
 #include <critical.h>      /* Kernel locks */
 #include <time_mgt.h>      /* Time manager */
 #include <drivermgr.h>     /* Driver manager service */
 #include <scheduler.h>     /* Kernel scheduler */
-#include <kerneloutput.h>  /* Kernel output manager */
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
 #include <vesa.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -60,12 +59,13 @@
 #define VESA_FDT_DEPTH_PROP "depth"
 /** @brief FDT property for refresh rate */
 #define VESA_FDT_REFRESH_PROP "refresh-rate"
+/** @brief FDT property for device path */
+#define VESA_FDT_DEVICE_PROP "device"
 
 /** @brief Defines the height in pixel of a character for the VESA driver */
 #define VESA_TEXT_CHAR_HEIGHT sVesaFontHeight
 /** @brief Defines the width in pixel of a character for the VESA driver */
 #define VESA_TEXT_CHAR_WIDTH sVesaFontWidth
-
 
 /** @brief Defines the VESA BIOS call interrupt */
 #define VESA_BIOS_CALL_INT 0x10
@@ -285,6 +285,9 @@ typedef struct
     /** @brief Display thread */
     kernel_thread_t* pDisplayThread;
 
+    /** @brief Stores the VFS driver */
+    vfs_driver_t vfsDriver;
+
     /** @brief Refresh rate */
     uint32_t refreshRate;
 } vesa_controler_t;
@@ -440,21 +443,6 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter);
 static void _vesaClearFramebuffer(void* pDriverCtrl);
 
 /**
- * @brief Places the cursor to the selected coordinates given as parameters.
- *
- * @details Places the screen cursor to the coordinated described with the
- * parameters. The function will check the boundaries or the position parameters
- * before setting the cursor position.
- *
- * @param[in, out] pDriverCtrl The VESA driver controler to use.
- * @param[in] kLine The line index where to place the cursor.
- * @param[in] column The column index where to place the cursor.
- */
-static void _vesaPutCursor(void*          pDriverCtrl,
-                           const uint32_t kLine,
-                           const uint32_t kColumn);
-
-/**
  * @brief Saves the cursor attributes in the buffer given as parameter.
  *
  * @details Fills the buffer given as parrameter with the current cursor
@@ -535,30 +523,6 @@ static void _vesaSetScheme(void*                pDriverCtrl,
  * color scheme used by the screen console.
  */
 static void _vesaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer);
-
-/**
- * ­@brief Put a string to screen.
- *
- * @details The function will display the string given as parameter to the
- * screen.
- *
- * @param[in, out] pDriverCtrl The VESA driver controler to use.
- * @param[in] kpString The string to display on the screen.
- *
- * @warning kpString must be NULL terminated.
- */
-static void _vesaPutString(void* pDriverCtrl, const char* kpString);
-
-/**
- * ­@brief Put a character to screen.
- *
- * @details The function will display the character given as parameter to the
- * screen.
- *
- * @param[in, out] pDriverCtrl The VESA driver controler to use.
- * @param[in] kCharacter The char to display on the screen.
- */
-static void _vesaPutChar(void* pDriverCtrl, const char kCharacter);
 
 /**
  * @brief Places the cursor to the selected coordinates given as parameters.
@@ -669,6 +633,77 @@ static OS_RETURN_E _vesaDrawPixel(void*          pCtrl,
  */
 static void _vesaFlush(void* pDriverCtrl);
 
+/**
+ * @brief VESA VFS open hook.
+ *
+ * @details VESA VFS open hook. This function returns a handle to control the
+ * VESA driver through VFS.
+ *
+ * @param[in, out] pDrvCtrl The VESA driver that was registered in the VFS.
+ * @param[in] kpPath The path in the VESA driver mount point.
+ * @param[in] flags The open flags, must be O_RDWR.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _vesaVfsOpen(void*       pDrvCtrl,
+                          const char* kpPath,
+                          int         flags,
+                          int         mode);
+
+/**
+ * @brief VESA VFS close hook.
+ *
+ * @details VESA VFS close hook. This function closes a handle that was created
+ * when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The VESA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vesaVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief VESA VFS write hook.
+ *
+ * @details VESA VFS write hook. This function writes a string to the VESA
+ * framebuffer.
+ *
+ * @param[in, out] pDrvCtrl The VESA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
+                             void*       pHandle,
+                             const void* kpBuffer,
+                             size_t      count);
+
+/**
+ * @brief VESA VFS IOCTL hook.
+ *
+ * @details VESA VFS IOCTL hook. This function performs the IOCTL for the VESA
+ * driver.
+ *
+ * @param[in, out] pDrvCtrl The VESA driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vesaVfsIOCTL(void*    pDriverData,
+                             void*    pHandle,
+                             uint32_t operation,
+                             void*    pArgs);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -709,52 +744,26 @@ static const uint32_t vgaColorTable[16] = {
     0xFFFFFFFF
 };
 
-
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
 {
-    const uint32_t*    kpUintProp;
-    size_t             propLen;
-    OS_RETURN_E        retCode;
-    OS_RETURN_E        error;
-    vesa_controler_t*  pDrvCtrl;
-    console_driver_t*  pConsoleDrv;
-    graphics_driver_t* pGraphDrv;
-    colorscheme_t      initScheme;
-    vbe_mode_t*        pModeNode;
-    vbe_mode_t*        pSaveNode;
-    uint32_t           width;
-    uint32_t           height;
-    uint32_t           depth;
-    kgeneric_driver_t* pGenericDriver;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_VESA_ENABLED,
-                       TRACE_X86_VESA_ATTACH_ENTRY,
-                       0);
-
-    pDrvCtrl    = NULL;
-    pConsoleDrv = NULL;
-    pGraphDrv   = NULL;
-    pGenericDriver = NULL;
+    const uint32_t*   kpUintProp;
+    const char*       kpStrProp;
+    size_t            propLen;
+    OS_RETURN_E       retCode;
+    OS_RETURN_E       error;
+    vesa_controler_t* pDrvCtrl;
+    colorscheme_t     initScheme;
+    vbe_mode_t*       pModeNode;
+    vbe_mode_t*       pSaveNode;
+    uint32_t          width;
+    uint32_t          height;
+    uint32_t          depth;
 
     /* Init structures */
-    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
-    if(pGenericDriver == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
-    pGraphDrv = kmalloc(sizeof(graphics_driver_t));
-    if(pGraphDrv == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pGraphDrv, 0, sizeof(graphics_driver_t));
     pDrvCtrl = kmalloc(sizeof(vesa_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -762,34 +771,7 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vesa_controler_t));
-
-    pConsoleDrv = kmalloc(sizeof(console_driver_t));
-    if(pConsoleDrv == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pConsoleDrv, 0, sizeof(console_driver_t));
-    pConsoleDrv->outputDriver.pClear           = _vesaClearFramebuffer;
-    pConsoleDrv->outputDriver.pPutCursor       = _vesaPutCursor;
-    pConsoleDrv->outputDriver.pSaveCursor      = _vesaSaveCursor;
-    pConsoleDrv->outputDriver.pRestoreCursor   = _vesaRestoreCursor;
-    pConsoleDrv->outputDriver.pScroll          = _vesaScroll;
-    pConsoleDrv->outputDriver.pSetColorScheme  = _vesaSetScheme;
-    pConsoleDrv->outputDriver.pSaveColorScheme = _vesaSaveScheme;
-    pConsoleDrv->outputDriver.pPutString       = _vesaPutString;
-    pConsoleDrv->outputDriver.pPutChar         = _vesaPutChar;
-    pConsoleDrv->outputDriver.pFlush           = _vesaFlush;
-    pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
-    pConsoleDrv->inputDriver.pRead             = NULL;
-    pConsoleDrv->inputDriver.pEcho             = NULL;
-    pConsoleDrv->inputDriver.pDriverCtrl       = pDrvCtrl;
-
-    pGraphDrv->pDrawPixel = _vesaDrawPixel;
-    pGraphDrv->pDriverCtrl = pDrvCtrl;
-
-    pGenericDriver->pConsoleDriver = pConsoleDrv;
-    pGenericDriver->pGraphicsDriver = pGraphDrv;
+    pDrvCtrl->vfsDriver = VFS_DRIVER_INVALID;
 
     /* Get the resolution */
     kpUintProp = fdtGetProp(pkFdtNode, VESA_FDT_RES_PROP, &propLen);
@@ -818,14 +800,15 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
     }
     pDrvCtrl->refreshRate  = FDTTOCPU32(*kpUintProp);
 
-    KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Resolution: %dx%d | Depth: %d | Rate %dHz",
-                 width,
-                 height,
-                 depth,
-                 pDrvCtrl->refreshRate);
-
+#if VESA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Resolution: %dx%d | Depth: %d | Rate %dHz",
+           width,
+           height,
+           depth,
+           pDrvCtrl->refreshRate);
+#endif
 
     /* Get the VESA modes */
     retCode = _vesaGetVBEInfo(pDrvCtrl);
@@ -867,10 +850,32 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
     initScheme.foreground = FG_WHITE;
     _vesaSetScheme(pDrvCtrl, &initScheme);
 
-    /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
+    /* Get the device path */
+    kpStrProp = fdtGetProp(pkFdtNode, VESA_FDT_DEVICE_PROP, &propLen);
+    if(kpStrProp == NULL || propLen  == 0)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
 
-    KERNEL_DEBUG(VESA_DEBUG_ENABLED, MODULE_NAME, "VESA driver initialized");
+    /* Register the driver */
+    pDrvCtrl->vfsDriver = vfsRegisterDriver(kpStrProp,
+                                            pDrvCtrl,
+                                            _vesaVfsOpen,
+                                            _vesaVfsClose,
+                                            NULL,
+                                            _vesaVfsWrite,
+                                            NULL,
+                                            _vesaVfsIOCTL);
+    if(pDrvCtrl->vfsDriver == VFS_DRIVER_INVALID)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
+
+#if VESA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "VESA driver initialized");
+#endif
 
 ATTACH_END:
     if(retCode != OS_NO_ERR)
@@ -908,27 +913,20 @@ ATTACH_END:
                     PANIC(error, MODULE_NAME, "Failed to unmap memory");
                 }
             }
+            if(pDrvCtrl->vfsDriver != VFS_DRIVER_INVALID)
+            {
+                error = vfsUnregisterDriver(&pDrvCtrl->vfsDriver);
+                if(error != OS_NO_ERR)
+                {
+                    PANIC(error,
+                          MODULE_NAME,
+                          "Failed to unregister VFS driver");
+                }
+            }
 
             kfree(pDrvCtrl);
         }
-        if(pConsoleDrv != NULL)
-        {
-            kfree(pConsoleDrv);
-        }
-        if(pGenericDriver != NULL)
-        {
-            kfree(pGenericDriver);
-        }
-        if(pGraphDrv != NULL)
-        {
-            kfree(pGraphDrv);
-        }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_VESA_ENABLED,
-                       TRACE_X86_VESA_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
 
     return retCode;
 }
@@ -960,15 +958,20 @@ static OS_RETURN_E _vesaGetVBEInfo(vesa_controler_t* pDrvCtrl)
     if(biosRegs.ax != VESA_BIOS_CALL_RETURN_OK ||
        strncmp(pDrvCtrl->vbeInfo.pSignature, "VESA", 4) != 0)
     {
-        KERNEL_ERROR("VESA Bios call failed: 0x%x\n", biosRegs.ax);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "VESA Bios call failed: 0x%x",
+               biosRegs.ax);
         return OS_ERR_INCORRECT_VALUE;
     }
 
     /* Check compatibility */
     if(pDrvCtrl->vbeInfo.version < 0x200)
     {
-        KERNEL_ERROR("VESA VBE Version incompatible: 0x%x\n",
-                     pDrvCtrl->vbeInfo.version);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "VESA VBE Version incompatible: 0x%x",
+               pDrvCtrl->vbeInfo.version);
         return OS_ERR_INCORRECT_VALUE;
     }
 
@@ -991,7 +994,10 @@ static OS_RETURN_E _vesaGetVBEInfo(vesa_controler_t* pDrvCtrl)
                               &error);
     if(error != OS_NO_ERR || oemData == NULL)
     {
-        KERNEL_ERROR("Failed to map OEM data\n", error);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to map OEM data",
+               error);
         return error;
     }
 
@@ -1003,7 +1009,10 @@ static OS_RETURN_E _vesaGetVBEInfo(vesa_controler_t* pDrvCtrl)
     error = memoryKernelUnmap(oemData, toMap);
     if(error != OS_NO_ERR)
     {
-        KERNEL_ERROR("Failed to unmap OEM data\n", error);
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to unmap OEM data",
+               error);
         return error;
     }
 
@@ -1013,33 +1022,36 @@ static OS_RETURN_E _vesaGetVBEInfo(vesa_controler_t* pDrvCtrl)
     pDrvCtrl->vbeInfo.vendor -= pDrvCtrl->vbeInfo.oem;
     pDrvCtrl->vbeInfo.oem = 0;
     pDrvCtrl->vbeInfo.videoModes = pDrvCtrl->vbeInfo.videoModes - initLoc;
-    KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "VESA Get Info Table (initial location 0x%x):\n"
-                 "\tSignature: %c%c%c%c\n"
-                 "\tVersion: 0x%x\n"
-                 "\tOEM: %s\n"
-                 "\tCapabilities: 0x%x\n"
-                 "\tVideo Modes Ptr: 0x%p\n"
-                 "\tTotal Memory: 0x%x\n"
-                 "\tSoftware Rev.: %d\n"
-                 "\tVendor: %s\n"
-                 "\tProduct Name: %s\n"
-                 "\tProvuct Rev.: %s\n",
-                 initLoc,
-                 pDrvCtrl->vbeInfo.pSignature[0],
-                 pDrvCtrl->vbeInfo.pSignature[1],
-                 pDrvCtrl->vbeInfo.pSignature[2],
-                 pDrvCtrl->vbeInfo.pSignature[3],
-                 pDrvCtrl->vbeInfo.version,
-                 &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.oem],
-                 pDrvCtrl->vbeInfo.capabilities,
-                 pDrvCtrl->vbeInfo.videoModes,
-                 pDrvCtrl->vbeInfo.totalMemory,
-                 pDrvCtrl->vbeInfo.softwareRev,
-                 &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.vendor],
-                 &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.productName],
-                 &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.productRev]);
+
+#if VESA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "VESA Get Info Table (initial location 0x%x):\n"
+           "\tSignature: %c%c%c%c\n"
+           "\tVersion: 0x%x\n"
+           "\tOEM: %s\n"
+           "\tCapabilities: 0x%x\n"
+           "\tVideo Modes Ptr: 0x%p\n"
+           "\tTotal Memory: 0x%x\n"
+           "\tSoftware Rev.: %d\n"
+           "\tVendor: %s\n"
+           "\tProduct Name: %s\n"
+           "\tProvuct Rev.: %s",
+           initLoc,
+           pDrvCtrl->vbeInfo.pSignature[0],
+           pDrvCtrl->vbeInfo.pSignature[1],
+           pDrvCtrl->vbeInfo.pSignature[2],
+           pDrvCtrl->vbeInfo.pSignature[3],
+           pDrvCtrl->vbeInfo.version,
+           &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.oem],
+           pDrvCtrl->vbeInfo.capabilities,
+           pDrvCtrl->vbeInfo.videoModes,
+           pDrvCtrl->vbeInfo.totalMemory,
+           pDrvCtrl->vbeInfo.softwareRev,
+           &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.vendor],
+           &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.productName],
+           &pDrvCtrl->vbeInfo.oemData[pDrvCtrl->vbeInfo.productRev]);
+#endif
 
     return OS_NO_ERR;
 }
@@ -1068,10 +1080,12 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
         pModeId[i] != 0xFFFF;
         ++i)
     {
-        KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "Processing Video Mode 0x%x\n",
-                     pModeId[i]);
+#if VESA_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Processing Video Mode 0x%x",
+               pModeId[i]);
+#endif
 
         /* Prepare BIOS call */
         biosRegs.ax = VESA_BIOS_CALL_GET_MODE_ID;
@@ -1088,8 +1102,10 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
         /* Check return value */
         if(biosRegs.ax != VESA_BIOS_CALL_RETURN_OK)
         {
-            KERNEL_ERROR("Failed to get VESA mode information, error %x\n",
-                         biosRegs.ax);
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to get VESA mode information, error %x",
+                   biosRegs.ax);
             error = OS_ERR_INCORRECT_VALUE;
             goto MODE_DISCOVERY_END;
         }
@@ -1098,9 +1114,11 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
         if((modeInfo.attributes & VESA_ATTRIBUTE_SUPPORTED) !=
            VESA_ATTRIBUTE_SUPPORTED)
         {
-            KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Not supported, skipping");
+
+#if VESA_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Not supported, skipping");
+#endif
+
             continue;
         }
 
@@ -1108,9 +1126,11 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
         if((modeInfo.attributes & VESA_ATTRIBUTE_LINEAR_FB) !=
            VESA_ATTRIBUTE_LINEAR_FB)
         {
-            KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Not linear, skipping");
+
+#if VESA_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Not linear, skipping");
+#endif
+
             continue;
         }
 
@@ -1118,9 +1138,13 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
         if(modeInfo.memoryModel != VESA_MEMORY_MODEL_PACKED &&
            modeInfo.memoryModel != VESA_MEMORY_MODEL_DIRECTCOLOR)
         {
-            KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                         MODULE_NAME,
-                         "Unsupported memory model skipping");
+
+#if VESA_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Unsupported memory model skipping");
+#endif
+
             continue;
         }
 
@@ -1141,17 +1165,19 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
 
         pNewMode->framebuffer = (void*)(uintptr_t)modeInfo.framebuffer;
 
-        KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                     MODULE_NAME,
-                     "==========> Supported mode 0x%p:\n"
-                     "\tResolution: %dx%d\n"
-                     "\tColor depth: %dbpp\n"
-                     "\tFramebuffer: 0x%p\n",
-                     pNewMode->id,
-                     pNewMode->width,
-                     pNewMode->height,
-                     pNewMode->bpp,
-                     pNewMode->framebuffer);
+#if VESA_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "==========> Supported mode 0x%p:\n"
+               "\tResolution: %dx%d\n"
+               "\tColor depth: %dbpp\n"
+               "\tFramebuffer: 0x%p",
+               pNewMode->id,
+               pNewMode->width,
+               pNewMode->height,
+               pNewMode->bpp,
+               pNewMode->framebuffer);
+#endif
 
         /* Link node */
         pNewMode->pNext = pDrvCtrl->pVbeModes;
@@ -1184,6 +1210,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
     vesa_controler_t* pCtrl;
     bios_int_regs_t   biosRegs;
     OS_RETURN_E       error;
+    OS_RETURN_E       retCode;
     size_t            newBufferSize;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
@@ -1206,7 +1233,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
     /* Check if we found the mode */
     if(pMode == NULL)
     {
-        KERNEL_ERROR("VESA mode not supported\n");
+        syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, "VESA mode not supported");
         return OS_ERR_NOT_SUPPORTED;
     }
 
@@ -1248,11 +1275,11 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
         pCtrl->videoBuffer.pFramebuffer = (void*)
                               ((uintptr_t)pCtrl->videoBuffer.pFramebuffer &
                                ~PAGE_SIZE_MASK);
-        error = memoryKernelUnmap(pCtrl->videoBuffer.pFramebuffer,
-                                  newBufferSize);
-        if(error != OS_NO_ERR)
+        retCode = memoryKernelUnmap(pCtrl->videoBuffer.pFramebuffer,
+                                    newBufferSize);
+        if(retCode != OS_NO_ERR)
         {
-            PANIC(error, MODULE_NAME, "Failed to unmap memory");
+            PANIC(retCode, MODULE_NAME, "Failed to unmap memory");
         }
 
         return error;
@@ -1286,14 +1313,19 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
         return OS_ERR_INCORRECT_VALUE;
     }
 
+    memset(pCtrl->videoBuffer.pBack, 0, newBufferSize);
+
     pCtrl->refreshRate = kRate;
-    KERNEL_DEBUG(VESA_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Updated VESA mode to %dx%x %dbpp | Refresh rate %dHz",
-                 kWidth,
-                 kHeight,
-                 kDepth,
-                 pCtrl->refreshRate);
+
+#if VESA_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Updated VESA mode to %dx%x %dbpp | Refresh rate %dHz",
+           kWidth,
+           kHeight,
+           kDepth,
+           pCtrl->refreshRate);
+#endif
 
     /* Update the screen value */
     pCtrl->lineCount    = kHeight / VESA_TEXT_CHAR_HEIGHT;
@@ -1527,21 +1559,6 @@ static void _vesaClearFramebuffer(void* pDriverCtrl)
            pCtrl->videoBuffer.framebufferSize);
 }
 
-static void _vesaPutCursor(void*          pDriverCtrl,
-                           const uint32_t kLine,
-                           const uint32_t kColumn)
-{
-    vesa_controler_t* pCtrl;
-
-    pCtrl = GET_CONTROLER(pDriverCtrl);
-
-    _vesaClearCursor(pCtrl);
-
-    _vesaPutCursorSafe(pCtrl, kLine, kColumn);
-
-    _vesaPrintCursor(pCtrl);
-}
-
 static void _vesaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
 {
     vesa_controler_t* pCtrl;
@@ -1566,6 +1583,7 @@ static void _vesaRestoreCursor(void* pDriverCtrl, const cursor_t* kpBuffer)
     {
         return;
     }
+
     /* Restore cursor attributes */
     _vesaPutCursorSafe(pDriverCtrl, kpBuffer->y, kpBuffer->x);
 }
@@ -1642,27 +1660,6 @@ static void _vesaSaveScheme(void* pDriverCtrl, colorscheme_t* pBuffer)
         pBuffer->foreground = pCtrl->screenScheme.foreground;
         pBuffer->background = pCtrl->screenScheme.background;
     }
-}
-
-static void _vesaPutString(void* pDriverCtrl, const char* kpString)
-{
-    size_t           i;
-    size_t           stringLen;
-
-    stringLen = strlen(kpString);
-
-    /* Output each character of the string */
-    for(i = 0; i < stringLen; ++i)
-    {
-        _vesaProcessChar(pDriverCtrl, kpString[i]);
-    }
-}
-
-static void _vesaPutChar(void* pDriverCtrl, const char kCharacter)
-{
-
-    _vesaProcessChar(pDriverCtrl, kCharacter);
-
 }
 
 static inline void _vesaPutCursorSafe(vesa_controler_t* pCtrl,
@@ -1775,6 +1772,115 @@ static void _vesaFlush(void* pDriverCtrl)
             pCtrl->scrollOffset);
 }
 
+static void* _vesaVfsOpen(void*       pDrvCtrl,
+                          const char* kpPath,
+                          int         flags,
+                          int         mode)
+{
+    (void)pDrvCtrl;
+    (void)mode;
+
+    /* The path must be empty */
+    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    {
+        return (void*)-1;
+    }
+
+    /* The flags must be O_RDWR */
+    if(flags != O_RDWR)
+    {
+        return (void*)-1;
+    }
+
+    /* We don't need a handle, return NULL */
+    return NULL;
+}
+
+static int32_t _vesaVfsClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+
+    /* Nothing to do */
+    return 0;
+}
+
+static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
+                             void*       pHandle,
+                             const void* kpBuffer,
+                             size_t      count)
+{
+    const char* pCursor;
+    size_t      coutSave;
+
+    (void)pHandle;
+
+    pCursor = (char*)kpBuffer;
+
+    /* Output each character of the string */
+    coutSave = count;
+    while(pCursor != NULL && *pCursor != 0 && count > 0)
+    {
+        _vesaProcessChar(pDrvCtrl, *pCursor);
+        ++pCursor;
+        --count;
+    }
+
+    return coutSave - count;
+}
+
+static int32_t _vesaVfsIOCTL(void*    pDriverData,
+                             void*    pHandle,
+                             uint32_t operation,
+                             void*    pArgs)
+{
+    int32_t                     retVal;
+    cons_ioctl_args_scroll_t*   pScrollArgs;
+    graph_ioctl_args_drawpixel* pDrawPixelArgs;
+
+    (void)pHandle;
+
+    /* Switch on the operation */
+    retVal = 0;
+    switch(operation)
+    {
+        case VFS_IOCTL_CONS_RESTORE_CURSOR:
+            _vesaRestoreCursor(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SAVE_CURSOR:
+            _vesaSaveCursor(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SCROLL:
+            pScrollArgs = pArgs;
+            _vesaScroll(pDriverData,
+                        pScrollArgs->direction,
+                        pScrollArgs->lineCount);
+            break;
+        case VFS_IOCTL_CONS_SET_COLORSCHEME:
+            _vesaSetScheme(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_SAVE_COLORSCHEME:
+            _vesaSaveScheme(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_CONS_CLEAR:
+            _vesaClearFramebuffer(pDriverData);
+            break;
+        case VFS_IOCTL_CONS_FLUSH:
+            _vesaFlush(pDriverData);
+            break;
+        case VFS_IOCTL_GRAPH_DRAWPIXEL:
+            pDrawPixelArgs = pArgs;
+            retVal = (int32_t)_vesaDrawPixel(pDriverData,
+                                             pDrawPixelArgs->x,
+                                             pDrawPixelArgs->y,
+                                             pDrawPixelArgs->rgbPixel);
+            break;
+        default:
+            retVal = -1;
+    }
+
+    return retVal;
+}
 
 /***************************** DRIVER REGISTRATION ****************************/
 DRIVERMGR_REG(sX86VESADriver);

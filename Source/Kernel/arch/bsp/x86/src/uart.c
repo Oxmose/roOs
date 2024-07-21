@@ -25,6 +25,8 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>          /* Virtual File System*/
+#include <ioctl.h>        /* IOCTL commands */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Memory allocation */
 #include <x86cpu.h>       /* CPU port manipulation */
@@ -44,9 +46,6 @@
 /* Header file */
 #include <puart.h>
 
-/* Tracing feature */
-#include <tracing.h>
-
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -60,6 +59,8 @@
 #define UART_FDT_COMM_PROP   "comm"
 /** @brief FDT property for interrupt  */
 #define UART_FDT_INT_PROP "interrupts"
+/** @brief FDT property for device path */
+#define UART_FDT_DEVICE_PROP "device"
 
 /** @brief Serial data length flag: 5 bits. */
 #define SERIAL_DATA_LENGTH_5 0x00
@@ -237,11 +238,8 @@ typedef struct
     /** @brief Input buffer semaphore */
     semaphore_t inputBufferSem;
 
-    /**
-     * @brief Tells if the driver shall output all its received data to the
-     * console.
-     */
-    bool_t echo;
+    /** @brief Stores the VFS driver */
+    vfs_driver_t vfsDriver;
 
     /** @brief Driver's lock */
     kernel_spinlock_t lock;
@@ -334,32 +332,6 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
                               const uint8_t      kData);
 
 /**
- * @brief Write the string given as patameter on the desired port.
- *
- * @details The function will output the data given as parameter on the desired
- * port. This call is blocking until the data has been sent to the uart port
- * controler.
- *
- * @param[in, out] pDrvCtrl The UART driver controler to use.
- * @param[in] kpString The string to write to the uart port.
- *
- * @warning string must be NULL terminated.
- */
-static void _uartPutString(void* pDrvCtrl, const char* kpString);
-
-/**
- * @brief Write the character given as patameter on the desired port.
- *
- * @details The function will output the character given as parameter on the
- * desired port. This call is blocking until the data has been sent to the uart
- * port controler.
- *
- * @param[in, out] pDrvCtrl The UART driver controler to use.
- * @param[in] kCharacter The character to write to the uart port.
- */
-static void _uartPutChar(void* pDrvCtrl, const char kCharacter);
-
-/**
  * @brief Clears the screen.
  *
  * @param[in, out] pDrvCtrl The UART driver controler to use.
@@ -423,15 +395,92 @@ static ssize_t _uartRead(void*        pDrvCtrl,
                          const size_t kBufferSize);
 
 /**
- * @brief Enables or disables the input echo for the UART driver.
+ * @brief UART VFS open hook.
  *
- * @details Enables or disables the input evho for the UART driver. When
- * enabled, the UART driver will echo all characters it receives as input.
+ * @details UART VFS open hook. This function returns a handle to control the
+ * UART driver through VFS.
  *
- * @param[in] pDrvCtrl The driver to be used.
- * @param kEnable Tells if the echo should be enabled or disabled.
+ * @param[in, out] pDrvCtrl The UART driver that was registered in the VFS.
+ * @param[in] kpPath The path in the UART driver mount point.
+ * @param[in] flags The open flags, must be O_RDWR.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
  */
-static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable);
+static void* _uartVfsOpen(void*       pDrvCtrl,
+                          const char* kpPath,
+                          int         flags,
+                          int         mode);
+
+/**
+ * @brief UART VFS close hook.
+ *
+ * @details UART VFS close hook. This function closes a handle that was created
+ * when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The UART driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _uartVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief UART VFS write hook.
+ *
+ * @details UART VFS write hook. This function writes a string to the UART.
+ *
+ * @param[in, out] pDrvCtrl The UART driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _uartVfsWrite(void*       pDrvCtrl,
+                             void*       pHandle,
+                             const void* kpBuffer,
+                             size_t      count);
+
+/**
+ * @brief UART VFS read hook.
+ *
+ * @details UART VFS read hook. This function reads a string from the UART.
+ *
+ * @param[in, out] pDrvCtrl The UART driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[out] kpBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _uartVfsRead(void*  pDrvCtrl,
+                            void*  pHandle,
+                            void*  kpBuffer,
+                            size_t count);
+
+/**
+ * @brief UART VFS IOCTL hook.
+ *
+ * @details UART VFS IOCTL hook. This function performs the IOCTL for the UART
+ * driver.
+ *
+ * @param[in, out] pDrvCtrl The UART driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _uartVfsIOCTL(void*    pDriverData,
+                             void*    pHandle,
+                             uint32_t operation,
+                             void*    pArgs);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -462,32 +511,18 @@ static uart_controler_t* spInputCtrl = NULL;
 static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 {
     const uint32_t*   kpUintProp;
+    const char*       kpStrProp;
     size_t            propLen;
     OS_RETURN_E       retCode;
+    OS_RETURN_E       error;
     uart_controler_t* pDrvCtrl;
-    console_driver_t* pConsoleDrv;
     bool_t            isSemInit;
     bool_t            isInputBufferSet;
-
-    kgeneric_driver_t* pGenericDriver;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_ATTACH_ENTRY, 0);
-
-    pDrvCtrl    = NULL;
-    pConsoleDrv = NULL;
-    pGenericDriver = NULL;
 
     isSemInit        = FALSE;
     isInputBufferSet = FALSE;
 
     /* Init structures */
-    pGenericDriver = kmalloc(sizeof(kgeneric_driver_t));
-    if(pGenericDriver == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pGenericDriver, 0, sizeof(kgeneric_driver_t));
     pDrvCtrl = kmalloc(sizeof(uart_controler_t));
     if(pDrvCtrl == NULL)
     {
@@ -495,29 +530,8 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(uart_controler_t));
+    pDrvCtrl->vfsDriver = VFS_DRIVER_INVALID;
     KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
-
-    pConsoleDrv = kmalloc(sizeof(console_driver_t));
-    if(pConsoleDrv == NULL)
-    {
-        retCode = OS_ERR_NO_MORE_MEMORY;
-        goto ATTACH_END;
-    }
-    memset(pConsoleDrv, 0, sizeof(console_driver_t));
-    pConsoleDrv->outputDriver.pClear           = _uartClear;
-    pConsoleDrv->outputDriver.pPutCursor       = NULL;
-    pConsoleDrv->outputDriver.pSaveCursor      = NULL;
-    pConsoleDrv->outputDriver.pRestoreCursor   = NULL;
-    pConsoleDrv->outputDriver.pScroll          = _uartScroll;
-    pConsoleDrv->outputDriver.pSetColorScheme  = NULL;
-    pConsoleDrv->outputDriver.pSaveColorScheme = NULL;
-    pConsoleDrv->outputDriver.pPutString       = _uartPutString;
-    pConsoleDrv->outputDriver.pPutChar         = _uartPutChar;
-    pConsoleDrv->outputDriver.pFlush           = NULL;
-    pConsoleDrv->outputDriver.pDriverCtrl      = pDrvCtrl;
-    pConsoleDrv->inputDriver.pDriverCtrl       = NULL;
-    pConsoleDrv->inputDriver.pRead             = NULL;
-    pConsoleDrv->inputDriver.pEcho             = NULL;
 
 
     /* Get the UART CPU communication ports */
@@ -552,15 +566,12 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     kpUintProp = fdtGetProp(pkFdtNode, UART_FDT_INT_PROP, &propLen);
     if(kpUintProp != NULL && propLen == sizeof(uint32_t) * 2)
     {
-
         /* Check that we are the only input port */
         if(spInputCtrl != NULL)
         {
-            retCode = OS_ERR_INTERRUPT_ALREADY_REGISTERED;
+            retCode = OS_ERR_ALREADY_EXIST;
             goto ATTACH_END;
         }
-
-        pDrvCtrl->echo = FALSE;
 
         /* Init buffer */
         pDrvCtrl->inputBufferStartCursor = 0;
@@ -605,19 +616,34 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
 
         /* Set the input driver */
         spInputCtrl = pDrvCtrl;
-        pConsoleDrv->inputDriver.pDriverCtrl = pDrvCtrl;
-        pConsoleDrv->inputDriver.pRead       = _uartRead;
-        pConsoleDrv->inputDriver.pEcho       = _uartSetEcho;
     }
     else
     {
         pDrvCtrl->irqNumber = -1;
     }
 
-    pGenericDriver->pConsoleDriver = pConsoleDrv;
+    /* Get the device path */
+    kpStrProp = fdtGetProp(pkFdtNode, UART_FDT_DEVICE_PROP, &propLen);
+    if(kpStrProp == NULL || propLen  == 0)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
 
-    /* Set the API driver */
-    retCode = driverManagerSetDeviceData(pkFdtNode, pGenericDriver);
+    /* Register the driver */
+    pDrvCtrl->vfsDriver = vfsRegisterDriver(kpStrProp,
+                                            pDrvCtrl,
+                                            _uartVfsOpen,
+                                            _uartVfsClose,
+                                            _uartVfsRead,
+                                            _uartVfsWrite,
+                                            NULL,
+                                            _uartVfsIOCTL);
+    if(pDrvCtrl->vfsDriver == VFS_DRIVER_INVALID)
+    {
+        retCode = OS_ERR_INCORRECT_VALUE;
+        goto ATTACH_END;
+    }
 
 ATTACH_END:
 
@@ -633,22 +659,20 @@ ATTACH_END:
         }
         if(pDrvCtrl != NULL)
         {
+            if(pDrvCtrl->vfsDriver != VFS_DRIVER_INVALID)
+            {
+                error = vfsUnregisterDriver(&pDrvCtrl->vfsDriver);
+                if(error != OS_NO_ERR)
+                {
+                    PANIC(error,
+                          MODULE_NAME,
+                          "Failed to unregister VFS driver");
+                }
+            }
+
             kfree(pDrvCtrl);
         }
-        if(pConsoleDrv != NULL)
-        {
-            kfree(pConsoleDrv);
-        }
-        if(pGenericDriver != NULL)
-        {
-            kfree(pGenericDriver);
-        }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_ATTACH_EXIT,
-                       1,
-                       (uint32_t)retCode);
 
     return retCode;
 }
@@ -656,32 +680,17 @@ ATTACH_END:
 
 static inline void _uartSetLine(const uint8_t kAttr, const uint16_t kCom)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SET_LINE,
-                       2,
-                       (uint32_t)kAttr,
-                       (uint32_t)kCom);
     _cpuOutB(kAttr, SERIAL_LINE_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBuffer(const uint8_t kAttr, const uint16_t kCom)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SET_BUFFER,
-                       2,
-                       (uint32_t)kAttr,
-                       (uint32_t)kCom);
     _cpuOutB(kAttr, SERIAL_FIFO_COMMAND_PORT(kCom));
 }
 
 static inline void _uartSetBaudrate(const SERIAL_BAUDRATE_E kRate,
                                     const uint16_t          kCom)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SET_BAUDRATE,
-                       2,
-                       (uint32_t)kRate,
-                       (uint32_t)kCom);
     _cpuOutB(SERIAL_DLAB_ENABLED, SERIAL_LINE_COMMAND_PORT(kCom));
     _cpuOutB((kRate >> 8) & 0x00FF, SERIAL_DATA_PORT(kCom));
     _cpuOutB(kRate & 0x00FF, SERIAL_DATA_PORT_2(kCom));
@@ -691,11 +700,6 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
                               uint16_t           kPort,
                               const uint8_t      kData)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_WRITE_ENTRY,
-                       2,
-                       kPort,
-                       kData);
 
     /* Wait for empty transmit */
     KERNEL_LOCK(*pLock);
@@ -711,19 +715,11 @@ static inline void _uartWrite(kernel_spinlock_t* pLock,
         _cpuOutB(kData, kPort);
     }
     KERNEL_UNLOCK(*pLock);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_WRITE_EXIT,
-                       2,
-                       kPort,
-                       kData);
 }
 
 void _uartClear(void* pDrvCtrl)
 {
     uint8_t i;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_CLEAR_ENTRY, 0);
 
     /* On 80x25 screen, just print 25 line feed. */
     for(i = 0; i < 25; ++i)
@@ -732,8 +728,6 @@ void _uartClear(void* pDrvCtrl)
                    GET_CONTROLER(pDrvCtrl)->cpuCommPort,
                    '\n');
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED, TRACE_X86_UART_CLEAR_EXIT, 0);
 }
 
 void _uartScroll(void*                    pDrvCtrl,
@@ -741,12 +735,6 @@ void _uartScroll(void*                    pDrvCtrl,
                  const uint32_t           kLines)
 {
     uint32_t i;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SCROLL_ENTRY,
-                       2,
-                       kDirection,
-                       kLines);
 
     if(kDirection == SCROLL_DOWN)
     {
@@ -758,56 +746,6 @@ void _uartScroll(void*                    pDrvCtrl,
                        '\n');
         }
     }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SCROLL_EXIT,
-                       2,
-                       kDirection,
-                       kLines);
-}
-
-void _uartPutString(void* pDrvCtrl, const char* kpString)
-{
-    size_t i;
-    size_t stringLen;
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_PUTSTRING_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpString),
-                       KERNEL_TRACE_LOW(kpString));
-
-    stringLen = strlen(kpString);
-
-    for(i = 0; i < stringLen; ++i)
-    {
-        _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
-                   GET_CONTROLER(pDrvCtrl)->cpuCommPort,
-                   kpString[i]);
-    }
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_PUTSTRING_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(kpString),
-                       KERNEL_TRACE_LOW(kpString));
-}
-
-void _uartPutChar(void* pDrvCtrl, const char kCharacter)
-{
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_PUTCHAR_ENTRY,
-                       1,
-                       kCharacter);
-
-    _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
-               GET_CONTROLER(pDrvCtrl)->cpuCommPort,
-               kCharacter);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_PUTCHAR_EXIT,
-                       1,
-                       kCharacter);
 }
 
 static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
@@ -872,24 +810,12 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     OS_RETURN_E error;
     size_t      availableSpace;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_INTERRUPT_HANDLER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(pCurrentThread),
-                       KERNEL_TRACE_LOW(pCurrentThread));
-
     (void)pCurrentThread;
 
     if(spInputCtrl == NULL)
     {
         /* Set EOI */
         interruptIRQSetEOI(spInputCtrl->irqNumber);
-
-        KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                           TRACE_X86_UART_INTERRUPT_HANDLER_EXIT,
-                           2,
-                           KERNEL_TRACE_HIGH(pCurrentThread),
-                           KERNEL_TRACE_LOW(pCurrentThread));
         return;
     }
 
@@ -898,10 +824,6 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     if((intStatus & UART_INT_STATUS_DATA_AVAILABLE) != 0)
     {
         data = _cpuInB(SERIAL_DATA_PORT(spInputCtrl->cpuCommPort));
-        if(spInputCtrl->echo == TRUE)
-        {
-            _uartWrite(&spInputCtrl->lock, spInputCtrl->cpuCommPort, data);
-        }
 
         /* Try to add the new data to the buffer */
         KERNEL_LOCK(spInputCtrl->inputBufferLock);
@@ -939,12 +861,6 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
 
     /* Set EOI */
     interruptIRQSetEOI(spInputCtrl->irqNumber);
-
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_INTERRUPT_HANDLER_EXIT,
-                       2,
-                       KERNEL_TRACE_HIGH(pCurrentThread),
-                       KERNEL_TRACE_LOW(pCurrentThread));
 }
 
 static ssize_t _uartRead(void*        pDrvCtrl,
@@ -957,25 +873,8 @@ static ssize_t _uartRead(void*        pDrvCtrl,
     size_t      usedSpace;
     size_t      i;
 
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_READ_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize));
-
     if(pDrvCtrl != spInputCtrl || spInputCtrl == NULL || pBuffer == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                           TRACE_X86_UART_READ_EXIT,
-                           6,
-                           KERNEL_TRACE_HIGH(pBuffer),
-                           KERNEL_TRACE_LOW(pBuffer),
-                           KERNEL_TRACE_HIGH(kBufferSize),
-                           KERNEL_TRACE_LOW(kBufferSize),
-                           KERNEL_TRACE_HIGH(0),
-                           KERNEL_TRACE_LOW(-1));
         return -1;
     }
 
@@ -1036,27 +935,114 @@ static ssize_t _uartRead(void*        pDrvCtrl,
 
     }
 
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_READ_EXIT,
-                       6,
-                       KERNEL_TRACE_HIGH(pBuffer),
-                       KERNEL_TRACE_LOW(pBuffer),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize),
-                       KERNEL_TRACE_HIGH(kBufferSize),
-                       KERNEL_TRACE_LOW(kBufferSize));
-
     return kBufferSize;
 }
 
-static void _uartSetEcho(void* pDrvCtrl, const bool_t kEnable)
+static void* _uartVfsOpen(void*       pDrvCtrl,
+                          const char* kpPath,
+                          int         flags,
+                          int         mode)
 {
-    KERNEL_TRACE_EVENT(TRACE_X86_UART_ENABLED,
-                       TRACE_X86_UART_SET_ECHO,
-                       1,
-                       kEnable);
+    (void)pDrvCtrl;
+    (void)mode;
 
-    GET_CONTROLER(pDrvCtrl)->echo = kEnable;
+    /* The path must be empty */
+    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    {
+        return (void*)-1;
+    }
+
+    /* The flags must be O_RDWR */
+    if(flags != O_RDWR)
+    {
+        return (void*)-1;
+    }
+
+    /* We don't need a handle, return NULL */
+    return NULL;
+}
+
+static int32_t _uartVfsClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+
+    /* Nothing to do */
+    return 0;
+}
+
+static ssize_t _uartVfsWrite(void*       pDrvCtrl,
+                             void*       pHandle,
+                             const void* kpBuffer,
+                             size_t      count)
+{
+    const char* pCursor;
+    size_t      coutSave;
+
+    (void)pHandle;
+
+    pCursor = (char*)kpBuffer;
+
+    /* Output each character of the string */
+    coutSave = count;
+    while(pCursor != NULL && *pCursor != 0 && count > 0)
+    {
+        _uartWrite(&(GET_CONTROLER(pDrvCtrl)->lock),
+                   GET_CONTROLER(pDrvCtrl)->cpuCommPort,
+                   *pCursor);
+        ++pCursor;
+        --count;
+    }
+
+    return coutSave - count;
+}
+
+static ssize_t _uartVfsRead(void*  pDrvCtrl,
+                            void*  pHandle,
+                            void*  pBuffer,
+                            size_t count)
+{
+    (void)pHandle;
+
+    /* Check the capability */
+    if(GET_CONTROLER(pDrvCtrl)->irqNumber != (uint32_t)-1)
+    {
+        return -1;
+    }
+
+    return _uartRead(pDrvCtrl, pBuffer, count);
+}
+
+static int32_t _uartVfsIOCTL(void*    pDriverData,
+                            void*    pHandle,
+                            uint32_t operation,
+                            void*    pArgs)
+{
+    int32_t                   retVal;
+    cons_ioctl_args_scroll_t* pScrollArgs;
+
+    (void)pHandle;
+
+    /* Switch on the operation */
+    retVal = 0;
+    switch(operation)
+    {
+        case VFS_IOCTL_CONS_SCROLL:
+            pScrollArgs = pArgs;
+            _uartScroll(pDriverData,
+                       pScrollArgs->direction,
+                       pScrollArgs->lineCount);
+            break;
+        case VFS_IOCTL_CONS_CLEAR:
+            _uartClear(pDriverData);
+            break;
+        case VFS_IOCTL_CONS_FLUSH:
+            break;
+        default:
+            retVal = -1;
+    }
+
+    return retVal;
 }
 
 #if DEBUG_LOG_UART

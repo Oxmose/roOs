@@ -53,10 +53,6 @@
  */
 #define KERNEL_ENTER_CRITICAL_LOCAL(INT_STATE) {                    \
     INT_STATE = interruptDisable();                                 \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,              \
-                       TRACE_CPU_ENTER_CRITICAL,                    \
-                       1,                                           \
-                       INT_STATE);                                  \
 }
 
 /**
@@ -68,10 +64,6 @@
  * interrupt state.
  */
 #define KERNEL_EXIT_CRITICAL_LOCAL(INT_STATE) {                 \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
-                       TRACE_CPU_EXIT_CRITICAL,                 \
-                       1,                                       \
-                       INT_STATE);                              \
     interruptRestore(INT_STATE);                                \
 }
 
@@ -84,10 +76,6 @@
 */
 #define KERNEL_LOCK(LOCK) {                                     \
     KernelLock(&(LOCK));                                        \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
-                       TRACE_CPU_SPINLOCK_LOCK,                 \
-                       1,                                       \
-                       ((LOCK).lock));                          \
 }
 
 /**
@@ -98,10 +86,6 @@
  * @param[out] LOCK The lock to unlock.
 */
 #define KERNEL_UNLOCK(LOCK) {                                   \
-    KERNEL_TRACE_EVENT(TRACE_CRITICAL_SECTION_ENABLED,          \
-                       TRACE_CPU_SPINLOCK_UNLOCK,               \
-                       1,                                       \
-                       ((LOCK).lock));                          \
     KernelUnlock(&(LOCK));                                      \
 }
 

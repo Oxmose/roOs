@@ -27,7 +27,7 @@
 #include <stddef.h>       /* Standard definitions */
 #include <stdint.h>       /* Generic int types */
 #include <string.h>       /* String manipulation */
-#include <kerneloutput.h> /* Kernel output methods */
+#include <syslog.h>       /* Kernel Syslog */
 
 /* Configuration files */
 #include <config.h>
@@ -175,11 +175,6 @@ OS_RETURN_E queueDelete(queue_t** ppQueue)
 
 OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue)
 {
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Queue 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
 
     if(pNode == NULL || pQueue == NULL)
     {
@@ -207,12 +202,6 @@ OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue)
     ++pQueue->size;
     pNode->enlisted = TRUE;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Enqueue element 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
-
     if(pNode->pNext != NULL &&
        pNode->pPrev != NULL &&
        pNode->pNext == pNode->pPrev)
@@ -229,12 +218,6 @@ OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
                           const uint64_t kPriority)
 {
     queue_node_t* pCursor;
-
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Enqueue 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
 
     if(pNode == NULL || pQueue == NULL)
     {
@@ -287,12 +270,6 @@ OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
     ++pQueue->size;
     pNode->enlisted = TRUE;
 
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Enqueue element 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
-
     if(pNode->pNext != NULL &&
        pNode->pPrev != NULL &&
        pNode->pNext == pNode->pPrev)
@@ -306,11 +283,6 @@ OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
 queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError)
 {
     queue_node_t* pNode;
-
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Dequeue element in queue 0x%p",
-                 pQueue);
 
     if(pQueue == NULL)
     {
@@ -334,12 +306,6 @@ queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError)
 
     /* Dequeue the last item */
     pNode = pQueue->pTail;
-
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Dequeue element 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
 
     if(pNode->pPrev != NULL)
     {
@@ -369,12 +335,6 @@ queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError)
 queue_node_t* queueFind(queue_t*pQueue, void* pData, OS_RETURN_E* pError)
 {
     queue_node_t* pNode;
-
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Find data 0x%p in queue 0x%p",
-                 pData,
-                 pQueue);
 
     /* If this queue is empty */
     if(pQueue == NULL)
@@ -419,12 +379,6 @@ OS_RETURN_E queueRemove(queue_t* pQueue, queue_node_t* pNode)
     {
         return OS_ERR_NULL_POINTER;
     }
-
-    KERNEL_DEBUG(QUEUE_DEBUG_ENABLED,
-                 "QUEUE",
-                 "Remove node node 0x%p in queue 0x%p",
-                 pNode,
-                 pQueue);
 
     /* Search for node in the queue*/
     pCursor = pQueue->pHead;

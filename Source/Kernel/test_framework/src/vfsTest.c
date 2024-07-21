@@ -1,39 +1,39 @@
 /*******************************************************************************
- * @file critical.c
+ * @file vfsTest.c
  *
- * @see critical.h
+ * @see test_framework.h
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 10/07/2024
+ * @date 14/05/2023
  *
  * @version 1.0
  *
- * @brief Kernel critical section implementation.
+ * @brief Testing framework VFS testing.
  *
- * @details Kernel critical section implementation. Uses spinlock and interrupt
- * management to create critical sections.
+ * @details Testing framework VFS testing.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
+
+#ifdef _TESTING_FRAMEWORK_ENABLED
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
 /* Included headers */
-#include <stdint.h>           /* Standard int definitions */
-#include <atomic.h>           /* Atomic sections */
-#include <interrupts.h>       /* Interrupts management */
+#include <vfs.h>
+#include <stdint.h>
+#include <kheap.h>
+#include <kerneloutput.h>
 
 /* Configuration files */
 #include <config.h>
 
 /* Header file */
-#include <critical.h>
-
-/* Unit test header */
 #include <test_framework.h>
+
 
 /*******************************************************************************
  * CONSTANTS
@@ -45,14 +45,10 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/*******************************************************************************
- * MACROS
- ******************************************************************************/
-
 /* None */
 
 /*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
+ * MACROS
  ******************************************************************************/
 
 /* None */
@@ -71,24 +67,22 @@
 /* None */
 
 /*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/* None */
+
+/*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-void KernelLock(kernel_spinlock_t* pLock)
+void vfsTest(void)
 {
-    uint32_t interruptState;
+    /* TODO: TODO */
 
-    /* Get interrupt state, disable interrupts, lock spinlock */
-    interruptState = interruptDisable();
-    spinlockAcquire(&pLock->lock);
-    pLock->interruptState = interruptState;
+    TEST_FRAMEWORK_END();
 }
 
-void KernelUnlock(kernel_spinlock_t* pLock)
-{
-    /* Unlock the spinlock and restore the interrupt state */
-    spinlockRelease(&pLock->lock);
-    interruptRestore(pLock->interruptState);
-}
+#endif /* #ifdef _TESTING_FRAMEWORK_ENABLED */
 
 /************************************ EOF *************************************/

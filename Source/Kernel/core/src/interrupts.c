@@ -30,10 +30,10 @@
 #include <stdint.h>         /* Generic int types */
 #include <stddef.h>         /* Standard definitions */
 #include <string.h>         /* String manipulation */
+#include <syslog.h>         /* Kernel Syslog */
 #include <critical.h>       /* Critical sections */
 #include <scheduler.h>      /* Kernel scheduler */
 #include <semaphore.h>      /* Kernel semaphores */
-#include <kerneloutput.h>   /* Kernel output methods */
 
 /* Configuration files */
 #include <config.h>
@@ -43,9 +43,6 @@
 
 /* Header file */
 #include <interrupts.h>
-
-/* Tracing feature */
-#include <tracing.h>
 
 /*******************************************************************************
  * CONSTANTS
@@ -225,10 +222,13 @@ static int32_t _initDriverGetIrqIntLine(const uint32_t kIrqNumber)
 
 static void _spuriousHandler(void)
 {
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Spurious interrupt %d",
-                 sSpuriousIntCount);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Spurious interrupt %d",
+           sSpuriousIntCount);
+#endif
+
     atomicIncrement32(&sSpuriousIntCount);
     interruptIRQSetEOI(kspCpuInterruptConfig->spuriousInterruptLine);
 
@@ -248,11 +248,6 @@ static void* _interruptDeferedRoutine(void* args)
         /* Wait for a new job */
         error = semWait(&sDefereIntQueueSem);
 
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_DEFERED_ENTRY,
-                           1,
-                           error);
-
         if(error == OS_NO_ERR)
         {
             pJobNode = kQueuePop(spDeferedIntQueue);
@@ -267,7 +262,9 @@ static void* _interruptDeferedRoutine(void* args)
                 }
                 else
                 {
-                    KERNEL_ERROR("Tried to execute a NULL interrupt job\n");
+                    syslog(SYSLOG_LEVEL_ERROR,
+                           MODULE_NAME,
+                           "Tried to execute a NULL interrupt job");
                 }
 
                 /* Destroy the node */
@@ -275,18 +272,18 @@ static void* _interruptDeferedRoutine(void* args)
             }
             else
             {
-                KERNEL_ERROR("Poped a NULL interrupt job\n");
+                syslog(SYSLOG_LEVEL_ERROR,
+                       MODULE_NAME,
+                       "Got a NULL interrupt job");
             }
         }
         else
         {
-            KERNEL_ERROR("Failed to wait on defered interrupt semaphore\n");
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Failed to wait on defered interrupt semaphore (%d)",
+                   error);
         }
-
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_DEFERED_EXIT,
-                           1,
-                           error);
     }
 
     return NULL;
@@ -302,38 +299,30 @@ void interruptMainHandler(void)
     pCurrentThread = schedGetCurrentThread();
     intId = cpuGetContextIntNumber(pCurrentThread->pVCpu);
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_HANDLER_ENTRY,
-                       2,
-                       (uint32_t)pCurrentThread->tid,
-                       intId);
-
     if(intId == kspCpuInterruptConfig->panicInterruptLine)
     {
         kernelPanicHandler(pCurrentThread);
     }
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Int %d", intId);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Interrupt %d", intId);
+#endif
 
     /* Check for spurious interrupt */
     if(sInterruptDriver.pHandleSpurious(intId) == INTERRUPT_TYPE_SPURIOUS)
     {
         _spuriousHandler();
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_HANDLER_EXIT,
-                           3,
-                           (uint32_t)pCurrentThread->tid,
-                           intId,
-                           2);
         /* Schedule, we will never return */
         schedScheduleNoInt(FALSE);
     }
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Non spurious %d | Handler 0x%p",
-                 intId,
-                 pKernelInterruptHandlerTable[intId]);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Non spurious %d | Handler 0x%p",
+           intId,
+           pKernelInterruptHandlerTable[intId]);
+#endif
 
     /* Select custom handlers */
     if(intId < kspCpuInterruptConfig->totalInterruptLineCount &&
@@ -349,13 +338,6 @@ void interruptMainHandler(void)
     /* Execute the handler */
     handler(pCurrentThread);
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_HANDLER_EXIT,
-                       3,
-                       (uint32_t)pCurrentThread->tid,
-                       intId,
-                       0);
-
     /* Schedule, we will never return */
     schedScheduleNoInt(FALSE);
     PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule int returned");
@@ -363,11 +345,10 @@ void interruptMainHandler(void)
 
 void interruptInit(void)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED, TRACE_INTERRUPT_INIT_ENTRY, 0);
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Initializing interrupt manager.");
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Initializing interrupt manager.");
+#endif
 
     KERNEL_SPINLOCK_INIT(sKernelInterruptHandlerTableLock);
 
@@ -401,17 +382,10 @@ void interruptInit(void)
     sInterruptDriver.pHandleSpurious      = _initDriverHandleSpurious;
     sInterruptDriver.pSetIrqEOI           = _initDriverSetIrqEOI;
     sInterruptDriver.pSetIrqMask          = _initDriverSetIrqMask;
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED, TRACE_INTERRUPT_INIT_EXIT, 0);
 }
 
 OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_SET_DRIVER_ENTRY,
-                       2,
-                       KERNEL_TRACE_HIGH(kpDriver),
-                       KERNEL_TRACE_LOW(kpDriver));
 
     if(kpDriver == NULL ||
        kpDriver->pSetIrqEOI == NULL ||
@@ -419,12 +393,6 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
        kpDriver->pHandleSpurious == NULL ||
        kpDriver->pGetIrqInterruptLine == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_SET_DRIVER_EXIT,
-                           3,
-                           KERNEL_TRACE_HIGH(kpDriver),
-                           KERNEL_TRACE_LOW(kpDriver),
-                           OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
@@ -437,17 +405,12 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 
     sInterruptDriver = *kpDriver;
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Set new interrupt driver at 0x%p",
-                 kpDriver);
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_SET_DRIVER_EXIT,
-                       3,
-                       KERNEL_TRACE_HIGH(kpDriver),
-                       KERNEL_TRACE_LOW(kpDriver),
-                       OS_ERR_NULL_POINTER);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Set new interrupt driver at 0x%p",
+           kpDriver);
+#endif
 
     return OS_NO_ERR;
 }
@@ -455,36 +418,16 @@ OS_RETURN_E interruptSetDriver(const interrupt_driver_t* kpDriver)
 OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
                               custom_handler_t handler)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REGISTER_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(handler),
-                       KERNEL_TRACE_LOW(handler),
-                       kInterruptLine);
 
     if(kInterruptLine < kspCpuInterruptConfig->minInterruptLine ||
        kInterruptLine > kspCpuInterruptConfig->maxInterruptLine)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kInterruptLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
 
     if(handler == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kInterruptLine,
-                           OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
@@ -495,53 +438,30 @@ OS_RETURN_E interruptRegister(const uint32_t   kInterruptLine,
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REGISTER_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kInterruptLine,
-                           OS_ERR_INTERRUPT_ALREADY_REGISTERED);
-
-        return OS_ERR_INTERRUPT_ALREADY_REGISTERED;
+        return OS_ERR_ALREADY_EXIST;
     }
 
     pKernelInterruptHandlerTable[kInterruptLine] = handler;
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "Added INT %u handler at 0x%p",
-                 kInterruptLine,
-                 handler);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Added INT %u handler at 0x%p",
+           kInterruptLine,
+           handler);
+#endif
 
     KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REGISTER_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(handler),
-                       KERNEL_TRACE_LOW(handler),
-                       kInterruptLine,
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }
 
 OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REMOVE_ENTRY,
-                       1,
-                       kInterruptLine);
 
     if(kInterruptLine < kspCpuInterruptConfig->minInterruptLine ||
        kInterruptLine > kspCpuInterruptConfig->maxInterruptLine)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REMOVE_EXIT,
-                           2,
-                           kInterruptLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
 
         return OR_ERR_UNAUTHORIZED_INTERRUPT_LINE;
     }
@@ -552,27 +472,19 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REMOVE_EXIT,
-                           2,
-                           kInterruptLine,
-                           OR_ERR_UNAUTHORIZED_INTERRUPT_LINE);
-
         return OS_ERR_INTERRUPT_NOT_REGISTERED;
     }
 
     pKernelInterruptHandlerTable[kInterruptLine] = NULL;
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME,
-                 "Removed interrupt %u handle", kInterruptLine);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Removed interrupt %u handle",
+           kInterruptLine);
+#endif
 
     KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REMOVE_EXIT,
-                       2,
-                       kInterruptLine,
-                       OS_NO_ERR);
 
     return OS_NO_ERR;
 }
@@ -583,38 +495,16 @@ OS_RETURN_E interruptIRQRegister(const uint32_t   kIrqNumber,
     int32_t     interruptLine;
     OS_RETURN_E retCode;
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REGISTER_IRQ_ENTRY,
-                       3,
-                       KERNEL_TRACE_HIGH(handler),
-                       KERNEL_TRACE_LOW(handler),
-                       kIrqNumber);
-
     /* Get the interrupt line attached to the IRQ number. */
     interruptLine = sInterruptDriver.pGetIrqInterruptLine(kIrqNumber);
 
     if(interruptLine < 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REGISTER_IRQ_EXIT,
-                           4,
-                           KERNEL_TRACE_HIGH(handler),
-                           KERNEL_TRACE_LOW(handler),
-                           kIrqNumber,
-                           OS_ERR_NO_SUCH_IRQ);
 
         return OS_ERR_NO_SUCH_IRQ;
     }
 
     retCode = interruptRegister(interruptLine, handler);
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REGISTER_IRQ_EXIT,
-                       4,
-                       KERNEL_TRACE_HIGH(handler),
-                       KERNEL_TRACE_LOW(handler),
-                       kIrqNumber,
-                       retCode);
 
     return retCode;
 }
@@ -624,32 +514,16 @@ OS_RETURN_E interruptIRQRemove(const uint32_t kIrqNumber)
     int32_t     interruptLine;
     OS_RETURN_E retCode;
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REMOVE_IRQ_ENTRY,
-                       1,
-                       kIrqNumber);
-
     /* Get the interrupt line attached to the IRQ number. */
     interruptLine = sInterruptDriver.pGetIrqInterruptLine(kIrqNumber);
 
     if(interruptLine < 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_REMOVE_IRQ_EXIT,
-                           2,
-                           kIrqNumber,
-                           OS_ERR_NO_SUCH_IRQ);
 
         return OS_ERR_NO_SUCH_IRQ;
     }
 
     retCode = interruptRemove(interruptLine);
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_REMOVE_IRQ_EXIT,
-                       2,
-                       kIrqNumber,
-                       retCode);
 
     return retCode;
 }
@@ -658,11 +532,11 @@ void interruptRestore(const uint32_t kPrevState)
 {
     if(kPrevState != 0)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                        TRACE_INTERRUPT_INTERRUPT_RESTORE,
-                        1,
-                        kPrevState);
-        KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Enabled HW INT");
+
+#if INTERRUPTS_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Enabled HW INT");
+#endif
+
         cpuSetInterrupt();
     }
 }
@@ -672,47 +546,35 @@ uint32_t interruptDisable(void)
     uint32_t prevState;
 
     prevState = cpuGetIntState();
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                    TRACE_INTERRUPT_INTERRUPT_DISABLE,
-                    1,
-                    prevState);
     cpuClearInterrupt();
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED, MODULE_NAME, "Disabled HW INT");
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Disabled HW INT");
+#endif
 
     return prevState;
 }
 
 void interruptIRQSetMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_IRQ_SET_MASK,
-                       2,
-                       kIrqNumber,
-                       kEnabled);
 
-
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 MODULE_NAME,
-                 "IRQ Mask change: %u %u",
-                 kIrqNumber,
-                 kEnabled);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "IRQ Mask change: %u %u",
+           kIrqNumber,
+           kEnabled);
+#endif
 
     sInterruptDriver.pSetIrqMask(kIrqNumber, kEnabled);
 }
 
 void interruptIRQSetEOI(const uint32_t kIrqNumber)
 {
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_IRQ_SET_EOI,
-                       1,
-                       kIrqNumber);
 
-    KERNEL_DEBUG(INTERRUPTS_DEBUG_ENABLED,
-                 "INTERRUPTS",
-                 "IRQ EOI: %u",
-                 kIrqNumber);
+#if INTERRUPTS_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "IRQ EOI: %u", kIrqNumber);
+#endif
 
     sInterruptDriver.pSetIrqEOI(kIrqNumber);
 }
@@ -720,10 +582,6 @@ void interruptIRQSetEOI(const uint32_t kIrqNumber)
 void interruptDeferInit(void)
 {
     OS_RETURN_E error;
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_DEFER_INIT_ENTRY,
-                       0);
 
     /* Create the defered interrupts queue */
     spDeferedIntQueue = kQueueCreate(TRUE);
@@ -744,9 +602,6 @@ void interruptDeferInit(void)
     INTERRUPT_ASSERT(error == OS_NO_ERR,
                      "Failed to create defered interrupt thread",
                      error);
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_DEFER_INIT_EXIT,
-                       0);
 }
 
 OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
@@ -755,24 +610,8 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
     interrupt_defered_job* pDefererJob;
     OS_RETURN_E            error;
 
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_ADD_DEFER_ENTRY,
-                       4,
-                       KERNEL_TRACE_HIGH(pRoutine),
-                       KERNEL_TRACE_LOW(pRoutine),
-                       KERNEL_TRACE_HIGH(pArgs),
-                       KERNEL_TRACE_LOW(pArgs));
-
     if(pRoutine == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pRoutine),
-                           KERNEL_TRACE_LOW(pRoutine),
-                           KERNEL_TRACE_HIGH(pArgs),
-                           KERNEL_TRACE_LOW(pArgs),
-                           OS_ERR_NULL_POINTER);
 
         return OS_ERR_NULL_POINTER;
     }
@@ -781,14 +620,6 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
     pDefererJob = kmalloc(sizeof(interrupt_defered_job));
     if(pDefererJob == NULL)
     {
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pRoutine),
-                           KERNEL_TRACE_LOW(pRoutine),
-                           KERNEL_TRACE_HIGH(pArgs),
-                           KERNEL_TRACE_LOW(pArgs),
-                           OS_ERR_NO_MORE_MEMORY);
 
         return OS_ERR_NO_MORE_MEMORY;
     }
@@ -800,15 +631,6 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
     if(pNewNode == NULL)
     {
         kfree(pDefererJob);
-
-        KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                           TRACE_INTERRUPT_ADD_DEFER_EXIT,
-                           5,
-                           KERNEL_TRACE_HIGH(pRoutine),
-                           KERNEL_TRACE_LOW(pRoutine),
-                           KERNEL_TRACE_HIGH(pArgs),
-                           KERNEL_TRACE_LOW(pArgs),
-                           OS_ERR_NO_MORE_MEMORY);
 
         return OS_ERR_NO_MORE_MEMORY;
     }
@@ -824,15 +646,6 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
         kQueueDestroyNode(&pNewNode);
         kfree(pDefererJob);
     }
-
-    KERNEL_TRACE_EVENT(TRACE_INTERRUPT_ENABLED,
-                       TRACE_INTERRUPT_ADD_DEFER_EXIT,
-                       5,
-                       KERNEL_TRACE_HIGH(pRoutine),
-                       KERNEL_TRACE_LOW(pRoutine),
-                       KERNEL_TRACE_HIGH(pArgs),
-                       KERNEL_TRACE_LOW(pArgs),
-                       error);
 
     return error;
 }

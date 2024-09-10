@@ -567,6 +567,6 @@ static int32_t _picGetInterruptLine(const uint32_t kIrqNumber)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86PICDriver);
+DRIVERMGR_REG_FDT(sX86PICDriver);
 
 /************************************ EOF *************************************/

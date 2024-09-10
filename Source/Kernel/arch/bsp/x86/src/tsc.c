@@ -318,6 +318,6 @@ uint64_t tracingTimerGetTick(void)
 #endif
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86TSCDriver);
+DRIVERMGR_REG_FDT(sX86TSCDriver);
 
 /************************************ EOF *************************************/

@@ -632,6 +632,6 @@ static inline void _lapicWrite(const uint32_t kRegister, const uint32_t kVal)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86LAPICDriver);
+DRIVERMGR_REG_FDT(sX86LAPICDriver);
 
 /************************************ EOF *************************************/

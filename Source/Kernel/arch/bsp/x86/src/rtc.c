@@ -47,7 +47,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief FDT property for inetrrupt  */
+/** @brief FDT property for interrupt  */
 #define RTC_FDT_INT_PROP        "interrupts"
 /** @brief FDT property for comm ports */
 #define RTC_FDT_COMM_PROP       "comm"
@@ -872,6 +872,6 @@ static void _rtcAckowledgeInt(void* pDrvCtrl)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86RTCDriver);
+DRIVERMGR_REG_FDT(sX86RTCDriver);
 
 /************************************ EOF *************************************/

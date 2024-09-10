@@ -103,6 +103,13 @@
 #define PAGE_FLAG_IS_HW 0x0000000000000800
 /** @brief Page flag: page global. */
 #define PAGE_FLAG_GLOBAL 0x0000000000000100
+/** @brief Page flag: PAT */
+#define PAGE_FLAG_PAT 0x0000000000000080
+
+/** @brief Page flag: Write Combining */
+#define PAGE_FLAG_CACHE_WC (PAGE_FLAG_CACHE_DISABLED |  \
+                            PAGE_FLAG_CACHE_WT       |  \
+                            PAGE_FLAG_PAT)
 
 /** @brief Recursive page PML4 address */
 #define KERNEL_RECUR_PML4_DIR_BASE 0xFFFFFF7FBFDFE000ULL
@@ -1469,6 +1476,10 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     {
         mapFlags |= PAGE_FLAG_CACHE_WB;
     }
+    if((kFlags & MEMMGR_MAP_WRITE_COMBINING) == MEMMGR_MAP_WRITE_COMBINING)
+    {
+        mapFlags |= PAGE_FLAG_CACHE_WC;
+    }
     if((kFlags & MEMMGR_MAP_EXEC) != MEMMGR_MAP_EXEC)
     {
         mapFlags |= PAGE_FLAG_XD;
@@ -2407,7 +2418,16 @@ void memoryMgrInit(void)
                "Failed to register the page fault handler",
                error);
 
-
+    /* Setup the PAT as follows:
+     * WC UC- WT WB UC UC- WT WB
+     */
+    __asm__ __volatile__ (
+        "mov $0x277, %%rcx\n\t"
+        "rdmsr\n\t"
+        "and $0xFFFFFFFFF8FFFFFF, %%rdx\n\t"
+        "or  $0x01000000, %%rdx\n\t"
+        "wrmsr\n\t"
+        :::"rax", "rcx", "rdx");
 
 #if MEMORY_MGR_DEBUG_ENABLED
     _printKernelMap();

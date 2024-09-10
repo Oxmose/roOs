@@ -499,8 +499,7 @@ static void _createIdleThreads(void)
         pInfoNode->pCurrentState = &spIdleThread[i]->currentState;
         pInfoNode->pAffinity     = &spIdleThread[i]->affinity;
         pInfoNode->pSchedCpu     = &spIdleThread[i]->schedCpu;
-        spIdleThread[i]->pInfoNode = kQueueCreateNode(pInfoNode,
-                                                            TRUE);
+        spIdleThread[i]->pInfoNode = kQueueCreateNode(pInfoNode, TRUE);
         kQueuePush(spIdleThread[i]->pInfoNode, spThreadList);
 
         /* Set idle node */

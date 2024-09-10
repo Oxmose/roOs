@@ -152,4 +152,97 @@ OS_RETURN_E graphicsDrawPixel(const uint32_t kX,
     return OS_NO_ERR;
 }
 
+OS_RETURN_E graphicsDrawRectangle(const uint32_t kX,
+                                  const uint32_t kY,
+                                  const uint32_t kWidth,
+                                  const uint32_t kHeight,
+                                  const uint32_t kColor)
+{
+    int32_t      retVal;
+    graph_rect_t ioctlArgs;
+
+    if(sGraphicDev >= 0)
+    {
+        ioctlArgs.x      = kX;
+        ioctlArgs.y      = kY;
+        ioctlArgs.width  = kWidth;
+        ioctlArgs.height = kHeight;
+        ioctlArgs.color  = kColor;
+        retVal = vfsIOCTL(sGraphicDev, VFS_IOCTL_GRAPH_DRAWRECT, &ioctlArgs);
+    }
+    else
+    {
+        return OS_ERR_NOT_SUPPORTED;
+    }
+
+    if(retVal < 0)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    return OS_NO_ERR;
+}
+
+OS_RETURN_E graphicsDrawLine(const uint32_t kStartX,
+                             const uint32_t kStartY,
+                             const uint32_t kEndX,
+                             const uint32_t kEndY,
+                             const uint32_t kColor)
+{
+    int32_t      retVal;
+    graph_line_t ioctlArgs;
+
+    if(sGraphicDev >= 0)
+    {
+        ioctlArgs.xStart = kStartX;
+        ioctlArgs.yStart = kStartY;
+        ioctlArgs.xEnd   = kEndX;
+        ioctlArgs.yEnd   = kEndY;
+        ioctlArgs.color  = kColor;
+        retVal = vfsIOCTL(sGraphicDev, VFS_IOCTL_GRAPH_DRAWLINE, &ioctlArgs);
+    }
+    else
+    {
+        return OS_ERR_NOT_SUPPORTED;
+    }
+
+    if(retVal < 0)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    return OS_NO_ERR;
+}
+
+OS_RETURN_E graphicsDrawBitmap(const uint32_t  kX,
+                               const uint32_t  kY,
+                               const uint32_t  kWidth,
+                               const uint32_t  kHeight,
+                               const uint32_t* kpBuffer)
+{
+    int32_t        retVal;
+    graph_bitmap_t ioctlArgs;
+
+    if(sGraphicDev >= 0)
+    {
+        ioctlArgs.x      = kX;
+        ioctlArgs.y      = kY;
+        ioctlArgs.width  = kWidth;
+        ioctlArgs.height = kHeight;
+        ioctlArgs.kpData = kpBuffer;
+        retVal = vfsIOCTL(sGraphicDev, VFS_IOCTL_GRAPH_DRAWBITMAP, &ioctlArgs);
+    }
+    else
+    {
+        return OS_ERR_NOT_SUPPORTED;
+    }
+
+    if(retVal < 0)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    return OS_NO_ERR;
+}
+
 /************************************ EOF *************************************/

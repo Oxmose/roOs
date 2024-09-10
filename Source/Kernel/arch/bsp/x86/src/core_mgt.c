@@ -466,6 +466,6 @@ void cpuMgtSendIpi(const uint32_t kFlags,
 #endif /* SOC_CPU_COUNT > 1 */
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86CPUDriver);
+DRIVERMGR_REG_FDT(sX86CPUDriver);
 
 /************************************ EOF *************************************/

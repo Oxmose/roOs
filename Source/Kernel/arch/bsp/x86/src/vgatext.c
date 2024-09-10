@@ -356,7 +356,7 @@ static ssize_t _vgaVfsWrite(void*       pDrvCtrl,
  *
  * @return The function returns 0 on success and -1 on error;
  */
-static int32_t _vgaVfsIOCTL(void*    pDriverData,
+static ssize_t _vgaVfsIOCTL(void*    pDriverData,
                             void*    pHandle,
                             uint32_t operation,
                             void*    pArgs);
@@ -832,7 +832,7 @@ static void* _vgaVfsOpen(void*       pDrvCtrl,
     (void)mode;
 
     /* The path must be empty */
-    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    if((*kpPath == '/' && *(kpPath + 1) != 0) || *kpPath != 0)
     {
         return (void*)-1;
     }
@@ -880,7 +880,7 @@ static ssize_t _vgaVfsWrite(void*       pDrvCtrl,
     return coutSave - count;
 }
 
-static int32_t _vgaVfsIOCTL(void*    pDriverData,
+static ssize_t _vgaVfsIOCTL(void*    pDriverData,
                             void*    pHandle,
                             uint32_t operation,
                             void*    pArgs)
@@ -925,6 +925,6 @@ static int32_t _vgaVfsIOCTL(void*    pDriverData,
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86VGADriver);
+DRIVERMGR_REG_FDT(sX86VGADriver);
 
 /************************************ EOF *************************************/

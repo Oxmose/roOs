@@ -45,15 +45,15 @@
         reservedacpi: acpimem@1 {
             reg = <0x0 0xffe1000 0x0 0x1000>;
         };
-        reservedramfs: res-ramfs3DC000 {
-            reg = <0x0 0x003DC000 0x0 0x400000>;
+        reservedramdisk: res-ramdisk@3FD000 {
+            reg = <0x0 0x003FD000 0x0 131072>;
         };
     };
 
-    ramfs@3DC000 {
-        compatible = "roOs,roOs-ramfs";
-        reg = <0x0 0x003DC000 0x0 0x400000>;
-        mount-pt = "/ramfs";
+    ramdisk@3FD000 {
+        compatible = "roOs,roOs-ramdisk";
+        reg = <0x0 0x003FD000 0x0 131072>;
+        device = "/dev/storage/ramdisk0";
     };
 
     platform {
@@ -187,9 +187,9 @@
 
         vesa: vesa {
             compatible = "x86,x86-vesa";
-            resolution = <1280 1024>;
+            resolution = <1024 768>;
             depth = <32>;
-            refresh-rate = <30>;
+            refresh-rate = <60>;
             device = "/dev/vesa";
         };
 

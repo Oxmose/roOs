@@ -36,6 +36,7 @@ MEMORY
 
     KERNEL_TRACE_BUFFER     (rw)    :   ORIGIN = 0xE035C000,    LENGTH = 128K
     KERNEL_TEST_BUFFER      (rw)    :   ORIGIN = 0xE037C000,    LENGTH = 256K
+    KERNEL_RAMDISK          (rw)    :   ORIGIN = 0xE03BC000,    LENGTH = 128K
 }
 
 /* Memory layout */
@@ -98,15 +99,24 @@ SECTIONS
         *(.rodata)
         *(.rodata*)
     } > KERNEL_RO_DATA
-    .roos_driver_tbl ALIGN(4K) : AT(ADDR(.roos_driver_tbl) - KERNEL_MEM_OFFSET)
+    .roos_driver_tbl ALIGN(8B) : AT(ADDR(.roos_driver_tbl) - KERNEL_MEM_OFFSET)
     {
+        . = ALIGN(8);
         _START_DRV_TABLE_ADDR = .;
         *(.roos_driver_tbl)
         QUAD(0x0);
         _END_DRV_TABLE_ADDR = .;
     } > KERNEL_RO_DATA
-    .eh_frame ALIGN(4K) : AT(ADDR(.eh_frame) - KERNEL_MEM_OFFSET)
+    .roos_fs_tbl ALIGN(8B) : AT(ADDR(.roos_fs_tbl) - KERNEL_MEM_OFFSET)
     {
+        _START_FS_TABLE_ADDR = .;
+        *(.roos_fs_tbl)
+        QUAD(0x0);
+        _END_FS_TABLE_ADDR = .;
+    } > KERNEL_RO_DATA
+    .eh_frame ALIGN(8B) : AT(ADDR(.eh_frame) - KERNEL_MEM_OFFSET)
+    {
+        . = ALIGN(8);
         *(.eh_frame)
 
         _END_RO_DATA_ADDR = .;
@@ -128,6 +138,14 @@ SECTIONS
         _END_BSS_ADDR = .;
         _END_RW_DATA_ADDR = .;
     } > KERNEL_RW_DATA
+
+    /* Stores the ramdisk */
+    . = ORIGIN(KERNEL_RAMDISK);
+    .roos_ramdisk ALIGN(4K) : AT(ADDR(.roos_ramdisk) - KERNEL_MEM_OFFSET)
+    {
+        KEEP(*(.roos_ramdisk))
+        KEEP(*(.roos_ramdisk*))
+    } > KERNEL_RAMDISK
 }
 
 /* Symbols */

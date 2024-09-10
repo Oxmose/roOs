@@ -9,7 +9,9 @@ cd "$(dirname "$0")"
 mkdir -p ../../../Kernel/ARTIFACTS
 
 
+#################################
 # Generate DTB
+#################################
 echo -e "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
 echo -e "\e[1m\e[34m| Generating device tree for x86_i386\e[22m\e[39m"
 echo -e "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
@@ -24,8 +26,25 @@ nasm -g -f elf -w+gnu-elf-extensions -F dwarf dtb_obj.s -o dtb_obj.o -I .
 ar r librawdtb.a dtb_obj.o
 mv librawdtb.a ../../../Kernel/ARTIFACTS/
 mv x86_i386_fdt.dtb ../../../Kernel/ARTIFACTS/
-
-cp Artifacts/* ../../../Kernel/ARTIFACTS/
 rm dtb_obj.o dtb_obj.s
 
+#################################
+# Generate Ramdisk
+#################################
+echo -e "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
+echo -e "\e[1m\e[34m| Generating RamDisk x86_i386\e[22m\e[39m"
+echo -e "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
+
+chmod +x ./create_initrd.sh
+./create_initrd.sh
+
+echo "section .roos_ramdisk" >> ramdisk.s
+echo "incbin \"utk.initrd\"" >> ramdisk.s
+
+nasm -g -f elf -w+gnu-elf-extensions -F dwarf ramdisk.s -o ramdisk.o -I .
+ar r libramdisk.a ramdisk.o
+mv libramdisk.a ../../../Kernel/ARTIFACTS/
+rm ramdisk.o ramdisk.s
+
+cp Artifacts/* ../../../Kernel/ARTIFACTS/
 echo -e "\e[1m\e[92m\nUpdated ARTIFACTS\e[22m\e[39m"

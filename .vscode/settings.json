@@ -39,6 +39,7 @@
         "functional": "c",
         "utility": "c",
         "interruptdeftestc": "c",
-        "interrupts.h": "c"
+        "interrupts.h": "c",
+        "cpu.h": "c"
     }
 }

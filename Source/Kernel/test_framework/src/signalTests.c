@@ -195,7 +195,7 @@ static void* otherThread(void* args)
     switch((uintptr_t)args)
     {
         case TEST_DIV_BY_ZERO:
-            value = value / value;
+            value = 1 / value;
             break;
         case TEST_SEGFAULT:
             value = *(uintptr_t*)value;

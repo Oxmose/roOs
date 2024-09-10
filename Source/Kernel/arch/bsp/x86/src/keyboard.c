@@ -247,14 +247,14 @@ static int32_t _kbdVfsClose(void* pDrvCtrl, void* pHandle);
  * @param[in, out] pDrvCtrl The keyboard driver that was registered in the VFS.
  * @param[in] pHandle The handle that was created when calling the open
  * function.
- * @param[out] kpBuffer The buffer that receives the string to read.
+ * @param[out] pBuffer The buffer that receives the string to read.
  * @param[in] count The number of bytes of the string to read.
  *
  * @return The function returns the number of bytes read or -1 on error;
  */
 static ssize_t _kbdVfsRead(void*  pDrvCtrl,
                            void*  pHandle,
-                           void*  kpBuffer,
+                           void*  pBuffer,
                            size_t count);
 
 /*******************************************************************************
@@ -542,6 +542,14 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
 
+    /* Set typematic settings */
+    while((_cpuInB(pDrvCtrl->cpuCommPort) & 2) != 0){}
+    _cpuOutB(0xF3, pDrvCtrl->cpuDataPort);
+    while((_cpuInB(pDrvCtrl->cpuCommPort) & 2) != 0){}
+    _cpuOutB(0x20, pDrvCtrl->cpuDataPort);
+    while((_cpuInB(pDrvCtrl->cpuCommPort) & 2) != 0){}
+    _cpuInB(pDrvCtrl->cpuDataPort);
+
     /* Set the interrupt mask */
     interruptIRQSetMask(pDrvCtrl->irqNumber, TRUE);
     interruptIRQSetEOI(pDrvCtrl->irqNumber);
@@ -746,7 +754,7 @@ static char _manageKeycode(const int8_t kKey)
     retChar = 0;
 
     /* Manage push of release */
-    if(kKey > 0)
+    if(kKey >= 0)
     {
         mod = FALSE;
 
@@ -782,7 +790,7 @@ static char _manageKeycode(const int8_t kKey)
     else
     {
         /* Manage modifiers */
-        switch(ksQwertyMap.regular[kKey + 128])
+        switch(ksQwertyMap.shifted[kKey + 128])
         {
             case KEY_LSHIFT:
                 spInputCtrl->flags &= ~KEY_LSHIFT;
@@ -807,7 +815,7 @@ static void* _kbdVfsOpen(void*       pDrvCtrl,
     (void)mode;
 
     /* The path must be empty */
-    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    if((*kpPath == '/' && *(kpPath + 1) != 0) || *kpPath != 0)
     {
         return (void*)-1;
     }
@@ -842,6 +850,6 @@ static ssize_t _kbdVfsRead(void*  pDrvCtrl,
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86KeyboardDriver);
+DRIVERMGR_REG_FDT(sX86KeyboardDriver);
 
 /************************************ EOF *************************************/

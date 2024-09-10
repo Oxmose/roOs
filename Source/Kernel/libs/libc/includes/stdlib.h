@@ -83,6 +83,34 @@ void itoa(int64_t value, char* buf, uint32_t base);
  */
 void uitoa(uint64_t value, char* buf, uint32_t base);
 
+/**
+ * @brief Formats a string to a buffer in memory.
+ *
+ * @details Formats a string to a buffer in memory. The buffer is not filled
+ * more than its size.
+ *
+ * @param[out] pBuffer The buffer to fill.
+ * @param[in] size The maximal size of the buffer.
+ * @param[in] kpFmt The format string to use.
+ * @param[in] ... Additional parameters for the format.
+ */
+int snprintf(char* pBuffer, size_t size, const char * kpFmt, ...);
+
+/**
+ * @brief Formats a string to a buffer in memory.
+ *
+ * @details Formats a string to a buffer in memory. The buffer is not filled
+ * more than its size.
+ *
+ * @param[out] pBuffer The buffer to fill.
+ * @param[in] size The maximal size of the buffer.
+ * @param[in] kpFmt The format string to use.
+ * @param[in] args Additional parameters for the format.
+ */
+int vsnprintf(char*             pBuffer,
+              size_t            size,
+              const char*       kpFmt,
+              __builtin_va_list args);
 #endif /* #ifndef __LIB_STDLIB_H_ */
 
 /************************************ EOF *************************************/

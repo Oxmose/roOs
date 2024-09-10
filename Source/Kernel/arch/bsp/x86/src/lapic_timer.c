@@ -50,7 +50,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief FDT property for inetrrupt  */
+/** @brief FDT property for interrupt  */
 #define LAPICT_FDT_INT_PROP "interrupts"
 /** @brief FDT property for frequency */
 #define LAPICT_FDT_SELFREQ_PROP "freq"
@@ -828,6 +828,6 @@ static inline void _lapicTimerWrite(const uintptr_t kBaseAddr,
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86LAPICTDriver);
+DRIVERMGR_REG_FDT(sX86LAPICTDriver);
 
 /************************************ EOF *************************************/

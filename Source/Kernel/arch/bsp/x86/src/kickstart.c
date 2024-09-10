@@ -42,6 +42,7 @@
 #include <scheduler.h>     /* Kernel scheduler */
 #include <interrupts.h>    /* Interrupt manager */
 #include <exceptions.h>    /* Exception manager */
+#include <diskmanager.h>   /* Disk manager */
 
 /* Configuration files */
 #include <config.h>
@@ -207,6 +208,10 @@ void kickstart(void)
     /* Init device manager */
     driverManagerInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Drivers initialized");
+
+    /* Init disk manager */
+    diskManagerInit();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Disk manager initialized");
 
     /* Init the time manager */
     timeInit();

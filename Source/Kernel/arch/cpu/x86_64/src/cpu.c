@@ -23,6 +23,7 @@
 #include <cpu.h>           /* Generic CPU API */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
+#include <stdlib.h>        /* Standard library */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
@@ -92,6 +93,9 @@
 /** @brief Thread's initial EFLAGS register value. */
 #define KERNEL_THREAD_INIT_RFLAGS 0x202 /* INT | PARITY */
 
+
+/** @brief Defines the core dump message length */
+#define CPU_CORE_DUMP_LENGTH 2048
 /***************************
  * GDT Flags
  **************************/
@@ -490,6 +494,9 @@
 
 /** @brief CPU flags interrupt enabled flag. */
 #define CPU_RFLAGS_IF 0x000000200
+
+/** @brief CPU MXCSR Precision Interrupt Mask */
+#define MXCSR_PRECISION_EXC_MASK 0x00001000
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -2494,7 +2501,7 @@ static void _securityExceptionHandler(kernel_thread_t* pCurrThread);
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
+#include <kerneloutput.h>
 static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
@@ -2502,6 +2509,7 @@ static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
     pCurrThread->errorTable.exceptionId = DIVISION_BY_ZERO_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
     pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
+
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 }
@@ -2690,12 +2698,18 @@ static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
 
 static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
 {
+    uint32_t* fxData;
     OS_RETURN_E error;
 
     pCurrThread->errorTable.exceptionId = SIMD_FLOATING_POINT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
     pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
+
+    fxData = (uint32_t*)((virtual_cpu_t*)pCurrThread->pVCpu)->fxData;
+    fxData = (uint32_t*)(((uintptr_t)fxData + 0xF) & 0xFFFFFFFFFFFFFFF0);
+    kprintf("Exc: %x\n", *(fxData + 6));
+    while(1){}
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 }
 
@@ -3861,6 +3875,9 @@ void cpuValidateArchitecture(void)
     CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
                "CPU does not support APIC",
                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_PAT) == EDX_PAT,
+               "CPU does not support PAT",
+               OS_ERR_NOT_SUPPORTED);
     CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
                "CPU does not support FX instructions",
                OS_ERR_NOT_SUPPORTED);
@@ -4279,7 +4296,8 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
 uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
                               kernel_thread_t* pThread)
 {
-    virtual_cpu_t* pVCpu;
+    virtual_cpu_t*   pVCpu;
+    fxdata_layout_t* pFxData;
 
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
@@ -4332,6 +4350,11 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->cpuState.fs  = KERNEL_DS_64;
     pVCpu->cpuState.es  = KERNEL_DS_64;
     pVCpu->cpuState.ds  = KERNEL_DS_64;
+
+    /* Setup the FPU */
+    pFxData = (fxdata_layout_t*)(((uintptr_t)pVCpu->fxData + 0xF) &
+                                 0xFFFFFFFFFFFFFFF0);
+    pFxData->mxcsr = MXCSR_PRECISION_EXC_MASK;
 
     pVCpu->isContextSaved = TRUE;
 
@@ -4527,16 +4550,22 @@ bool_t cpuIsVCPUSaved(const void* kpVCpu)
 
 void cpuCoreDump(const void* kpVCpu)
 {
-#if 0 // TODO: Reenable once we have snprintf
-    size_t    i;
-    uintptr_t callAddr;
-    uintptr_t* lastRBP;
+    size_t               i;
+    uintptr_t            callAddr;
+    uintptr_t*           lastRBP;
     const cpu_state_t*   cpuState;
     const int_context_t* intState;
-    uint64_t CR0;
-    uint64_t CR2;
-    uint64_t CR3;
-    uint64_t CR4;
+    uint64_t             CR0;
+    uint64_t             CR2;
+    uint64_t             CR3;
+    uint64_t             CR4;
+    char*                pDump;
+    size_t               offset;
+
+    pDump = kmalloc(CPU_CORE_DUMP_LENGTH);
+    CPU_ASSERT(pDump != NULL,
+               "Failed to allocate core dump memory",
+               OS_ERR_NO_MORE_MEMORY);
 
     intState = &((virtual_cpu_t*)kpVCpu)->intContext;
     cpuState = &((virtual_cpu_t*)kpVCpu)->cpuState;
@@ -4555,45 +4584,82 @@ void cpuCoreDump(const void* kpVCpu)
     : "%rax"
     );
 
-    kprintfPanic("RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
-                  cpuState->rax,
-                  cpuState->rbx,
-                  cpuState->rcx);
-    kprintfPanic("RDX: 0x%p | RSI: 0x%p | RDI: 0x%p \n",
-                  cpuState->rdx,
-                  cpuState->rsi,
-                  cpuState->rdi);
-    kprintfPanic("RBP: 0x%p | RSP: 0x%p | R8:  0x%p\n",
-                  cpuState->rbp,
-                  cpuState->rsp,
-                  cpuState->r8);
-    kprintfPanic("R9:  0x%p | R10: 0x%p | R11: 0x%p\n",
-                  cpuState->r9,
-                  cpuState->r10,
-                  cpuState->r11);
-    kprintfPanic("R12: 0x%p | R13: 0x%p | R14: 0x%p\n",
-                  cpuState->r12,
-                  cpuState->r13,
-                  cpuState->r14);
-    kprintfPanic("R15: 0x%p\n", cpuState->r15);
-    kprintfPanic("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p\nCR4: 0x%p\n",
-                  CR0, CR2,
-                  CR3,
-                  CR4);
-    kprintfPanic("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
-                  "FS: 0x%04X | GS: 0x%04X\n",
-                    intState->cs & 0xFFFF,
-                    cpuState->ds & 0xFFFF,
-                    cpuState->ss & 0xFFFF,
-                    cpuState->es & 0xFFFF ,
-                    cpuState->fs & 0xFFFF ,
-                    cpuState->gs & 0xFFFF);
+    snprintf(pDump,
+             CPU_CORE_DUMP_LENGTH,
+             "RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
+             cpuState->rax,
+             cpuState->rbx,
+             cpuState->rcx);
+    offset = strlen(pDump);
 
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "RDX: 0x%p | RSI: 0x%p | RDI: 0x%p \n",
+             cpuState->rdx,
+             cpuState->rsi,
+             cpuState->rdi);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "RBP: 0x%p | RSP: 0x%p | R8:  0x%p\n",
+             cpuState->rbp,
+             cpuState->rsp,
+             cpuState->r8);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "R9:  0x%p | R10: 0x%p | R11: 0x%p\n",
+             cpuState->r9,
+             cpuState->r10,
+             cpuState->r11);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "R12: 0x%p | R13: 0x%p | R14: 0x%p\n",
+             cpuState->r12,
+             cpuState->r13,
+             cpuState->r14);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "R15: 0x%p\n",
+             cpuState->r15);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "CR0: 0x%p | CR2: 0x%p | CR3: 0x%p\nCR4: 0x%p\n",
+              CR0,
+              CR2,
+              CR3,
+              CR4);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
+             "FS: 0x%04X | GS: 0x%04X\n",
+             intState->cs & 0xFFFF,
+             cpuState->ds & 0xFFFF,
+             cpuState->ss & 0xFFFF,
+             cpuState->es & 0xFFFF ,
+             cpuState->fs & 0xFFFF ,
+             cpuState->gs & 0xFFFF);
+    offset = strlen(pDump);
 
     lastRBP = (uintptr_t*)((virtual_cpu_t*)kpVCpu)->cpuState.rbp;
 
     /* Get the return address */
-    kprintf("Last RBP: 0x%p\n", lastRBP);
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "Last RBP: 0x%p\n",
+             lastRBP);
+
+    offset = strlen(pDump);
 
     for(i = 0; i < 10 && lastRBP != NULL; ++i)
     {
@@ -4603,20 +4669,25 @@ void cpuCoreDump(const void* kpVCpu)
 
         if(i != 0 && i % 4 == 0)
         {
-            kprintf("\n");
+            pDump[offset++] = '\n';
         }
         else if(i != 0)
         {
-            kprintf(" | ");
+            pDump[offset++] = ' ';
+            pDump[offset++] = '|';
+            pDump[offset++] = ' ';
         }
 
-        kprintf("[%u] 0x%p", i, callAddr);
+        snprintf(pDump + offset,
+                 CPU_CORE_DUMP_LENGTH - offset,
+                 "[%u] 0x%p",
+                 i,
+                 callAddr);
+        offset = strlen(pDump);
         lastRBP  = (uintptr_t*)*lastRBP;
     }
-    kprintfFlush();
-#else
-    (void)kpVCpu;
-#endif
+    pDump[offset] = 0;
+    syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
 }
 
 /* Stack protection support */

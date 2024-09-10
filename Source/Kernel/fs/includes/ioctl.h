@@ -46,12 +46,47 @@
 
 /** @brief IOCTL Graphic Command: Draw Pixel */
 #define VFS_IOCTL_GRAPH_DRAWPIXEL 7
+/** @brief IOCTL Graphic Command: Draw Rectangle */
+#define VFS_IOCTL_GRAPH_DRAWRECT 8
+/** @brief IOCTL Graphic Command: Draw Line */
+#define VFS_IOCTL_GRAPH_DRAWLINE 9
+/** @brief IOCTL Graphic Command: Draw Bitmap */
+#define VFS_IOCTL_GRAPH_DRAWBITMAP 10
+
+/** @brief IOCTL File Command: Seek */
+#define VFS_IOCTL_FILE_SEEK 11
+/** @brief IOCTL File Command: Tell */
+#define VFS_IOCTL_FILE_TELL 12
+
+/** @brief IOCTL Disk Command: Get Device Sector Size */
+#define VFS_IOCTL_DEV_GET_SECTOR_SIZE 100
+/** @brief IOCTL Disk Command: Set LBA */
+#define VFS_IOCTL_DEV_SET_LBA 101
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief File IOCTL Seek arguments */
+typedef enum
+{
+    /** @brief Set the absolute offset */
+    SEEK_SET = 0,
+    /** @brief Set the offset from the current position */
+    SEEK_CUR = 1,
+    /** @brief Set the offset after the end of the file */
+    SEEK_END = 2
+} SEEK_DIRECTION_E;
+
+/** @brief File IOCTL Seek arguments */
+typedef struct
+{
+    /** @brief Seek direction */
+    SEEK_DIRECTION_E direction;
+
+    /** @brief Seek offset */
+    size_t offset;
+} seek_ioctl_args_t;
 
 /*******************************************************************************
  * MACROS

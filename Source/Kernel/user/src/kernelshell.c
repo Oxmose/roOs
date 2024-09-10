@@ -23,6 +23,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>          /* VFS service */
 #include <cpu.h>          /* CPU API*/
 #include <kheap.h>        /* Kernel Heap */
 #include <signal.h>       /* Signal manager */
@@ -56,7 +57,7 @@ typedef struct
 {
     const char* pCommandName;
     const char* pDescription;
-    void (*pFunc)(void);
+    void (*pFunc)(const char*);
 } command_t;
 
 /*******************************************************************************
@@ -68,15 +69,20 @@ typedef struct
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
-static void _shellSyslog(void);
-static void _shellTimeTest(void);
+static void _shellSyslog(const char* args);
+static void _shellTimeTest(const char* args);
 static void _shellDummyDefered(void* args);
-static void _shellDefer(void);
-static void _shellDisplayThreads(void);
-static void _shellSignalSelf(void);
+static void _shellDefer(const char* args);
+static void _shellDisplayThreads(const char* args);
+static void _shellSignalSelf(const char* args);
 static void _shellSignalHandler(void);
-static void _shellCtxSwitchTime(void);
-static void _shellHelp(void);
+static void _shellCtxSwitchTime(const char* args);
+static void _shellHelp(const char* args);
+static void _shellDrawTest(const char* args);
+static void _shellList(const char* args);
+static void _shellCat(const char* args);
+static void _shellMount(const char* args);
+static void _shellTest(const char* args);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -107,6 +113,11 @@ static const command_t sCommands[] = {
     {"timeCtxSw", "Get the average context switch time", _shellCtxSwitchTime},
     {"timePrec", "Timer precision test", _shellTimeTest},
     {"syslog", "Syslog test", _shellSyslog},
+    {"draw", "Draw test", _shellDrawTest},
+    {"ls", "List files in a path", _shellList},
+    {"mount", "Mount a device", _shellMount},
+    {"cat", "Cat a file", _shellCat},
+    {"test", "Current dev test for testing purpose", _shellTest},
     {"help", "Display this help", _shellHelp},
     {NULL, NULL, NULL}
 };
@@ -115,8 +126,119 @@ static const command_t sCommands[] = {
  * FUNCTIONS
  ******************************************************************************/
 
-static void _shellHelp(void)
+static void _shellTest(const char* args)
 {
+    (void)args;
+    _shellMount("/dev/storage/ramdisk0 /rm ustar");
+    _shellCat("/rm/newfile2.txt");
+}
+
+static void _shellCat(const char* args)
+{
+    int32_t fd;
+    int32_t ret;
+    char buffer[100];
+    fd = vfsOpen(args, O_RDONLY, 0);
+    if(fd < 0)
+    {
+        kprintf("Failed to open %s\n", args);
+        return;
+    }
+
+    while((ret = vfsRead(fd, buffer, 99)) > 0)
+    {
+        buffer[ret] = 0;
+        kprintf("%s", buffer);
+    }
+    kprintf("\n");
+
+    vfsClose(fd);
+}
+
+static void _shellMount(const char* args)
+{
+    int32_t ret;
+    uint32_t i;
+    uint32_t lastCpy;
+    size_t length;
+    uint8_t copyIndex;
+    char argsVal[3][128];
+
+    lastCpy = 0;
+    copyIndex = 0;
+    length = strlen(args);
+    for(i = 0; i < length; ++i)
+    {
+        if(args[i] == ' ')
+        {
+            memcpy(argsVal[copyIndex], args + lastCpy, i - lastCpy);
+            argsVal[copyIndex][i - lastCpy] = 0;
+            ++copyIndex;
+            lastCpy = i + 1;
+        }
+        else if(i == length - 1)
+        {
+            memcpy(argsVal[copyIndex], args + lastCpy, i - lastCpy + 1);
+            argsVal[copyIndex][i - lastCpy + 1] = 0;
+            ++copyIndex;
+            lastCpy = i + 1;
+        }
+    }
+
+
+    if(copyIndex != 3)
+    {
+        kprintf("Error: mount <dev_path> <dir_path> <fs_name>\n");
+        return;
+    }
+    kprintf("Mouting %s to %s (fs: %s)\n", argsVal[0], argsVal[1], argsVal[2]);
+
+    ret = vfsMount(argsVal[1], argsVal[0], argsVal[2]);
+    if(ret != 0)
+    {
+        kprintf("Failed to mount: %d\n", ret);
+    }
+}
+
+static void _shellList(const char* args)
+{
+    int32_t  fd;
+    dirent_t dirEnt;
+    fd = vfsOpen(args, O_RDONLY, 0);
+    if(fd < 0)
+    {
+        kprintf("Failed to open %s\n", args);
+        return;
+    }
+
+    while(vfsReaddir(fd, &dirEnt) >= 0)
+    {
+        kprintf("%s\n", dirEnt.pName);
+    }
+
+    vfsClose(fd);
+}
+
+static void _shellDrawTest(const char* args)
+{
+    (void)args;
+    uint32_t x;
+
+    consoleClear();
+    consolePutCursor(0, 0);
+
+    graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
+
+    for(x = 1; x < 1022; ++x)
+    {
+        graphicsDrawLine(x, 1, 500, 500, 0xff33addf);
+        schedSleep(333333);
+    }
+}
+
+static void _shellHelp(const char* args)
+{
+    (void)args;
     size_t i;
 
     for(i = 0; sCommands[i].pCommandName != NULL; ++i)
@@ -127,32 +249,34 @@ static void _shellHelp(void)
     }
 }
 
-static void _shellSyslog(void)
+static void _shellSyslog(const char* args)
 {
     syslog(SYSLOG_LEVEL_CRITICAL,
            "SHELL",
-           "This is a critical message from TID %d",
+           args,
            schedGetCurrentThread()->tid);
     syslog(SYSLOG_LEVEL_ERROR,
            "SHELL",
-           "This is an error message from TID %d",
+           args,
            schedGetCurrentThread()->tid);
     syslog(SYSLOG_LEVEL_WARNING,
            "SHELL",
-           "This is a warning message from TID %d",
+           args,
            schedGetCurrentThread()->tid);
     syslog(SYSLOG_LEVEL_INFO,
            "SHELL",
-           "This is an info message from TID %d",
+           args,
            schedGetCurrentThread()->tid);
     syslog(SYSLOG_LEVEL_DEBUG,
            "SHELL",
-           "This is a debug message from TID %d",
+           args,
            schedGetCurrentThread()->tid);
 }
 
-static void _shellTimeTest(void)
+static void _shellTimeTest(const char* args)
 {
+    (void)args;
+
     uint32_t i;
     uint64_t time;
     uint64_t s;
@@ -222,8 +346,9 @@ static void* _shellCtxSwitchRoutine(void* args)
     return NULL;
 }
 
-static void _shellCtxSwitchTime(void)
+static void _shellCtxSwitchTime(const char* args)
 {
+    (void)args;
     kernel_thread_t* pShellThread[2];
     OS_RETURN_E      error;
 
@@ -304,8 +429,9 @@ static void _shellSignalHandler(void)
     spinlockRelease(&sSignalLock);
 }
 
-static void _shellSignalSelf(void)
+static void _shellSignalSelf(const char* args)
 {
+    (void)args;
     OS_RETURN_E error;
 
     spinlockAcquire(&sSignalLock);
@@ -337,8 +463,9 @@ static void _shellDummyDefered(void* args)
             schedGetCurrentThread()->tid);
 }
 
-static void _shellDefer(void)
+static void _shellDefer(const char* args)
 {
+    (void)args;
     OS_RETURN_E error;
 
     error = interruptDeferIsr(_shellDummyDefered, (void*)42);
@@ -348,8 +475,9 @@ static void _shellDefer(void)
     }
 }
 
-static void _shellDisplayThreads(void)
+static void _shellDisplayThreads(const char* args)
 {
+    (void)args;
     size_t         threadCount;
     size_t         i;
     uint32_t       j;
@@ -436,7 +564,9 @@ static void _shellDisplayThreads(void)
 static void _shellExecuteCommand(void)
 {
     size_t cursor;
+    size_t i;
     char   command[SHELL_INPUT_BUFFER_SIZE + 1];
+    char*  args;
 
     if(sInputBufferCursor == 0)
     {
@@ -454,21 +584,22 @@ static void _shellExecuteCommand(void)
             command[cursor] = sInputBuffer[cursor];
         }
     }
+
     command[cursor] = 0;
-
-    /* Remove the space */
-    if(cursor < sInputBufferCursor)
+    if(cursor == sInputBufferCursor)
     {
-        ++cursor;
+        args = "\0";
     }
-
-    size_t i;
+    else
+    {
+        args = &sInputBuffer[cursor + 1];
+    }
 
     for(i = 0; sCommands[i].pCommandName != NULL; ++i)
     {
         if(strcmp(command, sCommands[i].pCommandName) == 0)
         {
-            sCommands[i].pFunc();
+            sCommands[i].pFunc(args);
             break;
         }
     }
@@ -483,9 +614,18 @@ static void _shellGetCommand(void)
 {
     ssize_t readCount;
     char    readChar;
+    colorscheme_t saveScheme;
+    colorscheme_t promptScheme;
 
     sInputBufferCursor = 0;
-    kprintf("> ");
+    promptScheme.background = BG_BLACK;
+    promptScheme.foreground = FG_CYAN;
+    consoleSaveColorScheme(&saveScheme);
+    consoleSetColorScheme(&promptScheme);
+    kprintf(">");
+    kprintfFlush();
+    consoleSetColorScheme(&saveScheme);
+    kprintf(" ");
     kprintfFlush();
     while(TRUE)
     {
@@ -518,15 +658,12 @@ static void _shellGetCommand(void)
     sInputBuffer[sInputBufferCursor] = 0;
 }
 
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-
 static void* _shellEntry(void* args)
 {
     (void)args;
 
     /* Wait for all the system to be up */
-    schedSleep(2000000000);
+    schedSleep(1000000000);
 
     kprintf("\n");
 
@@ -550,7 +687,7 @@ void kernelShellInit(void)
      * of join.
      */
     error = schedCreateKernelThread(&pShellThread,
-                                    0,
+                                    10,
                                     "kernelShell",
                                     0x1000,
                                     0x2,

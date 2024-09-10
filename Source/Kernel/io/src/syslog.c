@@ -54,7 +54,7 @@
 /** @brief Defines the syslog thread cpu affinity */
 #define SYSLOG_THREAD_AFFINITY 0
 /** @brief Defines the maximal syslog size */
-#define SYSLOG_MESSAGE_MAX_LENGTH 512
+#define SYSLOG_MESSAGE_MAX_LENGTH 2048
 
 /** @brief Current module name */
 #define MODULE_NAME "SYSLOG"
@@ -102,61 +102,9 @@ typedef struct
     }                                                       \
 }
 
-
-/**
- * @brief Adds a padding sequence before a formated input.
- */
-#define PAD_SEQ                                                         \
-{                                                                       \
-    strSize = strlen(tmpSeq);                                           \
-                                                                        \
-    while(paddingMod > strSize)                                         \
-    {                                                                   \
-        _syslogToBufferChar(pBuffer, &bufferPos, kSize, padCharMod);    \
-        --paddingMod;                                                   \
-    }                                                                   \
-}
-
-/**
- * @brief Get a sequence value argument.
- */
-#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD)                     \
-{                                                              \
-                                                               \
-    /* Harmonize length */                                     \
-    if(LENGTH_MOD > 8)                                         \
-    {                                                          \
-        LENGTH_MOD = 8;                                        \
-    }                                                          \
-                                                               \
-    switch(LENGTH_MOD)                                         \
-    {                                                          \
-        case 1:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFF);   \
-            break;                                             \
-        case 2:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF); \
-            break;                                             \
-        case 4:                                                \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
-            break;                                             \
-        case 8:                                                \
-            VAL = __builtin_va_arg(ARGS, uint64_t);            \
-            break;                                             \
-        default:                                               \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
-    }                                                          \
-                                                               \
-}
-
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
-
-/* TODO: Once we have a snprintf and equivalent, replace the formating functions
- * by those.
- */
-
 /**
  * @brief Syslog thread routine.
  *
@@ -168,94 +116,6 @@ typedef struct
  * @return The function shall never return.
  */
 static void* _syslogRoutine(void* args);
-
-/**
- * @brief Formats a string to a buffer in memory.
- *
- * @details Formats a string to a buffer in memory. The buffer is not filled
- * more than its size.
- *
- * @param[out] pBuffer The buffer to fill.
- * @param[in] kSize The maximal size of the buffer.
- * @param[in] kFmt The format string to use.
- * @param[in] args Additional parameters for the format.
- */
-static void _syslogFormatArgs(char*             pBuffer,
-                              const size_t      kSize,
-                              const char*       kpFmt,
-                              __builtin_va_list args);
-
-/**
- * @brief Formats a string to a buffer in memory.
- *
- * @details Formats a string to a buffer in memory. The buffer is not filled
- * more than its size.
- *
- * @param[out] pBuffer The buffer to fill.
- * @param[in] kSize The maximal size of the buffer.
- * @param[in] kFmt The format string to use.
- * @param[in] ... Additional parameters for the format.
- */
-static inline void _syslogFormat(char*        pBuffer,
-                                 const size_t kSize,
-                                 const char*  kpFmt,
-                                 ...);
-
-/**
- * @brief Converts a string to upper case characters.
- *
- * @details Transforms all lowercase character of a NULL terminated string to
- * uppercase characters.
- *
- * @param[in, out] pString The string to tranform.
- */
-static inline void _toUpper(char* pString);
-
-/**
- * @brief Converts a string to upper case characters.
- *
- * @details Transforms all uppercase character of a NULL terminated string to
- * lowercase characters.
- *
- * @param[in, out] pString The string to tranform.
- */
-static inline void _toLower(char* pString);
-
-/**
- * @brief Copies a character to the buffer.
- *
- * @details Copies a character to the buffer. The offset of  the buffer is
- * updated in the function and the function does not copy more than the size
- * of the buffer.
- *
- * @param[out] pBuffer The buffer to fill.
- * @param[in, out] pOffset The pointer to the buffer offset. It is updated by
- * the copy.
- * @param[in] kSize The maximal size of the buffer.
- * @param[in] kChar The character to copy.
- */
-static inline void _syslogToBufferChar(char*        pBuffer,
-                                       size_t*      pOffset,
-                                       const size_t kSize,
-                                       const char   kChar);
-
-/**
- * @brief Copies a string to the buffer.
- *
- * @details Copies a string to the buffer. The offset of  the buffer is
- * updated in the function and the function does not copy more than the size
- * of the buffer.
- *
- * @param[out] pBuffer The buffer to fill.
- * @param[in, out] pOffset The pointer to the buffer offset. It is updated by
- * the copy.
- * @param[in] kSize The maximal size of the buffer.
- * @param[in] kStr The string to copy.
- */
-static inline void _syslogToBufferString(char*        pBuffer,
-                                         size_t*      pOffset,
-                                         const size_t kSize,
-                                         const char*  kStr);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -296,256 +156,6 @@ const char* sSyslogTags[SYSLOG_LEVEL_MAX + 1] = {
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-static inline void _toUpper(char* pString)
-{
-    /* For each character of the string */
-    while(*pString != 0)
-    {
-        /* If the character is lowercase, makes it uppercase */
-        if(*pString > 96 && *pString < 123)
-        {
-            *pString = *pString - 32;
-        }
-        ++pString;
-    }
-}
-
-static inline void _toLower(char* pString)
-{
-    /* For each character of the string */
-    while(*pString != 0)
-    {
-        /* If the character is uppercase, makes it lowercase */
-        if(*pString > 64 && *pString < 91)
-        {
-            *pString = *pString + 32;
-        }
-        ++pString;
-    }
-}
-
-static inline void _syslogToBufferChar(char*        pBuffer,
-                                       size_t*      pOffset,
-                                       const size_t kSize,
-                                       const char   kChar)
-{
-    if(kSize - 2 > *pOffset)
-    {
-        pBuffer[*pOffset] = kChar;
-        *pOffset += 1;
-    }
-}
-
-static inline void _syslogToBufferString(char*        pBuffer,
-                                         size_t*      pOffset,
-                                         const size_t kSize,
-                                         const char*  kStr)
-{
-    while(kSize - 2 > *pOffset && *kStr != 0)
-    {
-        pBuffer[*pOffset] = *kStr;
-        *pOffset += 1;
-        ++kStr;
-    }
-}
-
-static void _syslogFormatArgs(char*             pBuffer,
-                              const size_t      kSize,
-                              const char*       kpFmt,
-                              __builtin_va_list args)
-{
-    size_t   pos;
-    size_t   strLength;
-    uint64_t seqVal;
-    size_t   strSize;
-    uint8_t  modifier;
-    uint8_t  lengthMod;
-    uint8_t  paddingMod;
-    bool_t   upperMod;
-    char     padCharMod;
-    char     tmpSeq[128];
-    char*    pArgsValue;
-    size_t   bufferPos;
-
-    bufferPos  = 0;
-    modifier   = 0;
-    lengthMod  = 4;
-    paddingMod = 0;
-    upperMod   = FALSE;
-    padCharMod = ' ';
-    strLength  = strlen(kpFmt);
-
-    for(pos = 0; pos < strLength; ++pos)
-    {
-        if(kpFmt[pos] == '%')
-        {
-            /* If we encouter this character in a modifier sequence, it was
-             * just an escape one.
-             */
-            modifier = !modifier;
-            if(modifier)
-            {
-                continue;
-            }
-            else
-            {
-                _syslogToBufferChar(pBuffer, &bufferPos, kSize, kpFmt[pos]);
-            }
-        }
-        else if(modifier)
-        {
-            switch(kpFmt[pos])
-            {
-                /* Length mods */
-                case 'h':
-                    lengthMod /= 2;
-                    continue;
-                case 'l':
-                    lengthMod *= 2;
-                    continue;
-
-                /* Specifier mods */
-                case 's':
-                    pArgsValue = __builtin_va_arg(args, char*);
-                    _syslogToBufferString(pBuffer,
-                                          &bufferPos,
-                                          kSize,
-                                          pArgsValue);
-
-                    break;
-                case 'd':
-                case 'i':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
-                    memset(tmpSeq, 0, sizeof(tmpSeq));
-                    itoa(seqVal, tmpSeq, 10);
-                    PAD_SEQ
-                    _syslogToBufferString(pBuffer,
-                                          &bufferPos,
-                                          kSize,
-                                          tmpSeq);
-                    break;
-                case 'u':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
-                    memset(tmpSeq, 0, sizeof(tmpSeq));
-                    uitoa(seqVal, tmpSeq, 10);
-                    PAD_SEQ
-                    _syslogToBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
-                    break;
-                case 'X':
-                    upperMod = TRUE;
-                    __attribute__ ((fallthrough));
-                case 'x':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
-                    memset(tmpSeq, 0, sizeof(tmpSeq));
-                    uitoa(seqVal, tmpSeq, 16);
-                    PAD_SEQ
-                    if(upperMod == TRUE)
-                    {
-                        _toUpper(tmpSeq);
-                    }
-                    else
-                    {
-                        _toLower(tmpSeq);
-                    }
-                    _syslogToBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
-                    break;
-                case 'P':
-                    upperMod = TRUE;
-                    __attribute__ ((fallthrough));
-                case 'p':
-                    paddingMod  = 2 * sizeof(uintptr_t);
-                    padCharMod = '0';
-                    lengthMod = sizeof(uintptr_t);
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
-                    memset(tmpSeq, 0, sizeof(tmpSeq));
-                    uitoa(seqVal, tmpSeq, 16);
-                    PAD_SEQ
-                    if(upperMod == TRUE)
-                    {
-                        _toUpper(tmpSeq);
-                    }
-                    else
-                    {
-                        _toLower(tmpSeq);
-                    }
-                    _syslogToBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
-                    break;
-                case 'c':
-                    lengthMod = sizeof(char);
-                    GET_SEQ_VAL(tmpSeq[0], args, lengthMod);
-                    _syslogToBufferChar(pBuffer, &bufferPos, kSize, tmpSeq[0]);
-                    break;
-
-                /* Padding mods */
-                case '0':
-                    if(paddingMod == 0)
-                    {
-                        padCharMod = '0';
-                    }
-                    else
-                    {
-                        paddingMod *= 10;
-                    }
-                    continue;
-                case '1':
-                    paddingMod = paddingMod * 10 + 1;
-                    continue;
-                case '2':
-                    paddingMod = paddingMod * 10 + 2;
-                    continue;
-                case '3':
-                    paddingMod = paddingMod * 10 + 3;
-                    continue;
-                case '4':
-                    paddingMod = paddingMod * 10 + 4;
-                    continue;
-                case '5':
-                    paddingMod = paddingMod * 10 + 5;
-                    continue;
-                case '6':
-                    paddingMod = paddingMod * 10 + 6;
-                    continue;
-                case '7':
-                    paddingMod = paddingMod * 10 + 7;
-                    continue;
-                case '8':
-                    paddingMod = paddingMod * 10 + 8;
-                    continue;
-                case '9':
-                    paddingMod = paddingMod * 10 + 9;
-                    continue;
-                default:
-                    continue;
-            }
-        }
-        else
-        {
-            _syslogToBufferChar(pBuffer, &bufferPos, kSize, kpFmt[pos]);
-        }
-
-        /* Reinit mods */
-        lengthMod  = 4;
-        paddingMod = 0;
-        upperMod   = FALSE;
-        padCharMod = ' ';
-        modifier   = 0;
-    }
-
-    pBuffer[bufferPos] = 0;
-}
-
-static void _syslogFormat(char*        pBuffer,
-                          const size_t kSize,
-                          const char*  kpFmt,
-                          ...)
-{
-    __builtin_va_list args;
-
-    __builtin_va_start(args, kpFmt);
-    _syslogFormatArgs(pBuffer, kSize, kpFmt, args);
-    __builtin_va_end(args);
-}
 
 static void* _syslogRoutine(void* args)
 {
@@ -713,31 +323,31 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
     {
         tid = -1;
     }
-    _syslogFormat(pMsg,
-                  SYSLOG_MESSAGE_MAX_LENGTH - 1,
-                  "%s | %02d/%02d/%04d %02d:%02d:%02d | "
-                  "Uptime: %llu:%02llu:%02llu:%03llu:%03llu:%03llu  | "
-                  "%s (%d) | %s | ",
-                  pTag,
-                  date.day, date.month, date.year,
-                  dayTime.hours, dayTime.minutes, dayTime.seconds,
-                  time / 360000000000LLU,
-                  (time / 60000000000LLU) % 60LLU,
-                  (time / 1000000000LLU) % 60LLU,
-                  (time / 1000000LLU) % 1000LLU,
-                  (time / 1000LLU) % 1000LLU,
-                  (time % 1000LLU),
-                  pThreadName,
-                  tid,
-                  kpModule);
+    snprintf(pMsg,
+             SYSLOG_MESSAGE_MAX_LENGTH - 1,
+             "%s | %02d/%02d/%04d %02d:%02d:%02d | "
+             "Uptime: %llu:%02llu:%02llu:%03llu:%03llu:%03llu | "
+             "%s (%d) | %s | ",
+             pTag,
+             date.day, date.month, date.year,
+             dayTime.hours, dayTime.minutes, dayTime.seconds,
+             time / 360000000000LLU,
+             (time / 60000000000LLU) % 60LLU,
+             (time / 1000000000LLU) % 60LLU,
+             (time / 1000000LLU) % 1000LLU,
+             (time / 1000LLU) % 1000LLU,
+             (time % 1000LLU),
+             pThreadName,
+             tid,
+             kpModule);
 
     /* Format the message */
     size = strlen(pMsg);
     __builtin_va_start(args, kpMessage);
-    _syslogFormatArgs(pMsg + size,
-                      SYSLOG_MESSAGE_MAX_LENGTH - size - 1,
-                      kpMessage,
-                      args);
+    vsnprintf(pMsg + size,
+              SYSLOG_MESSAGE_MAX_LENGTH - size - 1,
+              kpMessage,
+              args);
     __builtin_va_end(args);
 
     /* Setup the message */
@@ -746,11 +356,16 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
     pSyslogMsg->time     = time;
     pSyslogMsg->pMessage = pMsg;
 
-
     if(sIsStarted == FALSE)
     {
         kprintf(pMsg);
         kprintf("\n");
+
+        kfree(pMsg);
+        kfree(pSyslogMsg);
+        kQueueDestroyNode(&pNewNode);
+
+        return OS_NO_ERR;
     }
 
     /* Add message to the queue */

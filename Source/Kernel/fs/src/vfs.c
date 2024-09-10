@@ -32,7 +32,6 @@
 #include <kqueue.h>       /* Kernel queues */
 #include <syslog.h>       /* Syslog service */
 #include <critical.h>     /* Kernel critical management */
-#include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
 #include <config.h>
@@ -78,6 +77,19 @@ typedef struct
     VFS_READDIR_FUNC pReadDir;
     /** @brief The ioctl function hook pointer. */
     VFS_IOCTL_FUNC pIOCTL;
+
+    /**
+     * @brief Unmount function for the filesystem.
+     *
+     * @details Unmount function for the filesystem. This function will unlink a
+     * directory to the associated device.
+     *
+     * @param[in, out] pDriverMountData The driver data generated when mounting
+     * the filesystem.
+     *
+     * @return The function returns the success or error status.
+     */
+    OS_RETURN_E (*pUnmount)(void* pDriverMountData);
 } vfs_driver_internal_t;
 
 /** @brief Node structure used to keep track of the mounted points */
@@ -147,6 +159,16 @@ typedef struct
     kernel_spinlock_t lock;
 } vfs_fd_table;
 
+/** @brief Defines the generic descriptor for the generic VFS operations */
+typedef struct
+{
+    /** @brief Descriptor mount point */
+    vfs_node_t* pMountPt;
+
+    /** @brief Contains the next dir entry */
+    vfs_node_t* pNextChildCursor;
+} vfs_generic_desc_t;
+
 
 /*******************************************************************************
  * MACROS
@@ -194,8 +216,10 @@ static ssize_t _getNextPathToken(const char* kpPath);
  * @param[out] pCleanPath A pointer to the memory where to store the cleaned
  * path.
  * @param[in] kpOriginalPath The original path to clean.
+ *
+ * @return The function returns the size of the clean path.
  */
-static void _cleanPath(char* pCleanPath, const char* kpOriginalPath);
+static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath);
 
 /**
  * @brief Cleans a node from the mount point graph.
@@ -326,12 +350,118 @@ static int32_t _createFileDescriptor(vfs_driver_internal_t* pDriver,
                                      const int              kFlags,
                                      const int              kMode);
 
+/**
+ * @brief Generic VFS open hook.
+ *
+ * @details Generic VFS open hook. This function returns a handle to control the
+ * VFS generic nodes.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] kpPath The path in the VFS mount point table.
+ * @param[in] flags The open flags.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _vfsGenericOpen(void*       pDrvCtrl,
+                             const char* kpPath,
+                             int         flags,
+                             int         mode);
+
+/**
+ * @brief Generic VFS close hook.
+ *
+ * @details Generic VFS close hook. This function closes a handle that was
+ * created when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vfsGenericClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief Generic VFS write hook.
+ *
+ * @details Generic VFS write hook.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _vfsGenericWrite(void*       pDrvCtrl,
+                                void*       pHandle,
+                                const void* kpBuffer,
+                                size_t      count);
+
+/**
+ * @brief Generic VFS write hook.
+ *
+ * @details Generic VFS write hook.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] pBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _vfsGenericRead(void*  pDrvCtrl,
+                               void*  pHandle,
+                               void*  pBuffer,
+                               size_t count);
+
+/**
+ * @brief Generic VFS ReadDir hook.
+ *
+ * @details Generic VFS ReadDir hook. This function performs the ReadDir for the
+ * Generic driver.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[out] pDirEntry The directory entry to fill by the driver.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _vfsGenericReadDir(void*     pDriverData,
+                                  void*     pHandle,
+                                  dirent_t* pDirEntry);
+
+/**
+ * @brief Generic VFS IOCTL hook.
+ *
+ * @details Generic VFS IOCTL hook. This function performs the IOCTL for the
+ * Generic driver.
+ *
+ * @param[in, out] pDrvCtrl The generic VFS driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static ssize_t _vfsGenericIOCTL(void*    pDriverData,
+                                void*    pHandle,
+                                uint32_t operation,
+                                void*    pArgs);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/* None */
+/** @brief Start address of the registered kernel fs table */
+extern uintptr_t _START_FS_TABLE_ADDR;
 
 /************************* Exported global variables **************************/
 /* None */
@@ -343,6 +473,17 @@ static vfs_fd_table sKernelFdTable;
 /** @brief VFS mount point graph */
 static vfs_node_t* spRootPoint = NULL;
 
+/** @brief VFS generic driver */
+static vfs_driver_internal_t sVfsGenericDriver = {
+    .pDriverData = NULL,
+    .pOpen       = _vfsGenericOpen,
+    .pClose      = _vfsGenericClose,
+    .pRead       = _vfsGenericRead,
+    .pWrite      = _vfsGenericWrite,
+    .pReadDir    = _vfsGenericReadDir,
+    .pIOCTL      = _vfsGenericIOCTL
+};
+
 /** @brief Kernel file descriptor table lock */
 static kernel_spinlock_t sMountPointLock;
 
@@ -351,6 +492,7 @@ static kernel_spinlock_t sMountPointLock;
  ******************************************************************************/
 
 #if 0
+#include <kerneloutput.h> /* Kernel output */
 void showVfs(vfs_node_t* pRoot, const uint32_t kLevel);
 void showVfs(vfs_node_t* pRoot, const uint32_t kLevel)
 {
@@ -369,18 +511,50 @@ void showVfs(vfs_node_t* pRoot, const uint32_t kLevel)
 
     showVfs(pRoot->pFirstChild, kLevel + 1);
     showVfs(pRoot->pNextSibling, kLevel);
-
 }
 #endif
 
-static void _cleanPath(char* pCleanPath, const char* kpOriginalPath)
+static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
 {
     size_t size;
+    size_t newSize;
+    size_t i;
+    bool_t firstDelim;
 
-    /* TODO: Clean the path */
     size = strlen(kpOriginalPath);
-    memcpy(pCleanPath, kpOriginalPath, size);
-    pCleanPath[size] = 0;
+
+    /* Remove trailing delimiter */
+    while(size > 0 && kpOriginalPath[size - 1] == VFS_PATH_DELIMITER)
+    {
+        --size;
+    }
+
+    /* Copy while removing multiple delimiters */
+    firstDelim = FALSE;
+    newSize = 0;
+    for(i = 0; i < size; ++i)
+    {
+        if(kpOriginalPath[i] == VFS_PATH_DELIMITER)
+        {
+            if(firstDelim == TRUE)
+            {
+                continue;
+            }
+            else
+            {
+                firstDelim = TRUE;
+            }
+        }
+        else
+        {
+            firstDelim = FALSE;
+        }
+        pCleanPath[newSize++] = kpOriginalPath[i];
+    }
+
+    pCleanPath[newSize] = 0;
+
+    return newSize;
 }
 
 static ssize_t _getNextPathToken(const char* kpPath)
@@ -416,7 +590,7 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
     int32_t     compare;
 
     /* Check values */
-    if(pRoot == NULL || kPathSize == 0)
+    if(pRoot == NULL)
     {
         return NULL;
     }
@@ -437,7 +611,15 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
     /* End of path */
     if(nextInternalPathStop < 0)
     {
-        return NULL;
+        if(kFindExactNode == TRUE ||
+            (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+        {
+            return pRoot;
+        }
+        else
+        {
+            return NULL;
+        }
     }
 
     /* Check if the current node can handle the path */
@@ -448,8 +630,26 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
                           nextInternalPathStop);
         if(compare == 0)
         {
-            ++nextInternalPathStop;
             kpPath += nextInternalPathStop;
+            if(*kpPath == VFS_PATH_DELIMITER)
+            {
+                ++nextInternalPathStop;
+                ++kpPath;
+            }
+
+            /* Check if we reached the end of the path */
+            if(*kpPath == 0)
+            {
+                if(kFindExactNode == TRUE ||
+                   (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+                {
+                    return pRoot;
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
 
             /* Check if other mount point might be managing this path */
             kpFoundNode = _findNodeFromPath(pRoot->pFirstChild,
@@ -810,8 +1010,6 @@ static void _releaseFileDescriptor(const int32_t fd)
     kqueue_node_t*   pFdNode;
     OS_RETURN_E      error;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
-
     /* Check that the FD is open */
     error = vectorGet(sKernelFdTable.pFdTable, fd, (void**)&pFdNode);
     VFS_ASSERT(error == OS_NO_ERR && pFdNode != NULL,
@@ -832,8 +1030,6 @@ static void _releaseFileDescriptor(const int32_t fd)
                OS_ERR_NO_SUCH_ID);
 
     kQueuePush(pFdNode, sKernelFdTable.pFdFreePool);
-
-    KERNEL_UNLOCK(sKernelFdTable.lock);
 }
 
 static OS_RETURN_E _getFd(const int32_t kFd, vfs_internal_fd** ppInternalFd)
@@ -863,6 +1059,161 @@ static OS_RETURN_E _getFd(const int32_t kFd, vfs_internal_fd** ppInternalFd)
     *ppInternalFd = pFdNode->pData;
 
     return OS_NO_ERR;
+}
+
+
+static void* _vfsGenericOpen(void*       pDrvCtrl,
+                             const char* kpPath,
+                             int         flags,
+                             int         mode)
+{
+    vfs_node_t*         pMountPt;
+    vfs_generic_desc_t* pDesc;
+
+
+    (void)pDrvCtrl;
+    (void)flags;
+    (void)mode;
+
+    /* Check if this is an exact node in the mount points */
+    pMountPt = _findNodeFromPath(spRootPoint,
+                                 kpPath,
+                                 strlen(kpPath),
+                                 FALSE,
+                                 TRUE);
+    if(pMountPt != NULL)
+    {
+        pDesc = kmalloc(sizeof(vfs_generic_desc_t));
+        if(pDesc == NULL)
+        {
+            return (void*) -1;
+        }
+        memset(pDesc, 0, sizeof(vfs_generic_desc_t));
+        pDesc->pMountPt = pMountPt;
+        return pDesc;
+    }
+
+    return (void*)-1;
+}
+
+static int32_t _vfsGenericClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+
+    /* Check if it was correctly opened */
+    if(pHandle != NULL && pHandle != (void*)-1)
+    {
+        kfree(pHandle);
+        return 0;
+    }
+
+
+    return -1;
+}
+
+static ssize_t _vfsGenericWrite(void*       pDrvCtrl,
+                                void*       pHandle,
+                                const void* kpBuffer,
+                                size_t      count)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+    (void)kpBuffer;
+    (void)count;
+
+    /* At the moment we do not this operation */
+    return -1;
+}
+
+static ssize_t _vfsGenericRead(void*  pDrvCtrl,
+                               void*  pHandle,
+                               void*  pBuffer,
+                               size_t count)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+    (void)pBuffer;
+    (void)count;
+
+    /* At the moment we do not this operation */
+    return -1;
+}
+
+static int32_t _vfsGenericReadDir(void*     pDriverData,
+                                  void*     pHandle,
+                                  dirent_t* pDirEntry)
+{
+    vfs_generic_desc_t* pDesc;
+
+    (void)pDriverData;
+
+    /* Check if it was correctly opened */
+    if(pHandle == NULL || pHandle == (void*)-1)
+    {
+        return -1;
+    }
+
+    pDesc = pHandle;
+    if(pDesc->pMountPt == NULL)
+    {
+        return -1;
+    }
+
+    if(pDesc->pNextChildCursor == NULL)
+    {
+        pDesc->pNextChildCursor = pDesc->pMountPt->pFirstChild;
+        if(pDesc->pNextChildCursor == NULL)
+        {
+            return 0;
+        }
+    }
+    else if(pDesc->pNextChildCursor == (void*)-1)
+    {
+        return -1;
+    }
+
+    /* Copy name */
+    strncpy(pDirEntry->pName,
+            pDesc->pNextChildCursor->pMountPoint,
+            VFS_FILENAME_MAX_LENGTH);
+    pDirEntry->pName[VFS_FILENAME_MAX_LENGTH] = 0;
+
+    /* Check if the node has children (it is a folder) */
+    if(pDesc->pNextChildCursor->pFirstChild != NULL)
+    {
+        pDirEntry->type = VFS_FILE_TYPE_DIR;
+    }
+    else
+    {
+        pDirEntry->type = VFS_FILE_TYPE_FILE;
+    }
+
+    /* Check if there is another sibling */
+    if(pDesc->pNextChildCursor->pNextSibling != NULL)
+    {
+        pDesc->pNextChildCursor = pDesc->pNextChildCursor->pNextSibling;
+        return 1;
+    }
+    else
+    {
+        pDesc->pNextChildCursor = (void*)-1;
+    }
+
+    return 0;
+}
+
+static ssize_t _vfsGenericIOCTL(void*    pDriverData,
+                                void*    pHandle,
+                                uint32_t operation,
+                                void*    pArgs)
+{
+    (void)pDriverData;
+    (void)pHandle;
+    (void)operation;
+    (void)pArgs;
+
+    /* At the moment we do not support this operation */
+    return -1;
 }
 
 void vfsInit(void)
@@ -994,6 +1345,7 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     pInternalHandle->pWrite      = pWrite;
     pInternalHandle->pReadDir    = pReadDir;
     pInternalHandle->pIOCTL      = pIOCTL;
+    pInternalHandle->pUnmount    = NULL;
     /* Add the node */
     newDriver = (vfs_driver_t)_vfsAddDriver(pCleanPath, pInternalHandle);
 
@@ -1043,57 +1395,94 @@ OS_RETURN_E vfsUnregisterDriver(vfs_driver_t* pDriver)
 
 int32_t vfsOpen(const char* kpPath, int flags, int mode)
 {
-    vfs_node_t* pMountPt;
-    void*       pHandle;
-    int32_t     fd;
-    size_t      pathSize;
+    vfs_node_t*            pMountPt;
+    vfs_driver_internal_t* pDriver;
+    void*                  pHandle;
+    int32_t                fd;
+    size_t                 pathSize;
+    char*                  pCleanPath;
 
     pathSize = strlen(kpPath);
+    pCleanPath = kmalloc(pathSize);
+    if(pCleanPath == NULL)
+    {
+        return -1;
+    }
+    pathSize = _cleanPath(pCleanPath, kpPath);
 
     /* Find the file mount point */
     pMountPt = _findNodeFromPath(spRootPoint,
-                                 kpPath,
+                                 pCleanPath,
                                  pathSize,
                                  TRUE,
                                  FALSE);
 
-    if(pMountPt == NULL)
+    /* If there is a driver */
+    if(pMountPt != NULL)
     {
-        return -1;
+        /* Redirect the value */
+        if(pMountPt->pDriver->pOpen == NULL)
+        {
+            kfree(pCleanPath);
+            return -1;
+        }
+
+        if(pathSize >= pMountPt->mountPointOffset)
+        {
+            pathSize = pMountPt->mountPointOffset;
+        }
+        pDriver = pMountPt->pDriver;
+    }
+    else
+    {
+        /* Check if this is an exact node in the mount points */
+        pMountPt = _findNodeFromPath(spRootPoint,
+                                     pCleanPath,
+                                     pathSize,
+                                     FALSE,
+                                     TRUE);
+        if(pMountPt != NULL)
+        {
+            /* Handle with the generic VFS driver */
+            pDriver = &sVfsGenericDriver;
+            pathSize = 0;
+        }
+        else
+        {
+            kfree(pCleanPath);
+            return -1;
+        }
     }
 
-    /* Redirect the value */
-    if(pMountPt->pDriver->pOpen == NULL)
-    {
-        return -1;
-    }
-
-    if(pathSize >= pMountPt->mountPointOffset)
-    {
-        pathSize = pMountPt->mountPointOffset;
-    }
-    pHandle = pMountPt->pDriver->pOpen(pMountPt->pDriver->pDriverData,
-                                       kpPath + pathSize,
-                                       flags,
-                                       mode);
+    pHandle = pDriver->pOpen(pDriver->pDriverData,
+                             pCleanPath + pathSize,
+                             flags,
+                             mode);
     /* Failed to open */
     if(pHandle == (void*)-1)
     {
+        kfree(pCleanPath);
         return -1;
     }
 
     /* Get a free file descriptor and set its attributes */
-    fd = _createFileDescriptor(pMountPt->pDriver, pHandle, kpPath, flags, mode);
+    fd = _createFileDescriptor(pDriver,
+                               pHandle,
+                               pCleanPath,
+                               flags,
+                               mode);
     if(fd < 0)
     {
         /* Close the file and return */
-        if(pMountPt->pDriver->pClose != NULL)
+        if(pDriver->pClose != NULL)
         {
-            pMountPt->pDriver->pClose(pMountPt->pDriver->pDriverData, pHandle);
+            pDriver->pClose(pDriver->pDriverData, pHandle);
         }
+        kfree(pCleanPath);
         return -1;
     }
 
+    kfree(pCleanPath);
     return fd;
 }
 
@@ -1153,6 +1542,12 @@ ssize_t vfsRead(int32_t fd, void* pBuffer, size_t count)
         return -1;
     }
 
+    if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
+    {
+        KERNEL_UNLOCK(sKernelFdTable.lock);
+        return -1;
+    }
+
     pDriver = pInternalFd->pDriver;
 
     KERNEL_UNLOCK(sKernelFdTable.lock);
@@ -1183,6 +1578,12 @@ ssize_t vfsWrite(int32_t fd, const void* pBuffer, size_t count)
 
     error = _getFd(fd, &pInternalFd);
     if(error != OS_NO_ERR)
+    {
+        KERNEL_UNLOCK(sKernelFdTable.lock);
+        return -1;
+    }
+
+    if((pInternalFd->openFlags & VFS_PERM_WRITE) == 0)
     {
         KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
@@ -1223,11 +1624,17 @@ int32_t vfsReaddir(int32_t fd, dirent_t* pDirEntry)
         return -1;
     }
 
+    if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
+    {
+        KERNEL_UNLOCK(sKernelFdTable.lock);
+        return -1;
+    }
+
     pDriver = pInternalFd->pDriver;
 
     KERNEL_UNLOCK(sKernelFdTable.lock);
 
-    if(pDriver->pWrite != NULL)
+    if(pDriver->pReadDir != NULL)
     {
         retVal = pDriver->pReadDir(pDriver->pDriverData,
                                    pInternalFd->pFileHandle,
@@ -1257,6 +1664,12 @@ int32_t vfsIOCTL(int32_t fd, uint32_t operation, void* pArgs)
         return -1;
     }
 
+    if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
+    {
+        KERNEL_UNLOCK(sKernelFdTable.lock);
+        return -1;
+    }
+
     pDriver = pInternalFd->pDriver;
 
     KERNEL_UNLOCK(sKernelFdTable.lock);
@@ -1276,4 +1689,193 @@ int32_t vfsIOCTL(int32_t fd, uint32_t operation, void* pArgs)
     return retVal;
 }
 
+OS_RETURN_E vfsMount(const char* kpPath,
+                     const char* kpDevPath,
+                     const char* kpFsName)
+{
+    fs_driver_t* pDriver;
+    uintptr_t    driverTableCursor;
+    OS_RETURN_E  retCode;
+    void*        pDriverMountData;
+    vfs_node_t*  pNewNode;
+
+    /* Search for the FS if provided */
+    if(kpFsName != NULL)
+    {
+#if VFS_DEBUG_ENABLED
+        syslog(SYSLOG_LEVEL_DEBUG,
+               MODULE_NAME,
+               "Searching FS driver for %s",
+               kpFsName);
+#endif
+
+        /* Display list of registered drivers */
+        driverTableCursor = (uintptr_t)&_START_FS_TABLE_ADDR;
+        pDriver = *(fs_driver_t**)driverTableCursor;
+
+        while(pDriver != NULL)
+        {
+#if VFS_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Searching FS driver for %s, comparing %s",
+                   kpFsName,
+                   pDriver->pName);
+#endif
+            if(strcmp(pDriver->pName, kpFsName) == 0)
+            {
+                break;
+            }
+            driverTableCursor += sizeof(uintptr_t);
+            pDriver = *(fs_driver_t**)driverTableCursor;
+        }
+
+        if(pDriver == NULL)
+        {
+            syslog(SYSLOG_LEVEL_ERROR,
+                   MODULE_NAME,
+                   "Could not find FS %s.",
+                   kpFsName);
+            return OS_ERR_NO_SUCH_ID;
+        }
+
+        /* Mount with driver */
+        retCode = pDriver->pMount(kpPath, kpDevPath, &pDriverMountData);
+    }
+    else
+    {
+        retCode = OS_ERR_NOT_SUPPORTED;
+
+        /* Display list of registered drivers */
+        driverTableCursor = (uintptr_t)&_START_FS_TABLE_ADDR;
+        pDriver = *(fs_driver_t**)driverTableCursor;
+
+        while(pDriver != NULL)
+        {
+#if VFS_DEBUG_ENABLED
+            syslog(SYSLOG_LEVEL_DEBUG,
+                   MODULE_NAME,
+                   "Mounting FS driver for %s: %s",
+                   kpDevPath,
+                   pDriver->pName);
+#endif
+            pDriver = *(fs_driver_t**)driverTableCursor;
+            retCode = pDriver->pMount(kpPath, kpDevPath, &pDriverMountData);
+            if(retCode == OS_NO_ERR)
+            {
+                break;
+            }
+            driverTableCursor += sizeof(uintptr_t);
+        }
+        if(pDriver == NULL)
+        {
+            retCode = OS_ERR_NOT_SUPPORTED;
+        }
+    }
+
+    /* On mount success, add the driver */
+    if(retCode == OS_NO_ERR)
+    {
+        pNewNode = vfsRegisterDriver(kpPath,
+                                     pDriverMountData,
+                                     pDriver->pOpen,
+                                     pDriver->pClose,
+                                     pDriver->pRead,
+                                     pDriver->pWrite,
+                                     pDriver->pReadDir,
+                                     pDriver->pIOCTL);
+
+        if(pNewNode != VFS_DRIVER_INVALID)
+        {
+            /* Add the driver data for unmount */
+            pNewNode->pDriver->pUnmount = pDriver->pUnmount;
+        }
+        else
+        {
+            retCode = OS_ERR_NOT_SUPPORTED;
+        }
+    }
+
+    return retCode;
+}
+
+OS_RETURN_E vfsUnmount(const char* kpPath)
+{
+    size_t                 pathLen;
+    char*                  pCleanPath;
+    bool_t                 addDelimiter;
+    vfs_node_t*            pDriverNode;
+    OS_RETURN_E            retCode;
+
+    if(kpPath == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    pathLen = strlen(kpPath);
+    if(pathLen == 0)
+    {
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    /* Check trailing delimiter*/
+    if(kpPath[pathLen - 1] != VFS_PATH_DELIMITER)
+    {
+        ++pathLen;
+        addDelimiter = TRUE;
+    }
+    else
+    {
+        addDelimiter = FALSE;
+    }
+
+    /* Allocate the clean path buffer */
+    pCleanPath = kmalloc(pathLen + 1);
+    if(pCleanPath == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    _cleanPath(pCleanPath, kpPath);
+    pathLen = strlen(pCleanPath);
+
+    if(addDelimiter == TRUE)
+    {
+        pCleanPath[pathLen]     = VFS_PATH_DELIMITER;
+        pCleanPath[pathLen + 1] = 0;
+    }
+
+    KERNEL_LOCK(sMountPointLock);
+
+    /* Check something is already mounted in the mount point */
+    pDriverNode = _findNodeFromPath(spRootPoint,
+                                    pCleanPath,
+                                    pathLen,
+                                    TRUE,
+                                    TRUE);
+    kfree(pCleanPath);
+    KERNEL_UNLOCK(sMountPointLock);
+    if(pDriverNode == NULL)
+    {
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    /* Call umount if exists */
+    if(pDriverNode->pDriver->pUnmount != NULL)
+    {
+        retCode =
+            pDriverNode->pDriver->pUnmount(pDriverNode->pDriver->pDriverData);
+    }
+    else
+    {
+        retCode = OS_NO_ERR;
+    }
+
+    /* Remove driver */
+    if(retCode == OS_NO_ERR)
+    {
+        retCode = vfsUnregisterDriver((vfs_driver_t*)pDriverNode);
+    }
+
+    return retCode;
+}
 /************************************ EOF *************************************/

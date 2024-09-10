@@ -100,6 +100,14 @@ typedef uint32_t uintptr_t;
  */
 #define MAX(x, y) ((x) < (y) ? (y) : (x))
 
+/** @brief Defines the ABS function, return the absolute value of a variable.
+ *
+ * @param[in] x The value to absolute.
+ *
+ * @return The absolute value.
+ */
+#define ABS(X) ((X) < 0 ? -(X) : (X))
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/

@@ -122,6 +122,38 @@ typedef struct
     uint64_t isContextSaved;
 } __attribute__((packed)) virtual_cpu_t;
 
+/** @brief Defines the memory layout of the FXData region */
+typedef struct
+{
+    /** @brief FPU Control Word */
+    uint16_t fcw;
+    /** @brief FPU Status Word */
+    uint16_t fsw;
+    /** @brief FPU Tag Word */
+    uint16_t ftw;
+    /** @brief FPU Final Opcode */
+    uint16_t fop;
+    /** @brief FPU Intruction Pointer */
+    uint32_t fip;
+    /** @brief FPU Control Status */
+    uint16_t fcs;
+    /** @brief FPU Reserved */
+    uint16_t reserved0;
+    /** @brief FPU Data Pointer */
+    uint32_t fdp;
+    /** @brief FPU Data Pointer Selector */
+    uint16_t fds;
+    /** @brief FPU Reserved */
+    uint16_t reserved1;
+    /** @brief MXCSR Register */
+    uint32_t mxcsr;
+    /** @brief MXCSR Mask Register */
+    uint32_t mxcsrMask;
+
+    /** @brief Other SSE/FPU Work Register */
+    uint8_t registers[];
+} fxdata_layout_t;
+
 /** @brief BIOS call CPU abstraction. Used to store the CPU registers value. */
 typedef struct
 {
@@ -138,6 +170,7 @@ typedef struct
     /** @brief Padding */
     uint8_t pad[6];
 } __attribute__((__packed__)) bios_int_regs_t;
+
 
 /*******************************************************************************
  * MACROS

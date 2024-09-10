@@ -48,6 +48,8 @@
 #define MEMMGR_MAP_CACHE_DISABLED 0x00000008
 /** @brief Memory mapping flags: Hardware */
 #define MEMMGR_MAP_HARDWARE 0x00000008
+/** @brief Memory mapping flags: Write Combining */
+#define MEMMGR_MAP_WRITE_COMBINING 0x00000010
 
 /** @brief Kernel page size */
 #define KERNEL_PAGE_SIZE 0x1000

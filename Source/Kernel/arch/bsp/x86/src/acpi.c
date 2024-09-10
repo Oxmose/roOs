@@ -1593,6 +1593,6 @@ uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86ACPIDriver);
+DRIVERMGR_REG_FDT(sX86ACPIDriver);
 
 /************************************ EOF *************************************/

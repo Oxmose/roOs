@@ -50,7 +50,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief FDT property for inetrrupt  */
+/** @brief FDT property for interrupt  */
 #define HPET_FDT_INT_PROP "interrupts"
 /** @brief FDT property for frequency */
 #define HPET_FDT_FREQ_PROP "freq"
@@ -190,8 +190,8 @@ typedef struct
  * @brief Attaches the HPET driver to the system.
  *
  * @details Attaches the HPET driver to the system. This function will
- * use the FDT to initialize the HPEThardware  and retreive the HPET
- * Timer parameters.
+ * use the FDT to initialize the HPET hardware and retreive the HPET
+ * parameters.
  *
  * @param[in] pkFdtNode The FDT node with the compatible declared
  * by the driver.
@@ -283,8 +283,6 @@ static OS_RETURN_E _hpetAttach(const fdt_node_t* pkFdtNode)
     kernel_timer_t* pTimerDrv;
 
     pTimerDrv = NULL;
-
-    retCode = OS_NO_ERR;
 
     /* Init structures */
     memset(&sDrvCtrl, 0, sizeof(hpet_ctrl_t));
@@ -478,6 +476,6 @@ static void _hpetDisable(void* pDrvCtrl)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86HPETDriver);
+DRIVERMGR_REG_FDT(sX86HPETDriver);
 
 /************************************ EOF *************************************/

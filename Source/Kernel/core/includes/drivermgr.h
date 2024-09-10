@@ -70,13 +70,13 @@ typedef struct
  ******************************************************************************/
 
 /**
- * @brief Registers a new driver.
+ * @brief Registers a new FDT driver.
  *
- * @details Registers a new driver in the kernel's driver table.
+ * @details Registers a new driver in the kernel's FDT driver table.
  *
- * @param[in] DRIVER The driver to add to the driver table.
+ * @param[in] DRIVER The driver to add to the FDT driver table.
  */
-#define DRIVERMGR_REG(DRIVER)                                                  \
+#define DRIVERMGR_REG_FDT(DRIVER)                                              \
     driver_t* DRVENT_##DRIVER __attribute__ ((section (".roos_driver_tbl"))) = \
         &DRIVER;
 

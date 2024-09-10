@@ -600,6 +600,6 @@ static inline void _ioapicWrite(const io_apic_controler_t* kpCtrl,
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86IOAPICDriver);
+DRIVERMGR_REG_FDT(sX86IOAPICDriver);
 
 /************************************ EOF *************************************/

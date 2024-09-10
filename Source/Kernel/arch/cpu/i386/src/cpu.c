@@ -23,6 +23,7 @@
 #include <cpu.h>           /* Generic CPU API */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
+#include <stdlib.h>        /* Standard library */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
@@ -91,6 +92,9 @@
 /** @brief Thread's initial EFLAGS register value. */
 #define KERNEL_THREAD_INIT_EFLAGS 0x202 /* INT | PARITY */
 
+
+/** @brief Defines the core dump message length */
+#define CPU_CORE_DUMP_LENGTH 2048
 /***************************
  * GDT Flags
  **************************/
@@ -489,6 +493,9 @@
 
 /** @brief CPU flags interrupt enabled flag. */
 #define CPU_EFLAGS_IF 0x000000200
+
+/** @brief CPU MXCSR Precision Interrupt Mask */
+#define MXCSR_PRECISION_EXC_MASK 0x00001000
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -3836,6 +3843,9 @@ void cpuValidateArchitecture(void)
     CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
                "CPU does not support APIC",
                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_PAT) == EDX_PAT,
+               "CPU does not support PAT",
+               OS_ERR_NOT_SUPPORTED);
     CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
                "CPU does not support FX instructions",
                OS_ERR_NOT_SUPPORTED);
@@ -4210,8 +4220,8 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
 uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
                               kernel_thread_t* pThread)
 {
-    virtual_cpu_t* pVCpu;
-
+    virtual_cpu_t*   pVCpu;
+    fxdata_layout_t* pFxData;
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
     if(pVCpu == NULL)
@@ -4254,6 +4264,11 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->cpuState.es  = KERNEL_DS_32;
     pVCpu->cpuState.ds  = KERNEL_DS_32;
 
+    /* Setup the FPU */
+    pFxData = (fxdata_layout_t*)(((uintptr_t)pVCpu->fxData + 0xF) &
+                                 0xFFFFFFF0);
+    pFxData->mxcsr = MXCSR_PRECISION_EXC_MASK;
+
     pVCpu->isContextSaved = TRUE;
 
     return (uintptr_t)pVCpu;
@@ -4285,10 +4300,7 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     pVCpu->intContext.cs     = pThreadVCpu->intContext.cs;
     pVCpu->intContext.eflags = pThreadVCpu->intContext.eflags;
 
-    /* Prepare the cpu state
-     * TODO: This could be an issue when we will have processes with red zone
-     * in that case, try to bypass the red zone.
-     */
+    /* Prepare the cpu state */
     memcpy(&pVCpu->cpuState, &pThreadVCpu->cpuState, sizeof(cpu_state_t));
 
     /* Put the function to call on the stack */
@@ -4448,16 +4460,22 @@ bool_t cpuIsVCPUSaved(const void* kpVCpu)
 
 void cpuCoreDump(const void* kpVCpu)
 {
-#if 0 // TODO: Reenable once we have snprintf
-    size_t    i;
-    uintptr_t callAddr;
-    uintptr_t* lastEBP;
+    size_t               i;
+    uintptr_t            callAddr;
+    uintptr_t*           lastEBP;
     const cpu_state_t*   cpuState;
     const int_context_t* intState;
-    uint32_t CR0;
-    uint32_t CR2;
-    uint32_t CR3;
-    uint32_t CR4;
+    uint32_t             CR0;
+    uint32_t             CR2;
+    uint32_t             CR3;
+    uint32_t             CR4;
+    char*                pDump;
+    size_t               offset;
+
+    pDump = kmalloc(CPU_CORE_DUMP_LENGTH);
+    CPU_ASSERT(pDump != NULL,
+               "Failed to allocate core dump memory",
+               OS_ERR_NO_MORE_MEMORY);
 
     intState = &((virtual_cpu_t*)kpVCpu)->intContext;
     cpuState = &((virtual_cpu_t*)kpVCpu)->cpuState;
@@ -4476,34 +4494,54 @@ void cpuCoreDump(const void* kpVCpu)
     : "%eax"
     );
 
-    kprintfPanic("EAX: 0x%p | EBX: 0x%p | ECX: 0x%p | EDX: 0x%p  \n",
-                  cpuState->eax,
-                  cpuState->ebx,
-                  cpuState->ecx,
-                  cpuState->edx);
-    kprintfPanic("ESI: 0x%p | EDI: 0x%p | EBP: 0x%p | ESP: 0x%p  \n",
-                  cpuState->esi,
-                  cpuState->edi,
-                  cpuState->ebp,
-                  cpuState->esp);
-    kprintfPanic("CR0: 0x%p | CR2: 0x%p | CR3: 0x%p | CR4: 0x%p  \n",
-                  CR0,
-                  CR2,
-                  CR3,
-                  CR4);
-    kprintfPanic("CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
-                  "FS: 0x%04X | GS: 0x%04X\n",
-                  intState->cs & 0xFFFF,
-                  cpuState->ds & 0xFFFF,
-                  cpuState->ss & 0xFFFF,
-                  cpuState->es & 0xFFFF ,
-                  cpuState->fs & 0xFFFF ,
-                  cpuState->gs & 0xFFFF);
+    snprintf(pDump,
+             CPU_CORE_DUMP_LENGTH,
+             "EAX: 0x%p | EBX: 0x%p | ECX: 0x%p | EDX: 0x%p  \n",
+             cpuState->eax,
+             cpuState->ebx,
+             cpuState->ecx,
+             cpuState->edx);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "ESI: 0x%p | EDI: 0x%p | EBP: 0x%p | ESP: 0x%p  \n",
+             cpuState->esi,
+             cpuState->edi,
+             cpuState->ebp,
+             cpuState->esp);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "CR0: 0x%p | CR2: 0x%p | CR3: 0x%p | CR4: 0x%p  \n",
+             CR0,
+             CR2,
+             CR3,
+             CR4);
+    offset = strlen(pDump);
+
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "CS: 0x%04X | DS: 0x%04X | SS: 0x%04X | ES: 0x%04X | "
+             "FS: 0x%04X | GS: 0x%04X\n",
+             intState->cs & 0xFFFF,
+             cpuState->ds & 0xFFFF,
+             cpuState->ss & 0xFFFF,
+             cpuState->es & 0xFFFF ,
+             cpuState->fs & 0xFFFF ,
+             cpuState->gs & 0xFFFF);
+    offset = strlen(pDump);
 
     lastEBP = (uintptr_t*)((virtual_cpu_t*)kpVCpu)->cpuState.ebp;
 
     /* Get the return address */
-    kprintf("Last RBP: 0x%p\n", lastEBP);
+    snprintf(pDump + offset,
+             CPU_CORE_DUMP_LENGTH - offset,
+             "Last EBP: 0x%p\n",
+             lastEBP);
+
+    offset = strlen(pDump);
 
     for(i = 0; i < 10 && lastEBP != NULL; ++i)
     {
@@ -4513,20 +4551,25 @@ void cpuCoreDump(const void* kpVCpu)
 
         if(i != 0 && i % 4 == 0)
         {
-            kprintf("\n");
+            pDump[offset++] = '\n';
         }
         else if(i != 0)
         {
-            kprintf(" | ");
+            pDump[offset++] = ' ';
+            pDump[offset++] = '|';
+            pDump[offset++] = ' ';
         }
 
-        kprintf("[%u] 0x%p", i, callAddr);
+        snprintf(pDump + offset,
+                 CPU_CORE_DUMP_LENGTH - offset,
+                 "[%u] 0x%p",
+                 i,
+                 callAddr);
+        offset = strlen(pDump);
         lastEBP  = (uintptr_t*)*lastEBP;
     }
-    kprintfFlush();
-#else
-    (void)kpVCpu;
-#endif
+    pDump[offset] = 0;
+    syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
 }
 
 /* Stack protection support */

@@ -245,11 +245,14 @@ typedef struct
     /** @brief Current mode frame buffer */
     void* pFramebuffer;
 
-    /** @brief Current mode freme buffer mapping size */
-    size_t framebufferSize;
+    /** @brief Current mode frame buffer mapping size */
+    size_t hwFramebufferSize;
 
     /** @brief The back buffer pointer */
     void* pBack;
+
+    /** @brief Current back buffer mapping size */
+    size_t backBufferSize;
 } double_buffer_t;
 
 /** @brief x86 VESA driver controler. */
@@ -270,9 +273,6 @@ typedef struct
     /** @brief Stores the number of columns for the text mode */
     uint32_t columnCount;
 
-    /** @brief Stores the current scroll offset */
-    size_t scrollOffset;
-
     /** @brief Contains the detected VESA information */
     vbe_mode_t* pVbeModes;
 
@@ -291,7 +291,6 @@ typedef struct
     /** @brief Refresh rate */
     uint32_t refreshRate;
 } vesa_controler_t;
-
 
 /*******************************************************************************
  * MACROS
@@ -315,25 +314,51 @@ typedef struct
 }
 
 /**
- * @brief Get the VESA video buffer virtual address.
+ * @brief Unrolled action for the fast memcpy used by the VESA driver.
  *
- * @details Get the VESA video buffer virtual address correponding to a
- * certain region of the buffer given the parameters.
+ * @details Unrolled action for the fast memcpy used by the VESA driver. Used in
+ * the Duff's device.
  *
- * @param[in] LINE The video buffer line.
- * @param[in] COLUMN The video buffer column.
- *
- * @return The video buffer virtual address is get correponding to a
- * certain region of the buffer given the parameters.
+ * @param[in] X The switch case.
  */
-#define GET_VIDEO_BUFFER_AT(CTRL, LINE, COL)                                   \
-        ((CTRL->videoBuffer.pBack) + (((COL) * VESA_TEXT_CHAR_WIDTH  * 4 +     \
-                                      ((LINE) *                                \
-                                       VESA_TEXT_CHAR_HEIGHT *                 \
-                                       CTRL->pCurrentMode->bytePerScanLine +   \
-                                       CTRL->scrollOffset) %                   \
-                                       CTRL->videoBuffer.framebufferSize)))
+#define VESA_FAST_CPY_UNROLL_ACTION(X) {                        \
+    case (X):                                                   \
+        __asm__ __volatile__ ("movups (%0), %%xmm7\n\t"         \
+                                "movntdq %%xmm7, (%1)\n\t"      \
+                                :                               \
+                                : "r"(pSrcPtr), "r"(pDstPtr)    \
+                                : "memory");                    \
+        pDstPtr += 16;                                          \
+        pSrcPtr += 16;                                          \
+}
 
+/**
+ * @brief Unrolled action for the fast fill used by the VESA driver.
+ *
+ * @details Unrolled action for the fast fill used by the VESA driver. Used in
+ * the Duff's device.
+ *
+ * @param[in] X The switch case.
+ */
+#define VESA_FAST_FILL_UNROLL_ACTION(X) {                       \
+    case (X):                                                   \
+        __asm__ __volatile__ ("movntdq %%xmm7, (%0)\n\t"        \
+                              :                                 \
+                              : "r"(pDestPtr)                   \
+                              : "memory");                      \
+                    pDestPtr += 16;                             \
+}
+
+/**
+ * @brief Rounds closest the number given as argument.
+ *
+ * @details Rounds closest the number given as argument.
+ *
+ * @param[in] X The number to round up.
+ */
+#define ROUND_CLOSEST(X) (((X) - (double)((uint32_t)(X))) >= 0.5 ? \
+                         ((uint32_t)(X) + 1) :                     \
+                         ((uint32_t)(X)))
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -620,6 +645,51 @@ static OS_RETURN_E _vesaDrawPixel(void*          pCtrl,
                                   const uint32_t kRGBPixel);
 
 /**
+ * @brief Draws a 32bits color rectangle to the graphics controller.
+ *
+ * @details Draws a 32bits color rectangle to the graphics controller. The
+ * driver handles the overflow and might not print the rectangle if the
+ * parameters are invalid.
+ *
+ * @param[in] pDriverCtrl The VESA controller do use.
+ * @param[in] kpRect The rectangle to draw.
+ *
+ * @return The success or error status is returned.
+ */
+static OS_RETURN_E _vesaDrawRectangle(void*               pCtrl,
+                                      const graph_rect_t* kpRect);
+
+/**
+ * @brief Draws a 32bits color line to the graphics controller.
+ *
+ * @details Draws a 32bits color line to the graphics controller. The
+ * driver handles the overflow and might not print the line if the
+ * parameters are invalid.
+ *
+ * @param[in] pDriverCtrl The VESA controller do use.
+ * @param[in] kpLine The line to draw.
+ *
+ * @return The success or error status is returned.
+ */
+static OS_RETURN_E _vesaDrawLine(void*               pCtrl,
+                                 const graph_line_t* kpLine);
+
+/**
+ * @brief Draws a 32bits color bitmap to the graphics controller.
+ *
+ * @details Draws a 32bits color bitmap to the graphics controller. The driver
+ * handles the overflow and might not print the bitmap if the parameters are
+ * invalid.
+ *
+ * @param[in] pDriverCtrl The VESA controller do use.
+ * @param[in] kpBitmap The bitmap to draw.
+ *
+ * @return The success or error status is returned.
+ */
+static OS_RETURN_E _vesaDrawBitmap(void*                 pCtrl,
+                                   const graph_bitmap_t* kpBitmap);
+
+/**
  * @brief Flushes the VESA back buffer to the VESA framebuffer
  *
  * @details Flushes the VESA back buffer to the VESA framebuffer. No concurrency
@@ -699,10 +769,54 @@ static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
  *
  * @return The function returns 0 on success and -1 on error;
  */
-static int32_t _vesaVfsIOCTL(void*    pDriverData,
+static ssize_t _vesaVfsIOCTL(void*    pDriverData,
                              void*    pHandle,
                              uint32_t operation,
                              void*    pArgs);
+
+/**
+ * @brief VESA fast fill function.
+ *
+ * @details VESA fast fill function. Using SSE instructions to speedup the
+ * filling of the back buffer.
+ *
+ * @param[in] bufferAddr The start address of the region of the buffer to fill.
+ * @param[in] kPixel The color pixel to fill.
+ * @param[in] pixelCount The amount of pixel the fill.
+ */
+static inline void _vesaFastFill(uintptr_t      bufferAddr,
+                                 const uint32_t kPixel,
+                                 uint32_t       pixelCount);
+
+/**
+ * @brief VESA fast fill function.
+ *
+ * @details VESA fast fill function. Using SSE instructions to speedup the
+ * filling of the back buffer.
+ *
+ * @param[out] pDest The start address of the region of the buffer to fill.
+ * @param[in] kpSrc The start address of the source region to copy.
+ * @param[in] sizeThe The size in bytes to copy.
+ */
+static inline void _vesaFastMemcpy(void*       pDest,
+                                   const void* kpSrc,
+                                   size_t      size);
+
+/**
+ * @brief VESA fast copy from the back buffer to the framebuffer.
+ *
+ * @details VESA fast copy from the back buffer to the framebuffer. Using SSE
+ * instruction to speedup the copy.
+ *
+ * @param[in] pCtrl The controller to use for the copy.
+ * @param[in] frameBufferAddr The start address of the framebuffer to copy.
+ * @param[in] videoBufferAddr The start address of the back buffer to copy.
+ * @param[in] lineCount The number of lines of pixel to copy.
+ */
+static inline void _vesaFastToFramebuffer(vesa_controler_t* pCtrl,
+                                          uintptr_t         frameBufferAddr,
+                                          uintptr_t         videoBufferAddr,
+                                          size_t            lineCount);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -747,6 +861,294 @@ static const uint32_t vgaColorTable[16] = {
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+static inline void _vesaFastFill(uintptr_t      bufferAddr,
+                                 const uint32_t kPixel,
+                                 uint32_t       pixelCount)
+{
+    uint32_t replicateValue[4] __attribute__((aligned(16)));
+
+    /* Compute the replicated value */
+    replicateValue[0] = kPixel;
+    replicateValue[1] = kPixel;
+    replicateValue[2] = kPixel;
+    replicateValue[3] = kPixel;
+
+    register size_t sseSize;
+    register size_t n;
+    register char*  pDestPtr;
+
+    pDestPtr = (char*)bufferAddr;
+
+    /* First unaligned */
+    while(((uintptr_t)pDestPtr & 0xF) != 0 && pixelCount > 0)
+    {
+        *(uint32_t*)pDestPtr = *(uint32_t*)replicateValue;
+        pDestPtr += sizeof(uint32_t);
+        --pixelCount;
+    }
+
+    sseSize = pixelCount / 4;
+
+    if(sseSize > 0)
+    {
+        /* Aligned */
+        __asm__ __volatile__ ("movups (%0), %%xmm7\n\t"
+                              :
+                              : "r"(replicateValue)
+                              : "memory");
+
+        pixelCount -= sseSize * 4;
+        n = (sseSize + 15) / 16;
+        switch (sseSize % 16)
+        {
+            case 0:
+                do {
+                    __asm__ __volatile__ ("movntdq %%xmm7, (%0)\n\t"
+                              :
+                              : "r"(pDestPtr)
+                              : "memory");
+                    pDestPtr += 16;
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(15)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(14)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(13)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(12)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(11)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(10)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(9)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(8)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(7)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(6)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(5)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(4)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(3)
+            __attribute__ ((fallthrough));
+            VESA_FAST_FILL_UNROLL_ACTION(2)
+            __attribute__ ((fallthrough));
+            case 1:
+                    __asm__ __volatile__ ("movntdq %%xmm7, (%0)\n\t"
+                              :
+                              : "r"(pDestPtr)
+                              : "memory");
+                     pDestPtr += 16;
+                } while (--n > 0);
+        }
+    }
+
+    /* Last unaligned */
+    while(pixelCount > 0)
+    {
+        *(uint32_t*)pDestPtr = *(uint32_t*)replicateValue;
+        pDestPtr += sizeof(uint32_t);
+        --pixelCount;
+    }
+}
+
+static inline void _vesaFastMemcpy(void*       pDest,
+                                   const void* kpSrc,
+                                   size_t      size)
+{
+    register const char* pSrcPtr;
+    register char*       pDstPtr;
+    register size_t      sseSize;
+    register size_t      n;
+
+    pSrcPtr = kpSrc;
+    pDstPtr = pDest;
+
+    /* If not the same alignement, we will never be able to align, use memcpy */
+    if(((uintptr_t)pSrcPtr & 0xF) != ((uintptr_t)pDstPtr & 0xF) || size <= 20)
+    {
+        memcpy(pDstPtr, pSrcPtr, size);
+        return;
+    }
+
+    /* First unaligned */
+    while(((uintptr_t)pSrcPtr & 0xF) != 0 && size > 0)
+    {
+        *(uint32_t*)pDstPtr = *(uint32_t*)pSrcPtr;
+        pSrcPtr += 4;
+        pDstPtr += 4;
+        size -= 4;
+    }
+
+    sseSize = size / (sizeof(uint64_t) * 2);
+
+    if(sseSize > 0)
+    {
+        size -= sseSize * (sizeof(uint64_t) * 2);
+        n = (sseSize + 31) / 32;
+        switch (sseSize % 32)
+        {
+            case 0:
+                do {
+                    __asm__ __volatile__ ("movups (%0), %%xmm7\n\t"
+                                          "movntdq %%xmm7, (%1)\n\t"
+                                          :
+                                          :"r"(pSrcPtr), "r"(pDstPtr)
+                                          : "memory");
+                    pDstPtr += 16;
+                    pSrcPtr += 16;
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(31)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(30)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(29)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(28)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(27)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(26)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(25)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(24)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(23)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(22)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(21)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(20)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(19)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(18)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(17)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(16)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(15)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(14)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(13)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(12)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(11)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(10)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(9)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(8)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(7)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(6)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(5)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(4)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(3)
+            __attribute__ ((fallthrough));
+            VESA_FAST_CPY_UNROLL_ACTION(2)
+            __attribute__ ((fallthrough));
+            case 1:
+                    __asm__ __volatile__ ("movups (%0), %%xmm7\n\t"
+                                          "movntdq %%xmm7, (%1)\n\t"
+                                          :
+                                          :"r"(pSrcPtr), "r"(pDstPtr)
+                                          : "memory");
+                    pDstPtr += 16;
+                    pSrcPtr += 16;
+                } while (--n > 0);
+        }
+    }
+
+    /* Last unaligned */
+    while(size > 0)
+    {
+        *(uint32_t*)pDstPtr = *(uint32_t*)pSrcPtr;
+        pSrcPtr += 4;
+        pDstPtr += 4;
+        size -= 4;
+    }
+}
+
+static inline void _vesaFastToFramebuffer(vesa_controler_t* pCtrl,
+                                          uintptr_t         frameBufferAddr,
+                                          uintptr_t         videoBufferAddr,
+                                          size_t            lineCount)
+{
+    size_t   i;
+    size_t   lineStride;
+    size_t   scanLineSize;
+    uint32_t pixel;
+    uint8_t  bpp;
+
+    bpp = pCtrl->pCurrentMode->bpp;
+    lineStride = pCtrl->pCurrentMode->width * sizeof(uint32_t);
+    scanLineSize = pCtrl->pCurrentMode->bytePerScanLine;
+    while(lineCount > 0)
+    {
+        switch(bpp)
+        {
+            case 32:
+                _vesaFastMemcpy((void*)frameBufferAddr,
+                                (void*)videoBufferAddr,
+                                lineStride);
+                break;
+            case 24:
+                for(i = 0; i < pCtrl->pCurrentMode->width; ++i)
+                {
+                    pixel = *(((uint32_t*)videoBufferAddr) + i);
+
+                    *(((uint16_t*)frameBufferAddr) + i) = (uint16_t)pixel;
+                    *(((uint8_t*)frameBufferAddr) + i * 2 + 1) =
+                                                        (uint8_t)(pixel >> 16);
+                }
+                break;
+            case 16:
+                for(i = 0; i < pCtrl->pCurrentMode->width; ++i)
+                {
+                    pixel = *(((uint32_t*)videoBufferAddr) + i);
+                    pixel = (pixel & 0xFF) >> 3         |
+                            ((pixel >> 8) & 0xFF) >> 3  |
+                            ((pixel >> 16) & 0xFF) >> 3;
+
+                    *(((uint16_t*)frameBufferAddr) + i) = (uint16_t)pixel;
+                }
+                break;
+            case 8:
+                for(i = 0; i < pCtrl->pCurrentMode->width; ++i)
+                {
+                    pixel = *(((uint32_t*)videoBufferAddr) + i);
+                    pixel = (pixel & 0xFF) >> 6         |
+                            ((pixel >> 8) & 0xFF) >> 5  |
+                            ((pixel >> 16) & 0xFF) >> 5;
+
+                    *(((uint8_t*)frameBufferAddr) + i) = (uint8_t)pixel;
+                }
+                break;
+            default:
+                /* Do nothing, we do not support this mode */
+                break;
+        }
+        frameBufferAddr += scanLineSize;
+        videoBufferAddr += lineStride;
+
+        --lineCount;
+    }
+}
 
 static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
 {
@@ -898,7 +1300,7 @@ ATTACH_END:
                     (void*)((uintptr_t)pDrvCtrl->videoBuffer.pFramebuffer &
                             ~PAGE_SIZE_MASK);
                 error = memoryKernelUnmap(pDrvCtrl->videoBuffer.pFramebuffer,
-                                         pDrvCtrl->videoBuffer.framebufferSize);
+                                    pDrvCtrl->videoBuffer.hwFramebufferSize);
                 if(error != OS_NO_ERR)
                 {
                     PANIC(error, MODULE_NAME, "Failed to unmap memory");
@@ -907,7 +1309,7 @@ ATTACH_END:
             if(pDrvCtrl->videoBuffer.pBack != NULL)
             {
                 error = memoryKernelUnmap(pDrvCtrl->videoBuffer.pBack,
-                                         pDrvCtrl->videoBuffer.framebufferSize);
+                                          pDrvCtrl->videoBuffer.backBufferSize);
                 if(error != OS_NO_ERR)
                 {
                     PANIC(error, MODULE_NAME, "Failed to unmap memory");
@@ -1067,7 +1469,6 @@ static OS_RETURN_E _vesaGetAvailableModes(vesa_controler_t* pDrvCtrl)
     vbe_mode_t*     pSaveNode;
     OS_RETURN_E     error;
 
-
     /* Get the first mode ID in the structure */
     pModeId = (uint16_t*)((uintptr_t)&pDrvCtrl->vbeInfo +
                           pDrvCtrl->vbeInfo.videoModes);
@@ -1212,6 +1613,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
     OS_RETURN_E       error;
     OS_RETURN_E       retCode;
     size_t            newBufferSize;
+    size_t            newBackBufferSize;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
@@ -1248,12 +1650,13 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
     /* Setup the new framebuffer */
     newBufferSize = kHeight * pMode->bytePerScanLine;
     newBufferSize = (newBufferSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
-    pCtrl->videoBuffer.framebufferSize = newBufferSize;
+    pCtrl->videoBuffer.hwFramebufferSize = newBufferSize;
     pCtrl->videoBuffer.pFramebuffer = memoryKernelMap(pMode->framebuffer,
                                                       newBufferSize,
                                                       MEMMGR_MAP_HARDWARE |
                                                       MEMMGR_MAP_KERNEL   |
-                                                      MEMMGR_MAP_RW,
+                                                      MEMMGR_MAP_RW |
+                                                      MEMMGR_MAP_WRITE_COMBINING,
                                                       &error);
     pCtrl->videoBuffer.pFramebuffer =
                             (void*)((uintptr_t)pCtrl->videoBuffer.pFramebuffer +
@@ -1265,7 +1668,10 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
     }
 
     /* Setup the new buffers */
-    pCtrl->videoBuffer.pBack = memoryKernelAllocate(newBufferSize,
+    newBackBufferSize = kHeight * kWidth * sizeof(uint32_t);
+    newBackBufferSize = (newBackBufferSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
+    pCtrl->videoBuffer.backBufferSize = newBackBufferSize;
+    pCtrl->videoBuffer.pBack = memoryKernelAllocate(newBackBufferSize,
                                                     MEMMGR_MAP_KERNEL |
                                                     MEMMGR_MAP_RW,
                                                     &error);
@@ -1305,7 +1711,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
         {
             PANIC(error, MODULE_NAME, "Failed to unmap memory");
         }
-        error = memoryKernelUnmap(pCtrl->videoBuffer.pBack, newBufferSize);
+        error = memoryKernelUnmap(pCtrl->videoBuffer.pBack, newBackBufferSize);
         if(error != OS_NO_ERR)
         {
             PANIC(error, MODULE_NAME, "Failed to unmap memory");
@@ -1313,9 +1719,7 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    memset(pCtrl->videoBuffer.pBack, 0, newBufferSize);
-
-    pCtrl->refreshRate = kRate;
+    memset(pCtrl->videoBuffer.pBack, 0, newBackBufferSize);
 
 #if VESA_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
@@ -1338,13 +1742,9 @@ static OS_RETURN_E _vesaSetGraphicMode(const uint32_t kWidth,
 static void* _vesaDisplayRoutine(void* pDrvCtrl)
 {
     vesa_controler_t* pCtrl;
-    size_t            lineSize;
-    uint8_t*          pFrameBuffer;
-    uint8_t*          pVideoBuffer;
     uint64_t          startTime;
     uint64_t          elapsed;
     uint64_t          period;
-    size_t            afterOffset;
 
     pCtrl = GET_CONTROLER(pDrvCtrl);
 
@@ -1352,36 +1752,15 @@ static void* _vesaDisplayRoutine(void* pDrvCtrl)
     {
         startTime = timeGetUptime();
 
-        /* Copy the buffer lines by lines */
-        pVideoBuffer = pCtrl->videoBuffer.pBack;
-        pFrameBuffer = pCtrl->videoBuffer.pFramebuffer;
-        lineSize = pCtrl->pCurrentMode->bytePerScanLine;
-        afterOffset = lineSize * pCtrl->pCurrentMode->height -
-                      pCtrl->scrollOffset;
-
-        /* Print the first past of the video buffer based on scroll offset */
-        /* TODO: Fast memcpy */
-        memcpy(pFrameBuffer,
-               pVideoBuffer + pCtrl->scrollOffset,
-               afterOffset);
-
-        /* Print the second past of the video buffer based on scroll offset */
-        /* TODO: Fast memcpy */
-        memcpy(pFrameBuffer + afterOffset,
-               pVideoBuffer,
-               pCtrl->scrollOffset);
+        _vesaFlush(pDrvCtrl);
 
         /* Manage refresh rate */
-        period = 1000000000 / pCtrl->refreshRate;
+        period  = 1000000000ULL / pCtrl->refreshRate;
         elapsed = timeGetUptime() - startTime;
 
         if(period > elapsed)
         {
             schedSleep(period - elapsed);
-        }
-        else
-        {
-            schedSleep(period);
         }
     }
 
@@ -1397,37 +1776,14 @@ static inline void _vesaPutPixel(vesa_controler_t* pCtrl,
     size_t offset;
 
     /* Calculate the position based on the BPP and screen resolution */
-    offset = kY * pCtrl->pCurrentMode->bytePerScanLine + pCtrl->scrollOffset +
-             kX * pCtrl->pCurrentMode->bpp / 8;
+    offset = kY * sizeof(uint32_t) *
+             pCtrl->pCurrentMode->width +
+             kX * sizeof(uint32_t);
 
     /* Check that we are in the bounds */
-    offset = offset % pCtrl->videoBuffer.framebufferSize;
-    pBufferMem = pCtrl->videoBuffer.pBack + offset;
-
-    switch(pCtrl->pCurrentMode->bpp)
-    {
-        case 32:
-            *(uint32_t*)pBufferMem = kRGBPixel;
-            break;
-        case 24:
-            *(uint16_t*)pBufferMem      = (uint16_t)kRGBPixel;
-            *((uint8_t*)pBufferMem + 2) = (uint8_t)(kRGBPixel >> 16);
-            break;
-        case 16:
-            *(uint16_t*)pBufferMem = (kRGBPixel & 0xFF) >> 3         |
-                                     ((kRGBPixel >> 8) & 0xFF) >> 3  |
-                                     ((kRGBPixel >> 16) & 0xFF) >> 3;
-            break;
-        case 8:
-            *(uint8_t*)pBufferMem = (kRGBPixel & 0xFF) >> 6         |
-                                    ((kRGBPixel >> 8) & 0xFF) >> 5  |
-                                    ((kRGBPixel >> 16) & 0xFF) >> 5;
-            break;
-        default:
-            /* Do nothing, we do not support this mode */
-            break;
-    }
-
+    offset = offset % pCtrl->videoBuffer.backBufferSize;
+    pBufferMem = (void*)((uintptr_t)pCtrl->videoBuffer.pBack + offset);
+    *(uint32_t*)pBufferMem = kRGBPixel;
 }
 
 static inline void _vesaPrintChar(vesa_controler_t* pCtrl,
@@ -1476,7 +1832,7 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
         _vesaPrintChar(pCtrl, kCharacter);
 
         /* Scroll if we reached the end of the line */
-        if((uint8_t)pCtrl->screenCursor.y >= pCtrl->lineCount)
+        if(pCtrl->screenCursor.y >= pCtrl->lineCount)
         {
             _vesaScrollSafe(pCtrl, SCROLL_DOWN, 1);
         }
@@ -1530,9 +1886,7 @@ static void _vesaProcessChar(void* pDriverCtrl, const char kCharacter)
             /* Clear screen */
             case '\f':
                 /* Clear all screen */
-                memset(pCtrl->videoBuffer.pBack,
-                       0,
-                       pCtrl->videoBuffer.framebufferSize);
+                _vesaClearFramebuffer(pCtrl);
                 break;
             /* Line return */
             case '\r':
@@ -1554,9 +1908,9 @@ static void _vesaClearFramebuffer(void* pDriverCtrl)
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
     /* Clear all screen */
-    memset(pCtrl->videoBuffer.pBack,
-           0,
-           pCtrl->videoBuffer.framebufferSize);
+    _vesaFastFill((uintptr_t)pCtrl->videoBuffer.pBack,
+                  0,
+                  pCtrl->pCurrentMode->width * pCtrl->pCurrentMode->height);
 }
 
 static void _vesaSaveCursor(void* pDriverCtrl, cursor_t* pBuffer)
@@ -1592,8 +1946,10 @@ static void _vesaScrollSafe(vesa_controler_t*        pCtrl,
                             const SCROLL_DIRECTION_E kDirection,
                             const uint32_t           kLines)
 {
-    uint32_t toScroll;
-    void*    pToClear;
+    uint32_t  toScroll;
+    size_t    buffOffset;
+    char*     pSource;
+    char*     pDestination;
 
     if(pCtrl->lineCount < kLines)
     {
@@ -1607,18 +1963,23 @@ static void _vesaScrollSafe(vesa_controler_t*        pCtrl,
     /* Select scroll direction */
     if(kDirection == SCROLL_DOWN)
     {
-        pCtrl->scrollOffset += (pCtrl->pCurrentMode->bytePerScanLine *
-                                VESA_TEXT_CHAR_HEIGHT * toScroll);
-        pCtrl->scrollOffset %= pCtrl->videoBuffer.framebufferSize;
-        /* Clear last line */
-        pToClear = ((pCtrl->pCurrentMode->bytePerScanLine *
-                    (pCtrl->pCurrentMode->height - VESA_TEXT_CHAR_HEIGHT) +
-                    pCtrl->scrollOffset) %
-                   pCtrl->videoBuffer.framebufferSize) +
-                   pCtrl->videoBuffer.pBack;
-        memset(pToClear,
-               0,
-               VESA_TEXT_CHAR_HEIGHT * pCtrl->pCurrentMode->bytePerScanLine);
+        pSource = pCtrl->videoBuffer.pBack;
+        pDestination = pCtrl->videoBuffer.pBack;
+
+        buffOffset = VESA_TEXT_CHAR_HEIGHT *
+                     pCtrl->pCurrentMode->width *
+                     toScroll *
+                     sizeof(uint32_t);
+        pSource += buffOffset;
+        _vesaFastMemcpy(pDestination,
+                        pSource,
+                        pCtrl->videoBuffer.backBufferSize - buffOffset);
+
+        pDestination += pCtrl->videoBuffer.backBufferSize - buffOffset;
+        /* Clear read */
+        _vesaFastFill((uintptr_t)pDestination,
+                      0,
+                      buffOffset / sizeof(uint32_t));
 
         /* Replace cursor */
         _vesaPutCursorSafe(pCtrl, pCtrl->lineCount - toScroll, 0);
@@ -1695,6 +2056,11 @@ static inline void _vesaCursorForward(vesa_controler_t* pCtrl,
             ++pCtrl->screenCursor.y;
             pCtrl->screenCursor.x = 0;
         }
+        else
+        {
+            _vesaScrollSafe(pCtrl, SCROLL_DOWN, 1);
+            pCtrl->screenCursor.x = 0;
+        }
     }
 }
 
@@ -1742,34 +2108,168 @@ static OS_RETURN_E _vesaDrawPixel(void*          pCtrl,
     return OS_NO_ERR;
 }
 
+static OS_RETURN_E _vesaDrawRectangle(void*               pCtrl,
+                                      const graph_rect_t* kpRect)
+{
+    uint32_t          xEnd;
+    uint32_t          yEnd;
+    uint32_t          y;
+    vesa_controler_t* pControler;
+    uintptr_t         pStartBuffer;
+    uint16_t          lineSize;
+    uint32_t          offset;
+
+    pControler = GET_CONTROLER(pCtrl);
+
+    /* Compute the maximal size based on the screen settings */
+    xEnd = MIN(pControler->pCurrentMode->width, kpRect->width + kpRect->x);
+    yEnd = MIN(pControler->pCurrentMode->height, kpRect->height + kpRect->y);
+
+    pStartBuffer = (uintptr_t)pControler->videoBuffer.pBack;
+    lineSize     = pControler->pCurrentMode->width * sizeof(uint32_t);
+
+    /* Fill the buffer lines by lines */
+    offset = kpRect->y * lineSize + kpRect->x * sizeof(uint32_t);
+    pStartBuffer += offset;
+
+    for(y = kpRect->y; y < yEnd; ++y)
+    {
+        _vesaFastFill(pStartBuffer,
+                      kpRect->color,
+                      xEnd - kpRect->x - 1);
+        pStartBuffer += lineSize;
+    }
+
+    return OS_NO_ERR;
+}
+
+static OS_RETURN_E _vesaDrawLine(void*               pCtrl,
+                                 const graph_line_t* kpLine)
+{
+    uint32_t     distance;
+    uint32_t     width;
+    uint32_t     height;
+    double       xFactor;
+    double       yFactor;
+    double       currX;
+    double       currY;
+
+
+    graph_rect_t rect;
+
+    width = ABS((int32_t)(kpLine->xEnd - kpLine->xStart));
+    height = ABS((int32_t)(kpLine->yEnd - kpLine->yStart));
+
+    /* Check if straight */
+    if(kpLine->xStart == kpLine->xEnd)
+    {
+        rect.color  = kpLine->color;
+        rect.height = height;
+        rect.width  = 1;
+        rect.x      = MIN(kpLine->xStart, kpLine->xEnd);
+        rect.y      = MIN(kpLine->yStart, kpLine->yEnd);
+
+        _vesaDrawRectangle(pCtrl, &rect);
+    }
+    else if(kpLine->yStart == kpLine->yEnd)
+    {
+        rect.color  = kpLine->color;
+        rect.height = 1;
+        rect.width  = width;
+        rect.x      = MIN(kpLine->xStart, kpLine->xEnd);
+        rect.y      = MIN(kpLine->yStart, kpLine->yEnd);
+
+        _vesaDrawRectangle(pCtrl, &rect);
+    }
+    else
+    {
+        distance = MAX(width, height);
+        if(kpLine->xStart < kpLine->xEnd)
+        {
+            xFactor  = (double)width / (double)distance;
+        }
+        else
+        {
+            xFactor  = -(double)width / (double)distance;
+        }
+        if(kpLine->yStart < kpLine->yEnd)
+        {
+            yFactor  = (double)height / (double)distance;
+        }
+        else
+        {
+            yFactor  = -(double)height / (double)distance;
+        }
+        currY    = (double)kpLine->yStart;
+        currX    = (double)kpLine->xStart;
+        while(distance > 0)
+        {
+            _vesaPutPixel(pCtrl,
+                          ROUND_CLOSEST(currX),
+                          ROUND_CLOSEST(currY),
+                          kpLine->color);
+            currX += xFactor;
+            currY += yFactor;
+            --distance;
+        }
+    }
+
+    return OS_NO_ERR;
+}
+
+static OS_RETURN_E _vesaDrawBitmap(void*                 pCtrl,
+                                   const graph_bitmap_t* kpBitmap)
+{
+    uint32_t          maxCpy;
+    uint32_t          yEnd;
+    uint32_t          y;
+    vesa_controler_t* pControler;
+    uintptr_t         pStartBuffer;
+    uintptr_t         pStartBitmap;
+    uint16_t          lineSize;
+    uint16_t          imageLineSize;
+    uint32_t          offset;
+
+    pControler = GET_CONTROLER(pCtrl);
+
+    /* Compute the maximal size based on the screen settings */
+    maxCpy = MIN(kpBitmap->x + kpBitmap->width,
+                 pControler->pCurrentMode->width);
+    maxCpy = (maxCpy - kpBitmap->x) * sizeof(uint32_t);
+    yEnd   = MIN(pControler->pCurrentMode->height,
+                 kpBitmap->height + kpBitmap->y);
+
+    pStartBuffer = (uintptr_t)pControler->videoBuffer.pBack;
+    pStartBitmap = (uintptr_t)kpBitmap->kpData;
+    lineSize     = pControler->pCurrentMode->width * sizeof(uint32_t);
+
+    imageLineSize = kpBitmap->width * sizeof(uint32_t);
+
+    /* Fill the buffer lines by lines */
+    offset = kpBitmap->y * lineSize + kpBitmap->x * sizeof(uint32_t);
+    pStartBuffer += offset;
+
+    for(y = kpBitmap->y; y < yEnd; ++y)
+    {
+        _vesaFastMemcpy((void*)pStartBuffer, (void*)pStartBitmap, maxCpy);
+        pStartBuffer += lineSize;
+        pStartBitmap += imageLineSize;
+    }
+
+    return OS_NO_ERR;
+}
+
 static void _vesaFlush(void* pDriverCtrl)
 {
     vesa_controler_t* pCtrl;
-    size_t            lineSize;
-    uint8_t*          pFrameBuffer;
-    uint8_t*          pVideoBuffer;
-    size_t            afterOffset;
 
     pCtrl = GET_CONTROLER(pDriverCtrl);
 
-    /* Copy the buffer lines by lines */
-    pVideoBuffer = pCtrl->videoBuffer.pBack;
-    pFrameBuffer = pCtrl->videoBuffer.pFramebuffer;
-    lineSize = pCtrl->pCurrentMode->bytePerScanLine;
-    afterOffset = lineSize * pCtrl->pCurrentMode->height -
-                    pCtrl->scrollOffset;
-
     /* Print the first past of the video buffer based on scroll offset */
-    /* TODO: Fast memcpy */
-    memcpy(pFrameBuffer,
-            pVideoBuffer + pCtrl->scrollOffset,
-            afterOffset);
-
-    /* Print the second past of the video buffer based on scroll offset */
-    /* TODO: Fast memcpy */
-    memcpy(pFrameBuffer + afterOffset,
-            pVideoBuffer,
-            pCtrl->scrollOffset);
+    _vesaFastToFramebuffer(pCtrl,
+                           (uintptr_t)pCtrl->videoBuffer.pFramebuffer,
+                           (uintptr_t)pCtrl->videoBuffer.pBack,
+                           pCtrl->pCurrentMode->height);
 }
 
 static void* _vesaVfsOpen(void*       pDrvCtrl,
@@ -1781,7 +2281,7 @@ static void* _vesaVfsOpen(void*       pDrvCtrl,
     (void)mode;
 
     /* The path must be empty */
-    if(*kpPath != 0 || (*kpPath == '/' && *(kpPath + 1) != 0))
+    if((*kpPath == '/' && *(kpPath + 1) != 0) || *kpPath != 0)
     {
         return (void*)-1;
     }
@@ -1829,7 +2329,7 @@ static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
     return coutSave - count;
 }
 
-static int32_t _vesaVfsIOCTL(void*    pDriverData,
+static ssize_t _vesaVfsIOCTL(void*    pDriverData,
                              void*    pHandle,
                              uint32_t operation,
                              void*    pArgs)
@@ -1875,6 +2375,15 @@ static int32_t _vesaVfsIOCTL(void*    pDriverData,
                                              pDrawPixelArgs->y,
                                              pDrawPixelArgs->rgbPixel);
             break;
+        case VFS_IOCTL_GRAPH_DRAWRECT:
+            retVal = (int32_t)_vesaDrawRectangle(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_GRAPH_DRAWLINE:
+            retVal = (int32_t)_vesaDrawLine(pDriverData, pArgs);
+            break;
+        case VFS_IOCTL_GRAPH_DRAWBITMAP:
+            retVal = (int32_t)_vesaDrawBitmap(pDriverData, pArgs);
+            break;
         default:
             retVal = -1;
     }
@@ -1883,6 +2392,6 @@ static int32_t _vesaVfsIOCTL(void*    pDriverData,
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86VESADriver);
+DRIVERMGR_REG_FDT(sX86VESADriver);
 
 /************************************ EOF *************************************/

@@ -205,7 +205,6 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
 
 OS_RETURN_E semDestroy(semaphore_t* pSem)
 {
-    uint32_t          intState;
     kqueue_node_t*    pWaitNode;
     semaphore_data_t* pData;
 
@@ -221,7 +220,6 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
     }
 
     /* Clear the semaphore and wakeup all threads */
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pSem->lock);
 
     pSem->isInit = FALSE;
@@ -241,10 +239,6 @@ OS_RETURN_E semDestroy(semaphore_t* pSem)
 
     KERNEL_UNLOCK(pSem->lock);
 
-    /* Schedule in case more prioritary thread were scheduled */
-    schedSchedule();
-
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
     return OS_NO_ERR;
 }
 

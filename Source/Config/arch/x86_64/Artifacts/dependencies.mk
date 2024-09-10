@@ -15,6 +15,7 @@ DEP_LIBS += -luser
 DEP_LIBS += -lsync
 DEP_LIBS += -lfs
 DEP_LIBS += --whole-archive -lrawdtb
+DEP_LIBS += --whole-archive -lramdisk
 ifeq ($(TESTS), TRUE)
 DEP_LIBS += --end-group
 endif

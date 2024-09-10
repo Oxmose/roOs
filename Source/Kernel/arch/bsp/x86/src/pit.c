@@ -47,7 +47,7 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief FDT property for inetrrupt  */
+/** @brief FDT property for interrupt  */
 #define PIT_FDT_INT_PROP        "interrupts"
 /** @brief FDT property for comm ports */
 #define PIT_FDT_COMM_PROP       "comm"
@@ -594,6 +594,6 @@ static void _pitAckInterrupt(void* pDrvCtrl)
 }
 
 /***************************** DRIVER REGISTRATION ****************************/
-DRIVERMGR_REG(sX86PITDriver);
+DRIVERMGR_REG_FDT(sX86PITDriver);
 
 /************************************ EOF *************************************/

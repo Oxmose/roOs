@@ -191,11 +191,13 @@ static void* otherThread(void* args)
                             error,
                             TEST_SIGNAL_ENABLED);
 
-    kprintf("Generating signal\n");
+    kprintf("Generating signal after register: %d\n", error);
     switch((uintptr_t)args)
     {
         case TEST_DIV_BY_ZERO:
-            value = 1 / value;
+            __asm__ __volatile("xor %%eax, %%eax\n\t"
+                               "xor %%ebx, %%ebx\n\t"
+                               "div %%ebx\n\t" ::: "%eax", "%ebx");
             break;
         case TEST_SEGFAULT:
             value = *(uintptr_t*)value;

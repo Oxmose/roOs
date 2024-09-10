@@ -28,7 +28,7 @@
 #include <stdint.h>       /* Generic integer definitions */
 #include <string.h>       /* Memory manipulation */
 #include <critical.h>     /* Critical sections */
-#include <kerneloutput.h> /* Kernel IO */
+#include <syslog.h>       /* Syslog */
 
 /* Configuration files */
 #include <config.h>
@@ -46,19 +46,248 @@
  * CONSTANTS
  ******************************************************************************/
 
+/** @brief Module name */
+#define MODULE_NAME "KHEAP"
+
+/** @brief Num size. */
+#define NUM_SIZES 32
+
+/** @brief Memory chunk alignement. */
+#define ALIGN 4
+
+/** @brief mem_chunk_t minimal size. */
+#define MIN_SIZE sizeof(list_t)
+
+/** @brief Header size. */
+#define HEADER_SIZE __builtin_offsetof(mem_chunk_t, pData)
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
+/** @brief Kernel's heap allocator list node. */
+typedef struct list
+{
+    /** @brief Next node of the list. */
+    struct list* pNext;
+    /** @brief Previous node of the list. */
+    struct list* pPrev;
+} list_t;
+
+/** @brief Kernel's heap allocator memory chunk representation. */
+typedef struct
+{
+    /** @brief Memory chunk list. */
+    list_t all;
+
+    /** @brief Used flag. */
+    int32_t used;
+
+    /** @brief If used, the union contains the chunk's data, else a list of free
+     * memory.
+     */
+    union
+    {
+        uint8_t pData[0];
+        list_t  free;
+    };
+} mem_chunk_t;
 
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
+/** @brief Get the container */
+#define CONTAINER(C, l, v) ((C*)(((char*)v) - (uintptr_t)&(((C*)0)->l)))
+
+/** @brief Initializes the list */
+#define LIST_INIT(v, l) _listInit(&v->l)
+
+/** @brief Remove element from the list */
+#define LIST_REMOVE_FROM(h, d, l)                           \
+{                                                           \
+    __typeof__(**h) **h_ = h, *d_ = d;                      \
+    list_t* head = &(*h_)->l;                               \
+    _removeFrom(&head, &d_->l);                             \
+    if (head == NULL)                                       \
+    {                                                       \
+          *h_ = NULL;                                       \
+    }                                                       \
+    else                                                    \
+    {                                                       \
+        *h_ = CONTAINER(__typeof__(**h), l, head);          \
+    }                                                       \
+}
+
+/** @brief Remove element to the list */
+#define LIST_PUSH(h, v, l)                          \
+{                                                   \
+    __typeof__(*v) **h_ = h, *v_ = v;               \
+    list_t* head = &(*h_)->l;                       \
+    if (*h_ == NULL)                                \
+    {                                               \
+        head = NULL;                                \
+    }                                               \
+    _push(&head, &v_->l);                           \
+    *h_ = CONTAINER(__typeof__(*v), l, head);       \
+}
+
+/** @brief Pop element from the list */
+#define LIST_POP(h, l)                                  \
+__extension__                                           \
+({                                                      \
+    __typeof__(**h) **h_ = h;                           \
+    list_t* head = &(*h_)->l;                           \
+    list_t* res = _pop(&head);                          \
+    if (head == NULL)                                   \
+    {                                                   \
+           *h_ = NULL;                                  \
+    }                                                   \
+    else                                                \
+    {                                                   \
+          *h_ = CONTAINER(__typeof__(**h), l, head);    \
+    }                                                   \
+    CONTAINER(__typeof__(**h), l, res);                 \
+})
+
+/** @brief Get spFirstChunk iterator of a list */
+#define LIST_ITERATOR_BEGIN(h, l, it)                                       \
+{                                                                           \
+    __typeof__(*h) *h_ = h;                                                 \
+      list_t* last_##it = h_->l.prev, *iter_##it = &h_->l, *next_##it;      \
+    do                                                                      \
+    {                                                                       \
+        if (iter_##it == last_##it)                                         \
+        {                                                                   \
+            next_##it = NULL;                                               \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            next_##it = iter_##it->pNext;                                   \
+        }                                                                   \
+        __typeof__(*h)* it = CONTAINER(__typeof__(*h), l, iter_##it);
+
+/** @brief Get end iterator of a list */
+#define LIST_ITERATOR_END(it)                                               \
+    }while((iter_##it = next_##it));                                        \
+}
 
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
+
+/**
+ * @brief Initializes the memory list.
+ *
+ * @details Initializes the memory list with the basic node value.
+ *
+ * @param[out] pNode The list's node to initialize.
+ */
+static inline void _listInit(list_t* pNode);
+
+/**
+ * @brief Inserts a node before the current node in the list.
+ *
+ * @details Inserts a node before the current node in the list.
+ *
+ * @param[in,out] pCurrent The current node.
+ * @param[in,out] pNew The new node to insert before the current node.
+ */
+static inline void _insertBefore(list_t* pCurrent, list_t* pNew);
+
+/**
+ * @brief Inserts a node after the current node in the list.
+ *
+ * @param[in,out] pCurrent The current node.
+ * @param[in,out] pNew The new node to insert after the current node.
+ */
+static inline void _insertAfter(list_t* pCurrent, list_t* pNew);
+
+/**
+ * @brief Removes a node from the list.
+ *
+ * @details Removes a node from the list.
+ *
+ * @param[out] pNode The node to remove from the list.
+ */
+static inline void _remove(list_t* pNode);
+
+/**
+ * @brief Pushes a node at the end of the list.
+ *
+ * @details Pushes a node at the end of the list.
+ *
+ * @param[out] ppList The list to be pushed.
+ * @param[in] pNode The node to push to the list.
+ */
+static inline void _push(list_t** ppList, list_t* pNode);
+
+/**
+ * @brief Pops a node from the list.
+ *
+ * @details Pops a node from the list and returns it.
+ *
+ * @param[out] ppList The list to be poped from.
+ *
+ * @return The node poped from the list is returned.
+ */
+static inline list_t* _pop(list_t** ppList);
+
+/**
+ * @brief Removes a node from the list.
+ *
+ * @details Removes a node from the list.
+ *
+ * @param[out] ppList The list to remove the node from.
+ * @param[out] pNode The node to remove from the list.
+ */
+static inline void _removeFrom(list_t** ppList, list_t* pNode);
+
+/**
+ * @brief Initializes a memory chunk structure.
+ *
+ * @details Initializes a memory chunk structure.
+ *
+ * @param[out] pChunk The chunk structure to initialize.
+ */
+static inline void _memoryChunkInit(mem_chunk_t* pChunk);
+
+/**
+ * @brief Returns the size of a memory chunk.
+ *
+ * @param pChunk The chunk to get the size of.
+ *
+ * @return The size of the memory chunk is returned.
+ */
+static inline uint32_t _memoryChunkSize(const mem_chunk_t* pChunk);
+
+/**
+ * @brief Returns the slot of a memory chunk for the desired size.
+ *
+ * @details Returns the slot of a memory chunk for the desired size.
+ *
+ * @param[in] size The size of the chunk to get the slot of.
+ *
+ * @return The slot of a memory chunk for the desired size.
+ */
+static inline int32_t _memoryChunkSlot(uint32_t size);
+
+/**
+ * @brief Removes a memory chunk in the free memory chunks list.
+ *
+ * @details Removes a memory chunk in the free memory chunks list.
+ *
+ * @param[in, out] pChunk The chunk to be removed from the list.
+ */
+static inline void _removeFree(mem_chunk_t* pChunk);
+
+/**
+ * @brief Pushes a memory chunk in the free memory chunks list.
+ *
+ * @details Pushes a memory chunk in the free memory chunks list.
+ *
+ * @param[in, out] pChunk The chunk to be placed in the list.
+ */
+static inline void _pushFree(mem_chunk_t *pChunk);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -74,6 +303,23 @@ extern uint8_t _KERNEL_HEAP_SIZE;
 /* None */
 
 /************************** Static global variables ***************************/
+/** @brief Kernel's heap initialization state. */
+static bool_t sInit = FALSE;
+
+/* Heap data */
+/** @brief Kernel's heap free memory chunks. */
+static mem_chunk_t* spFreeChunk[NUM_SIZES] = { NULL };
+/** @brief Kernel's heap spFirstChunk memory chunk. */
+static mem_chunk_t* spFirstChunk = NULL;
+/** @brief Kernel's heap spLastChunk memory chunk. */
+static mem_chunk_t* spLastChunk = NULL;
+
+/** @brief Quantity of free memory in the kernel's heap. */
+static size_t sMemFree;
+/** @brief Quantity of used memory in the kernel's heap. */
+static size_t sMemUsed;
+/** @brief Quantity of memory used to store meta data in the kernel's heap. */
+static size_t sMemMeta;
 
 /** @brief Heap lock */
 static kernel_spinlock_t sLock;
@@ -82,334 +328,322 @@ static kernel_spinlock_t sLock;
  * FUNCTIONS
  ******************************************************************************/
 
-/*
-	Linked List Bucket Heap 2013 Goswin von Brederlow <goswin-v-b@web.de>
-
-*/
-
-typedef struct DList DList;
-struct DList {
-    DList *next;
-    DList *prev;
-};
-
-// initialize a one element DList
-static inline void dlist_init(DList *dlist) {
-	//printf("%s(%p)\n", __FUNCTION__, dlist);
-    dlist->next = dlist;
-    dlist->prev = dlist;
+static inline void _listInit(list_t* pNode)
+{
+    pNode->pNext = pNode;
+    pNode->pPrev = pNode;
 }
 
-// insert d2 after d1
-static inline void dlist_insert_after(DList *d1, DList *d2) {
-	//printf("%s(%p, %p)\n", __FUNCTION__, d1, d2);
-    DList *n1 = d1->next;
-    DList *e2 = d2->prev;
+static inline void _insertBefore(list_t* pCurrent, list_t* pNew)
+{
+    list_t* pCurrentPrev = pCurrent->pPrev;
+    list_t* pNewPrev     = pNew->pPrev;
 
-    d1->next = d2;
-    d2->prev = d1;
-    e2->next = n1;
-    n1->prev = e2;
+    pCurrentPrev->pNext = pNew;
+    pNew->pPrev         = pCurrentPrev;
+    pNewPrev->pNext     = pCurrent;
+    pCurrent->pPrev     = pNewPrev;
 }
 
-// insert d2 before d1
-static inline void dlist_insert_before(DList *d1, DList *d2) {
-	//printf("%s(%p, %p)\n", __FUNCTION__, d1, d2);
-    DList *e1 = d1->prev;
-    DList *e2 = d2->prev;
+static inline void _insertAfter(list_t* pCurrent, list_t* pNew)
+{
+    list_t* pCurrentNext = pCurrent->pNext;
+    list_t* pNewPrev     = pNew->pPrev;
 
-    e1->next = d2;
-    d2->prev = e1;
-    e2->next = d1;
-    d1->prev = e2;
+    pCurrent->pNext     = pNew;
+    pNew->pPrev         = pCurrent;
+    pNewPrev->pNext     = pCurrentNext;
+    pCurrentNext->pPrev = pNewPrev;
 }
 
-// remove d from the list
-static inline void dlist_remove(DList *d) {
-	//printf("%s(%p)\n", __FUNCTION__, d);
-    d->prev->next = d->next;
-    d->next->prev = d->prev;
-    d->next = d;
-    d->prev = d;
+static inline void _remove(list_t* pNode)
+{
+    pNode->pPrev->pNext = pNode->pNext;
+    pNode->pNext->pPrev = pNode->pPrev;
+
+    pNode->pNext = pNode;
+    pNode->pPrev = pNode;
 }
 
-// push d2 to the front of the d1p list
-static inline void dlist_push(DList **d1p, DList *d2) {
-	//printf("%s(%p, %p)\n", __FUNCTION__, d1p, d2);
-    if (*d1p != NULL) {
-	dlist_insert_before(*d1p, d2);
+static inline void _push(list_t** ppList, list_t* pNode)
+{
+    if (*ppList != NULL)
+    {
+        _insertBefore(*ppList, pNode);
     }
-    *d1p = d2;
+
+    *ppList = pNode;
 }
 
-// pop the front of the dp list
-static inline DList * dlist_pop(DList **dp) {
-	//printf("%s(%p)\n", __FUNCTION__, dp);
-    DList *d1 = *dp;
-    DList *d2 = d1->next;
-    dlist_remove(d1);
-    if (d1 == d2) {
-	*dp = NULL;
-    } else {
-	*dp = d2;
+static inline list_t* _pop(list_t** ppList)
+{
+
+    list_t* top = *ppList;
+    list_t* nextTop = top->pNext;
+
+    _remove(top);
+
+    if (top == nextTop)
+    {
+           *ppList = NULL;
     }
-    return d1;
+    else
+    {
+           *ppList = nextTop;
+    }
+
+    return top;
 }
 
-// remove d2 from the list, advancing d1p if needed
-static inline void dlist_remove_from(DList **d1p, DList *d2) {
-	//printf("%s(%p, %p)\n", __FUNCTION__, d1p, d2);
-    if (*d1p == d2) {
-	dlist_pop(d1p);
-    } else {
-	dlist_remove(d2);
+static inline void _removeFrom(list_t** ppList, list_t* pNode)
+{
+    if (*ppList == pNode)
+    {
+        _pop(ppList);
+    }
+    else
+    {
+        _remove(pNode);
     }
 }
 
-#define CONTAINER(C, l, v) ((C*)(((char*)v) - (uintptr_t)&(((C*)0)->l)))
-#define OFFSETOF(TYPE, MEMBER)  __builtin_offsetof (TYPE, MEMBER)
-
-#define DLIST_INIT(v, l) dlist_init(&v->l)
-
-#define DLIST_REMOVE_FROM(h, d, l)					\
-    {									\
-	__typeof__(**h) **h_ = h, *d_ = d;					\
-	DList *head = &(*h_)->l;					\
-	dlist_remove_from(&head, &d_->l);					\
-	if (head == NULL) {						\
-	    *h_ = NULL;							\
-	} else {							\
-	    *h_ = CONTAINER(__typeof__(**h), l, head);			\
-	}								\
-    }
-
-#define DLIST_PUSH(h, v, l)						\
-    {									\
-	__typeof__(*v) **h_ = h, *v_ = v;					\
-	DList *head = &(*h_)->l;					\
-	if (*h_ == NULL) head = NULL;					\
-	dlist_push(&head, &v_->l);					\
-	*h_ = CONTAINER(__typeof__(*v), l, head);				\
-    }
-
-#define DLIST_POP(h, l)							\
-    ({									\
-	__typeof__(**h) **h_ = h;						\
-	DList *head = &(*h_)->l;					\
-	DList *res = dlist_pop(&head);					\
-	if (head == NULL) {						\
-	    *h_ = NULL;							\
-	} else {							\
-	    *h_ = CONTAINER(__typeof__(**h), l, head);			\
-	}								\
-	CONTAINER(__typeof__(**h), l, res);					\
-    })
-
-#define DLIST_ITERATOR_BEGIN(h, l, it)					\
-    {									\
-        __typeof__(*h) *h_ = h;						\
-	DList *last_##it = h_->l.prev, *iter_##it = &h_->l, *next_##it;	\
-	do {								\
-	    if (iter_##it == last_##it) {				\
-		next_##it = NULL;					\
-	    } else {							\
-		next_##it = iter_##it->next;				\
-	    }								\
-	    __typeof__(*h)* it = CONTAINER(__typeof__(*h), l, iter_##it);
-
-#define DLIST_ITERATOR_END(it)						\
-	} while((iter_##it = next_##it));				\
-    }
-
-#define DLIST_ITERATOR_REMOVE_FROM(h, it, l) DLIST_REMOVE_FROM(h, iter_##it, l)
-
-typedef struct Chunk Chunk;
-struct Chunk {
-    DList all;
-    int used;
-    union {
-	char data[0];
-	DList free;
-    };
-};
-
-enum {
-    NUM_SIZES = 32,
-    ALIGN = 4,
-    MIN_SIZE = sizeof(DList),
-    HEADER_SIZE = OFFSETOF(Chunk, data),
-};
-
-Chunk *free_chunk[NUM_SIZES] = { NULL };
-size_t mem_free = 0;
-size_t mem_used = 0;
-size_t mem_meta = 0;
-Chunk *first = NULL;
-Chunk *last = NULL;
-
-static void memory_chunk_init(Chunk *chunk) {
-	//printf("%s(%p)\n", __FUNCTION__, chunk);
-    DLIST_INIT(chunk, all);
-    chunk->used = 0;
-    DLIST_INIT(chunk, free);
+static inline void _memoryChunkInit(mem_chunk_t* pChunk)
+{
+    LIST_INIT(pChunk, all);
+    pChunk->used = FALSE;
+    LIST_INIT(pChunk, free);
 }
 
-static size_t memory_chunk_size(const Chunk *chunk) {
-	//printf("%s(%p)\n", __FUNCTION__, chunk);
-    char *end = (char*)(chunk->all.next);
-    char *start = (char*)(&chunk->all);
-    return (end - start) - HEADER_SIZE;
+static inline uint32_t _memoryChunkSize(const mem_chunk_t* pChunk)
+{
+    return ((int8_t*)(pChunk->all.pNext) - (int8_t*)(&pChunk->all)) - HEADER_SIZE;
 }
 
-static int memory_chunk_slot(size_t size) {
-    int n = -1;
-    while(size > 0) {
-	++n;
-	size /= 2;
+static inline int32_t _memoryChunkSlot(uint32_t size)
+{
+    int32_t n = -1;
+    while(size > 0)
+    {
+        ++n;
+        size /= 2;
     }
     return n;
 }
 
-void kHeapInit() {
+static inline void _removeFree(mem_chunk_t* pChunk)
+{
+    uint32_t len = _memoryChunkSize(pChunk);
+    int n = _memoryChunkSlot(len);
+
+    LIST_REMOVE_FROM(&spFreeChunk[n], pChunk, free);
+    sMemFree -= len;
+}
+
+static inline void _pushFree(mem_chunk_t *pChunk)
+{
+    uint32_t len = _memoryChunkSize(pChunk);
+    int n = _memoryChunkSlot(len);
+
+    LIST_PUSH(&spFreeChunk[n], pChunk, free);
+    sMemFree += len;
+}
+
+void kHeapInit(void)
+{
+    mem_chunk_t* pSecond;
+    uint32_t     len;
+    int32_t      n;
+
+    void*    pMem      = &_KERNEL_HEAP_BASE;
+    uint32_t size      = (uint32_t)(uintptr_t)&_KERNEL_HEAP_SIZE;
+    int8_t*  pMemStart = (int8_t*)
+                        (((uintptr_t)pMem + ALIGN - 1) & (~(ALIGN - 1)));
+    int8_t*  pMemEnd   = (int8_t*)(((uintptr_t)pMem + size) & (~(ALIGN - 1)));
+
+    sMemFree       = 0;
+    sMemMeta       = 0;
+    spFirstChunk   = NULL;
+    spLastChunk    = NULL;
+
+    spFirstChunk = (mem_chunk_t*)pMemStart;
+    pSecond = spFirstChunk + 1;
+    spLastChunk = ((mem_chunk_t*)pMemEnd) - 1;
+
+    _memoryChunkInit(spFirstChunk);
+    _memoryChunkInit(pSecond);
+    _memoryChunkInit(spLastChunk);
+
+    _insertAfter(&spFirstChunk->all, &pSecond->all);
+    _insertAfter(&pSecond->all, &spLastChunk->all);
+
+    spFirstChunk->used = TRUE;
+    spLastChunk->used  = TRUE;
+
+    len = _memoryChunkSize(pSecond);
+    n   = _memoryChunkSlot(len);
+
+    LIST_PUSH(&spFreeChunk[n], pSecond, free);
+    sMemFree = len - HEADER_SIZE;
+    sMemMeta = sizeof(mem_chunk_t) * 2 + HEADER_SIZE;
 
     KERNEL_SPINLOCK_INIT(sLock);
 
-    void*    mem      = &_KERNEL_HEAP_BASE;
-    uint32_t size      = (uint32_t)(uintptr_t)&_KERNEL_HEAP_SIZE;
-    memset(mem, 0, size);
+    sInit = TRUE;
 
-    char *mem_start = (char *)(((uintptr_t)mem + ALIGN - 1) & (~(ALIGN - 1)));
-    char *mem_end = (char *)(((uintptr_t)mem + size) & (~(ALIGN - 1)));
-    first = (Chunk*)mem_start;
-    Chunk *second = first + 1;
-    last = ((Chunk*)mem_end) - 1;
-    memory_chunk_init(first);
-    memory_chunk_init(second);
-    memory_chunk_init(last);
-    dlist_insert_after(&first->all, &second->all);
-    dlist_insert_after(&second->all, &last->all);
-    // make first/last as used so they never get merged
-    first->used = 1;
-    last->used = 1;
-
-    size_t len = memory_chunk_size(second);
-    int n = memory_chunk_slot(len);
-    //printf("%s(%p, %#lx) : adding chunk %#lx [%d]\n", __FUNCTION__, mem, size, len, n);
-    DLIST_PUSH(&free_chunk[n], second, free);
-    mem_free = len - HEADER_SIZE;
-    mem_meta = sizeof(Chunk) * 2 + HEADER_SIZE;
+#if KHEAP_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED, "KHEAP",
+                 "Kernel Heap Initialized at 0x%p", pMemStart);
+#endif
 
     TEST_POINT_FUNCTION_CALL(kheapTest, TEST_KHEAP_ENABLED);
 }
 
-void *kmalloc(size_t size)
+void* kmalloc(size_t size)
 {
+    size_t       n;
+    mem_chunk_t* pChunk;
+    mem_chunk_t* pChunk2;
+    size_t       size2;
+    size_t       len;
+
+#if KHEAP_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
+                 "KHEAP",
+                 "Kheap allocating %uB (%uB free, %uB used)",
+                 size,
+                 sMemFree,
+                 sMemUsed);
+#endif
+
+    if(sInit == FALSE || size == 0)
+    {
+        return NULL;
+    }
+
     KERNEL_LOCK(sLock);
 
-    //printf("%s(%#lx)\n", __FUNCTION__, size);
     size = (size + ALIGN - 1) & (~(ALIGN - 1));
 
-	if (size < MIN_SIZE) size = MIN_SIZE;
+    if (size < MIN_SIZE)
+    {
+         size = MIN_SIZE;
+    }
 
-	int n = memory_chunk_slot(size - 1) + 1;
+    n = _memoryChunkSlot(size - 1) + 1;
 
-	if (n >= NUM_SIZES)
+    if (n >= NUM_SIZES)
     {
         KERNEL_UNLOCK(sLock);
         return NULL;
     }
 
-	while(!free_chunk[n]) {
-		++n;
-		if (n >= NUM_SIZES)
+    while(spFreeChunk[n] == 0)
+    {
+        ++n;
+        if (n >= NUM_SIZES)
         {
             KERNEL_UNLOCK(sLock);
             return NULL;
         }
     }
 
-	Chunk *chunk = DLIST_POP(&free_chunk[n], free);
-    size_t size2 = memory_chunk_size(chunk);
-	//printf("@ %p [%#lx]\n", chunk, size2);
-    size_t len = 0;
+    pChunk = LIST_POP(&spFreeChunk[n], free);
+    size2 = _memoryChunkSize(pChunk);
+    len = 0;
 
-	if (size + sizeof(Chunk) <= size2) {
-		Chunk *chunk2 = (Chunk*)(((char*)chunk) + HEADER_SIZE + size);
-		memory_chunk_init(chunk2);
-		dlist_insert_after(&chunk->all, &chunk2->all);
-		len = memory_chunk_size(chunk2);
-		int n = memory_chunk_slot(len);
-		//printf("  adding chunk @ %p %#lx [%d]\n", chunk2, len, n);
-		DLIST_PUSH(&free_chunk[n], chunk2, free);
-		mem_meta += HEADER_SIZE;
-		mem_free += len - HEADER_SIZE;
+    if (size + sizeof(mem_chunk_t) <= size2)
+    {
+        pChunk2 = (mem_chunk_t*)(((int8_t*)pChunk) + HEADER_SIZE + size);
+
+        _memoryChunkInit(pChunk2);
+
+        _insertAfter(&pChunk->all, &pChunk2->all);
+
+        len = _memoryChunkSize(pChunk2);
+        n = _memoryChunkSlot(len);
+
+        LIST_PUSH(&spFreeChunk[n], pChunk2, free);
+
+        sMemMeta += HEADER_SIZE;
+        sMemFree += len;
     }
 
-	chunk->used = 1;
-    //memset(chunk->data, 0xAA, size);
-	//printf("AAAA\n");
-    mem_free -= size2;
-    mem_used += size2 - len - HEADER_SIZE;
-    //printf("  = %p [%p]\n", chunk->data, chunk);
+    pChunk->used = TRUE;
+
+    sMemFree -= size2;
+    sMemUsed += size2 - len - HEADER_SIZE;
+
+#if KHEAP_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
+                 "KHEAP",
+                 "Kheap allocated 0x%p -> %uB (%uB free, %uB used)",
+                 pChunk->pData,
+                 size2 - len - HEADER_SIZE,
+                 sMemFree,
+                 sMemUsed);
+#endif
 
     KERNEL_UNLOCK(sLock);
-    return chunk->data;
+
+    return pChunk->pData;
 }
 
-static void remove_free(Chunk *chunk) {
-    size_t len = memory_chunk_size(chunk);
-    int n = memory_chunk_slot(len);
-    //printf("%s(%p) : removing chunk %#lx [%d]\n", __FUNCTION__, chunk, len, n);
-    DLIST_REMOVE_FROM(&free_chunk[n], chunk, free);
-    mem_free -= len - HEADER_SIZE;
-}
+void kfree(void *ptr)
+{
+    mem_chunk_t* pChunk;
+    mem_chunk_t* pNext;
+    mem_chunk_t* pPrev;
 
-static void push_free(Chunk *chunk) {
-    size_t len = memory_chunk_size(chunk);
-    int n = memory_chunk_slot(len);
-    //printf("%s(%p) : adding chunk %#lx [%d]\n", __FUNCTION__, chunk, len, n);
-    DLIST_PUSH(&free_chunk[n], chunk, free);
-    mem_free += len - HEADER_SIZE;
-}
-
-void kfree(void *mem) {
-
-
-    if(mem == NULL)
+    if(ptr == NULL || sInit == FALSE)
     {
         return;
     }
+
     KERNEL_LOCK(sLock);
 
-    Chunk *chunk = (Chunk*)((char*)mem - HEADER_SIZE);
-    Chunk *next = CONTAINER(Chunk, all, chunk->all.next);
-    Chunk *prev = CONTAINER(Chunk, all, chunk->all.prev);
+    pChunk = (mem_chunk_t*)((int8_t*)ptr - HEADER_SIZE);
+    pNext = CONTAINER(mem_chunk_t, all, pChunk->all.pNext);
+    pPrev = CONTAINER(mem_chunk_t, all, pChunk->all.pPrev);
 
-	//printf("%s(%p): @%p %#lx [%d]\n", __FUNCTION__, mem, chunk, memory_chunk_size(chunk), memory_chunk_slot(memory_chunk_size(chunk)));
-    mem_used -= memory_chunk_size(chunk);
+    sMemUsed -= _memoryChunkSize(pChunk);
 
-    if (next->used == 0) {
-		// merge in next
-		remove_free(next);
-		dlist_remove(&next->all);
-		//memset(next, 0xDD, sizeof(Chunk));
-		mem_meta -= HEADER_SIZE;
-		mem_free += HEADER_SIZE;
+    if (pNext->used == FALSE)
+    {
+        _removeFree(pNext);
+        _remove(&pNext->all);
+
+        sMemMeta -= HEADER_SIZE;
+        sMemFree += HEADER_SIZE;
     }
-    if (prev->used == 0) {
-		// merge to prev
-		remove_free(prev);
-		dlist_remove(&chunk->all);
-		//memset(chunk, 0xDD, sizeof(Chunk));
-		push_free(prev);
-		mem_meta -= HEADER_SIZE;
-		mem_free += HEADER_SIZE;
-    } else {
-		// make chunk as free
-		chunk->used = 0;
-		DLIST_INIT(chunk, free);
-		push_free(chunk);
+
+    if (pPrev->used == FALSE)
+    {
+        _removeFree(pPrev);
+        _remove(&pChunk->all);
+
+        _pushFree(pPrev);
+        sMemMeta -= HEADER_SIZE;
+        sMemFree += HEADER_SIZE;
     }
+    else
+    {
+        pChunk->used = FALSE;
+        LIST_INIT(pChunk, free);
+        _pushFree(pChunk);
+    }
+
+#if KHEAP_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
+                 "KHEAP",
+                 "[KHEAP] Kheap freed 0x%p -> %uB",
+                 ptr,
+                 used);
+#endif
 
     KERNEL_UNLOCK(sLock);
+}
+
+size_t kHeapGetFree(void)
+{
+    return sMemFree;
 }

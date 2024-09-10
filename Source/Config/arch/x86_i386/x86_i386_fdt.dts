@@ -45,14 +45,14 @@
         reservedacpi: acpimem@1 {
             reg = <0xffe1000 0x001000>;
         };
-        reservedramdisk: res-ramdisk@3BC000 {
-            reg = <0x003BC000 131072>;
+        reservedramdisk: res-ramdisk@3FA000 {
+            reg = <0x003FA000 131072>;
         };
     };
 
-    ramdisk@3BC000 {
+    ramdisk@3FA000 {
         compatible = "roOs,roOs-ramdisk";
-        reg = <0x003BC000 131072>;
+        reg = <0x003FA000 131072>;
         device = "/dev/storage/ramdisk0";
     };
 

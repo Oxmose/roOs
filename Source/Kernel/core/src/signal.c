@@ -30,7 +30,6 @@
 #include <syslog.h>       /* Kernel Syslog */
 #include <critical.h>     /* Critical sections */
 #include <scheduler.h>    /* Scheduler services */
-#include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
 #include <config.h>

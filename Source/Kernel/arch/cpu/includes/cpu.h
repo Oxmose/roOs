@@ -177,14 +177,6 @@ const cpu_interrupt_config_t* cpuGetInterruptConfig(void);
 void cpuInit(void);
 
 /**
- * @brief Checks the architecture's feature and requirements for roOs.
- *
- * @details Checks the architecture's feature and requirements for roOs. If a
- * requirement is not met, a kernel panic is raised.
- */
-void cpuValidateArchitecture(void);
-
-/**
  * @brief Returns the CPU current interrupt state.
  *
  * @details Returns the current CPU eflags interrupt enable value.

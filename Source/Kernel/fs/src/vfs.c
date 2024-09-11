@@ -402,9 +402,9 @@ static ssize_t _vfsGenericWrite(void*       pDrvCtrl,
                                 size_t      count);
 
 /**
- * @brief Generic VFS write hook.
+ * @brief Generic VFS read hook.
  *
- * @details Generic VFS write hook.
+ * @details Generic VFS read hook.
  *
  * @param[in, out] pDrvCtrl The generic VFS driver.
  * @param[in] pHandle The handle that was created when calling the open
@@ -490,29 +490,6 @@ static kernel_spinlock_t sMountPointLock;
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-#if 0
-#include <kerneloutput.h> /* Kernel output */
-void showVfs(vfs_node_t* pRoot, const uint32_t kLevel);
-void showVfs(vfs_node_t* pRoot, const uint32_t kLevel)
-{
-    uint32_t i;
-
-    if(pRoot == NULL)
-    {
-        return;
-    }
-
-    for(i = 0; i < kLevel; ++i)
-    {
-        kprintf("   ");
-    }
-    kprintf("| %s/ : 0x%p\n", pRoot->pMountPoint, pRoot->pDriver);
-
-    showVfs(pRoot->pFirstChild, kLevel + 1);
-    showVfs(pRoot->pNextSibling, kLevel);
-}
-#endif
 
 static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
 {
@@ -1281,7 +1258,6 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     vfs_driver_internal_t* pInternalHandle;
     size_t                 pathLen;
     char*                  pCleanPath;
-    bool_t                 addDelimiter;
 
     if(kpPath == NULL)
     {
@@ -1294,17 +1270,6 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
         return VFS_DRIVER_INVALID;
     }
 
-    /* Check trailing delimiter*/
-    if(kpPath[pathLen - 1] != VFS_PATH_DELIMITER)
-    {
-        ++pathLen;
-        addDelimiter = TRUE;
-    }
-    else
-    {
-        addDelimiter = FALSE;
-    }
-
     /* Allocate the clean path buffer */
     pCleanPath = kmalloc(pathLen + 1);
     if(pCleanPath == NULL)
@@ -1314,11 +1279,8 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     _cleanPath(pCleanPath, kpPath);
     pathLen = strlen(pCleanPath);
 
-    if(addDelimiter == TRUE)
-    {
-        pCleanPath[pathLen]     = VFS_PATH_DELIMITER;
-        pCleanPath[pathLen + 1] = 0;
-    }
+    pCleanPath[pathLen] = VFS_PATH_DELIMITER;
+    pCleanPath[pathLen + 1] = 0;
 
     KERNEL_LOCK(sMountPointLock);
 

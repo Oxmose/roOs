@@ -129,15 +129,19 @@ static const command_t sCommands[] = {
 static void _shellTest(const char* args)
 {
     (void)args;
-    _shellMount("/dev/storage/ramdisk0 /rm ustar");
-    _shellCat("/rm/newfile2.txt");
+    _shellCat("/sys/threads/7");
+    _shellCat("/sys/threads/4");
+    _shellCat("/sys/cpus/0");
+    _shellCat("/sys/cpus/1");
+    _shellCat("/sys/cpus/2");
+    _shellCat("/sys/cpus/3");
 }
 
 static void _shellCat(const char* args)
 {
     int32_t fd;
     int32_t ret;
-    char buffer[100];
+    char buffer[256];
     fd = vfsOpen(args, O_RDONLY, 0);
     if(fd < 0)
     {
@@ -145,7 +149,7 @@ static void _shellCat(const char* args)
         return;
     }
 
-    while((ret = vfsRead(fd, buffer, 99)) > 0)
+    while((ret = vfsRead(fd, buffer, 255)) > 0)
     {
         buffer[ret] = 0;
         kprintf("%s", buffer);

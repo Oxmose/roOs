@@ -34,7 +34,6 @@
 #include <scheduler.h>    /* Kernel scheduler */
 #include <ctrl_block.h>   /* Kernel control blocks definitions */
 #include <uhashtable.h>   /* Kernel Uint Hash table */
-#include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
 #include <config.h>

@@ -122,17 +122,6 @@ extern uintptr_t _KERNEL_DEV_TREE_BASE;
  ******************************************************************************/
 void kickstart(void)
 {
-    uint32_t highPart;
-    uint32_t lowPart;
-    uint64_t entryTime;
-
-    /* Get time */
-    __asm__ __volatile__ ("rdtsc" : "=a"(lowPart), "=d"(highPart));
-    entryTime = 1000000000000UL / 3600000000 *
-           (((uint64_t)highPart << 32) | (uint64_t)lowPart);
-
-    /* Return to ns and apply offset */
-    entryTime /= 1000;
     /* Start testing framework */
     TEST_FRAMEWORK_START();
 
@@ -146,7 +135,6 @@ void kickstart(void)
 
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "roOs Kickstart");
 
-
     /* Initialize kernel heap */
     kHeapInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Kernel heap initialized");
@@ -154,11 +142,10 @@ void kickstart(void)
     /* Init the system logger */
     syslogInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Syslog initialized");
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Start time: %lluns", entryTime);
 
-    /* Validate architecture */
-    cpuValidateArchitecture();
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
+    /* Init the VFS driver */
+    vfsInit();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "VFS initialized");
 
     /* Initialize the CPU */
     cpuInit();
@@ -200,10 +187,6 @@ void kickstart(void)
     /* Init the futex library */
     futexLibInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Futex library initialized");
-
-    /* Init the VFS driver */
-    vfsInit();
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "VFS initialized");
 
     /* Init device manager */
     driverManagerInit();

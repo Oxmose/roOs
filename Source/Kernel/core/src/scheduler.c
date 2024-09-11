@@ -23,11 +23,13 @@
 
 /* Included headers */
 #include <cpu.h>          /* CPU API */
+#include <vfs.h>          /* VFS SysFS entries */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definitions */
+#include <stdlib.h>       /* Standard library */
 #include <kerror.h>       /* Kernel error codes */
 #include <kqueue.h>       /* Kernel queues */
 #include <memory.h>       /* Memory manager*/
@@ -38,7 +40,6 @@
 #include <critical.h>     /* Kernel critical */
 #include <ctrl_block.h>   /* Threads and processes control block */
 #include <interrupts.h>   /* Interrupt manager */
-#include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
 #include <config.h>
@@ -55,6 +56,9 @@
 
 /** @brief Current module name */
 #define MODULE_NAME "SCHEDULER"
+
+/** @brief Stores the sysfs threads entry directory name */
+#define SCHED_SYSFS_THREADS_DIR_PATH "/sys/threads"
 
 /**
  * @brief Defines the size of the window for which the CPU load is calculated
@@ -127,6 +131,27 @@ typedef struct
     uint8_t* pSchedCpu;
 } internal_thread_info_t;
 
+/** @brief Scheduler VFS entry types */
+typedef enum
+{
+    /** @brief Sched entry directory */
+    SYSFS_THREAD_DIR = 0,
+    /** @brief Sched entry file */
+    SYSFS_THREAD_ENTRY = 1,
+} SCHED_SYSFS_ENTRY_TYPE_E;
+
+/** @brief Scheduler VFS descriptor */
+typedef struct
+{
+    /** @brief Descriptor type */
+    SCHED_SYSFS_ENTRY_TYPE_E type;
+
+    /** @brief Current descriptor offset */
+    size_t offset;
+
+    /** @brief Linked thread id */
+    int32_t tid;
+} sched_vfs_entry_t;
 
 /*******************************************************************************
  * MACROS
@@ -254,7 +279,122 @@ static void _schedCleanThread(kernel_thread_t* pThread);
  * the thread's context was saved.
  */
 
-void _schedScheduleHandler(kernel_thread_t* pThread);
+static void _schedScheduleHandler(kernel_thread_t* pThread);
+
+/**
+ * @brief Creates the threads sysfs directory for the scheduler.
+ *
+ * @details Creates the threads sysfs directory for the scheduler. This function
+ * registers the sysfs directory and its driver.
+ *
+ * @return The function returns the success of error state.
+ */
+static OS_RETURN_E _schedInitSysFSThreads(void);
+
+/**
+ * @brief Scheduler threads sysfs entries open hook.
+ *
+ * @details Scheduler threads sysfs entries open hook. This function returns a
+ * handle to control the sysfs threads entries.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] kpPath The path in the threads sysfs entries
+ * @param[in] flags The open flags.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _schedVfsThreadsOpen(void*       pDrvCtrl,
+                                  const char* kpPath,
+                                  int         flags,
+                                  int         mode);
+
+/**
+ * @brief Scheduler threads sysfs entries close hook.
+ *
+ * @details Scheduler threads sysfs entries close hook. This function closes a
+ * handle that was created when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _schedVfsThreadsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief Scheduler threads sysfs entries write hook.
+ *
+ * @details Scheduler threads sysfs entries write hook.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _schedVfsThreadsWrite(void*       pDrvCtrl,
+                                     void*       pHandle,
+                                     const void* kpBuffer,
+                                     size_t      count);
+
+/**
+ * @brief Scheduler threads sysfs entries read hook.
+ *
+ * @details Scheduler threads sysfs entries read hook.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] pBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
+                                    void*  pHandle,
+                                    void*  pBuffer,
+                                    size_t count);
+
+/**
+ * @brief Scheduler threads sysfs entries ReadDir hook.
+ *
+ * @details Scheduler threads sysfs entries ReadDir hook. This function performs
+ * the ReadDir for the threads sysfs driver.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[out] pDirEntry The directory entry to fill by the driver.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
+                                       void*     pHandle,
+                                       dirent_t* pDirEntry);
+
+/**
+ * @brief Scheduler threads sysfs entries IOCTL hook.
+ *
+ * @details Scheduler threads sysfs entries IOCTL hook. This function performs
+ *  the IOCTL for the threads sysfs driver.
+ *
+ * @param[in, out] pDrvCtrl The scheduler threads sysfs driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
+                                     void*    pHandle,
+                                     uint32_t operation,
+                                     void*    pArgs);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -651,7 +791,324 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     kfree(pThread);
 }
 
-void _schedScheduleHandler(kernel_thread_t* pThread)
+
+static OS_RETURN_E _schedInitSysFSThreads(void)
+{
+    vfs_driver_t sysfsThreadDriver;
+
+    /* Register the driver */
+    sysfsThreadDriver = vfsRegisterDriver(SCHED_SYSFS_THREADS_DIR_PATH,
+                                          NULL,
+                                          _schedVfsThreadsOpen,
+                                          _schedVfsThreadsClose,
+                                          _schedVfsThreadsRead,
+                                          _schedVfsThreadsWrite,
+                                          _schedVfsThreadsReadDir,
+                                          _schedVfsThreadsIOCTL);
+    if(sysfsThreadDriver == VFS_DRIVER_INVALID)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    return OS_NO_ERR;
+}
+
+static void* _schedVfsThreadsOpen(void*       pDrvCtrl,
+                                  const char* kpPath,
+                                  int         flags,
+                                  int         mode)
+{
+    (void)pDrvCtrl;
+    (void)mode;
+
+    sched_vfs_entry_t*      pEntry;
+    int32_t                 tid;
+    kqueue_node_t*          pNode;
+    internal_thread_info_t* pInfo;
+    char*                   pStr;
+
+    if(flags != O_RDONLY)
+    {
+        return (void*)-1;
+    }
+
+    pEntry = kmalloc(sizeof(sched_vfs_entry_t));
+    if(pEntry == NULL)
+    {
+        return (void*)-1;
+    }
+
+    pEntry->offset = 0;
+
+    /* Check if we want to open a thread entry of the sysfs directory */
+    if(strlen(kpPath) != 0)
+    {
+        /* Get the tid */
+        tid = strtol(kpPath, &pStr, 10);
+        if(kpPath == pStr)
+        {
+            kfree(pEntry);
+            return (void*)-1;
+        }
+
+        /* This is an entry, check if it exists */
+        KERNEL_LOCK(sThreadListLock);
+        pNode = spThreadList->pHead;
+        while(pNode != NULL)
+        {
+            pInfo = (internal_thread_info_t*)pNode->pData;
+            if(pInfo->tid == tid)
+            {
+                pEntry->tid = tid;
+                break;
+            }
+            pNode = pNode->pNext;
+        }
+        KERNEL_UNLOCK(sThreadListLock);
+
+        if(pNode == NULL)
+        {
+            kfree(pEntry);
+            return (void*)-1;
+        }
+
+        pEntry->type = SYSFS_THREAD_ENTRY;
+    }
+    else
+    {
+        /* This is a directory */
+        pEntry->type = SYSFS_THREAD_DIR;
+    }
+
+    return pEntry;
+}
+
+static int32_t _schedVfsThreadsClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+
+    if(pHandle != NULL)
+    {
+        kfree(pHandle);
+        return 0;
+    }
+
+    return -1;
+}
+
+static ssize_t _schedVfsThreadsWrite(void*       pDrvCtrl,
+                                     void*       pHandle,
+                                     const void* kpBuffer,
+                                     size_t      count)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+    (void)kpBuffer;
+    (void)count;
+
+    /* Not supported */
+    return -1;
+}
+
+static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
+                                    void*  pHandle,
+                                    void*  pBuffer,
+                                    size_t count)
+{
+    kqueue_node_t*          pNode;
+    internal_thread_info_t* pInfo;
+    int32_t                 formatSize;
+    char*                   pState;
+    char*                   pType;
+    sched_vfs_entry_t*      pEntry;
+    char                    buffer[512];
+
+    (void)pDrvCtrl;
+
+    if(pHandle == NULL || pBuffer == NULL)
+    {
+        return -1;
+    }
+
+    if(count == 0)
+    {
+        return 0;
+    }
+
+    pEntry = pHandle;
+    if(pEntry->type != SYSFS_THREAD_ENTRY)
+    {
+        return -1;
+    }
+    /* Get the thread info */
+    KERNEL_LOCK(sThreadListLock);
+    pNode = spThreadList->pTail;
+
+    /* Got to the offset node */
+    while(pNode != NULL)
+    {
+        pInfo = pNode->pData;
+        if(pInfo->tid == pEntry->tid)
+        {
+            break;
+        }
+        pNode = pNode->pPrev;
+    }
+
+    /* We reached the end of threads, return -1 */
+    if(pNode == NULL)
+    {
+        KERNEL_UNLOCK(sThreadListLock);
+        return -1;
+    }
+
+    /* Format */
+    switch(pInfo->type)
+    {
+        case THREAD_TYPE_KERNEL:
+            pType = "kernel";
+            break;
+        case THREAD_TYPE_USER:
+            pType = "user";
+            break;
+        default:
+            pType = "unknown";
+    }
+    switch(*pInfo->pCurrentState)
+    {
+        case THREAD_STATE_RUNNING:
+            pState = "RUNNING";
+            break;
+        case THREAD_STATE_READY:
+            pState = "READY";
+            break;
+        case THREAD_STATE_SLEEPING:
+            pState = "SLEEPING";
+            break;
+        case THREAD_STATE_ZOMBIE:
+            pState = "ZAOMBIE";
+            break;
+        case THREAD_STATE_JOINING:
+            pState = "JOINING";
+            break;
+        case THREAD_STATE_WAITING:
+            pState = "WAITING";
+            break;
+        default:
+            pState = "UNKNOWN";
+    }
+    formatSize = snprintf(buffer,
+                          512,
+                          "Id: %d\n"
+                          "Name: %s\n"
+                          "Priority: %d\n"
+                          "Type: %s\n"
+                          "State: %s\n"
+                          "Affinity: 0x%x\n"
+                          "CPU: %d",
+                          pInfo->tid,
+                          pInfo->pName,
+                          *pInfo->pPriority,
+                          pType,
+                          pState,
+                          *pInfo->pAffinity,
+                          *pInfo->pSchedCpu);
+    KERNEL_UNLOCK(sThreadListLock);
+    /* Add null terminator */
+    ++formatSize;
+
+    if(formatSize < 0)
+    {
+        return -1;
+    }
+    if(pEntry->offset >= (size_t)formatSize)
+    {
+        return 0;
+    }
+
+    formatSize = MIN(count, formatSize - pEntry->offset);
+    memcpy(pBuffer, buffer + pEntry->offset, formatSize);
+    pEntry->offset += formatSize;
+
+    return formatSize;
+}
+
+static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
+                                       void*     pHandle,
+                                       dirent_t* pDirEntry)
+{
+    sched_vfs_entry_t*      pEntry;
+    size_t                  i;
+    kqueue_node_t*          pNode;
+    internal_thread_info_t* pInfo;
+
+    (void)pDriverData;
+
+    if(pHandle == NULL || pDirEntry == NULL)
+    {
+        return -1;
+    }
+
+    pEntry = pHandle;
+
+    if(pEntry->type != SYSFS_THREAD_DIR)
+    {
+        return -1;
+    }
+
+    KERNEL_LOCK(sThreadListLock);
+    pNode = spThreadList->pTail;
+
+    /* Got to the offset node */
+    for(i = 0; i < pEntry->offset && pNode != NULL; ++i)
+    {
+        pNode = pNode->pPrev;
+    }
+
+    /* We reached the end of threads, return -1 */
+    if(pNode == NULL)
+    {
+        KERNEL_UNLOCK(sThreadListLock);
+        return -1;
+    }
+
+
+    /* Update the offset */
+    ++pEntry->offset;
+
+    /* Otherwise, set the entry */
+    pInfo = pNode->pData;
+    snprintf(pDirEntry->pName, VFS_FILENAME_MAX_LENGTH, "%d", pInfo->tid);
+
+    pDirEntry->type = VFS_FILE_TYPE_FILE;
+
+    if(pNode->pPrev == NULL)
+    {
+        KERNEL_UNLOCK(sThreadListLock);
+        return 0;
+    }
+    else
+    {
+        KERNEL_UNLOCK(sThreadListLock);
+        return 1;
+    }
+}
+
+static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
+                                     void*    pHandle,
+                                     uint32_t operation,
+                                     void*    pArgs)
+{
+    (void)pDriverData;
+    (void)pHandle;
+    (void)operation;
+    (void)pArgs;
+
+    /* Not supported */
+    return -1;
+}
+
+static void _schedScheduleHandler(kernel_thread_t* pThread)
 {
     (void)pThread;
 
@@ -711,6 +1168,12 @@ void schedInit(void)
     error = interruptRegister(sSchedulerInterruptLine, _schedScheduleHandler);
     SCHED_ASSERT(error == OS_NO_ERR,
                  "Failed to register scheduler interrupt",
+                 error);
+
+    /* Create the thread sysfs entries */
+    error = _schedInitSysFSThreads();
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to register scheduler threads sysfs",
                  error);
 
 #if SCHED_DEBUG_ENABLED
@@ -1574,5 +2037,6 @@ void schedEnablePreemption(void)
 
     KERNEL_UNLOCK(pThread->lock);
 }
+
 
 /************************************ EOF *************************************/

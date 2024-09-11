@@ -21,6 +21,7 @@
  * INCLUDES
  ******************************************************************************/
 #include <cpu.h>           /* Generic CPU API */
+#include <vfs.h>           /* VFS services */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
 #include <stdlib.h>        /* Standard library */
@@ -29,8 +30,9 @@
 #include <string.h>        /* Memory manipulation */
 #include <memory.h>        /* Memory management */
 #include <signal.h>        /* Thread signals */
-#include <syslog.h>       /* Kernel Syslog */
+#include <syslog.h>        /* Kernel Syslog */
 #include <core_mgt.h>      /* Core management */
+#include <critical.h>      /* Kernel critical section */
 #include <x86memory.h>     /* X86 memory definitions */
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
@@ -56,6 +58,18 @@
 
 /** @brief Current module name */
 #define MODULE_NAME "CPU_I386"
+
+/** @brief Stores the sysfs cpu entry directory name */
+#define CPUS_SYSFS_DIR_PATH "/sys/cpus/"
+
+/** @brief Defines the vendor string size */
+#define CPU_VENDOR_STR_SIZE 12
+/** @brief Defines the addressing string size */
+#define CPU_ADDRESSING_SIZE 32
+/** @brief Defines the flags string size */
+#define CPU_FLAGS_SIZE 512
+/** @brief Defines the total sysfs string size */
+#define CPUS_SYSFS_STR_LENGTH 768
 
 /** @brief Kernel's 32 bits code segment descriptor. */
 #define KERNEL_CS_32 0x08
@@ -95,6 +109,7 @@
 
 /** @brief Defines the core dump message length */
 #define CPU_CORE_DUMP_LENGTH 2048
+
 /***************************
  * GDT Flags
  **************************/
@@ -587,6 +602,16 @@ typedef struct
     /** @brief Not used: IO Priviledges map */
     uint16_t ioMapBase;
 } __attribute__((__packed__)) cpu_tss_entry_t;
+
+/** @brief CPU vfs descriptor */
+typedef struct
+{
+    /** @brief Current descriptor offset */
+    size_t offset;
+
+    /** @brief Linked CPU id */
+    int32_t cpuId;
+} cpu_vfs_entry_t;
 
 /*******************************************************************************
  * MACROS
@@ -2206,6 +2231,19 @@ const cpu_interrupt_config_t ksInterruptConfig = {
     .ipiInterruptLine        = IPI_INT_LINE,
 };
 
+/** @brief Stores the CPU frequency for each CPU */
+static uint32_t sCpuFrequency[SOC_CPU_COUNT];
+/** @brief Stores the cache size for each CPU */
+static uint32_t sCpuCacheSize;
+/** @brief Stores the sysfs string */
+static char sCpuSysfsEntryStr[SOC_CPU_COUNT][CPUS_SYSFS_STR_LENGTH + 1];
+/** @brief Stores the vendor string */
+static char sCpuVendor[CPU_VENDOR_STR_SIZE + 1];
+/** @brief Stores the addressing string */
+static char sCpuAddressing[CPU_ADDRESSING_SIZE + 1];
+/** @brief Stores the flags string */
+static char sCpuFlags[CPU_FLAGS_SIZE + 1];
+
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -2486,6 +2524,127 @@ static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
  */
 static void _securityExceptionHandler(kernel_thread_t* pCurrThread);
 
+/**
+ * @brief Initializes the CPU sysfs entry.
+ *
+ * @details Initializes the CPU sysfs entry. This function must be called by
+ * each CPU after its initialization.
+ */
+static void _initSysfsEntry(void);
+
+/**
+ * @brief CPU entries open hook.
+ *
+ * @details CPU entries open hook. This function returns a
+ * handle to control the sysfs threads entries.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] kpPath The path in the threads sysfs entries
+ * @param[in] flags The open flags.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _cpuVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode);
+
+/**
+ * @brief CPU entries close hook.
+ *
+ * @details CPU entries close hook. This function closes a
+ * handle that was created when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief CPU entries write hook.
+ *
+ * @details CPU entries write hook.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] kpBuffer The buffer that contains the string to write.
+ * @param[in] count The number of bytes of the string to write.
+ *
+ * @return The function returns the number of bytes written or -1 on error;
+ */
+static ssize_t _cpuVfsWrite(void*       pDrvCtrl,
+                            void*       pHandle,
+                            const void* kpBuffer,
+                            size_t      count);
+
+/**
+ * @brief CPU entries read hook.
+ *
+ * @details CPU entries read hook.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] pBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _cpuVfsRead(void*  pDrvCtrl,
+                           void*  pHandle,
+                           void*  pBuffer,
+                           size_t count);
+
+/**
+ * @brief CPU entries ReadDir hook.
+ *
+ * @details CPU entries ReadDir hook. This function performs
+ * the ReadDir for the CPU sysfs driver.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[out] pDirEntry The directory entry to fill by the driver.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _cpuVfsReadDir(void*     pDriverData,
+                              void*     pHandle,
+                              dirent_t* pDirEntry);
+
+/**
+ * @brief CPU entries IOCTL hook.
+ *
+ * @details CPU entries IOCTL hook. This function performs
+ *  the IOCTL for the CPU sysfs driver.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] operation The operation to perform.
+ * @param[in, out] pArgs The arguments for the IOCTL operation.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static ssize_t _cpuVfsIOCTL(void*    pDriverData,
+                            void*    pHandle,
+                            uint32_t operation,
+                            void*    pArgs);
+
+/**
+ * @brief Checks the architecture's feature and requirements for roOs.
+ *
+ * @details Checks the architecture's feature and requirements for roOs. If a
+ * requirement is not met, a kernel panic is raised.
+ */
+static void _cpuValidateArchitecture(void);
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
@@ -2497,6 +2656,7 @@ static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
     pCurrThread->errorTable.exceptionId = DIVISION_BY_ZERO_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
     pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
+
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 }
@@ -2685,12 +2845,16 @@ static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
 
 static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
 {
+    uint32_t* fxData;
     OS_RETURN_E error;
 
     pCurrThread->errorTable.exceptionId = SIMD_FLOATING_POINT_EXC_LINE;
     pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
     pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
+
+    fxData = (uint32_t*)((virtual_cpu_t*)pCurrThread->pVCpu)->fxData;
+    fxData = (uint32_t*)(((uintptr_t)fxData + 0xF) & 0xFFFFFFF0);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
 }
 
@@ -2986,13 +3150,534 @@ static void _setupTSS(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "TSS Initialized at 0x%P", sTSS);
 }
 
+static void _initSysfsEntry(void)
+{
+    vfs_driver_t sysfsDriver;
+    int32_t      cpuId;
+
+    cpuId = cpuGetId();
+
+    /* Only the first CPU setup the sysfs */
+    if(cpuId == 0)
+    {
+        /* Register the driver */
+        sysfsDriver = vfsRegisterDriver(CPUS_SYSFS_DIR_PATH,
+                                        NULL,
+                                        _cpuVfsOpen,
+                                        _cpuVfsClose,
+                                        _cpuVfsRead,
+                                        _cpuVfsWrite,
+                                        _cpuVfsReadDir,
+                                        _cpuVfsIOCTL);
+        CPU_ASSERT(sysfsDriver != VFS_DRIVER_INVALID,
+                "Failed to setup CPU sysfs entry",
+                OS_ERR_INCORRECT_VALUE);
+    }
+
+    /* Prepare the VFS read value */
+    snprintf(sCpuSysfsEntryStr[cpuId],
+             CPUS_SYSFS_STR_LENGTH,
+             "CPU-%d\n"
+             "\t Identifier: %d\n"
+             "\t Frequency: %dMhz\n"
+             "\t Vendor: %s\n"
+             "\t Addressing: %s\n"
+             "\t Cache Size: %dKB\n"
+             "\t Flags: %s\n",
+             cpuId,
+             cpuId,
+             sCpuFrequency[cpuId],
+             sCpuVendor,
+             sCpuAddressing,
+             sCpuCacheSize,
+             sCpuFlags);
+}
+
+static void* _cpuVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode)
+{
+    cpu_vfs_entry_t* pEntry;
+    char*            pStr;
+
+    (void)pDrvCtrl;
+    (void)mode;
+
+    if(flags != O_RDONLY)
+    {
+        return (void*)-1;
+    }
+
+    pEntry = kmalloc(sizeof(cpu_vfs_entry_t));
+    if(pEntry == NULL)
+    {
+        return (void*)-1;
+    }
+    pEntry->offset = 0;
+
+    /* Check if we read an entry or not */
+    if(*kpPath != 0)
+    {
+        pEntry->cpuId = strtol(kpPath, &pStr, 10);
+        if(pStr == kpPath)
+        {
+            kfree(pEntry);
+            return (void*)-1;
+        }
+        if(pEntry->cpuId >= SOC_CPU_COUNT)
+        {
+            kfree(pEntry);
+            return (void*)-1;
+        }
+    }
+    else
+    {
+        pEntry->cpuId = -1;
+    }
+
+    return pEntry;
+}
+
+static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle)
+{
+    (void)pDrvCtrl;
+
+    if(pHandle != NULL)
+    {
+        kfree(pHandle);
+        return 0;
+    }
+
+    return -1;
+}
+
+static ssize_t _cpuVfsWrite(void*       pDrvCtrl,
+                            void*       pHandle,
+                            const void* kpBuffer,
+                            size_t      count)
+{
+    (void)pDrvCtrl;
+    (void)pHandle;
+    (void)kpBuffer;
+    (void)count;
+
+    /* Not supported */
+    return -1;
+}
+
+static ssize_t _cpuVfsRead(void*  pDrvCtrl,
+                           void*  pHandle,
+                           void*  pBuffer,
+                           size_t count)
+{
+    size_t           toCopy;
+    size_t           length;
+    cpu_vfs_entry_t* pEntry;
+
+    (void)pDrvCtrl;
+
+    if(pHandle == NULL || pBuffer == NULL)
+    {
+        return -1;
+    }
+    if(count == 0)
+    {
+        return 0;
+    }
+
+    pEntry = pHandle;
+
+    if(pEntry->cpuId == -1)
+    {
+        return -1;
+    }
+
+    length = strlen(sCpuSysfsEntryStr[pEntry->cpuId]);
+    if(length <= pEntry->offset)
+    {
+        return 0;
+    }
+    length -= pEntry->offset;
+
+    toCopy = MIN(length, count);
+    memcpy(pBuffer, sCpuSysfsEntryStr[pEntry->cpuId] + pEntry->offset, toCopy);
+    pEntry->offset += toCopy;
+
+    return toCopy;
+}
+
+static int32_t _cpuVfsReadDir(void*     pDriverData,
+                              void*     pHandle,
+                              dirent_t* pDirEntry)
+{
+    cpu_vfs_entry_t* pEntry;
+
+    (void)pDriverData;
+
+    if(pHandle == NULL || pDirEntry == NULL)
+    {
+        return -1;
+    }
+
+    pEntry = pHandle;
+    if(pEntry->cpuId != -1)
+    {
+        return -1;
+    }
+
+    /* Returns the next CPU */
+    if(pEntry->offset < SOC_CPU_COUNT)
+    {
+        snprintf(pDirEntry->pName,
+                 VFS_FILENAME_MAX_LENGTH,
+                 "%d",
+                 pEntry->offset);
+        pDirEntry->type = VFS_FILE_TYPE_FILE;
+        ++pEntry->offset;
+        if(pEntry->offset == SOC_CPU_COUNT)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    return -1;
+}
+
+static ssize_t _cpuVfsIOCTL(void*    pDriverData,
+                            void*    pHandle,
+                            uint32_t operation,
+                            void*    pArgs)
+{
+    (void)pDriverData;
+    (void)pHandle;
+    (void)operation;
+    (void)pArgs;
+
+    /* Not supported */
+    return -1;
+}
+
+static void _cpuValidateArchitecture(void)
+{
+    /* eax, ebx, ecx, edx */
+    volatile int32_t regs[4];
+    volatile int32_t regsExt[4];
+    uint32_t         ret;
+    uint32_t         cpuFlagsIndex;
+    uint32_t         i;
+
+#if CPU_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Detecting cpu capabilities");
+#endif
+
+    ret = _cpuCPUID(CPUID_GETVENDORSTRING, (uint32_t*)regs);
+
+    CPU_ASSERT(ret != 0,
+               "CPU does not support CPUID",
+               OS_ERR_NOT_SUPPORTED);
+
+    memset(sCpuVendor, 0, CPU_VENDOR_STR_SIZE + 1);
+    /* Check if CPUID return more that one available function */
+    for(int8_t j = 0; j < 4; ++j)
+    {
+        sCpuVendor[j] = (char)((regs[1] >> (j * 8)) & 0xFF);
+    }
+    for(int8_t j = 0; j < 4; ++j)
+    {
+        sCpuVendor[4 + j] = (char)((regs[3] >> (j * 8)) & 0xFF);
+    }
+    for(int8_t j = 0; j < 4; ++j)
+    {
+        sCpuVendor[8 + j] = (char)((regs[2] >> (j * 8)) & 0xFF);
+    }
+
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU Vendor: %s", sCpuVendor);
+
+    /* Get CPUID basic features */
+    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
+
+    /* Validate basic features */
+    CPU_ASSERT((regs[3] & EDX_SEP) == EDX_SEP,
+               "CPU does not support SYSENTER",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
+               "CPU does not support FPU",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_TSC) == EDX_TSC,
+               "CPU does not support TSC",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
+               "CPU does not support APIC",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_PAT) == EDX_PAT,
+               "CPU does not support PAT",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
+               "CPU does not support FX instructions",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_SSE) == EDX_SSE,
+               "CPU does not support SSE",
+               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT((regs[3] & EDX_SSE2) == EDX_SSE2,
+               "CPU does not support SSE2",
+               OS_ERR_NOT_SUPPORTED);
+
+    snprintf(sCpuAddressing,
+                 CPU_ADDRESSING_SIZE,
+                 "Physical %dbits | Virtual %dbits",
+                 32,
+                 32);
+
+    memset(sCpuFlags, 0, CPU_FLAGS_SIZE + 1);
+    cpuFlagsIndex = 0;
+
+    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
+
+    if((regs[2] & ECX_SSE3) == ECX_SSE3)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE3 - "); }
+    if((regs[2] & ECX_PCLMULQDQ) == ECX_PCLMULQDQ)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCLMULQDQ - "); }
+    if((regs[2] & ECX_DTES64) == ECX_DTES64)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DTES64 - "); }
+    if((regs[2] & ECX_MONITOR) == ECX_MONITOR)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MONITOR - "); }
+    if((regs[2] & ECX_DS_CPL) == ECX_DS_CPL)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DS_CPL - "); }
+    if((regs[2] & ECX_VMX) == ECX_VMX)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "VMX - "); }
+    if((regs[2] & ECX_SMX) == ECX_SMX)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SMX - "); }
+    if((regs[2] & ECX_EST) == ECX_EST)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "EST - "); }
+    if((regs[2] & ECX_TM2) == ECX_TM2)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TM2 - "); }
+    if((regs[2] & ECX_SSSE3) == ECX_SSSE3)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSSE3 - "); }
+    if((regs[2] & ECX_CNXT_ID) == ECX_CNXT_ID)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CNXT_ID - "); }
+    if((regs[2] & ECX_FMA) == ECX_FMA)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FMA - "); }
+    if((regs[2] & ECX_CX16) == ECX_CX16)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CX16 - "); }
+    if((regs[2] & ECX_XTPR) == ECX_XTPR)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XTPR - "); }
+    if((regs[2] & ECX_PDCM) == ECX_PDCM)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PDCM - "); }
+    if((regs[2] & ECX_PCID) == ECX_PCID)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCID - "); }
+    if((regs[2] & ECX_DCA) == ECX_DCA)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DCA - "); }
+    if((regs[2] & ECX_SSE41) == ECX_SSE41)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE41 - "); }
+    if((regs[2] & ECX_SSE42) == ECX_SSE42)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE42 - "); }
+    if((regs[2] & ECX_X2APIC) == ECX_X2APIC)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "X2APIC - "); }
+    if((regs[2] & ECX_MOVBE) == ECX_MOVBE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MOVBE - "); }
+    if((regs[2] & ECX_POPCNT) == ECX_POPCNT)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "POPCNT - "); }
+    if((regs[2] & ECX_TSC) == ECX_TSC)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
+    if((regs[2] & ECX_AESNI) == ECX_AESNI)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "AESNI - "); }
+    if((regs[2] & ECX_XSAVE) == ECX_XSAVE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XSAVE - "); }
+    if((regs[2] & ECX_OSXSAVE) == ECX_OSXSAVE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "OSXSAVE - "); }
+    if((regs[2] & ECX_AVX) == ECX_AVX)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "AVX - "); }
+    if((regs[2] & ECX_F16C) == ECX_F16C)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "F16C - "); }
+    if((regs[2] & ECX_RDRAND) == ECX_RDRAND)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "RDRAND - "); }
+    if((regs[3] & EDX_FPU) == EDX_FPU)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FPU - "); }
+    if((regs[3] & EDX_VME) == EDX_VME)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "VME - "); }
+    if((regs[3] & EDX_DE) == EDX_DE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DE - "); }
+    if((regs[3] & EDX_PSE) == EDX_PSE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSE - "); }
+    if((regs[3] & EDX_TSC) == EDX_TSC)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
+    if((regs[3] & EDX_MSR) == EDX_MSR)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MSR - "); }
+    if((regs[3] & EDX_PAE) == EDX_PAE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PAE - "); }
+    if((regs[3] & EDX_MCE) == EDX_MCE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MCE - "); }
+    if((regs[3] & EDX_CX8) == EDX_CX8)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CX8 - "); }
+    if((regs[3] & EDX_APIC) == EDX_APIC)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "APIC - "); }
+    if((regs[3] & EDX_SEP) == EDX_SEP)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SEP - "); }
+    if((regs[3] & EDX_MTRR) == EDX_MTRR)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MTRR - "); }
+    if((regs[3] & EDX_PGE) == EDX_PGE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PGE - "); }
+    if((regs[3] & EDX_MCA) == EDX_MCA)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MCA - "); }
+    if((regs[3] & EDX_CMOV) == EDX_CMOV)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CMOV - "); }
+    if((regs[3] & EDX_PAT) == EDX_PAT)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PAT - "); }
+    if((regs[3] & EDX_PSE36) == EDX_PSE36)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSE36 - "); }
+    if((regs[3] & EDX_PSN) == EDX_PSN)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSN - "); }
+    if((regs[3] & EDX_CLFLUSH) == EDX_CLFLUSH)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CLFLUSH - "); }
+    if((regs[3] & EDX_DS) == EDX_DS)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DS - "); }
+    if((regs[3] & EDX_ACPI) == EDX_ACPI)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "ACPI - "); }
+    if((regs[3] & EDX_MMX) == EDX_MMX)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MMX - "); }
+    if((regs[3] & EDX_FXSR) == EDX_FXSR)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR - "); }
+    if((regs[3] & EDX_SSE) == EDX_SSE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE - "); }
+    if((regs[3] & EDX_SSE2) == EDX_SSE2)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE2 - "); }
+    if((regs[3] & EDX_SS) == EDX_SS)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SS - "); }
+    if((regs[3] & EDX_HTT) == EDX_HTT)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "HTT - "); }
+    if((regs[3] & EDX_TM) == EDX_TM)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TM - "); }
+    if((regs[3] & EDX_PBE) == EDX_PBE)
+    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PBE - "); }
+
+    /* Check for extended features */
+    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
+    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_INTELFEATURES)
+    {
+        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
+
+        if((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SYSCALL - "); }
+        if((regsExt[3] & EDX_MP) == EDX_MP)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MP - "); }
+        if((regsExt[3] & EDX_XD) == EDX_XD)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XD - "); }
+        if((regsExt[3] & EDX_MMX_EX) == EDX_MMX_EX)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MMX_EX - "); }
+        if((regsExt[3] & EDX_FXSR) == EDX_FXSR)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR - "); }
+        if((regsExt[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR_OPT - "); }
+        if((regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "1GB_PAGE - "); }
+        if((regsExt[3] & EDX_RDTSCP) == EDX_RDTSCP)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "RDTSCP - "); }
+        if((regsExt[3] & EDX_64_BIT) == EDX_64_BIT)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "X64 - "); }
+        if((regsExt[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "3DNOW_EX - "); }
+        if((regsExt[3] & EDX_3DNOW) == EDX_3DNOW)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "3DNOW - "); }
+        if((regsExt[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "LAHF_LM - "); }
+        if((regsExt[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CMP_LEG - "); }
+        if((regsExt[2] & ECX_SVM) == ECX_SVM)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SVM - "); }
+        if((regsExt[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "EXTAPIC - "); }
+        if((regsExt[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CR8_LEG - "); }
+        if((regsExt[2] & ECX_ABM) == ECX_ABM)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "ABM - "); }
+        if((regsExt[2] & ECX_SSE4A) == ECX_SSE4A)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE4A - "); }
+        if((regsExt[2] & ECX_MISASSE) == ECX_MISASSE)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MISALIGNED_SSE - "); }
+        if((regsExt[2] & ECX_PREFETCH) == ECX_PREFETCH)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PREFETCH - "); }
+        if((regsExt[2] & ECX_OSVW) == ECX_OSVW)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "OSVW - "); }
+        if((regsExt[2] & ECX_IBS) == ECX_IBS)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "IBS - "); }
+        if((regsExt[2] & ECX_XOP) == ECX_XOP)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XOP - "); }
+        if((regsExt[2] & ECX_SKINIT) == ECX_SKINIT)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SKINIT - "); }
+        if((regsExt[2] & ECX_WDT) == ECX_WDT)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "WDT - "); }
+        if((regsExt[2] & ECX_LWP) == ECX_LWP)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "LWP - "); }
+        if((regsExt[2] & ECX_FMA4) == ECX_FMA4)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FMA4 - "); }
+        if((regsExt[2] & ECX_TCE) == ECX_TCE)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TCE - "); }
+        if((regsExt[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "NODE_ID_MSR - "); }
+        if((regsExt[2] & ECX_TBM) == ECX_TBM)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TMB - "); }
+        if((regsExt[2] & ECX_TOPOEX) == ECX_TOPOEX)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TOPOEX - "); }
+        if((regsExt[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PERF_CORE - "); }
+        if((regsExt[2] & ECX_PERF_NB) == ECX_PERF_NB)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PERF_NB - "); }
+        if((regsExt[2] & ECX_DBX) == ECX_DBX)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DBX - "); }
+        if((regsExt[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
+        if((regsExt[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
+        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCX_L2I - "); }
+    }
+
+    sCpuFlags[cpuFlagsIndex - 2] = 0;
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU Features: %s", sCpuFlags);
+
+    /* TODO: Get frequency */
+    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    {
+        sCpuFrequency[i] = 1000;
+    }
+
+    /* Get the cache size */
+    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
+    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_GETTLB)
+    {
+        _cpuCPUID(CPUID_GETTLB, (uint32_t*)regsExt);
+
+        /* TODO: Get size */
+        sCpuCacheSize = 4096;
+
+        syslog(SYSLOG_LEVEL_INFO,
+               MODULE_NAME,
+               "CPU Caches Size: %dKB",
+               sCpuCacheSize);
+    }
+    else
+    {
+        syslog(SYSLOG_LEVEL_ERROR,
+               MODULE_NAME,
+               "Failed to get CPU cache size");
+    }
+}
+
 void cpuInit(void)
 {
+    /* Validate architecture */
+    _cpuValidateArchitecture();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
 
     /* Init the GDT, IDT and TSS */
     _setupGDT();
     _setupIDT();
     _setupTSS();
+
+    /* Init the sysfs entries */
+    _initSysfsEntry();
 }
 
 OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
@@ -3785,289 +4470,6 @@ OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
     return OS_NO_ERR;
 }
 
-void cpuValidateArchitecture(void)
-{
-    /* eax, ebx, ecx, edx */
-    volatile int32_t regs[4];
-    volatile int32_t regsExt[4];
-    uint32_t         ret;
-
-#if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-    uint32_t outputBuffIndex;
-    char     outputBuff[512];
-    char     vendorString[26] = "CPU Vendor:             \n\0";
-#endif
-
-#if CPU_DEBUG_ENABLED
-    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Detecting cpu capabilities");
-#endif
-
-    ret = _cpuCPUID(CPUID_GETVENDORSTRING, (uint32_t*)regs);
-
-    CPU_ASSERT(ret != 0,
-               "CPU does not support CPUID",
-               OS_ERR_NOT_SUPPORTED);
-
-    /* Check if CPUID return more that one available function */
-
-#if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-    for(int8_t j = 0; j < 4; ++j)
-    {
-        vendorString[12 + j] = (char)((regs[1] >> (j * 8)) & 0xFF);
-    }
-    for(int8_t j = 0; j < 4; ++j)
-    {
-        vendorString[16 + j] = (char)((regs[3] >> (j * 8)) & 0xFF);
-    }
-    for(int8_t j = 0; j < 4; ++j)
-    {
-        vendorString[20 + j] = (char)((regs[2] >> (j * 8)) & 0xFF);
-    }
-
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, vendorString);
-#endif
-
-    /* Get CPUID basic features */
-    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
-
-    /* Validate basic features */
-    CPU_ASSERT((regs[3] & EDX_SEP) == EDX_SEP,
-               "CPU does not support SYSENTER",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
-               "CPU does not support FPU",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_TSC) == EDX_TSC,
-               "CPU does not support TSC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
-               "CPU does not support APIC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_PAT) == EDX_PAT,
-               "CPU does not support PAT",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
-               "CPU does not support FX instructions",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE) == EDX_SSE,
-               "CPU does not support SSE",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE2) == EDX_SSE2,
-               "CPU does not support SSE2",
-               OS_ERR_NOT_SUPPORTED);
-
-#if KERNEL_LOG_LEVEL >= INFO_LOG_LEVEL
-    memset(outputBuff, 0, 512 * sizeof(char));
-    strncpy(outputBuff, "CPU Features: ", 14);
-    outputBuffIndex = 14;
-
-    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
-
-    if((regs[2] & ECX_SSE3) == ECX_SSE3)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE3 - "); }
-    if((regs[2] & ECX_PCLMULQDQ) == ECX_PCLMULQDQ)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PCLMULQDQ - "); }
-    if((regs[2] & ECX_DTES64) == ECX_DTES64)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "DTES64 - "); }
-    if((regs[2] & ECX_MONITOR) == ECX_MONITOR)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MONITOR - "); }
-    if((regs[2] & ECX_DS_CPL) == ECX_DS_CPL)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "DS_CPL - "); }
-    if((regs[2] & ECX_VMX) == ECX_VMX)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "VMX - "); }
-    if((regs[2] & ECX_SMX) == ECX_SMX)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SMX - "); }
-    if((regs[2] & ECX_EST) == ECX_EST)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "EST - "); }
-    if((regs[2] & ECX_TM2) == ECX_TM2)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "TM2 - "); }
-    if((regs[2] & ECX_SSSE3) == ECX_SSSE3)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSSE3 - "); }
-    if((regs[2] & ECX_CNXT_ID) == ECX_CNXT_ID)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "CNXT_ID - "); }
-    if((regs[2] & ECX_FMA) == ECX_FMA)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "FMA - "); }
-    if((regs[2] & ECX_CX16) == ECX_CX16)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "CX16 - "); }
-    if((regs[2] & ECX_XTPR) == ECX_XTPR)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "XTPR - "); }
-    if((regs[2] & ECX_PDCM) == ECX_PDCM)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PDCM - "); }
-    if((regs[2] & ECX_PCID) == ECX_PCID)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PCID - "); }
-    if((regs[2] & ECX_DCA) == ECX_DCA)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "DCA - "); }
-    if((regs[2] & ECX_SSE41) == ECX_SSE41)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE41 - "); }
-    if((regs[2] & ECX_SSE42) == ECX_SSE42)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE42 - "); }
-    if((regs[2] & ECX_X2APIC) == ECX_X2APIC)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "X2APIC - "); }
-    if((regs[2] & ECX_MOVBE) == ECX_MOVBE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MOVBE - "); }
-    if((regs[2] & ECX_POPCNT) == ECX_POPCNT)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "POPCNT - "); }
-    if((regs[2] & ECX_TSC) == ECX_TSC)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
-    if((regs[2] & ECX_AESNI) == ECX_AESNI)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "AESNI - "); }
-    if((regs[2] & ECX_XSAVE) == ECX_XSAVE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "XSAVE - "); }
-    if((regs[2] & ECX_OSXSAVE) == ECX_OSXSAVE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "OSXSAVE - "); }
-    if((regs[2] & ECX_AVX) == ECX_AVX)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "AVX - "); }
-    if((regs[2] & ECX_F16C) == ECX_F16C)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "F16C - "); }
-    if((regs[2] & ECX_RDRAND) == ECX_RDRAND)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "RDRAND - "); }
-    if((regs[3] & EDX_FPU) == EDX_FPU)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "FPU - "); }
-    if((regs[3] & EDX_VME) == EDX_VME)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "VME - "); }
-    if((regs[3] & EDX_DE) == EDX_DE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "DE - "); }
-    if((regs[3] & EDX_PSE) == EDX_PSE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PSE - "); }
-    if((regs[3] & EDX_TSC) == EDX_TSC)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
-    if((regs[3] & EDX_MSR) == EDX_MSR)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MSR - "); }
-    if((regs[3] & EDX_PAE) == EDX_PAE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PAE - "); }
-    if((regs[3] & EDX_MCE) == EDX_MCE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MCE - "); }
-    if((regs[3] & EDX_CX8) == EDX_CX8)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "CX8 - "); }
-    if((regs[3] & EDX_APIC) == EDX_APIC)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "APIC - "); }
-    if((regs[3] & EDX_SEP) == EDX_SEP)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SEP - "); }
-    if((regs[3] & EDX_MTRR) == EDX_MTRR)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MTRR - "); }
-    if((regs[3] & EDX_PGE) == EDX_PGE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PGE - "); }
-    if((regs[3] & EDX_MCA) == EDX_MCA)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MCA - "); }
-    if((regs[3] & EDX_CMOV) == EDX_CMOV)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "CMOV - "); }
-    if((regs[3] & EDX_PAT) == EDX_PAT)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PAT - "); }
-    if((regs[3] & EDX_PSE36) == EDX_PSE36)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PSE36 - "); }
-    if((regs[3] & EDX_PSN) == EDX_PSN)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PSN - "); }
-    if((regs[3] & EDX_CLFLUSH) == EDX_CLFLUSH)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "CLFLUSH - "); }
-    if((regs[3] & EDX_DS) == EDX_DS)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "DS - "); }
-    if((regs[3] & EDX_ACPI) == EDX_ACPI)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "ACPI - "); }
-    if((regs[3] & EDX_MMX) == EDX_MMX)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "MMX - "); }
-    if((regs[3] & EDX_FXSR) == EDX_FXSR)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR - "); }
-    if((regs[3] & EDX_SSE) == EDX_SSE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE - "); }
-    if((regs[3] & EDX_SSE2) == EDX_SSE2)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SSE2 - "); }
-    if((regs[3] & EDX_SS) == EDX_SS)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "SS - "); }
-    if((regs[3] & EDX_HTT) == EDX_HTT)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "HTT - "); }
-    if((regs[3] & EDX_TM) == EDX_TM)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "TM - "); }
-    if((regs[3] & EDX_PBE) == EDX_PBE)
-    { CONCAT_STR(outputBuff, outputBuffIndex, "PBE - "); }
-
-    /* Check for extended features */
-    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
-    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_INTELFEATURES)
-    {
-        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
-
-        if((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "SYSCALL - "); }
-        if((regsExt[3] & EDX_MP) == EDX_MP)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "MP - "); }
-        if((regsExt[3] & EDX_XD) == EDX_XD)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "XD - "); }
-        if((regsExt[3] & EDX_MMX_EX) == EDX_MMX_EX)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "MMX_EX - "); }
-        if((regsExt[3] & EDX_FXSR) == EDX_FXSR)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR - "); }
-        if((regsExt[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "FXSR_OPT - "); }
-        if((regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "1GB_PAGE - "); }
-        if((regsExt[3] & EDX_RDTSCP) == EDX_RDTSCP)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "RDTSCP - "); }
-        if((regsExt[3] & EDX_64_BIT) == EDX_64_BIT)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "X64 - "); }
-        if((regsExt[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW_EX - "); }
-        if((regsExt[3] & EDX_3DNOW) == EDX_3DNOW)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "3DNOW - "); }
-        if((regsExt[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "LAHF_LM - "); }
-        if((regsExt[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "CMP_LEG - "); }
-        if((regsExt[2] & ECX_SVM) == ECX_SVM)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "SVM - "); }
-        if((regsExt[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "EXTAPIC - "); }
-        if((regsExt[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "CR8_LEG - "); }
-        if((regsExt[2] & ECX_ABM) == ECX_ABM)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "ABM - "); }
-        if((regsExt[2] & ECX_SSE4A) == ECX_SSE4A)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "SSE4A - "); }
-        if((regsExt[2] & ECX_MISASSE) == ECX_MISASSE)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "MISALIGNED_SSE - "); }
-        if((regsExt[2] & ECX_PREFETCH) == ECX_PREFETCH)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "PREFETCH - "); }
-        if((regsExt[2] & ECX_OSVW) == ECX_OSVW)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "OSVW - "); }
-        if((regsExt[2] & ECX_IBS) == ECX_IBS)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "IBS - "); }
-        if((regsExt[2] & ECX_XOP) == ECX_XOP)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "XOP - "); }
-        if((regsExt[2] & ECX_SKINIT) == ECX_SKINIT)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "SKINIT - "); }
-        if((regsExt[2] & ECX_WDT) == ECX_WDT)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "WDT - "); }
-        if((regsExt[2] & ECX_LWP) == ECX_LWP)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "LWP - "); }
-        if((regsExt[2] & ECX_FMA4) == ECX_FMA4)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "FMA4 - "); }
-        if((regsExt[2] & ECX_TCE) == ECX_TCE)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "TCE - "); }
-        if((regsExt[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "NODE_ID_MSR - "); }
-        if((regsExt[2] & ECX_TBM) == ECX_TBM)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "TMB - "); }
-        if((regsExt[2] & ECX_TOPOEX) == ECX_TOPOEX)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "TOPOEX - "); }
-        if((regsExt[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_CORE - "); }
-        if((regsExt[2] & ECX_PERF_NB) == ECX_PERF_NB)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "PERF_NB - "); }
-        if((regsExt[2] & ECX_DBX) == ECX_DBX)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "DBX - "); }
-        if((regsExt[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "TSC - "); }
-        if((regsExt[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
-        { CONCAT_STR(outputBuff, outputBuffIndex, "PCX_L2I - "); }
-    }
-
-    outputBuff[outputBuffIndex - 2] = '\n';
-    outputBuff[outputBuffIndex - 1] = 0;
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, outputBuff);
-#else
-    (void)regsExt;
-#endif
-}
-
 uint32_t cpuGetContextIntState(const void* kpVCpu)
 {
     return ((virtual_cpu_t*)kpVCpu)->intContext.eflags & CPU_EFLAGS_IF;
@@ -4162,6 +4564,9 @@ void cpuApInit(const uint8_t kCpuId)
 
     /* Init the rest of the CPU facilities */
     coreMgtApInit(kCpuId);
+
+    /* Init the sysfs entries */
+    _initSysfsEntry();
 
     syslog(SYSLOG_LEVEL_INFO,
            MODULE_NAME,

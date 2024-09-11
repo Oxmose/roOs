@@ -1004,7 +1004,7 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
                           "Priority: %d\n"
                           "Type: %s\n"
                           "State: %s\n"
-                          "Affinity: 0x%x\n"
+                          "Affinity: 0x%lx\n"
                           "CPU: %d",
                           pInfo->tid,
                           pInfo->pName,

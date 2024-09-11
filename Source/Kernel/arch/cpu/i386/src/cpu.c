@@ -3243,7 +3243,7 @@ static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
 
-    if(pHandle != NULL)
+    if(pHandle != (void*)-1 && pHandle != NULL )
     {
         kfree(pHandle);
         return 0;
@@ -3277,7 +3277,7 @@ static ssize_t _cpuVfsRead(void*  pDrvCtrl,
 
     (void)pDrvCtrl;
 
-    if(pHandle == NULL || pBuffer == NULL)
+    if(pHandle == NULL || pHandle == (void*)-1 || pBuffer == NULL)
     {
         return -1;
     }
@@ -3315,7 +3315,7 @@ static int32_t _cpuVfsReadDir(void*     pDriverData,
 
     (void)pDriverData;
 
-    if(pHandle == NULL || pDirEntry == NULL)
+    if(pHandle == NULL || pHandle == (void*)-1 || pDirEntry == NULL)
     {
         return -1;
     }

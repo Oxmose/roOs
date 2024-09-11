@@ -646,7 +646,7 @@ static int32_t _ustarVfsClose(void* pDrvCtrl, void* pHandle)
 {
     ustar_fd_t* pFileDesc;
 
-    if(pDrvCtrl == NULL || pHandle == NULL)
+    if(pDrvCtrl == NULL || pHandle == NULL || pHandle == (void*)-1)
     {
         return -1;
     }
@@ -677,7 +677,10 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
     seek_ioctl_args_t   seekArgs;
     OS_RETURN_E         err;
 
-    if(pDrvCtrl == NULL || pHandle == NULL || pBuffer == NULL)
+    if(pDrvCtrl == NULL ||
+       pHandle == NULL ||
+       pHandle == (void*)-1 ||
+       pBuffer == NULL)
     {
         return -1;
     }
@@ -745,7 +748,7 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
         }
 
         /* Copy to buffer */
-        memcpy(pBuffer + retVal,
+        memcpy((char*)pBuffer + retVal,
                ((uint8_t*)&currentBlock) + blockOffset,
                dataRead);
 

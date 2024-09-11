@@ -2299,7 +2299,11 @@ static void* _vesaVfsOpen(void*       pDrvCtrl,
 static int32_t _vesaVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
-    (void)pHandle;
+
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Nothing to do */
     return 0;
@@ -2313,7 +2317,10 @@ static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
     const char* pCursor;
     size_t      coutSave;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     pCursor = (char*)kpBuffer;
 
@@ -2338,7 +2345,10 @@ static ssize_t _vesaVfsIOCTL(void*    pDriverData,
     cons_ioctl_args_scroll_t*   pScrollArgs;
     graph_ioctl_args_drawpixel* pDrawPixelArgs;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Switch on the operation */
     retVal = 0;

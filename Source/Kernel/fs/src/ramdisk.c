@@ -313,6 +313,7 @@ static OS_RETURN_E _ramdiskAttach(const fdt_node_t* pkFdtNode)
     if(pCtrl == NULL)
     {
         retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
     }
     memset(pCtrl, 0, sizeof(ramdisk_ctrl_t));
 
@@ -621,11 +622,10 @@ static ssize_t _ramdiskVfsTell(void* pDriverData,
                                void* pHandle,
                                void* pArgs)
 {
-    ramdisk_fd_t*   pDesc;
-    ramdisk_ctrl_t* pCtrl;
+    ramdisk_fd_t* pDesc;
 
     (void)pArgs;
-    (void)pCtrl;
+    (void)pDriverData;
 
     if(pHandle == NULL || pHandle == (void*)-1)
     {
@@ -633,7 +633,6 @@ static ssize_t _ramdiskVfsTell(void* pDriverData,
     }
 
     pDesc = pHandle;
-    pCtrl = pDriverData;
 
     return pDesc->offset;
 }

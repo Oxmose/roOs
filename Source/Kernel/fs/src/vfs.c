@@ -1721,13 +1721,13 @@ OS_RETURN_E vfsMount(const char* kpPath,
                    kpDevPath,
                    pDriver->pName);
 #endif
-            pDriver = *(fs_driver_t**)driverTableCursor;
             retCode = pDriver->pMount(kpPath, kpDevPath, &pDriverMountData);
             if(retCode == OS_NO_ERR)
             {
                 break;
             }
             driverTableCursor += sizeof(uintptr_t);
+            pDriver = *(fs_driver_t**)driverTableCursor;
         }
         if(pDriver == NULL)
         {

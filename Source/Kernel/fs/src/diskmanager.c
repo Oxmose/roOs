@@ -985,7 +985,7 @@ static void* _dskmgrVfsOpen(void*       pDrvCtrl,
 
     /* Place the cursor at the begining of the partition on the disk */
     seekArgs.direction = SEEK_SET;
-    seekArgs.offset    = pPart->lbaStart * sectorSize;
+    seekArgs.offset    = (uint64_t)pPart->lbaStart * sectorSize;
     retVal = vfsIOCTL(pDesc->partFd, VFS_IOCTL_FILE_SEEK, &seekArgs);
     if(retVal < 0)
     {
@@ -994,9 +994,9 @@ static void* _dskmgrVfsOpen(void*       pDrvCtrl,
         return (void*)-1;
     }
     pDesc->pPart          = pPart;
-    pDesc->partitionStart = pPart->lbaStart * sectorSize;
+    pDesc->partitionStart = (uint64_t)pPart->lbaStart * sectorSize;
     pDesc->posByte        = 0;
-    pDesc->sizeByte       = pPart->sectorCount * sectorSize;
+    pDesc->sizeByte       = (uint64_t)pPart->sectorCount * sectorSize;
 
     return pDesc;
 }

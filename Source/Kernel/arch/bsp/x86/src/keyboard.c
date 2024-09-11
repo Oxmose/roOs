@@ -833,7 +833,11 @@ static void* _kbdVfsOpen(void*       pDrvCtrl,
 static int32_t _kbdVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
-    (void)pHandle;
+
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Nothing to do */
     return 0;
@@ -844,7 +848,10 @@ static ssize_t _kbdVfsRead(void*  pDrvCtrl,
                            void*  pBuffer,
                            size_t count)
 {
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     return _kbdRead(pDrvCtrl, pBuffer, count);
 }

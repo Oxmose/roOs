@@ -850,7 +850,10 @@ static void* _vgaVfsOpen(void*       pDrvCtrl,
 static int32_t _vgaVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Nothing to do */
     return 0;
@@ -864,7 +867,10 @@ static ssize_t _vgaVfsWrite(void*       pDrvCtrl,
     const char* pCursor;
     size_t      coutSave;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     pCursor = (char*)kpBuffer;
 
@@ -888,7 +894,10 @@ static ssize_t _vgaVfsIOCTL(void*    pDriverData,
     int32_t                   retVal;
     cons_ioctl_args_scroll_t* pScrollArgs;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Switch on the operation */
     retVal = 0;

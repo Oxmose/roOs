@@ -965,7 +965,11 @@ static void* _uartVfsOpen(void*       pDrvCtrl,
 static int32_t _uartVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
-    (void)pHandle;
+
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Nothing to do */
     return 0;
@@ -979,7 +983,10 @@ static ssize_t _uartVfsWrite(void*       pDrvCtrl,
     const char* pCursor;
     size_t      coutSave;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     pCursor = (char*)kpBuffer;
 
@@ -1002,7 +1009,10 @@ static ssize_t _uartVfsRead(void*  pDrvCtrl,
                             void*  pBuffer,
                             size_t count)
 {
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Check the capability */
     if(GET_CONTROLER(pDrvCtrl)->irqNumber != (uint32_t)-1)
@@ -1021,7 +1031,10 @@ static ssize_t _uartVfsIOCTL(void*    pDriverData,
     int32_t                   retVal;
     cons_ioctl_args_scroll_t* pScrollArgs;
 
-    (void)pHandle;
+    if(pHandle == (void*)-1)
+    {
+        return -1;
+    }
 
     /* Switch on the operation */
     retVal = 0;

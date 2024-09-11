@@ -86,9 +86,12 @@ void KernelLock(kernel_spinlock_t* pLock)
 
 void KernelUnlock(kernel_spinlock_t* pLock)
 {
+    uint32_t interruptState;
+
     /* Unlock the spinlock and restore the interrupt state */
+    interruptState = pLock->interruptState;
     spinlockRelease(&pLock->lock);
-    interruptRestore(pLock->interruptState);
+    interruptRestore(interruptState);
 }
 
 /************************************ EOF *************************************/

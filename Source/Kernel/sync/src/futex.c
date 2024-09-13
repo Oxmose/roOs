@@ -149,8 +149,6 @@ void futexLibInit(void)
     FUTEX_ASSERT(err == OS_NO_ERR, "Could not initialize futex table", err);
 
     KERNEL_SPINLOCK_INIT(sLock);
-
-    TEST_POINT_FUNCTION_CALL(futexTest, TEST_FUTEX_ENABLED);
 }
 
 OS_RETURN_E futexWait(futex_t*             pFutex,

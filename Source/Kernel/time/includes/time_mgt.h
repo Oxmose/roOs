@@ -301,7 +301,7 @@ uint64_t timeGetTicks(const uint8_t kCpuId);
  * @param[in] kNs The time to wait in nanoseconds.
  *
  * @warning This function must only be called before the scheduler is
- * running. Otherwise the function will has undefined behavior.
+ * running. Otherwise the function will have undefined behavior.
  */
 void timeWaitNoScheduler(const uint64_t kNs);
 

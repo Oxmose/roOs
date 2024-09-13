@@ -693,7 +693,7 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr);
  *
  * @return The number of LAPIC detected in the system is returned.
     */
-uint8_t _acpiGetLAPICCount(void);
+static uint8_t _acpiGetLAPICCount(void);
 
 /**
  * @brief Returns the list of detected LAPICs.
@@ -704,7 +704,7 @@ uint8_t _acpiGetLAPICCount(void);
  *
  * @return The list of detected LAPICs descritors is returned.
  */
-const lapic_node_t* _acpiGetLAPICList(void);
+static const lapic_node_t* _acpiGetLAPICList(void);
 
 /**
  * @brief Returns the detected LAPIC base address.
@@ -713,7 +713,7 @@ const lapic_node_t* _acpiGetLAPICList(void);
  *
  * @return The detected LAPIC base address is returned.
  */
-uintptr_t _acpiGetLAPICBaseAddress(void);
+static uintptr_t _acpiGetLAPICBaseAddress(void);
 
 /**
  * @brief Returns the number of IO-APIC detected in the system.
@@ -722,7 +722,7 @@ uintptr_t _acpiGetLAPICBaseAddress(void);
  *
  * @return The number of IO-APIC detected in the system is returned.
     */
-uint8_t _acpiGetIOAPICCount(void);
+static uint8_t _acpiGetIOAPICCount(void);
 
 /**
  * @brief Returns the list of detected IO-APICs.
@@ -733,7 +733,7 @@ uint8_t _acpiGetIOAPICCount(void);
  *
  * @return The list of detected IO-APICs descritors is returned.
  */
-const io_apic_node_t* _acpiGetIOAPICList(void);
+static const io_apic_node_t* _acpiGetIOAPICList(void);
 
 /**
  * @brief Returns the list of detected HPETs.
@@ -744,7 +744,7 @@ const io_apic_node_t* _acpiGetIOAPICList(void);
  *
  * @return The list of detected HPETs descritors is returned.
  */
-const hpet_node_t* _acpiGetHPETList(void);
+static const hpet_node_t* _acpiGetHPETList(void);
 
 /**
  * @brief Checks if the IRQ has been remaped in the IO-APIC structure.
@@ -757,7 +757,7 @@ const hpet_node_t* _acpiGetHPETList(void);
  * @return The remapped IRQ number corresponding to the irq number given as
  * parameter.
  */
-uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber);
+static uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -1540,7 +1540,7 @@ static void _acpiParseHPET(const acpi_hpet_desc_t* kpHpetPtr)
     ++sDrvCtrl.detectedHpetCount;
 }
 
-uint8_t _acpiGetLAPICCount(void)
+static uint8_t _acpiGetLAPICCount(void)
 {
     return sDrvCtrl.detectedCPUCount;
 }
@@ -1550,27 +1550,27 @@ const lapic_node_t* _acpiGetLAPICList(void)
     return sDrvCtrl.pLapicList;
 }
 
-uintptr_t _acpiGetLAPICBaseAddress(void)
+static uintptr_t _acpiGetLAPICBaseAddress(void)
 {
     return sDrvCtrl.localApicAddress;
 }
 
-uint8_t _acpiGetIOAPICCount(void)
+static uint8_t _acpiGetIOAPICCount(void)
 {
     return sDrvCtrl.detectedIOAPICCount;
 }
 
-const io_apic_node_t* _acpiGetIOAPICList(void)
+static const io_apic_node_t* _acpiGetIOAPICList(void)
 {
     return sDrvCtrl.pIoApicList;
 }
 
-const hpet_node_t* _acpiGetHPETList(void)
+static const hpet_node_t* _acpiGetHPETList(void)
 {
     return sDrvCtrl.pHpetList;
 }
 
-uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)
+static uint32_t _acpiGetRemapedIrq(const uint32_t kIrqNumber)
 {
     const int_override_node_t* kpOverride;
     uint32_t                   retValue;

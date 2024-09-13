@@ -921,8 +921,6 @@ void fdtInit(const uintptr_t kStartAddr)
             }
         }
     }
-
-    TEST_POINT_FUNCTION_CALL(devtreeTest, TEST_DEVTREE_ENABLED);
 }
 
 const void* fdtGetProp(const fdt_node_t* pkFdtNode,

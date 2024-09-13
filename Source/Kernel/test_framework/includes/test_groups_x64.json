@@ -1,66 +1,74 @@
 [
     {
-        "name": "Kernel Panic Tests Suite",
+        "name": "Kernel Panic",
         "testname": "PANIC"
     },
     {
-        "name": "Futex Tests Suite",
-        "testname": "FUTEX"
+        "name": "Kernel Critical Sections",
+        "testname": "CRITICAL"
     },
     {
-        "name": "Interrupt Tests Suite",
-        "testname": "INTERRUPT"
+        "name": "Kernel Atomics",
+        "testname": "ATOMICS"
     },
     {
-        "name": "Interrupt Defered ISR Tests Suite",
-        "testname": "DEF_INTERRUPT"
-    },
-    {
-        "name": "Exceptions Tests Suite",
-        "testname": "EXCEPTION"
-    },
-    {
-        "name": "Kernel Heap Tests Suite",
+        "name": "Kernel Heap",
         "testname": "KHEAP"
     },
     {
-        "name": "Kernel Queues Tests Suite",
+        "name": "Interrupt",
+        "testname": "INTERRUPT"
+    },
+    {
+        "name": "Interrupt Defered ISR",
+        "testname": "DEF_INTERRUPT"
+    },
+    {
+        "name": "Exceptions",
+        "testname": "EXCEPTION"
+    },
+    {
+        "name": "Kernel Queues",
         "testname": "OS_KQUEUE"
     },
     {
-        "name": "Queues Tests Suite",
+        "name": "Queues",
         "testname": "OS_QUEUE"
     },
     {
-        "name": "Vector Tests Suite",
+        "name": "Vector",
         "testname": "OS_VECTOR"
     },
     {
-        "name": "UHashTable Tests Suite",
+        "name": "UHashTable",
         "testname": "OS_UHASHTABLE"
     },
     {
-        "name": "Device Tree Lib Suite",
+        "name": "Device Tree",
         "testname": "DEVTREE"
     },
     {
-        "name": "Memory Suite",
+        "name": "Memory",
         "testname": "MEMMGR"
     },
     {
-        "name": "Scheduler Suite",
+        "name": "Scheduler",
         "testname": "SCHEDULER"
     },
     {
-        "name": "Semaphore Tests Suite",
+        "name": "Semaphore",
         "testname": "SEMAPHORE"
     },
     {
-        "name": "Mutex Tests Suite",
+        "name": "Mutex",
         "testname": "MUTEX"
     },
     {
-        "name": "Signals Tests Suite",
+        "name": "Futex",
+        "testname": "FUTEX"
+    },
+    {
+        "name": "Signals",
         "testname": "SIGNAL"
     }
 ]

@@ -2432,8 +2432,6 @@ void memoryMgrInit(void)
 #if MEMORY_MGR_DEBUG_ENABLED
     _printKernelMap();
 #endif
-
-    TEST_POINT_FUNCTION_CALL(memmgrTest, TEST_MEMMGR_ENABLED);
 }
 
 void* memoryKernelMap(const void*    kPhysicalAddress,

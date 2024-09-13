@@ -138,6 +138,7 @@ void kickstart(void)
     /* Initialize kernel heap */
     kHeapInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Kernel heap initialized");
+    TEST_POINT_FUNCTION_CALL(kheapTest, TEST_KHEAP_ENABLED);
 
     /* Init the system logger */
     syslogInit();
@@ -182,7 +183,6 @@ void kickstart(void)
     /* Init the defered interrupt servicing */
     interruptDeferInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Defered interrupts initialized");
-    TEST_POINT_FUNCTION_CALL(interruptDefferTest, TEST_DEF_INTERRUPT_ENABLED);
 
     /* Init the futex library */
     futexLibInit();
@@ -216,14 +216,21 @@ void kickstart(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Core manager initialized");
 
     /* Add library and core tests here */
+    TEST_POINT_FUNCTION_CALL(memmgrTest, TEST_MEMMGR_ENABLED);
+    TEST_POINT_FUNCTION_CALL(devtreeTest, TEST_DEVTREE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(schedulerTest, TEST_SCHEDULER_ENABLED);
     TEST_POINT_FUNCTION_CALL(kqueueTest, TEST_OS_KQUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(queueTest, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(vectorTest, TEST_OS_VECTOR_ENABLED);
     TEST_POINT_FUNCTION_CALL(uhashtableTest, TEST_OS_UHASHTABLE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(futexTest, TEST_FUTEX_ENABLED);
     TEST_POINT_FUNCTION_CALL(semaphoreTest, TEST_SEMAPHORE_ENABLED);
     TEST_POINT_FUNCTION_CALL(mutexTest, TEST_MUTEX_ENABLED);
     TEST_POINT_FUNCTION_CALL(panicTest, TEST_PANIC_ENABLED);
     TEST_POINT_FUNCTION_CALL(signalTest, TEST_SIGNAL_ENABLED);
+    TEST_POINT_FUNCTION_CALL(criticalTest, TEST_CRITICAL_ENABLED);
+    TEST_POINT_FUNCTION_CALL(atomicsTest, TEST_ATOMICS_ENABLED);
+    TEST_POINT_FUNCTION_CALL(interruptDefferTest, TEST_DEF_INTERRUPT_ENABLED);
 
 #ifndef _TESTING_FRAMEWORK_ENABLED
     /* Initialize the user functions */

@@ -300,7 +300,12 @@ extern uint8_t _KERNEL_HEAP_BASE;
 extern uint8_t _KERNEL_HEAP_SIZE;
 
 /************************* Exported global variables **************************/
-/* None */
+#if TEST_KHEAP_ENABLED
+/** @brief Test monitor flag */
+uint32_t kHeapMonitor = 0;
+/** @brief Test monitor value */
+size_t kHeapMonitorValue = 0;
+#endif
 
 /************************** Static global variables ***************************/
 /** @brief Kernel's heap initialization state. */
@@ -494,8 +499,6 @@ void kHeapInit(void)
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED, "KHEAP",
                  "Kernel Heap Initialized at 0x%p", pMemStart);
 #endif
-
-    TEST_POINT_FUNCTION_CALL(kheapTest, TEST_KHEAP_ENABLED);
 }
 
 void* kmalloc(size_t size)
@@ -575,12 +578,18 @@ void* kmalloc(size_t size)
 
 #if KHEAP_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
-                 "KHEAP",
                  "Kheap allocated 0x%p -> %uB (%uB free, %uB used)",
                  pChunk->pData,
                  size2 - len - HEADER_SIZE,
                  sMemFree,
                  sMemUsed);
+#endif
+
+#if TEST_KHEAP_ENABLED
+    if(kHeapMonitor == 1)
+    {
+        kHeapMonitorValue += _memoryChunkSize(pChunk);
+    }
 #endif
 
     KERNEL_UNLOCK(sLock);
@@ -602,6 +611,14 @@ void kfree(void *ptr)
     KERNEL_LOCK(sLock);
 
     pChunk = (mem_chunk_t*)((int8_t*)ptr - HEADER_SIZE);
+
+#if TEST_KHEAP_ENABLED
+    if(kHeapMonitor == 1)
+    {
+        kHeapMonitorValue -= _memoryChunkSize(pChunk);
+    }
+#endif
+
     pNext = CONTAINER(mem_chunk_t, all, pChunk->all.pNext);
     pPrev = CONTAINER(mem_chunk_t, all, pChunk->all.pPrev);
 
@@ -634,7 +651,6 @@ void kfree(void *ptr)
 
 #if KHEAP_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED,
-                 "KHEAP",
                  "[KHEAP] Kheap freed 0x%p -> %uB",
                  ptr,
                  used);

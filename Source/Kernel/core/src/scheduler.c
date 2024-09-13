@@ -1179,8 +1179,6 @@ void schedInit(void)
 #if SCHED_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Scheduler initialization end");
 #endif
-
-    TEST_POINT_FUNCTION_CALL(schedulerTest, TEST_SCHEDULER_ENABLED);
 }
 
 void schedScheduleNoInt(const bool_t kForceSwitch)

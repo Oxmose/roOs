@@ -40,6 +40,7 @@
         "utility": "c",
         "interruptdeftestc": "c",
         "interrupts.h": "c",
-        "cpu.h": "c"
+        "cpu.h": "c",
+        "*.h_test": "c"
     }
 }

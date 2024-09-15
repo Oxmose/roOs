@@ -891,7 +891,7 @@ static void _detectPartitions(const char* kpBasePath)
 
     /* Now for all entries in the storage path, either go deeper or detect */
     retVal = vfsReaddir(fd, &dirEntry);
-    if(retVal >= 0)
+    while(retVal >= 0)
     {
         pathLen  = strlen(dirEntry.pName) + baseLen + 2;
         pNewPath = kmalloc(pathLen);

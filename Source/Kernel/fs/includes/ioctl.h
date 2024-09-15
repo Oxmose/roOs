@@ -58,10 +58,12 @@
 /** @brief IOCTL File Command: Tell */
 #define VFS_IOCTL_FILE_TELL 12
 
-/** @brief IOCTL Disk Command: Get Device Sector Size */
+/** @brief IOCTL Device Command: Get Device Sector Size */
 #define VFS_IOCTL_DEV_GET_SECTOR_SIZE 100
-/** @brief IOCTL Disk Command: Set LBA */
+/** @brief IOCTL Device Command: Set LBA */
 #define VFS_IOCTL_DEV_SET_LBA 101
+/** @brief  IOCTL Device Command: Flush */
+#define VFS_IOCTL_DEV_FLUSH 102
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

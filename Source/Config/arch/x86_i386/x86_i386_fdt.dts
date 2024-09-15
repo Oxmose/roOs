@@ -1,5 +1,4 @@
 /dts-v1/;
-
 / {
     compatible = "roOs,roOs-fdt-v1";
 
@@ -65,6 +64,20 @@
             reg = <0xE0000 0x20000>;
         };
 
+        atapio0 {
+            compatible = "x86,x86-atapio";
+            comm = <0x1F0>;
+            type = <0>;
+            device = "/dev/storage/hd0";
+        };
+
+        atapio1 {
+            compatible = "x86,x86-atapio";
+            comm = <0x1F0>;
+            type = <1>;
+            device = "/dev/storage/hd1";
+        };
+
         lapic: local-apic {
             compatible = "x86,x86-lapic";
             acpi-node = <&acpi>;
@@ -74,7 +87,7 @@
          * interrupts.
          *
          * Only one controller be set as interrupt-controller, the rest should
-         * must be disabled by commenting or removinf the attribute.
+         * must be disabled by commenting or removing the attribute.
          * It is important to keep all node to ensure the hardware is corrtly
          * initialized. The node can be removed if the component is just not
          * present.

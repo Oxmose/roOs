@@ -73,4 +73,5 @@
 #define VFS_DEBUG_ENABLED 0
 #define DISKMGR_DEBUG_ENABLED 0
 #define USTAR_DEBUG_ENABLED 0
+#define ATA_PIO_DEBUG_ENABLED 1
 #endif /* #ifndef __GLOBAL_CONFIG_H_ */

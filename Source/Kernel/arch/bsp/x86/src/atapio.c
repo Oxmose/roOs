@@ -219,7 +219,7 @@ typedef struct
 
     uint64_t numLBA48Sectors;
 
-    uint16_t todo3[151];
+    uint16_t todo3[152];
 
 } __attribute__((__packed__)) atapio_dev_data_t;
 
@@ -595,7 +595,6 @@ static OS_RETURN_E _atapioAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     pCtrl->port = (uint16_t)FDTTOCPU32(*kpUint32Prop);
-
     /* Identify the disk */
     retCode = _atapioIdentify(pCtrl);
     if(retCode != OS_NO_ERR)

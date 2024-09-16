@@ -30,14 +30,14 @@
 /*************************************************
  * TESTING ENABLE FLAGS
  ************************************************/
-#define TEST_KHEAP_ENABLED                        1
+#define TEST_KHEAP_ENABLED                        0
 #define TEST_MEMMGR_ENABLED                       0
 #define TEST_EXCEPTION_ENABLED                    0
 #define TEST_INTERRUPT_ENABLED                    0
 #define TEST_PANIC_ENABLED                        0
 #define TEST_OS_KQUEUE_ENABLED                    0
 #define TEST_OS_QUEUE_ENABLED                     0
-#define TEST_OS_VECTOR_ENABLED                    0
+#define TEST_OS_VECTOR_ENABLED                    1
 #define TEST_OS_UHASHTABLE_ENABLED                0
 #define TEST_DEVTREE_ENABLED                      0
 #define TEST_FUTEX_ENABLED                        0
@@ -549,7 +549,7 @@
 #define TEST_ATOMICS_CREATE_TEST (1 + TEST_ATOMICS_VALUE_DEC)
 
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Signals"
+#define TEST_FRAMEWORK_TEST_NAME "Vector"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

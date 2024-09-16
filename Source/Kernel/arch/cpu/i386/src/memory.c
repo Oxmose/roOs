@@ -1658,18 +1658,16 @@ static void _memoryMgrDetectMemory(void)
 
     /* Get kernel bounds */
     kernelPhysStart = (uintptr_t)&_KERNEL_MEMORY_START;
-    kernelPhysEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
-
-#ifdef _TRACING_ENABLED
-    /* If tracing is enabled, the end is after its buffer */
-    kernelPhysEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
-                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
-#endif
-
 #ifdef _TESTING_FRAMEWORK_ENABLED
     /* If testing is enabled, the end is after its buffer */
     kernelPhysEnd = (uintptr_t)&_KERNEL_TEST_BUFFER_BASE +
                     (uintptr_t)&_KERNEL_TEST_BUFFER_SIZE;
+#elif defined(_TRACING_ENABLED)
+    /* If tracing is enabled, the end is after its buffer */
+    kernelPhysEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
+                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
+#else
+    kernelPhysEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
 #endif
 
     /* Get actual physical address */

@@ -306,7 +306,6 @@ static OS_RETURN_E _ramdiskAttach(const fdt_node_t* pkFdtNode)
     bool_t           isMutexSet;
 
     isMutexSet = FALSE;
-    retCode = OS_NO_ERR;
 
     /* Create the driver controller structure */
     pCtrl = kmalloc(sizeof(ramdisk_ctrl_t));

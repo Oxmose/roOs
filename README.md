@@ -1,7 +1,7 @@
 
 <p  align="center">
 
-<img  src="https://github.com/Oxmose/roOs/Doc/logo/roos_logo.png"  width="300">
+<img  src="https://raw.githubusercontent.com/Oxmose/roOs/main/Doc/logo/roos_logo.png"  width="300">
 
 </p>
 

@@ -80,7 +80,7 @@ typedef struct
     kernel_thread_t* pWaitingThread;
 
     /** @brief The value waiting to be observed */
-    uint32_t waitValue;
+    volatile uint32_t waitValue;
 
     /** @brief Wakeup reason */
     volatile FUTEX_WAKE_REASON_E wakeReason;

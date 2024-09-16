@@ -2120,19 +2120,17 @@ static void _memoryMgrInitAddressTable(void)
 {
     uintptr_t kernelVirtEnd;
 
-    /* Initialize kernel pages */
-    kernelVirtEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
-
-#ifdef _TRACING_ENABLED
-    /* If tracing is enabled, the end is after its buffer */
-    kernelVirtEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
-                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
-#endif
-
 #ifdef _TESTING_FRAMEWORK_ENABLED
     /* If testing is enabled, the end is after its buffer */
     kernelVirtEnd = (uintptr_t)&_KERNEL_TEST_BUFFER_BASE +
                     (uintptr_t)&_KERNEL_TEST_BUFFER_SIZE;
+#elif defined(_TRACING_ENABLED)
+    /* If tracing is enabled, the end is after its buffer */
+    kernelVirtEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
+                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
+#else
+    /* Initialize kernel pages */
+    kernelVirtEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
 #endif
 
     /* Get actual physical address */

@@ -134,10 +134,29 @@ typedef struct
     /** @brief Device file descriptor */
     int32_t devFd;
 
-    /** @brief Mount lock TODO: Change to mutex */
+    /** @brief Mount lock */
     mutex_t lock;
 } ustar_mount_data_t;
 
+/** @brief USTAR file types */
+typedef enum
+{
+    /** @brief Normal file */
+    FILE = 0,
+    /** @brief Hard link */
+    HARD_LINK = 1,
+    /** @brief Symbolic link */
+    SYM_LINK = 2,
+    /** @brief Character device */
+    CHAR_DEV = 3,
+    /** @brief Block device */
+    BLOCK_DEV = 4,
+    /** @brief Directory */
+    DIRECTORY = 5,
+    /** @brief Named pipe (FIFO) */
+    NAMED_PIPE = 6
+
+} USTAR_FILE_TYPE_E;
 
 /** @brief USTAR internal file descriptor */
 typedef struct
@@ -150,6 +169,12 @@ typedef struct
 
     /** @brief Size of the file */
     size_t fileSize;
+
+    /** @brief Type of file */
+    USTAR_FILE_TYPE_E type;
+
+    /** @brief File name */
+    char name[USTAR_FILENAME_MAX_LENGTH];
 } ustar_fd_t;
 
 /*******************************************************************************
@@ -519,7 +544,8 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     int32_t             retCode;
     ssize_t             readSize;
     ustar_fd_t*         pFileDesc;
-
+    size_t              pathLen;
+    size_t              fileLen;
     (void)mode;
 
     if(pDrvCtrl == NULL || kpPath == NULL)
@@ -538,6 +564,28 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     if(strlen(kpPath) > USTAR_FILENAME_MAX_LENGTH)
     {
         return (void*)-1;
+    }
+
+    /* If we open the root */
+    if(*kpPath == 0)
+    {
+         /* Create the file descriptor */
+        pFileDesc = kmalloc(sizeof(ustar_fd_t));
+        if(pFileDesc != NULL)
+        {
+            /* Setup file descriptor */
+            pFileDesc->offset = 0;
+            pFileDesc->type = DIRECTORY;
+            pFileDesc->devFdOffset = 0;
+            pFileDesc->fileSize = 0;
+            pFileDesc->name[0] = 0;
+        }
+        else
+        {
+            pFileDesc = (void*)-1;
+        }
+
+        return pFileDesc;
     }
 
 #if USTAR_DEBUG_ENABLED
@@ -582,6 +630,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     /* Search for the file, if first filename character is NULL, we reached the
      * end of the search
      */
+    pathLen = strlen(kpPath);
     while(currentBlock.fileName[0] != 0)
     {
 #if USTAR_DEBUG_ENABLED
@@ -590,10 +639,23 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
                "Checking %s",
                currentBlock.fileName);
 #endif
-
-        if(strncmp(kpPath,
-                   currentBlock.fileName,
-                   USTAR_FILENAME_MAX_LENGTH) == 0)
+        /* If the current file is a directory */
+        fileLen = strlen(currentBlock.fileName);
+        if(currentBlock.fileName[fileLen - 1] == '/')
+        {
+            if((kpPath[pathLen - 1] != '/') && (pathLen == fileLen - 1))
+            {
+                if(strncmp(kpPath, currentBlock.fileName, pathLen) == 0)
+                {
+                    found = TRUE;
+                    err = _ustarCheckBlock(&currentBlock);
+                    break;
+                }
+            }
+        }
+        else if(strncmp(kpPath,
+                        currentBlock.fileName,
+                        USTAR_FILENAME_MAX_LENGTH) == 0)
         {
             found = TRUE;
             err = _ustarCheckBlock(&currentBlock);
@@ -612,6 +674,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
         {
             /* Setup file descriptor */
             pFileDesc->offset = 0;
+            pFileDesc->type = currentBlock.type - '0';
             pFileDesc->devFdOffset = vfsIOCTL(pData->devFd,
                                               VFS_IOCTL_FILE_TELL,
                                               NULL);
@@ -620,6 +683,10 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
                 kfree(pFileDesc);
                 pFileDesc = (void*)-1;
             }
+
+            fileLen = strlen(currentBlock.fileName);
+            memcpy(pFileDesc->name, currentBlock.fileName, fileLen);
+            pFileDesc->name[fileLen] = 0;
 
             /* Get the file data */
             pFileDesc->fileSize = _oct2uint(currentBlock.size,
@@ -687,7 +754,9 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
 
     /* Check handle */
     pFileDesc = (ustar_fd_t*)pHandle;
-    if(pFileDesc->devFdOffset < 0 || pFileDesc->offset < 0)
+    if(pFileDesc->devFdOffset < 0 ||
+       pFileDesc->offset < 0 ||
+       pFileDesc->type != FILE)
     {
         return -1;
     }
@@ -796,13 +865,218 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
                                 void*     pHandle,
                                 dirent_t* pDirEntry)
 {
-    (void)pDriverData;
-    (void)pHandle;
-    (void)pDirEntry;
+    ustar_mount_data_t* pData;
+    ustar_block_t       currentBlock;
+    uint32_t            foundCount;
+    OS_RETURN_E         err;
+    uint32_t            blockId;
+    seek_ioctl_args_t   seekArgs;
+    int32_t             retCode;
+    ustar_fd_t*         pFileDesc;
+    size_t              pathSize;
+    size_t              filePathSize;
+    ssize_t             readSize;
+    ssize_t             firstOffset;
+    bool_t              found;
 
-    /* TODO */
+    if(pDriverData == NULL || pHandle == NULL || pDirEntry == NULL)
+    {
+        return -1;
+    }
 
-    return -1;
+    pFileDesc = pHandle;
+    if(pFileDesc->type != DIRECTORY || pFileDesc->offset == -1)
+    {
+        return -1;
+    }
+
+#if USTAR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Reading directory %s",
+           pFileDesc->name);
+#endif
+
+    pData = (ustar_mount_data_t*)pDriverData;
+
+    err = mutexLock(&pData->lock);
+    if(err != OS_NO_ERR)
+    {
+        return -1;
+    }
+
+    /* Read the first 512 bytes (USTAR block) */
+    seekArgs.direction = SEEK_SET;
+    seekArgs.offset = 0;
+    retCode = vfsIOCTL(pData->devFd, VFS_IOCTL_FILE_SEEK, &seekArgs);
+    if(retCode < 0)
+    {
+        err = mutexUnlock(&pData->lock);
+        USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
+        return -1;
+    }
+    readSize = vfsRead(pData->devFd, &currentBlock, USTAR_BLOCK_SIZE);
+    if(readSize != USTAR_BLOCK_SIZE)
+    {
+        err = mutexUnlock(&pData->lock);
+        USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
+        return -1;
+    }
+
+    err = _ustarCheckBlock(&currentBlock);
+    if(err != OS_NO_ERR)
+    {
+        err = mutexUnlock(&pData->lock);
+        USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
+        return -1;
+    }
+
+    foundCount = 0;
+    blockId = 0;
+    pathSize = strlen(pFileDesc->name);
+    firstOffset = pFileDesc->offset;
+    /* Search for the file, if first filename character is NULL, we reached the
+     * end of the search
+     */
+    while(currentBlock.fileName[0] != 0)
+    {
+        err = _ustarCheckBlock(&currentBlock);
+        if(err != OS_NO_ERR)
+        {
+            err = mutexUnlock(&pData->lock);
+            USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
+            return -1;
+        }
+
+        /* Check if we are in the root */
+        if(pathSize == 0)
+        {
+            for(filePathSize = 0;
+                *(currentBlock.fileName + filePathSize) != 0;
+                ++filePathSize)
+            {
+                if(*(currentBlock.fileName + filePathSize) == '/')
+                {
+                    ++filePathSize;
+                    break;
+                }
+            }
+            if(*(currentBlock.fileName + filePathSize) == 0)
+            {
+                if(foundCount == pFileDesc->offset)
+                {
+                    if(pFileDesc->type == FILE)
+                    {
+                        pDirEntry->type  = VFS_FILE_TYPE_FILE;
+                    }
+                    else
+                    {
+                        pDirEntry->type  = VFS_FILE_TYPE_DIR;
+                    }
+
+                    filePathSize = strlen(currentBlock.fileName);
+
+                    if(filePathSize - pathSize > VFS_FILENAME_MAX_LENGTH)
+                    {
+                        err = mutexUnlock(&pData->lock);
+                        USTAR_ASSERT(err == OS_NO_ERR,
+                                     "Failed to unlock acquired mutex",
+                                     err);
+                        return -1;
+                    }
+                    memcpy(pDirEntry->pName,
+                           currentBlock.fileName + pathSize,
+                           filePathSize - pathSize);
+                    pDirEntry->pName[filePathSize - pathSize] = 0;
+
+                    ++pFileDesc->offset;
+                    ++foundCount;
+                    break;
+                }
+                else
+                {
+                    ++foundCount;
+                }
+            }
+        }
+        /* Check if the path is the same */
+        else if(strncmp(pFileDesc->name,
+                        currentBlock.fileName,
+                        pathSize) == 0)
+        {
+            /* Check if this is the same folder */
+            if(pathSize != strlen(currentBlock.fileName))
+            {
+                /* Check if this is a direct child */
+                found = TRUE;
+                for(filePathSize = pathSize;
+                    *(currentBlock.fileName + filePathSize) != 0;
+                    ++filePathSize)
+                {
+                    if(*(currentBlock.fileName + filePathSize) == '/' &&
+                    *(currentBlock.fileName + filePathSize + 1) != 0)
+                    {
+                        found = FALSE;
+                        break;
+                    }
+                }
+
+                /* If this is a folder */
+                if(found == TRUE)
+                {
+                    if(foundCount == pFileDesc->offset)
+                    {
+                        if(pFileDesc->type == FILE)
+                        {
+                            pDirEntry->type  = VFS_FILE_TYPE_FILE;
+                        }
+                        else
+                        {
+                            pDirEntry->type  = VFS_FILE_TYPE_DIR;
+                        }
+
+                        filePathSize = strlen(currentBlock.fileName);
+
+                        if(filePathSize - pathSize > VFS_FILENAME_MAX_LENGTH)
+                        {
+                            err = mutexUnlock(&pData->lock);
+                            USTAR_ASSERT(err == OS_NO_ERR,
+                                        "Failed to unlock acquired mutex",
+                                        err);
+                            return -1;
+                        }
+                        memcpy(pDirEntry->pName,
+                            currentBlock.fileName + pathSize,
+                            filePathSize - pathSize);
+                        pDirEntry->pName[filePathSize - pathSize] = 0;
+
+                        ++pFileDesc->offset;
+                        ++foundCount;
+                        break;
+                    }
+                    else
+                    {
+                        ++foundCount;
+                    }
+                }
+            }
+        }
+        _ustarGetNextFile(pData->devFd, &currentBlock, &blockId);
+    }
+
+    err = mutexUnlock(&pData->lock);
+    USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
+
+    /* If we found the the same as the offset */
+    if(firstOffset != pFileDesc->offset)
+    {
+        return 1;
+    }
+    else
+    {
+        pFileDesc->offset = -1;
+        return -1;
+    }
 }
 
 static void _ustarGetNextFile(int32_t        devFd,
@@ -814,13 +1088,6 @@ static void _ustarGetNextFile(int32_t        devFd,
     int32_t           retCode;
     ssize_t           readSize;
     seek_ioctl_args_t seekArgs;
-
-#if USTAR_DEBUG_ENABLED
-        syslog(SYSLOG_LEVEL_DEBUG,
-               MODULE_NAME,
-               "Current file %s",
-               pBlock->fileName);
-#endif
 
     /* We loop over all possible empty names (removed files) */
     do
@@ -861,13 +1128,6 @@ static void _ustarGetNextFile(int32_t        devFd,
             return;
         }
     } while(pBlock->fileName[0] == 0);
-
-#if USTAR_DEBUG_ENABLED
-        syslog(SYSLOG_LEVEL_DEBUG,
-               MODULE_NAME,
-               "Next file %s",
-               pBlock->fileName);
-#endif
 }
 
 inline static OS_RETURN_E _ustarCheckBlock(const ustar_block_t* kpBlock)

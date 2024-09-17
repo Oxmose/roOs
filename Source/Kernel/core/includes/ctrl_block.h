@@ -36,11 +36,14 @@
 #error "Affinity cannot handle enough processor"
 #endif
 
-/** @brief Maximal thead's name length. */
+/** @brief Maximal thread's name length. */
 #define THREAD_NAME_MAX_LENGTH 32
 
 /** @brief Maximal number of signals a thread can support */
 #define THREAD_MAX_SIGNALS 32
+
+/** @brief Maximal process' name length. */
+#define PROCESS_NAME_MAX_LENGTH 32
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -148,6 +151,34 @@ typedef struct
     void* pExecVCpu;
 } thread_error_table_t;
 
+/** @brief Kernel thread forward declaration */
+struct kernel_thread_t;
+
+/**
+ * @brief This is the representation of a process for the kernel.
+ */
+typedef struct kernel_process_t
+{
+    /**************************************
+     * Process properties
+     *************************************/
+    /** @brief Process' identifier. */
+    int32_t pid;
+
+    /** @brief Process' name. */
+    char pName[PROCESS_NAME_MAX_LENGTH + 1];
+
+    /**************************************
+     * Scheduler management
+     *************************************/
+
+    /** @brief Process' parent process */
+    struct kernel_process_t* pParent;
+
+    /** @brief Process' main thread */
+    struct kernel_thread_t* pMainThread;
+} kernel_process_t;
+
 /** @brief This is the representation of the thread for the kernel. */
 typedef struct kernel_thread_t
 {
@@ -254,8 +285,8 @@ typedef struct kernel_thread_t
     /** @brief Tells if the thread has preemption disabled */
     bool_t preemptionDisabled;
 
-    /** @brief Parent thread */
-    struct kernel_thread_t* pParentThread;
+    /** @brief Process */
+    struct kernel_process_t* pProcess;
 
     /** @brief Joining thread */
     struct kernel_thread_t* pJoiningThread;
@@ -290,6 +321,9 @@ typedef struct kernel_thread_t
 
     /** @brief The thread's structure lock */
     kernel_spinlock_t lock;
+
+    /** @brief Thread's next node in the list */
+    struct kernel_thread_t* pNext;
 } kernel_thread_t;
 
 /*******************************************************************************

@@ -27,6 +27,8 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>         /* VFS service */
+#include <syslog.h>      /* Kernel syslog */
 #include <kernelshell.h> /* User kernel's shell */
 
 /* Header file */
@@ -36,7 +38,11 @@
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the init ram disk device path */
+#define INITRD_DEV_PATH "/dev/storage/ramdisk0"
+
+/** @brief Defines the init ram disk mount point */
+#define INITRD_MNT_PATH "/initrd"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -76,6 +82,18 @@
 
 void userInit(void)
 {
+    OS_RETURN_E error;
+
+    /* Mount the init ram disk */
+    error = vfsMount(INITRD_MNT_PATH, INITRD_DEV_PATH, NULL);
+    if(error != OS_NO_ERR)
+    {
+        syslog(SYSLOG_LEVEL_ERROR,
+               "USER",
+               "Failed to mount init ramdisk, error %d",
+               error);
+    }
+
     /* Initialize the kernel shell */
     kernelShellInit();
 }

@@ -22,7 +22,7 @@
 |------------------------------------------------|------------------------------|
 | **Status**<br>Work in Progress                 | **Status**<br>Work in Progress |
 | **Supported Processing**<br>Multicore, Singlecore | **Supported Processing**<br>Multicore, Singlecore |
-| **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard | **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard |
+| **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard<br>ATA-PIO | **Supported Drivers**<br>PIC<br>IO-APIC<br>Local APIC<br>ACPI<br>Serial Ports<br>RTC<br>PIT<br>Local APIC Timers<br>TSC<br>VGA Text 80x25<br>Generic PS/2 Keyboard<br>ATA-PIO |
 | | |
 
 ## Supported General Features
@@ -67,6 +67,8 @@
 
 ### Virtual File System
 * Character-based driver support
+* Disk manager
+* Filesystem mounting
 
 ## Roadmap
 You can see the planned tasks / features in the project's kanban on GitHub: https://github.com/users/Oxmose/projects/2

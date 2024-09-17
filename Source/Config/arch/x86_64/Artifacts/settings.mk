@@ -26,7 +26,7 @@ endif
 LINKER_FILE = ../../Config/arch/x86_64/linker.ld
 
 DEBUG_FLAGS = -O0 -g
-EXTRA_FLAGS = -O3 -g
+EXTRA_FLAGS = -O3 -fno-asynchronous-unwind-tables
 
 CFLAGS = -std=c11 -nostdinc -fno-builtin -nostdlib  \
          -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -fno-pie \

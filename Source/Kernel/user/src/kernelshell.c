@@ -129,8 +129,11 @@ static const command_t sCommands[] = {
 static void _shellTest(const char* args)
 {
     (void)args;
-    _shellMount("/dev/storage/hd0 /hd ustar");
-    _shellCat("/hd/newfile2.txt");
+    _shellList("/initrd");
+    kprintf("-----\n");
+    _shellList("/initrd/folder1");
+    kprintf("-----\n");
+    _shellList("/initrd/folder1/anotherfolder/");
 }
 
 static void _shellCat(const char* args)

@@ -584,7 +584,6 @@ static void _createIdleThreads(void)
         spIdleThread[i]->priority           = KERNEL_LOWEST_PRIORITY;
         spIdleThread[i]->pArgs              = (void*)(uintptr_t)i;
         spIdleThread[i]->pEntryPoint        = _idleRoutine;
-        spIdleThread[i]->pParentThread      = NULL;
         spIdleThread[i]->requestSchedule    = TRUE;
         spIdleThread[i]->preemptionDisabled = FALSE;
 
@@ -1351,7 +1350,7 @@ void schedReleaseThread(kernel_thread_t*     pThread,
     }
 
     SCHED_ASSERT(cpuId != SOC_CPU_COUNT,
-                 "Failed to find a CPU to relase the thread",
+                 "Failed to find a CPU to release the thread",
                  OS_ERR_INCORRECT_VALUE);
 
     /* Update the thread state and push to queue */
@@ -1545,7 +1544,6 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pNewThread->priority           = kPriority;
     pNewThread->pArgs              = args;
     pNewThread->pEntryPoint        = pRoutine;
-    pNewThread->pParentThread      = schedGetCurrentThread();
     pNewThread->requestSchedule    = TRUE;
     pNewThread->preemptionDisabled = FALSE;
 

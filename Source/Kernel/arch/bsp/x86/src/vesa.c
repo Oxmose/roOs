@@ -307,7 +307,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define VESA_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -1748,7 +1748,7 @@ static void* _vesaDisplayRoutine(void* pDrvCtrl)
 
     pCtrl = GET_CONTROLER(pDrvCtrl);
 
-    while(TRUE)
+    while(true)
     {
         startTime = timeGetUptime();
 

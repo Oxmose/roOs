@@ -24,13 +24,14 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <kerneloutput.h> /* Kernel output */
-#include <stdint.h>        /* Standard C ints */
-#include <stddef.h>        /* Standard definitions */
-#include <panic.h>         /* Kernel panic */
-#include <kerror.h>        /* Kernel errors */
 #include <cpu.h>          /*  CPU API */
+#include <stdint.h>       /* Standard C ints */
+#include <stddef.h>       /* Standard definitions */
+#include <panic.h>        /* Kernel panic */
+#include <kerror.h>       /* Kernel errors */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical */
+#include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
 #include <config.h>
@@ -70,7 +71,7 @@ typedef enum
 
 typedef struct test_item
 {
-    bool_t   status;
+    bool   status;
     uint64_t value;
     uint64_t expected;
     uint32_t id;
@@ -109,7 +110,7 @@ typedef union
  *
 */
 #define TEST_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -151,7 +152,7 @@ test_item_t null_test_item = {
     .id       = -1,
     .type     = TEST_TYPE_BYTE,
     .value    = -1,
-    .status   = FALSE
+    .status   = false
 };
 
 /** @brief Test spinlock */
@@ -163,7 +164,7 @@ static kernel_spinlock_t sLock;
 static void * _getTestMemory(const size_t size);
 
 static void _initTestItem(const uint32_t test_id,
-                            const bool_t condition,
+                            const bool condition,
                             const uint64_t expected,
                             const uint64_t value,
                             test_item_t** item);
@@ -194,7 +195,7 @@ static void * _getTestMemory(const size_t size)
 }
 
 static void _initTestItem(const uint32_t test_id,
-                            const bool_t condition,
+                            const bool condition,
                             const uint64_t expected,
                             const uint64_t value,
                             test_item_t** item)
@@ -212,7 +213,7 @@ static void _initTestItem(const uint32_t test_id,
         (*item)->value    = value;
 
         /* If the condition is expected then increment */
-        if(condition == TRUE)
+        if(condition == true)
         {
             ++success;
         }
@@ -314,7 +315,7 @@ void testFrameworkEnd(void)
 }
 
 void testFrameworkAssertUint(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const uint32_t expected,
                                 const uint32_t value)
 {
@@ -332,7 +333,7 @@ void testFrameworkAssertUint(const uint32_t test_id,
 }
 
 void testFrameworkAssertInt(const uint32_t test_id,
-                               const bool_t condition,
+                               const bool condition,
                                const int32_t expected,
                                const int32_t value)
 {
@@ -350,7 +351,7 @@ void testFrameworkAssertInt(const uint32_t test_id,
 }
 
 void testFrameworkAssertHuint(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const uint16_t expected,
                                  const uint16_t value)
 {
@@ -368,7 +369,7 @@ void testFrameworkAssertHuint(const uint32_t test_id,
 }
 
 void testFrameworkAssertHint(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const int16_t expected,
                                 const int16_t value)
 {
@@ -386,7 +387,7 @@ void testFrameworkAssertHint(const uint32_t test_id,
 }
 
 void testFrameworkAssertUbyte(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const uint8_t expected,
                                  const uint8_t value)
 {
@@ -404,7 +405,7 @@ void testFrameworkAssertUbyte(const uint32_t test_id,
 }
 
 void testFrameworkAssertByte(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const uint8_t expected,
                                 const uint8_t value)
 {
@@ -422,7 +423,7 @@ void testFrameworkAssertByte(const uint32_t test_id,
 }
 
 void testFrameworkAssertUdword(const uint32_t test_id,
-                                  const bool_t condition,
+                                  const bool condition,
                                   const uint64_t expected,
                                   const uint64_t value)
 {
@@ -440,7 +441,7 @@ void testFrameworkAssertUdword(const uint32_t test_id,
 }
 
 void testFrameworkAssertDword(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const int64_t expected,
                                  const int64_t value)
 {
@@ -458,7 +459,7 @@ void testFrameworkAssertDword(const uint32_t test_id,
 }
 
 void testFrameworkAssertFloat(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const float expected,
                                  const float value)
 {
@@ -480,7 +481,7 @@ void testFrameworkAssertFloat(const uint32_t test_id,
 }
 
 void testFrameworkAssertDouble(const uint32_t test_id,
-                                  const bool_t condition,
+                                  const bool condition,
                                   const double expected,
                                   const double value)
 {
@@ -502,7 +503,7 @@ void testFrameworkAssertDouble(const uint32_t test_id,
 }
 
 void testFrameworkAssertErrCode(const uint32_t test_id,
-                                   const bool_t condition,
+                                   const bool condition,
                                    const OS_RETURN_E expected,
                                    const OS_RETURN_E value)
 {
@@ -520,7 +521,7 @@ void testFrameworkAssertErrCode(const uint32_t test_id,
 }
 
 void testFrameworkAssertPointer(const uint32_t test_id,
-                                   const bool_t condition,
+                                   const bool condition,
                                    const uintptr_t expected,
                                    const uintptr_t value)
 {

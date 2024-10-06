@@ -27,12 +27,13 @@
 #include <kqueue.h>       /* Kernel queues */
 #include <string.h>       /* String manipulation */
 #include <stdlib.h>       /* Standard library */
-#include <stdint.h>       /* Generic int types and bool_t */
+#include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Standard definition */
 #include <kerror.h>       /* Kernel error codes */
+#include <stdbool.h>      /* Bool types */
 #include <time_mgt.h>     /* Time manager */
 #include <scheduler.h>    /* Kernel scheduler */
-#include <semaphore.h>    /* Semaphore service */
+#include <ksemaphore.h>   /* Semaphore service */
 #include <kerneloutput.h> /* Kernel output */
 
 /* Configuration files */
@@ -70,7 +71,7 @@ typedef struct
     SYSLOG_LEVEL_E level;
 
     /** @brief The space in which the massage was sent */
-    bool_t isKernel;
+    bool isKernel;
 
     /** @brief The time at which the message was sent */
     uint64_t time;
@@ -96,7 +97,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define SYSLOG_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -135,13 +136,13 @@ static kqueue_t* spSyslogQueue;
 static kernel_thread_t* spSyslogThread;
 
 /** @brief Stores the syslog semaphore */
-static semaphore_t sSyslogSem;
+static ksemaphore_t sSyslogSem;
 
 /** @brief Stores if the service is initialized */
-static bool_t sIsInit = FALSE;
+static bool sIsInit = false;
 
 /** @brief Stores if the service is started */
-static bool_t sIsStarted = FALSE;
+static bool sIsStarted = false;
 
 /** @brief Stores the syslog tags */
 const char* sSyslogTags[SYSLOG_LEVEL_MAX + 1] = {
@@ -166,16 +167,16 @@ static void* _syslogRoutine(void* args)
     (void)args;
 
     /* We shoud never have to read logs when the service is not initialized. */
-    while(sIsInit == FALSE)
+    while(sIsInit == false)
     {
         schedSchedule();
     }
 
-    sIsStarted = TRUE;
+    sIsStarted = true;
 
-    while(TRUE)
+    while(true)
     {
-        error = semWait(&sSyslogSem);
+        error = ksemWait(&sSyslogSem);
         if(error == OS_NO_ERR)
         {
             /* Get the message node */
@@ -215,9 +216,9 @@ static void* _syslogRoutine(void* args)
 void syslogInit(void)
 {
     /* Create the messages queue */
-    spSyslogQueue = kQueueCreate(TRUE);
+    spSyslogQueue = kQueueCreate(true);
 
-    sIsInit = TRUE;
+    sIsInit = true;
 }
 
 void syslogStart(void)
@@ -235,7 +236,7 @@ void syslogStart(void)
     SYSLOG_ASSERT(error == OS_NO_ERR, "Failed to start syslog thread", error);
 
     /* Init the syslog semaphore */
-    error = semInit(&sSyslogSem, 0, SEMAPHORE_FLAG_QUEUING_PRIO);
+    error = ksemInit(&sSyslogSem, 0, KSEMAPHORE_FLAG_QUEUING_PRIO);
     SYSLOG_ASSERT(error == OS_NO_ERR, "Faield to init syslog semaphore", error);
 }
 
@@ -258,7 +259,7 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
     int32_t           tid;
     const char*       pThreadName = "No Thread";
 
-    if(sIsInit == FALSE)
+    if(sIsInit == false)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
@@ -280,7 +281,7 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
         kfree(pMsg);
         return OS_ERR_NULL_POINTER;
     }
-    pNewNode = kQueueCreateNode(pSyslogMsg, FALSE);
+    pNewNode = kQueueCreateNode(pSyslogMsg, false);
     if(pNewNode == NULL)
     {
         kfree(pMsg);
@@ -352,11 +353,11 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
 
     /* Setup the message */
     pSyslogMsg->level    = kLevel;
-    pSyslogMsg->isKernel = TRUE;
+    pSyslogMsg->isKernel = true;
     pSyslogMsg->time     = time;
     pSyslogMsg->pMessage = pMsg;
 
-    if(sIsStarted == FALSE)
+    if(sIsStarted == false)
     {
         kprintf(pMsg);
         kprintf("\n");
@@ -372,12 +373,12 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
     kQueuePush(pNewNode, spSyslogQueue);
 
     /* Release the semaphore */
-    error = semPost(&sSyslogSem);
+    error = ksemPost(&sSyslogSem);
     if(error != OS_NO_ERR)
     {
         kfree(pMsg);
         kfree(pSyslogMsg);
-        kQueueRemove(spSyslogQueue, pNewNode, TRUE);
+        kQueueRemove(spSyslogQueue, pNewNode, true);
         kQueueDestroyNode(&pNewNode);
     }
 

@@ -26,6 +26,7 @@
 #include <vfs.h>          /* VFS service */
 #include <cpu.h>          /* CPU API*/
 #include <kheap.h>        /* Kernel Heap */
+#include <panic.h>        /* Kernel panic */
 #include <signal.h>       /* Signal manager */
 #include <string.h>       /* String manipulation */
 #include <signal.h>       /* Signals */
@@ -33,7 +34,7 @@
 #include <console.h>      /* Console driver */
 #include <graphics.h>     /* Graphics driver */
 #include <time_mgt.h>     /* Time manager */
-#include <semaphore.h>    /* Semaphore service */
+#include <ksemaphore.h>   /* Semaphore service */
 #include <scheduler.h>    /* Scheduler services */
 #include <kerneloutput.h> /* Kernel output */
 
@@ -83,6 +84,7 @@ static void _shellList(const char* args);
 static void _shellCat(const char* args);
 static void _shellMount(const char* args);
 static void _shellTest(const char* args);
+static void __shellPanic(const char* args);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -118,6 +120,7 @@ static const command_t sCommands[] = {
     {"mount", "Mount a device", _shellMount},
     {"cat", "Cat a file", _shellCat},
     {"test", "Current dev test for testing purpose", _shellTest},
+    {"panic", "Generates a kernel panic", __shellPanic},
     {"help", "Display this help", _shellHelp},
     {NULL, NULL, NULL}
 };
@@ -125,6 +128,12 @@ static const command_t sCommands[] = {
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void __shellPanic(const char* args)
+{
+    (void)args;
+    PANIC(OS_NO_ERR, "KERNEL_SHELL", "Kernel Shell Panic Generator");
+}
 
 static void _shellTest(const char* args)
 {
@@ -485,36 +494,44 @@ static void _shellDisplayThreads(const char* args)
     size_t         i;
     uint32_t       j;
     size_t         prio;
-    thread_info_t* pThreadTable;
+    int32_t*       pThreadTable;
+    thread_info_t  threadInfo;
 
     threadCount = schedGetThreadCount();
-    pThreadTable = kmalloc(sizeof(thread_info_t) * threadCount);
+    pThreadTable = kmalloc(sizeof(int32_t) * threadCount);
     if(pThreadTable == NULL)
     {
         kprintf("Unable to allocate thread table memory\n");
         return;
     }
 
-    threadCount = schedGetThreads(pThreadTable, threadCount);
-    kprintf("#------------------------------------------------------------------------#\n");
-    kprintf("| PID  | NAME                           | TYPE   | PRIO | STATE    | CPU |\n");
-    kprintf("#------------------------------------------------------------------------#\n");
+    threadCount = schedGetThreadsIds(pThreadTable, threadCount);
+    kprintf("#---------------------------------------------------------------------------------#\n");
+    kprintf("|  TID  |  PID  | NAME                           | TYPE   | PRIO | STATE    | CPU |\n");
+    kprintf("#---------------------------------------------------------------------------------#\n");
     for(prio = KERNEL_HIGHEST_PRIORITY; prio <= KERNEL_LOWEST_PRIORITY; ++prio)
     {
         for(i = 0; i < threadCount; ++i)
         {
-            if(pThreadTable[i].priority != prio)
+            if(schedGetThreadInfo(&threadInfo, pThreadTable[i]) != OS_NO_ERR)
             {
                 continue;
             }
-            kprintf("| % 4d | %s", pThreadTable[i].tid, pThreadTable[i].pName);
+            if(threadInfo.priority != prio)
+            {
+                continue;
+            }
+            kprintf("| % 5d | % 5d | %s",
+                    threadInfo.pid,
+                    threadInfo.tid,
+                    threadInfo.pName);
             for(j = 0;
-                j < THREAD_NAME_MAX_LENGTH - strlen(pThreadTable[i].pName) - 1;
+                j < THREAD_NAME_MAX_LENGTH - strlen(threadInfo.pName) - 1;
                 ++j)
             {
                 kprintf(" ");
             }
-            switch(pThreadTable[i].type)
+            switch(threadInfo.type)
             {
                 case THREAD_TYPE_KERNEL:
                     kprintf("| KERNEL |");
@@ -526,8 +543,8 @@ static void _shellDisplayThreads(const char* args)
                     kprintf("| NONE   |");
                     break;
             }
-            kprintf("  % 3d |", pThreadTable[i].priority);
-            switch(pThreadTable[i].currentState)
+            kprintf("  % 3d |", threadInfo.priority);
+            switch(threadInfo.currentState)
             {
                 case THREAD_STATE_RUNNING:
                     kprintf(" RUNNING  |");
@@ -551,17 +568,17 @@ static void _shellDisplayThreads(const char* args)
                     kprintf(" UNKNOWN  |");
                     break;
             }
-            if(pThreadTable[i].currentState == THREAD_STATE_RUNNING)
+            if(threadInfo.currentState == THREAD_STATE_RUNNING)
             {
-                kprintf(" % 3d |\n", pThreadTable[i].schedCpu);
+                kprintf(" % 3d |\n", threadInfo.schedCpu);
             }
             else
             {
-                kprintf("   * |\n", pThreadTable[i].schedCpu);
+                kprintf("   * |\n", threadInfo.schedCpu);
             }
         }
     }
-    kprintf("#------------------------------------------------------------------------#\n");
+    kprintf("#---------------------------------------------------------------------------------#\n");
 }
 
 static void _shellExecuteCommand(void)
@@ -630,7 +647,7 @@ static void _shellGetCommand(void)
     consoleSetColorScheme(&saveScheme);
     kprintf(" ");
     kprintfFlush();
-    while(TRUE)
+    while(true)
     {
         readCount = consoleRead(&readChar, 1);
         if(readCount > 0)
@@ -671,7 +688,7 @@ static void* _shellEntry(void* args)
     kprintf("\n");
 
 
-    while(TRUE)
+    while(true)
     {
         _shellGetCommand();
         _shellExecuteCommand();

@@ -56,16 +56,16 @@
         "testname": "SCHEDULER"
     },
     {
-        "name": "Semaphore",
-        "testname": "SEMAPHORE"
+        "name": "Kernel Semaphore",
+        "testname": "KSEMAPHORE"
     },
     {
-        "name": "Mutex",
-        "testname": "MUTEX"
+        "name": "Kernel Mutex",
+        "testname": "KMUTEX"
     },
     {
-        "name": "Futex",
-        "testname": "FUTEX"
+        "name": "Kernel Futex",
+        "testname": "KFUTEX"
     },
     {
         "name": "Signals",

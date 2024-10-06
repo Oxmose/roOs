@@ -29,6 +29,7 @@
 #include <kerror.h>       /* Kernel error */
 #include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* FDT driver */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical locks */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
@@ -127,7 +128,7 @@ typedef struct
     uint16_t cpuSlaveDataPort;
 
     /** @brief Tells if the PIC has a slave */
-    bool_t hasSlave;
+    bool hasSlave;
 
     /** @brief PIC IRQ interrupt offset */
     uint8_t intOffset;
@@ -148,7 +149,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define PIC_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -176,10 +177,10 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode);
  * @details Sets the IRQ mask for the IRQ number given as parameter.
  *
  * @param[in] kIrqNumber The IRQ number to enable/disable.
- * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
+ * @param[in] kEnabled Must be set to true to enable the IRQ or false
  * to disable the IRQ.
  */
-static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+static void _picSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled);
 
 /**
  * @brief Acknowleges an IRQ.
@@ -254,7 +255,7 @@ static pic_controler_t sDrvCtrl = {
     .cpuMasterDataPort = 0,
     .cpuSlaveCommPort  = 0,
     .cpuSlaveDataPort  = 0,
-    .hasSlave          = FALSE,
+    .hasSlave          = false,
     .intOffset         = 0
 };
 
@@ -273,7 +274,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     /* Check for slave */
     if(fdtGetProp(pkFdtNode, PIC_FDT_HASSLAVE_PROP, &propLen) != NULL)
     {
-        sDrvCtrl.hasSlave = TRUE;
+        sDrvCtrl.hasSlave = true;
     }
 
     /* Get IRQ offset */
@@ -288,7 +289,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
 
     /* Get the com ports */
     kpUintProp = fdtGetProp(pkFdtNode, PIC_FDT_COMM_PROP, &propLen);
-    if(sDrvCtrl.hasSlave == TRUE)
+    if(sDrvCtrl.hasSlave == true)
     {
         if(kpUintProp == NULL || propLen != sizeof(uint32_t) * 4)
         {
@@ -321,7 +322,7 @@ static OS_RETURN_E _picAttach(const fdt_node_t* pkFdtNode)
     /* Disable all IRQs */
     _cpuOutB(0xFF, sDrvCtrl.cpuMasterDataPort);
 
-    if(sDrvCtrl.hasSlave == TRUE)
+    if(sDrvCtrl.hasSlave == true)
     {
         /* Initialize the slave, remap IRQs */
         _cpuOutB(PIC_ICW1_ICW4 | PIC_ICW1_INIT, sDrvCtrl.cpuSlaveCommPort);
@@ -353,7 +354,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
+static void _picSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled)
 {
     uint8_t  initMask;
     uint32_t cascadingNumber;
@@ -372,7 +373,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
         initMask = _cpuInB(sDrvCtrl.cpuMasterDataPort);
 
         /* Set new mask value */
-        if(kEnabled == FALSE)
+        if(kEnabled == false)
         {
             initMask |= 1 << kIrqNumber;
         }
@@ -396,7 +397,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
     /* Manage slave PIC. WARNING, cascading will be enabled */
     if(kIrqNumber > 7)
     {
-        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+        PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find PIC IRQ (chained)",
                    OS_ERR_NO_SUCH_IRQ);
 
@@ -416,7 +417,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
         initMask = _cpuInB(sDrvCtrl.cpuSlaveDataPort);
 
         /* Set new mask value */
-        if(kEnabled == FALSE)
+        if(kEnabled == false)
         {
             initMask |= 1 << cascadingNumber;
         }
@@ -467,7 +468,7 @@ static void _picSetIrqEOI(const uint32_t kIrqNumber)
     /* End of interrupt signal */
     if(kIrqNumber > 7)
     {
-        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+        PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find PIC IRQ (chained)",
                    OS_ERR_NO_SUCH_IRQ);
 
@@ -506,7 +507,7 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
     /* Check the PIC type */
     if(irqNumber > 7)
     {
-        PIC_ASSERT(sDrvCtrl.hasSlave == TRUE,
+        PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find spurious PIC IRQ (chained)",
                    OS_ERR_NO_SUCH_IRQ);
 

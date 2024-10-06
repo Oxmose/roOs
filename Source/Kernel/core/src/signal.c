@@ -320,23 +320,27 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
     }
 
     KERNEL_LOCK(pThread->lock);
-    if(pThread->currentState != THREAD_STATE_ZOMBIE)
+
+    /* Check if the thread is still valid */
+    if(schedIsThreadValid(pThread) == false)
     {
-        if(pThread->signalHandlers[kSignal] != NULL)
-        {
-            pThread->signal |= (1ULL << kSignal);
-            error = OS_NO_ERR;
-        }
-        else
-        {
-            error = OS_ERR_INCORRECT_VALUE;
-        }
+        KERNEL_UNLOCK(pThread->lock);
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    if(pThread->signalHandlers[kSignal] != NULL)
+    {
+        pThread->signal |= (1ULL << kSignal);
+
+        KERNEL_UNLOCK(pThread->lock);
+        /* Release the thread */
+        error = schedSetThreadToReady(pThread);
     }
     else
     {
-        error = OS_ERR_NO_SUCH_ID;
+        KERNEL_UNLOCK(pThread->lock);
+        error = OS_ERR_INCORRECT_VALUE;
     }
-    KERNEL_UNLOCK(pThread->lock);
 
     return error;
 }

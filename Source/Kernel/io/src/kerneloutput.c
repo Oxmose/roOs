@@ -26,6 +26,7 @@
 #include <stdlib.h>   /* uitoa, itoa */
 #include <atomic.h>   /* Spinlocks */
 #include <console.h>  /* Console driver */
+#include <stdbool.h>  /* Bool types */
 #include <time_mgt.h> /* System time management */
 #include <critical.h> /* Kernel critical sections */
 
@@ -242,7 +243,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     uint8_t  modifier;
     uint8_t  lengthMod;
     uint8_t  paddingMod;
-    bool_t   upperMod;
+    bool     upperMod;
     char     padCharMod;
     char     tmpSeq[128];
     char*    pArgsValue;
@@ -250,7 +251,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     modifier   = 0;
     lengthMod  = 4;
     paddingMod = 0;
-    upperMod   = FALSE;
+    upperMod   = false;
     padCharMod = ' ';
     strLength  = strlen(kpStr);
 
@@ -304,14 +305,14 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     _toBufferStr(tmpSeq);
                     break;
                 case 'X':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'x':
                     GET_SEQ_VAL(seqVal, args, lengthMod);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -322,7 +323,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     _toBufferStr(tmpSeq);
                     break;
                 case 'P':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'p':
                     paddingMod  = 2 * sizeof(uintptr_t);
@@ -332,7 +333,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -398,7 +399,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
         /* Reinit mods */
         lengthMod  = 4;
         paddingMod = 0;
-        upperMod   = FALSE;
+        upperMod   = false;
         padCharMod = ' ';
         modifier   = 0;
     }
@@ -520,7 +521,7 @@ void kprintfError(const char* kpFmt, ...)
 
     newScheme.foreground = FG_RED;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -557,7 +558,7 @@ void kprintfSuccess(const char* kpFmt, ...)
 
     newScheme.foreground = FG_GREEN;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -594,7 +595,7 @@ void kprintfInfo(const char* kpFmt, ...)
 
     newScheme.foreground = FG_CYAN;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -632,7 +633,7 @@ void kprintfDebug(const char* kpFmt, ...)
 
     newScheme.foreground = FG_YELLOW;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);

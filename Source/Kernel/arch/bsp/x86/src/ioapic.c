@@ -35,6 +35,7 @@
 #include <syslog.h>       /* Kernel Syslog */
 #include <kerror.h>       /* Kernel error */
 #include <memory.h>       /* Memory manager */
+#include <stdbool.h>      /* Bool types */
 #include <devtree.h>      /* FDT driver */
 #include <drivermgr.h>    /* Driver manager */
 #include <interrupts.h>   /* Interrupt manager */
@@ -139,7 +140,7 @@ typedef struct io_apic_controler_t
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define IOAPIC_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -168,10 +169,10 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode);
  * @details Sets the IRQ mask for the IRQ number given as parameter.
  *
  * @param[in] kIrqNumber The IRQ number to enable/disable.
- * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
+ * @param[in] kEnabled Must be set to true to enable the IRQ or false
  * to disable the IRQ.
  */
-static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled);
 
 /**
  * @brief Sets the IRQ mask for the desired IRQ number on a given controller.
@@ -181,12 +182,12 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled);
  *
  * @param[in, out] pCtrl The controller to use.
  * @param[in] kIrqNumber The IRQ number to enable/disable.
- * @param[in] kEnabled Must be set to TRUE to enable the IRQ or FALSE
+ * @param[in] kEnabled Must be set to true to enable the IRQ or false
  * to disable the IRQ.
  */
 static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
                                         const uint32_t       kIrqNumber,
-                                        const bool_t         kEnabled);
+                                        const bool           kEnabled);
 
 /**
  * @brief Checks if the serviced interrupt is a spurious
@@ -430,7 +431,7 @@ static OS_RETURN_E _ioapicAttach(const fdt_node_t* pkFdtNode)
         /* Disable all IRQ for this  IOAPIC */
         for(i = pNewDrvCtrl->gsib; i < pNewDrvCtrl->gsil; ++i)
         {
-            _ioapicSetIrqMaskFor(pNewDrvCtrl, i, FALSE);
+            _ioapicSetIrqMaskFor(pNewDrvCtrl, i, false);
         }
 
         /* Go to next */
@@ -477,7 +478,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
+static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled)
 {
     uint32_t             remapIrq;
     io_apic_controler_t* pCtrl;
@@ -511,7 +512,7 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool_t kEnabled)
 
 static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
                                         const uint32_t       kIrqNumber,
-                                        const bool_t         kEnabled)
+                                        const bool           kEnabled)
 {
     uint32_t entryLow;
     uint32_t remapIrq;
@@ -525,7 +526,7 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
 
     /* Set the mask, IO APIC uses physical destination only to core 0 */
     entryLow = _ioapicGetInterruptLine(kIrqNumber);
-    if(kEnabled == FALSE)
+    if(kEnabled == false)
     {
         entryLow  |= (1 << 16);
     }

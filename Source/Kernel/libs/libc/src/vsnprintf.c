@@ -21,8 +21,10 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <stddef.h> /* Standard definitions */
-#include <string.h> /* String manipulation */
+#include <stddef.h>   /* Standard definitions */
+#include <string.h>   /* String manipulation */
+#include <stdbool.h>  /* Bool types */
+
 /* Configuration files */
 #include <config.h>
 
@@ -248,7 +250,7 @@ static size_t _formatArgs(char*             pBuffer,
     uint8_t  modifier;
     uint8_t  lengthMod;
     uint8_t  paddingMod;
-    bool_t   upperMod;
+    bool     upperMod;
     char     padCharMod;
     char     tmpSeq[32];
     char*    pArgsValue;
@@ -258,7 +260,7 @@ static size_t _formatArgs(char*             pBuffer,
     modifier   = 0;
     lengthMod  = 4;
     paddingMod = 0;
-    upperMod   = FALSE;
+    upperMod   = false;
     padCharMod = ' ';
     strLength  = strlen(kpFmt);
 
@@ -313,14 +315,14 @@ static size_t _formatArgs(char*             pBuffer,
                     _toBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
                     break;
                 case 'X':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'x':
                     GET_SEQ_VAL(seqVal, args, lengthMod);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -331,7 +333,7 @@ static size_t _formatArgs(char*             pBuffer,
                     _toBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
                     break;
                 case 'P':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'p':
                     paddingMod  = 2 * sizeof(uintptr_t);
@@ -341,7 +343,7 @@ static size_t _formatArgs(char*             pBuffer,
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -407,7 +409,7 @@ static size_t _formatArgs(char*             pBuffer,
         /* Reinit mods */
         lengthMod  = 4;
         paddingMod = 0;
-        upperMod   = FALSE;
+        upperMod   = false;
         padCharMod = ' ';
         modifier   = 0;
     }

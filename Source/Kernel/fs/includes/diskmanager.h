@@ -25,7 +25,8 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stddef.h> /* Standard definitions */
+#include <stddef.h>  /* Standard definitions */
+#include <stdbool.h> /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
@@ -52,9 +53,9 @@ typedef struct
      *
      * @param[in] kpRootPath The device path where to search for partitions.
      *
-     * @return The function shall return TRUE on success and FALSE on error.
+     * @return The function shall return true on success and false on error.
      */
-    bool_t (*createPartitions)(const char* kpRootPath);
+    bool (*createPartitions)(const char* kpRootPath);
 } dskmgr_driver_t;
 
 /*******************************************************************************

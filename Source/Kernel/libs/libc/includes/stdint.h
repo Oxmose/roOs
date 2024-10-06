@@ -29,11 +29,11 @@
  * CONSTANTS
  ******************************************************************************/
 
-/** @brief Defines the TRUE value. */
-#define TRUE 1
+/** @brief Defines the true value. */
+#define true 1
 
-/** @brief Defines the FALSE value. */
-#define FALSE 0
+/** @brief Defines the false value. */
+#define false 0
 
 /* Limits of exact-width integer types */
 /** @brief int8_t minimal value. */
@@ -99,9 +99,6 @@ typedef signed long long   int64_t;
  * @brief Defines uint64_t type as an exact width 64 bits integer.
  */
 typedef unsigned long long uint64_t;
-
-/** @brief Defines the boot_t type. */
-typedef uint8_t            bool_t;
 
 /*******************************************************************************
  * MACROS

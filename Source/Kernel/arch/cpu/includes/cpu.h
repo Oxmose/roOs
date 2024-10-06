@@ -27,6 +27,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Standard definitions */
 #include <kerror.h>       /* Kernel error */
+#include <stdbool.h>      /* Bool types */
 #include <ctrl_block.h>   /* Kernel control blocks */
 
 /*******************************************************************************
@@ -204,32 +205,6 @@ void cpuHalt(void);
 uint8_t cpuGetId(void);
 
 /**
- * @brief Creates and allocates a kernel stack.
- *
- * @details Creates and allocates a kernel stack. The stack will be mapped
- * to the kernel's virtual memory. The function aligns the end pointer of the
- * stack based on the CPU requirements and returns this end pointer.
- *
- * @param[in] kStackSize The stack size in bytes.
- *
- * @return The end address (high address) with CPU required alignement is
- * returned.
- */
-uintptr_t cpuCreateKernelStack(const size_t kStackSize);
-
-/**
- * @brief Destroys and deallocates a kernel stack.
- *
- * @details Destroys and deallocates a kernel stack. The stack will be unmapped
- * from the kernel's virtual memory.
- *
- * @param[in] kStackEndAddr The stack end address to destroy.
- * @param[in] kStackSize The stack size in bytes.
- */
-void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
-                           const size_t kStackSize);
-
-/**
  * @brief Creates a thread's virtual CPU.
  *
  * @details Initializes the thread's virtual CPU structure later used by the
@@ -237,12 +212,12 @@ void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
  * elsewhere than the CPU module.
  *
  * @param[in] kpEntryPoint The thread's entry point used to initialize the vCPU.
- * @param[out] pThread The thread's structure to update.
+ * @param[in] kStack The thread stack to use when starting it.
  *
  * @return The address of the newly created VCPU is returned.
  */
-uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
-                              kernel_thread_t* pThread);
+uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
+                              const uintptr_t kStack);
 
 /**
  * @brief Detroys a thread's virtual CPU.
@@ -312,7 +287,7 @@ void cpuManageThreadException(kernel_thread_t* pThread);
  */
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  pParams,
-                   const bool_t   kAllocateParam);
+                   const bool     kAllocateParam);
 
 
 /**
@@ -323,9 +298,9 @@ void cpuMgtSendIpi(const uint32_t kFlags,
  *
  * @param[in] kpVCpu The VCPU to check.
  *
- * @return Returns TRUE is the last VCPU's context was saved, FALSE otherwise.
+ * @return Returns true is the last VCPU's context was saved, false otherwise.
  */
-bool_t cpuIsVCPUSaved(const void* kpVCpu);
+bool cpuIsVCPUSaved(const void* kpVCpu);
 
 /**
  * @brief Prints the virtual CPU core dump.
@@ -336,6 +311,19 @@ bool_t cpuIsVCPUSaved(const void* kpVCpu);
  * @param[in] kpVCpu The VCPU to use.
  */
 void cpuCoreDump(const void* kpVCpu);
+
+
+/**
+ * @brief Updates the memory configuration for the running process.
+ *
+ * @details Updates the memory configuration for the running process. Depending
+ * on the architecture, this might entails MMU/MPU configuration changes for
+ * instance.
+ *
+ * @param[in, out] pCurrentProcess The current process to update the memory
+ * configuration for.
+ */
+void cpuUpdateMemoryConfig(kernel_process_t* pCurrentProcess);
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

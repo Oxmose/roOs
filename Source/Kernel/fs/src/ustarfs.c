@@ -24,11 +24,13 @@
 /* Included headers */
 #include <vfs.h>          /* Virtual File System*/
 #include <ioctl.h>        /* IOCTL commands */
+#include <kmutex.h>       /* Kernel critical section */
 #include <kheap.h>        /* Kernel heap */
 #include <panic.h>        /* Kernel panic */
 #include <string.h>       /* String manipulation */
 #include <syslog.h>       /* Kernel syslog */
-#include <mutex.h>        /* Kernel critical section */
+#include <stdbool.h>    /* Bool types */
+
 /* Configuration files */
 #include <config.h>
 
@@ -135,7 +137,7 @@ typedef struct
     int32_t devFd;
 
     /** @brief Mount lock */
-    mutex_t lock;
+    kmutex_t lock;
 } ustar_mount_data_t;
 
 /** @brief USTAR file types */
@@ -192,7 +194,7 @@ typedef struct
  *
  */
 #define USTAR_ASSERT(COND, MSG, ERROR) {                    \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -471,7 +473,7 @@ static OS_RETURN_E _ustarMount(const char* kpPath,
         return err;
     }
 
-    err = mutexInit(&pData->lock, MUTEX_FLAG_QUEUING_PRIO);
+    err = kmutexInit(&pData->lock, KMUTEX_FLAG_QUEUING_PRIO);
     if(err != OS_NO_ERR)
     {
         kfree(pData);
@@ -537,7 +539,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
 {
     ustar_mount_data_t* pData;
     ustar_block_t       currentBlock;
-    bool_t              found;
+    bool                found;
     OS_RETURN_E         err;
     uint32_t            blockId;
     seek_ioctl_args_t   seekArgs;
@@ -592,7 +594,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Opening %s", kpPath);
 #endif
 
-    err = mutexLock(&pData->lock);
+    err = kmutexLock(&pData->lock);
     if(err != OS_NO_ERR)
     {
         return (void*)-1;
@@ -604,14 +606,14 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     retCode = vfsIOCTL(pData->devFd, VFS_IOCTL_FILE_SEEK, &seekArgs);
     if(retCode < 0)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return (void*)-1;
     }
     readSize = vfsRead(pData->devFd, &currentBlock, USTAR_BLOCK_SIZE);
     if(readSize != USTAR_BLOCK_SIZE)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return (void*)-1;
     }
@@ -619,12 +621,12 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
     err = _ustarCheckBlock(&currentBlock);
     if(err != OS_NO_ERR)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return (void*)-1;
     }
 
-    found   = FALSE;
+    found   = false;
     blockId = 0;
 
     /* Search for the file, if first filename character is NULL, we reached the
@@ -647,7 +649,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
             {
                 if(strncmp(kpPath, currentBlock.fileName, pathLen) == 0)
                 {
-                    found = TRUE;
+                    found = true;
                     err = _ustarCheckBlock(&currentBlock);
                     break;
                 }
@@ -657,7 +659,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
                         currentBlock.fileName,
                         USTAR_FILENAME_MAX_LENGTH) == 0)
         {
-            found = TRUE;
+            found = true;
             err = _ustarCheckBlock(&currentBlock);
             break;
         }
@@ -666,7 +668,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
 
     pFileDesc = (void*)-1;
 
-    if(found == TRUE && err == OS_NO_ERR)
+    if(found == true && err == OS_NO_ERR)
     {
         /* Create the file descriptor */
         pFileDesc = kmalloc(sizeof(ustar_fd_t));
@@ -704,7 +706,7 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
         }
     }
 
-    err = mutexUnlock(&pData->lock);
+    err = kmutexUnlock(&pData->lock);
     USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
     return pFileDesc;
 }
@@ -776,7 +778,7 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
                          ((pFileDesc->offset / USTAR_BLOCK_SIZE) *
                           USTAR_BLOCK_SIZE);
 
-    err = mutexLock(&pData->lock);
+    err = kmutexLock(&pData->lock);
     if(err != OS_NO_ERR)
     {
         return -1;
@@ -785,7 +787,7 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
     retVal = vfsIOCTL(pData->devFd, VFS_IOCTL_FILE_SEEK, &seekArgs);
     if(retVal < 0)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
         return -1;
     }
@@ -798,7 +800,7 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
         devReadSize = vfsRead(pData->devFd, &currentBlock, USTAR_BLOCK_SIZE);
         if(devReadSize != USTAR_BLOCK_SIZE)
         {
-            err = mutexUnlock(&pData->lock);
+            err = kmutexUnlock(&pData->lock);
             USTAR_ASSERT(err == OS_NO_ERR,
                          "Failed to unlock acquired mutex",
                          err);
@@ -827,7 +829,7 @@ static ssize_t _ustarVfsRead(void*  pDrvCtrl,
         pFileDesc->offset += dataRead;
     }
 
-    err = mutexUnlock(&pData->lock);
+    err = kmutexUnlock(&pData->lock);
     USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
 
     return retVal;
@@ -877,7 +879,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
     size_t              filePathSize;
     ssize_t             readSize;
     ssize_t             firstOffset;
-    bool_t              found;
+    bool                found;
 
     if(pDriverData == NULL || pHandle == NULL || pDirEntry == NULL)
     {
@@ -899,7 +901,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
 
     pData = (ustar_mount_data_t*)pDriverData;
 
-    err = mutexLock(&pData->lock);
+    err = kmutexLock(&pData->lock);
     if(err != OS_NO_ERR)
     {
         return -1;
@@ -911,14 +913,14 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
     retCode = vfsIOCTL(pData->devFd, VFS_IOCTL_FILE_SEEK, &seekArgs);
     if(retCode < 0)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return -1;
     }
     readSize = vfsRead(pData->devFd, &currentBlock, USTAR_BLOCK_SIZE);
     if(readSize != USTAR_BLOCK_SIZE)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return -1;
     }
@@ -926,7 +928,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
     err = _ustarCheckBlock(&currentBlock);
     if(err != OS_NO_ERR)
     {
-        err = mutexUnlock(&pData->lock);
+        err = kmutexUnlock(&pData->lock);
         USTAR_ASSERT(err == OS_NO_ERR,  "Failed to unlock acquired mutex", err);
         return -1;
     }
@@ -943,7 +945,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
         err = _ustarCheckBlock(&currentBlock);
         if(err != OS_NO_ERR)
         {
-            err = mutexUnlock(&pData->lock);
+            err = kmutexUnlock(&pData->lock);
             USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
             return -1;
         }
@@ -978,7 +980,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
 
                     if(filePathSize - pathSize > VFS_FILENAME_MAX_LENGTH)
                     {
-                        err = mutexUnlock(&pData->lock);
+                        err = kmutexUnlock(&pData->lock);
                         USTAR_ASSERT(err == OS_NO_ERR,
                                      "Failed to unlock acquired mutex",
                                      err);
@@ -1008,7 +1010,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
             if(pathSize != strlen(currentBlock.fileName))
             {
                 /* Check if this is a direct child */
-                found = TRUE;
+                found = true;
                 for(filePathSize = pathSize;
                     *(currentBlock.fileName + filePathSize) != 0;
                     ++filePathSize)
@@ -1016,13 +1018,13 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
                     if(*(currentBlock.fileName + filePathSize) == '/' &&
                     *(currentBlock.fileName + filePathSize + 1) != 0)
                     {
-                        found = FALSE;
+                        found = false;
                         break;
                     }
                 }
 
                 /* If this is a folder */
-                if(found == TRUE)
+                if(found == true)
                 {
                     if(foundCount == pFileDesc->offset)
                     {
@@ -1039,7 +1041,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
 
                         if(filePathSize - pathSize > VFS_FILENAME_MAX_LENGTH)
                         {
-                            err = mutexUnlock(&pData->lock);
+                            err = kmutexUnlock(&pData->lock);
                             USTAR_ASSERT(err == OS_NO_ERR,
                                         "Failed to unlock acquired mutex",
                                         err);
@@ -1064,7 +1066,7 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
         _ustarGetNextFile(pData->devFd, &currentBlock, &blockId);
     }
 
-    err = mutexUnlock(&pData->lock);
+    err = kmutexUnlock(&pData->lock);
     USTAR_ASSERT(err == OS_NO_ERR, "Failed to unlock acquired mutex", err);
 
     /* If we found the the same as the offset */

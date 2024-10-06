@@ -31,6 +31,7 @@
 #include <memory.h>        /* Memory management */
 #include <signal.h>        /* Thread signals */
 #include <syslog.h>        /* Kernel Syslog */
+#include <stdbool.h>       /* Bool types */
 #include <core_mgt.h>      /* Core management */
 #include <critical.h>      /* Kernel critical section */
 #include <x86memory.h>     /* X86 memory definitions */
@@ -628,7 +629,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define CPU_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -4576,10 +4577,10 @@ void cpuApInit(const uint8_t kCpuId)
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    schedScheduleNoInt(TRUE);
+    schedScheduleNoInt(true);
 
     /* Once the scheduler is started, we should never come back here. */
-    CPU_ASSERT(FALSE, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
+    CPU_ASSERT(false, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
 }
 
 void cpuSetPageDirectory(const uintptr_t kNewPgDir)
@@ -4592,38 +4593,8 @@ void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
     __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
 }
 
-uintptr_t cpuCreateKernelStack(const size_t kStackSize)
-{
-    uintptr_t stackAddr;
-    uintptr_t newSize;
-
-    /* Align stack on 4K */
-    newSize = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
-
-    /* Request to map the stack */
-    stackAddr = (uintptr_t)memoryKernelMapStack(newSize);
-
-    /* Update to point to the end of the stack */
-    stackAddr += newSize;
-
-    return stackAddr;
-}
-
-void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
-                           const size_t    kStackSize)
-{
-    uintptr_t baseAddress;
-    size_t    actualSize;
-
-    /* Get the actual base address */
-    actualSize  = (kStackSize + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
-    baseAddress = kStackEndAddr - kStackSize;
-
-    memoryKernelUnmapStack(baseAddress, actualSize);
-}
-
-uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
-                              kernel_thread_t* pThread)
+uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
+                              const uintptr_t kStack)
 {
     virtual_cpu_t*   pVCpu;
     fxdata_layout_t* pFxData;
@@ -4644,11 +4615,11 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
     pVCpu->intContext.eflags    = KERNEL_THREAD_INIT_EFLAGS;
 
     /* Setup stack pointers */
-    pVCpu->cpuState.esp = pThread->kernelStackEnd - 0x8;
+    pVCpu->cpuState.esp = kStack - 0x8;
     pVCpu->cpuState.ebp = 0;
 
     /* On entry, we expect to have EBP aligned before pushing the return
-     * address, thus when simulating the push, wi should ensure that the
+     * address, thus when simulating the push, we should ensure that the
      * stack is aligned on 16bytes + 8
      */
     if((pVCpu->cpuState.ebp & 0xF) != 0x8)
@@ -4674,7 +4645,7 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
                                  0xFFFFFFF0);
     pFxData->mxcsr = MXCSR_PRECISION_EXC_MASK;
 
-    pVCpu->isContextSaved = TRUE;
+    pVCpu->isContextSaved = true;
 
     return (uintptr_t)pVCpu;
 }
@@ -4858,7 +4829,7 @@ void cpuManageThreadException(kernel_thread_t* pThread)
                     NULL);
 }
 
-bool_t cpuIsVCPUSaved(const void* kpVCpu)
+bool cpuIsVCPUSaved(const void* kpVCpu)
 {
     return ((virtual_cpu_t*)kpVCpu)->isContextSaved != 0;
 }
@@ -4977,6 +4948,12 @@ void cpuCoreDump(const void* kpVCpu)
     syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
 }
 
+void cpuUpdateMemoryConfig(kernel_process_t* pCurrentProcess)
+{
+    (void)pCurrentProcess;
+    /* TODO: Update CR3 and TSS*/
+}
+
 /* Stack protection support */
 #ifdef _STACK_PROT
 #define STACK_CHK_GUARD 0xe2dee396ULL
@@ -4984,8 +4961,8 @@ uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 __attribute__((noreturn)) void __stack_chk_fail(void);
 __attribute__((noreturn)) void __stack_chk_fail(void)
 {
-    CPU_ASSERT(FALSE, "Stack smashing detected", OS_ERR_UNAUTHORIZED_ACTION);
-    while(TRUE){cpuHalt();}
+    CPU_ASSERT(false, "Stack smashing detected", OS_ERR_UNAUTHORIZED_ACTION);
+    while(true){cpuHalt();}
 }
 #endif
 

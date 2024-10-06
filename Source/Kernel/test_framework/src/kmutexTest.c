@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file mutexTest.c
+ * @file kmutexTest.c
  *
  * @see test_framework.h
  *
@@ -26,7 +26,7 @@
 /* Included headers */
 #include <panic.h>
 #include <scheduler.h>
-#include <mutex.h>
+#include <kmutex.h>
 #include <kerneloutput.h>
 
 /* Configuration files */
@@ -65,14 +65,14 @@
 /* None */
 
 /************************** Static global variables ***************************/
-static mutex_t excMutex;
-static mutex_t orderMutex;
-static mutex_t fifoMutex;
-static mutex_t recMutex;
-static mutex_t cancelMutex;
-static mutex_t trylockMutex;
-static mutex_t trylockMutexSync;
-static mutex_t elevationMutex;
+static kmutex_t excMutex;
+static kmutex_t orderMutex;
+static kmutex_t fifoMutex;
+static kmutex_t recMutex;
+static kmutex_t cancelMutex;
+static kmutex_t trylockMutex;
+static kmutex_t trylockMutexSync;
+static kmutex_t elevationMutex;
 
 static volatile uint64_t mutexValueTest;
 static volatile uint32_t lastTid;
@@ -100,22 +100,22 @@ static void* testMutualExcRoutine(void* args)
 
     for(i = 0; i < 100; ++i)
     {
-        error0 |= mutexLock(&excMutex);
+        error0 |= kmutexLock(&excMutex);
         for(j = 0; j < 100; ++j)
             ++mutexValueTest;
-        error1 |= mutexUnlock(&excMutex);
+        error1 |= kmutexUnlock(&excMutex);
     }
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_EXC1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_EXC1(tid),
                             error0 == OS_NO_ERR,
                             OS_NO_ERR,
                             error0,
-                            TEST_MUTEX_ENABLED);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_EXC1(tid),
+                            TEST_KMUTEX_ENABLED);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_EXC1(tid),
                             error1 == OS_NO_ERR,
                             OS_NO_ERR,
                             error1,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     return NULL;
 }
 
@@ -128,29 +128,29 @@ static void* tesOrderRoutine(void* args)
 
     tid = (uintptr_t)args;
 
-    error0 |= mutexLock(&orderMutex);
+    error0 |= kmutexLock(&orderMutex);
     getTid = lastTid;
     lastTid = tid;
-    error1 |= mutexUnlock(&orderMutex);
+    error1 |= kmutexUnlock(&orderMutex);
 
     kprintf("Thread %d returned\n", tid);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_ORDER1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_ORDER1(tid),
                             error0 == OS_NO_ERR,
                             OS_NO_ERR,
                             error0,
-                            TEST_MUTEX_ENABLED);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_ORDER1(tid),
+                            TEST_KMUTEX_ENABLED);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_ORDER1(tid),
                             error1 == OS_NO_ERR,
                             OS_NO_ERR,
                             error1,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
-    TEST_POINT_ASSERT_UINT(TEST_MUTEX_ORDER_TEST(tid),
+    TEST_POINT_ASSERT_UINT(TEST_KMUTEX_ORDER_TEST(tid),
                             getTid == tid + 1,
                             tid + 1,
                             getTid,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     return NULL;
 }
 
@@ -162,26 +162,26 @@ static void* testFifoRoutine(void* args)
 
     tid = (uintptr_t)args;
 
-    error0 |= mutexLock(&fifoMutex);
+    error0 |= kmutexLock(&fifoMutex);
     if(lastTid == tid + 1)
     {
         ++orderedTid;
     }
     lastTid = tid;
-    error1 |= mutexUnlock(&fifoMutex);
+    error1 |= kmutexUnlock(&fifoMutex);
 
     kprintf("Thread %d returned\n", tid);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_FIFO1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_FIFO1(tid),
                             error0 == OS_NO_ERR,
                             OS_NO_ERR,
                             error0,
-                            TEST_MUTEX_ENABLED);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_FIFO1(tid),
+                            TEST_KMUTEX_ENABLED);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_FIFO1(tid),
                             error1 == OS_NO_ERR,
                             OS_NO_ERR,
                             error1,
-                            TEST_MUTEX_ENABLED);;
+                            TEST_KMUTEX_ENABLED);;
     return NULL;
 }
 
@@ -195,30 +195,30 @@ static void* testRecursiveRoutine(void* args)
 
     for(volatile int i = 0; i < 1000; ++i)
     {
-        error0 |= mutexLock(&recMutex);
-        error0 |= mutexLock(&recMutex);
-        error0 |= mutexLock(&recMutex);
-        error0 |= mutexLock(&recMutex);
-        error0 |= mutexLock(&recMutex);
-        error1 |= mutexUnlock(&recMutex);
-        error1 |= mutexUnlock(&recMutex);
-        error1 |= mutexUnlock(&recMutex);
-        error1 |= mutexUnlock(&recMutex);
-        error1 |= mutexUnlock(&recMutex);
+        error0 |= kmutexLock(&recMutex);
+        error0 |= kmutexLock(&recMutex);
+        error0 |= kmutexLock(&recMutex);
+        error0 |= kmutexLock(&recMutex);
+        error0 |= kmutexLock(&recMutex);
+        error1 |= kmutexUnlock(&recMutex);
+        error1 |= kmutexUnlock(&recMutex);
+        error1 |= kmutexUnlock(&recMutex);
+        error1 |= kmutexUnlock(&recMutex);
+        error1 |= kmutexUnlock(&recMutex);
     }
 
-    kprintf("Thread %d returned\n", tid);
+    kprintf("Thread %d (%d) returned\n", tid, schedGetCurrentThread()->tid);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_RECUR1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_RECUR1(tid),
                             error0 == OS_NO_ERR,
                             OS_NO_ERR,
                             error0,
-                            TEST_MUTEX_ENABLED);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_RECUR1(tid),
+                            TEST_KMUTEX_ENABLED);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_RECUR1(tid),
                             error1 == OS_NO_ERR,
                             OS_NO_ERR,
                             error1,
-                            TEST_MUTEX_ENABLED);;
+                            TEST_KMUTEX_ENABLED);;
     return NULL;
 }
 
@@ -229,15 +229,15 @@ static void* testCancelRoutine(void* args)
 
     tid = (uintptr_t)args;
 
-    error0 = mutexLock(&cancelMutex);
+    error0 = kmutexLock(&cancelMutex);
 
     kprintf("Thread %d returned with satus %d\n", tid, error0);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_CANCEL1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_CANCEL1(tid),
                             error0 == OS_ERR_DESTROYED,
                             OS_ERR_DESTROYED,
                             error0,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     return NULL;
 }
 
@@ -254,54 +254,54 @@ static void* testTryLockRoutine(void* args)
 
     initBase = KERNEL_LOWEST_PRIORITY / 2;
 
-    error0 = mutexLock(&trylockMutexSync);
-    errorTry = mutexTryLock(&trylockMutex, &level);
+    error0 = kmutexLock(&trylockMutexSync);
+    errorTry = kmutexTryLock(&trylockMutex, &level);
     if(tid > initBase)
     {
-        mutexUnlock(&trylockMutex);
+        kmutexUnlock(&trylockMutex);
     }
-    error1 = mutexUnlock(&trylockMutexSync);
+    error1 = kmutexUnlock(&trylockMutexSync);
 
     kprintf("Thread %d returned with state %d and value %d\n", tid, errorTry, level);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_TRYLOCK1(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_TRYLOCK1(tid),
                             error0 == OS_NO_ERR,
                             OS_NO_ERR,
                             error0,
-                            TEST_MUTEX_ENABLED);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_TRYLOCK1(tid),
+                            TEST_KMUTEX_ENABLED);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_TRYLOCK1(tid),
                             error1 == OS_NO_ERR,
                             OS_NO_ERR,
                             error1,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
     if(tid < initBase)
     {
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_TRYLOCK_TRYLOCK1(tid),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_TRYLOCK_TRYLOCK1(tid),
                                 errorTry == OS_ERR_BLOCKED,
                                 OS_ERR_BLOCKED,
                                 errorTry,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        TEST_POINT_ASSERT_UINT(TEST_MUTEX_TRYLOCK_TEST(tid),
+        TEST_POINT_ASSERT_UINT(TEST_KMUTEX_TRYLOCK_TEST(tid),
                                 level == 0,
                                 0,
                                 level,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
     }
     else
     {
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_TRYLOCK_TRYLOCK1(tid),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_TRYLOCK_TRYLOCK1(tid),
                                 errorTry == OS_NO_ERR,
                                 OS_NO_ERR,
                                 errorTry,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        TEST_POINT_ASSERT_INT(TEST_MUTEX_TRYLOCK_TEST(tid),
+        TEST_POINT_ASSERT_INT(TEST_KMUTEX_TRYLOCK_TEST(tid),
                               level == 1,
                               1,
                               level,
-                              TEST_MUTEX_ENABLED);
+                              TEST_KMUTEX_ENABLED);
     }
     return NULL;
 }
@@ -318,169 +318,169 @@ static void* testElevationRoutine(void* args)
 
     if(prio == 10)
     {
-        error = mutexLock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(0),
+        error = kmutexLock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_ELEVATION(0),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        while(elevationMutex.pWaitingList->size == 0){
+        while(elevationMutex.nbWaitingThreads == 0){
 
         }
         schedSleep(1000000);
 
         kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(0),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(0),
                                pCurThread->priority == 10,
                                10,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
 
-        while(elevationMutex.pWaitingList->size == 1){
-
-        }
-        schedSleep(1000000);
-
-        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
-
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(1),
-                               pCurThread->priority == 7,
-                               7,
-                               pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
-
-        while(elevationMutex.pWaitingList->size == 2){
+        while(elevationMutex.nbWaitingThreads == 1){
 
         }
         schedSleep(1000000);
 
         kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(2),
+
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(1),
                                pCurThread->priority == 7,
                                7,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
+
+        while(elevationMutex.nbWaitingThreads == 2){
+
+        }
+        schedSleep(1000000);
+
+        kprintf("New thread waiting and prio is %d\n", pCurThread->priority);
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(2),
+                               pCurThread->priority == 7,
+                               7,
+                               pCurThread->priority,
+                               TEST_KMUTEX_ENABLED);
 
 
 
-        error = mutexUnlock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_MUTEX_ELEVATION(0),
+        error = kmutexUnlock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_KMUTEX_ELEVATION(0),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
         kprintf("Unlocked the mutex and and prio is %d\n", pCurThread->priority);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(3),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(3),
                                pCurThread->priority == 10,
                                10,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
     }
     else if(prio == 12)
     {
         schedSleep(200000000);
 
-        error = mutexLock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(1),
+        error = kmutexLock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_ELEVATION(1),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(4),
-                               pCurThread->priority == 7,
-                               7,
-                               pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
-
-        kprintf("Unlocked thread and prio is %d\n", pCurThread->priority);
-
-        error = mutexUnlock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_MUTEX_ELEVATION(1),
-                                error == OS_NO_ERR,
-                                OS_NO_ERR,
-                                error,
-                                TEST_MUTEX_ENABLED);
-
-        kprintf("Unlocked the mutex and and prio is %d\n", pCurThread->priority);
-
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(5),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(4),
                                pCurThread->priority == 12,
                                12,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
+
+        kprintf("Unlocked thread and prio is %d\n", pCurThread->priority);
+
+        error = kmutexUnlock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_KMUTEX_ELEVATION(1),
+                                error == OS_NO_ERR,
+                                OS_NO_ERR,
+                                error,
+                                TEST_KMUTEX_ENABLED);
+
+        kprintf("Unlocked the mutex and and prio is %d\n", pCurThread->priority);
+
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(5),
+                               pCurThread->priority == 12,
+                               12,
+                               pCurThread->priority,
+                               TEST_KMUTEX_ENABLED);
     }
     else if(prio == 9)
     {
         schedSleep(6000000000);
 
-        error = mutexLock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(2),
+        error = kmutexLock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_ELEVATION(2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(6),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(6),
                                pCurThread->priority == 9,
                                9,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
 
         kprintf("Unlocked thread and prio is %d\n", pCurThread->priority);
 
-        error = mutexUnlock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_MUTEX_ELEVATION(2),
+        error = kmutexUnlock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_KMUTEX_ELEVATION(2),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
         kprintf("Unlocked the mutex and and prio is %d\n", pCurThread->priority);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(7),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(7),
                                pCurThread->priority == 9,
                                9,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
     }
     else if(prio == 7)
     {
         schedSleep(4000000000);
 
-        error = mutexLock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ELEVATION(3),
+        error = kmutexLock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_ELEVATION(3),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(8),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(8),
                                pCurThread->priority == 7,
                                7,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
 
         kprintf("Unlocked thread and prio is %d\n", pCurThread->priority);
 
-        error = mutexUnlock(&elevationMutex);
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_MUTEX_ELEVATION(3),
+        error = kmutexUnlock(&elevationMutex);
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_KMUTEX_ELEVATION(3),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
 
         kprintf("Unlocked the mutex and and prio is %d\n", pCurThread->priority);
 
-        TEST_POINT_ASSERT_BYTE(TEST_MUTEX_ELEVATION_PRIO(9),
+        TEST_POINT_ASSERT_BYTE(TEST_KMUTEX_ELEVATION_PRIO(9),
                                pCurThread->priority == 7,
                                7,
                                pCurThread->priority,
-                               TEST_MUTEX_ENABLED);
+                               TEST_KMUTEX_ENABLED);
     }
     else
     {
@@ -497,24 +497,24 @@ static void testMutualExc(void)
     OS_RETURN_E error;
     kernel_thread_t* pThreads[100];
 
-    error = mutexInit(&excMutex, 0);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_EXC0,
+    error = kmutexInit(&excMutex, 0);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_EXC0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
     }
     mutexValueTest = 0;
 
-    error = mutexLock(&excMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_EXC0,
+    error = kmutexLock(&excMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_EXC0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
     if(error != OS_NO_ERR)
     {
@@ -531,11 +531,11 @@ static void testMutualExc(void)
                                         testMutualExcRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_EXC0(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_EXC0(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -544,12 +544,12 @@ static void testMutualExc(void)
 
     kprintf("Gave mutex, waiting threads\n");
     /* Give mutex */
-    error = mutexUnlock(&excMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_EXC0,
+    error = kmutexUnlock(&excMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_EXC0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -559,22 +559,22 @@ static void testMutualExc(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_THREADS_EXC0(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_THREADS_EXC0(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
         }
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_MUTEX_VALUE,
+    TEST_POINT_ASSERT_UINT(TEST_KMUTEX_VALUE,
                             mutexValueTest == 1000000,
                             1000000,
                             mutexValueTest,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
 MUTEX_TEST_END:
     if(error != OS_NO_ERR)
@@ -591,19 +591,19 @@ static void testOrder(void)
 
     lastTid = KERNEL_LOWEST_PRIORITY + 1;
 
-    error = mutexInit(&orderMutex, MUTEX_FLAG_QUEUING_PRIO);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_ORDER_MUTEX,
+    error = kmutexInit(&orderMutex, KMUTEX_FLAG_QUEUING_PRIO);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_ORDER_KMUTEX,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
-    error = mutexLock(&orderMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_ORDER0,
+    error = kmutexLock(&orderMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_ORDER0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -619,11 +619,11 @@ static void testOrder(void)
                                         tesOrderRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_ORDER_THREAD(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_ORDER_THREAD(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -634,12 +634,12 @@ static void testOrder(void)
 
     kprintf("Gave mutex, waiting threads\n");
     /* Give mutex */
-    error = mutexUnlock(&orderMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_MUTEX_ORDER0,
+    error = kmutexUnlock(&orderMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_KMUTEX_ORDER0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -649,11 +649,11 @@ static void testOrder(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_ORDER_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_ORDER_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -675,19 +675,19 @@ static void testFifo(void)
 
     lastTid = KERNEL_LOWEST_PRIORITY + 1;
     orderedTid = 0;
-    error = mutexInit(&fifoMutex, MUTEX_FLAG_QUEUING_FIFO);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_FIFO_MUTEX,
+    error = kmutexInit(&fifoMutex, KMUTEX_FLAG_QUEUING_FIFO);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_FIFO_KMUTEX,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
-    error = mutexLock(&fifoMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_FIFO0,
+    error = kmutexLock(&fifoMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_FIFO0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -703,11 +703,11 @@ static void testFifo(void)
                                         testFifoRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_FIFO_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_FIFO_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -718,12 +718,12 @@ static void testFifo(void)
 
     kprintf("Gave mutex, waiting threads\n");
     /* Give mutex */
-    error = mutexUnlock(&fifoMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_UNLOCK_FIFO0,
+    error = kmutexUnlock(&fifoMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_UNLOCK_FIFO0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -733,22 +733,22 @@ static void testFifo(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_FIFO_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_FIFO_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
         }
     }
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_FIFO_VALUE,
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_FIFO_VALUE,
                             orderedTid != KERNEL_LOWEST_PRIORITY + 1,
                             0,
                             orderedTid,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     kprintf("Returned with %d in a row\n", orderedTid);
 
 MUTEX_TEST_END:
@@ -764,12 +764,12 @@ static void testRecursive(void)
     OS_RETURN_E error;
     kernel_thread_t* pThreads[10];
 
-    error = mutexInit(&recMutex, MUTEX_FLAG_RECURSIVE);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_RECUR0,
+    error = kmutexInit(&recMutex, KMUTEX_FLAG_RECURSIVE);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_RECUR0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -785,11 +785,11 @@ static void testRecursive(void)
                                         testRecursiveRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_RECUR(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_RECUR(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -802,11 +802,11 @@ static void testRecursive(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_THREADS_RECUR(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_THREADS_RECUR(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -826,19 +826,19 @@ static void testDestroy(void)
     OS_RETURN_E error;
     kernel_thread_t* pThreads[100];
 
-    error = mutexInit(&cancelMutex, 0);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_CANCEL,
+    error = kmutexInit(&cancelMutex, 0);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_CANCEL,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
-    error = mutexLock(&cancelMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_CANCEL0,
+    error = kmutexLock(&cancelMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_CANCEL0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -854,11 +854,11 @@ static void testDestroy(void)
                                         testCancelRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_CANCEL(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_CANCEL(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -869,12 +869,12 @@ static void testDestroy(void)
 
     kprintf("Destroyed mutex, waiting threads\n");
     /* Give mutex */
-    error = mutexDestroy(&cancelMutex);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_DESTROY_MUTEX,
+    error = kmutexDestroy(&cancelMutex);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_DESTROY_KMUTEX,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -884,11 +884,11 @@ static void testDestroy(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_THREADS_CANCEL(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_THREADS_CANCEL(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -907,36 +907,36 @@ static void testTrylock(void)
     OS_RETURN_E error;
     kernel_thread_t* pThreads[KERNEL_LOWEST_PRIORITY + 1];
 
-    error = mutexInit(&trylockMutex, 0);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_TRYLOCK,
+    error = kmutexInit(&trylockMutex, 0);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_TRYLOCK,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
     }
 
 
-    error = mutexInit(&trylockMutexSync, MUTEX_FLAG_QUEUING_PRIO);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_SYNC_TRYLOCK,
+    error = kmutexInit(&trylockMutexSync, KMUTEX_FLAG_QUEUING_PRIO);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_SYNC_TRYLOCK,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
 
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
     }
 
-    error = mutexLock(&trylockMutexSync);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_LOCK_MUTEX_TRYLOCK_SYNC,
+    error = kmutexLock(&trylockMutexSync);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_LOCK_KMUTEX_TRYLOCK_SYNC,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -952,11 +952,11 @@ static void testTrylock(void)
                                         testTryLockRoutine,
                                         (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_TRYLOCK(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_TRYLOCK(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -967,12 +967,12 @@ static void testTrylock(void)
 
     kprintf("Unlock mutex, waiting threads\n");
     /* Give mutex */
-    error = mutexUnlock(&trylockMutexSync);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_SYNC_MUTEX_UNLOCK,
+    error = kmutexUnlock(&trylockMutexSync);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_SYNC_KMUTEX_UNLOCK,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -982,11 +982,11 @@ static void testTrylock(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_THREADS_TRYLOCK(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_THREADS_TRYLOCK(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -1005,12 +1005,14 @@ static void testElevation(void)
     OS_RETURN_E error;
     kernel_thread_t* pThreads[4];
 
-    error = mutexInit(&elevationMutex, MUTEX_FLAG_PRIO_ELEVATION);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_MUTEX_ELEVATION,
+    error = kmutexInit(&elevationMutex,
+                       KMUTEX_FLAG_PRIO_ELEVATION |
+                       KMUTEX_FLAG_QUEUING_PRIO);
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_KMUTEX_ELEVATION,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -1024,11 +1026,11 @@ static void testElevation(void)
                                     testElevationRoutine,
                                     (void*)(uintptr_t)10);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_ELEVATION(0),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_ELEVATION(0),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -1042,11 +1044,11 @@ static void testElevation(void)
                                     testElevationRoutine,
                                     (void*)(uintptr_t)12);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_ELEVATION(1),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_ELEVATION(1),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -1060,11 +1062,11 @@ static void testElevation(void)
                                     testElevationRoutine,
                                     (void*)(uintptr_t)9);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_ELEVATION(2),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_ELEVATION(2),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -1078,11 +1080,11 @@ static void testElevation(void)
                                     testElevationRoutine,
                                     (void*)(uintptr_t)7);
 
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREADS_ELEVATION(3),
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREADS_ELEVATION(3),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;
@@ -1092,11 +1094,11 @@ static void testElevation(void)
     {
         error = schedJoinThread(pThreads[i], NULL, NULL);
 
-        TEST_POINT_ASSERT_RCODE(TEST_MUTEX_JOIN_THREADS_ELEVATION(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_JOIN_THREADS_ELEVATION(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_MUTEX_ENABLED);
+                                TEST_KMUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto MUTEX_TEST_END;
@@ -1112,27 +1114,36 @@ MUTEX_TEST_END:
 static void* testThread(void* args)
 {
     (void)args;
+    testRecursive();
+    kprintf("Recursive done\n");
     testMutualExc();
     kprintf("Mutual Exclusion Done\n");
     testOrder();
     kprintf("Order done\n");
     testFifo();
     kprintf("Fifo done\n");
-    testRecursive();
-    kprintf("Recursive done\n");
-    testDestroy();
-    kprintf("Destroy Done\n");
     testTrylock();
     kprintf("Trylock Done\n");
+    testDestroy();
+    kprintf("Destroy Done\n");
     testElevation();
     kprintf("Elevation done\n");
-
+#if 0
+#else
+    (void)testMutualExc;
+    (void)testOrder;
+    (void)testFifo;
+    (void)testRecursive;
+    (void)testDestroy;
+    (void)testTrylock;
+    (void)testElevation;
+#endif
     TEST_FRAMEWORK_END();
 
     return NULL;
 }
 
-void mutexTest(void)
+void kmutexTest(void)
 {
     OS_RETURN_E error;
     kernel_thread_t* pTestThread;
@@ -1145,11 +1156,11 @@ void mutexTest(void)
                                     1,
                                     testThread,
                                     NULL);
-    TEST_POINT_ASSERT_RCODE(TEST_MUTEX_CREATE_THREAD0,
+    TEST_POINT_ASSERT_RCODE(TEST_KMUTEX_CREATE_THREAD0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_MUTEX_ENABLED);
+                            TEST_KMUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto MUTEX_TEST_END;

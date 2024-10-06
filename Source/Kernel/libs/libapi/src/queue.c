@@ -116,7 +116,7 @@ OS_RETURN_E queueDeleteNode(queue_node_t** ppNode)
     }
 
     /* Check queue chaining */
-    if((*ppNode)->enlisted != FALSE)
+    if((*ppNode)->enlisted != false)
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
@@ -200,7 +200,7 @@ OS_RETURN_E queuePush(queue_node_t* pNode, queue_t* pQueue)
     }
 
     ++pQueue->size;
-    pNode->enlisted = TRUE;
+    pNode->enlisted = true;
 
     if(pNode->pNext != NULL &&
        pNode->pPrev != NULL &&
@@ -268,7 +268,7 @@ OS_RETURN_E queuePushPrio(queue_node_t*  pNode,
         }
     }
     ++pQueue->size;
-    pNode->enlisted = TRUE;
+    pNode->enlisted = true;
 
     if(pNode->pNext != NULL &&
        pNode->pPrev != NULL &&
@@ -322,7 +322,7 @@ queue_node_t* queuePop(queue_t* pQueue, OS_RETURN_E* pError)
 
     pNode->pNext = NULL;
     pNode->pPrev = NULL;
-    pNode->enlisted = FALSE;
+    pNode->enlisted = false;
 
     if(pError != NULL)
     {
@@ -417,7 +417,7 @@ OS_RETURN_E queueRemove(queue_t* pQueue, queue_node_t* pNode)
     pNode->pNext = NULL;
     pNode->pPrev = NULL;
 
-    pNode->enlisted = FALSE;
+    pNode->enlisted = false;
 
     return OS_NO_ERR;
 }

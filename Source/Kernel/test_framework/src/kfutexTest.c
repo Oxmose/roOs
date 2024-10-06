@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * @file futexTest.c
+ * @file kfutexTest.c
  *
  * @see test_framework.h
  *
@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <futex.h>
+#include <kfutex.h>
 #include <scheduler.h>
 #include <kerneloutput.h>
 #include <uhashtable.h>
@@ -66,11 +66,11 @@ extern uhashtable_t* spFutexTable;
 /* None */
 
 /************************** Static global variables ***************************/
-static volatile uint32_t orderWait = 0;
-static volatile uint32_t orderVal  = 0;
-static futex_t orderFutex;
-static futex_t multipleFutex;
-static volatile uint32_t multipleFutexValue = 0;
+static volatile int32_t orderWait = 0;
+static volatile int32_t orderVal  = 0;
+static kfutex_t orderFutex;
+static kfutex_t multipleFutex;
+static volatile int32_t multipleFutexValue = 0;
 static volatile uint32_t spinlock = 0;
 static volatile uint32_t returnedThreads = 0;
 
@@ -95,39 +95,39 @@ static void* testThread(void* args);
 
 static void* testOrderRoutineWait(void* args)
 {
-    uint32_t tid;
+    int32_t tid;
     uint64_t timeWait;
     OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E wakeReason;
+    KFUTEX_WAKE_REASON_E wakeReason;
 
     tid = (uint32_t)(uintptr_t)args;
     timeWait = (uint64_t)(tid + 1) * 500000000;
 
     error = schedSleep(timeWait);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_SLEEP(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_ORDER_WAIT_SLEEP(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     kprintf("Wait thread %d, waited %lluns\n", tid, timeWait);
 
     /* Wait for futex */
-    error = futexWait(&orderFutex, 0, &wakeReason);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_WAIT(tid),
+    error = kfutexWait(&orderFutex, 0, &wakeReason);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_ORDER_WAIT_WAIT(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_ORDER_WAIT_WAITVAL(tid),
+                            TEST_KFUTEX_ENABLED);
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_ORDER_WAIT_WAITVAL(tid),
                            orderVal == tid,
                            tid,
                            orderVal,
-                           TEST_FUTEX_ENABLED);
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_ORDER_WAIT_WAITREASON(tid),
-                           wakeReason == FUTEX_WAKEUP_WAKE,
+                           TEST_KFUTEX_ENABLED);
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_ORDER_WAIT_WAITREASON(tid),
+                           wakeReason == KFUTEX_WAKEUP_WAKE,
                            wakeReason,
-                           FUTEX_WAKEUP_WAKE,
-                           TEST_FUTEX_ENABLED);
+                           KFUTEX_WAKEUP_WAKE,
+                           TEST_KFUTEX_ENABLED);
     ++orderVal;
     kprintf("Wait thread %d, done on CPU %d order %d, reason %d\n", tid, cpuGetId(), orderVal, wakeReason);
 
@@ -136,7 +136,7 @@ static void* testOrderRoutineWait(void* args)
 
 static void* testOrderRoutineWake(void* args)
 {
-    uint32_t tid;
+    int32_t tid;
     uint64_t timeWait;
     OS_RETURN_E error;
 
@@ -145,38 +145,38 @@ static void* testOrderRoutineWake(void* args)
 
     kprintf("wake thread %d, sleeping %lluns\n", tid, timeWait);
     error = schedSleep(timeWait);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_SLEEP_WAKE(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_ORDER_WAIT_SLEEP_WAKE(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     kprintf("wake thread %d, waited %lluns\n", tid, timeWait);
     /* Wait for futex */
     orderWait = 1;
-    error = futexWake(&orderFutex, 1);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_ORDER_WAIT_WAKE(tid),
+    error = kfutexWake(&orderFutex, 1);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_ORDER_WAIT_WAKE(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     return NULL;
 }
 
 static void* testWaitMultiple(void* args)
 {
     OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E reason;
+    KFUTEX_WAKE_REASON_E reason;
     uintptr_t tid;
 
     tid = (uintptr_t)args;
 
     kprintf("Wait multiple waiting %d\n", tid);
-    error = futexWait(&multipleFutex, 0, &reason);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_WAIT(tid),
+    error = kfutexWait(&multipleFutex, 0, &reason);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_WAIT(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     kprintf("Wait wake thread %d reason: %d\n", tid, reason);
 
     spinlockAcquire(&spinlock);
@@ -190,21 +190,21 @@ static void* testWaitMultiple(void* args)
 static void* testWaitSameHandleValue(void* args)
 {
     OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E reason;
+    KFUTEX_WAKE_REASON_E reason;
     uintptr_t tid;
 
     tid = (uintptr_t)args;
 
     kprintf("Wait samehandle waiting %d\n", tid);
 
-    error = futexWait(&multipleFutex, 0, &reason);
+    error = kfutexWait(&multipleFutex, 0, &reason);
 
 
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_WAIT(tid),
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_WAIT(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
 
     //kprintf("Wait samehandle wake thread %d reason: %d\n", tid, reason);
 
@@ -219,30 +219,30 @@ static void* testWaitSameHandleValue(void* args)
 static void* testWaitReleaseResources(void* args)
 {
     OS_RETURN_E error;
-    FUTEX_WAKE_REASON_E reason;
+    KFUTEX_WAKE_REASON_E reason;
     uintptr_t tid;
 
     tid = (uintptr_t)args;
 
     kprintf("Wait release waiting %d\n", tid);
 
-    error = futexWait(&multipleFutex, 0, &reason);
+    error = kfutexWait(&multipleFutex, 0, &reason);
 
     if(tid == 10)
     {
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_WAIT(tid),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAIT(tid),
                                 error == OS_ERR_DESTROYED,
                                 OS_ERR_DESTROYED,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
     }
     else
     {
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_WAIT(tid),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAIT(tid),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
     }
     //kprintf("Wait samehandle wake thread %d reason: %d\n", tid, reason);
 
@@ -262,7 +262,7 @@ static void testOrder(void)
     OS_RETURN_E error;
 
     orderFutex.pHandle = &orderWait;
-    orderFutex.isAlive = TRUE;
+    orderFutex.isAlive = true;
     orderVal = 0;
 
     /* Spawn the wait thread */
@@ -276,11 +276,11 @@ static void testOrder(void)
                                 testOrderRoutineWait,
                                 (void*)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CREATE_THREADS(i + 1),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_CREATE_THREADS(i + 1),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -297,11 +297,11 @@ static void testOrder(void)
                                 testOrderRoutineWake,
                                 (void*)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CREATE_THREADS0(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_CREATE_THREADS0(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -312,11 +312,11 @@ static void testOrder(void)
     for(i = 0; i < 10; ++i)
     {
         error = schedJoinThread(pWaitThreads[i], NULL, NULL);
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_JOIN_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_JOIN_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -325,11 +325,11 @@ static void testOrder(void)
     for(i = 0; i < 10; ++i)
     {
         error = schedJoinThread(pWakeThreads[i], NULL, NULL);
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_JOIN_THREADS0(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_JOIN_THREADS0(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -349,7 +349,7 @@ static void testMultiple(void)
     uint32_t i;
 
     multipleFutex.pHandle = &multipleFutexValue;
-    multipleFutex.isAlive = TRUE;
+    multipleFutex.isAlive = true;
 
     returnedThreads = 0;
     multipleFutexValue = 0;
@@ -365,11 +365,11 @@ static void testMultiple(void)
                                 testWaitMultiple,
                                 (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_CREATE_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_CREATE_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -377,23 +377,23 @@ static void testMultiple(void)
     }
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_SLEEP0,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_SLEEP0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
     multipleFutexValue = 1;
-    error = futexWake(&multipleFutex, 5);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_WAKE,
+    error = kfutexWake(&multipleFutex, 5);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         kprintf("ERROR Wake! in main %d\n", error);
@@ -403,31 +403,31 @@ static void testMultiple(void)
     kprintf("Waiting for test to end\n");
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_SLEEP1,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_SLEEP1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_MULTIPLE_VALUE_RET,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_MULTIPLE_VALUE_RET,
                            returnedThreads == 5,
                            5,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
 
 
 
 
-    error = futexWake(&multipleFutex, 5);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_WAKE1,
+    error = kfutexWake(&multipleFutex, 5);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         kprintf("ERROR Wake! in main %d\n", error);
@@ -437,21 +437,21 @@ static void testMultiple(void)
     kprintf("Waiting for test to end\n");
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_MULTIPLE_SLEEP2,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_SLEEP2,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_MULTIPLE_VALUE_RET1,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_MULTIPLE_VALUE_RET1,
                            returnedThreads == 10,
                            10,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
 
 
     return;
@@ -467,7 +467,7 @@ static void testSameHandleValue(void)
     uint32_t i;
 
     multipleFutex.pHandle = &multipleFutexValue;
-    multipleFutex.isAlive = TRUE;
+    multipleFutex.isAlive = true;
 
     multipleFutexValue = 0;
     returnedThreads = 0;
@@ -483,11 +483,11 @@ static void testSameHandleValue(void)
                                 testWaitSameHandleValue,
                                 (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_CREATE_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_CREATE_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -495,23 +495,23 @@ static void testSameHandleValue(void)
     }
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_SLEEP0,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_SLEEP0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
     multipleFutexValue = 0;
-    error = futexWake(&multipleFutex, 100);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_WAKE,
+    error = kfutexWake(&multipleFutex, 100);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         kprintf("ERROR Wake! in main %d\n", error);
@@ -521,31 +521,31 @@ static void testSameHandleValue(void)
     kprintf("Waiting for test to end\n");
 
     error = schedSleep(5000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_SLEEP1,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_SLEEP1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_SAMEHANDLE_VALUE_RET,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_SAMEHANDLE_VALUE_RET,
                            returnedThreads == 0,
                            0,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
 
     kprintf("Actually waking now\n");
 
     multipleFutexValue = 1;
-    error = futexWake(&multipleFutex, 100);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_WAKE1,
+    error = kfutexWake(&multipleFutex, 100);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         kprintf("ERROR Wake! in main %d\n", error);
@@ -555,21 +555,21 @@ static void testSameHandleValue(void)
     kprintf("Waiting for test to end\n");
 
     error = schedSleep(1000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_SAMEHANDLE_SLEEP2,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_SLEEP2,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_SAMEHANDLE_VALUE_RET1,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_SAMEHANDLE_VALUE_RET1,
                            returnedThreads == 100,
                            100,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
     return;
 
 FUTEX_TEST_END:
@@ -585,7 +585,7 @@ static void testReleaseResources(void)
     void* value;
 
     multipleFutex.pHandle = &multipleFutexValue;
-    multipleFutex.isAlive = TRUE;
+    multipleFutex.isAlive = true;
 
     multipleFutexValue = 0;
     returnedThreads = 0;
@@ -593,11 +593,11 @@ static void testReleaseResources(void)
     identifier = memoryMgrGetPhysAddr((uintptr_t)&multipleFutexValue, NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
-        TEST_POINT_ASSERT_POINTER(TEST_FUTEX_RELEASE_GET_ID,
+        TEST_POINT_ASSERT_POINTER(TEST_KFUTEX_RELEASE_GET_ID,
                                   identifier != MEMMGR_PHYS_ADDR_ERROR,
                                   identifier,
                                   0,
-                                  TEST_FUTEX_ENABLED);
+                                  TEST_KFUTEX_ENABLED);
         goto FUTEX_TEST_END;
     }
 
@@ -613,11 +613,11 @@ static void testReleaseResources(void)
                                 testWaitReleaseResources,
                                 (void*)(uintptr_t)i);
 
-        TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_CREATE_THREADS(i),
+        TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_CREATE_THREADS(i),
                                 error == OS_NO_ERR,
                                 OS_NO_ERR,
                                 error,
-                                TEST_FUTEX_ENABLED);
+                                TEST_KFUTEX_ENABLED);
         if(error != OS_NO_ERR)
         {
             goto FUTEX_TEST_END;
@@ -625,48 +625,48 @@ static void testReleaseResources(void)
     }
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_SLEEP0,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_SLEEP0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
     multipleFutexValue = 1;
-    error = futexWake(&multipleFutex, 10);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_WAKE,
+    error = kfutexWake(&multipleFutex, 10);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_SLEEP1,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_SLEEP1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_RELEASE_VALUE_RET0,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_RELEASE_VALUE_RET0,
                            returnedThreads == 10,
                            10,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
 
     error = uhashtableGet(spFutexTable, identifier, &value);
 
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_GET_TABLE0,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_GET_TABLE0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
 
     multipleFutexValue = 0;
     returnedThreads = 0;
@@ -678,60 +678,60 @@ static void testReleaseResources(void)
                             testWaitReleaseResources,
                             (void*)(uintptr_t)10);
 
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_CREATE_THREADS0,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_CREATE_THREADS0,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_SLEEP2,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_SLEEP2,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
     multipleFutexValue = 1;
-    multipleFutex.isAlive = FALSE;
-    error = futexWake(&multipleFutex, 10);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_WAKE1,
+    multipleFutex.isAlive = false;
+    error = kfutexWake(&multipleFutex, 10);
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
 
     error = schedSleep(2000000000ULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_SLEEP3,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_SLEEP3,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;
     }
 
-    TEST_POINT_ASSERT_UINT(TEST_FUTEX_RELEASE_VALUE_RET1,
+    TEST_POINT_ASSERT_UINT(TEST_KFUTEX_RELEASE_VALUE_RET1,
                            returnedThreads == 1,
                            1,
                            returnedThreads,
-                           TEST_FUTEX_ENABLED);
+                           TEST_KFUTEX_ENABLED);
 
     error = uhashtableGet(spFutexTable, identifier, &value);
 
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_RELEASE_GET_TABLE1,
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_GET_TABLE1,
                             error == OS_ERR_NO_SUCH_ID,
                             OS_ERR_NO_SUCH_ID,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
 
     return;
 
@@ -757,7 +757,7 @@ static void* testThread(void* args)
     return NULL;
 }
 
-void futexTest(void)
+void kfutexTest(void)
 {
     OS_RETURN_E error;
     kernel_thread_t* pTestThread;
@@ -770,11 +770,11 @@ void futexTest(void)
                                     1,
                                     testThread,
                                     NULL);
-    TEST_POINT_ASSERT_RCODE(TEST_FUTEX_CREATE_THREADS(0),
+    TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_CREATE_THREADS(0),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
                             error,
-                            TEST_FUTEX_ENABLED);
+                            TEST_KFUTEX_ENABLED);
     if(error != OS_NO_ERR)
     {
         goto FUTEX_TEST_END;

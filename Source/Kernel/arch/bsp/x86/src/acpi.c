@@ -560,7 +560,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define ACPI_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -1030,7 +1030,7 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     }
     else
     {
-        ACPI_ASSERT(FALSE,
+        ACPI_ASSERT(false,
                     "Unsupported ACPI version",
                     OS_ERR_NOT_SUPPORTED);
     }

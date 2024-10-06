@@ -72,34 +72,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/**
- * @brief Maps a stack in the kernel memory region and returns its address.
- *
- * @details Maps a stack in the kernel memory region and returns its address.
- * One more page after the stack is allocated but not mapped to catch overflows.
- * The required frames are also allocated.
- *
- * @param[in] kSize The size of the stack. If not aligned with the kernel page
- * size, the actual mapped size will be aligned up on page boundaries.
- *
- * @return The base address of the stack in kernel memory is returned.
- */
-void* memoryKernelMapStack(const size_t kSize);
-
-/**
- * @brief Unmaps a stack in the kernel memory region and frees the associated
- * physical memory.
- *
- * @details Maps a stack in the kernel memory region and frees the associated
- * physical memory.
- * The additional overflow page is also freed.
- *
- * @param[in] kBaseAddress The base address of the stack to unmap. If not
- * aligned with the kernel page size, a panic is generated.
- * @param[in] kSize The size of the stack. If not aligned with the kernel page
- * size, a panic is generated.
- */
-void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize);
+/* None */
 
 #endif /* #ifndef __I386_X86_MEMORY_H_ */
 

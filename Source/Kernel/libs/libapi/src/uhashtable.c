@@ -187,7 +187,7 @@ static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*   pTable,
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
     while(pTable->ppEntries[entryIdx] != NULL &&
-          pTable->ppEntries[entryIdx]->isUsed == TRUE)
+          pTable->ppEntries[entryIdx]->isUsed == true)
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey)
@@ -221,7 +221,7 @@ static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*   pTable,
     /* Set the data */
     pTable->ppEntries[entryIdx]->key    = kKey;
     pTable->ppEntries[entryIdx]->pData  = pData;
-    pTable->ppEntries[entryIdx]->isUsed = TRUE;
+    pTable->ppEntries[entryIdx]->isUsed = true;
 
     return OS_NO_ERR;
 }
@@ -240,7 +240,7 @@ static void _uhashtableRehashEntry(uhashtable_t*       pTable,
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
     while(pTable->ppEntries[entryIdx] != NULL &&
-          pTable->ppEntries[entryIdx]->isUsed == TRUE)
+          pTable->ppEntries[entryIdx]->isUsed == true)
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == pEntry->key)
@@ -295,7 +295,7 @@ static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth)
         if(ppOldEnt[i] != NULL)
         {
             /* Check if it was an entry that was used */
-            if(ppOldEnt[i]->isUsed == TRUE)
+            if(ppOldEnt[i]->isUsed == true)
             {
                 _uhashtableRehashEntry(pTable, ppOldEnt[i]);
             }
@@ -420,7 +420,7 @@ OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey &&
-           pTable->ppEntries[entryIdx]->isUsed == TRUE)
+           pTable->ppEntries[entryIdx]->isUsed == true)
         {
             *ppData = pTable->ppEntries[entryIdx]->pData;
             return OS_NO_ERR;
@@ -495,13 +495,13 @@ OS_RETURN_E uhashtableRemove(uhashtable_t*   pTable,
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey &&
-           pTable->ppEntries[entryIdx]->isUsed == TRUE)
+           pTable->ppEntries[entryIdx]->isUsed == true)
         {
             if(ppData != NULL)
             {
                 *ppData = pTable->ppEntries[entryIdx]->pData;
             }
-            pTable->ppEntries[entryIdx]->isUsed = FALSE;
+            pTable->ppEntries[entryIdx]->isUsed = false;
 
             ++pTable->graveyardSize;
             --pTable->size;

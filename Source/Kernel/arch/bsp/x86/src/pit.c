@@ -114,7 +114,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define PIT_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -461,7 +461,7 @@ static void _pitEnable(void* pDrvCtrl)
 
     if(pPitCtrl->disabledNesting == 0)
     {
-        interruptIRQSetMask(pPitCtrl->irqNumber, TRUE);
+        interruptIRQSetMask(pPitCtrl->irqNumber, true);
     }
 
     KERNEL_UNLOCK(pPitCtrl->lock);
@@ -489,7 +489,7 @@ static void _pitDisable(void* pDrvCtrl)
            pPitCtrl->disabledNesting);
 #endif
 
-    interruptIRQSetMask(pPitCtrl->irqNumber, FALSE);
+    interruptIRQSetMask(pPitCtrl->irqNumber, false);
 
 }
 

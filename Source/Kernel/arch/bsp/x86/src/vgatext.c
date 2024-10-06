@@ -119,7 +119,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define VGA_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \

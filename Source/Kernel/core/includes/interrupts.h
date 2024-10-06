@@ -25,6 +25,7 @@
 #include <stdint.h>     /* Generic int types */
 #include <stddef.h>     /* Standard definitions */
 #include <kerror.h>     /* Kernel error codes */
+#include <stdbool.h>    /* Bool types */
 #include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
@@ -77,10 +78,10 @@ typedef struct
      * used as parameter.
      *
      * @param[in] kIrqNumber The number of the IRQ to enable/disable.
-     * @param[in] kEnabled Must be set to TRUE to enable the IRQ and FALSE to
+     * @param[in] kEnabled Must be set to true to enable the IRQ and false to
      * disable the IRQ.
      */
-    void (*pSetIrqMask)(const uint32_t kIrqNumber, const bool_t kEnabled);
+    void (*pSetIrqMask)(const uint32_t kIrqNumber, const bool kEnabled);
 
     /**
      * @brief The function should acknowleges an IRQ.
@@ -271,7 +272,7 @@ uint32_t interruptDisable(void);
  * @param[in] kEnabled Must be set to 1 to enable the IRQ or 0 to disable the
  * IRQ.
  */
-void interruptIRQSetMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+void interruptIRQSetMask(const uint32_t kIrqNumber, const bool kEnabled);
 
 /**
  * @brief Acknowleges an IRQ.

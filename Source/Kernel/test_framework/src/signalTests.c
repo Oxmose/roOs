@@ -152,7 +152,6 @@ static void signalHandlerSelf(void)
     schedThreadExit(THREAD_TERMINATE_CORRECTLY,
                     THREAD_RETURN_STATE_RETURNED,
                     NULL);
-
 }
 
 static void signalHandlerRegular(void)
@@ -178,7 +177,7 @@ static void* otherThread(void* args)
 
     pNewThreadHandle = schedGetCurrentThread();
 
-    kprintf("Registering signals\n");
+    kprintf("Registering signals in %d\n", pNewThreadHandle->tid);
 
     error = signalRegister(THREAD_SIGNAL_ILL, signalHandlerIllegalInst);
     error |= signalRegister(THREAD_SIGNAL_FPE, signalHandlerDivZero);
@@ -371,6 +370,7 @@ static void* testThread(void* args)
                            retValue,
                            TEST_SIGNAL_ENABLED);
 
+    kprintf("Test end\n");
 
     TEST_FRAMEWORK_END();
     return NULL;

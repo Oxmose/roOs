@@ -28,7 +28,7 @@
 #include <uart.h>          /* UART driver */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
-#include <futex.h>         /* Futex library */
+#include <kfutex.h>        /* Futex library */
 #include <syslog.h>        /* Syslog services */
 #include <memory.h>        /* Memory manager */
 #include <syslog.h>        /* Kernel Syslog */
@@ -81,7 +81,7 @@
  *
 */
 #define KICKSTART_ASSERT(COND, MSG, ERROR) {                \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -185,7 +185,7 @@ void kickstart(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Defered interrupts initialized");
 
     /* Init the futex library */
-    futexLibInit();
+    kfutexLibInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Futex library initialized");
 
     /* Init device manager */
@@ -223,9 +223,9 @@ void kickstart(void)
     TEST_POINT_FUNCTION_CALL(queueTest, TEST_OS_QUEUE_ENABLED);
     TEST_POINT_FUNCTION_CALL(vectorTest, TEST_OS_VECTOR_ENABLED);
     TEST_POINT_FUNCTION_CALL(uhashtableTest, TEST_OS_UHASHTABLE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(futexTest, TEST_FUTEX_ENABLED);
-    TEST_POINT_FUNCTION_CALL(semaphoreTest, TEST_SEMAPHORE_ENABLED);
-    TEST_POINT_FUNCTION_CALL(mutexTest, TEST_MUTEX_ENABLED);
+    TEST_POINT_FUNCTION_CALL(kfutexTest, TEST_KFUTEX_ENABLED);
+    TEST_POINT_FUNCTION_CALL(ksemaphoreTest, TEST_KSEMAPHORE_ENABLED);
+    TEST_POINT_FUNCTION_CALL(kmutexTest, TEST_KMUTEX_ENABLED);
     TEST_POINT_FUNCTION_CALL(panicTest, TEST_PANIC_ENABLED);
     TEST_POINT_FUNCTION_CALL(signalTest, TEST_SIGNAL_ENABLED);
     TEST_POINT_FUNCTION_CALL(criticalTest, TEST_CRITICAL_ENABLED);
@@ -239,10 +239,10 @@ void kickstart(void)
 #endif
 
     /* Call first schedule */
-    schedScheduleNoInt(TRUE);
+    schedScheduleNoInt(true);
 
     /* Once the scheduler is started, we should never come back here. */
-    KICKSTART_ASSERT(FALSE, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);
+    KICKSTART_ASSERT(false, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);
 }
 
 /************************************ EOF *************************************/

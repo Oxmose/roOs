@@ -30,6 +30,7 @@
 #include <string.h>
 #include <kqueue.h>
 #include <critical.h>
+#include <stdbool.h>
 
 /* Configuration files */
 #include <config.h>
@@ -78,8 +79,8 @@ extern spinlock_t sPhyMemListLock;
 
 extern inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
                                     const uintptr_t kSize,
-                                    bool_t*         pIsHardware,
-                                    bool_t*         pIsMemory);
+                                    bool*         pIsHardware,
+                                    bool*         pIsMemory);
 extern void _addBlock(kqueue_t*    pList,
                       uintptr_t    baseAddress,
                       const size_t length);
@@ -87,7 +88,7 @@ extern void _removeBlock(mem_list_t*  pList,
                          uintptr_t    baseAddress,
                          const size_t kLength);
 extern uintptr_t _getBlock(mem_list_t* pList, const size_t kLength);
-extern bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
+extern bool _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
                                  size_t          pageCount);
 extern OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
                                  const uintptr_t kPhysicalAddress,
@@ -104,7 +105,7 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
 void* memoryKernelMapStack(const size_t kSize);
 void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize);
 static inline uintptr_t _makeCanonical(const uintptr_t kAddress,
-                                       const bool_t    kIsPhysical);
+                                       const bool    kIsPhysical);
 #endif
 /*******************************************************************************
  * FUNCTIONS

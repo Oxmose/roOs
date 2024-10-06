@@ -223,6 +223,9 @@ if __name__ == "__main__":
                     p.wait(TEST_TIMEOUT)
                 except subprocess.TimeoutExpired:
                     p.kill()
+                    p.wait(TEST_TIMEOUT)
+                    os.system("killall qemu-system-i386")
+                    os.system("killall qemu-system-x64")
 
                 outputFile.close()
             print("Tests took {:.2f}ms".format(1000 * (time.time() - start)))

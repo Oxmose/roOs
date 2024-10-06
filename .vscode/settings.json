@@ -41,6 +41,10 @@
         "interruptdeftestc": "c",
         "interrupts.h": "c",
         "cpu.h": "c",
-        "*.h_test": "c"
+        "*.h_test": "c",
+        "*.c_nocomp": "c",
+        "stdbool.h": "c",
+        "syslog.h": "c",
+        "kheap.h": "c"
     }
 }

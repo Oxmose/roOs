@@ -31,6 +31,7 @@
 #include <vector.h>       /* Vectors library */
 #include <kqueue.h>       /* Kernel queues */
 #include <syslog.h>       /* Syslog service */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical management */
 
 /* Configuration files */
@@ -185,7 +186,7 @@ typedef struct
  *
 */
 #define VFS_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -230,10 +231,10 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath);
  *
  * @param[out] pNode The node to clean.
  *
- * @return The function returns TRUE if the node implements a driver, FALSE
+ * @return The function returns true if the node implements a driver, false
  * otherwise and if cleaned.
  */
-static bool_t _cleanNode(vfs_node_t* pNode);
+static bool _cleanNode(vfs_node_t* pNode);
 
 /**
  * @brief Adds a node to the mount point graph.
@@ -270,11 +271,11 @@ static vfs_node_t* _addNode(vfs_node_t*  pParent,
  * @return The function return the node corresponding to the search criteria.
  * If no node is found, NULL is returned.
  */
-static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
-                                     const char*  kpPath,
-                                     size_t       kPathSize,
-                                     const bool_t kSearchDriver,
-                                     const bool_t kFindExactNode);
+static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
+                                     const char* kpPath,
+                                     size_t      kPathSize,
+                                     const bool  kSearchDriver,
+                                     const bool  kFindExactNode);
 
 /**
  * @brief Adds a driver with a given path to the mount point graph.
@@ -496,7 +497,7 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
     size_t size;
     size_t newSize;
     size_t i;
-    bool_t firstDelim;
+    bool   firstDelim;
 
     size = strlen(kpOriginalPath);
 
@@ -507,24 +508,24 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
     }
 
     /* Copy while removing multiple delimiters */
-    firstDelim = FALSE;
+    firstDelim = false;
     newSize = 0;
     for(i = 0; i < size; ++i)
     {
         if(kpOriginalPath[i] == VFS_PATH_DELIMITER)
         {
-            if(firstDelim == TRUE)
+            if(firstDelim == true)
             {
                 continue;
             }
             else
             {
-                firstDelim = TRUE;
+                firstDelim = true;
             }
         }
         else
         {
-            firstDelim = FALSE;
+            firstDelim = false;
         }
         pCleanPath[newSize++] = kpOriginalPath[i];
     }
@@ -556,11 +557,11 @@ static ssize_t _getNextPathToken(const char* kpPath)
     return nextStop;
 }
 
-static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
-                                     const char*  kpPath,
-                                     size_t       kPathSize,
-                                     const bool_t kSearchDriver,
-                                     const bool_t kFindExactNode)
+static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
+                                     const char* kpPath,
+                                     size_t      kPathSize,
+                                     const bool  kSearchDriver,
+                                     const bool  kFindExactNode)
 {
     ssize_t     nextInternalPathStop;
     vfs_node_t* kpFoundNode;
@@ -588,8 +589,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
     /* End of path */
     if(nextInternalPathStop < 0)
     {
-        if(kFindExactNode == TRUE ||
-            (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+        if(kFindExactNode == true ||
+            (kSearchDriver == true && pRoot->pDriver != NULL))
         {
             return pRoot;
         }
@@ -617,8 +618,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
             /* Check if we reached the end of the path */
             if(*kpPath == 0)
             {
-                if(kFindExactNode == TRUE ||
-                   (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+                if(kFindExactNode == true ||
+                   (kSearchDriver == true && pRoot->pDriver != NULL))
                 {
                     return pRoot;
                 }
@@ -638,8 +639,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
             /* If the found node is still NULL, this means we are the
              * manager if we have a driver registered.
              */
-            if(kpFoundNode == NULL && kFindExactNode == FALSE &&
-               (kSearchDriver == FALSE || pRoot->pDriver != NULL))
+            if(kpFoundNode == NULL && kFindExactNode == false &&
+               (kSearchDriver == false || pRoot->pDriver != NULL))
             {
                 kpFoundNode = pRoot;
             }
@@ -801,24 +802,24 @@ static vfs_node_t* _addNode(vfs_node_t*  pParent,
     return pNewNode;
 }
 
-static bool_t _cleanNode(vfs_node_t* pNode)
+static bool _cleanNode(vfs_node_t* pNode)
 {
-    bool_t      hasDriver;
+    bool        hasDriver;
     vfs_node_t* pChild;
 
     /* Check if we have a driver */
     if(pNode->pDriver != NULL)
     {
-        return TRUE;
+        return true;
     }
 
     /* Check if children have drivers */
-    hasDriver = FALSE;
+    hasDriver = false;
     pChild = pNode->pFirstChild;
     while(pChild != NULL)
     {
         hasDriver = _cleanNode(pChild);
-        if(hasDriver == TRUE)
+        if(hasDriver == true)
         {
             break;
         }
@@ -827,7 +828,7 @@ static bool_t _cleanNode(vfs_node_t* pNode)
     }
 
     /* If the children have no drivers, clean ourselves */
-    if(hasDriver == FALSE)
+    if(hasDriver == false)
     {
         /* Unlink */
         if(pNode->pParent->pFirstChild == pNode)
@@ -865,8 +866,8 @@ static vfs_node_t* _vfsAddDriver(const char*            kpPath,
     pNode = _findNodeFromPath(spRootPoint,
                               kpPath,
                               strlen(kpPath),
-                              FALSE,
-                              FALSE);
+                              false,
+                              false);
     if(pNode == NULL)
     {
         return VFS_DRIVER_INVALID;
@@ -1056,8 +1057,8 @@ static void* _vfsGenericOpen(void*       pDrvCtrl,
     pMountPt = _findNodeFromPath(spRootPoint,
                                  kpPath,
                                  strlen(kpPath),
-                                 FALSE,
-                                 TRUE);
+                                 false,
+                                 true);
     if(pMountPt != NULL)
     {
         pDesc = kmalloc(sizeof(vfs_generic_desc_t));
@@ -1207,7 +1208,7 @@ void vfsInit(void)
     VFS_ASSERT(error == OS_NO_ERR,
                "Failed to create the VFS kernel FD table",
                error);
-    sKernelFdTable.pFdFreePool = kQueueCreate(TRUE);
+    sKernelFdTable.pFdFreePool = kQueueCreate(true);
     for(i = 0; i < VFS_INITIAL_FD_COUNT; ++i)
     {
         pNewFd = kmalloc(sizeof(vfs_internal_fd));
@@ -1218,7 +1219,7 @@ void vfsInit(void)
         pNewFd->tableId   = i;
         error = vectorSet(sKernelFdTable.pFdTable,
                           i,
-                          kQueueCreateNode(pNewFd, TRUE));
+                          kQueueCreateNode(pNewFd, true));
         VFS_ASSERT(error == OS_NO_ERR, "Failed to create the FD list", error);
         _releaseFileDescriptor(i);
     }
@@ -1285,7 +1286,7 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     KERNEL_LOCK(sMountPointLock);
 
     /* Check something is already mounted in the mount point */
-    if(_findNodeFromPath(spRootPoint, pCleanPath, pathLen, TRUE, TRUE) != NULL)
+    if(_findNodeFromPath(spRootPoint, pCleanPath, pathLen, true, true) != NULL)
     {
         KERNEL_UNLOCK(sMountPointLock);
         kfree(pCleanPath);
@@ -1376,8 +1377,8 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
     pMountPt = _findNodeFromPath(spRootPoint,
                                  pCleanPath,
                                  pathSize,
-                                 TRUE,
-                                 FALSE);
+                                 true,
+                                 false);
 
     /* If there is a driver */
     if(pMountPt != NULL)
@@ -1401,8 +1402,8 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
         pMountPt = _findNodeFromPath(spRootPoint,
                                      pCleanPath,
                                      pathSize,
-                                     FALSE,
-                                     TRUE);
+                                     false,
+                                     true);
         if(pMountPt != NULL)
         {
             /* Handle with the generic VFS driver */
@@ -1765,7 +1766,7 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
 {
     size_t                 pathLen;
     char*                  pCleanPath;
-    bool_t                 addDelimiter;
+    bool                   addDelimiter;
     vfs_node_t*            pDriverNode;
     OS_RETURN_E            retCode;
 
@@ -1784,11 +1785,11 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     if(kpPath[pathLen - 1] != VFS_PATH_DELIMITER)
     {
         ++pathLen;
-        addDelimiter = TRUE;
+        addDelimiter = true;
     }
     else
     {
-        addDelimiter = FALSE;
+        addDelimiter = false;
     }
 
     /* Allocate the clean path buffer */
@@ -1800,7 +1801,7 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     _cleanPath(pCleanPath, kpPath);
     pathLen = strlen(pCleanPath);
 
-    if(addDelimiter == TRUE)
+    if(addDelimiter == true)
     {
         pCleanPath[pathLen]     = VFS_PATH_DELIMITER;
         pCleanPath[pathLen + 1] = 0;
@@ -1812,8 +1813,8 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     pDriverNode = _findNodeFromPath(spRootPoint,
                                     pCleanPath,
                                     pathLen,
-                                    TRUE,
-                                    TRUE);
+                                    true,
+                                    true);
     kfree(pCleanPath);
     KERNEL_UNLOCK(sMountPointLock);
     if(pDriverNode == NULL)

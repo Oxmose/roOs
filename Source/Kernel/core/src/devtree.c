@@ -24,10 +24,11 @@
 #include <kheap.h>        /* Kernel heap */
 #include <panic.h>        /* Kernel panic */
 #include <stddef.h>       /* Standard defined types */
-#include <stdint.h>       /* Standard int types and bool_t */
+#include <stdint.h>       /* Standard int types */
 #include <kerror.h>       /* Kernel error codes */
 #include <string.h>       /* Memory manipulation */
 #include <syslog.h>       /* Kernel Syslog */
+#include <stdbool.h>      /* Bool types */
 
 /* Configuration files */
 #include <config.h>
@@ -206,7 +207,7 @@ static inline void _linkProperty(fdt_property_t* pProp,
 static fdt_node_t* _parseNode(uint32_t*     pOffset,
                               const uint8_t kAddrCells,
                               const uint8_t kSizeCells,
-                              const bool_t  kIsResMemSubNode);
+                              const bool    kIsResMemSubNode);
 
 /**
  * @brief Parses a property in the FDT.
@@ -570,7 +571,7 @@ static fdt_property_t* _parseProperty(uint32_t*   pOffset,
 static fdt_node_t* _parseNode(uint32_t*     pOffset,
                               const uint8_t kAddrCells,
                               const uint8_t kSizeCells,
-                              const bool_t  kIsResMemSubNode)
+                              const bool    kIsResMemSubNode)
 {
     fdt_node_t*     pNode;
     fdt_node_t*     pChildNode;
@@ -581,7 +582,7 @@ static fdt_node_t* _parseNode(uint32_t*     pOffset,
     size_t          length;
     uint32_t        cursor;
     size_t          i;
-    bool_t          isResMem;
+    bool            isResMem;
 
     /* Check if start node */
     if(FDTTOCPU32(sFdtDesc.pStructs[*pOffset]) != FDT_BEGIN_NODE)
@@ -906,7 +907,7 @@ void fdtInit(const uintptr_t kStartAddr)
     for(i = 0; i < sFdtDesc.nbStructs; ++i)
     {
         /* Get the node and add to root */
-        pNode = _parseNode(&i, INIT_ADDR_CELLS, INIT_SIZE_CELLS, FALSE);
+        pNode = _parseNode(&i, INIT_ADDR_CELLS, INIT_SIZE_CELLS, false);
         if(pNode != NULL)
         {
             /* Link node */

@@ -27,6 +27,7 @@
 #include <stdint.h>           /* Generic int types */
 #include <string.h>           /* Memset */
 #include <console.h>          /* Console service */
+#include <stdbool.h>          /* Bool types */
 #include <time_mgt.h>         /* Time management */
 #include <critical.h>         /* Critical section */
 #include <core_mgt.h>         /* Core manager */
@@ -147,7 +148,7 @@ static const char* skpPanicMsg = NULL;
 static spinlock_t sLock = SPINLOCK_INIT_VALUE;
 
 /** @brief Panic delivered flag */
-static bool_t sDelivered = FALSE;
+static bool sDelivered = false;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -435,7 +436,7 @@ static void _panicNoSched(void)
 
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_CYAN;
-    consoleScheme.vgaColor   = TRUE;
+    consoleScheme.vgaColor   = true;
 
     consoleSetColorScheme(&consoleScheme);
 
@@ -487,7 +488,7 @@ static void _panicNoSched(void)
     /* Hide cursor */
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_BLACK;
-    consoleScheme.vgaColor   = TRUE;
+    consoleScheme.vgaColor   = true;
 
     consoleSetColorScheme(&consoleScheme);
 
@@ -513,26 +514,26 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
 
     spinlockAcquire(&sLock);
 
-    if(sDelivered == TRUE)
+    if(sDelivered == true)
     {
         spinlockRelease(&sLock);
         goto PANIC_END;
     }
 
-    sDelivered = TRUE;
+    sDelivered = true;
     spinlockRelease(&sLock);
 
     cpuId = cpuGetId();
 
     /* Send IPI to all other cores and tell that the panic was delivered */
     ipiParams.function = IPI_FUNC_PANIC;
-    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, FALSE);
+    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, false);
 
     pThreadVCpu = pCurrThread->pVCpu;
 
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_CYAN;
-    consoleScheme.vgaColor   = TRUE;
+    consoleScheme.vgaColor   = true;
 
     consoleSetColorScheme(&consoleScheme);
 
@@ -563,8 +564,8 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
             uptime % 1000,
             pCurrThread->pName,
             pCurrThread->tid,
-            "ROOS_KERNEL", // TODO: Process name
-            0); // TODO: Process ID
+            pCurrThread->pProcess->pName,
+            pCurrThread->pProcess->pid);
 
     if(skpPanicFile != NULL)
     {
@@ -585,12 +586,12 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     /* Hide cursor */
     consoleScheme.background = BG_BLACK;
     consoleScheme.foreground = FG_BLACK;
-    consoleScheme.vgaColor   = TRUE;
+    consoleScheme.vgaColor   = true;
 
     consoleSetColorScheme(&consoleScheme);
 
     TEST_POINT_ASSERT_RCODE(TEST_PANIC_SUCCESS_ID,
-                            TRUE,
+                            true,
                             OS_NO_ERR,
                             OS_NO_ERR,
                             TEST_PANIC_ENABLED);
@@ -625,7 +626,7 @@ void kernelPanic(const uint32_t kErrorCode,
     skpPanicFile   = kpFile;
     sPanicLine     = kLine;
 
-    if(schedGetCurrentThread() == NULL)
+    if(schedIsRunning() == false)
     {
         _panicNoSched();
     }

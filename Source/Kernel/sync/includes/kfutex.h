@@ -1,7 +1,7 @@
 /*******************************************************************************
- * @file futex.h
+ * @file kfutex.h
  *
- * @see futex.c
+ * @see kfutex.c
  *
  * @author Alexy Torres Aurora Dugo
  *
@@ -18,22 +18,30 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __SYNC_FUTEX_H_
-#define __SYNC_FUTEX_H_
+#ifndef __SYNC_KFUTEX_H_
+#define __SYNC_KFUTEX_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Standard int definitions */
-#include <kerror.h> /* Kernel error */
-#include <kqueue.h> /* Kernel queues */
+#include <stdint.h>  /* Standard int definitions */
+#include <kerror.h>  /* Kernel error */
+#include <kqueue.h>  /* Kernel queues */
+#include <stdbool.h> /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
-/* None */
+/** @brief Defines the maximal number of waiting threads on a futex */
+#define KFUTEX_MAX_WAIT_COUNT 4096
+
+/** @brief Futex flag: futex has FIFO queuing discipline. */
+#define KFUTEX_FLAG_QUEUING_FIFO 0x00000001
+
+/** @brief Futex flag: futex has priority based queuing discipline. */
+#define KFUTEX_FLAG_QUEUING_PRIO 0x00000002
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -43,24 +51,30 @@
 typedef enum
 {
     /** @brief The thread was woken up because wake was called */
-    FUTEX_WAKEUP_WAKE = 0,
+    KFUTEX_WAKEUP_WAKE = 0,
 
     /** @brief The thread was woken up because the futex was destroyed */
-    FUTEX_WAKEUP_DESTROYED = 1,
+    KFUTEX_WAKEUP_DESTROYED = 1,
 
     /** @brief The futex was canceled. */
-    FUTEX_WAKEUP_CANCEL = 2,
-} FUTEX_WAKE_REASON_E;
+    KFUTEX_WAKEUP_CANCEL = 2,
+} KFUTEX_WAKE_REASON_E;
 
 /** @brief Futex structure definition. */
 typedef struct
 {
     /** @brief Futex atomic handle */
-    volatile uint32_t* pHandle;
+    volatile int32_t* pHandle;
 
     /** @brief Futex alive state */
-    volatile bool_t isAlive;
-} futex_t;
+    volatile bool isAlive;
+
+        /** @brief Waiting queue discipline */
+    uint32_t queuingDiscipline;
+
+    /** @brief Number of waiting threads */
+    uint32_t nbWaitingThreads;
+} kfutex_t;
 
 /*******************************************************************************
  * MACROS
@@ -91,7 +105,7 @@ typedef struct
  * @details Initializes the futex library. If the function was not able to
  * alocate the necessary resources, a kernel panic is generated.
  */
-void futexLibInit(void);
+void kfutexLibInit(void);
 
 /**
  * @brief Waits on a given futex.
@@ -111,9 +125,9 @@ void futexLibInit(void);
  * wait until the next call to futexWake.
  * Waiting on a destroyed futex produces undefined behavior.
  */
-OS_RETURN_E futexWait(futex_t*             pFutex,
-                      const uint32_t       kWaitValue,
-                      FUTEX_WAKE_REASON_E* pWakeReason);
+OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
+                       const int32_t         kWaitValue,
+                       KFUTEX_WAKE_REASON_E* pWakeReason);
 
 /**
  * @brief Wakes a given futex.
@@ -133,8 +147,8 @@ OS_RETURN_E futexWait(futex_t*             pFutex,
  * wait until the next call to futexWake.
  * Waking on a destroyed futex produces undefined behavior.
  */
-OS_RETURN_E futexWake(futex_t* pFutex, const uintptr_t kWakeCount);
+OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount);
 
-#endif /* #ifndef __SYNC_FUTEX_H_ */
+#endif /* #ifndef __SYNC_KFUTEX_H_ */
 
 /************************************ EOF *************************************/

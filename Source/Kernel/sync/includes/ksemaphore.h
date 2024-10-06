@@ -1,7 +1,7 @@
 /*******************************************************************************
- * @file semaphore.h
+ * @file ksemaphore.h
  *
- * @see semaphore.c
+ * @see ksemaphore.c
  *
  * @author Alexy Torres Aurora Dugo
  *
@@ -21,30 +21,32 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __SYNC_SEMAPHORE_H_
-#define __SYNC_SEMAPHORE_H_
+#ifndef __SYNC_KSEMAPHORE_H_
+#define __SYNC_KSEMAPHORE_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
 #include <kqueue.h>   /* Kernel queues */
+#include <kfutex.h>   /* Kernel futex */
 #include <stdint.h>   /* Standard int definitions */
 #include <kerror.h>   /* Kernel error */
 #include <atomic.h>   /* Spinlock structure */
+#include <stdbool.h>  /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
 /** @brief Semaphore flag: semaphore has FIFO queuing discipline. */
-#define SEMAPHORE_FLAG_QUEUING_FIFO 0x00000001
+#define KSEMAPHORE_FLAG_QUEUING_FIFO 0x00000001
 
 /** @brief Semaphore flag: semaphore has priority based queuing discipline. */
-#define SEMAPHORE_FLAG_QUEUING_PRIO 0x00000002
+#define KSEMAPHORE_FLAG_QUEUING_PRIO 0x00000002
 
 /** @brief Semaphore flag: binary semaphore. */
-#define SEMAPHORE_FLAG_BINARY 0x00000004
+#define KSEMAPHORE_FLAG_BINARY 0x00000004
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -56,18 +58,21 @@ typedef struct
     /** @brief Semaphore level counter */
     volatile int32_t level;
 
-    /** @brief Semaphore waiting list */
-    kqueue_t* pWaitingList;
+    /** @brief Semaphore lock state */
+    volatile int32_t lockState;
+
+    /** @brief Semaphore associated futex */
+    kfutex_t futex;
 
     /** @brief Initialization state */
-    bool_t isInit;
+    bool isInit;
 
     /** @brief Semaphore flags */
     uint32_t flags;
 
     /** @brief Semaphore lock. */
     kernel_spinlock_t lock;
-} semaphore_t;
+} ksemaphore_t;
 
 /*******************************************************************************
  * MACROS
@@ -104,9 +109,9 @@ typedef struct
  *
  * @return The success state or the error code.
  */
-OS_RETURN_E semInit(semaphore_t*   pSem,
-                    const int32_t  kInitLevel,
-                    const uint32_t kFlags);
+OS_RETURN_E ksemInit(ksemaphore_t*   pSem,
+                     const int32_t  kInitLevel,
+                     const uint32_t kFlags);
 
 /**
  * @brief Destroys the semaphore given as parameter.
@@ -122,7 +127,7 @@ OS_RETURN_E semInit(semaphore_t*   pSem,
  * @warning Using a non-initialized or destroyed semaphore produces undefined
  * behavior.
  */
-OS_RETURN_E semDestroy(semaphore_t* pSem);
+OS_RETURN_E ksemDestroy(ksemaphore_t* pSem);
 
 /**
  * @brief Pends on the semaphore given as parameter.
@@ -137,7 +142,7 @@ OS_RETURN_E semDestroy(semaphore_t* pSem);
  * @warning Using a non-initialized or destroyed semaphore produces undefined
  * behavior.
  */
-OS_RETURN_E semWait(semaphore_t* pSem);
+OS_RETURN_E ksemWait(ksemaphore_t* pSem);
 
 /**
  * @brief Post the semaphore given as parameter.
@@ -149,7 +154,7 @@ OS_RETURN_E semWait(semaphore_t* pSem);
  * @warning Using a non-initialized or destroyed semaphore produces undefined
  * behavior.
  */
-OS_RETURN_E semPost(semaphore_t* pSem);
+OS_RETURN_E ksemPost(ksemaphore_t* pSem);
 
 /**
  * @brief Try to pend on the semaphore given as parameter.
@@ -166,8 +171,8 @@ OS_RETURN_E semPost(semaphore_t* pSem);
  * @warning Using a non-initialized or destroyed semaphore produces undefined
  * behavior.
  */
-OS_RETURN_E semTryWait(semaphore_t* pSem, int32_t* pValue);
+OS_RETURN_E ksemTryWait(ksemaphore_t* pSem, int32_t* pValue);
 
-#endif /* #ifndef __SYNC_SEMAPHORE_H_ */
+#endif /* #ifndef __SYNC_KSEMAPHORE_H_ */
 
 /************************************ EOF *************************************/

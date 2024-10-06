@@ -27,6 +27,8 @@
 #include <stdint.h>     /* Standard int definitions */
 #include <kerror.h>     /* Kernel error codes */
 #include <signal.h>     /* Thread signals */
+#include <kqueue.h>     /* Kernel queues */
+#include <stdbool.h>    /* Bool types */
 #include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
@@ -47,6 +49,9 @@
 /** @brief Defines the thread information structure */
 typedef struct
 {
+    /** @brief Thread's process identifier.  */
+    int32_t pid;
+
     /** @brief Thread's identifier. */
     int32_t tid;
 
@@ -118,7 +123,7 @@ void schedInit(void);
  * the thread's context was saved. Use schedSchedule to save the context.
  */
 
-void schedScheduleNoInt(const bool_t kForceSwitch);
+void schedScheduleNoInt(const bool kForceSwitch);
 
 /**
  * @brief Calls the scheduler dispatch function by generating an interrupt.
@@ -129,24 +134,6 @@ void schedScheduleNoInt(const bool_t kForceSwitch);
  */
 
 void schedSchedule(void);
-
-/**
- * @brief Releases a thread to the scheduler.
- *
- * @details Releases a thread to the scheduler. This function is used to
- * put back a thread in the scheduler after locking it in, for instance, a
- * semaphore.
- *
- * @param[in] pThread The thread to release.
- * @param[in] kIsLocked Tells if the thread lock is already acquired.
- * @param[in] kState The release state.
- * @param[in] kSchedSameCpu Request schedule is a more prioritary thread can be
- * awaken on the same CPU.
- */
-void schedReleaseThread(kernel_thread_t*     pThread,
-                        const bool_t         kIsLocked,
-                        const THREAD_STATE_E kState,
-                        const bool_t         kSchedSameCpu);
 
 /**
  * @brief Puts the calling thread to sleep.
@@ -260,17 +247,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
 uint64_t schedGetCpuLoad(const uint8_t kCpuId);
 
 /**
- * @brief Sets the thread's state to waiting on a resource.
- *
- * @details Sets the thread's state to waiting on a resource. No scheduling
- * operation is called, the thread is simply put in waiting state, waiting on a
- * resource of the type passed as parameter.
- *
- * @param[in] kResource The type of waiting resource.
- */
-void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource);
-
-/**
  * @brief Updates the thread's priority.
  *
  * @details Updates the thread's priority. This will affect both running and
@@ -279,32 +255,7 @@ void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource);
  * ­@param[out] pThread The thread to update.
  * @param[in] kPrio The new priority to set.
  */
-void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
-
-/**
- * @brief Adds a resource to the thread's resource queue.
- *
- * @details Adds a resource to the thread's resource queue. The resource will
- * be freed when the thread is killed or exits.
- *
- * @param[in] kpResource The thread's resource to add.
- *
- * @return The handle to the added thread resource is returned.
- */
-void* schedThreadAddResource(const thread_resource_t* kpResource);
-
-/**
- * @brief Removes a resource from the thread's resource queue.
- *
- * @details Removes a resource from the thread's resource queue. The resource
- * release function is not called in that case, the resource is simply
- * removed from the resource queue.
- *
- * @param[in] pResourceHandle The handle to the resource to be removed.
- *
- * @return The function returnsthe error or success status.
- */
-OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle);
+OS_RETURN_E schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
 
 /**
  * @brief Terminates a thread.
@@ -351,7 +302,20 @@ void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
  * @return The function returns the number of threads that were filled in the
  * table.
  */
-size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize);
+size_t schedGetThreadsIds(int32_t* pThreadTable, const size_t kTableSize);
+
+/**
+ * @brief Fills the thread information structure.
+ *
+ * @details Fills the thread information structure with the information of the
+ * thread with the specified thread id.
+ *
+ * @param[out] pInfo The thread information structure to fill.
+ * @param[in] kTid The identifier of the thread to get the information of.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedGetThreadInfo(thread_info_t* pInfo, const int32_t kTid);
 
 /**
  * @brief Disables preemption for the current thread.
@@ -368,6 +332,66 @@ void schedDisablePreemption(void);
  * switched.
  */
 void schedEnablePreemption(void);
+
+/**
+ * @brief Returns the handle to the current running process.
+ *
+ * @details Returns the handle to the current running process. This value should
+ * never be NULL as a process should always be elected for running.
+ *
+ * @return A handle to the current running process is returned.
+ */
+kernel_process_t* schedGetCurrentProcess(void);
+
+/**
+ * @brief Sets a thread to the ready state.
+ *
+ * @details Sets a thread to the ready state. This function releases the thread
+ * to the ready list and manage it appartenance to any other scheduler lists.
+ *
+ * @param[out] pThread The thread to set to ready.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedSetThreadToReady(kernel_thread_t* pThread);
+
+/**
+ * @brief Sets the current thread to the waiting state.
+ *
+ * @details Sets the current thread to the waiting state. This function prevents
+ * putting back the thread to the ready list when the scheduler kicks in.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedThreadSetWaiting(void);
+
+/**
+ * @brief Tells if the sheduler has been initialized.
+ *
+ * @return true is returned if the scheduler has been initialized. false
+ * otherwise.
+ */
+bool schedIsInit(void);
+
+/**
+ * @brief Tells if the sheduler is running
+ *
+ * @return true is returned if the scheduler is running. false
+ * otherwise.
+ */
+bool schedIsRunning(void);
+
+/**
+ * @brief Returns if a thread is valid.
+ *
+ * @details Returns if a thread is valid. A thread is valid if it is still
+ * registered in the process that owns it.
+ *
+ * @param[in] pThread The thread to check.
+ *
+ * @return true is returned is the thread is value, false otherwise.
+ */
+bool schedIsThreadValid(kernel_thread_t* pThread);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

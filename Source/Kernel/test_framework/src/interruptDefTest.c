@@ -88,7 +88,7 @@ void defIntRoutine(void* args)
 
     TEST_POINT_ASSERT_INT(TEST_DEF_TID_VALUE,
                           schedGetCurrentThread()->tid != mainTid,
-                          0,
+                          mainTid,
                           schedGetCurrentThread()->tid,
                           TEST_DEF_INTERRUPT_ENABLED);
 
@@ -135,6 +135,8 @@ void* testThread(void* args)
 
     /* Schedule so we let the defered interrupt execute */
     schedSchedule();
+
+    while(counter != 100000){}
 
     TEST_POINT_ASSERT_UINT(TEST_DEF_INT_VALUE,
                            counter == 100000,

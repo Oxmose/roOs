@@ -24,7 +24,7 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic int types and bool_t */
+#include <stdint.h> /* Generic int types */
 #include <stddef.h> /* Standard definition */
 #include <kerror.h> /* Kernel error codes */
 

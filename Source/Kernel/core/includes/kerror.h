@@ -68,6 +68,8 @@ typedef enum
     OS_ERR_BLOCKED                         = 14,
     /** @brief Page fault occured */
     OS_ERR_PAGE_FAULT                      = 15,
+    /** @brief Canceled action */
+    OS_ERR_CANCELED                        = 16,
 } OS_RETURN_E;
 
 /*******************************************************************************

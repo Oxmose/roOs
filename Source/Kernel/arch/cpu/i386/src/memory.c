@@ -33,6 +33,7 @@
 #include <signal.h>        /* Thread signals */
 #include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>       /* FDT library */
+#include <stdbool.h>       /* Bool types */
 #include <critical.h>      /* Kernel lock */
 #include <core_mgt.h>      /* Core manager */
 #include <x86memory.h>     /* I386 memory definitions */
@@ -160,7 +161,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define MEM_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -226,8 +227,8 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread);
  */
 static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
                                     const uintptr_t kSize,
-                                    bool_t*         pIsHardware,
-                                    bool_t*         pIsMemory);
+                                    bool*           pIsHardware,
+                                    bool*           pIsMemory);
 
 /**
  * @brief Adds a free memory block to a memory list.
@@ -327,15 +328,15 @@ static void _releaseKernelPages(const uintptr_t kBaseAddress,
  * @brief Tells if a memory region is already mapped in the current page tables.
  *
  * @details Tells if a memory region is already mapped in the current page
- * tables. Returns FALSE if the region is not mapped, TRUE otherwise.
+ * tables. Returns false if the region is not mapped, true otherwise.
  *
  * @param[in] kVirtualAddress The base virtual address to check for mapping.
  * @param[in] pageCount The number of pages to check for mapping.
  *
- * @return Returns FALSE if the region is not mapped, TRUE otherwise.
+ * @return Returns false if the region is not mapped, true otherwise.
  */
-static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
-                                 size_t          pageCount);
+static bool _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
+                               size_t          pageCount);
 
 /**
  * @brief Maps the virtual address to the physical address in the current
@@ -623,7 +624,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     uintptr_t   physAddr;
     uint32_t    errorCode;
     uint32_t    flags;
-    bool_t      staleEntry;
+    bool        staleEntry;
     OS_RETURN_E error;
 
     /* Get the fault address and error code */
@@ -642,7 +643,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     physAddr = memoryMgrGetPhysAddr(faultAddress, &flags);
     if(physAddr != MEMMGR_PHYS_ADDR_ERROR)
     {
-        staleEntry = TRUE;
+        staleEntry = true;
         if((errorCode & PAGE_FAULT_ERROR_PROT_VIOLATION) ==
            PAGE_FAULT_ERROR_PROT_VIOLATION)
         {
@@ -650,23 +651,23 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
             if((errorCode & PAGE_FAULT_ERROR_USER) == PAGE_FAULT_ERROR_USER &&
                (flags & MEMMGR_MAP_USER) != MEMMGR_MAP_USER)
             {
-                staleEntry = FALSE;
+                staleEntry = false;
             }
 
             /* Check the access rights */
             if((errorCode & PAGE_FAULT_ERROR_WRITE) == PAGE_FAULT_ERROR_WRITE &&
                (flags & MEMMGR_MAP_RW) != MEMMGR_MAP_RW)
             {
-                staleEntry = FALSE;
+                staleEntry = false;
             }
 
         }
         else if(errorCode != 0)
         {
-            staleEntry = FALSE;
+            staleEntry = false;
         }
 
-        if(staleEntry == TRUE)
+        if(staleEntry == true)
         {
 
 #if MEMORY_MGR_DEBUG_ENABLED
@@ -695,15 +696,15 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
 
 static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
                                     const uintptr_t kSize,
-                                    bool_t*         pIsHardware,
-                                    bool_t*         pIsMemory)
+                                    bool*           pIsHardware,
+                                    bool*           pIsMemory)
 {
     uintptr_t limit;
     size_t    bytesOutMem;
     size_t    i;
 
-    *pIsHardware = FALSE;
-    *pIsMemory   = FALSE;
+    *pIsHardware = false;
+    *pIsMemory   = false;
 
     limit       = kPhysicalAddress + kSize;
     bytesOutMem = kSize;
@@ -715,8 +716,8 @@ static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
     }
     else if(limit < kPhysicalAddress)
     {
-        *pIsMemory  = TRUE;
-        *pIsHardware = TRUE;
+        *pIsMemory  = true;
+        *pIsHardware = true;
         return;
     }
 
@@ -754,7 +755,7 @@ static void _addBlock(mem_list_t*  pList,
     mem_range_t*   pRange;
     mem_range_t*   pNextRange;
     uintptr_t      limit;
-    bool_t         merged;
+    bool           merged;
 
     limit = baseAddress + kLength;
 
@@ -789,7 +790,7 @@ static void _addBlock(mem_list_t*  pList,
 
     /* Try to merge the new block, the list is ordered by base address asc */
     pCursor = pList->pQueue->pHead;
-    merged = FALSE;
+    merged = false;
     while(pCursor != NULL)
     {
         pRange = (mem_range_t*)pCursor->pData;
@@ -818,7 +819,7 @@ static void _addBlock(mem_list_t*  pList,
             /* Extend left */
             pRange->base  = baseAddress;
             pCursor->priority = KERNEL_VIRTUAL_ADDR_MAX - baseAddress;
-            merged = TRUE;
+            merged = true;
         }
         /* If the new block is after but needs merging */
         else if(baseAddress == pRange->limit)
@@ -845,27 +846,27 @@ static void _addBlock(mem_list_t*  pList,
                     pNextRange->base = pRange->base;
                     pCursor->priority = KERNEL_VIRTUAL_ADDR_MAX -
                                         pNextRange->base;
-                    merged = TRUE;
+                    merged = true;
 
 
                     /* Remove node */
                     kfree(pSaveCursor->pData);
-                    kQueueRemove(pList->pQueue, pSaveCursor, TRUE);
+                    kQueueRemove(pList->pQueue, pSaveCursor, true);
                     kQueueDestroyNode(&pSaveCursor);
                 }
                 else if(((mem_range_t*)pCursor->pNext->pData)->base < limit)
                 {
-                    MEM_ASSERT(FALSE,
+                    MEM_ASSERT(false,
                                "Adding an already free block",
                                OS_ERR_UNAUTHORIZED_ACTION);
                 }
             }
 
-            if(merged == FALSE)
+            if(merged == false)
             {
                 /* Extend up */
                 pRange->limit = limit;
-                merged = TRUE;
+                merged = true;
             }
         }
         else if(baseAddress < pRange->base)
@@ -886,14 +887,14 @@ static void _addBlock(mem_list_t*  pList,
     }
 
     /* If not merged, create a new block in the list */
-    if(merged == FALSE)
+    if(merged == false)
     {
         pRange = kmalloc(sizeof(mem_range_t));
         MEM_ASSERT(pRange != NULL,
                    "Failed to allocate new memory range",
                    OS_ERR_NO_MORE_MEMORY);
 
-        pNewNode = kQueueCreateNode(pRange, TRUE);
+        pNewNode = kQueueCreateNode(pRange, true);
 
         pRange->base  = baseAddress;
         pRange->limit = limit;
@@ -975,7 +976,7 @@ static void _removeBlock(mem_list_t*  pList,
             }
 
             kfree(pSaveCursor->pData);
-            kQueueRemove(pList->pQueue, pSaveCursor, TRUE);
+            kQueueRemove(pList->pQueue, pSaveCursor, true);
             kQueueDestroyNode(&pSaveCursor);
         }
         /* If up containted */
@@ -1050,7 +1051,7 @@ static void _removeBlock(mem_list_t*  pList,
                        "Failed to allocate new memory range",
                        OS_ERR_NO_MORE_MEMORY);
 
-            pNewNode = kQueueCreateNode(pRange, TRUE);
+            pNewNode = kQueueCreateNode(pRange, true);
 
             pRange->base  = baseAddress;
             pRange->limit = saveLimit;
@@ -1117,7 +1118,7 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
 #endif
 
                 kfree(pCursor->pData);
-                kQueueRemove(pList->pQueue, pCursor, TRUE);
+                kQueueRemove(pList->pQueue, pCursor, true);
                 kQueueDestroyNode(&pCursor);
             }
             else
@@ -1172,10 +1173,10 @@ static void _releaseKernelPages(const uintptr_t kBaseAddress,
               kPageCount * KERNEL_PAGE_SIZE);
 }
 
-static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
-                                 size_t          pageCount)
+static bool _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
+                                 size_t        pageCount)
 {
-    bool_t     isMapped;
+    bool       isMapped;
     uint16_t   pgDirEntry;
     uint16_t   pgTableEntry;
     uint16_t   offset;
@@ -1187,7 +1188,7 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
                "Checking mapping for non aligned address",
                OS_ERR_INCORRECT_VALUE);
 
-    isMapped = FALSE;
+    isMapped = false;
     pPgDirRecurEntry = (uintptr_t*)KERNEL_RECUR_PG_DIR_BASE;
     currVirtAddr = kVirtualAddress;
 
@@ -1219,7 +1220,7 @@ static bool_t _memoryMgrIsMapped(const uintptr_t kVirtualAddress,
                 if((pPgTableRecurEntry[pgTableEntry] & PAGE_FLAG_PRESENT) != 0)
                 {
                     pageCount = 0;
-                    isMapped = TRUE;
+                    isMapped = true;
                     break;
                 }
                 else
@@ -1243,9 +1244,9 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     size_t     toMap;
     uint32_t   mapFlags;
     uint32_t   mapPgdirFlags;
-    bool_t     isMapped;
-    bool_t     isHardware;
-    bool_t     isMemory;
+    bool       isMapped;
+    bool       isHardware;
+    bool       isMemory;
     uint16_t   pgDirEntry;
     uint16_t   pgTableEntry;
     uintptr_t  currVirtAddr;
@@ -1269,8 +1270,8 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
                      &isMemory);
 
     /* If is hardware, check if flags are valid */
-    if((isHardware == TRUE && isMemory == TRUE) ||
-       (isHardware ==TRUE &&
+    if((isHardware == true && isMemory == true) ||
+       (isHardware ==true &&
         (kFlags & MEMMGR_MAP_HARDWARE) != MEMMGR_MAP_HARDWARE))
     {
         return OS_ERR_UNAUTHORIZED_ACTION;
@@ -1291,7 +1292,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
      * more page directory entries
      */
     isMapped = _memoryMgrIsMapped(kVirtualAddress, kPageCount);
-    if(isMapped == TRUE)
+    if(isMapped == true)
     {
         return OS_ERR_ALREADY_EXIST;
     }
@@ -1397,7 +1398,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                    const size_t    kPageCount)
 {
     size_t       toUnmap;
-    bool_t       hasMapping;
+    bool         hasMapping;
     uint16_t     pgDirEntry;
     uint16_t     pgTableEntry;
     uint16_t     offset;
@@ -1450,7 +1451,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
 
                     /* Update other cores TLB */
                     ipiParams.pData = (void*)currVirtAddr;
-                    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, TRUE);
+                    cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, true);
                 }
 
                 currVirtAddr += KERNEL_PAGE_SIZE;
@@ -1463,31 +1464,31 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
             offset = pgTableEntry;
             pgTableEntry = (kVirtualAddress >> PG_TABLE_ENTRY_OFFSET) &
                             PG_TABLE_ENTRY_OFFSET_MASK;
-            hasMapping = FALSE;
+            hasMapping = false;
 
             /* Check before entry */
             for(i = 0; i < pgTableEntry; ++i)
             {
                 if((pPgTableRecurEntry[i] & PAGE_FLAG_PRESENT) != 0)
                 {
-                    hasMapping = TRUE;
+                    hasMapping = true;
                     break;
                 }
             }
 
             /* Check after entry */
             for(i = offset;
-                hasMapping == FALSE && i < KERNEL_PGDIR_ENTRY_COUNT;
+                hasMapping == false && i < KERNEL_PGDIR_ENTRY_COUNT;
                 ++i)
             {
                 if((pPgTableRecurEntry[i] & PAGE_FLAG_PRESENT) != 0)
                 {
-                    hasMapping = TRUE;
+                    hasMapping = true;
                     break;
                 }
             }
 
-            if(hasMapping == FALSE)
+            if(hasMapping == false)
             {
                 /* Release frame and set as non present */
                 _releaseFrames(pPgDirRecurEntry[pgDirEntry] &
@@ -1498,7 +1499,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
 
                 /* Update other cores TLB */
                 ipiParams.pData = (void*)pPgTableRecurEntry;
-                cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, TRUE);
+                cpuMgtSendIpi(CPU_IPI_BROADCAST_TO_OTHER, &ipiParams, true);
             }
         }
         else
@@ -1925,10 +1926,10 @@ void memoryMgrInit(void)
     OS_RETURN_E error;
 
     /* Initialize structures */
-    sPhysMemList.pQueue = kQueueCreate(TRUE);
+    sPhysMemList.pQueue = kQueueCreate(true);
     KERNEL_SPINLOCK_INIT(sPhysMemList.lock);
 
-    sKernelFreePagesList.pQueue = kQueueCreate(TRUE);
+    sKernelFreePagesList.pQueue = kQueueCreate(true);
     KERNEL_SPINLOCK_INIT(sKernelFreePagesList.lock);
 
     /* Detect the memory */
@@ -2159,7 +2160,7 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
     return error;
 }
 
-void* memoryKernelMapStack(const size_t kSize)
+uintptr_t memoryKernelMapStack(const size_t kSize)
 {
     size_t      pageCount;
     size_t      mappedCount;
@@ -2179,7 +2180,7 @@ void* memoryKernelMapStack(const size_t kSize)
     if(pageBaseAddress == 0)
     {
         KERNEL_UNLOCK(sLock);
-        return NULL;
+        return (uintptr_t)NULL;
     }
 
     /* Now map, we do not need contiguous frames */
@@ -2230,16 +2231,17 @@ void* memoryKernelMapStack(const size_t kSize)
 
     KERNEL_UNLOCK(sLock);
 
-    return (void*)pageBaseAddress;
+    return pageBaseAddress + (pageCount * KERNEL_PAGE_SIZE);
 }
 
-void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
+void memoryKernelUnmapStack(const uintptr_t kEndAddress, const size_t kSize)
 {
     size_t    pageCount;
     size_t    i;
     uintptr_t frameAddr;
+    uintptr_t baseAddress;
 
-    MEM_ASSERT((kBaseAddress & PAGE_SIZE_MASK) == 0 &&
+    MEM_ASSERT((kEndAddress & PAGE_SIZE_MASK) == 0 &&
                 (kSize & PAGE_SIZE_MASK) == 0 &&
                 kSize != 0,
                 "Unmaped kernel stack with invalid parameters",
@@ -2247,13 +2249,14 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
 
     /* Get the page count */
     pageCount = kSize / KERNEL_PAGE_SIZE;
+    baseAddress = kEndAddress - kSize;
 
     KERNEL_LOCK(sLock);
 
     /* Free the frames and memory */
     for(i = 0; i < pageCount; ++i)
     {
-        frameAddr = _memoryMgrGetPhysAddr(kBaseAddress + KERNEL_PAGE_SIZE * i,
+        frameAddr = _memoryMgrGetPhysAddr(baseAddress - KERNEL_PAGE_SIZE * i,
                                           NULL);
         MEM_ASSERT(frameAddr != MEMMGR_PHYS_ADDR_ERROR,
                    "Invalid physical frame",
@@ -2262,8 +2265,8 @@ void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize)
     }
 
     /* Unmap the memory */
-    _memoryMgrUnmap(kBaseAddress, pageCount);
-    _releaseKernelPages(kBaseAddress, pageCount + 1);
+    _memoryMgrUnmap(baseAddress, pageCount);
+    _releaseKernelPages(baseAddress, pageCount + 1);
 
     KERNEL_UNLOCK(sLock);
 }

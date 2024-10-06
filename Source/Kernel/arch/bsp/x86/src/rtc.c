@@ -144,7 +144,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define RTC_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -556,7 +556,7 @@ static void _rtcEnable(void* pDrvCtrl)
 
     if(pRtcCtrl->disabledNesting == 0 && pRtcCtrl->selectedFrequency != 0)
     {
-        interruptIRQSetMask(pRtcCtrl->irqNumber, TRUE);
+        interruptIRQSetMask(pRtcCtrl->irqNumber, true);
     }
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
@@ -582,7 +582,7 @@ static void _rtcDisable(void* pDrvCtrl)
            pRtcCtrl->disabledNesting);
 #endif
 
-    interruptIRQSetMask(pRtcCtrl->irqNumber, FALSE);
+    interruptIRQSetMask(pRtcCtrl->irqNumber, false);
 
     KERNEL_UNLOCK(pRtcCtrl->lock);
 }

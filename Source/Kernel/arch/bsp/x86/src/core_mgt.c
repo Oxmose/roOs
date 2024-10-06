@@ -32,6 +32,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* Device tree library */
+#include <stdbool.h>      /* Bool types */
 #include <console.h>      /* Console service */
 #include <critical.h>     /* Critical sections */
 #include <drivermgr.h>    /* Driver manager */
@@ -91,7 +92,7 @@
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define CORE_MGT_ASSERT(COND, MSG, ERROR) {                 \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -219,7 +220,7 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
             break;
         case IPI_FUNC_SCHEDULE:
             /* Request a schedule */
-            pCurrThread->requestSchedule = TRUE;
+            pCurrThread->requestSchedule = true;
             break;
         default:
             PANIC(OS_ERR_INCORRECT_VALUE,
@@ -278,7 +279,7 @@ void coreMgtInit(void)
     /* Initializes the IPI parameters locks */
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
-        sIpiParametersList[i] = kQueueCreate(TRUE);
+        sIpiParametersList[i] = kQueueCreate(true);
     }
 
     /* Init the current core information */
@@ -331,7 +332,7 @@ void coreMgtApInit(const uint8_t kCpuId)
 
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  kpParams,
-                   const bool_t   kAllocateParam)
+                   const bool     kAllocateParam)
 {
     uint8_t        i;
     uint8_t        destCpuId;
@@ -357,7 +358,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         /* Check if in bounds */
         if(destCpuId < _bootedCPUCount)
         {
-            if(kAllocateParam == TRUE)
+            if(kAllocateParam == true)
             {
                 pParams = kmalloc(sizeof(ipi_params_t));
                 CORE_MGT_ASSERT(pParams != NULL,
@@ -369,7 +370,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
             {
                 pParams = kpParams;
             }
-            pNode = kQueueCreateNode(pParams, TRUE);
+            pNode = kQueueCreateNode(pParams, true);
             kQueuePush(pNode, sIpiParametersList[destCpuId]);
 
             kspLapicDriver->pSendIPI(sCoreIds[destCpuId], sIpiInterruptLine);
@@ -381,7 +382,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         /* Send to all */
         for(i = 0; i < _bootedCPUCount; ++i)
         {
-            if(kAllocateParam == TRUE)
+            if(kAllocateParam == true)
             {
                 pParams = kmalloc(sizeof(ipi_params_t));
                 CORE_MGT_ASSERT(pParams != NULL,
@@ -393,7 +394,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
             {
                 pParams = kpParams;
             }
-            pNode = kQueueCreateNode(pParams, TRUE);
+            pNode = kQueueCreateNode(pParams, true);
             kQueuePush(pNode, sIpiParametersList[i]);
 
             kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
@@ -408,7 +409,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         {
             if(i != srcCpuId)
             {
-                if(kAllocateParam == TRUE)
+                if(kAllocateParam == true)
                 {
                     pParams = kmalloc(sizeof(ipi_params_t));
                     CORE_MGT_ASSERT(pParams != NULL,
@@ -420,7 +421,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                 {
                     pParams = kpParams;
                 }
-                pNode = kQueueCreateNode(pParams, TRUE);
+                pNode = kQueueCreateNode(pParams, true);
                 kQueuePush(pNode, sIpiParametersList[i]);
 
                 kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
@@ -457,7 +458,7 @@ void coreMgtApInit(const uint8_t kCpuId)
 
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  pParams,
-                   const bool_t   kAllocateParam)
+                   const bool     kAllocateParam)
 {
     (void)kFlags;
     (void)kpParams;

@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include <stddef.h> /* Standard defined types */
-#include <stdint.h> /* Standard int types and bool_t */
+#include <stdint.h> /* Standard int types */
 
 /*******************************************************************************
  * CONSTANTS

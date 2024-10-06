@@ -196,6 +196,35 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
 uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
                                uint32_t*       pFlags);
 
+/**
+ * @brief Maps a stack in the kernel memory region and returns its address.
+ *
+ * @details Maps a stack in the kernel memory region and returns its address.
+ * One more page after the stack is allocated but not mapped to catch overflows.
+ * The required frames are also allocated.
+ *
+ * @param[in] kSize The size of the stack. If not aligned with the kernel page
+ * size, the actual mapped size will be aligned up on page boundaries.
+ *
+ * @return The base end of the stack in kernel memory is returned.
+ */
+uintptr_t memoryKernelMapStack(const size_t kSize);
+
+/**
+ * @brief Unmaps a stack in the kernel memory region and frees the associated
+ * physical memory.
+ *
+ * @details Maps a stack in the kernel memory region and frees the associated
+ * physical memory.
+ * The additional overflow page is also freed.
+ *
+ * @param[in] kEndAddress The end address of the stack to unmap. If not
+ * aligned with the kernel page size, a panic is generated.
+ * @param[in] kSize The size of the stack. If not aligned with the kernel page
+ * size, a panic is generated.
+ */
+void memoryKernelUnmapStack(const uintptr_t kEndAddress,
+                            const size_t kSize);
 #endif /* #ifndef __MEMORY_MGR_ */
 
 /************************************ EOF *************************************/

@@ -83,7 +83,7 @@
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define TIME_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -236,7 +236,7 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
     }
 
     /* The main time triggered, we need to schedule the thread */
-    pCurrThread->requestSchedule = TRUE;
+    pCurrThread->requestSchedule = true;
 }
 
 static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
@@ -262,7 +262,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     /* Create queue is it does not exist */
     if(spAuxTimersQueue == NULL)
     {
-        spAuxTimersQueue = kQueueCreate(FALSE);
+        spAuxTimersQueue = kQueueCreate(false);
         if(spAuxTimersQueue == NULL)
         {
             return OS_ERR_NO_MORE_MEMORY;
@@ -272,7 +272,7 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
     KERNEL_UNLOCK(sAuxTimersListLock);
 
     /* Create the new node */
-    pNewNode = kQueueCreateNode((void*)kpTimer, FALSE);
+    pNewNode = kQueueCreateNode((void*)kpTimer, false);
     if(pNewNode == NULL)
     {
         return OS_ERR_NO_MORE_MEMORY;

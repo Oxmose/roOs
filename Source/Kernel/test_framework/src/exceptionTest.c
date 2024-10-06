@@ -84,9 +84,9 @@ static void _end(void)
 {
     kprintf("In end\n");
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER1_ID,
-                            TRUE,
-                            TRUE,
-                            TRUE,
+                            true,
+                            true,
+                            true,
                             TEST_EXCEPTION_ENABLED);
     TEST_FRAMEWORK_END();
 }
@@ -99,9 +99,9 @@ static void _dummy(kernel_thread_t* curr_thread)
     kprintf("Got exc\n");
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,
-                            TRUE,
-                            TRUE,
-                            TRUE,
+                            true,
+                            true,
+                            true,
                             TEST_EXCEPTION_ENABLED);
 }
 
@@ -188,9 +188,9 @@ void exceptionTest(void)
     (void)m;
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_NOT_CAUGHT_ID,
-                            FALSE,
-                            TRUE,
-                            FALSE,
+                            false,
+                            true,
+                            false,
                             TEST_EXCEPTION_ENABLED);
 }
 

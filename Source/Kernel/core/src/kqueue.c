@@ -32,6 +32,7 @@
 #include <string.h>       /* String manipulation */
 #include <kerror.h>       /* Kernel errors definitions */
 #include <syslog.h>       /* Kernel Syslog */
+#include <stdbool.h>      /* Bool types */
 
 /* Configuration files */
 #include <config.h>
@@ -72,7 +73,7 @@
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define KQUEUE_ASSERT(COND, MSG, ERROR) {                    \
-    if((COND) == FALSE)                                      \
+    if((COND) == false)                                      \
     {                                                        \
         PANIC(ERROR, MODULE_NAME, MSG);                      \
     }                                                        \
@@ -101,7 +102,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
+kqueue_node_t* kQueueCreateNode(void* pData, const bool kIsCritical)
 {
     kqueue_node_t* pNewNode;
 
@@ -109,9 +110,9 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical)
     pNewNode = kmalloc(sizeof(kqueue_node_t));
     if(pNewNode == NULL)
     {
-        if(kIsCritical == TRUE)
+        if(kIsCritical == true)
         {
-            KQUEUE_ASSERT(FALSE,
+            KQUEUE_ASSERT(false,
                           "Could not allocate knode",
                           OS_ERR_NO_MORE_MEMORY);
             return NULL;
@@ -156,7 +157,7 @@ void kQueueDestroyNode(kqueue_node_t** ppNode)
     *ppNode = NULL;
 }
 
-kqueue_t* kQueueCreate(const bool_t kIsCritical)
+kqueue_t* kQueueCreate(const bool kIsCritical)
 {
     kqueue_t* pNewQueue;
 
@@ -164,12 +165,11 @@ kqueue_t* kQueueCreate(const bool_t kIsCritical)
     pNewQueue = kmalloc(sizeof(kqueue_t));
     if(pNewQueue == NULL)
     {
-        if(kIsCritical == TRUE)
+        if(kIsCritical == true)
         {
-            KQUEUE_ASSERT(FALSE,
+            KQUEUE_ASSERT(false,
                           "Could not allocate kqueue",
                           OS_ERR_NO_MORE_MEMORY);
-            return NULL;
         }
         else
         {
@@ -435,10 +435,8 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData)
     return pNode;
 }
 
-void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
+void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool kPanic)
 {
-    kqueue_node_t* pCursor;
-
 #if KQUEUE_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
@@ -453,38 +451,33 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     KERNEL_LOCK(pQueue->lock);
 
-    /* Search for node in the queue*/
-    pCursor = pQueue->pHead;
-    while(pCursor != NULL && pCursor != pNode)
+    if(pNode->pQueuePtr != pQueue)
     {
-        pCursor = pCursor->pNext;
-    }
-
-    KQUEUE_ASSERT((pCursor != NULL || kPanic == FALSE),
-                  "Could not find knode to remove",
-                  OS_ERR_INCORRECT_VALUE);
-
-    if(pCursor == NULL)
-    {
+        if(kPanic == true)
+        {
+            KQUEUE_ASSERT(false,
+                          "Could not find knode to remove",
+                          OS_ERR_INCORRECT_VALUE);
+        }
         KERNEL_UNLOCK(pQueue->lock);
         return;
     }
 
     /* Manage link */
-    if(pCursor->pPrev != NULL && pCursor->pNext != NULL)
+    if(pNode->pPrev != NULL && pNode->pNext != NULL)
     {
-        pCursor->pPrev->pNext = pCursor->pNext;
-        pCursor->pNext->pPrev = pCursor->pPrev;
+        pNode->pPrev->pNext = pNode->pNext;
+        pNode->pNext->pPrev = pNode->pPrev;
     }
-    else if(pCursor->pPrev == NULL && pCursor->pNext != NULL)
+    else if(pNode->pPrev == NULL && pNode->pNext != NULL)
     {
-        pQueue->pHead = pCursor->pNext;
-        pCursor->pNext->pPrev = NULL;
+        pQueue->pHead = pNode->pNext;
+        pNode->pNext->pPrev = NULL;
     }
-    else if(pCursor->pPrev != NULL && pCursor->pNext == NULL)
+    else if(pNode->pPrev != NULL && pNode->pNext == NULL)
     {
-        pQueue->pTail = pCursor->pPrev;
-        pCursor->pPrev->pNext = NULL;
+        pQueue->pTail = pNode->pPrev;
+        pNode->pPrev->pNext = NULL;
     }
     else
     {
@@ -497,6 +490,8 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
 
     pNode->pQueuePtr = NULL;
 
+    --pQueue->size;
+
     KERNEL_UNLOCK(pQueue->lock);
 
 #if KQUEUE_DEBUG_ENABLED
@@ -505,6 +500,15 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic)
            "KQueue renoved knode 0x%p from kqueue 0x%p",
            pNode, pQueue);
 #endif
+}
+
+size_t kQueueSize(const kqueue_t* kpQueue)
+{
+    KQUEUE_ASSERT(kpQueue != NULL,
+                  "Cannot get size of NULL kqueue",
+                  OS_ERR_NULL_POINTER);
+
+    return kpQueue->size;
 }
 
 /************************************ EOF *************************************/

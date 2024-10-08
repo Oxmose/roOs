@@ -159,6 +159,8 @@ OS_RETURN_E ksemInit(ksemaphore_t*   pSem,
 
 OS_RETURN_E ksemDestroy(ksemaphore_t* pSem)
 {
+    size_t wakeCount;
+
     /* Check parameters */
     if(pSem == NULL)
     {
@@ -178,7 +180,8 @@ OS_RETURN_E ksemDestroy(ksemaphore_t* pSem)
     /* Release all waiting threads */
     pSem->lockState = 1;
     pSem->level = SEMAPHORE_MAX_LEVEL;
-    kfutexWake(&pSem->futex, KFUTEX_MAX_WAIT_COUNT);
+    wakeCount = KFUTEX_MAX_WAIT_COUNT;
+    kfutexWake(&pSem->futex, &wakeCount);
     pSem->futex.isAlive = false;
 
     KERNEL_UNLOCK(pSem->lock);
@@ -275,6 +278,8 @@ OS_RETURN_E ksemPost(ksemaphore_t* pSem)
 {
     uint32_t    intState;
     OS_RETURN_E error;
+    size_t      wakeCount;
+
     /* Check parameters */
     if(pSem == NULL)
     {
@@ -303,9 +308,10 @@ OS_RETURN_E ksemPost(ksemaphore_t* pSem)
     {
         pSem->lockState = 1;
         /* Release thread */
-        error = kfutexWake(&pSem->futex, 1);
+        wakeCount = 1;
+        error = kfutexWake(&pSem->futex, &wakeCount);
 
-        if(error == OS_NO_ERR)
+        if(error == OS_NO_ERR && wakeCount > 0)
         {
             --pSem->level;
             if(pSem->level <= 0)

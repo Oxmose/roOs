@@ -72,6 +72,7 @@ static ksemaphore_t fifoSem;
 static ksemaphore_t cancelSem;
 static ksemaphore_t trypendSem;
 static ksemaphore_t trypendSemSync;
+static ksemaphore_t semMultiple;
 static volatile uint64_t mutexValueTest;
 static volatile uint32_t lastTid;
 static volatile uint32_t orderedTid;
@@ -264,6 +265,48 @@ static void* testTrypendRoutine(void* args)
                               TEST_KSEMAPHORE_ENABLED);
     }
     return NULL;
+}
+
+
+static void testMultiplePost(void)
+{
+    uint32_t i;
+    OS_RETURN_E error;
+
+    error = ksemInit(&semMultiple, 0, 0);
+    TEST_POINT_ASSERT_RCODE(TEST_KSEMAPHORE_CREATE_KSEMAPHORE7,
+                            error == OS_NO_ERR,
+                            OS_NO_ERR,
+                            error,
+                            TEST_KSEMAPHORE_ENABLED);
+    mutexValueTest = 0;
+
+    for(i = 0; i < 100; ++i)
+    {
+        error = ksemPost(&semMultiple);
+        TEST_POINT_ASSERT_RCODE(TEST_KSEMAPHORE_POST_MULTIPLE(i),
+                                error == OS_NO_ERR,
+                                OS_NO_ERR,
+                                error,
+                                TEST_KSEMAPHORE_ENABLED);
+    }
+
+    for(i = 0; i < 100; ++i)
+    {
+        error = ksemWait(&semMultiple);
+        TEST_POINT_ASSERT_RCODE(TEST_KSEMAPHORE_WAIT_MULTIPLE(i),
+                                error == OS_NO_ERR,
+                                OS_NO_ERR,
+                                error,
+                                TEST_KSEMAPHORE_ENABLED);
+    }
+
+    error = ksemDestroy(&semMultiple);
+    TEST_POINT_ASSERT_RCODE(TEST_KSEMAPHORE_DESTROY_MULTIPLE,
+                            error == OS_NO_ERR,
+                            OS_NO_ERR,
+                            error,
+                            TEST_KSEMAPHORE_ENABLED);
 }
 
 static void testMutualExc(void)
@@ -647,6 +690,8 @@ static void* testThread(void* args)
 {
     (void)args;
 
+    testMultiplePost();
+    kprintf("Multiple Post done\n");
     testMutualExc();
     kprintf("Mutual Exclusion Done\n");
     testOrder();

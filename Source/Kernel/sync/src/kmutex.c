@@ -151,6 +151,8 @@ OS_RETURN_E kmutexInit(kmutex_t* pMutex, const uint32_t kFlags)
 
 OS_RETURN_E kmutexDestroy(kmutex_t* pMutex)
 {
+    size_t wakeCount;
+
     /* Check parameters */
     if(pMutex == NULL)
     {
@@ -171,7 +173,9 @@ OS_RETURN_E kmutexDestroy(kmutex_t* pMutex)
     pMutex->lockState = 1;
     pMutex->recLevel = 0;
     pMutex->nbWaitingThreads = 0;
-    kfutexWake(&pMutex->futex, KFUTEX_MAX_WAIT_COUNT);
+
+    wakeCount = KFUTEX_MAX_WAIT_COUNT;
+    kfutexWake(&pMutex->futex, &wakeCount);
     pMutex->futex.isAlive = false;
 
     KERNEL_UNLOCK(pMutex->lock);
@@ -305,6 +309,7 @@ OS_RETURN_E kmutexUnlock(kmutex_t* pMutex)
     uint32_t         intState;
     kernel_thread_t* pCurThread;
     OS_RETURN_E      error;
+    size_t           wakeCount;
     bool             schedule;
 
     /* Check parameters */
@@ -354,9 +359,10 @@ OS_RETURN_E kmutexUnlock(kmutex_t* pMutex)
 
         /* Release one thread */
         pMutex->lockState = 1;
-        error = kfutexWake(&pMutex->futex, 1);
+        wakeCount = 1;
+        error = kfutexWake(&pMutex->futex, &wakeCount);
 
-        if(error == OS_NO_ERR)
+        if(error == OS_NO_ERR && wakeCount > 0)
         {
             /* We wokeup a thread, set the mutex as locked */
             pMutex->lockState = 0;

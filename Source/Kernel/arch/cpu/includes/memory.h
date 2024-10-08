@@ -137,28 +137,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
                       OS_RETURN_E*   pError);
 
 /**
- * @brief Maps a physical memory region in the kernel address space.
- *
- * @details Maps a physical memory region in the kernel address space. The
- * function allocated free memory frames to the kernel and creates a new
- * mapping. The size must be aligned on page boundaries. If not, the mapping
- * fails and NULL is returned.
- *
- * @param[in] kSize The size of the region to map in bytes. Must be aligned on
- * page boundaries.
- * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
- * infomation.
- * @param[out] pError The error buffer to store the operation's result. If NULL,
- * does not set the error value.
- *
- * @return The function returns the virtual base address of the mapped region.
- * NULL is returned on error.
- */
-void* memoryKernelAllocate(const size_t   kSize,
-                           const uint32_t kFlags,
-                           OS_RETURN_E*   pError);
-
-/**
  * @brief Unmaps a virtual region (memory or hardware) from the kernel address
  * space.
  *
@@ -225,6 +203,54 @@ uintptr_t memoryKernelMapStack(const size_t kSize);
  */
 void memoryKernelUnmapStack(const uintptr_t kEndAddress,
                             const size_t kSize);
+
+/**
+ * @brief Returns the physical address of the kernel page table.
+ *
+ * @details Returns the physical address of the kernel page table.
+ *
+ * @return Returns the physical address of the kernel page table.
+ */
+void* memoryKernelGetPageTable(void);
+
+/**
+ * @brief Maps a physical memory region in the kernel address space.
+ *
+ * @details Maps a physical memory region in the kernel address space. The
+ * function allocates free memory frames to the kernel and creates a new
+ * mapping. The size must be aligned on page boundaries. If not, the mapping
+ * fails and NULL is returned.
+ *
+ * @param[in] kSize The size of the region to map in bytes. Must be aligned on
+ * page boundaries.
+ * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
+ * infomation.
+ * @param[out] pError The error buffer to store the operation's result. If NULL,
+ * does not set the error value.
+ *
+ * @return The function returns the virtual base address of the mapped region.
+ * NULL is returned on error.
+ */
+void* memoryKernelAllocate(const size_t   kSize,
+                           const uint32_t kFlags,
+                           OS_RETURN_E*   pError);
+
+/**
+ * @brief Releases a physical memory region in the kernel address space.
+ *
+ * @details Releases a physical memory region in the kernel address space. The
+ * function releases the memory frames to the kernel and removes the existing
+ * mapping. The size must be aligned on page boundaries. If not, the unmapping
+ * fails and NULL is returned.
+ *
+ * @param[in] kVirtualAddress The virtual address of the mapping to release.
+ * @param[in] kSize The size of the mapping to release.
+ *
+ * @return The function returns the success or error state.
+ */
+OS_RETURN_E memoryKernelFree(const void* kVirtualAddress, const size_t kSize);
+
+
 #endif /* #ifndef __MEMORY_MGR_ */
 
 /************************************ EOF *************************************/

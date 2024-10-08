@@ -138,7 +138,8 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
  * re-scheduled. The wait success or error state is returned.
  *
  * @param[in, out] pFutex The futex object to wait.
- * @param[in] kWakeCount The nunber of thread to wake.
+ * @param[in] pWakeCount The nunber of thread to wake. This value is updated
+ * with the actual number of thread that were woken up.
  *
  * @return The wake success or error state is returned.
  *
@@ -147,7 +148,7 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
  * wait until the next call to futexWake.
  * Waking on a destroyed futex produces undefined behavior.
  */
-OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount);
+OS_RETURN_E kfutexWake(kfutex_t* pFutex, size_t* pWakeCount);
 
 #endif /* #ifndef __SYNC_KFUTEX_H_ */
 

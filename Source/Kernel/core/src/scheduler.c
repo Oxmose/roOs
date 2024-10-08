@@ -419,6 +419,30 @@ static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
 static void _schedReleaseThread(kernel_thread_t* pThread,
                                 const bool       kIsLocked);
 
+/**
+ * @brief Manages the thread's next state.
+ *
+ * @details Manages the thread's next state. Depending on the thread's status
+ * and its next state, the thread actual next state us updated.
+ *
+ * @param[in, out] pThread The thread to manage.
+ */
+static void _manageNextState(kernel_thread_t* pThread);
+
+/**
+ * @brief Creates the init process.
+ *
+ * @details Creates the init process. The function will initialize the process
+ * and its attributes and allocate the required resources.
+ *
+ * @param[out] ppProcess The handle buffer that receives the new process'
+ * handle.
+ * @param[in] kpName The name of the new process.
+ *
+ * @return The function returns the success or error status.
+ */
+static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
+                                           const char*        kpName);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -452,6 +476,9 @@ static u32_atomic_t sLastGivenTid;
 
 /** @brief The number of thread in the system. */
 static u32_atomic_t sThreadCount;
+
+/** @brief The number of processes in the system. */
+static u32_atomic_t sProcessCount;
 
 /** @brief Stores the thread tables for all CPUs */
 static thread_table_t sThreadTables[SOC_CPU_COUNT];
@@ -828,7 +855,7 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     OS_RETURN_E        error;
 
     SCHED_ASSERT(pThread != schedGetCurrentThread(),
-                 "Thread cannot clean themselves!",
+                 "Threads cannot clean themselves!",
                  OS_ERR_UNAUTHORIZED_ACTION);
 
     SCHED_ASSERT(pThread->currentState == THREAD_STATE_ZOMBIE,
@@ -1385,6 +1412,74 @@ static void _manageNextState(kernel_thread_t* pThread)
     pThread->currentState = pThread->nextState;
 }
 
+static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
+                                           const char*        kpName)
+{
+    OS_RETURN_E       error;
+    kernel_process_t* pProcess;
+
+    if(ppProcess == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Allocate the structure */
+    pProcess = kmalloc(sizeof(kernel_process_t));
+    if(pProcess == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    memset(pProcess, 0, sizeof(kernel_process_t));
+
+    /* Create process memory information */
+    pProcess->pMemoryData = memoryKernelGetPageTable();
+    if(pProcess->pMemoryData == NULL)
+    {
+        kfree(pProcess);
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Create the thread table */
+    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                   kfree),
+                                                &error);
+    if(error != OS_NO_ERR)
+    {
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Create the futex table */
+    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                  kfree),
+                                               &error);
+    if(error != OS_NO_ERR)
+    {
+
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
+                     "Failed to remove threads table.",
+                     error);
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Setup the process attributes */
+    pProcess->pid = atomicIncrement32(&sLastGivenPid);
+    pProcess->pParent = schedGetCurrentProcess();
+    memcpy(pProcess->pName,
+           kpName,
+           MIN(PROCESS_NAME_MAX_LENGTH, strlen(kpName) + 1));
+    pProcess->pName[PROCESS_NAME_MAX_LENGTH] = 0;
+
+    KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
+    KERNEL_SPINLOCK_INIT(pProcess->lock);
+
+    *ppProcess = pProcess;
+
+    atomicIncrement32(&sProcessCount);
+    return OS_NO_ERR;
+}
+
 void schedInit(void)
 {
     uint32_t    i;
@@ -1395,33 +1490,16 @@ void schedInit(void)
     sLastGivenTid = 0;
     sLastGivenPid = 0;
     sThreadCount  = 0;
+    sProcessCount = 0;
     memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * SOC_CPU_COUNT);
     memset(spCurrentProcessPtr, 0, sizeof(kernel_process_t) * SOC_CPU_COUNT);
     memset(sCpuStats, 0, sizeof(cpu_stat_t) * SOC_CPU_COUNT);
 
     /* Create the kernel main process */
-    spCurrentProcessPtr[0] = kmalloc(sizeof(kernel_process_t));
-    SCHED_ASSERT(spCurrentProcessPtr[0] != NULL,
-                 "Failed to create the kernel main process",
-                 OS_ERR_NO_MORE_MEMORY);
-
-    spCurrentProcessPtr[0]->pThreadTable =
-        uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &error);
+    error = _schedCreateInitProcess(&spCurrentProcessPtr[0], "ROOS_KERNEL");
     SCHED_ASSERT(error == OS_NO_ERR,
-                 "Failed to allocate main process threads table.",
+                 "Failed to create main process.",
                  OS_ERR_NO_MORE_MEMORY);
-
-    KERNEL_SPINLOCK_INIT(spCurrentProcessPtr[0]->lock);
-    spCurrentProcessPtr[0]->pid = atomicIncrement32(&sLastGivenPid);
-    spCurrentProcessPtr[0]->pParent = NULL;
-    memcpy(spCurrentProcessPtr[0]->pName, "ROOS_KERNEL", 12);
-
-    spCurrentProcessPtr[0]->pFutexTable =
-        uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc, kfree), &error);
-    SCHED_ASSERT(error == OS_NO_ERR,
-                 "Failed to allocate main process futex table.",
-                 OS_ERR_NO_MORE_MEMORY);
-    KERNEL_SPINLOCK_INIT(spCurrentProcessPtr[0]->futexTableLock);
 
     /* Initialize the thread table */
     for(j = 0; j < SOC_CPU_COUNT; ++j)
@@ -1602,12 +1680,9 @@ void schedScheduleNoInt(const bool kForceSwitch)
                  OS_ERR_UNAUTHORIZED_ACTION);
 
     /* Update the new process and switch memory config */
-    if(spCurrentProcessPtr[cpuId] != pThread->pProcess)
-    {
-        spCurrentProcessPtr[cpuId] = pThread->pProcess;
-        cpuUpdateMemoryConfig(spCurrentProcessPtr[cpuId]);
-    }
+    cpuUpdateMemoryConfig(pThread);
 
+    spCurrentProcessPtr[cpuId] = pThread->pProcess;
     pThread->currentState    = THREAD_STATE_RUNNING;
     pThread->requestSchedule = false;
 
@@ -1723,6 +1798,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
 {
     kernel_thread_t* pNewThread;
     OS_RETURN_E      error;
+    int32_t          newTid;
 
     pNewThread      = NULL;
     error           = OS_NO_ERR;
@@ -1737,6 +1813,13 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     {
         error = OS_ERR_INCORRECT_VALUE;
         goto SCHED_CREATE_KTHREAD_END;
+    }
+
+    newTid = atomicIncrement32(&sLastGivenTid);
+    if(newTid >= INT32_MAX || newTid == 0)
+    {
+        atomicDecrement32(&sLastGivenTid);
+        return OS_ERR_NO_MORE_MEMORY;
     }
 
     /* Allocate new structure */
@@ -1758,7 +1841,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
 
     /* Set the thread's information */
     pNewThread->affinity           = kAffinitySet;
-    pNewThread->tid                = atomicIncrement32(&sLastGivenTid);
+    pNewThread->tid                = newTid;
     pNewThread->type               = THREAD_TYPE_KERNEL;
     pNewThread->priority           = kPriority;
     pNewThread->pArgs              = args;
@@ -1836,12 +1919,12 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     error = uhashtableSet(pNewThread->pProcess->pThreadTable,
                           (uintptr_t)pNewThread,
                           NULL);
+    KERNEL_UNLOCK(pNewThread->pProcess->lock);
     if(error != OS_NO_ERR)
     {
         goto SCHED_CREATE_KTHREAD_END;
     }
 
-    KERNEL_UNLOCK(pNewThread->pProcess->lock);
 
     /* Add to the global list */
     KERNEL_LOCK(sTotalThreadsList.lock);
@@ -2403,5 +2486,82 @@ bool schedIsThreadValid(kernel_thread_t* pThread)
     KERNEL_UNLOCK(pThread->pProcess->lock);
 
     return (err == OS_NO_ERR);
+}
+
+OS_RETURN_E schedForkProcess(kernel_process_t** ppNewProcess)
+{
+    OS_RETURN_E       error;
+    kernel_process_t* pProcess;
+    kernel_process_t* pCurrentProcess;
+
+    if(ppNewProcess == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Allocate the structure */
+    pProcess = kmalloc(sizeof(kernel_process_t));
+    if(pProcess == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    memset(pProcess, 0, sizeof(kernel_process_t));
+
+    /* Create process memory information TODO: */
+    pProcess->pMemoryData = memoryKernelGetPageTable();
+    if(pProcess->pMemoryData == NULL)
+    {
+        kfree(pProcess);
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Copy the mapping of the current process */
+
+    /* Create the thread table */
+    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                   kfree),
+                                                &error);
+    if(error != OS_NO_ERR)
+    {
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Create the futex table */
+    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                  kfree),
+                                               &error);
+    if(error != OS_NO_ERR)
+    {
+
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
+                     "Failed to remove threads table.",
+                     error);
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Create the main thread (copy from the current thread) */
+
+    /* Setup the process attributes */
+    pCurrentProcess = schedGetCurrentProcess();
+
+    pProcess->pid = atomicIncrement32(&sLastGivenPid);
+    memcpy(pProcess->pName, pCurrentProcess->pName, PROCESS_NAME_MAX_LENGTH);
+    pProcess->pName[PROCESS_NAME_MAX_LENGTH] = 0;
+
+    KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
+    KERNEL_SPINLOCK_INIT(pProcess->lock);
+
+    pProcess->pParent = pCurrentProcess;
+    /* TODO: Add to parent's children */
+
+    /* Release main thread */
+
+
+    *ppNewProcess = pProcess;
+
+    atomicIncrement32(&sProcessCount);
+    return OS_NO_ERR;
 }
 /************************************ EOF *************************************/

@@ -64,7 +64,7 @@
 /**
  * @brief Get a sequence value argument.
  */
-#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD)                     \
+#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD, IS_FLOAT)           \
 {                                                              \
                                                                \
     /* Harmonize length */                                     \
@@ -82,10 +82,24 @@
             VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF); \
             break;                                             \
         case 4:                                                \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
+            if(IS_FLOAT == true)                               \
+            {                                                  \
+                VAL = __builtin_va_arg(ARGS, double);          \
+            }                                                  \
+            else                                               \
+            {                                                  \
+                VAL = __builtin_va_arg(ARGS, uint32_t);        \
+            }                                                  \
             break;                                             \
         case 8:                                                \
-            VAL = __builtin_va_arg(ARGS, uint64_t);            \
+            if(IS_FLOAT == true)                               \
+            {                                                  \
+                VAL = __builtin_va_arg(ARGS, double);          \
+            }                                                  \
+            else                                               \
+            {                                                  \
+                VAL = __builtin_va_arg(ARGS, uint64_t);        \
+            }                                                  \
             break;                                             \
         default:                                               \
             VAL = __builtin_va_arg(ARGS, uint32_t);            \
@@ -181,6 +195,21 @@ static size_t _formatArgs(char*             pBuffer,
                           const size_t      kSize,
                           const char*       kpFmt,
                           __builtin_va_list args);
+
+/**
+ * @brief Converts a double or float value to a string.
+ *
+ * @details Converts a double or float value to a string.
+ *
+ * @param[in] value The value to convert.
+ * @param[out] pBuffer The buffer that receives the converted value.
+ * @param[in, out] pSignificant The number of decimal after the decimal point.
+ * This value is updated to substract the number of decimal actually set.
+ */
+static inline void _floatToStr(double   value,
+                               char*    pBuffer,
+                               uint8_t* pSignificant);
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
@@ -238,6 +267,48 @@ static inline void _toBufferString(char*        pBuffer,
     }
 }
 
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+static inline void _floatToStr(double   value,
+                               char*    pBuffer,
+                               uint8_t* pSignificant)
+{
+    uint64_t intValue;
+    bool     isNeg;
+
+    isNeg = (value < 0);
+    if(isNeg)
+    {
+        *pBuffer = '-';
+        ++pBuffer;
+        value = -value;
+    }
+
+    /* Setup the integer part */
+    intValue = (uint64_t)value;
+    uitoa(intValue, pBuffer, 10);
+    pBuffer += strlen(pBuffer) + (isNeg ? 1 : 0);
+    value -= intValue;
+
+    if(*pSignificant == 0)
+    {
+        *pSignificant = 10;
+    }
+
+    *pBuffer = '.';
+    ++pBuffer;
+
+    /* Now setup the decimal part */
+    while(*pSignificant > 0)
+    {
+        intValue = (uint64_t)(value * 10.0);
+        *pBuffer = ((char)intValue) + '0';
+        ++pBuffer;
+        --*pSignificant;
+    }
+
+    pBuffer = 0;
+}
+
 static size_t _formatArgs(char*             pBuffer,
                           const size_t      kSize,
                           const char*       kpFmt,
@@ -246,13 +317,14 @@ static size_t _formatArgs(char*             pBuffer,
     size_t   pos;
     size_t   strLength;
     uint64_t seqVal;
+    double   seqValFloat;
     size_t   strSize;
     uint8_t  modifier;
     uint8_t  lengthMod;
     uint8_t  paddingMod;
     bool     upperMod;
     char     padCharMod;
-    char     tmpSeq[32];
+    char     tmpSeq[128];
     char*    pArgsValue;
     size_t   bufferPos;
 
@@ -301,14 +373,14 @@ static size_t _formatArgs(char*             pBuffer,
                     break;
                 case 'd':
                 case 'i':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     itoa(seqVal, tmpSeq, 10);
                     PAD_SEQ
                     _toBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
                     break;
                 case 'u':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 10);
                     PAD_SEQ
@@ -318,7 +390,7 @@ static size_t _formatArgs(char*             pBuffer,
                     upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'x':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
@@ -332,6 +404,12 @@ static size_t _formatArgs(char*             pBuffer,
                     }
                     _toBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
                     break;
+                case 'f':
+                    GET_SEQ_VAL(seqValFloat, args, lengthMod, true);
+                    memset(tmpSeq, 0, sizeof(tmpSeq));
+                    _floatToStr(seqValFloat, tmpSeq, &paddingMod);
+                    _toBufferString(pBuffer, &bufferPos, kSize, tmpSeq);
+                    break;
                 case 'P':
                     upperMod = true;
                     __attribute__ ((fallthrough));
@@ -339,7 +417,7 @@ static size_t _formatArgs(char*             pBuffer,
                     paddingMod  = 2 * sizeof(uintptr_t);
                     padCharMod = '0';
                     lengthMod = sizeof(uintptr_t);
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
@@ -355,7 +433,7 @@ static size_t _formatArgs(char*             pBuffer,
                     break;
                 case 'c':
                     lengthMod = sizeof(char);
-                    GET_SEQ_VAL(tmpSeq[0], args, lengthMod);
+                    GET_SEQ_VAL(tmpSeq[0], args, lengthMod, false);
                     _toBufferChar(pBuffer, &bufferPos, kSize, tmpSeq[0]);
                     break;
 

@@ -335,7 +335,7 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
     return error;
 }
 
-OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount)
+OS_RETURN_E kfutexWake(kfutex_t* pFutex, size_t* pWakeCount)
 {
     OS_RETURN_E      error;
     uintptr_t        identifier;
@@ -346,9 +346,10 @@ OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount)
     kqueue_node_t*   pSaveNode;
     kernel_thread_t* pThread;
     uint32_t         intState;
+    size_t           actualWakeCount;
 
     /* Check parameters */
-    if(pFutex == NULL || pFutex->pHandle == NULL)
+    if(pFutex == NULL || pFutex->pHandle == NULL || pWakeCount == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
@@ -371,12 +372,14 @@ OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount)
         return error;
     }
 
+    actualWakeCount = 0;
+
     KERNEL_LOCK(pFutexData->lock);
 
     /* Wake up the next threads to wake */
     pWaitingNode = pFutexData->pWaitingThreads->pTail;
 
-    for(i = 0; i < kWakeCount && pWaitingNode != NULL; ++i)
+    for(i = 0; i < *pWakeCount && pWaitingNode != NULL; ++i)
     {
         pWaiting = pWaitingNode->pData;
 
@@ -407,6 +410,10 @@ OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount)
                        "Failed to wakeup thread from futex. Error %d",
                        error);
             }
+            else
+            {
+                ++actualWakeCount;
+            }
         }
         else
         {
@@ -417,6 +424,8 @@ OS_RETURN_E kfutexWake(kfutex_t* pFutex, const uintptr_t kWakeCount)
     KERNEL_UNLOCK(sLock);
     KERNEL_UNLOCK(pFutexData->lock);
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    *pWakeCount = actualWakeCount;
 
     return OS_NO_ERR;
 }

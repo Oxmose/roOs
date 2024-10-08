@@ -312,18 +312,39 @@ bool cpuIsVCPUSaved(const void* kpVCpu);
  */
 void cpuCoreDump(const void* kpVCpu);
 
+/**
+ * @brief Creates a process memory configuration.
+ *
+ * @details Creates a process memory configuration. The function will allocate
+ * the required resources.
+ *
+ * @return The function return a pointer to the configuration on success or NULL
+ * on error.
+ */
+void* cpuCreateProcessMemoryData(void);
 
 /**
- * @brief Updates the memory configuration for the running process.
+ * @brief Destroys a process memory configuration.
  *
- * @details Updates the memory configuration for the running process. Depending
+ * @details Destroys a process memory configuration. The function will release
+ * the required resources.
+ *
+ * @param[in] pMemoryData The configuration to release.
+ */
+void cpuDestroyProcessMemoryData(void* pMemoryData);
+
+/**
+ * @brief Updates the memory configuration for the running thread.
+ *
+ * @details Updates the memory configuration for the running thread. Depending
  * on the architecture, this might entails MMU/MPU configuration changes for
  * instance.
  *
- * @param[in, out] pCurrentProcess The current process to update the memory
+ * @param[in, out] pCurrentThread The current thread to update the memory
  * configuration for.
  */
-void cpuUpdateMemoryConfig(kernel_process_t* pCurrentProcess);
+void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread);
+
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

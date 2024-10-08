@@ -393,6 +393,21 @@ bool schedIsRunning(void);
  */
 bool schedIsThreadValid(kernel_thread_t* pThread);
 
+/**
+ * @brief Forks the current process.
+ *
+ * @details Forks the current process. A complete copy of the current process
+ * will be done and memory will be marked as COW for both new and current
+ * process. Only the calling thread will be copied to the new process.
+ *
+ * @param[in] func The system call function id used to fork the current process.
+ * @param[out] ppNewProcess This buffer is used to return the newly created
+ * process.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedForkProcess(kernel_process_t** ppNewProcess);
+
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 
 /************************************ EOF *************************************/

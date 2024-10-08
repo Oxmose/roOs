@@ -3425,9 +3425,6 @@ static void _cpuValidateArchitecture(void)
     _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
 
     /* Validate basic features */
-    CPU_ASSERT((regs[3] & EDX_SEP) == EDX_SEP,
-               "CPU does not support SYSENTER",
-               OS_ERR_NOT_SUPPORTED);
     CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
                "CPU does not support FPU",
                OS_ERR_NOT_SUPPORTED);
@@ -3455,9 +3452,14 @@ static void _cpuValidateArchitecture(void)
     if((uint32_t)regsExt[0] >= (uint32_t)CPUID_ADDRESS_WIDTH)
     {
         _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
+
         CPU_ASSERT((regsExt[3] & EDX_64_BIT) == EDX_64_BIT,
                    "CPU addressing width unavailable",
                    OS_ERR_NOT_SUPPORTED);
+
+        CPU_ASSERT((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL,
+                   "CPU does not support SYSCALL",
+                    OS_ERR_NOT_SUPPORTED);
 
         _cpuCPUID(CPUID_ADDRESS_WIDTH, (uint32_t*)regsExt);
 
@@ -5052,10 +5054,46 @@ void cpuCoreDump(const void* kpVCpu)
     syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
 }
 
-void cpuUpdateMemoryConfig(kernel_process_t* pCurrentProcess)
+void* cpuCreateProcessMemoryData(void)
 {
-    (void)pCurrentProcess;
-    /* TODO: Update CR3 and TSS*/
+    return (void*)1;
+}
+
+void cpuDestroyProcessMemoryData(void* pMemoryData)
+{
+    /* TODO: */
+    (void)pMemoryData;
+}
+
+void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
+{
+    uintptr_t pageDirAddr;
+    uintptr_t cr3Value;
+    uint8_t   cpuId;
+
+    cpuId = cpuGetId();
+
+    /* The process contains the pointer to the page directory */
+    pageDirAddr = (uintptr_t)pCurrentThread->pProcess->pMemoryData;
+
+    /* Check if we need to change */
+    __asm__ __volatile__ (
+        "mov %%cr3, %%rax\n\t"
+        "mov %%rax, %0\n\t"
+    : "=m" (cr3Value)
+    : /* no input */
+    : "%rax"
+    );
+    if(cr3Value != pageDirAddr)
+    {
+        cpuSetPageDirectory(pageDirAddr);
+    }
+
+    if(pCurrentThread->type == THREAD_TYPE_USER)
+    {
+        /* Update the TSS */
+        sTSS[cpuId].rsp0 = pCurrentThread->kernelStackEnd - 0x8;
+    }
 }
 
 /* Stack protection support */

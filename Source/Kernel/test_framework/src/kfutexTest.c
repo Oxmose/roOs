@@ -139,6 +139,7 @@ static void* testOrderRoutineWake(void* args)
     int32_t tid;
     uint64_t timeWait;
     OS_RETURN_E error;
+    size_t      wakeCount;
 
     tid = (uint32_t)(uintptr_t)args;
     timeWait = (uint64_t)(tid + 11) * 500000000;
@@ -153,7 +154,8 @@ static void* testOrderRoutineWake(void* args)
     kprintf("wake thread %d, waited %lluns\n", tid, timeWait);
     /* Wait for futex */
     orderWait = 1;
-    error = kfutexWake(&orderFutex, 1);
+    wakeCount = 1;
+    error = kfutexWake(&orderFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_ORDER_WAIT_WAKE(tid),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -347,6 +349,7 @@ static void testMultiple(void)
     kernel_thread_t* pThreads[10];
     OS_RETURN_E error;
     uint32_t i;
+    size_t wakeCount;
 
     multipleFutex.pHandle = &multipleFutexValue;
     multipleFutex.isAlive = true;
@@ -388,7 +391,8 @@ static void testMultiple(void)
     }
 
     multipleFutexValue = 1;
-    error = kfutexWake(&multipleFutex, 5);
+    wakeCount = 5;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -421,8 +425,8 @@ static void testMultiple(void)
 
 
 
-
-    error = kfutexWake(&multipleFutex, 5);
+    wakeCount = 5;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_MULTIPLE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -465,6 +469,7 @@ static void testSameHandleValue(void)
     kernel_thread_t* pThreads[100];
     OS_RETURN_E error;
     uint32_t i;
+    size_t wakeCount;
 
     multipleFutex.pHandle = &multipleFutexValue;
     multipleFutex.isAlive = true;
@@ -506,7 +511,8 @@ static void testSameHandleValue(void)
     }
 
     multipleFutexValue = 0;
-    error = kfutexWake(&multipleFutex, 100);
+    wakeCount = 100;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -540,7 +546,8 @@ static void testSameHandleValue(void)
     kprintf("Actually waking now\n");
 
     multipleFutexValue = 1;
-    error = kfutexWake(&multipleFutex, 100);
+    wakeCount = 100;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_SAMEHANDLE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -583,6 +590,7 @@ static void testReleaseResources(void)
     uint32_t i;
     uintptr_t identifier;
     void* value;
+    size_t wakeCount;
 
     multipleFutex.pHandle = &multipleFutexValue;
     multipleFutex.isAlive = true;
@@ -636,7 +644,8 @@ static void testReleaseResources(void)
     }
 
     multipleFutexValue = 1;
-    error = kfutexWake(&multipleFutex, 10);
+    wakeCount = 10;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAKE,
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -701,7 +710,8 @@ static void testReleaseResources(void)
 
     multipleFutexValue = 1;
     multipleFutex.isAlive = false;
-    error = kfutexWake(&multipleFutex, 10);
+    wakeCount = 10;
+    error = kfutexWake(&multipleFutex, &wakeCount);
     TEST_POINT_ASSERT_RCODE(TEST_KFUTEX_RELEASE_WAKE1,
                             error == OS_NO_ERR,
                             OS_NO_ERR,

@@ -563,7 +563,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
                     "----------------------\n");
     kprintfPanic("Core ID: %u | Time: %02u:%02u:%02u | "
             "Core uptime: [%llu.%llu.%llu.%llu]\n"
-            "Thread: %s (%u) | Process: %s (%u)\n",
+            "Thread: %s (%u, state: %d) | Process: %s (%u)\n",
             cpuId,
             currTime.hours,
             currTime.minutes,
@@ -574,6 +574,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
             uptime % 1000,
             pCurrThread->pName,
             pCurrThread->tid,
+            pCurrThread->currentState,
             pCurrThread->pProcess->pName,
             pCurrThread->pProcess->pid);
 

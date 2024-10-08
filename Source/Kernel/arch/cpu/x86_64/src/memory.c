@@ -235,22 +235,6 @@ static void _printKernelMap(void);
 static void _pageFaultHandler(kernel_thread_t* pCurrentThread);
 
 /**
- * @brief Checks the memory type (memory vs hardware) of a physical region.
- *
- * @details Checks the memory type (memory vs hardware) of a physical region.
- * The result are stored in the buffers given as parameter.
- *
- * @param[in] kPhysicalAddress The base address of the region to check.
- * @param[in] kSize The size in bytes of the region to check.
- * @param[out] pIsHardware The buffer to store the hardware result.
- * @param[out] pIsMemory The buffer to store the memory result.
- */
-static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
-                                    const uintptr_t kSize,
-                                    bool*           pIsHardware,
-                                    bool*           pIsMemory);
-
-/**
  * @brief Makes the address passed as parameter canonical.
  *
  * @details Makes the address passed as parameter canonical. This means it
@@ -547,12 +531,6 @@ static mem_list_t sKernelFreePagesList;
 /** @brief Kernel virtual memory bounds */
 static mem_range_t sKernelVirtualMemBounds;
 
-/** @brief Kernel physical memory bounds */
-static mem_range_t* sKernelPhysicalMemBounds;
-
-/** @brief Kernel physical memory bounds count */
-static size_t sKernelPhysicalMemBoundsCount;
-
 /** @brief CPU physical addressing width mask */
 static uintptr_t sPhysAddressWidthMask = 0;
 
@@ -577,9 +555,7 @@ static void _printKernelMap(void)
     mem_range_t*   pMemRange;
 
 #if MEMORY_MGR_DEBUG_ENABLED
-    syslog(SYSLOG_LEVEL_DEBUG,
-                 MODULE_NAME,
-                 "=== Kernel memory layout");
+    syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "=== Kernel memory layout");
     syslog(SYSLOG_LEVEL_DEBUG,
                  MODULE_NAME,
                  "Startup AP  low 0x%p -> 0x%p | "PRIPTR"KB",
@@ -702,7 +678,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
 
             /* Check if execution is allowed */
             if((errorCode & PAGE_FAULT_ERROR_EXEC) == PAGE_FAULT_ERROR_EXEC &&
-            (flags & MEMMGR_MAP_EXEC) != MEMMGR_MAP_EXEC)
+               (flags & MEMMGR_MAP_EXEC) != MEMMGR_MAP_EXEC)
             {
                 staleEntry = false;
             }
@@ -735,6 +711,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
                    faultAddress,
                    errorCode);
 #endif
+
             cpuInvalidateTlbEntry(faultAddress);
             return;
         }
@@ -749,57 +726,6 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     pCurrentThread->errorTable.pExecVCpu = pCurrentThread->pVCpu;
     error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
     MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
-}
-
-static inline void _checkMemoryType(const uintptr_t kPhysicalAddress,
-                                    const uintptr_t kSize,
-                                    bool*           pIsHardware,
-                                    bool*           pIsMemory)
-{
-    uintptr_t limit;
-    size_t    bytesOutMem;
-    size_t    i;
-
-    *pIsHardware = false;
-    *pIsMemory   = false;
-
-    limit       = kPhysicalAddress + kSize;
-    bytesOutMem = kSize;
-
-    /* Check for overflow */
-    if(limit == 0)
-    {
-        limit = limit - 1;
-    }
-    else if(limit < kPhysicalAddress)
-    {
-        *pIsMemory  = true;
-        *pIsHardware = true;
-        return;
-    }
-
-    for(i = 0; i < sKernelPhysicalMemBoundsCount; ++i)
-    {
-        /* If overlapping low */
-        if(kPhysicalAddress <= sKernelPhysicalMemBounds[i].base &&
-           limit > sKernelPhysicalMemBounds[i].base)
-        {
-            bytesOutMem -= MIN(limit, sKernelPhysicalMemBounds[i].limit) -
-                               sKernelPhysicalMemBounds[i].base;
-        }
-        else if(kPhysicalAddress > sKernelPhysicalMemBounds[i].base &&
-                kPhysicalAddress < sKernelPhysicalMemBounds[i].limit)
-        {
-            bytesOutMem -= MIN(limit, sKernelPhysicalMemBounds[i].limit) -
-                           kPhysicalAddress;
-        }
-    }
-
-    /* If reduced the base / limit, it's in part memory */
-    *pIsMemory = (bytesOutMem != kSize);
-
-    /* If we did not completely consume the range, we have hardware */
-    *pIsHardware = (bytesOutMem != 0);
 }
 
 static inline uintptr_t _makeCanonical(const uintptr_t kAddress,
@@ -887,6 +813,7 @@ static void _addBlock(mem_list_t*  pList,
         /* If the new block is before but needs merging */
         if(baseAddress < pRange->base && limit == pRange->base)
         {
+
 #if MEMORY_MGR_DEBUG_ENABLED
             syslog(SYSLOG_LEVEL_DEBUG,
                    MODULE_NAME,
@@ -894,6 +821,7 @@ static void _addBlock(mem_list_t*  pList,
                    pRange->base,
                    pRange->limit);
 #endif
+
             /* Extend left */
             pRange->base  = baseAddress;
             pCursor->priority = KERNEL_VIRTUAL_ADDR_MAX - baseAddress;
@@ -988,6 +916,7 @@ static void _addBlock(mem_list_t*  pList,
                baseAddress,
                limit);
 #endif
+
     }
 
     KERNEL_UNLOCK(pList->lock);
@@ -1375,8 +1304,6 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     uint64_t   mapFlags;
     uint64_t   mapPgdirFlags;
     bool       isMapped;
-    bool       isHardware;
-    bool       isMemory;
     uintptr_t  currVirtAddr;
     uintptr_t  currPhysAdd;
     uintptr_t  newPgTableFrame;
@@ -1413,28 +1340,12 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    /* Check the memory type */
-    _checkMemoryType(kPhysicalAddress,
-                     kPageCount * KERNEL_PAGE_SIZE,
-                     &isHardware,
-                     &isMemory);
-
-    /* If is hardware, check if flags are valid */
-    if((isHardware == true && isMemory == true) ||
-       (isHardware ==true &&
-        (kFlags & MEMMGR_MAP_HARDWARE) != MEMMGR_MAP_HARDWARE))
-    {
-        return OS_ERR_UNAUTHORIZED_ACTION;
-    }
-
 #if MEMORY_MGR_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
-           "Mapping 0x%p to 0x%p, HW (%d) MEM(%d), Virt: 0x%p",
+           "Mapping 0x%p to 0x%p -> 0x%p",
            kPhysicalAddress,
            kPhysicalAddress + kPageCount * KERNEL_PAGE_SIZE,
-           isHardware,
-           isMemory,
            kVirtualAddress);
 #endif
 
@@ -1444,10 +1355,6 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     isMapped = _memoryMgrIsMapped(kVirtualAddress, kPageCount);
     if(isMapped == true)
     {
-
-#if MEMORY_MGR_DEBUG_ENABLED
-        syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Already mapped");
-#endif
         return OS_ERR_ALREADY_EXIST;
     }
 
@@ -1605,8 +1512,6 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     return OS_NO_ERR;
 }
 
-
-
 static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                                    const size_t    kPageCount)
 {
@@ -1761,9 +1666,6 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                     /* If present, unmap */
                     if((pRecurTableEntry[pmlEntry[0]] & PAGE_FLAG_PRESENT) != 0)
                     {
-                        /* TODO: Once we have reference count, free the frame
-                         * if needed */
-
                         /* Set mapping and invalidate */
                         pRecurTableEntry[pmlEntry[0]] = 0;
                         cpuInvalidateTlbEntry(currVirtAddr);
@@ -2010,7 +1912,6 @@ static void _memoryMgrDetectMemory(void)
     size_t         size;
     uintptr_t      kernelPhysStart;
     uintptr_t      kernelPhysEnd;
-    kqueue_node_t* pMemNode;
 
     const fdt_mem_node_t* kpPhysMemNode;
     const fdt_mem_node_t* kpResMemNode;
@@ -2093,28 +1994,6 @@ static void _memoryMgrDetectMemory(void)
     _removeBlock(&sPhysMemList,
                  kernelPhysStart,
                  kernelPhysEnd - kernelPhysStart);
-
-    /* Now create the physical memory bounds array */
-    sKernelPhysicalMemBoundsCount = 0;
-    pMemNode = sPhysMemList.pQueue->pHead;
-    while(pMemNode != NULL)
-    {
-        ++sKernelPhysicalMemBoundsCount;
-        pMemNode = pMemNode->pNext;
-    }
-    sKernelPhysicalMemBounds = kmalloc(sizeof(mem_range_t) *
-                                       sKernelPhysicalMemBoundsCount);
-    pMemNode = sPhysMemList.pQueue->pHead;
-    size = 0;
-    while(pMemNode != NULL)
-    {
-        sKernelPhysicalMemBounds[size].base  =
-            ((mem_range_t*)pMemNode->pData)->base;
-        sKernelPhysicalMemBounds[size].limit =
-            ((mem_range_t*)pMemNode->pData)->limit;
-        ++size;
-        pMemNode = pMemNode->pNext;
-    }
 }
 
 static void _memoryMgrInitAddressTable(void)
@@ -2496,95 +2375,6 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
     return (void*)kernelPages;
 }
 
-void* memoryKernelAllocate(const size_t   kSize,
-                           const uint32_t kFlags,
-                           OS_RETURN_E*   pError)
-{
-    uintptr_t   kernelPages;
-    uintptr_t   kernelFrames;
-    size_t      pageCount;
-    OS_RETURN_E error;
-
-#if MEMORY_MGR_DEBUG_ENABLED
-    syslog(SYSLOG_LEVEL_DEBUG,
-           MODULE_NAME,
-           "Allocating address %dB | Flags: 0x%x",
-           kSize,
-           kFlags);
-#endif
-
-    /* Check size */
-    if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
-    {
-        if(pError != NULL)
-        {
-            *pError = OS_ERR_INCORRECT_VALUE;
-        }
-        return NULL;
-    }
-
-    /* Check flags */
-    if((kFlags & MEMMGR_MAP_HARDWARE) == MEMMGR_MAP_HARDWARE)
-    {
-        if(pError != NULL)
-        {
-            *pError = OS_ERR_INCORRECT_VALUE;
-        }
-        return NULL;
-    }
-
-    pageCount = kSize / KERNEL_PAGE_SIZE;
-
-    KERNEL_LOCK(sLock);
-
-    /* Allocate pages */
-    kernelPages = _allocateKernelPages(pageCount);
-    if(kernelPages == 0)
-    {
-        KERNEL_UNLOCK(sLock);
-
-        if(pError != NULL)
-        {
-            *pError = OS_ERR_NO_MORE_MEMORY;
-        }
-        return NULL;
-    }
-
-    /* Allocate frames */
-    kernelFrames = _allocateFrames(pageCount);
-    if(kernelFrames == 0)
-    {
-        _releaseKernelPages(kernelPages, pageCount);
-
-        KERNEL_UNLOCK(sLock);
-
-        if(pError != NULL)
-        {
-            *pError = OS_ERR_NO_MORE_MEMORY;
-        }
-        return NULL;
-    }
-
-    /* Apply mapping */
-    error = _memoryMgrMap(kernelPages,
-                          kernelFrames,
-                          pageCount,
-                          kFlags | MEMMGR_MAP_KERNEL | PAGE_FLAG_GLOBAL);
-    if(error != OS_NO_ERR)
-    {
-        _releaseFrames(kernelFrames, pageCount);
-        _releaseKernelPages(kernelPages, pageCount);
-    }
-
-    KERNEL_UNLOCK(sLock);
-
-    if(pError != NULL)
-    {
-        *pError = error;
-    }
-    return (void*)kernelPages;
-}
-
 OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
 {
     size_t      pageCount;
@@ -2752,4 +2542,169 @@ uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
 
     return retPhysAddr;
 }
+
+void* memoryKernelGetPageTable(void)
+{
+    return (void*)memoryMgrGetPhysAddr((uintptr_t)spKernelPageDir, NULL);
+}
+
+void* memoryKernelAllocate(const size_t   kSize,
+                           const uint32_t kFlags,
+                           OS_RETURN_E*   pError)
+{
+    size_t      pageCount;
+    size_t      mappedCount;
+    size_t      i;
+    OS_RETURN_E error;
+    uintptr_t   pageBaseAddress;
+    uintptr_t   newFrame;
+
+#if MEMORY_MGR_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Allocating address %dB | Flags: 0x%x",
+           kSize,
+           kFlags);
+#endif
+
+    /* Check size */
+    if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
+    {
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_INCORRECT_VALUE;
+        }
+        return NULL;
+    }
+
+    /* Check flags */
+    if((kFlags & MEMMGR_MAP_HARDWARE) == MEMMGR_MAP_HARDWARE)
+    {
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_INCORRECT_VALUE;
+        }
+        return NULL;
+    }
+
+    /* Get the page count */
+    pageCount = kSize / KERNEL_PAGE_SIZE;
+
+    KERNEL_LOCK(sLock);
+
+    /* Request the pages */
+    pageBaseAddress = _allocateKernelPages(pageCount);
+    if(pageBaseAddress == 0)
+    {
+        KERNEL_UNLOCK(sLock);
+        if(pError != NULL)
+        {
+            *pError = OS_ERR_NO_MORE_MEMORY;
+        }
+        return NULL;
+    }
+
+    /* Now map, we do not need contiguous frames */
+    for(i = 0; i < pageCount; ++i)
+    {
+        newFrame = _allocateFrames(1);
+        if(newFrame == 0)
+        {
+            break;
+        }
+
+        error = _memoryMgrMap(pageBaseAddress + i * KERNEL_PAGE_SIZE,
+                              newFrame,
+                              1,
+                              kFlags);
+        if(error != OS_NO_ERR)
+        {
+            /* On error, release the frame */
+            _releaseFrames(newFrame, 1);
+            break;
+        }
+    }
+
+    /* Check if everything is mapped, if not unmap and return */
+    if(i < pageCount)
+    {
+        if(i != 0)
+        {
+            mappedCount = i;
+            /* Release frames */
+            for(i = 0; i < mappedCount; ++i)
+            {
+                newFrame = _memoryMgrGetPhysAddr(pageBaseAddress +
+                                                 KERNEL_PAGE_SIZE * i,
+                                                 NULL);
+                MEM_ASSERT(newFrame != MEMMGR_PHYS_ADDR_ERROR,
+                           "Invalid physical frame",
+                           OS_ERR_INCORRECT_VALUE);
+                _releaseFrames(newFrame, 1);
+            }
+
+            _memoryMgrUnmap(pageBaseAddress, mappedCount);
+        }
+        _releaseKernelPages(pageBaseAddress, pageCount);
+
+        pageBaseAddress = (uintptr_t)NULL;
+    }
+
+    KERNEL_UNLOCK(sLock);
+
+    if(pError != NULL)
+    {
+        *pError = error;
+    }
+    return (void*)pageBaseAddress;
+}
+
+OS_RETURN_E memoryKernelFree(const void* kVirtualAddress, const size_t kSize)
+{
+    size_t      pageCount;
+    size_t      i;
+    uintptr_t   frameAddr;
+    OS_RETURN_E error;
+
+    if(((uintptr_t)kVirtualAddress & PAGE_SIZE_MASK) != 0)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    if((kSize & PAGE_SIZE_MASK) != 0 || kSize < KERNEL_PAGE_SIZE)
+    {
+        return OS_ERR_INCORRECT_VALUE;
+    }
+
+    /* Get the page count */
+    pageCount = kSize / KERNEL_PAGE_SIZE;
+
+    KERNEL_LOCK(sLock);
+
+    /* Free the frames and memory */
+    for(i = 0; i < pageCount; ++i)
+    {
+        frameAddr = _memoryMgrGetPhysAddr((uintptr_t)kVirtualAddress +
+                                          KERNEL_PAGE_SIZE * i,
+                                          NULL);
+        MEM_ASSERT(frameAddr != MEMMGR_PHYS_ADDR_ERROR,
+                   "Invalid physical frame",
+                   OS_ERR_INCORRECT_VALUE);
+        _releaseFrames(frameAddr, 1);
+    }
+
+    /* Unmap the memory */
+    error = _memoryMgrUnmap((uintptr_t)kVirtualAddress, pageCount);
+    MEM_ASSERT(error == OS_NO_ERR,
+               "Invalid unmapping frame",
+               OS_ERR_INCORRECT_VALUE);
+
+    /* Release pages */
+    _releaseKernelPages((uintptr_t)kVirtualAddress, pageCount);
+
+    KERNEL_UNLOCK(sLock);
+
+    return error;
+}
+
 /************************************ EOF *************************************/

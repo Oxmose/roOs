@@ -4948,12 +4948,54 @@ void cpuCoreDump(const void* kpVCpu)
     syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
 }
 
-void cpuUpdateMemoryConfig(kernel_process_t* pCurrentProcess)
+void* cpuCreateProcessMemoryData(void)
 {
-    (void)pCurrentProcess;
-    /* TODO: Update CR3 and TSS*/
+    return (void*)1;
 }
 
+void cpuDestroyProcessMemoryData(void* pMemoryData)
+{
+    /* TODO: */
+    (void)pMemoryData;
+}
+
+void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
+{
+    uintptr_t pageDirAddr;
+    uintptr_t cr3Value;
+    uint8_t   cpuId;
+
+    cpuId = cpuGetId();
+
+    /* The process contains the pointer to the page directory */
+    pageDirAddr = (uintptr_t)pCurrentThread->pProcess->pMemoryData;
+
+    /* Check if we need to change */
+    __asm__ __volatile__ (
+        "mov %%cr3, %%eax\n\t"
+        "mov %%eax, %0\n\t"
+    : "=m" (cr3Value)
+    : /* no input */
+    : "%eax"
+    );
+    if(cr3Value != pageDirAddr)
+    {
+        cpuSetPageDirectory(pageDirAddr);
+    }
+
+    if(pCurrentThread->type == THREAD_TYPE_USER)
+    {
+        /* Update the TSS */
+        sTSS[cpuId].esp0 = pCurrentThread->kernelStackEnd - 0x8;
+        sTSS[cpuId].ss0 = KERNEL_DS_32;
+        sTSS[cpuId].es = USER_DS_32;
+        sTSS[cpuId].cs = USER_CS_32;
+        sTSS[cpuId].ss = USER_DS_32;
+        sTSS[cpuId].ds = USER_DS_32;
+        sTSS[cpuId].fs = USER_DS_32;
+        sTSS[cpuId].gs = USER_DS_32;
+    }
+}
 /* Stack protection support */
 #ifdef _STACK_PROT
 #define STACK_CHK_GUARD 0xe2dee396ULL

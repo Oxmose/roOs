@@ -29,8 +29,10 @@
 
 #include <stddef.h>    /* Standard definitons */
 #include <stdint.h>    /* Generic int types */
+#include <kerror.h>    /* Kernel errors */
 #include <stdbool.h>   /* Bool types */
 #include <critical.h>  /* Kernel locks */
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -235,6 +237,20 @@ void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool kPanic);
  * returned.
  */
 size_t kQueueSize(const kqueue_t* kpQueue);
+
+/**
+ * @brief Cleans a queue. Removes all its node and destroy them.
+ *
+ * @details Cleans a queue. Removes all its node and destroy them. The memory
+ * used by the node is released. In the case the user set the parameter
+ * kCleanData to true and the nodes data are not NULL, the nodes data are also
+ * freed using the kfree function.
+ *
+ * @param[in, out] pQueue The queue to clean.
+ * @param[in] kCleanData Tells if the data in the detroyed node should be freed
+ * using the kfree function.
+ */
+void kQueueClean(kqueue_t* pQueue, const bool kCleanData);
 
 
 #endif /* #ifndef __CORE_KQUEUE_H_ */

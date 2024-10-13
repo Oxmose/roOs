@@ -230,6 +230,21 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
 void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress);
 
 /**
+ * @brief Copies a thread's virtual CPUs.
+ *
+ * @details Copies the thread's virtual CPU structures. The new VCPUs are
+ * allocated, the kernel stack of the new thread is taken into account and the
+ * current VCPU is selected.
+ *
+ * @param[in] kpSrcThread The thread that contains VCPUs to copy.
+ * @param[in] kStackEndAddr The thread that will receive the copied VPUs
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
+                               kernel_thread_t*       pDstThread);
+
+/**
  * @brief Restores the CPU context of a thread.
  *
  * @details Restores the CPU context of a thread. This function will load the
@@ -313,27 +328,6 @@ bool cpuIsVCPUSaved(const void* kpVCpu);
 void cpuCoreDump(const void* kpVCpu);
 
 /**
- * @brief Creates a process memory configuration.
- *
- * @details Creates a process memory configuration. The function will allocate
- * the required resources.
- *
- * @return The function return a pointer to the configuration on success or NULL
- * on error.
- */
-void* cpuCreateProcessMemoryData(void);
-
-/**
- * @brief Destroys a process memory configuration.
- *
- * @details Destroys a process memory configuration. The function will release
- * the required resources.
- *
- * @param[in] pMemoryData The configuration to release.
- */
-void cpuDestroyProcessMemoryData(void* pMemoryData);
-
-/**
  * @brief Updates the memory configuration for the running thread.
  *
  * @details Updates the memory configuration for the running thread. Depending
@@ -344,6 +338,34 @@ void cpuDestroyProcessMemoryData(void* pMemoryData);
  * configuration for.
  */
 void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread);
+
+/**
+ * @brief Tells if the saved context of the virtual CPU is saved from an
+ * interrupt.
+ *
+ * @details Tells if the saved context of the virtual CPU is saved from an
+ * interrupt.
+ *
+ * @param[in] kpVCpu The virtual CPU to check.
+ *
+ * @return The function returns true if the current virtual CPU context was
+ * saved in an interrupt context, false otherwise
+ */
+bool cpuIsContextFromInt(const void* kpVCpu);
+
+/**
+ * @brief Tells if the saved context of the virtual CPU is saved from a system
+ * call.
+ *
+ * @details Tells if the saved context of the virtual CPU is saved from a system
+ * call
+ *
+ * @param[in] kpVCpu The virtual CPU to check.
+ *
+ * @return The function returns true if the current virtual CPU context was
+ * saved in a system call context, false otherwise
+ */
+bool cpuIsContextFromSyscall(const void* kpVCpu);
 
 #endif /* #ifndef __CPU_H_ */
 

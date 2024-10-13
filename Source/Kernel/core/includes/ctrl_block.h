@@ -27,7 +27,9 @@
 #include <stddef.h>     /* Standard definition type */
 #include <atomic.h>     /* Critical sections spinlock */
 #include <stdbool.h>    /* Bool types */
+#include <kqueue.h>     /* Kernel queue */
 #include <uhashtable.h> /* Hahsing table */
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -190,7 +192,11 @@ typedef struct kernel_process_t
     /** @brief Process' parent process */
     struct kernel_process_t* pParent;
 
-    /** @brief Process' main thread, this is also the first thread in the
+    /** @brief List of children processes */
+    kqueue_t* pChildren;
+
+    /**
+     * @brief Process' main thread, this is also the first thread in the
      * thread list.
      */
     struct kernel_thread_t* pMainThread;
@@ -213,6 +219,9 @@ typedef struct kernel_process_t
 
     /** @brief Stores the memory management data for the process */
     void* pMemoryData;
+
+    /** @brief Stores the file descriptors for the process */
+    void* pFdTable;
 
     /** @brief The process' structure lock */
     kernel_spinlock_t lock;
@@ -311,10 +320,10 @@ typedef struct kernel_thread_t
     THREAD_STATE_E nextState;
 
     /** @brief Associated queue node in the scheduler */
-    void* pThreadNode;
+    kqueue_node_t* pThreadNode;
 
     /** @brief Thread list node */
-    void* pThreadListNode;
+    kqueue_node_t* pThreadListNode;
 
     /** @brief Thread's CPU affinity */
     uint64_t affinity;
@@ -358,7 +367,7 @@ typedef struct kernel_thread_t
     THREAD_RESOURCE_TYPE_E resourceBlockType;
 
     /** @brief Resource queue pointer */
-    void* pThreadResources;
+    kqueue_t* pThreadResources;
 
     /** @brief The thread's structure lock */
     kernel_spinlock_t lock;

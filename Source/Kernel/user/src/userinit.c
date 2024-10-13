@@ -94,7 +94,9 @@ void userInit(void)
                error);
     }
 
-    /* Initialize the kernel shell */
+    /* Create the init process */
+
+    /* Initialize the kernel shell TODO: Remove */
     kernelShellInit();
 }
 

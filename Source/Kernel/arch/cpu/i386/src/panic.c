@@ -35,7 +35,7 @@
 #include <ctrl_block.h>       /* Thread's control block */
 #include <interrupts.h>       /* Interrupts manager */
 #include <kerneloutput.h>     /* Kernel output methods */
-#include <cpu_interrupt.h>    /* Interrupt management */
+#include <cpuInterrupt.h>     /* Interrupt management */
 
 /* Configuration files */
 #include <config.h>

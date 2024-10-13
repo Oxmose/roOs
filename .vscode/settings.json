@@ -45,6 +45,7 @@
         "*.c_nocomp": "c",
         "stdbool.h": "c",
         "syslog.h": "c",
-        "kheap.h": "c"
+        "kheap.h": "c",
+        "cpuinterrupt.h": "c"
     }
 }

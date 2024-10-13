@@ -82,7 +82,7 @@ void itoa(int64_t i, char* buf, uint32_t base)
     if (base == 10 && i < 0)
     {
         *buf++ = '-';
-        i *= -1;
+        i = -i;
     }
 
     /* To the job */

@@ -144,11 +144,11 @@ static void* criticalGlobalRoutine1(void* args)
 
     for(i = 0; i < 1000000; ++i)
     {
-        KernelLock(&lock);
+        kernelLock(&lock);
         save = criticalValueTest;
         for(j = 0; j < 100; ++j);
         criticalValueTest = save + 1;
-        KernelUnlock(&lock);
+        kernelUnlock(&lock);
     }
 
     return NULL;

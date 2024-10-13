@@ -61,17 +61,6 @@
  * FUNCTIONS
  ******************************************************************************/
 
-#ifdef _TRACING_ENABLED
-/**
- * @brief Hook for tracing timestamp.
- *
- * @details Hook for tracing timestamp. This hook must be defined by the
- * platform to get tracing timestamp.
- *
- * @return The uptime in ticks.
-*/
-uint64_t tracingTimerGetTick(void);
-#endif
 #endif /* #ifndef __X86_TSC_H_ */
 
 /************************************ EOF *************************************/

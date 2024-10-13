@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>      /* CPU API */
 #include <string.h>   /* memset, strlen */
 #include <stdlib.h>   /* uitoa, itoa */
 #include <atomic.h>   /* Spinlocks */
@@ -77,49 +78,58 @@ typedef struct
 }
 
 /**
- * @brief Get a sequence value argument.
+ * @brief Get a sequence value argument for floats.
  */
-#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD, IS_FLOAT)           \
-{                                                              \
-                                                               \
-    /* Harmonize length */                                     \
-    if(LENGTH_MOD > 8)                                         \
-    {                                                          \
-        LENGTH_MOD = 8;                                        \
-    }                                                          \
-                                                               \
-    switch(LENGTH_MOD)                                         \
-    {                                                          \
-        case 1:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFF);   \
-            break;                                             \
-        case 2:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF); \
-            break;                                             \
-        case 4:                                                \
-            if(IS_FLOAT == true)                               \
-            {                                                  \
-                VAL = __builtin_va_arg(ARGS, double);          \
-            }                                                  \
-            else                                               \
-            {                                                  \
-                VAL = __builtin_va_arg(ARGS, uint32_t);        \
-            }                                                  \
-            break;                                             \
-        case 8:                                                \
-            if(IS_FLOAT == true)                               \
-            {                                                  \
-                VAL = __builtin_va_arg(ARGS, double);          \
-            }                                                  \
-            else                                               \
-            {                                                  \
-                VAL = __builtin_va_arg(ARGS, uint64_t);        \
-            }                                                  \
-            break;                                             \
-        default:                                               \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
-    }                                                          \
-                                                               \
+#define GET_SEQ_VAL_DOUBLE(VAL, ARGS, LENGTH_MOD)   \
+{                                                   \
+    VAL = __builtin_va_arg(ARGS, double);           \
+}
+
+/**
+ * @brief Get a sequence value argument for integers.
+ */
+#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD, EXTEND)                  \
+{                                                                   \
+                                                                    \
+    /* Harmonize length */                                          \
+    if(LENGTH_MOD > 8)                                              \
+    {                                                               \
+        LENGTH_MOD = 8;                                             \
+    }                                                               \
+                                                                    \
+    switch(LENGTH_MOD)                                              \
+    {                                                               \
+        case 1:                                                     \
+            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFF);        \
+            if(((uint64_t)VAL & 0x80) != 0 && EXTEND == true)       \
+            {                                                       \
+                VAL |= 0xFFFFFFFFFFFFFF00;                          \
+            }                                                       \
+            break;                                                  \
+        case 2:                                                     \
+            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF);      \
+            if(((uint64_t)VAL & 0x8000) != 0 && EXTEND == true)     \
+            {                                                       \
+                VAL |= 0xFFFFFFFFFFFF0000;                          \
+            }                                                       \
+            break;                                                  \
+        case 4:                                                     \
+            VAL = __builtin_va_arg(ARGS, uint32_t);                 \
+            if(((uint64_t)VAL & 0x80000000) != 0 && EXTEND == true) \
+            {                                                       \
+                VAL |= 0xFFFFFFFF00000000;                          \
+            }                                                       \
+            break;                                                  \
+        case 8:                                                     \
+            VAL = __builtin_va_arg(ARGS, uint64_t);                 \
+            break;                                                  \
+        default:                                                    \
+            VAL = __builtin_va_arg(ARGS, uint32_t);                 \
+            if(((uint64_t)VAL & 0x80000000) != 0 && EXTEND == true) \
+            {                                                       \
+                VAL |= 0xFFFFFFFF00000000;                          \
+            }                                                       \
+    }                                                               \
 }
 
 /*******************************************************************************
@@ -320,7 +330,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     break;
                 case 'd':
                 case 'i':
-                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, true);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     itoa(seqVal, tmpSeq, 10);
                     PAD_SEQ
@@ -352,7 +362,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     _toBufferStr(tmpSeq);
                     break;
                 case 'f':
-                    GET_SEQ_VAL(seqValFloat, args, lengthMod, true);
+                    GET_SEQ_VAL_DOUBLE(seqValFloat, args, lengthMod);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     _floatToStr(seqValFloat, tmpSeq, &paddingMod);
                     _toBufferStr(tmpSeq);

@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-; File: cpu_sync.S
+; File: cpuSync.S
 ;
 ; Author: Alexy Torres Aurora Dugo
 ;
@@ -13,7 +13,7 @@
 ;-------------------------------------------------------------------------------
 ; ARCH
 ;-------------------------------------------------------------------------------
-[bits 32]
+[bits 64]
 
 ;-------------------------------------------------------------------------------
 ; DEFINES
@@ -48,20 +48,17 @@ section .text
 ; Lock Spinlock
 ;
 ; Param:
-;     Input: ESP + 4: Address of the lock
+;     Input: rdi: Address of the lock
 
 spinlockAcquire:
-    mov  eax, [esp + 4]
-
 __pauseSpinlockEntry:
-    lock bts dword [eax], 0
-    jc   __pauseSpinlockPause
-
+    lock bts dword [rdi], 0
+    jc   __pauseSpinlockEntry
     ret
 
 __pauseSpinlockPause:
     pause
-    test  dword [eax], 1
+    test  dword [rdi], 1
     jnz   __pauseSpinlockPause
     jmp   __pauseSpinlockEntry
 
@@ -69,34 +66,30 @@ __pauseSpinlockPause:
 ; Unlock Spinlock
 ;
 ; Param:
-;     Input: ESP + 4: Address of the lock
+;     Input: rdi: Address of the lock
 
 spinlockRelease:
-    mov  eax, [esp + 4]
-    mov  dword [eax], 0
+    mov  dword [rdi], 0
     ret
-
 
 ;-------------------------------------------------------------------------------
 ; 32 Bits atomic increment
 ;
 ; Param:
-;     Input: ESP + 4: u32_atomic_t value to increment
+;     Input: rdi: u32_atomic_t value to increment
 atomicIncrement32:
-    mov  edx, [esp + 4]
     mov  eax, 1
-    lock xadd dword [edx], eax
+    lock xadd dword [rdi], eax
     ret
 
 ;-------------------------------------------------------------------------------
 ; 32 Bits atomic decrement
 ;
 ; Param:
-;     Input: ESP + 4: u32_atomic_t value to decrement
+;     Input: rdi: u32_atomic_t value to decrement
 atomicDecrement32:
-    mov  edx, [esp + 4]
     mov  eax, -1
-    lock xadd dword [edx], eax
+    lock xadd dword [rdi], eax
     ret
 
 ;-------------------------------------------------------------------------------

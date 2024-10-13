@@ -1,68 +1,43 @@
 /*******************************************************************************
- * @file stdbool.h
+ * @file cpuSyscall.h
+ *
+ * @see cpuSyscall.c
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 05/10/2023
+ * @date 11/10/2024
  *
  * @version 1.0
  *
- * @brief Kernel's bool type.
+ * @brief CPU system call services.
  *
- * @details Define basics bool types for the kernel.
+ * @details CPU system call services. Raise system calls and call the handlers
+ * based on the provided functions.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-
-#ifndef __LIB_STDBOOL_H_
-#define __LIB_STDBOOL_H_
-
+#ifndef __CPU_CPUSYSCALL_H_
+#define __CPU_CPUSYSCALL_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-/* None */
+#include <kerror.h>     /* Kernel errors */
+#include <ctrl_block.h> /* Kernel thread blocks */
 
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
+
 /* None */
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-
-#if defined(__GNUC__) || \
-    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
-
-/** @brief False value for the bool type. */
-#define false 0
-/** @brief True value for the bool type. */
-#define true 1
-
-#else
-
-/** @brief Boolean primitive type. */
-typedef enum
-{
-    /** @brief False value for the bool type. */
-    false = 0,
-    /** @brief True value for the bool type. */
-    true = 1
-} _Bool;
-
-/** @brief False constant. */
-#define false false
-/** @brief True constant. */
-#define true true
-
-#endif
-
-/** @brief Defines the bool type. */
-#define bool _Bool
+/* None */
 
 /*******************************************************************************
  * MACROS
@@ -86,9 +61,14 @@ typedef enum
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+/* TODO: Doc */
+void cpuKernelSyscallRaise(const uintptr_t syscallHandler,
+                           void*           pParams,
+                           const uintptr_t kKernelStack);
 
-/* None */
+void cpuSaveSyscallContext(const uintptr_t syscallReturnAddress);
+void cpuRestoreSyscallContext(const kernel_thread_t* kpThread);
 
-#endif /* #ifndef __LIB_STDBOOL_H_ */
+#endif /* #ifndef __CPU_CPUSYSCALL_H_ */
 
 /************************************ EOF *************************************/

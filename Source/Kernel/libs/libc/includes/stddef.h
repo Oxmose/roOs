@@ -80,7 +80,8 @@ typedef uint32_t uintptr_t;
  * MACROS
  ******************************************************************************/
 
-/** @brief Defines the MIN function, return the minimal value between two
+/**
+ * @brief Defines the MIN function, return the minimal value between two
  * variables.
  *
  * @param[in] x The first value to compare.
@@ -90,7 +91,8 @@ typedef uint32_t uintptr_t;
  */
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
-/** @brief Defines the MAX function, return the maximal value between two
+/**
+ * @brief Defines the MAX function, return the maximal value between two
  * variables.
  *
  * @param[in] x The first value to compare.
@@ -100,13 +102,25 @@ typedef uint32_t uintptr_t;
  */
 #define MAX(x, y) ((x) < (y) ? (y) : (x))
 
-/** @brief Defines the ABS function, return the absolute value of a variable.
+/**
+ * @brief Defines the ABS function, return the absolute value of a variable.
  *
  * @param[in] x The value to absolute.
  *
  * @return The absolute value.
  */
 #define ABS(X) ((X) < 0 ? -(X) : (X))
+
+/**
+ * @brief Returns the number of elements in a statically allocated array.
+ *
+ * @param[in] x The array to calculate the size of.
+ *
+ * @return THe number of elements in the array.
+ *
+ * @warning This macro shall only by used with statically allocated arrays.
+ */
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /*******************************************************************************
  * GLOBAL VARIABLES

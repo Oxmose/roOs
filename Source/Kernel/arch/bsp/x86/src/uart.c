@@ -39,6 +39,7 @@
 #include <critical.h>     /* Kernel locks */
 #include <drivermgr.h>    /* Driver manager service */
 #include <ksemaphore.h>   /* Kernel semaphores */
+#include <interrupts.h>   /* Interrupt manager */
 #include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */

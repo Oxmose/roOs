@@ -37,8 +37,10 @@
 #include <syslog.h>       /* Kernel Syslog */
 #include <signal.h>       /* Thread signals */
 #include <stdbool.h>      /* Bool types */
+#include <syscall.h>      /* System call manager */
 #include <time_mgt.h>     /* Time management services */
 #include <critical.h>     /* Kernel critical */
+#include <cpuSyscall.h>   /* CPU System call manager */
 #include <ctrl_block.h>   /* Threads and processes control block */
 #include <interrupts.h>   /* Interrupt manager */
 
@@ -152,6 +154,36 @@ typedef struct
     /** @brief Stats lock */
     kernel_spinlock_t lock;
 } cpu_stat_t;
+
+/** @brief Sleep system call parameters */
+typedef struct
+{
+    /** @brief Time to sleep in nanoseconds for the calling thread. */
+    uint64_t timeToSleepNs;
+
+    /** @brief The system call return code. */
+    OS_RETURN_E retCode;
+} syscall_sleep_param_t;
+
+/** @brief Schedule system call parameters */
+typedef struct
+{
+    /** @brief The system call return code. */
+    OS_RETURN_E retCode;
+} syscall_schedule_param_t;
+
+/** @brief Fork system call parameters */
+typedef struct
+{
+    /**
+     * @brief When the return code is OS_NO_ERROR, this contains the new
+     * forked process PID.
+     */
+    int32_t newPid;
+
+    /** @brief The system call return code. */
+    OS_RETURN_E retCode;
+} syscall_fork_param_t;
 
 /*******************************************************************************
  * MACROS
@@ -443,6 +475,20 @@ static void _manageNextState(kernel_thread_t* pThread);
  */
 static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
                                            const char*        kpName);
+
+/**
+ * @brief Makes a copy of the running thread.
+ *
+ * @details Makes a copy of the running thread. The destination thread will be
+ * allocated as well as the necessary resources. The destination thread is
+ * not put in any queue and the links to any process or queue present in the
+ * source thread are not copied.
+ *
+ * @param[out] ppDstThread The pointer to the destination thread.
+ *
+ * @return The function returns the success or error status.
+ */
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -656,12 +702,13 @@ static void _createIdleThreads(void)
         spIdleThread[i]->pThreadResources = kQueueCreate(true);
 
         /* Set the thread's stack for both interrupt and main */
-        spIdleThread[i]->kernelStackEnd =
-            memoryKernelMapStack(KERNEL_STACK_SIZE);
+        spIdleThread[i]->kernelStackEnd = memoryMapStack(KERNEL_STACK_SIZE,
+                                                         NULL,
+                                                         true);
         SCHED_ASSERT(spIdleThread[i]->kernelStackEnd != (uintptr_t)NULL,
                      "Failed to allocate IDLE thread stack",
                      OS_ERR_NO_MORE_MEMORY);
-
+        spIdleThread[i]->kernelStackSize = KERNEL_STACK_SIZE;
         spIdleThread[i]->stackEnd  = (uintptr_t)NULL;
         spIdleThread[i]->stackSize = 0;
 
@@ -878,16 +925,18 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     kQueueDestroy((kqueue_t**)&pThread->pThreadResources);
 
     /* Destroy the kernel stack */
-    memoryKernelUnmapStack(pThread->kernelStackEnd,
-                           pThread->kernelStackSize);
+    memoryUnmapStack(pThread->kernelStackEnd,
+                     pThread->kernelStackSize,
+                     true,
+                     NULL);
 
     /* Destroy the regular stack */
-    if(pThread->stackEnd != (uintptr_t)NULL)
-    {
-        /* TODO: */
-    }
+    memoryUnmapStack(pThread->stackEnd,
+                     pThread->stackSize,
+                     false,
+                     pThread->pProcess);
 
-    /* Destroy the virutal CPUs */
+    /* Destroy the virtual CPUs */
     cpuDestroyVirtualCPU((uintptr_t)pThread->pThreadVCpu);
     cpuDestroyVirtualCPU((uintptr_t)pThread->pSignalVCpu);
 
@@ -1432,11 +1481,20 @@ static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
     memset(pProcess, 0, sizeof(kernel_process_t));
 
     /* Create process memory information */
-    pProcess->pMemoryData = memoryKernelGetPageTable();
+    pProcess->pMemoryData = memoryCreateProcessMemoryData();
     if(pProcess->pMemoryData == NULL)
     {
         kfree(pProcess);
         return OS_ERR_NULL_POINTER;
+    }
+
+    /* Create the file descriptor table */
+    error = vfsCreateProcessFdTable(pProcess);
+    if(error != OS_NO_ERR)
+    {
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return error;
     }
 
     /* Create the thread table */
@@ -1445,6 +1503,10 @@ static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
                                                 &error);
     if(error != OS_NO_ERR)
     {
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
         kfree(pProcess);
         return error;
     }
@@ -1455,17 +1517,40 @@ static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
                                                &error);
     if(error != OS_NO_ERR)
     {
-
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
         SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
                      "Failed to remove threads table.",
                      error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
         kfree(pProcess);
         return error;
     }
 
+
+    pProcess->pChildren = kQueueCreate(false);
+    if(pProcess->pChildren == NULL)
+    {
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
+                     "Failed to remove threads table.",
+                     error);
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pFutexTable) == OS_NO_ERR,
+                     "Failed to remove futex table.",
+                     error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+
     /* Setup the process attributes */
     pProcess->pid = atomicIncrement32(&sLastGivenPid);
-    pProcess->pParent = schedGetCurrentProcess();
+    pProcess->pChildren = kQueueCreate(true);
+    pProcess->pParent = NULL;
     memcpy(pProcess->pName,
            kpName,
            MIN(PROCESS_NAME_MAX_LENGTH, strlen(kpName) + 1));
@@ -1478,6 +1563,141 @@ static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
 
     atomicIncrement32(&sProcessCount);
     return OS_NO_ERR;
+}
+
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
+{
+    kernel_thread_t*       pNewThread;
+    OS_RETURN_E            error;
+    const kernel_thread_t* pSrcThread;
+
+    if(ppDstThread == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    pSrcThread = schedGetCurrentThread();
+
+    SCHED_ASSERT(*ppDstThread == NULL,
+                 "Trying to copy thread on non NULL destination.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+
+    /* Allocate the new thread */
+    pNewThread = kmalloc(sizeof(kernel_thread_t));
+    if(pNewThread == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Copy the attributes */
+    memcpy(pNewThread, pSrcThread, sizeof(kernel_thread_t));
+
+    /* Reset unique attributes */
+    pNewThread->kernelStackEnd   = (uintptr_t)NULL;
+    pNewThread->pThreadVCpu      = NULL;
+    pNewThread->pSignalVCpu      = NULL;
+    pNewThread->pThreadNode      = NULL;
+    pNewThread->pThreadListNode  = NULL;
+    pNewThread->pThreadResources = NULL;
+    pNewThread->pNext            = NULL;
+    pNewThread->pPrev            = NULL;
+    pNewThread->pProcess         = NULL;
+    pNewThread->pJoiningThread   = NULL;
+    pNewThread->pJoinedThread    = NULL;
+    KERNEL_SPINLOCK_INIT(pNewThread->lock);
+
+    /* Allocate a new thread Id */
+    pNewThread->tid = atomicIncrement32(&sLastGivenTid);
+    if(pNewThread->tid >= INT32_MAX || pNewThread->tid == 0)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Create the resource queue */
+    pNewThread->pThreadResources = kQueueCreate(false);
+    if(pNewThread->pThreadResources == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Create the list nodes */
+    pNewThread->pThreadNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+    pNewThread->pThreadListNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadListNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Create the new kernel stack */
+    pNewThread->kernelStackEnd = memoryMapStack(pNewThread->kernelStackSize,
+                                                NULL,
+                                                true);
+    if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Copy the kernel stack */
+    memcpy((void*)(pNewThread->kernelStackEnd - pNewThread->kernelStackSize),
+           (void*)(pSrcThread->kernelStackEnd - pSrcThread->kernelStackSize),
+           pSrcThread->kernelStackSize);
+
+    /* Copy the VCPUs */
+    error = cpuCopyVirtualCPUs(pSrcThread, pNewThread);
+    if(error != OS_NO_ERR)
+    {
+        goto COPY_CLEANUP;
+    }
+
+    error = OS_NO_ERR;
+    /* Assign the new thread */
+    *ppDstThread = pNewThread;
+
+COPY_CLEANUP:
+    if(error != OS_NO_ERR)
+    {
+        if(pNewThread != NULL)
+        {
+            if(pNewThread->kernelStackEnd != (uintptr_t)NULL)
+            {
+                memoryUnmapStack(pNewThread->kernelStackEnd,
+                                 pNewThread->kernelStackSize,
+                                 true,
+                                 NULL);
+            }
+            if(pNewThread->pThreadResources != NULL)
+            {
+                kQueueDestroy(&pNewThread->pThreadResources);
+            }
+            if(pNewThread->pThreadNode != NULL)
+            {
+                kQueueDestroyNode(&pNewThread->pThreadNode);
+            }
+            if(pNewThread->pThreadListNode != NULL)
+            {
+                kQueueDestroyNode(&pNewThread->pThreadListNode);
+            }
+            if(pNewThread->pThreadVCpu != NULL)
+            {
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pThreadVCpu);
+            }
+            if(pNewThread->pSignalVCpu != NULL)
+            {
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
+            }
+
+            kfree(pNewThread);
+        }
+    }
+    return error;
 }
 
 void schedInit(void)
@@ -1722,53 +1942,21 @@ void schedScheduleNoInt(const bool kForceSwitch)
            cpuId);
 #endif
 
-    /* We should never come back */
-    cpuRestoreContext(pThread);
+    /* Check if we should restore the full context or the syscall context */
+    if(cpuIsContextFromInt(pThread->pVCpu) == true)
+    {
+        cpuRestoreContext(pThread);
+    }
+    else if(cpuIsContextFromSyscall(pThread->pVCpu) == true)
+    {
+        cpuRestoreSyscallContext(pThread);
+    }
+
+    while(1){};
 
     SCHED_ASSERT(false,
                  "Schedule returned",
                  OS_ERR_UNAUTHORIZED_ACTION);
-}
-
-void schedSchedule(void)
-{
-    /* Request schedule */
-    schedGetCurrentThread()->requestSchedule = true;
-
-    /* Just generate a scheduler interrupt */
-    cpuRaiseInterrupt(sSchedulerInterruptLine);
-}
-
-OS_RETURN_E schedSleep(const uint64_t kTimeNs)
-{
-    kernel_thread_t* pCurrThread;
-    uint32_t         intState;
-
-    /* Check the current thread */
-    pCurrThread = schedGetCurrentThread();
-    if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
-    {
-        return OS_ERR_UNAUTHORIZED_ACTION;
-    }
-
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    KERNEL_LOCK(pCurrThread->lock);
-    /* Get the current time and set as sleeping*/
-    pCurrThread->wakeupTime = timeGetUptime() + kTimeNs;
-    pCurrThread->nextState = THREAD_STATE_SLEEPING;
-    KERNEL_UNLOCK(pCurrThread->lock);
-
-    /* Request scheduling */
-    schedSchedule();
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    /* On return, check that the wakeup time is readched */
-    if(pCurrThread->wakeupTime > timeGetUptime())
-    {
-        return OS_ERR_CANCELED;
-    }
-
-    return OS_NO_ERR;
 }
 
 size_t schedGetThreadCount(void)
@@ -1818,7 +2006,6 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     newTid = atomicIncrement32(&sLastGivenTid);
     if(newTid >= INT32_MAX || newTid == 0)
     {
-        atomicDecrement32(&sLastGivenTid);
         return OS_ERR_NO_MORE_MEMORY;
     }
 
@@ -1848,12 +2035,15 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pNewThread->pEntryPoint        = pRoutine;
     pNewThread->requestSchedule    = true;
     pNewThread->preemptionDisabled = false;
+    pNewThread->pProcess           = schedGetCurrentProcess();
 
     strncpy(pNewThread->pName, kpName, THREAD_NAME_MAX_LENGTH);
     pNewThread->pName[THREAD_NAME_MAX_LENGTH] = 0;
 
     /* Set the thread's stack for both interrupt and main */
-    pNewThread->kernelStackEnd = memoryKernelMapStack(kStackSize);
+    pNewThread->kernelStackEnd = memoryMapStack(kStackSize,
+                                                NULL,
+                                                true);
     if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1862,13 +2052,15 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pNewThread->kernelStackSize = kStackSize;
 
     /* No user stack for kernel threads */
-    pNewThread->stackEnd  = (uintptr_t)NULL;
-    pNewThread->stackSize = 0;
+    pNewThread->stackEnd  = memoryMapStack(kStackSize,
+                                           pNewThread->pProcess,
+                                           false);
+    pNewThread->stackSize = kStackSize;
 
     /* Allocate the vCPUs */
     pNewThread->pThreadVCpu =
         (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                   pNewThread->kernelStackEnd);
+                                   pNewThread->stackEnd);
     if(pNewThread->pThreadVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1876,7 +2068,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     }
     pNewThread->pSignalVCpu =
         (void*)cpuCreateVirtualCPU(NULL,
-                                   pNewThread->kernelStackEnd);
+                                   pNewThread->stackEnd);
     if(pNewThread->pSignalVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1904,8 +2096,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     /* Init signal */
     signalInitSignals(pNewThread);
 
-     /* Setup the process link */
-    pNewThread->pProcess = schedGetCurrentProcess();
+    /* Setup the process link */
     pNewThread->pNext = NULL;
 
     KERNEL_LOCK(pNewThread->pProcess->lock);
@@ -1952,13 +2143,18 @@ SCHED_CREATE_KTHREAD_END:
         {
             if(pNewThread->stackEnd != (uintptr_t)NULL)
             {
-                /* TODO: */
+                memoryUnmapStack(pNewThread->stackEnd,
+                                 pNewThread->stackSize,
+                                 false,
+                                 NULL);
             }
             if(pNewThread->kernelStackEnd != (uintptr_t)NULL)
             {
 
-                memoryKernelUnmapStack(pNewThread->kernelStackEnd,
-                                      pNewThread->kernelStackSize);
+                memoryUnmapStack(pNewThread->kernelStackEnd,
+                                 pNewThread->kernelStackSize,
+                                 true,
+                                 pNewThread->pProcess);
 
             }
             if(pNewThread->pThreadVCpu != NULL)
@@ -1981,6 +2177,7 @@ SCHED_CREATE_KTHREAD_END:
                              true);
                 kQueueDestroyNode((kqueue_node_t**)
                                   &pNewThread->pThreadListNode);
+                --sTotalThreadsList.threadCount;
                 KERNEL_UNLOCK(sTotalThreadsList.lock);
             }
             if(pNewThread->pThreadNode != NULL)
@@ -2350,6 +2547,8 @@ OS_RETURN_E schedGetThreadInfo(thread_info_t* pInfo, const int32_t kTid)
             pInfo->currentState = pThread->currentState;
             pInfo->affinity     = pThread->affinity;
             pInfo->schedCpu     = pThread->schedCpu;
+            pInfo->kStack       = pThread->kernelStackEnd;
+            pInfo->uStack       = pThread->stackEnd;
             memcpy(pInfo->pName, pThread->pName, THREAD_NAME_MAX_LENGTH);
 
             KERNEL_UNLOCK(sTotalThreadsList.lock);
@@ -2488,80 +2687,351 @@ bool schedIsThreadValid(kernel_thread_t* pThread)
     return (err == OS_NO_ERR);
 }
 
-OS_RETURN_E schedForkProcess(kernel_process_t** ppNewProcess)
+bool schedIsIdleThread(const kernel_thread_t* kpThread)
 {
-    OS_RETURN_E       error;
-    kernel_process_t* pProcess;
-    kernel_process_t* pCurrentProcess;
+    uint8_t cpuId;
 
-    if(ppNewProcess == NULL)
+    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    {
+        if(kpThread == spIdleThread[cpuId])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*******************************************************************************
+ * SYSTEM CALL PERFORMERS
+ ******************************************************************************/
+OS_RETURN_E schedSleep(const uint64_t kTimeNs)
+{
+    syscall_sleep_param_t sleepParam;
+    OS_RETURN_E           error;
+
+    /* Prepare the system call */
+    sleepParam.timeToSleepNs = kTimeNs;
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_SLEEP, &sleepParam);
+    if(error == OS_NO_ERR)
+    {
+        error = sleepParam.retCode;
+    }
+
+    return error;
+}
+
+void schedSchedule(void)
+{
+    syscall_schedule_param_t schedParam;
+    OS_RETURN_E              error;
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_SCHEDULE, &schedParam);
+    SCHED_ASSERT(error == OS_NO_ERR && schedParam.retCode == OS_NO_ERR,
+                 "Failed to schedule thread",
+                 error);
+}
+
+OS_RETURN_E schedFork(int32_t* pNewPid)
+{
+    syscall_fork_param_t forkParam;
+    OS_RETURN_E          error;
+
+    if(pNewPid == NULL)
     {
         return OS_ERR_NULL_POINTER;
     }
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_FORK, &forkParam);
+    if(error == OS_NO_ERR)
+    {
+        error = forkParam.retCode;
+        if(error == OS_NO_ERR)
+        {
+            *pNewPid = forkParam.newPid;
+        }
+        else
+        {
+            *pNewPid = -1;
+        }
+    }
+
+    return error;
+}
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+void schedSyscallHandleSleep(void* pParams)
+{
+    kernel_thread_t*       pCurrThread;
+    uint32_t               intState;
+    syscall_sleep_param_t* pSleepParam;
+    uint64_t               wakeupTime;
+    uint64_t               currentTime;
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(schedGetCurrentThread()->pVCpu),
+                 "Called sleep handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Sleep parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pSleepParam = pParams;
+    pSleepParam->retCode = OS_NO_ERR;
+
+    /* Check the current thread */
+    pCurrThread = schedGetCurrentThread();
+    if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
+    {
+        pSleepParam->retCode = OS_ERR_UNAUTHORIZED_ACTION;
+        return;
+    }
+
+    /* Calculate the wakeup time and check for rollback */
+    currentTime = timeGetUptime();
+    wakeupTime  = currentTime + pSleepParam->timeToSleepNs;
+    if(wakeupTime < currentTime)
+    {
+        pSleepParam->retCode = OS_ERR_INCORRECT_VALUE;
+        return;
+    }
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pCurrThread->lock);
+    /* Get the current time and set as sleeping*/
+    pCurrThread->wakeupTime = wakeupTime;
+    pCurrThread->nextState = THREAD_STATE_SLEEPING;
+    KERNEL_UNLOCK(pCurrThread->lock);
+
+    /* Request scheduling */
+    schedScheduleNoInt(true);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    SCHED_ASSERT(false,
+                 "Sleep system call handler returned",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+}
+
+void schedSyscallHandleSchedule(void* pParams)
+{
+    uint32_t                  intState;
+    syscall_schedule_param_t* pSchedParam;
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(schedGetCurrentThread()->pVCpu),
+                 "Called schedule handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Schedule parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pSchedParam = pParams;
+    pSchedParam->retCode = OS_NO_ERR;
+
+    /* Request schedule */
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    schedScheduleNoInt(true);
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    SCHED_ASSERT(false,
+                 "Schedule system call handler returned",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+}
+
+void schedSyscallHandleFork( void* pParams)
+{
+    OS_RETURN_E           error;
+    OS_RETURN_E           newError;
+    kernel_process_t*     pProcess;
+    kernel_process_t*     pCurrentProcess;
+    kernel_thread_t*      pCurrentThread;
+    kernel_thread_t*      pMainThread;
+    kqueue_node_t*        pNewProcessNode;
+    syscall_fork_param_t* pForkParam;
+
+    pMainThread = NULL;
+
+    pCurrentThread = schedGetCurrentThread();
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(pCurrentThread->pVCpu),
+                 "Called fork handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Fork parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pForkParam = pParams;
+
+    pCurrentProcess = schedGetCurrentProcess();
 
     /* Allocate the structure */
     pProcess = kmalloc(sizeof(kernel_process_t));
     if(pProcess == NULL)
     {
-        return OS_ERR_NO_MORE_MEMORY;
+        pForkParam->retCode = OS_ERR_NO_MORE_MEMORY;
+        return;
     }
     memset(pProcess, 0, sizeof(kernel_process_t));
 
-    /* Create process memory information TODO: */
-    pProcess->pMemoryData = memoryKernelGetPageTable();
+    /* Create process memory information */
+    pProcess->pMemoryData = memoryCreateProcessMemoryData();
     if(pProcess->pMemoryData == NULL)
     {
-        kfree(pProcess);
-        return OS_ERR_NULL_POINTER;
+        error = OS_ERR_NULL_POINTER;
+        goto SCHED_FORK_END;
     }
-
-    /* Copy the mapping of the current process */
 
     /* Create the thread table */
     pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
                                                                    kfree),
-                                                &error);
+                                              &error);
     if(error != OS_NO_ERR)
     {
-        kfree(pProcess);
-        return error;
+        goto SCHED_FORK_END;
     }
 
     /* Create the futex table */
     pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
                                                                   kfree),
-                                               &error);
+                                             &error);
     if(error != OS_NO_ERR)
     {
 
-        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
-                     "Failed to remove threads table.",
-                     error);
-        kfree(pProcess);
-        return error;
+        goto SCHED_FORK_END;
     }
 
-    /* Create the main thread (copy from the current thread) */
+    /* Copy the file descriptors */
+    error = vfsCopyProcessFdTable(pProcess, pCurrentProcess);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Copy the mapping of the current process */
+    error = memoryCloneProcessMemory(pProcess);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Create the main thread (copy from the current thread) and add to the
+     * new process thread table
+     */
+    error = _copyThread(&pMainThread);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
 
     /* Setup the process attributes */
-    pCurrentProcess = schedGetCurrentProcess();
-
-    pProcess->pid = atomicIncrement32(&sLastGivenPid);
     memcpy(pProcess->pName, pCurrentProcess->pName, PROCESS_NAME_MAX_LENGTH);
     pProcess->pName[PROCESS_NAME_MAX_LENGTH] = 0;
-
+    pProcess->pid = atomicIncrement32(&sLastGivenPid);
     KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
     KERNEL_SPINLOCK_INIT(pProcess->lock);
 
+    /* Add the thread to the process */
+    pProcess->pMainThread = pMainThread;
+    pProcess->pThreadListTail = pMainThread;
+    pMainThread->pProcess = pProcess;
+
+    /* Create the children list */
+    pProcess->pChildren = kQueueCreate(false);
+    if(pProcess->pChildren == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_FORK_END;
+    }
+
+    /* Add to parent's children */
     pProcess->pParent = pCurrentProcess;
-    /* TODO: Add to parent's children */
+    pNewProcessNode = kQueueCreateNode(pProcess, false);
+    if(pNewProcessNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_FORK_END;
+    }
 
-    /* Release main thread */
-
-
-    *ppNewProcess = pProcess;
+    /* Add the thread to the thread list */
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    kQueuePush(pMainThread->pThreadListNode, sTotalThreadsList.pThreadList);
+    ++sTotalThreadsList.threadCount;
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
 
     atomicIncrement32(&sProcessCount);
-    return OS_NO_ERR;
+    atomicIncrement32(&sThreadCount);
+
+    KERNEL_LOCK(pProcess->lock);
+    kQueuePush(pNewProcessNode, pCurrentProcess->pChildren);
+
+    /* Release main thread */
+    _schedReleaseThread(pProcess->pMainThread, true);
+    KERNEL_UNLOCK(pProcess->lock);
+
+    /* Update the new PID */
+    pForkParam->newPid = pProcess->pid;
+
+    error = OS_NO_ERR;
+
+SCHED_FORK_END:
+    if(error != OS_NO_ERR)
+    {
+        if(pProcess != NULL)
+        {
+            if(pProcess->pMemoryData != NULL)
+            {
+                memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+            }
+
+            if(pProcess->pThreadTable != NULL)
+            {
+                newError = uhashtableDestroy(pProcess->pThreadTable);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                            "Failed to remove threads table.",
+                            newError);
+            }
+
+            if(pProcess->pFutexTable != NULL)
+            {
+                newError = uhashtableDestroy(pProcess->pFutexTable);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                             "Failed to remove futex table.",
+                             newError);
+            }
+
+            if(pProcess->pChildren != NULL)
+            {
+                kQueueDestroy(&pProcess->pChildren);
+            }
+
+            if(pNewProcessNode != NULL)
+            {
+                kQueueRemove(pCurrentProcess->pChildren, pNewProcessNode, true);
+                kQueueDestroyNode(&pNewProcessNode);
+            }
+
+            if(pMainThread != NULL)
+            {
+                pMainThread->currentState = THREAD_STATE_ZOMBIE;
+                _schedCleanThread(pMainThread);
+            }
+
+            if(pProcess->pFdTable != NULL)
+            {
+                newError = vfsDestroyProcessFdTable(pProcess);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                             "Failed to destroy file descriptor table.",
+                             newError);
+            }
+
+            kfree(pProcess);
+        }
+    }
+
+    pForkParam->retCode = error;
 }
 /************************************ EOF *************************************/

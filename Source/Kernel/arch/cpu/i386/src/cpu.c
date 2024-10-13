@@ -38,7 +38,7 @@
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
 #include <exceptions.h>    /* Exception manager */
-#include <cpu_interrupt.h> /* Interrupt manager */
+#include <cpuInterrupt.h>  /* Interrupt manager */
 
 /* Configuration files */
 #include <config.h>
@@ -4946,17 +4946,6 @@ void cpuCoreDump(const void* kpVCpu)
     }
     pDump[offset] = 0;
     syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, pDump);
-}
-
-void* cpuCreateProcessMemoryData(void)
-{
-    return (void*)1;
-}
-
-void cpuDestroyProcessMemoryData(void* pMemoryData)
-{
-    /* TODO: */
-    (void)pMemoryData;
 }
 
 void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)

@@ -237,7 +237,6 @@ void kQueuePush(kqueue_node_t* pNode, kqueue_t* pQueue)
     ++pQueue->size;
     pNode->pQueuePtr = pQueue;
 
-
     KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
                    pNode->pNext == NULL ||
                    pNode->pPrev == NULL),
@@ -321,6 +320,11 @@ void kQueuePushPrio(kqueue_node_t* pNode,
     }
     ++pQueue->size;
     pNode->pQueuePtr = pQueue;
+
+    while(pNode->pNext == pNode->pPrev && pNode->pNext != NULL && pNode->pPrev != NULL)
+    {
+
+    }
 
     KQUEUE_ASSERT((pNode->pNext != pNode->pPrev ||
                    pNode->pNext == NULL ||
@@ -509,6 +513,40 @@ size_t kQueueSize(const kqueue_t* kpQueue)
                   OS_ERR_NULL_POINTER);
 
     return kpQueue->size;
+}
+
+void kQueueClean(kqueue_t* pQueue, const bool kCleanData)
+{
+    kqueue_node_t* pNode;
+    kqueue_node_t* pSaveNode;
+
+    KQUEUE_ASSERT(pQueue != NULL,
+                  "Cannot clean NULL kqueue",
+                  OS_ERR_NULL_POINTER);
+
+    KERNEL_LOCK(pQueue->lock);
+    pNode = pQueue->pHead;
+    while(pNode != NULL)
+    {
+        /* Clean data if requested */
+        if(kCleanData == true && pNode->pData != NULL)
+        {
+            kfree(pNode->pData);
+        }
+
+        /* Get next node */
+        pSaveNode = pNode;
+        pNode = pNode->pNext;
+
+        /* Destroy the node */
+        pSaveNode->pQueuePtr = NULL;
+        kQueueDestroyNode(&pSaveNode);
+    }
+
+    pQueue->pHead = NULL;
+    pQueue->pTail = NULL;
+
+    KERNEL_UNLOCK(pQueue->lock);
 }
 
 /************************************ EOF *************************************/

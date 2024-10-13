@@ -72,6 +72,12 @@ typedef struct
 
     /** @brief Thread's currently mapped CPU */
     uint8_t schedCpu;
+
+    /* Kernel stack end address */
+    uintptr_t kStack;
+
+    /* User stack end address */
+    uintptr_t uStack;
 } thread_info_t;
 
 
@@ -126,9 +132,9 @@ void schedInit(void);
 void schedScheduleNoInt(const bool kForceSwitch);
 
 /**
- * @brief Calls the scheduler dispatch function by generating an interrupt.
+ * @brief Calls the scheduler dispatch function using a system call.
  *
- * @details Calls the scheduler dispatch function by generating an interrupt.
+ * @details Calls the scheduler dispatch function using a system call.
  * This function will select the next thread to schedule and execute it. The
  * context of the calling thread is saved before scheduling.
  */
@@ -394,19 +400,78 @@ bool schedIsRunning(void);
 bool schedIsThreadValid(kernel_thread_t* pThread);
 
 /**
+ * @brief Tells if the thread is an idle thread.
+ *
+ * @details Tells if the thread is an idle thread.
+ *
+ * @param[in] kpThread The thread to test.
+ *
+ * @return The function returns true is the thread is an idle thread, false
+ * otherwise.
+ */
+bool schedIsIdleThread(const kernel_thread_t* kpThread);
+
+/**
  * @brief Forks the current process.
  *
  * @details Forks the current process. A complete copy of the current process
  * will be done and memory will be marked as COW for both new and current
  * process. Only the calling thread will be copied to the new process.
  *
- * @param[in] func The system call function id used to fork the current process.
- * @param[out] ppNewProcess This buffer is used to return the newly created
- * process.
+ * @param[out] pNewPid The new forked process PID. This value is 0 for the new
+ * process and the actual new process PID for the caller. -1 is set on error.
  *
  * @return The function returns the success or error status.
  */
-OS_RETURN_E schedForkProcess(kernel_process_t** ppNewProcess);
+OS_RETURN_E schedFork(int32_t* pNewPid);
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+
+/**
+ * @brief System call handler to sleep.
+ *
+ * @details System call handler to sleep. Puts the calling thread to sleep for
+ * at least the required amount of time. The sleeping time can be greater
+ * depending on the time granularity and the system's load.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the sleep parameter structure.
+ */
+void schedSyscallHandleSleep(void* pParams);
+
+/**
+ * @brief System call handler to schedule the current thread.
+ *
+ * @details System call handler to schedule the current thread. Calls the
+ * scheduler dispatch function.This function will select the next thread to
+ * schedule and execute it. The context of the calling thread is saved before
+ * scheduling.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the schedule parameter structure.
+ */
+void schedSyscallHandleSchedule(void* pParams);
+
+/**
+ * @brief System call handler to fork the current process.
+ *
+ * @details System call handler to fork the current process. A complete copy of
+ * the current process will be done and memory will be marked as COW for both
+ * new and current process. Only the calling thread will be copied to the new
+ * process.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the fork parameter structure.
+ */
+void schedSyscallHandleFork(void* pParams);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-; File: int_handlers.S
+; File: intHandlers.S
 ;
 ; Author: Alexy Torres Aurora Dugo
 ;

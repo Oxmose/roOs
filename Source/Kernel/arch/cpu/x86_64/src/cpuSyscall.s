@@ -1,14 +1,14 @@
 ;-------------------------------------------------------------------------------
 ;
-; File: cpu_sync.S
+; File: cpuSyscall.S
 ;
 ; Author: Alexy Torres Aurora Dugo
 ;
-; Date: 25/04/2023
+; Date: 12/10/2023
 ;
 ; Version: 1.0
 ;
-; CPU synchronization functions
+; CPU system call manager
 ;-------------------------------------------------------------------------------
 ;-------------------------------------------------------------------------------
 ; ARCH
@@ -30,14 +30,13 @@
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
+extern cpuSaveSyscallContext
+extern cpuRestoreSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
 ;-------------------------------------------------------------------------------
-global spinlockAcquire
-global spinlockRelease
-global atomicIncrement32
-global atomicDecrement32
+global cpuKernelSyscallRaise
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -45,51 +44,48 @@ global atomicDecrement32
 
 section .text
 ;-------------------------------------------------------------------------------
-; Lock Spinlock
+; Raise a kernel space system call.
 ;
 ; Param:
-;     Input: rdi: Address of the lock
+;     Input: rdi: The system call handler function address.
+;            rsi: A pointer to the system call parameters.
+;            rdx: The kernel stack to use for the call.
+cpuKernelSyscallRaise:
+    push r12
+    push r13
+    push rbp
 
-spinlockAcquire:
-__pauseSpinlockEntry:
-    lock bts dword [rdi], 0
-    jc   __pauseSpinlockEntry
-    ret
+    ; Switch to kernel stack and save old stack
+    mov r12, rsp
+    mov rsp, rdx
+    push r12
 
-__pauseSpinlockPause:
-    pause
-    test  dword [rdi], 1
-    jnz   __pauseSpinlockPause
-    jmp   __pauseSpinlockEntry
+    ; Save if the current context shall be saved
+    mov r12, rdi
+    mov r13, rsi
 
-;-------------------------------------------------------------------------------
-; Unlock Spinlock
-;
-; Param:
-;     Input: rdi: Address of the lock
+    ; Save the cpu context in the case the syscall is blocking
+    mov rdi, __cpuKernelSyscallReturn
+    call cpuSaveSyscallContext
 
-spinlockRelease:
-    mov  dword [rdi], 0
-    ret
+    ; Restore parameter context
+    mov rdi, r13
 
-;-------------------------------------------------------------------------------
-; 32 Bits atomic increment
-;
-; Param:
-;     Input: rdi: u32_atomic_t value to increment
-atomicIncrement32:
-    mov  eax, 1
-    lock xadd dword [rdi], eax
-    ret
+__cpuKernelSyscallNoSave:
+    ; Call the main system call handler with the right parameters
+    call r12
 
-;-------------------------------------------------------------------------------
-; 32 Bits atomic decrement
-;
-; Param:
-;     Input: rdi: u32_atomic_t value to decrement
-atomicDecrement32:
-    mov  eax, -1
-    lock xadd dword [rdi], eax
+__cpuKernelSyscallReturn:
+    ; Switch to user stack
+    pop rax
+    mov rsp, rax
+
+    ; Restore the saved stack context
+    pop rbp
+    pop r13
+    pop r12
+
+    ; Return
     ret
 
 ;-------------------------------------------------------------------------------

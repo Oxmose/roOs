@@ -38,7 +38,7 @@
 #include <core_mgt.h>      /* Core manager */
 #include <x86memory.h>     /* I386 memory definitions */
 #include <exceptions.h>    /* Exception manager */
-#include <cpu_interrupt.h> /* CPU interrupt settings */
+#include <cpuInterrupt.h>  /* CPU interrupt settings */
 
 /* Configuration files */
 #include <config.h>
@@ -254,6 +254,17 @@ static void _removeBlock(mem_list_t*  pList,
 static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength);
 
 /**
+ * @brief Returns a block from the end of a memory list and removes it.
+ *
+ * @details Returns a block from the end of a memory list and removes it.
+ * The list will be kept sorted by base address in a ascending fashion.
+ *
+ * @param[out] pList The memory list to get the block from.
+ * @param[in] kLength The size, in bytes of the memory region to get.
+ */
+static uintptr_t _getBlockFromEnd(mem_list_t* pList, const size_t kLength);
+
+/**
  * @brief Kernel memory frame allocation.
  *
  * @details Kernel memory frame allocation. This method gets the desired number
@@ -296,7 +307,7 @@ static uintptr_t _allocateKernelPages(const size_t kPageCount);
 /**
  * @brief Kernel memory page release.
  *
- * @details Kernel memory page allocation. This method rekeases the kernel pages
+ * @details Kernel memory page release. This method rekeases the kernel pages
  * to the kernel pages pool. Releasing already free or out of bound pages will
  * generate a kernel panic.
  *
@@ -421,6 +432,53 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
  */
 static void _memoryMgrInitPaging(void);
 
+/**
+ * @brief Releases the memory used by a process.
+ *
+ * @details Releases the memory used by a process. This function only releases
+ * the frames that are used un user space and the frames that compose the user
+ * land of the page directory. The page directory  frame itself is not
+ * released.
+ *
+ * @param[in] pageDir The page directory to release.
+ */
+static void _memoryMgrReleaseUserPageDir(uintptr_t pageDir);
+
+/**
+ * @brief User memory pages allocation.
+ *
+ * @details User memory pages allocation. This method gets the desired number
+ * of contiguous pages from the user pages pool and allocate them.
+ *
+ * @param[in] kPageCount The number of desired pages to allocate.
+ * @param[in] kpProcess The process from which the pages should be allocated.
+ * @param[in] kFromTop Tells if the pages must be allocated from the top or
+ * the bottom of the memory space.
+ *
+ * @return The bottom address of the first page of the contiguous block is
+ * returned.
+ */
+static uintptr_t _allocateUserPages(const size_t            kPageCount,
+                                    const kernel_process_t* kpProcess,
+                                    const bool              kFromTop);
+
+/**
+ * @brief User memory page release.
+ *
+ * @details User memory page release. This method releases the user pages
+ * to the user pages pool. Releasing already free or out of bound pages will
+ * generate a user panic.
+ *
+ * @param[in] kBaseAddress The base address of the contiguous pages pool to
+ * release.
+ * @param[in] kPageCount The number of desired pages to release.
+ * @param[in] kpProcess The process to which the pages should be released.
+ *
+ */
+static void _releaseUserPages(const uintptr_t         kBaseAddress,
+                              const size_t            kPageCount,
+                              const kernel_process_t* kpProcess);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -462,13 +520,6 @@ extern uint8_t _KERNEL_HEAP_SIZE;
 extern uint8_t _KERNEL_MEMORY_START;
 /** @brief Kernel symbols mapping: Kernel total memory end. */
 extern uint8_t _KERNEL_MEMORY_END;
-
-#ifdef _TRACING_ENABLED
-/** @brief Kernel symbols mapping: Trace buffer start. */
-extern uint8_t _KERNEL_TRACE_BUFFER_BASE;
-/** @brief Kernel symbols mapping: Trace buffer size. */
-extern uint8_t _KERNEL_TRACE_BUFFER_SIZE;
-#endif
 
 #ifdef _TESTING_FRAMEWORK_ENABLED
 /** @brief Kernel symbols mapping: Test buffer start. */
@@ -1072,6 +1123,73 @@ static uintptr_t _getBlock(mem_list_t* pList, const size_t kLength)
     return retBlock;
 }
 
+static uintptr_t _getBlockFromEnd(mem_list_t* pList, const size_t kLength)
+{
+    uintptr_t      retBlock;
+    kqueue_node_t* pCursor;
+    mem_range_t*   pRange;
+
+    MEM_ASSERT((kLength & PAGE_SIZE_MASK) == 0,
+               "Tried to get a non aligned block",
+               OS_ERR_UNAUTHORIZED_ACTION);
+
+    retBlock = 0;
+
+    KERNEL_LOCK(pList->lock);
+
+    /* Walk the list until we find a valid block */
+    pCursor = pList->pQueue->pTail;
+    while(pCursor != NULL)
+    {
+        pRange = (mem_range_t*)pCursor->pData;
+
+        if(pRange->base + kLength <= pRange->limit ||
+           ((pRange->base + kLength > pRange->base) && pRange->limit == 0))
+        {
+            retBlock = pRange->limit - kLength;
+
+            /* Reduce the node or remove it */
+            if(pRange->base + kLength == pRange->limit)
+            {
+
+#if MEMORY_MGR_DEBUG_ENABLED
+                syslog(SYSLOG_LEVEL_DEBUG,
+                       MODULE_NAME,
+                       "Removing block after alloc 0x%p -> 0x%p",
+                       pRange->base,
+                       pRange->limit);
+#endif
+
+                kfree(pCursor->pData);
+                kQueueRemove(pList->pQueue, pCursor, true);
+                kQueueDestroyNode(&pCursor);
+            }
+            else
+            {
+#if MEMORY_MGR_DEBUG_ENABLED
+                syslog(SYSLOG_LEVEL_DEBUG,
+                       MODULE_NAME,
+                       "Reducing block after alloc 0x%p -> 0x%p to "
+                       "0x%p -> 0x%p",
+                       pRange->base,
+                       pRange->limit,
+                       pRange->base + kLength,
+                       pRange->limit);
+#endif
+
+                pRange->limit -= kLength;
+            }
+            break;
+        }
+
+        pCursor = pCursor->pPrev;
+    }
+
+    KERNEL_UNLOCK(pList->lock);
+
+    return retBlock;
+}
+
 static uintptr_t _allocateFrames(const size_t kFrameCount)
 {
     return _getBlock(&sPhysMemList, KERNEL_PAGE_SIZE * kFrameCount);
@@ -1350,9 +1468,6 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
                 /* If present, unmap */
                 if((pPgTableRecurEntry[pgTableEntry] & PAGE_FLAG_PRESENT) != 0)
                 {
-                    /* TODO: Once we have reference count, free the frame
-                     * if needed */
-
                     /* Set mapping and invalidate */
                     pPgTableRecurEntry[pgTableEntry] = 0;
                     cpuInvalidateTlbEntry(currVirtAddr);
@@ -1430,6 +1545,92 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     }
 
     return OS_NO_ERR;
+}
+
+static void _memoryMgrReleaseUserPageDir(uintptr_t pageDir)
+{
+    OS_RETURN_E error;
+    uintptr_t*  pgDirLevel[2];
+    uint32_t    lvl_idx[2];
+    uint8_t     i;
+    uintptr_t   physAddr[3];
+    uintptr_t   virtAddr;
+
+    physAddr[0] = _allocateKernelPages(2);
+
+    MEM_ASSERT(physAddr[0] != (uintptr_t)NULL,
+               "Insufficient memory to release process",
+               OS_ERR_NO_MORE_MEMORY);
+    for(i = 0; i < 2; ++i)
+    {
+        pgDirLevel[i] = (uintptr_t*)(physAddr[0] + KERNEL_PAGE_SIZE * i);
+    }
+
+
+    /* Map the page directory */
+    error = _memoryMgrMap((uintptr_t)pgDirLevel[0],
+                          pageDir,
+                          1,
+                          MEMMGR_MAP_RO | MEMMGR_MAP_KERNEL);
+    MEM_ASSERT(error == OS_NO_ERR,
+               "Failed to map release memory to release process",
+               error);
+
+    /* Walk the page directory and release frames */
+    for(lvl_idx[0] = 0; lvl_idx[0] < KERNEL_PGDIR_ENTRY_COUNT; ++lvl_idx[0])
+    {
+        /* Is the entry mapped */
+        if((pgDirLevel[0][lvl_idx[0]] & PAGE_FLAG_PRESENT) != 0)
+        {
+            physAddr[1] = pgDirLevel[0][lvl_idx[0]] & ~PAGE_SIZE_MASK;
+            error = _memoryMgrMap((uintptr_t)pgDirLevel[1],
+                                  physAddr[1],
+                                  1,
+                                  MEMMGR_MAP_RO | MEMMGR_MAP_KERNEL);
+            MEM_ASSERT(error == OS_NO_ERR,
+                       "Failed to map release memory to release process",
+                       error);
+            for(lvl_idx[1] = 0;
+                lvl_idx[1] < KERNEL_PGDIR_ENTRY_COUNT;
+                ++lvl_idx[1])
+            {
+
+                virtAddr = VIRT_ADDR_FROM_ENT(lvl_idx[0],
+                                              lvl_idx[1]);
+                /* Check if we still are in the low kernel
+                    * space
+                    */
+                if(virtAddr < USER_MEMORY_START)
+                {
+                    continue;
+                }
+                /* Check if we reached the end of the user
+                 * space
+                 */
+                else if(virtAddr >= USER_MEMORY_END)
+                {
+                    lvl_idx[0] = KERNEL_PGDIR_ENTRY_COUNT;
+                    lvl_idx[1] = KERNEL_PGDIR_ENTRY_COUNT;
+                    break;
+                }
+
+                if((pgDirLevel[1][lvl_idx[1]] & PAGE_FLAG_PRESENT) != 0)
+                {
+                    if((pgDirLevel[1][lvl_idx[1]] & PAGE_FLAG_IS_HW) !=
+                       PAGE_FLAG_IS_HW)
+                    {
+                        physAddr[2] = pgDirLevel[1][lvl_idx[1]] &
+                                      ~PAGE_SIZE_MASK;
+                        _releaseFrames(physAddr[2], 1);
+                    }
+                }
+            }
+            _releaseFrames(physAddr[1], 1);
+            _memoryMgrUnmap((uintptr_t)pgDirLevel[1], 1);
+        }
+    }
+    _memoryMgrUnmap((uintptr_t)pgDirLevel[0], 1);
+    _releaseKernelPages((uintptr_t)pgDirLevel[0], 2);
 }
 
 static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
@@ -1570,10 +1771,6 @@ static void _memoryMgrDetectMemory(void)
     /* If testing is enabled, the end is after its buffer */
     kernelPhysEnd = (uintptr_t)&_KERNEL_TEST_BUFFER_BASE +
                     (uintptr_t)&_KERNEL_TEST_BUFFER_SIZE;
-#elif defined(_TRACING_ENABLED)
-    /* If tracing is enabled, the end is after its buffer */
-    kernelPhysEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
-                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
 #else
     kernelPhysEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
 #endif
@@ -1598,10 +1795,6 @@ static void _memoryMgrInitAddressTable(void)
     /* If testing is enabled, the end is after its buffer */
     kernelVirtEnd = (uintptr_t)&_KERNEL_TEST_BUFFER_BASE +
                     (uintptr_t)&_KERNEL_TEST_BUFFER_SIZE;
-#elif defined(_TRACING_ENABLED)
-    /* If tracing is enabled, the end is after its buffer */
-    kernelVirtEnd = (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
-                    (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE;
 #else
     /* Initialize kernel pages */
     kernelVirtEnd   = (uintptr_t)&_KERNEL_MEMORY_END;
@@ -1778,15 +1971,6 @@ static void _memoryMgrInitPaging(void)
                               (uintptr_t)&_KERNEL_HEAP_SIZE,
                               MEMMGR_MAP_RW);
 
-#ifdef _TRACING_ENABLED
-    _memoryMgrMapKernelRegion(&kernelSectionStart,
-                              &kernelSectionEnd,
-                              (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE,
-                              (uintptr_t)&_KERNEL_TRACE_BUFFER_BASE +
-                              (uintptr_t)&_KERNEL_TRACE_BUFFER_SIZE,
-                              MEMMGR_MAP_RW);
-#endif
-
 #ifdef _TESTING_FRAMEWORK_ENABLED
     _memoryMgrMapKernelRegion(&kernelSectionStart,
                               &kernelSectionEnd,
@@ -1804,6 +1988,40 @@ static void _memoryMgrInitPaging(void)
 
     /* Update the whole page table */
     cpuSetPageDirectory((uintptr_t)spKernelPageDir - KERNEL_MEM_OFFSET);
+}
+
+static uintptr_t _allocateUserPages(const size_t            kPageCount,
+                                    const kernel_process_t* kpProcess,
+                                    const bool              kFromTop)
+{
+    memproc_info_t* pMemProcInfo;
+
+    pMemProcInfo = kpProcess->pMemoryData;
+
+    if(kFromTop == true)
+    {
+        return _getBlockFromEnd(&pMemProcInfo->freePageTable,
+                                kPageCount * KERNEL_PAGE_SIZE);
+    }
+    else
+    {
+        return _getBlock(&pMemProcInfo->freePageTable,
+                         kPageCount * KERNEL_PAGE_SIZE);
+    }
+
+}
+
+static void _releaseUserPages(const uintptr_t         kBaseAddress,
+                              const size_t            kPageCount,
+                              const kernel_process_t* kpProcess)
+{
+    memproc_info_t* pMemProcInfo;
+
+    pMemProcInfo = kpProcess->pMemoryData;
+
+    _addBlock(&pMemProcInfo->freePageTable,
+              kBaseAddress,
+              kPageCount * KERNEL_PAGE_SIZE);
 }
 
 void memoryMgrInit(void)
@@ -1957,7 +2175,9 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize)
     return error;
 }
 
-uintptr_t memoryKernelMapStack(const size_t kSize)
+uintptr_t memoryMapStack(const size_t      kSize,
+                         kernel_process_t* pProcess,
+                         const bool        kIsKernel)
 {
     size_t      pageCount;
     size_t      mappedCount;
@@ -1972,7 +2192,7 @@ uintptr_t memoryKernelMapStack(const size_t kSize)
     KERNEL_LOCK(sLock);
 
     /* Request the pages + 1 to catch overflow (not mapping the last page)*/
-    pageBaseAddress = _allocateKernelPages(pageCount + 1);
+    pageBaseAddress = _allocateUserPages(pageCount + 1, pProcess, true);
     if(pageBaseAddress == 0)
     {
         KERNEL_UNLOCK(sLock);
@@ -1988,10 +2208,22 @@ uintptr_t memoryKernelMapStack(const size_t kSize)
             break;
         }
 
-        error = _memoryMgrMap(pageBaseAddress + i * KERNEL_PAGE_SIZE,
-                              newFrame,
-                              1,
-                              MEMMGR_MAP_RW | MEMMGR_MAP_KERNEL);
+        if(kIsKernel == true)
+        {
+            error = _memoryMgrMap(pageBaseAddress + i * KERNEL_PAGE_SIZE,
+                                  newFrame,
+                                  1,
+                                  MEMMGR_MAP_RW | MEMMGR_MAP_KERNEL);
+        }
+        else
+        {
+            error = _memoryMgrMap(pageBaseAddress + i * KERNEL_PAGE_SIZE,
+                                  newFrame,
+                                  1,
+                                  MEMMGR_MAP_RW     |
+                                  MEMMGR_MAP_KERNEL |
+                                  MEMMGR_MAP_USER);
+        }
         if(error != OS_NO_ERR)
         {
             /* On error, release the frame */
@@ -2020,17 +2252,23 @@ uintptr_t memoryKernelMapStack(const size_t kSize)
 
             _memoryMgrUnmap(pageBaseAddress, mappedCount);
         }
-        _releaseKernelPages(pageBaseAddress, pageCount + 1);
+        _releaseUserPages(pageBaseAddress, pageCount + 1, pProcess);
 
         pageBaseAddress = (uintptr_t)NULL;
     }
 
     KERNEL_UNLOCK(sLock);
 
-    return pageBaseAddress + (pageCount * KERNEL_PAGE_SIZE);
+    if(pageBaseAddress != (uintptr_t)NULL)
+    {
+        pageBaseAddress += (pageCount * KERNEL_PAGE_SIZE);
+    }
+    return pageBaseAddress;
 }
 
-void memoryKernelUnmapStack(const uintptr_t kEndAddress, const size_t kSize)
+void memoryUnmapStack(const uintptr_t   kEndAddress,
+                      const size_t      kSize,
+                      kernel_process_t* pProcess)
 {
     size_t    pageCount;
     size_t    i;
@@ -2062,7 +2300,7 @@ void memoryKernelUnmapStack(const uintptr_t kEndAddress, const size_t kSize)
 
     /* Unmap the memory */
     _memoryMgrUnmap(baseAddress, pageCount);
-    _releaseKernelPages(baseAddress, pageCount + 1);
+    _releaseUserPages(baseAddress, pageCount + 1, pProcess);
 
     KERNEL_UNLOCK(sLock);
 }
@@ -2079,11 +2317,6 @@ uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
     KERNEL_UNLOCK(sLock);
 
     return retPhysAddr;
-}
-
-void* memoryKernelGetPageTable(void)
-{
-    return (void*)memoryMgrGetPhysAddr((uintptr_t)spKernelPageDir, NULL);
 }
 
 void* memoryKernelAllocate(const size_t   kSize,
@@ -2244,5 +2477,80 @@ OS_RETURN_E memoryKernelFree(const void* kVirtualAddress, const size_t kSize)
 
     return error;
 }
+
+void* memoryCreateProcessMemoryData(void)
+{
+    memproc_info_t* pMemProcInfo;
+
+    /* Create the memory structure */
+    pMemProcInfo = kmalloc(sizeof(memproc_info_t));
+    if(pMemProcInfo == NULL)
+    {
+        return NULL;
+    }
+
+    /* Create the page directory */
+    if(schedIsInit() == true)
+    {
+        /* Allocate a frame for the page directory */
+        pMemProcInfo->pageDir = _allocateFrames(1);
+        if(pMemProcInfo->pageDir == (uintptr_t)NULL)
+        {
+            kfree(pMemProcInfo);
+            return NULL;
+        }
+    }
+    else
+    {
+        /* When the scheduler is not initialized, use the kernel page dir */
+        pMemProcInfo->pageDir = memoryMgrGetPhysAddr((uintptr_t)spKernelPageDir,
+                                                     NULL);
+    }
+
+    /* Create the free page table */
+    pMemProcInfo->freePageTable.pQueue = kQueueCreate(false);
+    if(pMemProcInfo->freePageTable.pQueue == NULL)
+    {
+        kfree(pMemProcInfo);
+        return NULL;
+    }
+    KERNEL_SPINLOCK_INIT(pMemProcInfo->freePageTable.lock);
+
+    /* Add free pages */
+    _addBlock(&pMemProcInfo->freePageTable,
+              USER_MEMORY_START,
+              USER_MEMORY_END - USER_MEMORY_START);
+
+    return pMemProcInfo;
+}
+
+void memoryDestroyProcessMemoryData(void* pMemoryData)
+{
+    memproc_info_t* pMemProcInfo;
+    kqueue_node_t*  pNode;
+
+    pMemProcInfo = pMemoryData;
+
+    /* Destroy the page directory */
+    _memoryMgrReleaseUserPageDir(pMemProcInfo->pageDir);
+    if(pMemProcInfo->pageDir != (uintptr_t)spKernelPageDir)
+    {
+        _releaseFrames(pMemProcInfo->pageDir, 1);
+    }
+
+    /* Destroy the free page table */
+    KERNEL_LOCK(pMemProcInfo->freePageTable.lock);
+    pNode = kQueuePop(pMemProcInfo->freePageTable.pQueue);
+    while(pNode != NULL)
+    {
+        kfree(pNode->pData);
+        kQueueDestroyNode(&pNode);
+    }
+    kQueueDestroy(&pMemProcInfo->freePageTable.pQueue);
+
+    /* Release the memory structure */
+    kfree(pMemProcInfo);
+}
+
 
 /************************************ EOF *************************************/

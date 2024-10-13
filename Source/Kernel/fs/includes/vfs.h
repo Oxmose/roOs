@@ -25,9 +25,12 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stddef.h>  /* Standard definitions */
-#include <stdint.h>  /* Standard int definitions */
-#include <kerror.h>  /* Kernel errors */
+#include <stddef.h>     /* Standard definitions */
+#include <stdint.h>     /* Standard int definitions */
+#include <kqueue.h>     /* Kernel queues */
+#include <vector.h>     /* Vector library */
+#include <kerror.h>     /* Kernel errors */
+#include <ctrl_block.h> /* Process control block */
 
 /*******************************************************************************
  * CONSTANTS
@@ -97,10 +100,10 @@ typedef struct
  * only used by the underlying driver and not modified by the VFS. On error the
  * function shall return -1 casted to void*.
  */
-typedef void* (*VFS_OPEN_FUNC)(void*       pDriverData,
-                               const char* kpPath,
-                               int         flags,
-                               int         mode);
+typedef void* (*vfs_open_func_t)(void*       pDriverData,
+                                 const char* kpPath,
+                                 int         flags,
+                                 int         mode);
 
 /**
  * @brief Defines the function pointer for the close hook function.
@@ -117,7 +120,7 @@ typedef void* (*VFS_OPEN_FUNC)(void*       pDriverData,
  * @return The function shall return 0 when the close operation is successfull,
  * -1 otherwise.
  */
-typedef int32_t (*VFS_CLOSE_FUNC)(void* pDriverData, void* pFileData);
+typedef int32_t (*vfs_close_func_t)(void* pDriverData, void* pFileData);
 
 /**
  * @brief Defines the function pointer for the read hook function.
@@ -135,10 +138,10 @@ typedef int32_t (*VFS_CLOSE_FUNC)(void* pDriverData, void* pFileData);
  * @return The function shall return the number of byte read into the buffer or
  * -1 on error.
  */
-typedef ssize_t (*VFS_READ_FUNC)(void*  pDriverData,
-                                 void*  pFileData,
-                                 void*  pBuffer,
-                                 size_t count);
+typedef ssize_t (*vfs_read_func_t)(void*  pDriverData,
+                                   void*  pFileData,
+                                   void*  pBuffer,
+                                   size_t count);
 
 /**
  * @brief Defines the function pointer for the write hook function.
@@ -156,10 +159,10 @@ typedef ssize_t (*VFS_READ_FUNC)(void*  pDriverData,
  * @return The function shall return the number of byte written from the buffer
  * or -1 on error.
  */
-typedef ssize_t (*VFS_WRITE_FUNC)(void*       pDriverData,
-                                  void*       pFileData,
-                                  const void* pBuffer,
-                                  size_t      count);
+typedef ssize_t (*vfs_write_func_t)(void*       pDriverData,
+                                    void*       pFileData,
+                                    const void* pBuffer,
+                                    size_t      count);
 
 /**
  * @brief Defines the function pointer for the readdir hook function.
@@ -176,9 +179,9 @@ typedef ssize_t (*VFS_WRITE_FUNC)(void*       pDriverData,
  * @return The function shall return 0 on reaching the end of the directory,
  * 1 success or -1 on error.
  */
-typedef int32_t (*VFS_READDIR_FUNC)(void*     pDriverData,
-                                    void*     pFileData,
-                                    dirent_t* pDirEntry);
+typedef int32_t (*vfs_readdir_func_t)(void*     pDriverData,
+                                      void*     pFileData,
+                                      dirent_t* pDirEntry);
 
 /**
  * @brief Defines the function pointer for the ioctl hook function.
@@ -195,10 +198,10 @@ typedef int32_t (*VFS_READDIR_FUNC)(void*     pDriverData,
  *
  * @return The function shall return whatever value required to be returned.
  */
-typedef ssize_t (*VFS_IOCTL_FUNC)(void*    pDriverData,
-                                  void*    pFileData,
-                                  uint32_t operation,
-                                  void*    pArgs);
+typedef ssize_t (*vfs_ioctl_func_t)(void*    pDriverData,
+                                    void*    pFileData,
+                                    uint32_t operation,
+                                    void*    pArgs);
 
 /** @brief Defines the VFS driver handle */
 typedef void* vfs_driver_t;
@@ -239,22 +242,22 @@ typedef struct
      */
     OS_RETURN_E (*pUnmount)(void* pDriverMountData);
 
-    /** @brief FS open function, see VFS_OPEN_FUNC type for more information */
-    VFS_OPEN_FUNC pOpen;
-    /** @brief FS close function, see VFS_CLOSE_FUNC type for more
+    /** @brief FS open function, see vfs_open_func_t type for more information */
+    vfs_open_func_t pOpen;
+    /** @brief FS close function, see vfs_close_func_t type for more
      * information */
-    VFS_CLOSE_FUNC pClose;
-    /** @brief FS read function, see VFS_READ_FUNC type for more information */
-    VFS_READ_FUNC pRead;
-    /** @brief FS write function, see VFS_WRITE_FUNC type for more
+    vfs_close_func_t pClose;
+    /** @brief FS read function, see vfs_read_func_t type for more information */
+    vfs_read_func_t pRead;
+    /** @brief FS write function, see vfs_write_func_t type for more
      * information */
-    VFS_WRITE_FUNC pWrite;
-    /** @brief FS read dir function, see VFS_READDIR_FUNC type for more
+    vfs_write_func_t pWrite;
+    /** @brief FS read dir function, see vfs_readdir_func_t type for more
      * information */
-    VFS_READDIR_FUNC pReadDir;
-    /** @brief FS ioctl function, see VFS_IOCTL_FUNC type for more
+    vfs_readdir_func_t pReadDir;
+    /** @brief FS ioctl function, see vfs_ioctl_func_t type for more
      * information */
-    VFS_IOCTL_FUNC pIOCTL;
+    vfs_ioctl_func_t pIOCTL;
 } fs_driver_t;
 
 /*******************************************************************************
@@ -299,6 +302,54 @@ typedef struct
 void vfsInit(void);
 
 /**
+ * @brief Initializes the file descriptor table for a given process.
+ *
+ * @details Initializes the file descriptor table for a given process. This
+ * function will create the new table for the process and allocate the
+ * resources.
+ *
+ * @param[out] pProcess The process for which the file descriptor table shall
+ * be initialized.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E vfsCreateProcessFdTable(kernel_process_t* pProcess);
+
+/**
+ * @brief Destroys the file descriptor table for a given process.
+ *
+ * @details Destroys the file descriptor table for a given process. This
+ * function will remove the new table for the process and release the
+ * resources.
+ *
+ * @param[out] pProcess The process for which the file descriptor table shall
+ * be detroyed.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E vfsDestroyProcessFdTable(kernel_process_t* pProcess);
+
+/**
+ * @brief Copies the file descriptor table of a process to another process.
+ *
+ * @details Copies the file descritor table of a process to another process. The
+ * copied file descriptor table will have its own resources and the two tables
+ * and descriptors will be completely isolated.
+ * @warning: The file descriptor table of the destination process must not be
+ * created prior to calling this functions. Any file descriptor already opened
+ * will be lost and not closed.
+ *
+ * @param[out] pDstProcess The process to which the file descriptor table shall
+ * be copied
+ * @param[in] pSrcProcess The process from which the file descriptor table shall
+ * be copied
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E vfsCopyProcessFdTable(kernel_process_t* pDstProcess,
+                                  kernel_process_t* pSrcProcess);
+
+/**
  * @brief Registers a new driver in the VFS for the given path.
  *
  * @details Registers a new driver in the VFS for the given path.
@@ -320,12 +371,12 @@ void vfsInit(void);
  */
 vfs_driver_t vfsRegisterDriver(const char*      kpPath,
                                void*            pDriverData,
-                               VFS_OPEN_FUNC    pOpen,
-                               VFS_CLOSE_FUNC   pClose,
-                               VFS_READ_FUNC    pRead,
-                               VFS_WRITE_FUNC   pWrite,
-                               VFS_READDIR_FUNC pReadDir,
-                               VFS_IOCTL_FUNC   pIOCTL);
+                               vfs_open_func_t    pOpen,
+                               vfs_close_func_t   pClose,
+                               vfs_read_func_t    pRead,
+                               vfs_write_func_t   pWrite,
+                               vfs_readdir_func_t pReadDir,
+                               vfs_ioctl_func_t   pIOCTL);
 
 /**
  * @brief Unregisters a registered VFS driver using its handle.
@@ -462,6 +513,13 @@ OS_RETURN_E vfsMount(const char* kpPath,
  */
 OS_RETURN_E vfsUnmount(const char* kpPath);
 
+#if 0
+OS_RETURN_E vfsInitFdTable(vfs_fd_table* pTable);
+
+OS_RETURN_E vfsDestroyFdTable(vfs_fd_table* pTable);
+
+OS_RETURN_E vfsCopyFdTable(vfs_fd_table*);
+#endif
 #endif /* #ifndef __FS_VFS_H_ */
 
 /************************************ EOF *************************************/

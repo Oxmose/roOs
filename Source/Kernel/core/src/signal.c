@@ -319,6 +319,11 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
         return OS_ERR_INCORRECT_VALUE;
     }
 
+    if(schedIsIdleThread(pThread) == true)
+    {
+        return OS_ERR_UNAUTHORIZED_ACTION;
+    }
+
     KERNEL_LOCK(pThread->lock);
 
     /* Check if the thread is still valid */

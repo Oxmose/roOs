@@ -1,0 +1,152 @@
+make[1]: Entering directory '/home/alexy/Documents/roOs/Source'
+[1m[34m
+#-------------------------------------------------------------------------------[22m[39m
+[1m[34m| Preparing run for target x86_64[22m[39m
+[1m[34m#-------------------------------------------------------------------------------
+[22m[39m
+rm -rf ./build/GRUB
+rm -f -f ./build/roOs_boot.iso
+cp -R Config/arch/x86_64/GRUB ./build/
+cp ./build/roOs.elf ./build/GRUB/boot/
+grub-mkrescue -d ../Tools/i386-pc -o ./build/roOs_boot.iso ./build/GRUB 2>&1 /dev/null
+xorriso 1.5.4 : RockRidge filesystem manipulator, libburnia project.
+
+Drive current: -outdev 'stdio:./build/roOs_boot.iso'
+Media current: stdio file, overwriteable
+Media status : is blank
+Media summary: 0 sessions, 0 data blocks, 0 data,  231g free
+Added to ISO image: directory '/'='/tmp/grub.gMF99q'
+xorriso : UPDATE :     289 files added in 1 seconds
+Added to ISO image: directory '/'='/home/alexy/Documents/roOs/Source/build/GRUB'
+Added to ISO image: file '/null'='/dev/null'
+xorriso : UPDATE :     294 files added in 1 seconds
+xorriso : NOTE : Copying to System Area: 512 bytes from file '/home/alexy/Documents/roOs/Tools/i386-pc/boot_hybrid.img'
+ISO image produced: 2837 sectors
+Written to medium : 2837 sectors at LBA 0
+Writing to 'stdio:./build/roOs_boot.iso' completed successfully.
+
+[1m[94m=== Running on Qemu DEBUG MODE[22m[39m
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | Syslog initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | VFS initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | CPU Vendor: GenuineIntel
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | CPU Addressing: Physical 40bits | Virtual 48bits
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | CPU Features: SSE3 - SSSE3 - CX16 - SSE41 - SSE42 - POPCNT - FPU - DE - PSE - TSC - MSR - PAE - MCE - CX8 - APIC - SEP - MTRR - PGE - MCA - CMOV - PAT - PSE36 - CLFLUSH - MMX - FXSR - SSE - SSE2 - HTT - SYSCALL - XD - X64 - LAHF_LM 
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | CPU Caches Size: 4096KB
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | Architecture validated
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | GDT Initialized at 0xFFFFFFFF80186B08
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | IDT Initialized at 0xFFFFFFFF80186B88
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | CPU_X64 | TSS Initialized at 0xFFFFFFFF80187B98
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | CPU initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | Interrupt manager initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | Exception manager initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | FDT initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | No Thread (-1) | KICKSTART | Memory manager initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Scheduler initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Syslog started
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Defered interrupts initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Futex library initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 ACPI Driver - X86 ACPI Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | ATA PIO Driver - ATA PIO Driver roOs.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 CPU Driver - X86 CPU Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 HPET Driver - X86 High Precision Event Timer for roOs.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 IO-APIC Driver - X86 IO-APIC Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 Keyboard Driver - X86 Keyboard Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 Local APIC Driver - X86 LAPIC Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 LAPIC Timer Driver - X86 LAPIC Timer Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 PIC Driver - X86 Programable Interrupt Controler Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 PIT Driver - X86 Programable Interval Timer Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 RTC Driver - X86 Real Time Clock Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 TSC Driver - X86 Timestamp Counter for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 UART Driver - X86 UART Driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 VESA driver - X86 VESA driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 VGA driver - X86 VGA driver for roOs
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | RamDisk Driver - RamDisk Driver roOs.
+ERROR | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | Driver for roOs,roOs-fdt-v1 not found
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 CPU Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 CPU Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 CPU Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 CPU Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | RamDisk Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 ACPI Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | ATA PIO Driver attached successfully.
+ERROR | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | Failed to attach driver ATA PIO Driver. Error 11
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 Local APIC Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 PIC Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 IO-APIC Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 PIT Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 HPET Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 RTC Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 TSC Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 LAPIC Timer Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 VGA driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 VESA driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 Keyboard Driver attached successfully.
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | X86 UART Driver attached successfully.
+ERROR | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | Failed to attach driver X86 UART Driver. Error -2145726288
+ERROR | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | Failed to attach driver X86 UART Driver. Error -2145726288
+ERROR | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | DRIVER_MGR | Failed to attach driver X86 UART Driver. Error -2145726288
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Drivers initialized
+INFO | 00/00/0000 00:00:00 | Uptime: 0:00:00:000:000:000 | idle (0) | KICKSTART | Disk manager initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:665:631:865 | idle (0) | KICKSTART | Time manager initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:666:518:578 | idle (0) | KICKSTART | Console initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:670:051:889 | idle (0) | KICKSTART | Graphics manager initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:685:267:237 | idle (1) | CPU_X64 | Secondary CPU 1 initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:705:072:879 | idle (2) | CPU_X64 | Secondary CPU 2 initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:725:138:071 | idle (3) | CPU_X64 | Secondary CPU 3 initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:734:068:926 | idle (0) | KICKSTART | Core manager initialized
+INFO | 14/10/2024 01:48:41 | Uptime: 0:00:00:740:230:328 | idle (0) | KICKSTART | User initialization done
+
+> tasks
+#---------------------------------------------------------------------------------------------------------#
+|  PID  |  TID  | NAME                           | TYPE   | PRIO | STATE    | CPU | STACKS                |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     6 | vesaDisplay                    | KERNEL |    0 | RUNNING  |   3 | K: 0xFFFFFFFF809EE000 |
+|       |       |                                |        |      |          |     | U: 0x00007FFFFFFFB000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     5 | defISR                         | KERNEL |    0 | WAITING  |   * | K: 0xFFFFFFFF803C8000 |
+|       |       |                                |        |      |          |     | U: 0x00007FFFFFFFD000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     4 | syslog                         | KERNEL |    0 | WAITING  |   * | K: 0xFFFFFFFF803C6000 |
+|       |       |                                |        |      |          |     | U: 0x00007FFFFFFFF000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     7 | kernelShell                    | KERNEL |   10 | RUNNING  |   1 | K: 0xFFFFFFFF809F0000 |
+|       |       |                                |        |      |          |     | U: 0x00007FFFFFFF9000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     3 | idle                           | KERNEL |   63 | RUNNING  |   3 | K: 0xFFFFFFFF803C4000 |
+|       |       |                                |        |      |          |     | U: 0x0000000000000000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     2 | idle                           | KERNEL |   63 | RUNNING  |   2 | K: 0xFFFFFFFF803C2000 |
+|       |       |                                |        |      |          |     | U: 0x0000000000000000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     1 | idle                           | KERNEL |   63 | READY    |   * | K: 0xFFFFFFFF803C0000 |
+|       |       |                                |        |      |          |     | U: 0x0000000000000000 |
+#---------------------------------------------------------------------------------------------------------#
+|     0 |     0 | idle                           | KERNEL |   63 | RUNNING  |   0 | K: 0xFFFFFFFF803BE000 |
+|       |       |                                |        |      |          |     | U: 0x0000000000000000 |
+#---------------------------------------------------------------------------------------------------------#
+> fork
+##############################    KERNEL PANIC    ##############################
+Panic generated by the kernel                     INT ID: 0x20                 
+Instruction [RIP]: 0xffffffff80108074             Error code: 0x0       
+
+
+RAX: 0xffffffff80108072 | RBX: 0xffffffff8011c04a | RCX: 0xffffffff80144108
+RDX: 0x0000000000000000 | RSI: 0xffffffff8014412f | RDI: 0x0000000000000020 
+RBP: 0xffffffff809efbb8 | RSP: 0xffffffff809efb98 | R8:  0x0000000000000bf2
+R9:  0x0000000000000001 | R10: 0x0000000000000000 | R11: 0x0000000000000000
+R12: 0xffffffff8011bdb8 | R13: 0xffffffff8011c04a | R14: 0xffffffff8011bdb8
+R15: 0xffffffff8011c04a
+CR0: 0x0000000080010033 | CR2: 0x0000000000000000 | CR3: 0x0000000000183000
+CR4: 0x00000000000006a0
+CS: 0x0008 | DS: 0x0010 | SS: 0x0010 | ES: 0x0010 | FS: 0x0010 | GS: 0x0010
+RFLAGS: 0x0000000000000097 | CF PF AF SF 
+
+--------------------------------- INFORMATION ----------------------------------
+Core ID: 1 | Time: 01:48:46 | Core uptime: [5.93.108.847]
+Thread: kernelShell (7, state: 0) | Process: ROOS_KERNEL (0)
+File: src/memory.c at line 3058
+[X86_64 MEM] | Failed to find physical address in frames meta table (11)
+
+Last RBP: 0xffffffff809efbb8
+[0] 0xffffffff80112c04 | [1] 0xffffffff801109fc | [2] 0xffffffff80110a74
+[3] 0xffffffff801104c6 | [4] 0xffffffff80110407 | [5] 0xffffffff80110407

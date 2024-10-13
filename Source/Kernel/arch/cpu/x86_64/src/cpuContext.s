@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-; File: cpu_context.s
+; File: cpuContext.s
 ;
 ; Author: Alexy Torres Aurora Dugo
 ;
@@ -54,8 +54,8 @@
 %define VCPU_OFF_DS  0xC8
 %define VCPU_OFF_FXD 0xD0
 
-%define VCPU_OFF_SAVED 0x2E0
-
+%define VCPU_OFF_FROM_INT    0x2E0
+%define VCPU_OFF_SYSCALL_RSP 0x2E8
 
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE
@@ -80,6 +80,8 @@ global cpuSaveContext
 global cpuRestoreContext
 global cpuGetId
 global cpuSignalHandler
+global cpuSaveSyscallContext
+global cpuRestoreSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -153,7 +155,7 @@ cpuSaveContext:
 
     ; Set the last context as saved
     mov rbx, 1
-    mov [rax + VCPU_OFF_SAVED], rbx
+    mov [rax + VCPU_OFF_FROM_INT], rbx
 
     ret
 
@@ -163,7 +165,7 @@ cpuRestoreContext:
 
     ; Set the last context as not been saved
     mov rbx, 0
-    mov [rax + VCPU_OFF_SAVED], rbx
+    mov [rax + VCPU_OFF_FROM_INT], rbx
 
     ; Restore the FxData
     mov rbx, rax
@@ -261,6 +263,64 @@ cpuSignalHandlerLoop:
     cli
     hlt
     jmp cpuSignalHandlerLoop
+
+;-------------------------------------------------------------------------------
+; Saves the context from a system call
+;
+; Param:
+;     Input: rdi: The address to return to when restoring the context
+
+cpuSaveSyscallContext:
+    ; Save the return address in rsi
+    pop rsi
+
+    ; Save the specific context that will be used when scheduling back
+    pushfq
+
+    ; Save the context return address
+    push rdi
+
+    ; Get the current thread handle and VCPU
+    call cpuGetId
+    push rdx
+    mov rcx, 8
+    mul rcx
+    pop rdx
+    mov rcx, pCurrentThreadsPtr
+    add rax, rcx
+    mov rax, [rax]
+    mov rax, [rax]
+
+    ; Save the stack pointer to the process context
+    mov [rax + VCPU_OFF_SYSCALL_RSP], rsp
+
+    ; Return to caller
+    jmp rsi
+
+;-------------------------------------------------------------------------------
+; Restore the context from a system call
+;
+; Param:
+;     Input: rdi: A pointer to the thread to restore
+cpuRestoreSyscallContext:
+    ; The current thread is sent as parameter, load the VCPU
+    mov rax, [rdi]
+
+    ; Restore rsp
+    mov rsp, [rax + VCPU_OFF_SYSCALL_RSP]
+
+    ; Put the return address in rdi
+    pop rdi
+
+    ; Restore the specific context that will be used when scheduling back
+    popfq
+
+    ; Clear the stack pointer of the process context
+    mov rcx, 0
+    mov [rax + VCPU_OFF_SYSCALL_RSP], rcx
+
+    ; Return to context caller
+    jmp rdi
 
 ;-------------------------------------------------------------------------------
 ; DATA

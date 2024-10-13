@@ -33,28 +33,30 @@
  ******************************************************************************/
 
 /** @brief Memory mapping flags: Read-Only mapping */
-#define MEMMGR_MAP_RO 0x00000000
+#define MEMMGR_MAP_RO 0x00000000ULL
 /** @brief Memory mapping flags: Read-Write mapping */
-#define MEMMGR_MAP_RW 0x00000001
+#define MEMMGR_MAP_RW 0x00000001ULL
 /** @brief Memory mapping flags: Execute mapping */
-#define MEMMGR_MAP_EXEC 0x00000002
+#define MEMMGR_MAP_EXEC 0x00000002ULL
 
 /** @brief Memory mapping flags: Kernel access only  */
-#define MEMMGR_MAP_KERNEL 0x00000004
+#define MEMMGR_MAP_KERNEL 0x00000004ULL
 /** @brief Memory mapping flags: Kernel and user access */
-#define MEMMGR_MAP_USER 0x00000000
+#define MEMMGR_MAP_USER 0x00000000ULL
 
 /** @brief Memory mapping flags: Cache disabled */
-#define MEMMGR_MAP_CACHE_DISABLED 0x00000008
+#define MEMMGR_MAP_CACHE_DISABLED 0x00000008ULL
 /** @brief Memory mapping flags: Hardware */
-#define MEMMGR_MAP_HARDWARE 0x00000008
+#define MEMMGR_MAP_HARDWARE 0x00000008ULL
 /** @brief Memory mapping flags: Write Combining */
-#define MEMMGR_MAP_WRITE_COMBINING 0x00000010
+#define MEMMGR_MAP_WRITE_COMBINING 0x00000010ULL
+/** @brief Memory mapping flags: Copy On Write */
+#define MEMMGR_MAP_COW 0x00000020ULL
 
 /** @brief Kernel page size */
-#define KERNEL_PAGE_SIZE 0x1000
+#define KERNEL_PAGE_SIZE 0x1000ULL
 /** @brief Page size mask */
-#define PAGE_SIZE_MASK 0xFFF
+#define PAGE_SIZE_MASK 0xFFFULL
 
 /** @brief Defines the error for physical address */
 #define MEMMGR_PHYS_ADDR_ERROR ((uintptr_t)0xFFFFFFFFFFFFFFFFULL)
@@ -175,24 +177,29 @@ uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
                                uint32_t*       pFlags);
 
 /**
- * @brief Maps a stack in the kernel memory region and returns its address.
+ * @brief Maps a stack in the process memory region and returns its address.
  *
- * @details Maps a stack in the kernel memory region and returns its address.
+ * @details Maps a stack in the process memory region and returns its address.
  * One more page after the stack is allocated but not mapped to catch overflows.
  * The required frames are also allocated.
  *
  * @param[in] kSize The size of the stack. If not aligned with the kernel page
  * size, the actual mapped size will be aligned up on page boundaries.
+ * @param[in, out] pProcess The process from which the stack should be
+ * allocated.
+ * @param[in] kIsKernel Tells if the stack is a kernel or user stack.
  *
  * @return The base end of the stack in kernel memory is returned.
  */
-uintptr_t memoryKernelMapStack(const size_t kSize);
+uintptr_t memoryMapStack(const size_t      kSize,
+                         kernel_process_t* pProcess,
+                         const bool        kIsKernel);
 
 /**
- * @brief Unmaps a stack in the kernel memory region and frees the associated
+ * @brief Unmaps a stack in the process memory region and frees the associated
  * physical memory.
  *
- * @details Maps a stack in the kernel memory region and frees the associated
+ * @details Maps a stack in the process memory region and frees the associated
  * physical memory.
  * The additional overflow page is also freed.
  *
@@ -200,18 +207,13 @@ uintptr_t memoryKernelMapStack(const size_t kSize);
  * aligned with the kernel page size, a panic is generated.
  * @param[in] kSize The size of the stack. If not aligned with the kernel page
  * size, a panic is generated.
+ * @param[in] kIsKernel Tells if the stack is a kernel stack.
+ * @param[in, out] pProcess The process to which the stack should be released.
  */
-void memoryKernelUnmapStack(const uintptr_t kEndAddress,
-                            const size_t kSize);
-
-/**
- * @brief Returns the physical address of the kernel page table.
- *
- * @details Returns the physical address of the kernel page table.
- *
- * @return Returns the physical address of the kernel page table.
- */
-void* memoryKernelGetPageTable(void);
+void memoryUnmapStack(const uintptr_t   kEndAddress,
+                      const size_t      kSize,
+                      const bool        kIsKernel,
+                      kernel_process_t* pProcess);
 
 /**
  * @brief Maps a physical memory region in the kernel address space.
@@ -250,6 +252,44 @@ void* memoryKernelAllocate(const size_t   kSize,
  */
 OS_RETURN_E memoryKernelFree(const void* kVirtualAddress, const size_t kSize);
 
+/**
+ * @brief Creates a process memory configuration.
+ *
+ * @details Creates a process memory configuration. The function will allocate
+ * the required resources.
+ *
+ * @return The function return a pointer to the configuration on success or NULL
+ * on error.
+ */
+void* memoryCreateProcessMemoryData(void);
+
+/**
+ * @brief Destroys a process memory configuration.
+ *
+ * @details Destroys a process memory configuration. The function will release
+ * the required resources.
+ *
+ * @param[in] pMemoryData The configuration to release.
+ */
+void memoryDestroyProcessMemoryData(void* pMemoryData);
+
+/**
+ * @brief Copies the complete memory space of a process and set both processes
+ * memory to COW.
+ *
+ * @details Copies the complete memory space of a process and set both processes
+ * memory to COW. The kernel-space mapping is simply copied while the user-space
+ * memory is copied and set as COW. The necessary resources are allocated to
+ * fill in the new page table.
+ *
+ * @warning The destination process page directory must be created and empty,
+ * otherwise, memory will be lost and unreachable.
+ *
+ * @param[out] pDstProcess The process that will receive the copy of the memory.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E memoryCloneProcessMemory(kernel_process_t* pDstProcess);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

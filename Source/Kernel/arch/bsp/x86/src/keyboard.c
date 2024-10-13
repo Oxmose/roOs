@@ -34,6 +34,7 @@
 #include <stdbool.h>    /* Bool types */
 #include <critical.h>   /* Kernel locks */
 #include <drivermgr.h>  /* Driver manager service */
+#include <interrupts.h> /* Interrupt manager */
 #include <ksemaphore.h> /* Kernel semaphores */
 
 /* Configuration files */

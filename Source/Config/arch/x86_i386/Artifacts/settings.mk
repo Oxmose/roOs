@@ -23,7 +23,7 @@ else
 	AR = ar
 endif
 
-LINKER_FILE = ../../Config/arch/x86_i386/linker.ld
+KERNEL_LINKER_FILE = ../../Config/arch/x86_i386/kernel_linker.ld
 
 DEBUG_FLAGS = -O0 -g
 EXTRA_FLAGS = -O3 -fno-asynchronous-unwind-tables
@@ -52,9 +52,5 @@ else
 CFLAGS += $(EXTRA_FLAGS)
 endif
 
-ifeq ($(TRACE), TRUE)
-CFLAGS += -D_TRACING_ENABLED
-endif
-
 ASFLAGS = -g -f elf -w+gnu-elf-extensions -F dwarf
-LDFLAGS = -T $(LINKER_FILE) -no-pie -melf_i386
+LDFLAGS = -T $(KERNEL_LINKER_FILE) -no-pie -melf_i386

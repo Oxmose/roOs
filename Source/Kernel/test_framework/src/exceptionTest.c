@@ -25,7 +25,7 @@
 
 /* Included headers */
 #include <exceptions.h>
-#include <cpu_interrupt.h>
+#include <cpuInterrupt.h>
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>

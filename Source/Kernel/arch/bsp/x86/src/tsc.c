@@ -305,18 +305,6 @@ static uint64_t _tscGetTimeNs(void* pDrvCtrl)
     return time;
 }
 
-#ifdef _TRACING_ENABLED
-uint64_t tracingTimerGetTick(void)
-{
-    uint32_t highPart;
-    uint32_t lowPart;
-
-    /* Get time */
-    __asm__ __volatile__ ("rdtsc" : "=a"(lowPart), "=d"(highPart));
-    return (((uint64_t)highPart << 32) | (uint64_t)lowPart);
-}
-#endif
-
 /***************************** DRIVER REGISTRATION ****************************/
 DRIVERMGR_REG_FDT(sX86TSCDriver);
 

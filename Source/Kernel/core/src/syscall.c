@@ -106,18 +106,23 @@ static syscall_handler_t sSyscalTable[] = {
  ******************************************************************************/
 OS_RETURN_E syscallPerform(const SYSCALL_ID_E kSysCallId, void* pParams)
 {
+    kernel_thread_t* pCurrThread;
+
     /* Check the system call ID */
     if(kSysCallId >= ARRAY_SIZE(sSyscalTable))
     {
         return OS_ERR_INCORRECT_VALUE;
     }
 
+    pCurrThread = schedGetCurrentThread();
+
     /* Issue the system call */
-    if(schedGetCurrentThread()->type == THREAD_TYPE_KERNEL)
+    if(pCurrThread->type == THREAD_TYPE_KERNEL)
     {
         cpuKernelSyscallRaise((uintptr_t)sSyscalTable[kSysCallId].pHandler,
                               pParams,
-                              schedGetCurrentThread()->kernelStackEnd);
+                              pCurrThread->kernelStackEnd,
+                              pCurrThread);
     }
     else
     {

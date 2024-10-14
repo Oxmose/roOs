@@ -62,11 +62,12 @@
  * FUNCTIONS
  ******************************************************************************/
 /* TODO: Doc */
-void cpuKernelSyscallRaise(const uintptr_t syscallHandler,
-                           void*           pParams,
-                           const uintptr_t kKernelStack);
+void cpuKernelSyscallRaise(const uintptr_t  syscallHandler,
+                           void*            pParams,
+                           const uintptr_t  kKernelStack,
+                           kernel_thread_t* pCurrThread);
 
-void cpuSaveSyscallContext(const uintptr_t syscallReturnAddress);
+void cpuSwitchKernelSyscallContext(const uintptr_t syscallReturnAddress, kernel_thread_t* pCurrThread);
 void cpuRestoreSyscallContext(const kernel_thread_t* kpThread);
 
 #endif /* #ifndef __CPU_CPUSYSCALL_H_ */

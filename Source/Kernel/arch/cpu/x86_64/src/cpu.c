@@ -4735,6 +4735,7 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     virtual_cpu_t* pSignalVCpu;
     virtual_cpu_t* pThreadVCpu;
     virtual_cpu_t* pCurVCpu;
+    uintptr_t      pStackOffset;
 
     /* Allocate the new VCPUs */
     pSignalVCpu = kmalloc(sizeof(virtual_cpu_t));
@@ -4754,6 +4755,9 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     memcpy(pThreadVCpu, kpSrcThread->pThreadVCpu, sizeof(virtual_cpu_t));
 
     /* Get the current VCPU */
+    pDstThread->pSignalVCpu = pSignalVCpu;
+    pDstThread->pThreadVCpu = pThreadVCpu;
+
     if(kpSrcThread->pSignalVCpu == kpSrcThread->pVCpu)
     {
         pDstThread->pVCpu = pDstThread->pSignalVCpu;
@@ -4767,7 +4771,10 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     pCurVCpu = pDstThread->pVCpu;
     if(pCurVCpu->rspSaveFromSyscall != (uintptr_t)NULL)
     {
-        pCurVCpu->rspSaveFromSyscall = pDstThread->kernelStackEnd;
+        pStackOffset = kpSrcThread->kernelStackEnd -
+                       pCurVCpu->rspSaveFromSyscall;
+        pCurVCpu->rspSaveFromSyscall = pDstThread->kernelStackEnd -
+                                       pStackOffset;
     }
 
     return OS_NO_ERR;

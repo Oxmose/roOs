@@ -80,7 +80,7 @@ global cpuSaveContext
 global cpuRestoreContext
 global cpuGetId
 global cpuSignalHandler
-global cpuSaveSyscallContext
+global cpuSwitchKernelSyscallContext
 global cpuRestoreSyscallContext
 
 ;-------------------------------------------------------------------------------
@@ -265,14 +265,16 @@ cpuSignalHandlerLoop:
     jmp cpuSignalHandlerLoop
 
 ;-------------------------------------------------------------------------------
-; Saves the context from a system call
+; Switch the context from a system call
 ;
 ; Param:
 ;     Input: rdi: The address to return to when restoring the context
+;            rsi: The current thread
+;            rdx: The kernel stack to switch to
 
-cpuSaveSyscallContext:
-    ; Save the return address in rsi
-    pop rsi
+cpuSwitchKernelSyscallContext:
+    ; Save the return address in rcx
+    pop rcx
 
     ; Save the specific context that will be used when scheduling back
     pushfq
@@ -281,21 +283,13 @@ cpuSaveSyscallContext:
     push rdi
 
     ; Get the current thread handle and VCPU
-    call cpuGetId
-    push rdx
-    mov rcx, 8
-    mul rcx
-    pop rdx
-    mov rcx, pCurrentThreadsPtr
-    add rax, rcx
-    mov rax, [rax]
-    mov rax, [rax]
+    mov rax, [rsi]
 
     ; Save the stack pointer to the process context
     mov [rax + VCPU_OFF_SYSCALL_RSP], rsp
 
     ; Return to caller
-    jmp rsi
+    jmp rcx
 
 ;-------------------------------------------------------------------------------
 ; Restore the context from a system call

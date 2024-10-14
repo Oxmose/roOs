@@ -2889,6 +2889,10 @@ OS_RETURN_E _copyPgDirEntry(uintptr_t*      pSrcLevel,
                 /* Set the source and destination as COW and read only */
                 if((pSrcLevel[addrEntryIdx] & PAGE_FLAG_IS_HW) == 0)
                 {
+                    frameAddr = _makeCanonical(pSrcLevel[addrEntryIdx] &
+                                               ~PAGE_SIZE_MASK,
+                                               true);
+
                     refCount = _getAndLockReferenceCount(frameAddr);
                     if(*refCount < UINT16_MAX)
                     {
@@ -2910,10 +2914,6 @@ OS_RETURN_E _copyPgDirEntry(uintptr_t*      pSrcLevel,
                                                   (pSrcLevel[addrEntryIdx] &
                                                   ~PAGE_FLAG_READ_WRITE);
                     }
-
-                    frameAddr = _makeCanonical(pSrcLevel[addrEntryIdx] &
-                                               ~PAGE_SIZE_MASK,
-                                               true);
                 }
                 pDstLevel[addrEntryIdx] = pSrcLevel[addrEntryIdx];
                 *pVirtAddress += virtAddrAdd;
@@ -2949,14 +2949,19 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
                                     const uintptr_t        kPhysAddr,
                                     const kernel_thread_t* kpThread)
 {
-    uint16_t*   refCount;
-    uintptr_t   baseVirt;
-    uintptr_t   newFrame;
-    uintptr_t   newPage;
-    OS_RETURN_E error;
-    uint32_t    pmlEntry[4];
-    uintptr_t*  pRecurTableEntry;
-    uintptr_t   newEntryValue;
+    uint16_t*       refCount;
+    uintptr_t       baseVirt;
+    uintptr_t       newFrame;
+    uintptr_t       newPage;
+    OS_RETURN_E     error;
+    uint32_t        pmlEntry[4];
+    uintptr_t*      pRecurTableEntry;
+    uintptr_t       newEntryValue;
+    memproc_info_t* pProcessMem;
+
+    /* Lock the process to avoid frame modification during the mapping */
+    pProcessMem = kpThread->pProcess->pMemoryData;
+    KERNEL_LOCK(pProcessMem->lock);
 
     /* Update the page table and the reference count */
     refCount = _getAndLockReferenceCount(kPhysAddr);
@@ -2964,17 +2969,24 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
                "Invalid reference count zero",
                OS_ERR_INCORRECT_VALUE);
 
-
     baseVirt = kFaultVirtAddr & ~PAGE_SIZE_MASK;
     /* If the reference count is greater than 1, we need to copy
      * the frame.
      */
     if(*refCount > 1)
     {
+
+        /* Release the reference */
+        *refCount = *refCount - 1;
+        _unlockReferenceCount(kPhysAddr);
+
         /* Allocate the new frame */
         newFrame = _allocateFrames(1);
         if(newFrame == (uintptr_t)NULL)
         {
+            refCount = _getAndLockReferenceCount(kPhysAddr);
+            *refCount = *refCount + 1;
+            _unlockReferenceCount(kPhysAddr);
             return OS_ERR_NO_MORE_MEMORY;
         }
 
@@ -2983,6 +2995,8 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
         if(newPage == (uintptr_t)NULL)
         {
             _releaseFrames(newFrame, 1);
+            refCount = _getAndLockReferenceCount(kPhysAddr);
+            *refCount = *refCount + 1;
             _unlockReferenceCount(kPhysAddr);
             return OS_ERR_NO_MORE_MEMORY;
         }
@@ -2995,6 +3009,8 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
         {
             _releaseFrames(newFrame, 1);
             _releaseUserPages(newPage, 1, kpThread->pProcess);
+            refCount = _getAndLockReferenceCount(kPhysAddr);
+            *refCount = *refCount + 1;
             _unlockReferenceCount(kPhysAddr);
             return OS_ERR_NO_MORE_MEMORY;
         }
@@ -3002,9 +3018,7 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
         /* Copy the frame */
         memcpy((uintptr_t*)newPage, (uintptr_t*)baseVirt, KERNEL_PAGE_SIZE);
 
-        /* Release the reference */
-        *refCount = *refCount - 1;
-        _unlockReferenceCount(kPhysAddr);
+
 
         /* Unmap temporary data */
         error = _memoryMgrUnmap(newPage, 1);
@@ -3015,9 +3029,10 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
     }
     else
     {
-        newFrame = _makeCanonical(kPhysAddr, true);
         _unlockReferenceCount(kPhysAddr);
+        newFrame = _makeCanonical(kPhysAddr, true);
     }
+
 
     /* Update the mapping */
     pmlEntry[3] = (baseVirt >> PML4_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
@@ -3033,8 +3048,10 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
                     ~(sPhysAddressWidthMask & ~PAGE_SIZE_MASK);
 
     /* Remove COW and add new address */
-    newEntryValue &= ~PAGE_FLAG_COW;
+    newEntryValue =  (newEntryValue | PAGE_FLAG_READ_WRITE) & ~PAGE_FLAG_COW;
     pRecurTableEntry[pmlEntry[0]] = newEntryValue | newFrame;
+
+    KERNEL_UNLOCK(pProcessMem->lock);
 
     return OS_NO_ERR;
 }
@@ -3054,7 +3071,7 @@ static inline void _getReferenceIndexTable(const uintptr_t      kPhysAddr,
         }
         *ppTable = (*ppTable)->pNext;
     }
-
+    while(*ppTable == NULL){}
     MEM_ASSERT(*ppTable != NULL,
                "Failed to find physical address in frames meta table",
                OS_ERR_NO_SUCH_ID);

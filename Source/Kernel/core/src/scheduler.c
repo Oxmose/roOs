@@ -931,10 +931,13 @@ static void _schedCleanThread(kernel_thread_t* pThread)
                      NULL);
 
     /* Destroy the regular stack */
-    memoryUnmapStack(pThread->stackEnd,
-                     pThread->stackSize,
-                     false,
-                     pThread->pProcess);
+    if(pThread->stackEnd != (uintptr_t)NULL)
+    {
+        memoryUnmapStack(pThread->stackEnd,
+                         pThread->stackSize,
+                         false,
+                         pThread->pProcess);
+    }
 
     /* Destroy the virtual CPUs */
     cpuDestroyVirtualCPU((uintptr_t)pThread->pThreadVCpu);
@@ -2052,15 +2055,13 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     pNewThread->kernelStackSize = kStackSize;
 
     /* No user stack for kernel threads */
-    pNewThread->stackEnd  = memoryMapStack(kStackSize,
-                                           pNewThread->pProcess,
-                                           false);
-    pNewThread->stackSize = kStackSize;
+    pNewThread->stackEnd  = (uintptr_t)NULL;
+    pNewThread->stackSize = 0;
 
     /* Allocate the vCPUs */
     pNewThread->pThreadVCpu =
         (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                   pNewThread->stackEnd);
+                                   pNewThread->kernelStackEnd);
     if(pNewThread->pThreadVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -2068,7 +2069,7 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     }
     pNewThread->pSignalVCpu =
         (void*)cpuCreateVirtualCPU(NULL,
-                                   pNewThread->stackEnd);
+                                   pNewThread->kernelStackEnd);
     if(pNewThread->pSignalVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -2842,7 +2843,7 @@ void schedSyscallHandleSchedule(void* pParams)
                  OS_ERR_UNAUTHORIZED_ACTION);
 }
 
-void schedSyscallHandleFork( void* pParams)
+void schedSyscallHandleFork(void* pParams)
 {
     OS_RETURN_E           error;
     OS_RETURN_E           newError;
@@ -2865,6 +2866,12 @@ void schedSyscallHandleFork( void* pParams)
                  OS_ERR_NULL_POINTER);
 
     pForkParam = pParams;
+    /* Only user mode can fork */
+    if(pCurrentThread->type == THREAD_TYPE_KERNEL)
+    {
+        pForkParam->retCode = OS_ERR_UNAUTHORIZED_ACTION;
+        return;
+    }
 
     pCurrentProcess = schedGetCurrentProcess();
 

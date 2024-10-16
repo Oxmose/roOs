@@ -4685,8 +4685,19 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
     pVCpu->intContext.rflags    = KERNEL_THREAD_INIT_RFLAGS;
 
     /* Setup stack pointers */
-    pVCpu->cpuState.rsp = kStack;
+    pVCpu->cpuState.rsp = kStack - 0x8;
     pVCpu->cpuState.rbp = 0;
+
+    /* On entry, we expect to have RSP aligned before pushing the return
+     * address, thus when simulating the push, wi should ensure that the
+     * stack is aligned on 16bytes + 8
+     */
+    if((pVCpu->cpuState.rsp & 0xF) != 0x8)
+    {
+        pVCpu->cpuState.rsp = ((pVCpu->cpuState.rsp - 0x8) &
+                               0xFFFFFFFFFFFFFFF0) |
+                               0x8;
+    }
 
     /* Setup the CPU state */
     pVCpu->cpuState.rdi = 0;

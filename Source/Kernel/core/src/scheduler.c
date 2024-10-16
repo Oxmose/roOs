@@ -1809,6 +1809,7 @@ void schedScheduleNoInt(const bool kForceSwitch)
     uint64_t         upTime;
     thread_table_t*  pCurrentTable;
     kernel_thread_t* pThread;
+    uint32_t         timeIdx;
 
     SCHED_ASSERT(cpuGetIntState() == 0,
                  "Called scheduler no int with interrupt enabled",
@@ -1823,20 +1824,17 @@ void schedScheduleNoInt(const bool kForceSwitch)
     /* Update the CPU statistics */
     upTime = timeGetUptime();
     KERNEL_LOCK(sCpuStats[cpuId].lock);
+    timeIdx = sCpuStats[cpuId].timesIdx;
     if(pThread == spIdleThread[cpuId])
     {
-        sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx] =
-            upTime -
-            sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx];
+        sCpuStats[cpuId].idleTimes[timeIdx] = upTime -
+                                            sCpuStats[cpuId].idleTimes[timeIdx];
     }
-    sCpuStats[cpuId].totalTimes[sCpuStats[cpuId].timesIdx] =
-        upTime -
-        sCpuStats[cpuId].totalTimes[sCpuStats[cpuId].timesIdx];
+    sCpuStats[cpuId].totalTimes[timeIdx] = upTime -
+                                           sCpuStats[cpuId].totalTimes[timeIdx];
 
-    sCpuStats[cpuId].totalTime +=
-        sCpuStats[cpuId].totalTimes[sCpuStats[cpuId].timesIdx];
-    sCpuStats[cpuId].idleTime +=
-        sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx];
+    sCpuStats[cpuId].totalTime += sCpuStats[cpuId].totalTimes[timeIdx];
+    sCpuStats[cpuId].idleTime  += sCpuStats[cpuId].idleTimes[timeIdx];
     KERNEL_UNLOCK(sCpuStats[cpuId].lock);
 
     /* Wakeup sleeping threads if needed */
@@ -1911,8 +1909,6 @@ void schedScheduleNoInt(const bool kForceSwitch)
 
     signalManage(pThread);
 
-    KERNEL_UNLOCK(pThread->lock);
-
     /* Update the CPU statistics */
     KERNEL_LOCK(sCpuStats[cpuId].lock);
     sCpuStats[cpuId].timesIdx = (sCpuStats[cpuId].timesIdx + 1) %
@@ -1937,6 +1933,8 @@ void schedScheduleNoInt(const bool kForceSwitch)
     ++sCpuStats[cpuId].schedCount;
     KERNEL_UNLOCK(sCpuStats[cpuId].lock);
 
+    KERNEL_UNLOCK(pThread->lock);
+
 #if SCHED_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
@@ -1954,8 +1952,6 @@ void schedScheduleNoInt(const bool kForceSwitch)
     {
         cpuRestoreSyscallContext(pThread);
     }
-
-    while(1){};
 
     SCHED_ASSERT(false,
                  "Schedule returned",

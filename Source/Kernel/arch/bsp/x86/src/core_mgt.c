@@ -223,6 +223,7 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
             pCurrThread->requestSchedule = true;
             break;
         default:
+            while(1){}
             PANIC(OS_ERR_INCORRECT_VALUE,
                   MODULE_NAME,
                   "Unknown IPI function");

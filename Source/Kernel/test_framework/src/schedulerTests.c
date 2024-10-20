@@ -76,7 +76,7 @@
 
 void schedulerTest(void)
 {
-    /* TODO: Tests do as for futex in a separate thread and mode the TEST_FRAMEWORK_END */
+
     TEST_POINT_ASSERT_POINTER(TEST_SCHEDULER_TODO,
                               NULL == NULL,
                               (uintptr_t)NULL,

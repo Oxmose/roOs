@@ -227,19 +227,19 @@ typedef struct
 static void* _idleRoutine(void* pArgs);
 
 /**
- * @brief Thread entry point routine wrapper.
+ * @brief Kernel thread entry point routine wrapper.
  *
- * @details Thread launch routine. Wrapper for the actual thread routine. The
- * wrapper will call the thread routine, pass its arguments and gather the
+ * @details Kernel thread launch routine. Wrapper for the actual thread routine.
+ * The wrapper will call the thread routine, pass its arguments and gather the
  * return value of the thread function to allow the joining thread to retreive
  * it. Some statistics about the thread might be added in this function.
  */
-static void _threadEntryPoint(void);
+static void _kernelThreadEntryPoint(void);
 
 /**
- * @brief Thread's exit point.
+ * @brief Kernel thread exit point.
  *
- * @details Exit point of a thread. The function will release the resources of
+ * @details Kernel thread exit point. The function will release the resources of
  * the thread and manage its children. Put the thread
  * in a THREAD_STATE_ZOMBIE state. If an other thread is already joining the
  * active thread, then the joining thread will switch from blocked to ready
@@ -249,9 +249,9 @@ static void _threadEntryPoint(void);
  * @param[in] kRetState The thread return state.
  * @param[in] pRetVal The thread return value.
  */
-static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
-                             const THREAD_RETURN_STATE_E    kRetState,
-                             void*                          pRetVal);
+static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
+                                   const THREAD_RETURN_STATE_E    kRetState,
+                                   void*                          pRetVal);
 
 /**
  * @brief Creates the IDLE threads.
@@ -462,9 +462,9 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
 static void _manageNextState(kernel_thread_t* pThread);
 
 /**
- * @brief Creates the init process.
+ * @brief Creates the kernel process.
  *
- * @details Creates the init process. The function will initialize the process
+ * @details Creates the kernel process. The function will initialize the process
  * and its attributes and allocate the required resources.
  *
  * @param[out] ppProcess The handle buffer that receives the new process'
@@ -473,8 +473,8 @@ static void _manageNextState(kernel_thread_t* pThread);
  *
  * @return The function returns the success or error status.
  */
-static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
-                                           const char*        kpName);
+static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
+                                             const char*        kpName);
 
 /**
  * @brief Makes a copy of the running thread.
@@ -575,7 +575,7 @@ static void* _idleRoutine(void* pArgs)
     return NULL;
 }
 
-static void _threadEntryPoint(void)
+static void _kernelThreadEntryPoint(void)
 {
     void*            pThreadReturnValue;
     kernel_thread_t* pCurrThread;
@@ -586,17 +586,17 @@ static void _threadEntryPoint(void)
     pCurrThread->startTime = timeGetUptime();
 
     /* Call the thread routine */
-    pThreadReturnValue = pCurrThread->pEntryPoint(pCurrThread->pArgs);
+    pThreadReturnValue = pCurrThread->pRoutine(pCurrThread->pArgs);
 
     /* Call the exit function */
-    _threadExitPoint(THREAD_TERMINATE_CORRECTLY,
-                     THREAD_RETURN_STATE_RETURNED,
-                     pThreadReturnValue);
+    _kernelThreadExitPoint(THREAD_TERMINATE_CORRECTLY,
+                           THREAD_RETURN_STATE_RETURNED,
+                           pThreadReturnValue);
 }
 
-static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
-                             const THREAD_RETURN_STATE_E    kRetState,
-                             void*                          pRetVal)
+static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
+                                   const THREAD_RETURN_STATE_E    kRetState,
+                                   void*                          pRetVal)
 {
     kernel_thread_t* pJoiningThread;
     kernel_thread_t* pCurThread;
@@ -688,7 +688,8 @@ static void _createIdleThreads(void)
         spIdleThread[i]->type               = THREAD_TYPE_KERNEL;
         spIdleThread[i]->priority           = KERNEL_LOWEST_PRIORITY;
         spIdleThread[i]->pArgs              = (void*)(uintptr_t)i;
-        spIdleThread[i]->pEntryPoint        = _idleRoutine;
+        spIdleThread[i]->pEntryPoint        = _kernelThreadEntryPoint;
+        spIdleThread[i]->pRoutine           = _idleRoutine;
         spIdleThread[i]->requestSchedule    = true;
         spIdleThread[i]->preemptionDisabled = false;
         spIdleThread[i]->pProcess           = spCurrentProcessPtr[i];
@@ -703,8 +704,8 @@ static void _createIdleThreads(void)
 
         /* Set the thread's stack for both interrupt and main */
         spIdleThread[i]->kernelStackEnd = memoryMapStack(KERNEL_STACK_SIZE,
-                                                         NULL,
-                                                         true);
+                                                         true,
+                                                         NULL);
         SCHED_ASSERT(spIdleThread[i]->kernelStackEnd != (uintptr_t)NULL,
                      "Failed to allocate IDLE thread stack",
                      OS_ERR_NO_MORE_MEMORY);
@@ -714,14 +715,12 @@ static void _createIdleThreads(void)
 
         /* Allocate the vCPU */
         spIdleThread[i]->pThreadVCpu =
-                (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                            spIdleThread[i]->kernelStackEnd);
+                (void*)cpuCreateVirtualCPU(spIdleThread[i], true);
         SCHED_ASSERT(spIdleThread[i]->pThreadVCpu != NULL,
                      "Failed to allocate IDLE thread VCPU",
                      OS_ERR_NO_MORE_MEMORY);
         spIdleThread[i]->pSignalVCpu =
-                (void*)cpuCreateVirtualCPU(NULL,
-                                           spIdleThread[i]->kernelStackEnd);
+                (void*)cpuCreateVirtualCPU(spIdleThread[i], false);
         SCHED_ASSERT(spIdleThread[i]->pSignalVCpu != NULL,
                      "Failed to allocate IDLE thread signal VCPU",
                      OS_ERR_NO_MORE_MEMORY);
@@ -1464,8 +1463,8 @@ static void _manageNextState(kernel_thread_t* pThread)
     pThread->currentState = pThread->nextState;
 }
 
-static OS_RETURN_E _schedCreateInitProcess(kernel_process_t** ppProcess,
-                                           const char*        kpName)
+static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
+                                             const char*        kpName)
 {
     OS_RETURN_E       error;
     kernel_process_t* pProcess;
@@ -1640,8 +1639,8 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
 
     /* Create the new kernel stack */
     pNewThread->kernelStackEnd = memoryMapStack(pNewThread->kernelStackSize,
-                                                NULL,
-                                                true);
+                                                true,
+                                                NULL);
     if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1719,7 +1718,7 @@ void schedInit(void)
     memset(sCpuStats, 0, sizeof(cpu_stat_t) * SOC_CPU_COUNT);
 
     /* Create the kernel main process */
-    error = _schedCreateInitProcess(&spCurrentProcessPtr[0], "ROOS_KERNEL");
+    error = _schedCreateKernelProcess(&spCurrentProcessPtr[0], "ROOS_KERNEL");
     SCHED_ASSERT(error == OS_NO_ERR,
                  "Failed to create main process.",
                  OS_ERR_NO_MORE_MEMORY);
@@ -1911,23 +1910,23 @@ void schedScheduleNoInt(const bool kForceSwitch)
 
     /* Update the CPU statistics */
     KERNEL_LOCK(sCpuStats[cpuId].lock);
-    sCpuStats[cpuId].timesIdx = (sCpuStats[cpuId].timesIdx + 1) %
+    timeIdx = (sCpuStats[cpuId].timesIdx + 1) %
                                 CPU_LOAD_TICK_WINDOW;
-
+    sCpuStats[cpuId].timesIdx = timeIdx;
     sCpuStats[cpuId].totalTime -=
-        sCpuStats[cpuId].totalTimes[sCpuStats[cpuId].timesIdx];
+        sCpuStats[cpuId].totalTimes[timeIdx];
     sCpuStats[cpuId].idleTime -=
-        sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx];
+        sCpuStats[cpuId].idleTimes[timeIdx];
 
     if(pThread == spIdleThread[cpuId])
     {
-        sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx] = upTime;
+        sCpuStats[cpuId].idleTimes[timeIdx] = upTime;
     }
     else
     {
-        sCpuStats[cpuId].idleTimes[sCpuStats[cpuId].timesIdx] = 0;
+        sCpuStats[cpuId].idleTimes[timeIdx] = 0;
     }
-    sCpuStats[cpuId].totalTimes[sCpuStats[cpuId].timesIdx] = upTime;
+    sCpuStats[cpuId].totalTimes[timeIdx] = upTime;
 
 
     ++sCpuStats[cpuId].schedCount;
@@ -1950,7 +1949,16 @@ void schedScheduleNoInt(const bool kForceSwitch)
     }
     else if(cpuIsContextFromSyscall(pThread->pVCpu) == true)
     {
-        cpuRestoreSyscallContext(pThread);
+        if(pThread->type == THREAD_TYPE_KERNEL)
+        {
+            cpuRestoreKernelSyscallContext(pThread);
+        }
+        else
+        {
+            SCHED_ASSERT(false,
+                         "Unsuported system call return un user space",
+                         OS_ERR_UNAUTHORIZED_ACTION);
+        }
     }
 
     SCHED_ASSERT(false,
@@ -1975,20 +1983,21 @@ kernel_thread_t* schedGetCurrentThread(void)
     return pCur;
 }
 
-OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
-                                    const uint8_t     kPriority,
-                                    const char*       kpName,
-                                    const size_t      kStackSize,
-                                    const uint64_t    kAffinitySet,
-                                    void*             (*pRoutine)(void*),
-                                    void*             args)
+OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
+                              const bool        kIsKernel,
+                              const uint8_t     kPriority,
+                              const char*       kpName,
+                              const size_t      kStackSize,
+                              const uint64_t    kAffinitySet,
+                              void*             (*pRoutine)(void*),
+                              void*             args)
 {
     kernel_thread_t* pNewThread;
     OS_RETURN_E      error;
     int32_t          newTid;
 
-    pNewThread      = NULL;
-    error           = OS_NO_ERR;
+    pNewThread = NULL;
+    error      = OS_NO_ERR;
 
     /* Validate parameters */
     if((kAffinitySet >> SOC_CPU_COUNT) != 0 ||
@@ -2028,10 +2037,9 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     /* Set the thread's information */
     pNewThread->affinity           = kAffinitySet;
     pNewThread->tid                = newTid;
-    pNewThread->type               = THREAD_TYPE_KERNEL;
     pNewThread->priority           = kPriority;
     pNewThread->pArgs              = args;
-    pNewThread->pEntryPoint        = pRoutine;
+    pNewThread->pRoutine           = pRoutine;
     pNewThread->requestSchedule    = true;
     pNewThread->preemptionDisabled = false;
     pNewThread->pProcess           = schedGetCurrentProcess();
@@ -2039,33 +2047,58 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     strncpy(pNewThread->pName, kpName, THREAD_NAME_MAX_LENGTH);
     pNewThread->pName[THREAD_NAME_MAX_LENGTH] = 0;
 
-    /* Set the thread's stack for both interrupt and main */
-    pNewThread->kernelStackEnd = memoryMapStack(kStackSize,
-                                                NULL,
-                                                true);
-    if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+    if(kIsKernel == true)
     {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
-    }
-    pNewThread->kernelStackSize = kStackSize;
+        /* Set the thread's stack for both interrupt and main */
+        pNewThread->kernelStackEnd = memoryMapStack(kStackSize,
+                                                    true,
+                                                    NULL);
+        if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->kernelStackSize = kStackSize;
 
-    /* No user stack for kernel threads */
-    pNewThread->stackEnd  = (uintptr_t)NULL;
-    pNewThread->stackSize = 0;
+        pNewThread->type = THREAD_TYPE_KERNEL;
+        pNewThread->pEntryPoint = _kernelThreadEntryPoint;
+    }
+    else
+    {
+        /* Set the thread's stack for both interrupt */
+        pNewThread->kernelStackEnd = memoryMapStack(KERNEL_STACK_SIZE,
+                                                    true,
+                                                    NULL);
+        if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->kernelStackSize = KERNEL_STACK_SIZE;
+
+        /* Set the thread's stack for user */
+        pNewThread->stackEnd = memoryMapStack(kStackSize,
+                                              false,
+                                              pNewThread->pProcess);
+        if(pNewThread->stackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->stackSize = kStackSize;
+
+        pNewThread->type = THREAD_TYPE_USER;
+        pNewThread->pEntryPoint = pRoutine;
+    }
 
     /* Allocate the vCPUs */
-    pNewThread->pThreadVCpu =
-        (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                   pNewThread->kernelStackEnd);
+    pNewThread->pThreadVCpu = (void*)cpuCreateVirtualCPU(pNewThread, true);
     if(pNewThread->pThreadVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
         goto SCHED_CREATE_KTHREAD_END;
     }
-    pNewThread->pSignalVCpu =
-        (void*)cpuCreateVirtualCPU(NULL,
-                                   pNewThread->kernelStackEnd);
+    pNewThread->pSignalVCpu = (void*)cpuCreateVirtualCPU(pNewThread, false);
     if(pNewThread->pSignalVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -2305,6 +2338,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
                 *pTerminationCause = pThread->terminateCause;
             }
             KERNEL_UNLOCK(pCurThread->lock);
+            KERNEL_UNLOCK(pThread->lock);
             KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
             /* Clean the thread */
@@ -2464,7 +2498,7 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         /* If we are terminating ourselves just go to the exit point */
-        _threadExitPoint(kCause, THREAD_RETURN_STATE_KILLED, NULL);
+        _kernelThreadExitPoint(kCause, THREAD_RETURN_STATE_KILLED, NULL);
         SCHED_ASSERT(false,
                      "Exit point returned on terminate",
                      OS_ERR_UNAUTHORIZED_ACTION);
@@ -2493,7 +2527,7 @@ void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
                      const THREAD_RETURN_STATE_E    kRetState,
                      void*                          pRetVal)
 {
-    _threadExitPoint(kCause, kRetState, pRetVal);
+    _kernelThreadExitPoint(kCause, kRetState, pRetVal);
 }
 
 size_t schedGetThreadsIds(int32_t* pThreadTable, const size_t kTableSize)

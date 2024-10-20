@@ -270,7 +270,7 @@ static void testOrder(void)
     /* Spawn the wait thread */
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pWaitThreads[i],
+        error = schedCreateThread(&pWaitThreads[i], true,
                                 0,
                                 "FUTEX_WAIT_ORDER_TEST",
                                 0x1000,
@@ -291,7 +291,7 @@ static void testOrder(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pWakeThreads[i],
+        error = schedCreateThread(&pWakeThreads[i], true,
                                 0,
                                 "FUTEX_WAKE_ORDER_TEST",
                                 0x1000,
@@ -360,7 +360,7 @@ static void testMultiple(void)
     /* Spawn the wait thread */
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                 0,
                                 "FUTEX_MULTIPLE_TEST",
                                 0x1000,
@@ -480,7 +480,7 @@ static void testSameHandleValue(void)
     /* Spawn the wait thread */
     for(i = 0; i < 100; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                 0,
                                 "FUTEX_SAMEHANDLE_TEST",
                                 0x1000,
@@ -598,7 +598,9 @@ static void testReleaseResources(void)
     multipleFutexValue = 0;
     returnedThreads = 0;
 
-    identifier = memoryMgrGetPhysAddr((uintptr_t)&multipleFutexValue, NULL);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)&multipleFutexValue,
+                                      schedGetCurrentProcess(),
+                                      NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         TEST_POINT_ASSERT_POINTER(TEST_KFUTEX_RELEASE_GET_ID,
@@ -613,7 +615,7 @@ static void testReleaseResources(void)
     /* Spawn the wait thread */
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                 0,
                                 "FUTEX_RELEASE_TEST",
                                 0x1000,
@@ -679,7 +681,7 @@ static void testReleaseResources(void)
 
     multipleFutexValue = 0;
     returnedThreads = 0;
-    error = schedCreateKernelThread(&pThreads[0],
+    error = schedCreateThread(&pThreads[0], true,
                             0,
                             "FUTEX_RELEASE_TEST",
                             0x1000,
@@ -773,7 +775,7 @@ void kfutexTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     0,
                                     "FUTEX_MAIN_TEST",
                                     0x1000,

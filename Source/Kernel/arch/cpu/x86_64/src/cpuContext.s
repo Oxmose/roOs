@@ -81,7 +81,7 @@ global cpuRestoreContext
 global cpuGetId
 global cpuSignalHandler
 global cpuSwitchKernelSyscallContext
-global cpuRestoreSyscallContext
+global cpuRestoreKernelSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -265,12 +265,11 @@ cpuSignalHandlerLoop:
     jmp cpuSignalHandlerLoop
 
 ;-------------------------------------------------------------------------------
-; Switch the context from a system call
+; Switch the context from a kernel system call
 ;
 ; Param:
 ;     Input: rdi: The address to return to when restoring the context
 ;            rsi: The current thread
-;            rdx: The kernel stack to switch to
 
 cpuSwitchKernelSyscallContext:
     ; Save the return address in rcx
@@ -292,11 +291,11 @@ cpuSwitchKernelSyscallContext:
     jmp rcx
 
 ;-------------------------------------------------------------------------------
-; Restore the context from a system call
+; Restore the context from a kernel system call
 ;
 ; Param:
 ;     Input: rdi: A pointer to the thread to restore
-cpuRestoreSyscallContext:
+cpuRestoreKernelSyscallContext:
     ; The current thread is sent as parameter, load the VCPU
     mov rax, [rdi]
 

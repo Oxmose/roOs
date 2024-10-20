@@ -121,7 +121,6 @@ OS_RETURN_E syscallPerform(const SYSCALL_ID_E kSysCallId, void* pParams)
     {
         cpuKernelSyscallRaise((uintptr_t)sSyscalTable[kSysCallId].pHandler,
                               pParams,
-                              pCurrThread->kernelStackEnd,
                               pCurrThread);
     }
     else

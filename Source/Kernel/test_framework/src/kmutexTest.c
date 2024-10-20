@@ -523,7 +523,7 @@ static void testMutualExc(void)
 
     for(i = 0; i < 100; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         0,
                                         "MUTEX_MUTUALEXC_TEST",
                                         0x1000,
@@ -611,7 +611,7 @@ static void testOrder(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "NUTEX_ORDER_TEST",
                                         0x1000,
@@ -695,7 +695,7 @@ static void testFifo(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "MUTEX_FIFO_TEST",
                                         0x1000,
@@ -777,7 +777,7 @@ static void testRecursive(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         0,
                                         "MUTEX_RECUR_TEST",
                                         0x1000,
@@ -846,7 +846,7 @@ static void testDestroy(void)
 
     for(i = 0; i < 100; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         0,
                                         "MUTEX_CANCEL_TEST",
                                         0x1000,
@@ -944,7 +944,7 @@ static void testTrylock(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "MUTEX_TRYLOCK_TEST",
                                         0x1000,
@@ -1018,7 +1018,7 @@ static void testElevation(void)
         goto MUTEX_TEST_END;
     }
 
-    error = schedCreateKernelThread(&pThreads[0],
+    error = schedCreateThread(&pThreads[0], true,
                                     10,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
@@ -1036,7 +1036,7 @@ static void testElevation(void)
         goto MUTEX_TEST_END;
     }
 
-    error = schedCreateKernelThread(&pThreads[1],
+    error = schedCreateThread(&pThreads[1], true,
                                     12,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
@@ -1054,7 +1054,7 @@ static void testElevation(void)
         goto MUTEX_TEST_END;
     }
 
-    error = schedCreateKernelThread(&pThreads[2],
+    error = schedCreateThread(&pThreads[2], true,
                                     9,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
@@ -1072,7 +1072,7 @@ static void testElevation(void)
         goto MUTEX_TEST_END;
     }
 
-    error = schedCreateKernelThread(&pThreads[3],
+    error = schedCreateThread(&pThreads[3], true,
                                     7,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
@@ -1149,7 +1149,7 @@ void kmutexTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     0,
                                     "MUTEX_MAIN_TEST",
                                     0x1000,

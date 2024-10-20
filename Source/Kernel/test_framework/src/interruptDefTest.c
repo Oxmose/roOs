@@ -155,7 +155,7 @@ void interruptDefferTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     1,
                                     "DEF_INT_MAIN",
                                     0x1000,

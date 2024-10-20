@@ -54,6 +54,7 @@ global _bootedCPUCount
 global _kernelPGDir
 global _pagingPDP
 global _pagingPD
+global _physicalMapDir
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
@@ -142,4 +143,6 @@ _pagingPD:
     dq 0x0000000000000083
     dq 0x0000000000200083
     dq 0x0000000000400083
-    times (507) dq 0x00
+    times (509) dq 0x00
+_physicalMapDir:
+    times (512) dq 0x00

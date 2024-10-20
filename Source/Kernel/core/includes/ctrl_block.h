@@ -261,8 +261,11 @@ typedef struct kernel_thread_t
     /** @brief Thread's start arguments. */
     void* pArgs;
 
+    /** @brief Thread's entry point. */
+    void* pEntryPoint;
+
     /** @brief Thread's routine. */
-    void* (*pEntryPoint)(void*);
+    void* (*pRoutine)(void*);
 
     /** @brief Thread's return value. */
     void* retValue;

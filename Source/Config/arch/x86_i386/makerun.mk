@@ -19,10 +19,10 @@ pre-run:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
 	@echo "\e[1m\e[34m| Preparing run for target $(target)\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
-	rm -rf ./$(BUILD_DIR)/GRUB
-	$(RM) -f ./$(BUILD_DIR)/roOs_boot.iso
-	cp -R Config/arch/x86_i386/GRUB ./$(BUILD_DIR)/
-	cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
+	@rm -rf ./$(BUILD_DIR)/GRUB
+	@$(RM) -f ./$(BUILD_DIR)/roOs_boot.iso
+	@cp -R Config/arch/x86_i386/GRUB ./$(BUILD_DIR)/
+	@cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
 #cp ./$(BUILD_DIR)/roOs.initrd ./$(BUILD_DIR)/GRUB/boot/
 	grub-mkrescue -d ../Tools/i386-pc -o ./$(BUILD_DIR)/roOs_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
 

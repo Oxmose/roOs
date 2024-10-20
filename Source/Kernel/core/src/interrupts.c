@@ -473,7 +473,7 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        return OS_ERR_INTERRUPT_NOT_REGISTERED;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     pKernelInterruptHandlerTable[kInterruptLine] = NULL;
@@ -593,13 +593,14 @@ void interruptDeferInit(void)
                      error);
 
     /* Create the defered interrupts thread */
-    error = schedCreateKernelThread(&spDeferedIntThread,
-                                    DEFERED_INTERRUPT_THREAD_PRIO,
-                                    "defISR",
-                                    DEFERED_INTERRUPT_THREAD_STACK_SIZE,
-                                    DEFERED_INTERRUPT_THREAD_AFFINITY,
-                                    _interruptDeferedRoutine,
-                                    NULL);
+    error = schedCreateThread(&spDeferedIntThread,
+                              true,
+                              DEFERED_INTERRUPT_THREAD_PRIO,
+                              "defISR",
+                              DEFERED_INTERRUPT_THREAD_STACK_SIZE,
+                              DEFERED_INTERRUPT_THREAD_AFFINITY,
+                              _interruptDeferedRoutine,
+                              NULL);
     INTERRUPT_ASSERT(error == OS_NO_ERR,
                      "Failed to create defered interrupt thread",
                      error);

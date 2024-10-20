@@ -156,12 +156,13 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
                        const int32_t         kWaitValue,
                        KFUTEX_WAKE_REASON_E* pWakeReason)
 {
-    OS_RETURN_E     error;
-    uintptr_t       identifier;
-    futex_waiting_t waiting;
-    kqueue_node_t   waitingNode;
-    futex_data_t*   pFutexData;
-    uint32_t        intState;
+    OS_RETURN_E      error;
+    uintptr_t        identifier;
+    futex_waiting_t  waiting;
+    kqueue_node_t    waitingNode;
+    futex_data_t*    pFutexData;
+    uint32_t         intState;
+    kernel_thread_t* pCurrentThread;
 
     /* Check parameters */
     if(pFutex == NULL || pFutex->pHandle == NULL)
@@ -180,8 +181,12 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
         return OS_ERR_NOT_BLOCKED;
     }
 
+    pCurrentThread = schedGetCurrentThread();
+
     /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle,
+                                      pCurrentThread->pProcess,
+                                      NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         KERNEL_UNLOCK(sLock);
@@ -233,7 +238,7 @@ OS_RETURN_E kfutexWait(kfutex_t*             pFutex,
         FUTEX_ASSERT(error == OS_NO_ERR, "Failed to get futex", error);
     }
 
-    waiting.pWaitingThread = schedGetCurrentThread();
+    waiting.pWaitingThread = pCurrentThread;
     waiting.waitValue      = kWaitValue;
     waiting.wakeReason     = KFUTEX_WAKEUP_CANCEL;
     waiting.identifier     = identifier;
@@ -355,7 +360,9 @@ OS_RETURN_E kfutexWake(kfutex_t* pFutex, size_t* pWakeCount)
     }
 
     /* Get the identifier, we use the physical address of the handle */
-    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle, NULL);
+    identifier = memoryMgrGetPhysAddr((uintptr_t)pFutex->pHandle,
+                                      schedGetCurrentProcess(),
+                                      NULL);
     if(identifier == MEMMGR_PHYS_ADDR_ERROR)
     {
         return OS_ERR_INCORRECT_VALUE;

@@ -1451,7 +1451,7 @@ static OS_RETURN_E _memoryMgrUnmap(const uintptr_t kVirtualAddress,
     while(toUnmap != 0)
     {
         /* Get entry indexes */
-        pgDirEntry   = currVirtAddr >> PG_DIR_ENTRY_OFFSET;
+        pgDirEntry = currVirtAddr >> PG_DIR_ENTRY_OFFSET;
 
         /* If the entry is empty */
         if((pPgDirRecurEntry[pgDirEntry] & PAGE_FLAG_PRESENT) != 0)
@@ -2549,6 +2549,7 @@ void memoryDestroyProcessMemoryData(void* pMemoryData)
     kQueueDestroy(&pMemProcInfo->freePageTable.pQueue);
 
     /* Release the memory structure */
+    KERNEL_UNLOCK(pMemProcInfo->freePageTable.lock);
     kfree(pMemProcInfo);
 }
 

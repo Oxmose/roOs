@@ -60,7 +60,7 @@
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
-    /* TODO: Reenable */
+
 #if 0
 /************************* Imported global variables **************************/
 extern kqueue_t* spPhysMemList;
@@ -113,7 +113,7 @@ static inline uintptr_t _makeCanonical(const uintptr_t kAddress,
 
 void memmgrTest(void)
 {
-    /* TODO: Reenable */
+
 #if 0
     mem_range_t* pRange;
     kqueue_node_t* pNode;
@@ -403,7 +403,7 @@ void memmgrTest(void)
                             (uintptr_t)i,
                             TEST_MEMMGR_ENABLED);
 
-    /*TODO: Test remove block */
+
 
 #else
     TEST_POINT_ASSERT_UINT(TEST_MEMMGR_ADDBLOCK(0),

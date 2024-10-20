@@ -226,13 +226,14 @@ void syslogStart(void)
     OS_RETURN_E error;
 
     /* Create the syslog thread */
-    error = schedCreateKernelThread(&spSyslogThread,
-                                    SYSLOG_THREAD_PRIO,
-                                    SYSLOG_THREAD_NAME,
-                                    SYSLOG_THREAD_STACK_SIZE,
-                                    SYSLOG_THREAD_AFFINITY,
-                                    _syslogRoutine,
-                                    NULL);
+    error = schedCreateThread(&spSyslogThread,
+                              true,
+                              SYSLOG_THREAD_PRIO,
+                              SYSLOG_THREAD_NAME,
+                              SYSLOG_THREAD_STACK_SIZE,
+                              SYSLOG_THREAD_AFFINITY,
+                              _syslogRoutine,
+                              NULL);
     SYSLOG_ASSERT(error == OS_NO_ERR, "Failed to start syslog thread", error);
 
     /* Init the syslog semaphore */

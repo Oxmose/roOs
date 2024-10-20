@@ -177,18 +177,16 @@ size_t schedGetThreadCount(void);
 kernel_thread_t* schedGetCurrentThread(void);
 
 /**
- * @brief Creates a new kernel thread in the thread table.
+ * @brief Creates a new thread in the thread table.
  *
  * @details Creates a new thread added in the ready threads table. The thread
  * might not be directly scheduled depending on its priority and the current
  * system's load.
  * A handle to the thread is given as parameter and set on success.
  *
- * @warning These are kernel threads, sharing the kernel memory space and using
- * the kernel memory map and heap.
- *
  * @param[out] ppThread The pointer to the thread structure. This is the handle
  * of the thread for the user.
+ * @param[in] kIsKernel Tells if the created thread is a kernel or user thread.
  * @param[in] kPriority The priority of the thread.
  * @param[in] kpName The name of the thread.
  * @param[in] kStackSize The thread's stack size in bytes, must be a multiple of
@@ -208,13 +206,14 @@ kernel_thread_t* schedGetCurrentThread(void);
  * - OS_ERR_UNAUTHORIZED_ACTION is the stack is not a multiple of the system's
  * page size.
  */
-OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
-                                    const uint8_t     kPriority,
-                                    const char*       kpName,
-                                    const size_t      kStackSize,
-                                    const uint64_t    kAffinitySet,
-                                    void*             (*pRoutine)(void*),
-                                    void*             args);
+OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
+                              const bool        kIsKernel,
+                              const uint8_t     kPriority,
+                              const char*       kpName,
+                              const size_t      kStackSize,
+                              const uint64_t    kAffinitySet,
+                              void*             (*pRoutine)(void*),
+                              void*             args);
 
 /**
  * @brief Remove a thread from the threads table.

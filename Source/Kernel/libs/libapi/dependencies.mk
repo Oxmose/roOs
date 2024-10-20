@@ -1,5 +1,6 @@
 DEP_INCLUDES += -I ../libc/includes
 DEP_INCLUDES += -I ../../io/includes
+DEP_INCLUDES += -I ../../fs/includes
 DEP_INCLUDES += -I ../../test_framework/includes
 DEP_INCLUDES += -I ../../core/includes
 DEP_INCLUDES += -I ../../arch/cpu/includes

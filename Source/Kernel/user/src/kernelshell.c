@@ -38,6 +38,7 @@
 #include <ksemaphore.h>   /* Semaphore service */
 #include <scheduler.h>    /* Scheduler services */
 #include <interrupts.h>   /* Interrupt manager */
+#include <elfmanager.h>   /* ELF manager */
 #include <kerneloutput.h> /* Kernel output */
 
 /* Header file */
@@ -90,6 +91,7 @@ static void _shellPanic(const char* args);
 static void _shellSleep(const char* args);
 static void _shellExit(const char* args);
 static void _shellFork(const char* args);
+static void _shellReadElf(const char* args);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -128,6 +130,7 @@ static const command_t sCommands[] = {
     {"panic", "Generates a kernel panic", _shellPanic},
     {"sleep", "Sleeps for ns time", _shellSleep},
     {"fork", "Tests the fork features", _shellFork},
+    {"relf", "Read the ELF", _shellReadElf},
     {"exit", "Exit the shell", _shellExit},
     {"help", "Display this help", _shellHelp},
     {NULL, NULL, NULL}
@@ -136,6 +139,22 @@ static const command_t sCommands[] = {
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+static void _shellReadElf(const char* args)
+{
+    OS_RETURN_E error;
+    uintptr_t   entryPoint;
+    error = elfManagerLoadElf(args, &entryPoint);
+
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to check ELF %s\n", args);
+    }
+    else
+    {
+        kprintf("Valid ELF %s | Entry point 0x%p\n", args, entryPoint);
+    }
+}
 
 static void _shellFork(const char* args)
 {
@@ -209,11 +228,8 @@ static void _shellPanic(const char* args)
 static void _shellTest(const char* args)
 {
     (void)args;
-    _shellList("/initrd");
-    kprintf("-----\n");
-    _shellList("/initrd/folder1");
-    kprintf("-----\n");
-    _shellList("/initrd/folder1/anotherfolder/");
+    _shellReadElf("/initrd/newfile2.txt");
+    _shellReadElf("/initrd/init");
 }
 
 static void _shellCat(const char* args)
@@ -486,7 +502,7 @@ static void _shellCtxSwitchTime(const char* args)
     memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
     threadStarted = 0;
 
-    error = schedCreateKernelThread(&pShellThread[0],
+    error = schedCreateThread(&pShellThread[0], true,
                                     11,
                                     "kernelShellTime",
                                     0x1000,
@@ -510,7 +526,7 @@ static void _shellCtxSwitchTime(const char* args)
     memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
     threadStarted = 0;
 
-    error = schedCreateKernelThread(&pShellThread[0],
+    error = schedCreateThread(&pShellThread[0], true,
                                     11,
                                     "kernelShellTime",
                                     0x1000,
@@ -538,7 +554,7 @@ static void _shellCtxSwitchTime(const char* args)
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateKernelThread(&pShellThread[0],
+    error = schedCreateThread(&pShellThread[0], true,
                                     11,
                                     "kernelShellTime0",
                                     0x1000,
@@ -550,7 +566,7 @@ static void _shellCtxSwitchTime(const char* args)
         kprintf("Failed to start thread. Error %d\n", error);
         return;
     }
-    error = schedCreateKernelThread(&pShellThread[1],
+    error = schedCreateThread(&pShellThread[1], true,
                                     11,
                                     "kernelShellTime1",
                                     0x1000,
@@ -582,7 +598,7 @@ static void _shellCtxSwitchTime(const char* args)
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateKernelThread(&pShellThread[0],
+    error = schedCreateThread(&pShellThread[0], true,
                                     11,
                                     "kernelShellTime0",
                                     0x1000,
@@ -594,7 +610,7 @@ static void _shellCtxSwitchTime(const char* args)
         kprintf("Failed to start thread. Error %d\n", error);
         return;
     }
-    error = schedCreateKernelThread(&pShellThread[1],
+    error = schedCreateThread(&pShellThread[1], true,
                                     11,
                                     "kernelShellTime1",
                                     0x1000,
@@ -895,7 +911,7 @@ void kernelShellInit(void)
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateKernelThread(&pShellThread,
+    error = schedCreateThread(&pShellThread, true,
                                     10,
                                     "kernelShell",
                                     0x1000,

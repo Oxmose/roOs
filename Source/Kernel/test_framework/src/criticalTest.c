@@ -164,7 +164,7 @@ static void testLocal(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "LOCAL_CRITICAL_TEST",
                                         0x1000,
@@ -221,7 +221,7 @@ static void testGlobal0(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "GLOBAL_CRITICAL_TEST",
                                         0x1000,
@@ -278,7 +278,7 @@ static void testGlobal1(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "GLOBAL_CRITICAL_TEST",
                                         0x1000,
@@ -346,7 +346,7 @@ void criticalTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     0,
                                     "CRITICAL_TEST",
                                     0x1000,

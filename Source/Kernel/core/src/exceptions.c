@@ -191,7 +191,7 @@ OS_RETURN_E exceptionRemove(const uint32_t kExceptionLine)
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        return OS_ERR_INTERRUPT_NOT_REGISTERED;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     pKernelInterruptHandlerTable[kExceptionLine] = NULL;

@@ -106,6 +106,8 @@
 
 /** @brief Thread's initial EFLAGS register value. */
 #define KERNEL_THREAD_INIT_RFLAGS 0x202 /* INT | PARITY */
+/** @brief Thread's initial EFLAGS register value. */
+#define USER_THREAD_INIT_RFLAGS 0x202 /* INT | PARITY */
 
 /** @brief Defines the core dump message length */
 #define CPU_CORE_DUMP_LENGTH 2048
@@ -4657,22 +4659,40 @@ void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
     __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
 }
 
-uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
-                              const uintptr_t kStack)
+uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry)
 {
     virtual_cpu_t*   pVCpu;
     fxdata_layout_t* pFxData;
+    uintptr_t        stack;
+    uint64_t         csVal;
+    uint64_t         dsVal;
+    uint64_t         rflagsVal;
+
+    if(pThread->type == THREAD_TYPE_KERNEL)
+    {
+        csVal = KERNEL_CS_64;
+        dsVal = KERNEL_DS_64;
+        rflagsVal = KERNEL_THREAD_INIT_RFLAGS;
+        stack = pThread->kernelStackEnd;
+    }
+    else
+    {
+        csVal = USER_CS_64 | 0x3;
+        dsVal = USER_DS_64 | 0x3;
+        rflagsVal = USER_THREAD_INIT_RFLAGS;
+        stack = pThread->stackEnd;
+    }
 
     /* Ensure the stack alignement */
-    CPU_ASSERT((kStack & 0xF) == 0,
-               "Created virtual CPU with unaligned stack",
-               OS_ERR_INCORRECT_VALUE);
+    if((stack & 0xF) != 0)
+    {
+        return 0;
+    }
 
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
     if(pVCpu == NULL)
     {
-
         return 0;
     }
     memset(pVCpu, 0, sizeof(virtual_cpu_t));
@@ -4680,27 +4700,26 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
     /* Setup the interrupt context */
     pVCpu->intContext.intId     = 0;
     pVCpu->intContext.errorCode = 0;
-    pVCpu->intContext.rip       = (uintptr_t)kEntryPoint;
-    pVCpu->intContext.cs        = KERNEL_CS_64;
-    pVCpu->intContext.rflags    = KERNEL_THREAD_INIT_RFLAGS;
+    pVCpu->intContext.cs        = csVal;
+    pVCpu->intContext.rflags    = rflagsVal;
 
-    /* Setup stack pointers */
-    pVCpu->cpuState.rsp = kStack - 0x8;
-    pVCpu->cpuState.rbp = 0;
-
-    /* On entry, we expect to have RSP aligned before pushing the return
-     * address, thus when simulating the push, wi should ensure that the
-     * stack is aligned on 16bytes + 8
-     */
-    if((pVCpu->cpuState.rsp & 0xF) != 0x8)
+    /* If the entry point needs to be set, set it */
+    if(kSetEntry == true)
     {
-        pVCpu->cpuState.rsp = ((pVCpu->cpuState.rsp - 0x8) &
-                               0xFFFFFFFFFFFFFFF0) |
-                               0x8;
+        pVCpu->intContext.rip = (uintptr_t)pThread->pEntryPoint;
+        pVCpu->cpuState.rdi   = (uintptr_t)pThread->pArgs;
+    }
+    else
+    {
+        pVCpu->intContext.rip = 0;
+        pVCpu->cpuState.rdi   = 0;
     }
 
+    /* Setup stack pointers */
+    pVCpu->cpuState.rsp = stack;
+    pVCpu->cpuState.rbp = 0;
+
     /* Setup the CPU state */
-    pVCpu->cpuState.rdi = 0;
     pVCpu->cpuState.rsi = 0;
     pVCpu->cpuState.rdx = 0;
     pVCpu->cpuState.rcx = 0;
@@ -4714,11 +4733,11 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
     pVCpu->cpuState.r13 = 0;
     pVCpu->cpuState.r14 = 0;
     pVCpu->cpuState.r15 = 0;
-    pVCpu->cpuState.ss  = KERNEL_DS_64;
-    pVCpu->cpuState.gs  = KERNEL_DS_64;
-    pVCpu->cpuState.fs  = KERNEL_DS_64;
-    pVCpu->cpuState.es  = KERNEL_DS_64;
-    pVCpu->cpuState.ds  = KERNEL_DS_64;
+    pVCpu->cpuState.ss  = dsVal;
+    pVCpu->cpuState.gs  = dsVal;
+    pVCpu->cpuState.fs  = dsVal;
+    pVCpu->cpuState.es  = dsVal;
+    pVCpu->cpuState.ds  = dsVal;
 
     /* Setup the FPU */
     pFxData = (fxdata_layout_t*)(((uintptr_t)pVCpu->fxData + 0xF) &

@@ -211,13 +211,13 @@ uint8_t cpuGetId(void);
  * CPU. This structure is private to the architecture and should not be used
  * elsewhere than the CPU module.
  *
- * @param[in] kpEntryPoint The thread's entry point used to initialize the vCPU.
- * @param[in] kStack The thread stack to use when starting it.
+ * @param[in] pThread The thread to initialize the vCPU of.
+ * @param[in] kSetEntry Tells if the entry point (and associated arguments) need
+ * to be set.
  *
  * @return The address of the newly created VCPU is returned.
  */
-uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
-                              const uintptr_t kStack);
+uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry);
 
 /**
  * @brief Detroys a thread's virtual CPU.

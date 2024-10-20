@@ -395,6 +395,23 @@ inline static void _uint2oct(char* pOct, uint32_t value, size_t size);
  */
 inline static uint32_t _oct2uint(const char* kpOct, size_t size);
 
+/**
+ * @brief USTAR VFS seek hook.
+ *
+ * @details USTAR VFS seek hook. This function performs a seek for the
+ * USTAR driver.
+ *
+ * @param[in, out] pDrvCtrl The USTAR driver that was registered in the VFS.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in, out] pArgs The arguments for the seek operation.
+ *
+ * @return The function returns the new offset from the beginning of the file on
+ * success and -1 on error;
+ */
+static ssize_t _ustarVfsSeek(void*              pDriverData,
+                             void*              pHandle,
+                             seek_ioctl_args_t* pArgs);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -854,13 +871,18 @@ static ssize_t _ustarVfsIOCTL(void*    pDriverData,
                               uint32_t operation,
                               void*    pArgs)
 {
-    (void)pDriverData;
-    (void)pHandle;
-    (void)operation;
-    (void)pArgs;
+    ssize_t retVal;
 
-    /* Not supported */
-    return -1;
+    switch(operation)
+    {
+        case VFS_IOCTL_FILE_SEEK:
+            retVal = _ustarVfsSeek(pDriverData, pHandle, pArgs);
+            break;
+        default:
+            retVal = -1;
+    }
+
+    return retVal;
 }
 
 static int32_t _ustarVfsReadDir(void*     pDriverData,
@@ -1183,6 +1205,39 @@ inline static uint32_t _oct2uint(const char* kpOct, size_t size)
         out = (out << 3) | (uint32_t)(kpOct[i++] - '0');
     }
     return out;
+}
+
+static ssize_t _ustarVfsSeek(void*              pDriverData,
+                             void*              pHandle,
+                             seek_ioctl_args_t* pArgs)
+{
+    ustar_fd_t* pFileDesc;
+
+    (void)pDriverData;
+
+    if(pHandle == NULL || pHandle == (void*)-1)
+    {
+        return -1;
+    }
+
+    pFileDesc = pHandle;
+
+    if(pArgs->direction == SEEK_SET)
+    {
+        if(pArgs->offset <= pFileDesc->fileSize)
+        {
+            pFileDesc->offset = pArgs->offset;
+        }
+    }
+    else if(pArgs->direction == SEEK_CUR)
+    {
+        if(pFileDesc->offset + pArgs->offset <= pFileDesc->fileSize)
+        {
+            pFileDesc->offset += pArgs->offset;
+        }
+    }
+
+    return pFileDesc->offset;
 }
 
 /***************************** DRIVER REGISTRATION ****************************/

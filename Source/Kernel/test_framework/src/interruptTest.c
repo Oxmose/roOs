@@ -158,8 +158,8 @@ static void test_sw_interupts(void)
     /* TEST REMOVE WHEN NOT REGISTERED */
     err = interruptRemove(MIN_INTERRUPT_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_BAD_HANDLER2_ID,
-                            err == OS_ERR_INTERRUPT_NOT_REGISTERED,
-                            OS_ERR_INTERRUPT_NOT_REGISTERED,
+                            err == OS_ERR_NO_SUCH_ID,
+                            OS_ERR_NO_SUCH_ID,
                             err,
                             TEST_INTERRUPT_ENABLED);
 

@@ -1236,13 +1236,14 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
     }
 
     /* Create the display thread */
-    retCode = schedCreateKernelThread(&pDrvCtrl->pDisplayThread,
-                                      VESA_DISPLAY_THREAD_PRIO,
-                                      VESA_DISPLAY_THREAD_NAME,
-                                      VESA_DISPLAY_THREAD_STACK_SIZE,
-                                      VESA_DISPLAY_THREAD_AFFINITY,
-                                      _vesaDisplayRoutine,
-                                      (void*)pDrvCtrl);
+    retCode = schedCreateThread(&pDrvCtrl->pDisplayThread,
+                                true,
+                                VESA_DISPLAY_THREAD_PRIO,
+                                VESA_DISPLAY_THREAD_NAME,
+                                VESA_DISPLAY_THREAD_STACK_SIZE,
+                                VESA_DISPLAY_THREAD_AFFINITY,
+                                _vesaDisplayRoutine,
+                                (void*)pDrvCtrl);
     if(retCode != OS_NO_ERR)
     {
         goto ATTACH_END;

@@ -19,21 +19,20 @@ pre-run:
 	@echo "\e[1m\e[34m\n#-------------------------------------------------------------------------------\e[22m\e[39m"
 	@echo "\e[1m\e[34m| Preparing run for target $(target)\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
-	rm -rf ./$(BUILD_DIR)/GRUB
-	$(RM) -f ./$(BUILD_DIR)/roOs_boot.iso
-	cp -R Config/arch/x86_64/GRUB ./$(BUILD_DIR)/
-	cp ./$(BUILD_DIR)/$(KERNEL).elf ./$(BUILD_DIR)/GRUB/boot/
-#cp ./$(BUILD_DIR)/roOs.initrd ./$(BUILD_DIR)/GRUB/boot/
-	grub-mkrescue -d ../Tools/i386-pc -o ./$(BUILD_DIR)/roOs_boot.iso ./$(BUILD_DIR)/GRUB 2>&1 /dev/null
+	@rm -rf ./$(KERNEL_BUILD_DIR)/GRUB
+	@$(RM) -f ./$(KERNEL_BUILD_DIR)/$(KERNEL)_boot.iso
+	@cp -R Config/arch/x86_64/GRUB ./$(KERNEL_BUILD_DIR)/
+	@cp ./$(KERNEL_BUILD_DIR)/$(KERNEL).elf ./$(KERNEL_BUILD_DIR)/GRUB/boot/
+	@grub-mkrescue -d ../Tools/i386-pc -o ./$(KERNEL_BUILD_DIR)/roOs_boot.iso ./$(KERNEL_BUILD_DIR)/GRUB 2>&1 /dev/null
 
 run: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu\e[22m\e[39m"
-	$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/roOs_boot.iso -monitor telnet:127.0.0.1:55550,server,nowait
+	$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(KERNEL_BUILD_DIR)/roOs_boot.iso -monitor telnet:127.0.0.1:55550,server,nowait
 
 qemu-test-mode: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu TEST MODE\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/roOs_boot.iso -nographic -monitor none
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(KERNEL_BUILD_DIR)/roOs_boot.iso -nographic -monitor none
 
 debug: pre-run
 	@echo "\e[1m\e[94m=== Running on Qemu DEBUG MODE\e[22m\e[39m"
-	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(BUILD_DIR)/roOs_boot.iso -S -monitor telnet:127.0.0.1:55550,server,nowait -gdb tcp::1234
+	@$(QEMU) $(QEMUOPTS) -boot d -cdrom ./$(KERNEL_BUILD_DIR)/roOs_boot.iso -S -monitor telnet:127.0.0.1:55550,server,nowait -gdb tcp::1234

@@ -325,7 +325,7 @@ static void testMutualExc(void)
 
     for(i = 0; i < 100; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         0,
                                         "SEM_MUTUALEXC_TEST",
                                         0x1000,
@@ -403,7 +403,7 @@ static void testOrder(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_ORDER_TEST",
                                         0x1000,
@@ -476,7 +476,7 @@ static void testFifo(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_FIFO_TEST",
                                         0x1000,
@@ -554,7 +554,7 @@ static void testDestroy(void)
 
     for(i = 0; i < 100; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         0,
                                         "SEM_CANCEL_TEST",
                                         0x1000,
@@ -631,7 +631,7 @@ static void testTrypend(void)
 
     for(i = 0; i < KERNEL_LOWEST_PRIORITY + 1; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_TRYPEND_TEST",
                                         0x1000,
@@ -721,7 +721,7 @@ void ksemaphoreTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     0,
                                     "SEM_MAIN_TEST",
                                     0x1000,

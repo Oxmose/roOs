@@ -33,25 +33,25 @@
  ******************************************************************************/
 
 /** @brief Memory mapping flags: Read-Only mapping */
-#define MEMMGR_MAP_RO 0x00000000ULL
+#define MEMMGR_MAP_RO 0x00000001ULL
 /** @brief Memory mapping flags: Read-Write mapping */
-#define MEMMGR_MAP_RW 0x00000001ULL
+#define MEMMGR_MAP_RW 0x00000002ULL
 /** @brief Memory mapping flags: Execute mapping */
-#define MEMMGR_MAP_EXEC 0x00000002ULL
+#define MEMMGR_MAP_EXEC 0x00000004ULL
 
 /** @brief Memory mapping flags: Kernel access only  */
-#define MEMMGR_MAP_KERNEL 0x00000004ULL
+#define MEMMGR_MAP_KERNEL 0x00000008ULL
 /** @brief Memory mapping flags: Kernel and user access */
-#define MEMMGR_MAP_USER 0x00000000ULL
+#define MEMMGR_MAP_USER 0x00000010ULL
 
 /** @brief Memory mapping flags: Cache disabled */
-#define MEMMGR_MAP_CACHE_DISABLED 0x00000008ULL
+#define MEMMGR_MAP_CACHE_DISABLED 0x00000020ULL
 /** @brief Memory mapping flags: Hardware */
-#define MEMMGR_MAP_HARDWARE 0x00000008ULL
+#define MEMMGR_MAP_HARDWARE 0x00000040ULL
 /** @brief Memory mapping flags: Write Combining */
-#define MEMMGR_MAP_WRITE_COMBINING 0x00000010ULL
+#define MEMMGR_MAP_WRITE_COMBINING 0x00000080ULL
 /** @brief Memory mapping flags: Copy On Write */
-#define MEMMGR_MAP_COW 0x00000020ULL
+#define MEMMGR_MAP_COW 0x00000100ULL
 
 /** @brief Kernel page size */
 #define KERNEL_PAGE_SIZE 0x1000ULL
@@ -150,13 +150,8 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
  * page boundaries.
  * @param[in] kSize The size of the region to unmap map in bytes. Must be
  * aligned on page boundaries.
- * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
- * infomation.
- * @param[out] pError The error buffer to store the operation's result. If NULL,
- * does not set the error value.
  *
- * @return The function returns the virtual base address of the mapped region.
- * NULL is returned on error.
+ * @return The function returns success or error status.
  */
 OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
 
@@ -168,13 +163,15 @@ OS_RETURN_E memoryKernelUnmap(const void* kVirtualAddress, const size_t kSize);
  * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
  *
  * @param[in] kVirtualAddress The virtual address to lookup.
+ * @param[in] kpProcess The process to use for the search.
  * @param[out] pFlags The memory flags used for the mapping. Can be NULL.
  *
  * @returns The physical address of a virtual address mapped in the
  * current page directory. If not found, MEMMGR_PHYS_ADDR_ERROR is returned.
  */
-uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
-                               uint32_t*       pFlags);
+uintptr_t memoryMgrGetPhysAddr(const uintptr_t         kVirtualAddress,
+                               const kernel_process_t* kpProcess,
+                               uint32_t*               pFlags);
 
 /**
  * @brief Maps a stack in the process memory region and returns its address.
@@ -185,15 +182,15 @@ uintptr_t memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
  *
  * @param[in] kSize The size of the stack. If not aligned with the kernel page
  * size, the actual mapped size will be aligned up on page boundaries.
+ * @param[in] kIsKernel Tells if the stack is a kernel or user stack.
  * @param[in, out] pProcess The process from which the stack should be
  * allocated.
- * @param[in] kIsKernel Tells if the stack is a kernel or user stack.
  *
  * @return The base end of the stack in kernel memory is returned.
  */
 uintptr_t memoryMapStack(const size_t      kSize,
-                         kernel_process_t* pProcess,
-                         const bool        kIsKernel);
+                         const bool        kIsKernel,
+                         kernel_process_t* pProcess);
 
 /**
  * @brief Unmaps a stack in the process memory region and frees the associated
@@ -290,6 +287,105 @@ void memoryDestroyProcessMemoryData(void* pMemoryData);
  * @return The function returns the success or error status.
  */
 OS_RETURN_E memoryCloneProcessMemory(kernel_process_t* pDstProcess);
+
+/**
+ * @brief Returns the user space start address.
+ *
+ * @details Returns the user space start address.
+ *
+ * @return The function returns the user space start address.
+ */
+uintptr_t memoryGetUserStartAddr(void);
+
+/**
+ * @brief Returns the user space end address.
+ *
+ * @details Returns the user space end address.
+ *
+ * @return The function returns the user space end address.
+ */
+uintptr_t memoryGetUserEndAddr(void);
+
+/**
+ * @brief Kernel memory frame allocation.
+ *
+ * @details Kernel memory frame allocation. This method gets the desired number
+ * of contiguous frames from the kernel frame pool and allocate them.
+ *
+ * @param[in] kFrameCount The number of desired frames to allocate.
+ *
+ * @return The address of the first frame of the contiguous block is
+ * returned.
+ */
+uintptr_t memoryAllocFrames(const size_t kFrameCount);
+
+/**
+ * @brief Memory frames release.
+ *
+ * @details Memory frames release. This method releases the memory frames
+ * to the free frames pool. Releasing already free or out of bound frame will
+ * generate a kernel panic.
+ *
+ * @param[in] kBaseAddress The base address of the contiguous frame pool to
+ * release.
+ * @param[in] kFrameCount The number of desired frames to release.
+ */
+void memoryReleaseFrame(const uintptr_t kBaseAddress,
+                        const size_t    kFrameCount);
+
+/**
+ * @brief Maps a physical region (memory or hardware) in the user address
+ * space to the requested virtual address.
+ *
+ * @details Maps a user virtual memory region to a memory region. The function
+ * does not check if the physical region is already mapped and will create a
+ * new mapping. The physical address and the size must be aligned on page
+ * boundaries. If not, the mapping fails and NULL is returned.
+ *
+ * @param[in] kPhysicalAddress The physical address to map. Must be aligned on
+ * page boundaries.
+ * @param[in] kVirtualAddress The virtual address to map. Must be aligned on
+ * page boundaries.
+ * @param[in] kSize The size of the region to map in bytes. Must be aligned on
+ * page boundaries.
+ * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
+ * infomation.
+ * @param[in, out] pProcess The process for which the mapping should be
+ * effective.
+ *
+ * @return The function returns the success or error status.
+ *
+ * @warning The mapping does not remove the physical address from the free
+ * free memory. Thus, if the user wants to ensure this memory region not to be
+ * used later (or already used) memoryAllocFrames must be used to get a free
+ * physical memory region. This does not apply to hardware mapping.
+ */
+OS_RETURN_E memoryUserMapDirect(const void*       kPhysicalAddress,
+                                const void*       kVirtualAddress,
+                                const size_t      kSize,
+                                const uint32_t    kFlags,
+                                kernel_process_t* pProcess);
+
+/**
+ * @brief Unmaps a virtual region (memory or hardware) from the kernel address
+ * space.
+ *
+ * @details Unmaps a virtual region (memory or hardware) from the kernel address
+ * space. The virtual address and the size must be aligned on page
+ * boundaries. If not, the unmapping fails and an error is returned.
+ *
+ * @param[in] kVirtualAddress The virtual address to unmap. Must be aligned on
+ * page boundaries.
+ * @param[in] kSize The size of the region to unmap map in bytes. Must be
+ * aligned on page boundaries.
+ * @param[in, out] pProcess The process for which the mapping should be
+ * removed.
+ *
+ * @return The function returns success or error status.
+ */
+OS_RETURN_E memoryUserUnmap(const void*       kVirtualAddress,
+                            const size_t      kSize,
+                            kernel_process_t* pProcess);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

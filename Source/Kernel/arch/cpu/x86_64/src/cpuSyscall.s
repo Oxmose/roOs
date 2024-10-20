@@ -31,7 +31,7 @@
 ; EXTERN FUNCTIONS
 ;-------------------------------------------------------------------------------
 extern cpuSwitchKernelSyscallContext
-extern cpuRestoreSyscallContext
+extern cpuRestoreKernelSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED FUNCTIONS
@@ -49,8 +49,7 @@ section .text
 ; Param:
 ;     Input: rdi: The system call handler function address.
 ;            rsi: A pointer to the system call parameters.
-;            rdx: The kernel stack to use for the call.
-;            rcx: The current thread
+;            rdx: The current thread
 cpuKernelSyscallRaise:
     push rbx
     push rdx
@@ -62,11 +61,11 @@ cpuKernelSyscallRaise:
 
     mov r12, rdi
     mov r13, rsi
-    mov r14, rcx
+    mov r14, rdx
 
     ; Save the cpu context in the case the syscall is blocking
     mov rdi, __cpuKernelSyscallReturn
-    mov rsi, rcx
+    mov rsi, rdx
     call cpuSwitchKernelSyscallContext
 
     ; Restore parameter context
@@ -78,7 +77,7 @@ __cpuKernelSyscallNoSave:
 
     ; If we returned, restore the context
     mov rdi, r14
-    call cpuRestoreSyscallContext
+    call cpuRestoreKernelSyscallContext
 
 __cpuKernelSyscallReturn:
     ; Restore the saved stack context

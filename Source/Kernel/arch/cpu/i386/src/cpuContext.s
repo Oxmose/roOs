@@ -47,7 +47,8 @@
 %define VCPU_OFF_DS  0x44
 %define VCPU_OFF_FXD 0x48
 
-%define VCPU_OFF_SAVED 0x258
+%define VCPU_OFF_FROM_INT 0x258
+%define VCPU_OFF_SYSCALL_ESP 0x25C
 
 ;-------------------------------------------------------------------------------
 ; MACRO DEFINE
@@ -72,6 +73,8 @@ global cpuSaveContext
 global cpuRestoreContext
 global cpuGetId
 global cpuSignalHandler
+global cpuSwitchKernelSyscallContext
+global cpuRestoreKernelSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -139,7 +142,7 @@ cpuSaveContext:
 
     ; Set the last context as saved
     mov ebx, 1
-    mov [eax + VCPU_OFF_SAVED], ebx
+    mov [eax + VCPU_OFF_FROM_INT], ebx
 
     ret
 
@@ -150,7 +153,7 @@ cpuRestoreContext:
 
     ; Set the last context as not been saved
     mov ebx, 0
-    mov [eax + VCPU_OFF_SAVED], ebx
+    mov [eax + VCPU_OFF_FROM_INT], ebx
 
     ; Restore the FxData
     mov ebx, eax
@@ -231,6 +234,55 @@ cpuSignalHandlerLoop:
     hlt
     jmp cpuSignalHandlerLoop
 
+;-------------------------------------------------------------------------------
+; Switch the context from a kernel system call
+;
+; Param:
+;     Input: esp + 8: The address to return to when restoring the context
+;            esp + 4: The current thread
+
+cpuSwitchKernelSyscallContext:
+    ; Save the return address in ecx
+    pop ecx
+
+    ; Get the current thread handle and VCPU
+    pop eax
+
+    ; Save the specific context that will be used when scheduling back
+    pushfd
+
+
+    ; Save the stack pointer to the process context
+    mov [eax + VCPU_OFF_SYSCALL_ESP], esp
+
+    ; Return to caller
+    jmp ecx
+
+;-------------------------------------------------------------------------------
+; Restore the context from a kernel system call
+;
+; Param:
+;     Input: esp + 4: A pointer to the thread to restore
+cpuRestoreKernelSyscallContext:
+    ; The current thread is sent as parameter, load the VCPU
+    mov eax, [esp + 4]
+
+    ; Restore rsp
+    mov esp, [eax + VCPU_OFF_SYSCALL_RSP]
+
+    ; Restore the specific context that will be used when scheduling back
+    popfq
+
+    ; Clear the stack pointer of the process context
+    mov ecx, 0
+    mov [eax + VCPU_OFF_SYSCALL_RSP], ecx
+
+    ; Get the return pointer
+    pop ecx
+
+    ; Return to context caller
+    jmp ecx
+    
 ;-------------------------------------------------------------------------------
 ; DATA
 ;-------------------------------------------------------------------------------

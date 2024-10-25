@@ -35,7 +35,11 @@ CFLAGS = -std=c11 -nostdinc -fno-builtin -nostdlib  \
 		 -fno-omit-frame-pointer -Wmissing-prototypes \
 		 -Wunused-result $(ARCH_FLAGS)
 
-
+ifeq ($(STK_PROT), TRUE)
+CFLAGS += -D_STACK_PROT -fstack-protector-all -mstack-protector-guard=global
+else
+CFLAGS += -fno-stack-protector
+endif
 
 ifeq ($(DEBUG), TRUE)
 CFLAGS += $(DEBUG_FLAGS)

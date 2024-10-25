@@ -942,6 +942,9 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     cpuDestroyVirtualCPU((uintptr_t)pThread->pThreadVCpu);
     cpuDestroyVirtualCPU((uintptr_t)pThread->pSignalVCpu);
 
+    /* Destroy the thread local storage and user thread structure */
+    cpuDestroyLocalStorage(pThread);
+
     /* Clear the active thread node, it should not be in any queue */
     kQueueDestroyNode((kqueue_node_t**)&pThread->pThreadNode);
 
@@ -1596,6 +1599,7 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
 
     /* Reset unique attributes */
     pNewThread->kernelStackEnd   = (uintptr_t)NULL;
+    pNewThread->pUserThreadData  = NULL;
     pNewThread->pThreadVCpu      = NULL;
     pNewThread->pSignalVCpu      = NULL;
     pNewThread->pThreadNode      = NULL;
@@ -1659,6 +1663,13 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
         goto COPY_CLEANUP;
     }
 
+    /* Create the thread local storage */
+    error = cpuCreateLocalStorage(pNewThread);
+    if(error != OS_NO_ERR)
+    {
+        goto COPY_CLEANUP;
+    }
+
     error = OS_NO_ERR;
     /* Assign the new thread */
     *ppDstThread = pNewThread;
@@ -1694,6 +1705,10 @@ COPY_CLEANUP:
             if(pNewThread->pSignalVCpu != NULL)
             {
                 cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
+            }
+            if(pNewThread->pUserThreadData != NULL)
+            {
+                cpuDestroyLocalStorage(pNewThread);
             }
 
             kfree(pNewThread);
@@ -2108,6 +2123,12 @@ OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
     /* Set the current vCPU as the regular thread vCPU */
     pNewThread->pVCpu = pNewThread->pThreadVCpu;
 
+    error = cpuCreateLocalStorage(pNewThread);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+
     /* Set thread to READY */
     pNewThread->currentState = THREAD_STATE_READY;
     pNewThread->nextState    = THREAD_STATE_READY;
@@ -2145,7 +2166,6 @@ OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
     {
         goto SCHED_CREATE_KTHREAD_END;
     }
-
 
     /* Add to the global list */
     KERNEL_LOCK(sTotalThreadsList.lock);
@@ -2194,6 +2214,10 @@ SCHED_CREATE_KTHREAD_END:
             if(pNewThread->pSignalVCpu != NULL)
             {
                 cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
+            }
+            if(pNewThread->pUserThreadData != NULL)
+            {
+                cpuDestroyLocalStorage(pNewThread);
             }
             if(pNewThread->pThreadResources != NULL)
             {

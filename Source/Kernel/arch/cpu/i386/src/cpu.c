@@ -106,6 +106,8 @@
 
 /** @brief Thread's initial EFLAGS register value. */
 #define KERNEL_THREAD_INIT_EFLAGS 0x202 /* INT | PARITY */
+/** @brief Thread's initial EFLAGS register value. */
+#define USER_THREAD_INIT_EFLAGS 0x202 /* INT | PARITY */
 
 
 /** @brief Defines the core dump message length */
@@ -3244,7 +3246,7 @@ static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
 
-    if(pHandle != (void*)-1 && pHandle != NULL )
+    if(pHandle != (void*)-1 && pHandle != NULL)
     {
         kfree(pHandle);
         return 0;
@@ -3428,10 +3430,10 @@ static void _cpuValidateArchitecture(void)
                OS_ERR_NOT_SUPPORTED);
 
     snprintf(sCpuAddressing,
-                 CPU_ADDRESSING_SIZE,
-                 "Physical %dbits | Virtual %dbits",
-                 32,
-                 32);
+             CPU_ADDRESSING_SIZE,
+             "Physical %dbits | Virtual %dbits",
+             32,
+             32);
 
     memset(sCpuFlags, 0, CPU_FLAGS_SIZE + 1);
     cpuFlagsIndex = 0;
@@ -4593,16 +4595,40 @@ void cpuInvalidateTlbEntry(const uintptr_t kVirtAddress)
     __asm__ __volatile__("invlpg (%0)": :"r"(kVirtAddress) : "memory");
 }
 
-uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
-                              const uintptr_t kStack)
+uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry)
 {
     virtual_cpu_t*   pVCpu;
     fxdata_layout_t* pFxData;
+    uintptr_t        stack;
+    uint32_t         csVal;
+    uint32_t         dsVal;
+    uint32_t         eflagsVal;
+
+    if(pThread->type == THREAD_TYPE_KERNEL)
+    {
+        csVal = KERNEL_CS_32;
+        dsVal = KERNEL_DS_32;
+        eflagsVal = KERNEL_THREAD_INIT_EFLAGS;
+        stack = pThread->kernelStackEnd;
+    }
+    else
+    {
+        csVal = USER_CS_32 | 0x3;
+        dsVal = USER_DS_32 | 0x3;
+        eflagsVal = USER_THREAD_INIT_EFLAGS;
+        stack = pThread->stackEnd;
+    }
+
+    /* Ensure the stack alignement */
+    if((stack & 0xF) != 0)
+    {
+        return 0;
+    }
+
     /* Allocate the new VCPU */
     pVCpu = kmalloc(sizeof(virtual_cpu_t));
     if(pVCpu == NULL)
     {
-
         return 0;
     }
     memset(pVCpu, 0, sizeof(virtual_cpu_t));
@@ -4610,22 +4636,23 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
     /* Setup the interrupt context */
     pVCpu->intContext.intId     = 0;
     pVCpu->intContext.errorCode = 0;
-    pVCpu->intContext.eip       = (uintptr_t)kEntryPoint;
-    pVCpu->intContext.cs        = KERNEL_CS_32;
-    pVCpu->intContext.eflags    = KERNEL_THREAD_INIT_EFLAGS;
+    pVCpu->intContext.cs        = csVal;
+    pVCpu->intContext.eflags    = eflagsVal;
+
+    /* If the entry point needs to be set, set it */
+    if(kSetEntry == true)
+    {
+        pVCpu->intContext.eip = (uintptr_t)pThread->pEntryPoint;
+        *((uintptr_t*)(kStack - 0x4)) = (uintptr_t)pThread->pArgs;
+    }
+    else
+    {
+        pVCpu->intContext.eip = 0;
+    }
 
     /* Setup stack pointers */
-    pVCpu->cpuState.esp = kStack - 0x8;
+    pVCpu->cpuState.esp = kStack - 0x4;
     pVCpu->cpuState.ebp = 0;
-
-    /* On entry, we expect to have EBP aligned before pushing the return
-     * address, thus when simulating the push, we should ensure that the
-     * stack is aligned on 16bytes + 8
-     */
-    if((pVCpu->cpuState.ebp & 0xF) != 0x8)
-    {
-        pVCpu->cpuState.ebp = ((pVCpu->cpuState.ebp - 0x8) & 0xFFFFFFF0) | 0x8;
-    }
 
     /* Setup the CPU state */
     pVCpu->cpuState.edi = 0;
@@ -4634,18 +4661,19 @@ uintptr_t cpuCreateVirtualCPU(void            (*kEntryPoint)(void),
     pVCpu->cpuState.ecx = 0;
     pVCpu->cpuState.ebx = 0;
     pVCpu->cpuState.eax = 0;
-    pVCpu->cpuState.ss  = KERNEL_DS_32;
-    pVCpu->cpuState.gs  = KERNEL_DS_32;
-    pVCpu->cpuState.fs  = KERNEL_DS_32;
-    pVCpu->cpuState.es  = KERNEL_DS_32;
-    pVCpu->cpuState.ds  = KERNEL_DS_32;
+    pVCpu->cpuState.ss  = dsVal;
+    pVCpu->cpuState.gs  = dsVal;
+    pVCpu->cpuState.fs  = dsVal;
+    pVCpu->cpuState.es  = dsVal;
+    pVCpu->cpuState.ds  = dsVal;
 
     /* Setup the FPU */
     pFxData = (fxdata_layout_t*)(((uintptr_t)pVCpu->fxData + 0xF) &
                                  0xFFFFFFF0);
     pFxData->mxcsr = MXCSR_PRECISION_EXC_MASK;
 
-    pVCpu->isContextSaved = true;
+    pVCpu->isContextFromInt   = true;
+    pVCpu->rspSaveFromSyscall = (uintptr_t)NULL;
 
     return (uintptr_t)pVCpu;
 }
@@ -4657,6 +4685,57 @@ void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress)
                OS_ERR_NULL_POINTER);
 
     kfree((void*)kVCpuAddress);
+}
+
+OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
+                               kernel_thread_t*       pDstThread)
+{
+    virtual_cpu_t* pSignalVCpu;
+    virtual_cpu_t* pThreadVCpu;
+    virtual_cpu_t* pCurVCpu;
+    uintptr_t      pStackOffset;
+
+    /* Allocate the new VCPUs */
+    pSignalVCpu = kmalloc(sizeof(virtual_cpu_t));
+    if(pSignalVCpu == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    pThreadVCpu = kmalloc(sizeof(virtual_cpu_t));
+    if(pThreadVCpu == NULL)
+    {
+        kfree(pSignalVCpu);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Copy the VCPUs */
+    memcpy(pSignalVCpu, kpSrcThread->pSignalVCpu, sizeof(virtual_cpu_t));
+    memcpy(pThreadVCpu, kpSrcThread->pThreadVCpu, sizeof(virtual_cpu_t));
+
+    /* Get the current VCPU */
+    pDstThread->pSignalVCpu = pSignalVCpu;
+    pDstThread->pThreadVCpu = pThreadVCpu;
+
+    if(kpSrcThread->pSignalVCpu == kpSrcThread->pVCpu)
+    {
+        pDstThread->pVCpu = pDstThread->pSignalVCpu;
+    }
+    else
+    {
+        pDstThread->pVCpu = pDstThread->pThreadVCpu;
+    }
+
+    /* Update the system call RSP if needed */
+    pCurVCpu = pDstThread->pVCpu;
+    if(pCurVCpu->espSaveFromSyscall != (uintptr_t)NULL)
+    {
+        pStackOffset = kpSrcThread->kernelStackEnd -
+                       pCurVCpu->espSaveFromSyscall;
+        pCurVCpu->espSaveFromSyscall = pDstThread->kernelStackEnd -
+                                       pStackOffset;
+    }
+
+    return OS_NO_ERR;
 }
 
 void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
@@ -4672,7 +4751,7 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     /* Redirect execution to the CPU redirection handler
      * Copy the thread's regular state.
      */
-    pVCpu->intContext.eip    = (uint32_t)cpuSignalHandler;
+    pVCpu->intContext.eip    = (uintptr_t)cpuSignalHandler;
     pVCpu->intContext.cs     = pThreadVCpu->intContext.cs;
     pVCpu->intContext.eflags = pThreadVCpu->intContext.eflags;
 
@@ -4680,8 +4759,8 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     memcpy(&pVCpu->cpuState, &pThreadVCpu->cpuState, sizeof(cpu_state_t));
 
     /* Put the function to call on the stack */
-    pVCpu->cpuState.esp -= sizeof(uint32_t);
-    *(uint32_t*)(pVCpu->cpuState.esp) = (uint32_t)instructionAddr;
+    pVCpu->cpuState.esp -= sizeof(uintptr_t);
+    *(uintptr_t*)(pVCpu->cpuState.esp) = (uintptr_t)instructionAddr;
 }
 
 OS_RETURN_E cpuRegisterExceptions(void)
@@ -4829,9 +4908,14 @@ void cpuManageThreadException(kernel_thread_t* pThread)
                     NULL);
 }
 
-bool cpuIsVCPUSaved(const void* kpVCpu)
+bool cpuIsContextFromInt(const void* kpVCpu)
 {
-    return ((virtual_cpu_t*)kpVCpu)->isContextSaved != 0;
+    return ((virtual_cpu_t*)kpVCpu)->isContextFromInt != 0;
+}
+
+bool cpuIsContextFromSyscall(const void* kpVCpu)
+{
+    return ((virtual_cpu_t*)kpVCpu)->rexpSaveFromSyscall != (uintptr_t)NULL;
 }
 
 void cpuCoreDump(const void* kpVCpu)
@@ -4950,14 +5034,14 @@ void cpuCoreDump(const void* kpVCpu)
 
 void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
 {
-    uintptr_t pageDirAddr;
-    uintptr_t cr3Value;
-    uint8_t   cpuId;
+    uintptr_t       cr3Value;
+    uint8_t         cpuId;
+    memproc_info_t* pMemProcInfo;
 
     cpuId = cpuGetId();
 
     /* The process contains the pointer to the page directory */
-    pageDirAddr = (uintptr_t)pCurrentThread->pProcess->pMemoryData;
+    pMemProcInfo = pCurrentThread->pProcess->pMemoryData;
 
     /* Check if we need to change */
     __asm__ __volatile__ (
@@ -4967,9 +5051,9 @@ void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
     : /* no input */
     : "%eax"
     );
-    if(cr3Value != pageDirAddr)
+    if(cr3Value != pMemProcInfo->pageDir)
     {
-        cpuSetPageDirectory(pageDirAddr);
+        cpuSetPageDirectory(pMemProcInfo->pageDir);
     }
 
     if(pCurrentThread->type == THREAD_TYPE_USER)
@@ -4985,6 +5069,7 @@ void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
         sTSS[cpuId].gs = USER_DS_32;
     }
 }
+
 /* Stack protection support */
 #ifdef _STACK_PROT
 #define STACK_CHK_GUARD 0xe2dee396ULL

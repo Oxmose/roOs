@@ -27,7 +27,6 @@ ar r librawdtb.a dtb_obj.o
 mv librawdtb.a ../../../Kernel/ARTIFACTS/
 rm dtb_obj.o dtb_obj.s x86_64_fdt.dtb
 
-
 cp Artifacts/kernel/* ../../../Kernel/ARTIFACTS/
 cp Artifacts/user/* ../../../User/ARTIFACTS/
 echo -e "\e[1m\e[92m\nUpdated ARTIFACTS\e[22m\e[39m"

@@ -100,7 +100,7 @@ SECTIONS
     } > KERNEL_RO_DATA
     .roos_driver_tbl ALIGN(16B) : AT(ADDR(.roos_driver_tbl) - KERNEL_MEM_OFFSET)
     {
-        . = ALIGN(16);
+        . = ALIGN(8);
         _START_DRV_TABLE_ADDR = .;
         *(.roos_driver_tbl)
         QUAD(0x0);
@@ -114,9 +114,9 @@ SECTIONS
         QUAD(0x0);
         _END_FS_TABLE_ADDR = .;
     } > KERNEL_RO_DATA
-    .eh_frame ALIGN(16B) : AT(ADDR(.eh_frame) - KERNEL_MEM_OFFSET)
+    .eh_frame ALIGN(8B) : AT(ADDR(.eh_frame) - KERNEL_MEM_OFFSET)
     {
-        . = ALIGN(16);
+        . = ALIGN(8);
         *(.eh_frame)
 
         _END_RO_DATA_ADDR = .;

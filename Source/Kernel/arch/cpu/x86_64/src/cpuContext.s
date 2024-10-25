@@ -54,7 +54,7 @@
 %define VCPU_OFF_DS  0xC8
 %define VCPU_OFF_FXD 0xD0
 
-%define VCPU_OFF_FROM_INT    0x2E0
+%define VCPU_OFF_FROM_INT 0x2E0
 %define VCPU_OFF_SYSCALL_RSP 0x2E8
 
 ;-------------------------------------------------------------------------------

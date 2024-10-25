@@ -32,7 +32,7 @@ CFLAGS = -std=c11 -nostdinc -fno-builtin -nostdlib  \
          -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -fno-pie \
 		 -no-pie -MD -ffreestanding -Wno-address-of-packed-member \
 		 -fno-omit-frame-pointer -Wmissing-prototypes -mcmodel=kernel \
-		 -Wunused-result -mno-red-zone
+		 -Wunused-result -mno-red-zone 
 
 TESTS_FLAGS = -D_TESTING_FRAMEWORK_ENABLED
 

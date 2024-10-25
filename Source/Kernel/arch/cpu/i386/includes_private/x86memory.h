@@ -43,12 +43,42 @@
 /** @brief Kernel physical memory offset */
 #define KERNEL_MEM_START 0x00100000
 
+/** @brief User total memory start. */
+#define USER_MEMORY_START 0x00100000ULL
+
+/** @brief User total memory end. */
+#define USER_MEMORY_END 0xE00000000ULL
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines a memory list */
+typedef struct
+{
+    /** @brief The memory list structure  */
+    kqueue_t* pQueue;
 
+    /** @brief The memory list lock */
+    kernel_spinlock_t lock;
+} mem_list_t;
+
+
+/**
+ * @brief Defines the structure that contains the memory information for a
+ * process.
+ */
+typedef struct
+{
+    /** @brief The physical address of the process page directory. */
+    uintptr_t pageDir;
+
+    /** @brief The free page table of the process. */
+    mem_list_t freePageTable;
+
+    /** @brief The memory management lock for the process */
+    kernel_spinlock_t lock;
+} memproc_info_t;
 /*******************************************************************************
  * MACROS
  ******************************************************************************/

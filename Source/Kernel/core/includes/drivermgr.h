@@ -78,7 +78,7 @@ typedef struct
  */
 #define DRIVERMGR_REG_FDT(DRIVER)                                              \
     driver_t* DRVENT_##DRIVER __attribute__ ((section (".roos_driver_tbl"))) = \
-        &DRIVER;
+        &DRIVER
 
 /*******************************************************************************
  * GLOBAL VARIABLES

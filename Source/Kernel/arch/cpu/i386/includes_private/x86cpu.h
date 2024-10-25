@@ -101,8 +101,11 @@ typedef struct
     /** @brief FXSAVE / FXRSTOR data region */
     uint8_t fxData[FXDATA_REGION_SIZE];
 
-    /** @brief Last context save status */
-    uint32_t isContextSaved;
+    /** @brief Tells if the context was saved from an interrupt */
+    uint32_t isContextFromInt;
+
+    /** @brief Stores the RSP value when saving the context in a system call */
+    uint32_t rspSaveFromSyscall;
 } __attribute__((packed)) virtual_cpu_t;
 
 /** @brief Defines the memory layout of the FXData region */

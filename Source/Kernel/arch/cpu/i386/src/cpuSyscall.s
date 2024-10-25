@@ -47,46 +47,41 @@ section .text
 ; Raise a kernel space system call.
 ;
 ; Param:
-;     Input: rdi: The system call handler function address.
-;            rsi: A pointer to the system call parameters.
-;            rdx: The current thread
+;     Input: esp + 12: The system call handler function address.
+;            esp + 8: A pointer to the system call parameters.
+;            esp + 4: The current thread
 cpuKernelSyscallRaise:
-    push rbx
-    push rdx
-    push rbp
-    push r12
-    push r13
-    push r14
-    push r15
-
-    mov r12, rdi
-    mov r13, rsi
-    mov r14, rdx
+    push ebx
+    push esi
+    push edi
+    push ebp
 
     ; Save the cpu context in the case the syscall is blocking
-    mov rdi, __cpuKernelSyscallReturn
-    mov rsi, rdx
+    mov eax, __cpuKernelSyscallReturn
+    push eax
+    mov eax, [esp + 20]
+    push eax
     call cpuSwitchKernelSyscallContext
-
-    ; Restore parameter context
-    mov rdi, r13
+    add eax, 8
 
     ; Call the main system call handler with the right parameters
-    call r12
+    mov eax, [esp + 24]
+    push eax
+    mov eax, [esp + 32]
+    call eax
 
     ; If we returned, restore the context
-    mov rdi, r14
+    add esp, 4
+    mov eax, [esp + 20]
+    push eax
     call cpuRestoreKernelSyscallContext
 
 __cpuKernelSyscallReturn:
     ; Restore the saved stack context
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbp
-    pop rdx
-    pop rbx
+    pop ebp
+    pop edi
+    pop esi
+    pop ebx
 
     ; Return
     ret

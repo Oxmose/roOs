@@ -576,20 +576,35 @@ typedef struct
  */
 typedef struct cpu_tss_entry
 {
+    /** @brief Reserved entry */
     uint32_t reserved0;
+    /** @brief RSP for RING0 value. */
     uint64_t rsp0;
+    /** @brief RSP for RING1 value. */
     uint64_t rsp1;
+    /** @brief RSP for RING2 value */
     uint64_t rsp2;
+    /** @brief Reserved entry */
     uint64_t reserved1;
+    /** @brief Interrupt ST 1 */
     uint64_t ist1;
+    /** @brief Interrupt ST 2 */
     uint64_t ist2;
+    /** @brief Interrupt ST 3 */
     uint64_t ist3;
+    /** @brief Interrupt ST 4 */
     uint64_t ist4;
+    /** @brief Interrupt ST 5 */
     uint64_t ist5;
+    /** @brief Interrupt ST 6 */
     uint64_t ist6;
+    /** @brief Interrupt ST 7 */
     uint64_t ist7;
+    /** @brief Reserved entry */
     uint64_t reserved2;
+    /** @brief IO proiledges map */
     uint16_t ioMapBase;
+    /** @brief Reserved entry */
     uint16_t reserved3;
 } __attribute__((__packed__)) cpu_tss_entry_t;
 
@@ -3269,7 +3284,7 @@ static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle)
 {
     (void)pDrvCtrl;
 
-    if(pHandle != NULL && pHandle != (void*)-1)
+    if(pHandle != (void*)-1 && pHandle != NULL)
     {
         kfree(pHandle);
         return 0;
@@ -4716,7 +4731,7 @@ uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry)
     }
 
     /* Setup stack pointers */
-    pVCpu->cpuState.rsp = stack;
+    pVCpu->cpuState.rsp = stack - 0x8;
     pVCpu->cpuState.rbp = 0;
 
     /* Setup the CPU state */
@@ -4823,7 +4838,7 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     /* Redirect execution to the CPU redirection handler
      * Copy the thread's regular state.
      */
-    pVCpu->intContext.rip    = (uint64_t)cpuSignalHandler;
+    pVCpu->intContext.rip    = (uintptr_t)cpuSignalHandler;
     pVCpu->intContext.cs     = pThreadVCpu->intContext.cs;
     pVCpu->intContext.rflags = pThreadVCpu->intContext.rflags;
 
@@ -4834,8 +4849,8 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     memcpy(&pVCpu->cpuState, &pThreadVCpu->cpuState, sizeof(cpu_state_t));
 
     /* Put the function to call on the stack */
-    pVCpu->cpuState.rsp -= sizeof(uint64_t);
-    *(uint64_t*)(pVCpu->cpuState.rsp) = (uint64_t)instructionAddr;
+    pVCpu->cpuState.rsp -= sizeof(uintptr_t);
+    *(uintptr_t*)(pVCpu->cpuState.rsp) = (uintptr_t)instructionAddr;
 }
 
 OS_RETURN_E cpuRegisterExceptions(void)

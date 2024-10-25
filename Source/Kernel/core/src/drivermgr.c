@@ -224,6 +224,7 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
 {
     OS_RETURN_E retCode;
 
+
     /* Check parameters */
     if(pkFdtNode != NULL)
     {

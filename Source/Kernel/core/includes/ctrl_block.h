@@ -223,9 +223,37 @@ typedef struct kernel_process_t
     /** @brief Stores the file descriptors for the process */
     void* pFdTable;
 
+    /** @brief Stores the main TLS size */
+    size_t mainTlsSize;
+
+    /** @brief Stores the main TLS data */
+    void* pMainTlsData;
+
     /** @brief The process' structure lock */
     kernel_spinlock_t lock;
 } kernel_process_t;
+
+/** @brief Stores the thread user data, used for fast access to thread 
+ * properties in the user space.
+ */
+typedef struct user_thread_t
+{
+    /** @brief The thread's self pointer. */
+    struct user_thread_t* pSelfPointer;
+
+    /** @brief Thread's process identifier. */
+    int32_t pid;
+
+    /** @brief Thread's identifier. */
+    int32_t tid;
+
+    /** @brief The thread's priority */
+    uint8_t priority;
+
+    /** @brief The thread's current CPU */
+    uint8_t currentCpu;
+
+} user_thread_t;
 
 /** @brief This is the representation of the thread for the kernel. */
 typedef struct kernel_thread_t
@@ -253,6 +281,9 @@ typedef struct kernel_thread_t
 
     /** @brief Thread's type. */
     THREAD_TYPE_E type;
+
+    /** @brief The thread local storage region pointer. */
+    user_thread_t* pUserThreadData;
 
     /**************************************
      * System interface

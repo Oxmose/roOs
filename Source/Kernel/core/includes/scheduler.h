@@ -122,14 +122,12 @@ void schedInit(void);
  * @details Calls the scheduler. This function will select the next thread to
  * schedule and execute it.
  *
- * @param[in] kForceSwitch For the current task to be switched.
- *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
  * the thread's context was saved. Use schedSchedule to save the context.
  */
 
-void schedScheduleNoInt(const bool kForceSwitch);
+void schedScheduleNoInt(void);
 
 /**
  * @brief Calls the scheduler dispatch function using a system call.

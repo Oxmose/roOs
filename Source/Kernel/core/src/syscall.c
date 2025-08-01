@@ -22,9 +22,12 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <vfs.h>        /* VFS services */
+#include <errno.h>      /* Errno values */
 #include <kerror.h>     /* Kernel errors */
 #include <stddef.h>     /* Standard definitions */
 #include <stdbool.h>    /* Standard bool type definition */
+#include <time_mgt.h>   /* Time manager */
 #include <scheduler.h>  /* Kernel scheduler */
 #include <cpuSyscall.h> /* CPU system call manager */
 
@@ -99,6 +102,14 @@ static syscall_handler_t sSyscalTable[] = {
     {
         .pHandler = schedSyscallHandleFork
     },
+    /* SYSCALL_WRITE */
+    {
+        .pHandler = vfsSyscallHandleWrite
+    },
+    /* SYSCALL_CLOCK_GETTIME */
+    {
+        .pHandler = timeSyscallHandleClockGetTime
+    }
 };
 
 /*******************************************************************************
@@ -125,11 +136,28 @@ OS_RETURN_E syscallPerform(const SYSCALL_ID_E kSysCallId, void* pParams)
     }
     else
     {
-        /* Currently we do not support user space */
         return OS_ERR_NOT_SUPPORTED;
     }
 
     return OS_NO_ERR;
+}
+
+void syscallHandle(const SYSCALL_ID_E kSysCallId, void* pParams)
+{
+    if(pParams == NULL)
+    {
+        return;
+    }
+
+    /* Check the system call ID */
+    if(kSysCallId >= ARRAY_SIZE(sSyscalTable))
+    {
+        *((syscall_min_params_t*)pParams) = ENOSYS;
+    }
+    else
+    {
+        sSyscalTable[kSysCallId].pHandler(pParams);
+    }
 }
 
 /************************************ EOF *************************************/

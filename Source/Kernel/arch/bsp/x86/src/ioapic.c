@@ -505,7 +505,7 @@ static void _ioapicSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled)
         pCtrl = pCtrl->pNext;
     }
 
-    IOAPIC_ASSERT(pCtrl != NULL, "No such IRQ", OS_ERR_NO_SUCH_IRQ);
+    IOAPIC_ASSERT(pCtrl != NULL, "No such IRQ", OS_ERR_NO_SUCH_ID);
 
     _ioapicSetIrqMaskFor(pCtrl, remapIrq, kEnabled);
 }
@@ -519,7 +519,7 @@ static inline void _ioapicSetIrqMaskFor(io_apic_controler_t* pCtrl,
 
     IOAPIC_ASSERT(kIrqNumber >= pCtrl->gsib && kIrqNumber < pCtrl->gsil,
                   "No such IRQ for current IOAPIC",
-                  OS_ERR_NO_SUCH_IRQ);
+                  OS_ERR_NO_SUCH_ID);
 
     /* Update the IRQ for the table */
     remapIrq = kIrqNumber - pCtrl->gsib;

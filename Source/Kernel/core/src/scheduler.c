@@ -158,31 +158,31 @@ typedef struct
 /** @brief Sleep system call parameters */
 typedef struct
 {
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
+
     /** @brief Time to sleep in nanoseconds for the calling thread. */
     uint64_t timeToSleepNs;
-
-    /** @brief The system call return code. */
-    OS_RETURN_E retCode;
 } syscall_sleep_param_t;
 
 /** @brief Schedule system call parameters */
 typedef struct
 {
-    /** @brief The system call return code. */
-    OS_RETURN_E retCode;
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
 } syscall_schedule_param_t;
 
 /** @brief Fork system call parameters */
 typedef struct
 {
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
+
     /**
      * @brief When the return code is OS_NO_ERROR, this contains the new
      * forked process PID.
      */
     int32_t newPid;
-
-    /** @brief The system call return code. */
-    OS_RETURN_E retCode;
 } syscall_fork_param_t;
 
 /*******************************************************************************
@@ -316,12 +316,14 @@ static void _schedCleanThread(kernel_thread_t* pThread);
  *
  * @param[in] pThread Unused.
  *
+ * @return Returns if the scheduler shall be called on return.
+ *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
  * the thread's context was saved.
  */
 
-static void _schedScheduleHandler(kernel_thread_t* pThread);
+static bool _schedScheduleHandler(kernel_thread_t* pThread);
 
 /**
  * @brief Creates the threads sysfs directory for the scheduler.
@@ -651,7 +653,7 @@ static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
     /* Schedule thread, no need for interrupt, the context does not need to be
      * saved.
      */
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
@@ -663,7 +665,8 @@ static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
 
 static void _createIdleThreads(void)
 {
-    uint32_t i;
+    uint32_t    i;
+    OS_RETURN_E error;
 
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
@@ -690,7 +693,6 @@ static void _createIdleThreads(void)
         spIdleThread[i]->pArgs              = (void*)(uintptr_t)i;
         spIdleThread[i]->pEntryPoint        = _kernelThreadEntryPoint;
         spIdleThread[i]->pRoutine           = _idleRoutine;
-        spIdleThread[i]->requestSchedule    = true;
         spIdleThread[i]->preemptionDisabled = false;
         spIdleThread[i]->pProcess           = spCurrentProcessPtr[i];
 
@@ -731,6 +733,12 @@ static void _createIdleThreads(void)
         /* Set idle to READY */
         spIdleThread[i]->currentState = THREAD_STATE_RUNNING;
         spIdleThread[i]->nextState = THREAD_STATE_READY;
+
+        /* Init TLS */
+        error = cpuCreateLocalStorage(spIdleThread[i]);
+        SCHED_ASSERT(error == OS_NO_ERR,
+                     "Failed to create Idle thread TLS",
+                     OS_ERR_NO_MORE_MEMORY);
 
         /* Init signal */
         signalInitSignals(spIdleThread[i]);
@@ -1305,12 +1313,14 @@ static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
     return -1;
 }
 
-static void _schedScheduleHandler(kernel_thread_t* pThread)
+static bool _schedScheduleHandler(kernel_thread_t* pThread)
 {
     (void)pThread;
 
     /* Just call the scheduler */
-    schedScheduleNoInt(false);
+    schedScheduleNoInt();
+
+    return true;
 }
 
 static void _schedReleaseThread(kernel_thread_t* pThread,
@@ -1533,7 +1543,6 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
         return error;
     }
 
-
     pProcess->pChildren = kQueueCreate(false);
     if(pProcess->pChildren == NULL)
     {
@@ -1583,6 +1592,12 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
 
     pSrcThread = schedGetCurrentThread();
 
+    /* Only user mode can copy threads */
+    if(pSrcThread->type == THREAD_TYPE_KERNEL)
+    {
+        return OS_ERR_UNAUTHORIZED_ACTION;
+    }
+
     SCHED_ASSERT(*ppDstThread == NULL,
                  "Trying to copy thread on non NULL destination.",
                  OS_ERR_UNAUTHORIZED_ACTION);
@@ -1607,7 +1622,6 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
     pNewThread->pThreadResources = NULL;
     pNewThread->pNext            = NULL;
     pNewThread->pPrev            = NULL;
-    pNewThread->pProcess         = NULL;
     pNewThread->pJoiningThread   = NULL;
     pNewThread->pJoinedThread    = NULL;
     KERNEL_SPINLOCK_INIT(pNewThread->lock);
@@ -1664,11 +1678,15 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
     }
 
     /* Create the thread local storage */
-    error = cpuCreateLocalStorage(pNewThread);
+    error = cpuCopyLocalStorage(pNewThread, pSrcThread);
     if(error != OS_NO_ERR)
     {
         goto COPY_CLEANUP;
     }
+    pNewThread->pUserThreadData->pSelfPointer = pNewThread->pUserThreadData;
+    pNewThread->pUserThreadData->pid = pNewThread->pProcess->pid;
+    pNewThread->pUserThreadData->tid = pNewThread->tid;
+    pNewThread->pUserThreadData->priority = pNewThread->priority;
 
     error = OS_NO_ERR;
     /* Assign the new thread */
@@ -1815,7 +1833,7 @@ void schedInit(void)
 #endif
 }
 
-void schedScheduleNoInt(const bool kForceSwitch)
+void schedScheduleNoInt(void)
 {
     uint8_t          cpuId;
     uint8_t          currPrio;
@@ -1872,8 +1890,7 @@ void schedScheduleNoInt(const bool kForceSwitch)
          * priority and schedule was requested.
          */
         if(nextPrio < currPrio ||
-           (pCurrentTable->pReadyList[currPrio]->pHead != NULL &&
-           (pThread->requestSchedule == true || kForceSwitch == true)))
+           (pCurrentTable->pReadyList[currPrio]->pHead != NULL))
         {
             /* Put back the thread in the list, the highest priority will be
              * updated by the next _electNextThreadFromTable.
@@ -1918,8 +1935,7 @@ void schedScheduleNoInt(const bool kForceSwitch)
     cpuUpdateMemoryConfig(pThread);
 
     spCurrentProcessPtr[cpuId] = pThread->pProcess;
-    pThread->currentState    = THREAD_STATE_RUNNING;
-    pThread->requestSchedule = false;
+    pThread->currentState      = THREAD_STATE_RUNNING;
 
     signalManage(pThread);
 
@@ -1970,9 +1986,7 @@ void schedScheduleNoInt(const bool kForceSwitch)
         }
         else
         {
-            SCHED_ASSERT(false,
-                         "Unsuported system call return un user space",
-                         OS_ERR_UNAUTHORIZED_ACTION);
+            cpuRestoreUserSyscallContext(pThread);
         }
     }
 
@@ -2055,7 +2069,6 @@ OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
     pNewThread->priority           = kPriority;
     pNewThread->pArgs              = args;
     pNewThread->pRoutine           = pRoutine;
-    pNewThread->requestSchedule    = true;
     pNewThread->preemptionDisabled = false;
     pNewThread->pProcess           = schedGetCurrentProcess();
 
@@ -2123,11 +2136,16 @@ OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
     /* Set the current vCPU as the regular thread vCPU */
     pNewThread->pVCpu = pNewThread->pThreadVCpu;
 
+    /* Initialize the user-specific data */
     error = cpuCreateLocalStorage(pNewThread);
     if(error != OS_NO_ERR)
     {
         goto SCHED_CREATE_KTHREAD_END;
     }
+    pNewThread->pUserThreadData->pSelfPointer = pNewThread->pUserThreadData;
+    pNewThread->pUserThreadData->pid = pNewThread->pProcess->pid;
+    pNewThread->pUserThreadData->tid = pNewThread->tid;
+    pNewThread->pUserThreadData->priority = pNewThread->priority;
 
     /* Set thread to READY */
     pNewThread->currentState = THREAD_STATE_READY;
@@ -2196,7 +2214,7 @@ SCHED_CREATE_KTHREAD_END:
                 memoryUnmapStack(pNewThread->stackEnd,
                                  pNewThread->stackSize,
                                  false,
-                                 NULL);
+                                 pNewThread->pProcess);
             }
             if(pNewThread->kernelStackEnd != (uintptr_t)NULL)
             {
@@ -2204,7 +2222,7 @@ SCHED_CREATE_KTHREAD_END:
                 memoryUnmapStack(pNewThread->kernelStackEnd,
                                  pNewThread->kernelStackSize,
                                  true,
-                                 pNewThread->pProcess);
+                                 NULL);
 
             }
             if(pNewThread->pThreadVCpu != NULL)
@@ -2469,6 +2487,7 @@ OS_RETURN_E schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
     KERNEL_UNLOCK(sThreadTables[cpuId].lock);
 
     pThread->priority = kPrio;
+    pThread->pUserThreadData->priority = kPrio;
     KERNEL_UNLOCK(pThread->lock);
 
     return OS_NO_ERR;
@@ -2772,7 +2791,7 @@ OS_RETURN_E schedSleep(const uint64_t kTimeNs)
     error = syscallPerform(SYSCALL_SLEEP, &sleepParam);
     if(error == OS_NO_ERR)
     {
-        error = sleepParam.retCode;
+        error = sleepParam.errnoVal;
     }
 
     return error;
@@ -2785,7 +2804,7 @@ void schedSchedule(void)
 
     /* Perform the system call */
     error = syscallPerform(SYSCALL_SCHEDULE, &schedParam);
-    SCHED_ASSERT(error == OS_NO_ERR && schedParam.retCode == OS_NO_ERR,
+    SCHED_ASSERT(error == OS_NO_ERR && schedParam.errnoVal == OS_NO_ERR,
                  "Failed to schedule thread",
                  error);
 }
@@ -2804,7 +2823,7 @@ OS_RETURN_E schedFork(int32_t* pNewPid)
     error = syscallPerform(SYSCALL_FORK, &forkParam);
     if(error == OS_NO_ERR)
     {
-        error = forkParam.retCode;
+        error = forkParam.errnoVal;
         if(error == OS_NO_ERR)
         {
             *pNewPid = forkParam.newPid;
@@ -2837,13 +2856,13 @@ void schedSyscallHandleSleep(void* pParams)
                  OS_ERR_NULL_POINTER);
 
     pSleepParam = pParams;
-    pSleepParam->retCode = OS_NO_ERR;
+    pSleepParam->errnoVal = OS_NO_ERR;
 
     /* Check the current thread */
     pCurrThread = schedGetCurrentThread();
     if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
     {
-        pSleepParam->retCode = OS_ERR_UNAUTHORIZED_ACTION;
+        pSleepParam->errnoVal = OS_ERR_UNAUTHORIZED_ACTION;
         return;
     }
 
@@ -2852,7 +2871,7 @@ void schedSyscallHandleSleep(void* pParams)
     wakeupTime  = currentTime + pSleepParam->timeToSleepNs;
     if(wakeupTime < currentTime)
     {
-        pSleepParam->retCode = OS_ERR_INCORRECT_VALUE;
+        pSleepParam->errnoVal = OS_ERR_INCORRECT_VALUE;
         return;
     }
 
@@ -2864,7 +2883,7 @@ void schedSyscallHandleSleep(void* pParams)
     KERNEL_UNLOCK(pCurrThread->lock);
 
     /* Request scheduling */
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     SCHED_ASSERT(false,
@@ -2885,11 +2904,11 @@ void schedSyscallHandleSchedule(void* pParams)
                  OS_ERR_NULL_POINTER);
 
     pSchedParam = pParams;
-    pSchedParam->retCode = OS_NO_ERR;
+    pSchedParam->errnoVal = OS_NO_ERR;
 
     /* Request schedule */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     SCHED_ASSERT(false,
@@ -2923,7 +2942,7 @@ void schedSyscallHandleFork(void* pParams)
     /* Only user mode can fork */
     if(pCurrentThread->type == THREAD_TYPE_KERNEL)
     {
-        pForkParam->retCode = OS_ERR_UNAUTHORIZED_ACTION;
+        pForkParam->errnoVal = OS_ERR_UNAUTHORIZED_ACTION;
         return;
     }
 
@@ -2933,7 +2952,7 @@ void schedSyscallHandleFork(void* pParams)
     pProcess = kmalloc(sizeof(kernel_process_t));
     if(pProcess == NULL)
     {
-        pForkParam->retCode = OS_ERR_NO_MORE_MEMORY;
+        pForkParam->errnoVal = OS_ERR_NO_MORE_MEMORY;
         return;
     }
     memset(pProcess, 0, sizeof(kernel_process_t));
@@ -2999,6 +3018,11 @@ void schedSyscallHandleFork(void* pParams)
     pProcess->pMainThread = pMainThread;
     pProcess->pThreadListTail = pMainThread;
     pMainThread->pProcess = pProcess;
+    error = uhashtableSet(pProcess->pThreadTable, (uintptr_t)pMainThread, NULL);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
 
     /* Create the children list */
     pProcess->pChildren = kQueueCreate(false);
@@ -3030,6 +3054,7 @@ void schedSyscallHandleFork(void* pParams)
     kQueuePush(pNewProcessNode, pCurrentProcess->pChildren);
 
     /* Release main thread */
+    pProcess->pMainThread->currentState = THREAD_STATE_READY;
     _schedReleaseThread(pProcess->pMainThread, true);
     KERNEL_UNLOCK(pProcess->lock);
 
@@ -3093,6 +3118,6 @@ SCHED_FORK_END:
         }
     }
 
-    pForkParam->retCode = error;
+    pForkParam->errnoVal = error;
 }
 /************************************ EOF *************************************/

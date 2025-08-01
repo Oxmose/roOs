@@ -131,7 +131,7 @@ static uint32_t _tscGetFrequency(void* pDrvCtrl);
  * @return OS_ERR_NOT_SUPPORTED is always returned.
  */
 static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*));
+                                  bool(*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Unused, TSC does not support interrupts.
@@ -270,7 +270,7 @@ static uint32_t _tscGetFrequency(void* pDrvCtrl)
 }
 
 static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*))
+                                  bool(*pHandler)(kernel_thread_t*))
 {
     (void)pDrvCtrl;
     (void)pHandler;

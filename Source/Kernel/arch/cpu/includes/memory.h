@@ -350,6 +350,8 @@ void memoryReleaseFrame(const uintptr_t kBaseAddress,
  * page boundaries.
  * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
  * infomation.
+ * @param[in] kRemoveFromPagePool Tells if the mapped virtual addresses shall
+ * be removed from the process free page pool.
  * @param[in, out] pProcess The process for which the mapping should be
  * effective.
  *
@@ -364,6 +366,7 @@ OS_RETURN_E memoryUserMapDirect(const void*       kPhysicalAddress,
                                 const void*       kVirtualAddress,
                                 const size_t      kSize,
                                 const uint32_t    kFlags,
+                                const bool        kRemoveFromPagePool,
                                 kernel_process_t* pProcess);
 
 /**
@@ -378,6 +381,8 @@ OS_RETURN_E memoryUserMapDirect(const void*       kPhysicalAddress,
  * page boundaries.
  * @param[in] kSize The size of the region to unmap map in bytes. Must be
  * aligned on page boundaries.
+ * @param[in] kAddToPagePool Tells if the ubmapped virtual addresses shall
+ * be released to the process free page pool.
  * @param[in, out] pProcess The process for which the mapping should be
  * removed.
  *
@@ -385,7 +390,51 @@ OS_RETURN_E memoryUserMapDirect(const void*       kPhysicalAddress,
  */
 OS_RETURN_E memoryUserUnmap(const void*       kVirtualAddress,
                             const size_t      kSize,
+                            const bool        kAddToPagePool,
                             kernel_process_t* pProcess);
+
+/**
+ * @brief Maps a physical memory region in the user address space.
+ *
+ * @details Maps a physical memory region in the user address space. The
+ * function allocates free memory frames to the user and creates a new
+ * mapping. The size must be aligned on page boundaries. If not, the mapping
+ * fails and NULL is returned.
+ *
+ * @param[in] kSize The size of the region to map in bytes. Must be aligned on
+ * page boundaries.
+ * @param[in] kFlags The mapping flags, see the MEM_MGR flags for more
+ * infomation.
+ * @param[in] pProcess The process to which the memory shall be allocated.
+ * @param[out] pError The error buffer to store the operation's result. If NULL,
+ * does not set the error value.
+ *
+ *
+ * @return The function returns the virtual base address of the mapped region.
+ * NULL is returned on error.
+ */
+void* memoryUserAllocate(const size_t      kSize,
+                         const uint32_t    kFlags,
+                         kernel_process_t* pProcess,
+                         OS_RETURN_E*      pError);
+
+/**
+ * @brief Releases a physical memory region in the user address space.
+ *
+ * @details Releases a physical memory region in the user address space. The
+ * function releases the memory frames to the user and removes the existing
+ * mapping. The size must be aligned on page boundaries. If not, the unmapping
+ * fails and NULL is returned.
+ *
+ * @param[in] kVirtualAddress The virtual address of the mapping to release.
+ * @param[in] kSize The size of the mapping to release.
+ * @param[in] pProcess The process from which the memory shall be released.
+ *
+ * @return The function returns the success or error state.
+ */
+OS_RETURN_E memoryUserFree(const void*       kVirtualAddress,
+                           const size_t      kSize,
+                           kernel_process_t* pProcess);
 
 #endif /* #ifndef __MEMORY_MGR_ */
 

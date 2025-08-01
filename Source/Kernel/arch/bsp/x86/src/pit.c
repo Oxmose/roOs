@@ -148,8 +148,10 @@ static OS_RETURN_E _pitAttach(const fdt_node_t* pkFdtNode);
  *
  * @param[in] pCurrThread Unused, the current thread at the
  * interrupt.
+ *
+ * @return Returns if the scheduler shall be called on return.
  */
-static void _pitDummyHandler(kernel_thread_t* pCurrThread);
+static bool _pitDummyHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Enables PIT ticks.
@@ -217,7 +219,7 @@ static uint32_t _pitGetFrequency(void* pDrvCtrl);
  * registered for the PIT.
  */
 static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*));
+                                  bool(*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Removes the PIT tick handler.
@@ -428,7 +430,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _pitDummyHandler(kernel_thread_t* pCurrThread)
+static bool _pitDummyHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
@@ -436,7 +438,7 @@ static void _pitDummyHandler(kernel_thread_t* pCurrThread)
           MODULE_NAME,
           "PIT Dummy handler called");
 
-    return;
+    return false;
 }
 
 static void _pitEnable(void* pDrvCtrl)
@@ -539,7 +541,7 @@ static uint32_t _pitGetFrequency(void* pDrvCtrl)
 }
 
 static OS_RETURN_E _pitSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*))
+                                  bool(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E      err;
     pit_controler_t* pPitCtrl;

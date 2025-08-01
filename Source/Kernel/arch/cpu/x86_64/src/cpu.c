@@ -38,6 +38,7 @@
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
 #include <exceptions.h>    /* Exception manager */
+#include <cpuSyscall.h>    /* CPU system calls */
 #include <cpuInterrupt.h>  /* Interrupt manager */
 
 /* Configuration files */
@@ -77,9 +78,9 @@
 /** @brief Kernel's 64 bits data segment descriptor. */
 #define KERNEL_DS_64 0x10
 /** @brief User's 64 bits code segment descriptor. */
-#define USER_CS_64 0x18
+#define USER_CS_64 0x20
 /** @brief User's 64 bits data segment descriptor. */
-#define USER_DS_64 0x20
+#define USER_DS_64 0x18
 /** @brief Kernel's TSS segment descriptor. */
 #define TSS_SEGMENT  0x30
 
@@ -2255,6 +2256,9 @@ static char sCpuAddressing[CPU_ADDRESSING_SIZE + 1];
 /** @brief Stores the flags string */
 static char sCpuFlags[CPU_FLAGS_SIZE + 1];
 
+/** @brief Stores the Double Fault Exception Special Stack */
+static uint8_t sDoubleFaultStack[512] __attribute__((aligned(8)));
+
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -2333,11 +2337,13 @@ static void _formatTSSEntry(uint64_t*      pEntry,
  * @param[in] kandler The handler function for the IDT entry.
  * @param[in] kType  The type of segment for the IDT entry.
  * @param[in] kFlags The flags to be set for the IDT entry.
+ * @param[in] kIst The IST to be set for the IDT entry.
  */
 static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
                             const uintptr_t  kHandler,
                             const uint8_t    kType,
-                            const uint32_t   kFlags);
+                            const uint32_t   kFlags,
+                            const uint8_t    kIst);
 
 /**
  * @brief Handles a division by zero exception.
@@ -2347,8 +2353,10 @@ static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
  *
  * @param[in, out] pCurrThread The current thread at the moment of the division
  * by zero.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _fpExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _fpExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles an invalid instruction exception.
@@ -2358,8 +2366,10 @@ static void _fpExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _invalidInstructionHandler(kernel_thread_t* pCurrThread);
+static bool _invalidInstructionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a debug CPU exception.
@@ -2368,8 +2378,10 @@ static void _invalidInstructionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _debugExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _debugExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a breakpoint CPU exception.
@@ -2378,8 +2390,10 @@ static void _debugExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles an overflow CPU exception.
@@ -2388,8 +2402,10 @@ static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _overflowExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _overflowExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a bound range exceeded CPU exception.
@@ -2398,8 +2414,10 @@ static void _overflowExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a device not available CPU exception.
@@ -2408,8 +2426,10 @@ static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a double fault CPU exception.
@@ -2418,8 +2438,10 @@ static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _doubleFaultHandler(kernel_thread_t* pCurrThread);
+static bool _doubleFaultHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a coprocessor segment overrun CPU exception.
@@ -2429,8 +2451,10 @@ static void _doubleFaultHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles an invalid TSS CPU exception.
@@ -2439,8 +2463,10 @@ static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a segment not present CPU exception.
@@ -2449,8 +2475,10 @@ static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a stack segment fault CPU exception.
@@ -2459,8 +2487,10 @@ static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a general protection fault CPU exception.
@@ -2469,8 +2499,10 @@ static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles an alignement check CPU exception.
@@ -2479,8 +2511,10 @@ static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a machine check CPU exception.
@@ -2489,8 +2523,10 @@ static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a SIMD floating point CPU exception.
@@ -2499,8 +2535,10 @@ static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a virtualization CPU exception.
@@ -2509,8 +2547,10 @@ static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a control protection CPU exception.
@@ -2519,8 +2559,10 @@ static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles an hypervisor injection CPU exception.
@@ -2529,8 +2571,10 @@ static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a VMM communication CPU exception.
@@ -2539,8 +2583,10 @@ static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Handles a security CPU exception.
@@ -2549,8 +2595,10 @@ static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
  *
  * @param[in, out] pCurrThread The current thread at the moment of the
  * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _securityExceptionHandler(kernel_thread_t* pCurrThread);
+static bool _securityExceptionHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Initializes the CPU sysfs entry.
@@ -2677,7 +2725,7 @@ static void _cpuValidateArchitecture(void);
  * FUNCTIONS
  ******************************************************************************/
 
-static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _fpExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2687,9 +2735,11 @@ static void _fpExceptionHandler(kernel_thread_t* pCurrThread)
 
     error = signalThread(pCurrThread, THREAD_SIGNAL_FPE);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
+
+    return true;
 }
 
-static void _invalidInstructionHandler(kernel_thread_t* pCurrThread)
+static bool _invalidInstructionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2700,9 +2750,11 @@ static void _invalidInstructionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal invalid instruction",
                error);
+
+    return true;
 }
 
-static void _debugExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _debugExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2713,9 +2765,11 @@ static void _debugExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _breakpointExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2726,9 +2780,11 @@ static void _breakpointExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _overflowExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _overflowExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2739,9 +2795,11 @@ static void _overflowExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _boundRangeExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2752,9 +2810,11 @@ static void _boundRangeExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2765,22 +2825,21 @@ static void _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _doubleFaultHandler(kernel_thread_t* pCurrThread)
+static bool _doubleFaultHandler(kernel_thread_t* pCurrThread)
 {
-    OS_RETURN_E error;
+    kernelPanicHandler(pCurrThread);
 
-    pCurrThread->errorTable.exceptionId = DOUBLE_FAULT_EXC_LINE;
-    pCurrThread->errorTable.instAddr = cpuGetContextIP(pCurrThread->pVCpu);
-    pCurrThread->errorTable.pExecVCpu = pCurrThread->pVCpu;
-    error = signalThread(pCurrThread, THREAD_SIGNAL_EXC);
-    CPU_ASSERT(error == OS_NO_ERR,
-               "Failed to signal exception",
-               error);
+    /* Double faults will directly crash the computer */
+    PANIC(OS_ERR_DESTROYED, MODULE_NAME, "Double fault detected");
+
+    return true;
 }
 
-static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2791,9 +2850,11 @@ static void _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2804,9 +2865,11 @@ static void _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2817,9 +2880,11 @@ static void _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2830,9 +2895,11 @@ static void _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2843,9 +2910,11 @@ static void _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2856,9 +2925,11 @@ static void _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2869,9 +2940,11 @@ static void _machineCheckExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
 {
     uint32_t* fxData;
     OS_RETURN_E error;
@@ -2884,9 +2957,11 @@ static void _simdFpExceptionHandler(kernel_thread_t* pCurrThread)
     fxData = (uint32_t*)((virtual_cpu_t*)pCurrThread->pVCpu)->fxData;
     fxData = (uint32_t*)(((uintptr_t)fxData + 0xF) & 0xFFFFFFFFFFFFFFF0);
     CPU_ASSERT(error == OS_NO_ERR, "Failed to signal division by zero", error);
+
+    return true;
 }
 
-static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _virtualizationExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2897,9 +2972,11 @@ static void _virtualizationExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2910,9 +2987,11 @@ static void _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2923,9 +3002,11 @@ static void _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2936,9 +3017,11 @@ static void _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
-static void _securityExceptionHandler(kernel_thread_t* pCurrThread)
+static bool _securityExceptionHandler(kernel_thread_t* pCurrThread)
 {
     OS_RETURN_E error;
 
@@ -2949,6 +3032,8 @@ static void _securityExceptionHandler(kernel_thread_t* pCurrThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to signal exception",
                error);
+
+    return true;
 }
 
 static void _formatGDTEntry(uint64_t*      pEntry,
@@ -2988,7 +3073,8 @@ static void _formatTSSEntry(uint64_t*      pEntry,
 static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
                             const uintptr_t  kHandler,
                             const uint8_t    kType,
-                            const uint32_t   kFlags)
+                            const uint32_t   kFlags,
+                            const uint8_t    kIst)
 {
     /* Set offset */
     pEntry->offLow = kHandler & 0x000000000000FFFF;
@@ -2999,8 +3085,8 @@ static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
     pEntry->cSel  = KERNEL_CS_64;
     pEntry->flags = (kFlags & 0xF0) | (kType & 0x0F);
 
-    /* Zeroise */
-    pEntry->ist      = 0;
+    /* Set the rest of the attributes */
+    pEntry->ist      = kIst;
     pEntry->reserved = 0;
 }
 
@@ -3146,9 +3232,22 @@ static void _setupIDT(void)
      */
     for(i = 0; i < IDT_ENTRY_COUNT; ++i)
     {
-        _formatIDTEntry(&sIDT[i],
-                        sIntHandlerTable[i],
-                        IDT_TYPE_INT_GATE, IDT_FLAG_PRESENT | IDT_FLAG_PL0);
+        if(i == DOUBLE_FAULT_EXC_LINE)
+        {
+            _formatIDTEntry(&sIDT[i],
+                            sIntHandlerTable[i],
+                            IDT_TYPE_INT_GATE,
+                            IDT_FLAG_PRESENT | IDT_FLAG_PL0,
+                            1);
+        }
+        else
+        {
+            _formatIDTEntry(&sIDT[i],
+                            sIntHandlerTable[i],
+                            IDT_TYPE_INT_GATE,
+                            IDT_FLAG_PRESENT | IDT_FLAG_PL0,
+                            0);
+        }
     }
 
     /* Set the IDT descriptor */
@@ -3179,6 +3278,9 @@ static void _setupTSS(void)
     /* Set basic values */
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
+        /* Setup the ISTs */
+
+        sTSS[i].ist1 = (uintptr_t)sDoubleFaultStack;
         sTSS[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
                         KERNEL_STACK_SIZE * (i + 1) - sizeof(uint64_t) * 2;
         sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
@@ -3753,6 +3855,11 @@ void cpuInit(void)
     _setupGDT();
     _setupIDT();
     _setupTSS();
+
+    /* Init the system calls */
+    cpuSystemCallInit((uintptr_t)cpuUserSyscallHandler,
+                      KERNEL_CS_64,
+                      KERNEL_DS_64);
 
     /* Init the sysfs entries */
     _initSysfsEntry();
@@ -4647,6 +4754,11 @@ void cpuApInit(const uint8_t kCpuId)
     /* Init the rest of the CPU facilities */
     coreMgtApInit(kCpuId);
 
+    /* Init the system calls */
+    cpuSystemCallInit((uintptr_t)cpuUserSyscallHandler,
+                      KERNEL_CS_64,
+                      KERNEL_DS_64);
+
     /* Init the sysfs entries */
     _initSysfsEntry();
 
@@ -4658,7 +4770,7 @@ void cpuApInit(const uint8_t kCpuId)
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(false, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);
@@ -4761,6 +4873,7 @@ uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry)
 
     pVCpu->isContextFromInt   = true;
     pVCpu->rspSaveFromSyscall = (uintptr_t)NULL;
+    pVCpu->kernelStackEnd     = pThread->kernelStackEnd;
 
     return (uintptr_t)pVCpu;
 }
@@ -5046,7 +5159,7 @@ void cpuCoreDump(const void* kpVCpu)
 
     snprintf(pDump,
              CPU_CORE_DUMP_LENGTH,
-             "RAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
+             "\nRAX: 0x%p | RBX: 0x%p | RCX: 0x%p\n",
              cpuState->rax,
              cpuState->rbx,
              cpuState->rcx);
@@ -5179,6 +5292,233 @@ void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
         /* Update the TSS */
         sTSS[cpuId].rsp0 = pCurrentThread->kernelStackEnd - 0x8;
     }
+
+    /* Update the thread local storage */
+    __asm__ __volatile__("wrmsr\n\t"
+                         :
+                         :"a"(pCurrentThread->pUserThreadData),
+                          "d"((uintptr_t)pCurrentThread->pUserThreadData >> 32),
+                          "c"(0xC0000100)
+                         :);
+
+}
+
+OS_RETURN_E cpuCreateLocalStorage(kernel_thread_t* pThread)
+{
+    size_t      align;
+    size_t      size;
+    OS_RETURN_E error;
+    OS_RETURN_E intError;
+    uintptr_t   tlsPhys;
+    size_t      userDataAlign;
+    void*       pTmpData;
+
+    if(pThread->type == THREAD_TYPE_KERNEL)
+    {
+        /* Kernel thread do not have thread local storage */
+        pThread->pUserThreadData = kmalloc(sizeof(user_thread_t));
+        if(pThread->pUserThreadData == NULL)
+        {
+            return OS_ERR_NO_MORE_MEMORY;
+        }
+        return OS_NO_ERR;
+    }
+
+    /* Compute the memory size with alignement */
+    align = MAX(pThread->pProcess->mainTlsAlign, __alignof__(user_thread_t));
+    /* We do not support more than a page alignement */
+    if(align > KERNEL_PAGE_SIZE)
+    {
+        return OS_ERR_NOT_SUPPORTED;
+    }
+
+    userDataAlign = ALIGN_UP(pThread->pProcess->mainTlsSize, align);
+
+    size = ALIGN_UP(userDataAlign + sizeof(user_thread_t), KERNEL_PAGE_SIZE);
+
+    pThread->pUserThreadData = memoryUserAllocate(size,
+                                        pThread->pProcess->mainTlsMappingFlags,
+                                        pThread->pProcess,
+                                        &error);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+
+    tlsPhys = memoryMgrGetPhysAddr((uintptr_t)pThread->pUserThreadData,
+                                   pThread->pProcess,
+                                   NULL);
+    CPU_ASSERT(tlsPhys != MEMMGR_PHYS_ADDR_ERROR,
+               "Failed to get mapped physical address",
+                OS_ERR_INCORRECT_VALUE);
+
+    pTmpData = memoryKernelMap((void*)tlsPhys,
+                               size,
+                               MEMMGR_MAP_KERNEL | MEMMGR_MAP_RW,
+                               &error);
+    if(error != OS_NO_ERR)
+    {
+        intError = memoryUserFree(pThread->pUserThreadData,
+                                  size,
+                                  pThread->pProcess);
+        CPU_ASSERT(intError == OS_NO_ERR,
+                   "Failed to free allocated memory",
+                    OS_ERR_INCORRECT_VALUE);
+        return error;
+    }
+
+    /* Copy the main TLS, the User linker defines that the data for the TLS
+     * comes before the bss for the TLS.
+     */
+    memcpy((uint8_t*)pTmpData + userDataAlign - pThread->pProcess->mainTlsSize,
+           pThread->pProcess->pMainTlsData,
+           pThread->pProcess->mainTlsInitDataSize);
+    /* Zeroize the TLS */
+    memset((uint8_t*)pTmpData +
+           userDataAlign -
+           pThread->pProcess->mainTlsSize +
+           pThread->pProcess->mainTlsInitDataSize,
+           0,
+           userDataAlign - pThread->pProcess->mainTlsInitDataSize);
+
+
+    intError = memoryKernelUnmap(pTmpData, size);
+    CPU_ASSERT(intError == OS_NO_ERR,
+               "Failed to unmap mapped memory",
+               OS_ERR_INCORRECT_VALUE);
+
+    /* Setup the user data pointer */
+    pThread->pUserThreadData = (void*)((uintptr_t)pThread->pUserThreadData +
+                               userDataAlign);
+
+    return OS_NO_ERR;
+}
+
+OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
+                                const kernel_thread_t* kpSrcThread)
+{
+    size_t      align;
+    size_t      size;
+    OS_RETURN_E error;
+    OS_RETURN_E intError;
+    uintptr_t   tls;
+    uintptr_t   tlsPhys;
+    void*       pTmpData;
+
+    if(pThread->type == THREAD_TYPE_KERNEL)
+    {
+        /* Kernel thread do not have thread local storage */
+        pThread->pUserThreadData = kmalloc(sizeof(user_thread_t));
+        if(pThread->pUserThreadData == NULL)
+        {
+            return OS_ERR_NO_MORE_MEMORY;
+        }
+        memcpy(pThread->pUserThreadData,
+               kpSrcThread->pUserThreadData,
+               sizeof(user_thread_t));
+        return OS_NO_ERR;
+    }
+
+    /* Compute the memory size with alignement */
+    align = MAX(pThread->pProcess->mainTlsAlign, __alignof__(user_thread_t));
+    /* We do not support more than a page alignement */
+    if(align > KERNEL_PAGE_SIZE)
+    {
+        return OS_ERR_NOT_SUPPORTED;
+    }
+
+    size = ALIGN_UP(pThread->pProcess->mainTlsSize, align) +
+           sizeof(user_thread_t);
+
+    /* Align to page size */
+    size = ALIGN_UP(size, KERNEL_PAGE_SIZE);
+
+    pThread->pUserThreadData = memoryUserAllocate(size,
+                                                  MEMMGR_MAP_RW |
+                                                  MEMMGR_MAP_USER,
+                                                  pThread->pProcess,
+                                                  &error);
+    if(error != OS_NO_ERR)
+    {
+        return error;
+    }
+
+    tlsPhys = memoryMgrGetPhysAddr((uintptr_t)pThread->pUserThreadData,
+                                   pThread->pProcess,
+                                   NULL);
+    CPU_ASSERT(tlsPhys != MEMMGR_PHYS_ADDR_ERROR,
+               "Failed to get mapped physical address",
+                OS_ERR_INCORRECT_VALUE);
+
+    pTmpData = memoryKernelMap((void*)tlsPhys,
+                               size,
+                               MEMMGR_MAP_KERNEL | MEMMGR_MAP_RW,
+                               &error);
+    if(error != OS_NO_ERR)
+    {
+        intError = memoryUserFree(pThread->pUserThreadData,
+                                  size,
+                                  pThread->pProcess);
+        CPU_ASSERT(intError == OS_NO_ERR,
+                   "Failed to free allocated memory",
+                    OS_ERR_INCORRECT_VALUE);
+        return error;
+    }
+
+    /* Get the TLS and copy */
+    tls = (uintptr_t)kpSrcThread->pUserThreadData -
+          ALIGN_UP(pThread->pProcess->mainTlsSize, align);
+    memcpy(pTmpData,
+           (void*)tls,
+           (uintptr_t)kpSrcThread->pUserThreadData - tls);
+
+    intError = memoryKernelUnmap(pTmpData, size);
+    CPU_ASSERT(intError == OS_NO_ERR,
+               "Failed to unmap mapped memory",
+               OS_ERR_INCORRECT_VALUE);
+
+    /* Setup the user data pointer */
+    pThread->pUserThreadData = (void*)((uintptr_t)pThread->pUserThreadData +
+                               ALIGN_UP(pThread->pProcess->mainTlsSize, align));
+
+    return OS_NO_ERR;
+}
+
+void cpuDestroyLocalStorage(kernel_thread_t* pThread)
+{
+    size_t      align;
+    size_t      size;
+    uintptr_t   tls;
+    OS_RETURN_E error;
+
+    if(pThread->type == THREAD_TYPE_KERNEL)
+    {
+        /* Kernel thread do not have thread local storage */
+        kfree(pThread->pUserThreadData);
+
+        return;
+    }
+
+    /* Compute the memory size with alignement */
+    align = MAX(pThread->pProcess->mainTlsAlign, __alignof__(user_thread_t));
+    /* We do not support more than a page alignement */
+    CPU_ASSERT(align <= KERNEL_PAGE_SIZE,
+               "Invalid TLS alignement",
+               OS_ERR_NOT_SUPPORTED);
+
+    size = ALIGN_UP(pThread->pProcess->mainTlsSize, align) +
+           sizeof(user_thread_t);
+    /* Align to page size */
+    size = ALIGN_UP(size, KERNEL_PAGE_SIZE);
+
+    /* Get the TLS */
+    tls = (uintptr_t)pThread->pUserThreadData -
+          ALIGN_UP(pThread->pProcess->mainTlsSize, align);
+
+    error = memoryUserFree((void*)tls, size, pThread->pProcess);
+    CPU_ASSERT(error == OS_NO_ERR,
+               "Failed to release thread local storage.",
+               error);
 }
 
 /* Stack protection support */

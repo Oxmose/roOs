@@ -174,8 +174,10 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode);
  * data and unblock a thread if it is blocked on the input.
  *
  * @param[in] pCurrentThread Unused.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread);
+static bool _kbdInterruptHandler(kernel_thread_t* pCurrentThread);
 
 /**
  * @brief Reads data from the keyboard input buffer.
@@ -614,7 +616,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
+static bool _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 {
     uint8_t     data;
     OS_RETURN_E error;
@@ -624,7 +626,7 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 
     if(spInputCtrl == NULL)
     {
-        return;
+        return false;
     }
 
     /* Check is we received a data */
@@ -669,6 +671,8 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
                    "Failed to post keyboard semaphore",
                    error);
     }
+
+    return false;
 }
 
 static ssize_t _kbdRead(void*        pDrvCtrl,

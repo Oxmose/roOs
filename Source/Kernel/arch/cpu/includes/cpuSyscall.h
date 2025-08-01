@@ -109,6 +109,30 @@ void cpuSwitchKernelSyscallContext(const uintptr_t  syscallReturnAddress,
  */
 void cpuRestoreKernelSyscallContext(const kernel_thread_t* kpThread);
 
+/**
+ * @brief Restores the context of a thread after returning from a system call.
+ *
+ * @details Restores the context of a thread after returning from a system call.
+ * This function perform the restore for a kerusernel thread.
+ *
+ * @param[in] kpThread The thread for which the context should be restored.
+ *
+ * @warning This function must only be called from user space.
+ */
+void cpuRestoreUserSyscallContext(const kernel_thread_t* kpThread);
+
+/**
+ * @brief Handles a system call request from the user space.
+ *
+ * @details Handles a system call request from the user space. This function
+ * will execute the necessary process to handle the system call, call the
+ * associated kernel function and setup the return arguments.
+ *
+ * @param[in] kSyscallId The system call ID to handle.
+ * @param[in] pParams The parameters to pass to the system call handler.
+ */
+void cpuUserSyscallHandler(const uint64_t kSyscallId, void* pParams);
+
 #endif /* #ifndef __CPU_CPUSYSCALL_H_ */
 
 /************************************ EOF *************************************/

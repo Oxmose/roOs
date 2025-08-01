@@ -426,7 +426,7 @@ static void _panicNoSched(void)
     colorscheme_t  consoleScheme;
     cursor_t       consoleCursor;
     uint8_t        cpuId;
-    time_t         currTime;
+    daytime_t      currTime;
     uint64_t       uptime;
     uintptr_t*     lastEBP;
 
@@ -506,7 +506,7 @@ void kernelPanicHandler(kernel_thread_t* pCurrThread)
     cursor_t       consoleCursor;
     virtual_cpu_t* pThreadVCpu;
     uint8_t        cpuId;
-    time_t         currTime;
+    daytime_t      currTime;
     uint64_t       uptime;
     ipi_params_t   ipiParams;
 

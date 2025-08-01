@@ -1,22 +1,22 @@
 /*******************************************************************************
- * @file unistd.h
+ * @file time.h
  *
  * @author Alexy Torres Aurora Dugo
  *
- * @date 21/10/2024
+ * @date 27/10/2024
  *
  * @version 1.0
  *
- * @brief Unistd port for roOs.
+ * @brief Time port for roOs.
  *
- * @details Unistd port for roOs. This port is not inteded to be conplete and
+ * @details Time port for roOs. This port is not inteded to be complete and
  * provides API for roOs.
  *
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __LIB_UNISTD_H_
-#define __LIB_UNISTD_H_
+#ifndef __LIB_TIME_H_
+#define __LIB_TIME_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -33,7 +33,21 @@
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
-/* None */
+/** @brief Real arithmetic type capable of representing times. */
+typedef int64_t time_t;
+
+/**
+ * @brief Structure holding an interval broken down into seconds and
+ * nanoseconds.
+ */
+struct timespec
+{
+    /** @brief Whole seconds (valid values are >= 0) */
+    time_t tv_sec;
+
+    /** @brief Nanoseconds (valid values are [0, 999999999]) */
+    long int tv_nsec;
+};
 
 /*******************************************************************************
  * MACROS
@@ -60,46 +74,37 @@
 /**
  * @brief Writes to a file descriptor.
  *
- * @details Writes up to count bytes from the buffer starting at buf to the
- * file referred to by the file descriptor fd.
+ * @details Writes up to count bytes from the buffer starting at pBuffer to the
+ * file referred to by the file descriptor fileFd.
  *
- * @param[in] fd The file descriptor to write to.
- * @param[in] buf The buffer to write to the file descriptor.
- * @param[in] count The size in bytes to the data to write.
+ * @param[in] clk_id The identifier of the particular clock on which to act.
+ * @param[in] tp The timespec structure to fill with the time.
  *
- * @return The function returns the number of bytes effectively written to the
- * file descriptor.
+ * @return The function returns 0 for success, or -1 for failure (in which case
+ * errno is set appropriately).
  */
-ssize_t write(int fd, const void* buf, size_t count);
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
+
 
 /**
- * @brief Causes the calling thread to sleep.
+ * @brief Suspends the execution of the calling thread.
  *
- * @details Causes the calling thread to sleep either until the
- * number of real-time seconds specified in seconds have elapsed or
- * until a signal arrives which is not ignored.
+ * @details Suspends the execution of the calling thread until
+ * either at least the time specified in *duration has elapsed, or
+ * the delivery of a signal that triggers the invocation of a
+ * handler in the calling thread or that terminates the process.
  *
- * @param[in] seconds The number of seconds to sleep.
+ * @param[in] duration It is used to specify intervals of time with nanosecond
+ * precision.
+ * @param[out] rem Can be NULL, can then be used to call nanosleep() again and
+ * complete an uncomplete pause.
  *
- * @return Zero if the requested time has elapsed, or the number of seconds
- *  left to sleep, if the call was interrupted by a signal handler.
+ * @return The function returns 0 for success, or -1 for failure (in which case
+ * errno is set appropriately).
  */
-unsigned int sleep(unsigned int seconds);
+int nanosleep(const struct timespec *duration,
+              struct timespec* rem);
 
-/**
- * @brief Creates a new process by duplicating the calling process.
- *
- * @details Creates a new process by duplicating the calling process. The new
- * process is referred to as the child process. The calling process is referred
- * to as the parent process.
- *
- * @return On success, the PID of the child process is returned in the
- * parent, and 0 is returned in the child.  On failure, -1 is
- * returned in the parent, no child process is created, and errno is
- * set to indicate the error.
- */
-pid_t fork(void);
-
-#endif /* #ifndef __LIB_UNISTD_H_ */
+#endif /* #ifndef __LIB_TIME_H_ */
 
 /************************************ EOF *************************************/

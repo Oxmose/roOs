@@ -911,13 +911,14 @@ void kernelShellInit(void)
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateThread(&pShellThread, true,
-                                    10,
-                                    "kernelShell",
-                                    0x1000,
-                                    0x2,
-                                    _shellEntry,
-                                    NULL);
+    error = schedCreateThread(&pShellThread,
+                              true,
+                              10,
+                              "kernelShell",
+                              0x1000,
+                              0x0,
+                              _shellEntry,
+                              NULL);
     if(error != OS_NO_ERR)
     {
         syslog(SYSLOG_LEVEL_ERROR,

@@ -513,6 +513,24 @@ OS_RETURN_E vfsMount(const char* kpPath,
  */
 OS_RETURN_E vfsUnmount(const char* kpPath);
 
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+
+/**
+ * @brief System call handler for vfsWrite.
+ *
+ * @details System call handler for vfsWrite. See vfsWrite for more information.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. The parameter must contain an attribute of type
+ * syscall_min_params_t at the very begining of the structure. Otherwise, the
+ * existing attribute will be overwritten.
+ *
+ * @param[out] pParams The pointer to system call parameter structure.
+ */
+void vfsSyscallHandleWrite(void* pParams);
+
 #if 0
 OS_RETURN_E vfsInitFdTable(vfs_fd_table* pTable);
 

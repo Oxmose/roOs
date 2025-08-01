@@ -63,8 +63,10 @@ typedef enum
  *
  * @param[in, out] pCurrThread The current thread scheduled at the moment of the
  * exception.
+ *
+ * @return The function returns if the scheduler shall be called on return.
  */
-typedef void(*custom_handler_t)(kernel_thread_t* pCurrThread);
+typedef bool (*custom_handler_t)(kernel_thread_t* pCurrThread);
 
 /** @brief Defines the basic interface for an interrupt management driver (let
  * it be PIC or IO APIC for instance).
@@ -204,7 +206,7 @@ OS_RETURN_E interruptIRQRegister(const uint32_t   kIrqNumber,
  * - OS_NO_ERR is returned if no error is encountered.
  * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the IRQ attached to the
  * interrupt line is not allowed.
- * - OS_ERR_NO_SUCH_IRQ_LINE is returned if the IRQ number is not supported.
+ * - OS_ERR_NO_SUCH_ID is returned if the IRQ number is not supported.
  * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the IRQ has no handler
  * attached.
  */

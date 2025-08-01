@@ -82,6 +82,7 @@ global cpuGetId
 global cpuSignalHandler
 global cpuSwitchKernelSyscallContext
 global cpuRestoreKernelSyscallContext
+global cpuRestoreUserSyscallContext
 
 ;-------------------------------------------------------------------------------
 ; CODE
@@ -175,8 +176,6 @@ cpuRestoreContext:
     fxrstor [rbx]
 
     ; Restore registers
-    mov gs, [rax + VCPU_OFF_GS]
-    mov fs, [rax + VCPU_OFF_FS]
     mov es, [rax + VCPU_OFF_ES]
     mov ds, [rax + VCPU_OFF_DS]
 
@@ -302,19 +301,40 @@ cpuRestoreKernelSyscallContext:
     ; Restore rsp
     mov rsp, [rax + VCPU_OFF_SYSCALL_RSP]
 
+    ; Clear the stack pointer of the process context
+    mov rcx, 0
+    mov [rax + VCPU_OFF_SYSCALL_RSP], rcx
+
     ; Put the return address in rdi
     pop rdi
 
     ; Restore the specific context that will be used when scheduling back
     popfq
 
-    ; Clear the stack pointer of the process context
-    mov rcx, 0
-    mov [rax + VCPU_OFF_SYSCALL_RSP], rcx
-
     ; Return to context caller
     jmp rdi
 
+;-------------------------------------------------------------------------------
+; Restore the context from a user system call
+;
+; Param:
+;     Input: rdi: A pointer to the thread to restore
+cpuRestoreUserSyscallContext:
+    ; The current thread is sent as parameter, load the VCPU
+    mov rdi, [rdi]
+
+    ; Restore rsp
+    mov rsp, [rdi + VCPU_OFF_SYSCALL_RSP]
+
+    ; Clear the stack pointer of the process context
+    mov rax, 0
+    mov [rdi + VCPU_OFF_SYSCALL_RSP], rax
+
+    ; Put the return address in rax
+    pop rax
+
+    ; Return to context caller
+    jmp rax
 ;-------------------------------------------------------------------------------
 ; DATA
 ;-------------------------------------------------------------------------------

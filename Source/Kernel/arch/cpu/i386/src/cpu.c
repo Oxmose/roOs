@@ -4579,7 +4579,7 @@ void cpuApInit(const uint8_t kCpuId)
     /* Call scheduler, we should never come back. Restoring a thread should
      * enable interrupt.
      */
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
 
     /* Once the scheduler is started, we should never come back here. */
     CPU_ASSERT(false, "CPU AP Init Returned", OS_ERR_UNAUTHORIZED_ACTION);

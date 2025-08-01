@@ -248,7 +248,7 @@ OS_RETURN_E syslog(const SYSLOG_LEVEL_E kLevel,
 {
     uint64_t          time;
     date_t            date;
-    time_t            dayTime;
+    daytime_t         dayTime;
     char*             pMsg;
     const char*       pTag;
     kqueue_node_t*    pNewNode;

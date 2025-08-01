@@ -82,10 +82,12 @@
  *
  * @param[in, out] pCurrThread The thread that generated the panic
  *
+ * @return Returns if the scheduler shall be called on return.
+ *
  * @warning Panic should never be called, it must only be used as an interrupt
  * handler.
  */
-void kernelPanicHandler(kernel_thread_t* pCurrThread);
+bool kernelPanicHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Causes a kernel panic.

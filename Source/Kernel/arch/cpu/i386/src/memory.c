@@ -179,26 +179,6 @@ typedef struct frame_meta_table_t
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
 }
-
-/**
- * @brief Align a value on boundaries. If not aligned, the value is aligned on
- * the next boundary.
- *
- * @param[in] VALUE The value to align.
- * @param[in] ALIGN_BOUND The boundary to use.
- */
-#define ALIGN_UP(VALUE, ALIGN_BOUND) (((VALUE) + ((ALIGN_BOUND) - 1)) & \
-                                      (~((ALIGN_BOUND) - 1)))
-
-/**
- * @brief Align a value on boundaries. If not aligned, the value is aligned on
- * the previous boundary.
- *
- * @param[in] VALUE The value to align.
- * @param[in] ALIGN_BOUND The boundary to use.
- */
-#define ALIGN_DOWN(VALUE, ALIGN_BOUND) ((VALUE) & (~((ALIGN_BOUND) - 1)))
-
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
@@ -605,25 +585,25 @@ static void _unlockReferenceCount(const uintptr_t kPhysAddr);
 /**
  * @brief Translates memory mapping flags from the memory manager interface to
  * the processor mapping flags.
- * 
+ *
  * @details Translates memory mapping flags from the memory manager interface to
- * the processor mapping flags. This takes into account merges flags and will 
+ * the processor mapping flags. This takes into account merges flags and will
  * prevent incompatible flags to be set.
- * 
+ *
  * @param kFlags The memory manager flags to translate to the CPU mapping flags.
- * 
- * @return The function returns the CPU mapping flag fileds. 
+ *
+ * @return The function returns the CPU mapping flag fileds.
  */
 static inline uintptr_t _translateFlags(const uint32_t kFlags);
 
 /**
  * @brief Maps a physical address in the user space of a given process.
- * 
+ *
  * @details Maps a physical address in the user space of a given process.
  * This function will check the memmory bounds before applying the mapping.
  * An will set the new mapping in the provided process address space. This
  * function is recursive for ease of implementation.
- * 
+ *
  * @param pTableLevel The mapped page table level where the memory will be
  * mapped.
  * @param pVirtAddress The virtual address to map to the physical address.
@@ -632,8 +612,8 @@ static inline uintptr_t _translateFlags(const uint32_t kFlags);
  * @param kLevel The current level in the page directory (used for recusivity).
  * The level in the first call must be the page directory.
  * @param kPageFlags The flags to use for the mapping.
- * 
- * @return The function returns the success or error status. 
+ *
+ * @return The function returns the success or error status.
  */
 static OS_RETURN_E _memoryMgrMapUser(uintptr_t*     pTableLevel,
                                      uintptr_t*     pVirtAddress,
@@ -644,19 +624,19 @@ static OS_RETURN_E _memoryMgrMapUser(uintptr_t*     pTableLevel,
 
 /**
  * @brief Unmaps a virtual address in the process user space.
- * 
- * @details Unmaps a virtual address in the process user space. The function 
- * will check the memory bounds and remove the mapping in the provided 
+ *
+ * @details Unmaps a virtual address in the process user space. The function
+ * will check the memory bounds and remove the mapping in the provided
  * process address space.
- * 
+ *
  * @param pTableLevel The mapped page table level where the memory will be
  * mapped.
  * @param pVirtAddress The virtual address to unmap.
  * @param pPageCount The number of pages to unmap.
  * @param kLevel The current level in the page directory (used for recusivity).
- * The level in the first call must be the page directory. 
- * 
- * @return The function returns the success or error status.  
+ * The level in the first call must be the page directory.
+ *
+ * @return The function returns the success or error status.
  */
 static OS_RETURN_E _memoryMgrUnmapUser(uintptr_t*    pTableLevel,
                                        uintptr_t*    pVirtAddress,
@@ -915,7 +895,7 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
     }
 
     /* Set reason page fault and reason data the address,
-     * also get the reason code in the interrupt info 
+     * also get the reason code in the interrupt info
      */
     pCurrentThread->errorTable.exceptionId  = PAGE_FAULT_EXC_LINE;
     pCurrentThread->errorTable.segfaultAddr = faultAddress;

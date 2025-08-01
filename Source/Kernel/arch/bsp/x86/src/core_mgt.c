@@ -110,8 +110,10 @@
  * dispatches the IPI request.
  *
  * @param[in] pCurrThread The executing thread at the moment of the IPI.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _ipiInterruptHandler(kernel_thread_t* pCurrThread);
+static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Attaches the Core Manager driver to the system.
@@ -190,11 +192,12 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode)
 }
 
 #if SOC_CPU_COUNT > 1
-static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
+static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
     kqueue_node_t* pNode;
     ipi_params_t   params;
     uint8_t        cpuId;
+    bool           doSchedule;
 
     interruptIRQSetEOI(sIpiInterruptLine);
 
@@ -210,6 +213,7 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
     kQueueDestroyNode(&pNode);
 
     /* Dispatch */
+    doSchedule = false;
     switch(params.function)
     {
         case IPI_FUNC_PANIC:
@@ -220,14 +224,15 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
             break;
         case IPI_FUNC_SCHEDULE:
             /* Request a schedule */
-            pCurrThread->requestSchedule = true;
+            doSchedule = true;
             break;
         default:
-            while(1){}
             PANIC(OS_ERR_INCORRECT_VALUE,
                   MODULE_NAME,
                   "Unknown IPI function");
     }
+
+    return doSchedule;
 }
 
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)

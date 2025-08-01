@@ -122,6 +122,26 @@ typedef uint32_t uintptr_t;
  */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+/**
+ * @brief Align a value on boundaries. If not aligned, the value is aligned on
+ * the next boundary.
+ *
+ * @param[in] VALUE The value to align.
+ * @param[in] ALIGN_BOUND The boundary to use.
+ */
+#define ALIGN_UP(VALUE, ALIGN_BOUND) (((VALUE) + ((ALIGN_BOUND) - 1)) & \
+                                      (~((ALIGN_BOUND) - 1)))
+
+/**
+ * @brief Align a value on boundaries. If not aligned, the value is aligned on
+ * the previous boundary.
+ *
+ * @param[in] VALUE The value to align.
+ * @param[in] ALIGN_BOUND The boundary to use.
+ */
+#define ALIGN_DOWN(VALUE, ALIGN_BOUND) ((VALUE) & (~((ALIGN_BOUND) - 1)))
+
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/

@@ -23,6 +23,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <errno.h>        /* Errno values */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
 #include <stdint.h>       /* Standard int definitions */
@@ -32,6 +33,7 @@
 #include <kqueue.h>       /* Kernel queues */
 #include <syslog.h>       /* Syslog service */
 #include <stdbool.h>      /* Bool types */
+#include <syscall.h>      /* System calls */
 #include <critical.h>     /* Kernel critical management */
 #include <scheduler.h>    /* Kernel scheduler */
 
@@ -183,6 +185,24 @@ typedef struct
     /** @brief Contains the next dir entry */
     vfs_node_t* pNextChildCursor;
 } vfs_generic_desc_t;
+
+/**
+ * @brief Defines the parameters for the write system call.
+ */
+typedef struct
+{
+    /** @brief Errno value to set */
+    syscall_min_params_t errnoVal;
+    /** @brief Size in bytes to write */
+    size_t toWrite;
+    /** @brief Size in bytes written */
+    ssize_t written;
+    /** @brief The buffer to write */
+    const void* pBuffer;
+    /** @brief The file descriptor to use */
+    int32_t fd;
+} syscall_write_params_t;
+
 
 /*******************************************************************************
  * MACROS
@@ -1932,14 +1952,13 @@ ssize_t vfsWrite(int32_t fd, const void* pBuffer, size_t count)
 
     if(error != OS_NO_ERR)
     {
-        return -1;
+        return -EBADF;
     }
 
     if((pInternalFd->openFlags & VFS_PERM_WRITE) == 0)
     {
-        return -1;
+        return -EINVAL;
     }
-
     pDriver = pInternalFd->pShared->pDriver;
 
     if(pDriver->pWrite != NULL)
@@ -1951,7 +1970,7 @@ ssize_t vfsWrite(int32_t fd, const void* pBuffer, size_t count)
     }
     else
     {
-        bytesWritten = -1;
+        bytesWritten = -EINVAL;
     }
 
     return bytesWritten;
@@ -2231,5 +2250,34 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     }
 
     return retCode;
+}
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+void vfsSyscallHandleWrite(void* pParams)
+{
+    ssize_t                 written;
+    syscall_write_params_t* pSyscallParams;
+
+    if(pParams == NULL)
+    {
+        return;
+    }
+
+    pSyscallParams = pParams;
+
+    written = vfsWrite(pSyscallParams->fd,
+                       pSyscallParams->pBuffer,
+                       pSyscallParams->toWrite);
+    if(written < 0)
+    {
+        pSyscallParams->errnoVal = -written;
+        pSyscallParams->written = -1;
+    }
+    else
+    {
+        pSyscallParams->written = written;
+    }
 }
 /************************************ EOF *************************************/

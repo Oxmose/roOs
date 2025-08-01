@@ -8,7 +8,7 @@ pwd
 # Create tar file
 echo "Creating TAR with files:"
 cd $1
-gtar --sort=name -pcvf ../$2/initrd.tar `ls -A`
+tar --sort=name -pcvf ../$2/initrd.tar `ls -A`
 filesize=$(wc -c < "../$2/initrd.tar")
 
 echo -e "\nInitrd size: $filesize"

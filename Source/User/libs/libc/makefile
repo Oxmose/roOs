@@ -35,9 +35,11 @@ init:
 
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BIN_DIR)
+	$(shell mkdir -p $(dir $(C_OBJS)) >/dev/null)
+	$(shell mkdir -p $(dir $(A_OBJS)) >/dev/null)
 
 module: compile_asm compile_cc
-	@$(AR) r $(BIN_DIR)/liblibc.a $(BUILD_DIR)/*.o
+	@$(AR) r $(BIN_DIR)/liblibc.a $(A_OBJS) $(C_OBJS)
 	@echo "\e[1m\e[92m=> Generated user libc module\e[22m\e[39m"
 	@echo "\e[1m\e[92m--------------------------------------------------------------------------------\n\e[22m\e[39m"
 

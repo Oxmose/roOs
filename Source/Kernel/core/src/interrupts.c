@@ -295,6 +295,7 @@ void interruptMainHandler(void)
     custom_handler_t handler;
     kernel_thread_t* pCurrentThread;
     uint32_t         intId;
+    bool             schedule;
 
     /* Get the current thread */
     pCurrentThread = schedGetCurrentThread();
@@ -314,7 +315,7 @@ void interruptMainHandler(void)
     {
         _spuriousHandler();
         /* Schedule, we will never return */
-        schedScheduleNoInt(false);
+        schedScheduleNoInt();
     }
 
 #if INTERRUPTS_DEBUG_ENABLED
@@ -337,10 +338,17 @@ void interruptMainHandler(void)
     }
 
     /* Execute the handler */
-    handler(pCurrentThread);
+    schedule = handler(pCurrentThread);
 
     /* Schedule, we will never return */
-    schedScheduleNoInt(false);
+    if(schedule == true)
+    {
+        schedScheduleNoInt();
+    }
+    else
+    {
+        cpuRestoreContext(pCurrentThread);
+    }
     PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule int returned");
 }
 
@@ -502,7 +510,7 @@ OS_RETURN_E interruptIRQRegister(const uint32_t   kIrqNumber,
     if(interruptLine < 0)
     {
 
-        return OS_ERR_NO_SUCH_IRQ;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     retCode = interruptRegister(interruptLine, handler);
@@ -521,7 +529,7 @@ OS_RETURN_E interruptIRQRemove(const uint32_t kIrqNumber)
     if(interruptLine < 0)
     {
 
-        return OS_ERR_NO_SUCH_IRQ;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     retCode = interruptRemove(interruptLine);

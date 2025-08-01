@@ -239,7 +239,7 @@ void kickstart(void)
 #endif
 
     /* Call first schedule */
-    schedScheduleNoInt(true);
+    schedScheduleNoInt();
 
     /* Once the scheduler is started, we should never come back here. */
     KICKSTART_ASSERT(false, "Kickstart Returned", OS_ERR_UNAUTHORIZED_ACTION);

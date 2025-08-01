@@ -27,11 +27,13 @@
 /* Included headers */
 #include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
+#include <errno.h>         /* Errno values */
 #include <stdint.h>        /* Generic int types */
 #include <kerror.h>        /* Kernel error codes */
 #include <kqueue.h>        /* Kernel queues */
-#include <syslog.h>       /* Kernel Syslog */
+#include <syslog.h>        /* Kernel Syslog */
 #include <devtree.h>       /* Device tree lib */
+#include <syscall.h>       /* Kernel system call */
 #include <drivermgr.h>     /* Driver manager */
 #include <interrupts.h>    /* Interrupt manager */
 
@@ -59,12 +61,39 @@
 /** @brief FDT Time node, aux timer pHandles */
 #define FDT_TIMECONFIG_AUX_PROP "aux"
 
+/** @brief Defines the year of the Epoch */
+#define TIMESPAMP_START_YEAR 1970ULL
+/** @brief Defines the number of seconds in a leap year */
+#define SEC_PER_LEAP_YEAR 31622400ULL
+/** @brief Defines the number of seconds in a year */
+#define SEC_PER_YEAR 31536000ULL
+/** @brief Defines the number of seconds in a day */
+#define SEC_PER_DAY 86400ULL
+/** @brief Defines the number of seconds in an hour */
+#define SEC_PER_HOUR 3600ULL
+/** @brief Defines the number of seconds in a minute */
+#define SEC_PER_MINUTES 60ULL
+/** @brief Tells if the year X is a leap year. */
+#define IS_LEAP_YEAR(X) ((((X) % 4 == 0) && ((X) % 100 != 0)) || \
+                         ((X) % 400 == 0))
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/**
+ * @brief Defines the parameters for the get time system call.
+ */
+typedef struct
+{
+    /** @brief Errno value to set */
+    syscall_min_params_t errnoVal;
+    /** @brief The clock ID to use */
+    clockid_t clkId;
+    /** @brief The time spec structure to use for the call */
+    struct timespec* pTimeSpec;
+} syscall_gettime_params_t;
+
 
 /*******************************************************************************
  * MACROS
@@ -100,8 +129,10 @@
  * the main timer of the system.
  *
  * @param[in, out] pCurrThread Current thread at the moment of the interrupt.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _mainTimerHandler(kernel_thread_t* pCurrThread);
+static bool _mainTimerHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief The kernel's RTC timer interrupt handler.
@@ -110,8 +141,10 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread);
  * the RTC timer of the system.
  *
  * @param[in, out] pCurrThread Current thread at the moment of the interrupt.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _rtcTimerHandler(kernel_thread_t* pCurrThread);
+static bool _rtcTimerHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Adds an auxiliary timer to the list.
@@ -202,13 +235,28 @@ static volatile uint64_t sActiveWait[SOC_CPU_COUNT] = {0};
 /** @brief Auxiliary timers list lock */
 static kernel_spinlock_t sAuxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
 
+/** @brief Stores the number of reconds in a month for year and leap years */
+static uint64_t sSecPerMonth[2][12] = {
+    /* Year */
+    {
+        2678400, 2419200, 2678400, 2592000, 2678400, 2592000,
+        2678400, 2678400, 2592000, 2678400, 2592000, 2678400
+    },
+    /* Leap year */
+    {
+        2678400, 2505600, 2678400, 2592000, 2678400, 2592000,
+        2678400, 2678400, 2592000, 2678400, 2592000, 2678400
+    }
+};
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-static void _mainTimerHandler(kernel_thread_t* pCurrThread)
+static bool _mainTimerHandler(kernel_thread_t* pCurrThread)
 {
     uint8_t cpuId;
+
+    (void)pCurrThread;
 
     cpuId = cpuGetId();
 
@@ -235,11 +283,10 @@ static void _mainTimerHandler(kernel_thread_t* pCurrThread)
         }
     }
 
-    /* The main time triggered, we need to schedule the thread */
-    pCurrThread->requestSchedule = true;
+    return true;
 }
 
-static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
+static bool _rtcTimerHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
@@ -251,6 +298,8 @@ static void _rtcTimerHandler(kernel_thread_t* pCurrThread)
 #if TIME_MGT_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Time manager RTC handler");
 #endif
+
+    return false;
 }
 
 static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer)
@@ -451,9 +500,9 @@ uint64_t timeGetUptime(void)
     return time;
 }
 
-time_t timeGetDayTime(void)
+daytime_t timeGetDayTime(void)
 {
-    time_t time;
+    daytime_t time;
 
     if(sSysRtcTimer.pGetDaytime != NULL)
     {
@@ -539,6 +588,84 @@ void timeWaitNoScheduler(const uint64_t ns)
         while(sSysLifetimeTimer.pGetTimeNs(sSysLifetimeTimer.pDriverCtrl) <
               currTime + ns){}
     }
+}
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+
+void timeSyscallHandleClockGetTime(void* pParams)
+{
+    syscall_gettime_params_t* pClockParam;
+    daytime_t                 time;
+    date_t                    date;
+    uint64_t                  currTime;
+    uint32_t                  years;
+    uint32_t                  leaps;
+    int32_t                   i;
+    uint8_t                   leapIdx;
+
+    if(pParams == NULL)
+    {
+        return;
+    }
+
+    pClockParam = pParams;
+    if(pClockParam->pTimeSpec == NULL)
+    {
+        pClockParam->errnoVal = EFAULT;
+        return;
+    }
+
+    if(pClockParam->clkId == CLOCK_REALTIME)
+    {
+        time = timeGetDayTime();
+        date = timeGetDate();
+
+        /* Manage years */
+        for(i = TIMESPAMP_START_YEAR; i < date.year; ++i)
+        {
+            if(IS_LEAP_YEAR(i) == true)
+            {
+                ++leaps;
+            }
+            else
+            {
+                ++years;
+            }
+        }
+        currTime = years * SEC_PER_YEAR + leaps * SEC_PER_LEAP_YEAR;
+
+        /* Manage month */
+        leapIdx = IS_LEAP_YEAR(date.year) ? 1 : 0;
+        for(i = 0; i < date.month - 1; ++i)
+        {
+            currTime += sSecPerMonth[leapIdx][i];
+        }
+
+        /* Manage days */
+        currTime += (date.day - 1) * SEC_PER_DAY;
+
+        /* Manage the rest of the clock */
+        currTime += time.hours * SEC_PER_HOUR +
+                    time.minutes * SEC_PER_MINUTES +
+                    time.seconds;
+
+        /* Convert to nanoseconds */
+        currTime *= 1000000000;
+    }
+    else if(pClockParam->clkId == CLOCK_MONOTONIC)
+    {
+        currTime = timeGetUptime();
+    }
+    else
+    {
+        pClockParam->errnoVal = EINVAL;
+        return;
+    }
+
+    pClockParam->pTimeSpec->tv_sec  = currTime / 1000000000;
+    pClockParam->pTimeSpec->tv_nsec = currTime % 1000000000;
 }
 
 /************************************ EOF *************************************/

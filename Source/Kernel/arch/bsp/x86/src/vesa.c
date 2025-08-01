@@ -27,6 +27,7 @@
 #include <ioctl.h>         /* IOCTL commands */
 #include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
+#include <errno.h>         /* Errno values */
 #include <x86cpu.h>        /* CPU port manipulation */
 #include <stdint.h>        /* Generic int types */
 #include <string.h>        /* String manipualtion */
@@ -290,6 +291,9 @@ typedef struct
 
     /** @brief Refresh rate */
     uint32_t refreshRate;
+
+    /** @brief The controler's lock */
+    kernel_spinlock_t lock;
 } vesa_controler_t;
 
 /*******************************************************************************
@@ -1173,6 +1177,7 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
         goto ATTACH_END;
     }
     memset(pDrvCtrl, 0, sizeof(vesa_controler_t));
+    KERNEL_SPINLOCK_INIT(pDrvCtrl->lock);
     pDrvCtrl->vfsDriver = VFS_DRIVER_INVALID;
 
     /* Get the resolution */
@@ -2315,21 +2320,30 @@ static ssize_t _vesaVfsWrite(void*       pDrvCtrl,
                              const void* kpBuffer,
                              size_t      count)
 {
-    const char* pCursor;
-    size_t      coutSave;
+    const char*       pCursor;
+    size_t            coutSave;
+    vesa_controler_t* pCtrl;
 
     if(pHandle == (void*)-1)
     {
-        return -1;
+        return -EBADF;
+    }
+
+    if(kpBuffer == NULL)
+    {
+        return -EFAULT;
     }
 
     pCursor = (char*)kpBuffer;
 
     /* Output each character of the string */
     coutSave = count;
-    while(pCursor != NULL && *pCursor != 0 && count > 0)
+    pCtrl = GET_CONTROLER(pDrvCtrl);
+    while(pCursor != NULL && count > 0)
     {
+        KERNEL_LOCK(pCtrl->lock);
         _vesaProcessChar(pDrvCtrl, *pCursor);
+        KERNEL_UNLOCK(pCtrl->lock);
         ++pCursor;
         --count;
     }
@@ -2343,6 +2357,7 @@ static ssize_t _vesaVfsIOCTL(void*    pDriverData,
                              void*    pArgs)
 {
     int32_t                     retVal;
+    vesa_controler_t*           pCtrl;
     cons_ioctl_args_scroll_t*   pScrollArgs;
     graph_ioctl_args_drawpixel* pDrawPixelArgs;
 
@@ -2353,6 +2368,8 @@ static ssize_t _vesaVfsIOCTL(void*    pDriverData,
 
     /* Switch on the operation */
     retVal = 0;
+    pCtrl = GET_CONTROLER(pDriverData);
+    KERNEL_LOCK(pCtrl->lock);
     switch(operation)
     {
         case VFS_IOCTL_CONS_RESTORE_CURSOR:
@@ -2398,6 +2415,7 @@ static ssize_t _vesaVfsIOCTL(void*    pDriverData,
         default:
             retVal = -1;
     }
+    KERNEL_UNLOCK(pCtrl->lock);
 
     return retVal;
 }

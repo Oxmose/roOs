@@ -178,8 +178,10 @@ static OS_RETURN_E _rtcAttach(const fdt_node_t* pkFdtNode);
  *
  * @param[in] pCurrThread Unused, the current thread at the
  * interrupt.
+ *
+ * @return Returns if the scheduler shall be called on return.
  */
-static void _rtcDummyHandler(kernel_thread_t* pCurrThread);
+static bool _rtcDummyHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Enables RTC ticks.
@@ -249,7 +251,7 @@ static uint32_t _rtcGetFrequency(void* pDrvCtrl);
  *   registered for the RTC.
  */
 static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*));
+                                  bool(*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Removes the RTC tick handler.
@@ -290,7 +292,7 @@ static date_t _rtcGetDate(void* pDrvCtrl);
  *
  * @return The current daytime in seconds.
  */
-static time_t _rtcGetDaytime(void* pDrvCtrl);
+static daytime_t _rtcGetDaytime(void* pDrvCtrl);
 
 /**
  * @brief Updates the system's time and date.
@@ -307,7 +309,7 @@ static time_t _rtcGetDaytime(void* pDrvCtrl);
  * @warning You MUST call that function in every RTC handler or the RTC will
  * never raise interrupt again.
  */
-static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime);
+static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, daytime_t* pTime);
 
 /**
  * @brief Sends EOI to RTC itself.
@@ -522,7 +524,7 @@ ATTACH_END:
 
 }
 
-static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
+static bool _rtcDummyHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
@@ -530,7 +532,7 @@ static void _rtcDummyHandler(kernel_thread_t* pCurrThread)
           MODULE_NAME,
           "RTC Dummy handler called");
 
-    return;
+    return false;
 }
 
 static void _rtcEnable(void* pDrvCtrl)
@@ -695,7 +697,7 @@ static uint32_t _rtcGetFrequency(void* pDrvCtrl)
 }
 
 static OS_RETURN_E _rtcSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*))
+                                  bool(*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E      err;
     rtc_controler_t* pRtcCtrl;
@@ -741,9 +743,9 @@ static OS_RETURN_E _rtcRemoveHandler(void* pDrvCtrl)
     return _rtcSetHandler(pDrvCtrl, _rtcDummyHandler);
 }
 
-static time_t _rtcGetDaytime(void* pDrvCtrl)
+static daytime_t _rtcGetDaytime(void* pDrvCtrl)
 {
-    time_t retTime;
+    daytime_t retTime;
     date_t retDate;
     _rtcUpdateTime(pDrvCtrl, &retDate, &retTime);
     return retTime;
@@ -751,7 +753,7 @@ static time_t _rtcGetDaytime(void* pDrvCtrl)
 
 static date_t _rtcGetDate(void* pDrvCtrl)
 {
-    time_t retTime;
+    daytime_t retTime;
     date_t retDate;
 
     _rtcUpdateTime(pDrvCtrl, &retDate, &retTime);
@@ -759,7 +761,7 @@ static date_t _rtcGetDate(void* pDrvCtrl)
     return retDate;
 }
 
-static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, time_t* pTime)
+static void _rtcUpdateTime(void* pDrvCtrl, date_t* pDate, daytime_t* pTime)
 {
     uint8_t          century;
     uint8_t          regB;

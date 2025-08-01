@@ -436,7 +436,7 @@ static void _panicNoSched(void)
     colorscheme_t  consoleScheme;
     cursor_t       consoleCursor;
     uint8_t        cpuId;
-    time_t         currTime;
+    daytime_t      currTime;
     uint64_t       uptime;
     uintptr_t*     lastRBP;
 
@@ -456,7 +456,7 @@ static void _panicNoSched(void)
     consoleCursor.y = 0;
     consoleRestoreCursor(&consoleCursor);
 
-    kprintfPanic("##############################    KERNEL PANIC    ##########"
+    kprintfPanic("\n##############################    KERNEL PANIC    ##########"
                     "####################\n");
 
     kprintfPanic("\nPanic called before scheduler was initialized. Error %d\n",
@@ -510,13 +510,13 @@ static void _panicNoSched(void)
     }
 }
 
-void kernelPanicHandler(kernel_thread_t* pCurrThread)
+bool kernelPanicHandler(kernel_thread_t* pCurrThread)
 {
     colorscheme_t  consoleScheme;
     cursor_t       consoleCursor;
     virtual_cpu_t* pThreadVCpu;
     uint8_t        cpuId;
-    time_t         currTime;
+    daytime_t      currTime;
     uint64_t       uptime;
     ipi_params_t   ipiParams;
 
@@ -619,6 +619,8 @@ PANIC_END:
         interruptDisable();
         cpuHalt();
     }
+
+    return true;
 }
 
 void kernelPanic(const uint32_t kErrorCode,

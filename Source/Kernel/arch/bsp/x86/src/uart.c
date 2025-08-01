@@ -376,8 +376,10 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate);
  * and unblock a thread if it is blocked on the input.
  *
  * @param[in] pCurrentThread Unused.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _uartInterruptHandler(kernel_thread_t* pCurrentThread);
+static bool _uartInterruptHandler(kernel_thread_t* pCurrentThread);
 
 /**
  * @brief Reads data from the UART input buffer.
@@ -805,7 +807,7 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
     }
 }
 
-static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
+static bool _uartInterruptHandler(kernel_thread_t* pCurrentThread)
 {
     uint8_t     intStatus;
     uint8_t     data;
@@ -818,7 +820,7 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     {
         /* Set EOI */
         interruptIRQSetEOI(spInputCtrl->irqNumber);
-        return;
+        return false;
     }
 
     /* Check is we received a data */
@@ -863,6 +865,8 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
 
     /* Set EOI */
     interruptIRQSetEOI(spInputCtrl->irqNumber);
+
+    return false;
 }
 
 static ssize_t _uartRead(void*        pDrvCtrl,

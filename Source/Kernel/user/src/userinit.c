@@ -263,7 +263,7 @@ static OS_RETURN_E _createInit(void)
         /* Create the init thread */
         error = schedCreateThread(&pInitThread,
                                   false,
-                                  KERNEL_HIGHEST_PRIORITY,
+                                  20,
                                   "init",
                                   KERNEL_STACK_SIZE,
                                   0,
@@ -322,11 +322,6 @@ static void* _userShutdown(void* args)
 
     pInitThread = args;
 
-    while(1)
-    {
-        schedSleep(1000000000);
-    }
-
     error = schedJoinThread(pInitThread, NULL, NULL);
     if(error != OS_NO_ERR)
     {
@@ -356,6 +351,9 @@ void userInit(void)
         return;
     }
 
+    /* Initialize the kernel shell */
+    kernelShellInit();
+
     /* Create the init process */
     error = _createInit();
     if(error != OS_NO_ERR)
@@ -365,9 +363,6 @@ void userInit(void)
                "Failed to create the init process, error %d",
                error);
     }
-
-    /* Initialize the kernel shell */
-    kernelShellInit();
 }
 
 /************************************ EOF *************************************/

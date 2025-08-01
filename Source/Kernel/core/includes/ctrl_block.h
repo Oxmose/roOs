@@ -226,14 +226,23 @@ typedef struct kernel_process_t
     /** @brief Stores the main TLS size */
     size_t mainTlsSize;
 
+    /** @brief Stores the main TLS initialized data size */
+    size_t mainTlsInitDataSize;
+
     /** @brief Stores the main TLS data */
     void* pMainTlsData;
+
+    /** @brief Stores the main TLS alignement */
+    size_t mainTlsAlign;
+
+    /** @brief Stores the TLS mapping flags */
+    uint64_t mainTlsMappingFlags;
 
     /** @brief The process' structure lock */
     kernel_spinlock_t lock;
 } kernel_process_t;
 
-/** @brief Stores the thread user data, used for fast access to thread 
+/** @brief Stores the thread user data, used for fast access to thread
  * properties in the user space.
  */
 typedef struct user_thread_t
@@ -250,9 +259,8 @@ typedef struct user_thread_t
     /** @brief The thread's priority */
     uint8_t priority;
 
-    /** @brief The thread's current CPU */
-    uint8_t currentCpu;
-
+    /** @brief The thread local storage size */
+    ssize_t tlsSize;
 } user_thread_t;
 
 /** @brief This is the representation of the thread for the kernel. */
@@ -364,9 +372,6 @@ typedef struct kernel_thread_t
 
     /** @brief Thread's currently mapped CPU */
     uint8_t schedCpu;
-
-    /** @brief Tells if the thread should be scheduled */
-    bool requestSchedule;
 
     /** @brief Tells if the thread has preemption disabled */
     bool preemptionDisabled;

@@ -46,6 +46,7 @@
         "stdbool.h": "c",
         "syslog.h": "c",
         "kheap.h": "c",
-        "cpuinterrupt.h": "c"
+        "cpuinterrupt.h": "c",
+        "syscalls.h": "c"
     }
 }

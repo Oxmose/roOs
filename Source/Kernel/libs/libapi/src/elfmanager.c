@@ -394,6 +394,21 @@ typedef struct
 static OS_RETURN_E _checkFile(const elf_header_t* kpHeader);
 
 /**
+ * @brief Loads the thread local storage segment in the process.
+ *
+ * @details Loads the thread local storage segment in the process. This will
+ * create the main TLS for the process. The size and alignement as well as the
+ * data are saved to the process structure.
+ *
+ * @param[in] kpHeader The TLS segment program header.
+ * @param[out] pProcess The process to update.
+ *
+ * @return The function returns the success or error status.
+ */
+static OS_RETURN_E _getTLSData(const elf_pheader_t* kpHeader,
+                               kernel_process_t*    pProcess);
+
+/**
  * @brief Loads a relocatable ELF.
  *
  * @details Loads a relocatable ELF. The function loads the ELF and
@@ -505,6 +520,34 @@ static OS_RETURN_E _checkFile(const elf_header_t* kpHeader)
     return OS_NO_ERR;
 }
 
+static OS_RETURN_E _getTLSData(const elf_pheader_t* kpHeader,
+                               kernel_process_t*    pProcess)
+{
+    pProcess->mainTlsMappingFlags = MEMMGR_MAP_USER | MEMMGR_MAP_RW;
+    if((kpHeader->pFlags & ELF_SEG_FLAG_R) == ELF_SEG_FLAG_R)
+    {
+        if((kpHeader->pFlags & ELF_SEG_FLAG_W) == ELF_SEG_FLAG_W)
+        {
+            pProcess->mainTlsMappingFlags |= MEMMGR_MAP_RW;
+        }
+        else
+        {
+            pProcess->mainTlsMappingFlags |= MEMMGR_MAP_RO;
+        }
+    }
+    if((kpHeader->pFlags & ELF_SEG_FLAG_X) == ELF_SEG_FLAG_X)
+    {
+        pProcess->mainTlsMappingFlags |= MEMMGR_MAP_EXEC;
+    }
+
+    pProcess->pMainTlsData = (void*)kpHeader->pVAddr;
+    pProcess->mainTlsSize = kpHeader->pMemSz;
+    pProcess->mainTlsInitDataSize = kpHeader->pFileSz;
+    pProcess->mainTlsAlign = kpHeader->pAlign;
+
+    return OS_NO_ERR;
+}
+
 static OS_RETURN_E _loadElfReloc(const int32_t       kFileFd,
                                  const elf_header_t* kpHeader)
 {
@@ -612,6 +655,14 @@ static OS_RETURN_E _loadElfExec(const int32_t       kFileFd,
     pProcess = schedGetCurrentProcess();
     for(i = 0; i < kpHeader->ePhNum; ++i)
     {
+        if(pProgHeader[i].pType == ELF_SEG_TYPE_TLS)
+        {
+            error = _getTLSData(&pProgHeader[i], pProcess);
+            if(error != OS_NO_ERR)
+            {
+                break;
+            }
+        }
         /* Only check the loadable segments */
         if(pProgHeader[i].pType != ELF_SEG_TYPE_LOAD)
         {
@@ -709,6 +760,7 @@ static OS_RETURN_E _loadElfExec(const int32_t       kFileFd,
                                         (void*)(pProgHeader[i].pVAddr + mapped),
                                         KERNEL_PAGE_SIZE,
                                         mappingFlags,
+                                        true,
                                         pProcess);
             if(error != OS_NO_ERR)
             {
@@ -729,7 +781,10 @@ static OS_RETURN_E _loadElfExec(const int32_t       kFileFd,
                                                 NULL);
                 memoryReleaseFrame(newFrame, 1);
             }
-            memoryUserUnmap((void*)pProgHeader[i].pVAddr, mapped, pProcess);
+            memoryUserUnmap((void*)pProgHeader[i].pVAddr,
+                            mapped,
+                            true,
+                            pProcess);
             ELFMGR_ASSERT(error == OS_NO_ERR,
                           "Failed to unmap mapped memory",
                           error);
@@ -761,6 +816,7 @@ static OS_RETURN_E _loadElfExec(const int32_t       kFileFd,
                 }
                 error = memoryUserUnmap((void*)pProgHeader[i].pVAddr,
                                         mapped,
+                                        true,
                                         pProcess);
                 ELFMGR_ASSERT(error == OS_NO_ERR,
                               "Failed to unmap mapped memory",
@@ -769,6 +825,16 @@ static OS_RETURN_E _loadElfExec(const int32_t       kFileFd,
 
             --i;
         } while(i != 0);
+        if(pProcess->pMainTlsData != NULL)
+        {
+            /* TODO: Use the user heap to allocate this */
+            /* Free thread local storage data */
+            kfree(pProcess->pMainTlsData);
+            pProcess->mainTlsAlign        = 0;
+            pProcess->mainTlsInitDataSize = 0;
+            pProcess->mainTlsSize         = 0;
+            pProcess->pMainTlsData        = NULL;
+        }
     }
 
     /* Free the buffers */

@@ -194,8 +194,10 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId);
  *
  * @param[in] pCurrThread Unused, the current thread at the
  * interrupt.
+ *
+ * @return Returns if the scheduler shall be called on return.
  */
-static void _lapicTimerDummyHandler(kernel_thread_t* pCurrThread);
+static bool _lapicTimerDummyHandler(kernel_thread_t* pCurrThread);
 
 /**
  * @brief Enables LAPIC Timer ticks.
@@ -262,7 +264,7 @@ static uint32_t _lapicTimerGetFrequency(void* pDrvCtrl);
  * registered for the LAPIC Timer.
  */
 static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
-                                         void(*pHandler)(kernel_thread_t*));
+                                         bool (*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Removes the LAPIC Timer tick handler.
@@ -610,7 +612,7 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     return OS_NO_ERR;
 }
 
-static void _lapicTimerDummyHandler(kernel_thread_t* pCurrThread)
+static bool _lapicTimerDummyHandler(kernel_thread_t* pCurrThread)
 {
     (void)pCurrThread;
 
@@ -618,7 +620,7 @@ static void _lapicTimerDummyHandler(kernel_thread_t* pCurrThread)
           MODULE_NAME,
           "LAPIC Timer Dummy handler called");
 
-    return;
+    return false;
 }
 
 static void _lapicTimerEnable(void* pDrvCtrl)
@@ -735,7 +737,7 @@ static uint32_t _lapicTimerGetFrequency(void* pDrvCtrl)
 }
 
 static OS_RETURN_E _lapicTimerSetHandler(void* pDrvCtrl,
-                                         void(*pHandler)(kernel_thread_t*))
+                                         bool (*pHandler)(kernel_thread_t*))
 {
     OS_RETURN_E         err;
     lapic_timer_ctrl_t* pLapicTimerCtrl;

@@ -367,6 +367,52 @@ bool cpuIsContextFromInt(const void* kpVCpu);
  */
 bool cpuIsContextFromSyscall(const void* kpVCpu);
 
+/**
+ * @brief Creates the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Creates the local thread storage for the thread provided in
+ * parameters. The memory and other resources are allocated and the master
+ * TLS is copied. This function also allocates the user thread data but does not
+ * initialize it.
+ *
+ * @param[in] pThread The thread for which the thread local storage shall be
+ * created.
+ *
+ * @return The function returns the error or success status.
+ */
+OS_RETURN_E cpuCreateLocalStorage(kernel_thread_t* pThread);
+
+/**
+ * @brief Copies the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Copies the local thread storage for the thread provided in
+ * parameters. The memory and other resources are allocated. This function also
+ * allocates the user thread data but does not initialize it.
+ *
+ * @param[in] pThread The destination thread that will receive the copy.
+ * @param[in] kpSrcThread The thread for which the thread local storage shall be
+ * copied.
+ *
+ * @return The function returns the error or success status.
+ */
+OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
+                                const kernel_thread_t* kpSrcThread);
+
+/**
+ * @brief Destroys the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Destroys the local thread storage for the thread provided in
+ * parameters. The memory and other resources are released and the master
+ * TLS is copied.
+ *
+ * @param[in] pThread The thread for which the thread local storage shall be
+ * destroyed.
+ */
+void cpuDestroyLocalStorage(kernel_thread_t* pThread);
+
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

@@ -362,7 +362,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled)
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
-               OS_ERR_NO_SUCH_IRQ);
+               OS_ERR_NO_SUCH_ID);
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
@@ -399,7 +399,7 @@ static void _picSetIrqMask(const uint32_t kIrqNumber, const bool kEnabled)
     {
         PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find PIC IRQ (chained)",
-                   OS_ERR_NO_SUCH_IRQ);
+                   OS_ERR_NO_SUCH_ID);
 
         /* Set new IRQ number */
         cascadingNumber = kIrqNumber - 8;
@@ -462,7 +462,7 @@ static void _picSetIrqEOI(const uint32_t kIrqNumber)
 
     PIC_ASSERT(kIrqNumber <= PIC_MAX_IRQ_LINE,
                "Could not find PIC IRQ",
-               OS_ERR_NO_SUCH_IRQ);
+               OS_ERR_NO_SUCH_ID);
 
 
     /* End of interrupt signal */
@@ -470,7 +470,7 @@ static void _picSetIrqEOI(const uint32_t kIrqNumber)
     {
         PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find PIC IRQ (chained)",
-                   OS_ERR_NO_SUCH_IRQ);
+                   OS_ERR_NO_SUCH_ID);
 
         _cpuOutB(PIC_EOI, sDrvCtrl.cpuSlaveCommPort);
     }
@@ -509,7 +509,7 @@ static INTERRUPT_TYPE_E _picHandleSpurious(const uint32_t kIntNumber)
     {
         PIC_ASSERT(sDrvCtrl.hasSlave == true,
                    "Could not find spurious PIC IRQ (chained)",
-                   OS_ERR_NO_SUCH_IRQ);
+                   OS_ERR_NO_SUCH_ID);
 
         /* This is not a potential spurious irq */
         if(irqNumber != PIC_SPURIOUS_IRQ_SLAVE)

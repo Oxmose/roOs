@@ -262,11 +262,14 @@ void cpuRestoreContext(const kernel_thread_t* kpThread);
  *
  * @param[in] pThread The thread for which the redirection is done.
  * @param[in] instructionAddr The address to which the execution flow is done.
+ * @param[in] kIsUser Tells if the signal is executed in user or kernel mode.
  *
  * @warning This function shall only be called in the scheduler it is restoring
  * the thread's context.
  */
-void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr);
+void cpuRequestSignal(kernel_thread_t* pThread, 
+                      void*            instructionAddr, 
+                      const bool       kIsUser);
 
 /**
  * @brief Registers the CPU exceptions.

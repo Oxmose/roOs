@@ -4938,7 +4938,9 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     return OS_NO_ERR;
 }
 
-void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
+void cpuRequestSignal(kernel_thread_t* pThread, 
+                      void*            instructionAddr, 
+                      const bool       kIsUser)
 {
     virtual_cpu_t* pVCpu;
     virtual_cpu_t* pThreadVCpu;
@@ -4948,12 +4950,35 @@ void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr)
     pVCpu = pThread->pVCpu;
     pThreadVCpu = pThread->pThreadVCpu;
 
-    /* Redirect execution to the CPU redirection handler
-     * Copy the thread's regular state.
-     */
+    /* Prepare for kernel mode signal if needed */
+    if(kIsUser == false)
+    {
+        /* Setup VCPU for kernel mode */
+        pVCpu->intContext.cs     = KERNEL_CS_64;
+        pVCpu->intContext.rflags = pThreadVCpu->intContext.rflags;
+        pVCpu->cpuState.ss       = KERNEL_DS_64;
+        pVCpu->cpuState.gs       = KERNEL_DS_64;
+        pVCpu->cpuState.fs       = KERNEL_DS_64;
+        pVCpu->cpuState.es       = KERNEL_DS_64;
+        pVCpu->cpuState.ds       = KERNEL_DS_64;
+    }
+    else
+    {
+        /* Setup VCPU for user mode */
+        pVCpu->intContext.cs     = USER_CS_64;
+        pVCpu->intContext.rflags = pThreadVCpu->intContext.rflags;
+        pVCpu->cpuState.ss       = USER_DS_64;
+        pVCpu->cpuState.gs       = USER_DS_64;
+        pVCpu->cpuState.fs       = USER_DS_64;
+        pVCpu->cpuState.es       = USER_DS_64;
+        pVCpu->cpuState.ds       = USER_DS_64;
+        PANIC(OS_ERR_NOT_SUPPORTED, 
+              MODULE_NAME, 
+              "User signals are not implemented yet.");
+    }
+
+    /* Redirect execution to the CPU redirection handler */
     pVCpu->intContext.rip    = (uintptr_t)cpuSignalHandler;
-    pVCpu->intContext.cs     = pThreadVCpu->intContext.cs;
-    pVCpu->intContext.rflags = pThreadVCpu->intContext.rflags;
 
     /* Prepare the cpu state
      * TODO: This could be an issue when we will have processes with red zone

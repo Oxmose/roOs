@@ -623,6 +623,8 @@ void timeSyscallHandleClockGetTime(void* pParams)
         date = timeGetDate();
 
         /* Manage years */
+        years = 0;
+        leaps = 0;
         for(i = TIMESPAMP_START_YEAR; i < date.year; ++i)
         {
             if(IS_LEAP_YEAR(i) == true)

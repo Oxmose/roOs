@@ -650,7 +650,7 @@ static void _shellSignalSelf(const char* args)
 
     spinlockAcquire(&sSignalLock);
 
-    error = signalRegister(THREAD_SIGNAL_USR1, _shellSignalHandler);
+    error = signalRegister(THREAD_SIGNAL_USR1, _shellSignalHandler, false);
     if(error != OS_NO_ERR)
     {
         kprintf("Failed to register signal handler with error %d\n", error);

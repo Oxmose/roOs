@@ -154,6 +154,18 @@ typedef struct
 } thread_resource_t;
 
 /**
+ * @brief This structure defines the signal handling data.
+ */
+typedef struct
+{
+    /** @brief Signal handler function */
+    void* handler;
+
+    /** @brief Defines if the handler shall be called in kernel or user mode. */
+    bool isUser;
+} signal_t;
+
+/**
  * @brief Defines a thread error information table.
  */
 typedef struct
@@ -393,7 +405,7 @@ typedef struct kernel_thread_t
     uint32_t signal;
 
     /** @brief Thread's signal handlers table */
-    void* signalHandlers[THREAD_MAX_SIGNALS];
+    signal_t signalHandlers[THREAD_MAX_SIGNALS];
 
     /** @brief Thread's error table */
     thread_error_table_t errorTable;

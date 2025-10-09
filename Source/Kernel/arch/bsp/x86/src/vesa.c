@@ -1205,7 +1205,7 @@ static OS_RETURN_E _vesaDriverAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_INCORRECT_VALUE;
         goto ATTACH_END;
     }
-    pDrvCtrl->refreshRate  = FDTTOCPU32(*kpUintProp);
+    pDrvCtrl->refreshRate = FDTTOCPU32(*kpUintProp);
 
 #if VESA_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,

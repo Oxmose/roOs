@@ -1410,7 +1410,8 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
                  "Failed to find a CPU to release the thread",
                  OS_ERR_INCORRECT_VALUE);
     pThread->currentState = THREAD_STATE_READY;
-    pThread->schedCpu  = cpuId;
+    pThread->nextState    = THREAD_STATE_READY;
+    pThread->schedCpu     = cpuId;
 
     KERNEL_LOCK(sThreadTables[cpuId].lock);
 

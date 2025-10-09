@@ -220,7 +220,7 @@ cpuSignalHandler:
     mov ebx, [eax]
 
     ; RBX contains the pointer to the current VCPU, replace with the regular
-    ; VCPU at eBX + 4
+    ; VCPU at EBX + 4
     mov eax, ebx
     add eax, 4
     mov eax, [eax]
@@ -250,7 +250,6 @@ cpuSwitchKernelSyscallContext:
 
     ; Save the specific context that will be used when scheduling back
     pushfd
-
 
     ; Save the stack pointer to the process context
     mov [eax + VCPU_OFF_SYSCALL_ESP], esp

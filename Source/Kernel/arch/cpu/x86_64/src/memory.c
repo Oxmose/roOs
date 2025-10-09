@@ -3128,6 +3128,7 @@ static OS_RETURN_E _memoryMgrUnmapUser(uintptr_t*     pTableLevel,
     return error;
 }
 
+#include <kerneloutput.h>
 static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
                                     const uintptr_t        kPhysAddr,
                                     const kernel_thread_t* kpThread)
@@ -3148,12 +3149,12 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
     KERNEL_LOCK(pProcessMem->lock);
 
     /* Update the page table and the reference count */
+    baseVirt = GET_VIRT_MEM_ADDR(kPhysAddr) & ~PAGE_SIZE_MASK;
     refCount = _getAndLockReferenceCount(kPhysAddr);
     MEM_ASSERT(*refCount > 0,
                "Invalid reference count zero",
                OS_ERR_INCORRECT_VALUE);
-
-    baseVirt = GET_VIRT_MEM_ADDR(kPhysAddr) & ~PAGE_SIZE_MASK;
+    
     /* If the reference count is greater than 1, we need to copy
      * the frame.
      */
@@ -3181,7 +3182,6 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
         _unlockReferenceCount(kPhysAddr);
         newFrame = _makeCanonical(kPhysAddr, true) & ~PAGE_SIZE_MASK;
     }
-
 
     /* Update the mapping */
     pmlEntry[3] = (kFaultVirtAddr >> PML4_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
@@ -3211,6 +3211,8 @@ static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
     /* Remove COW and add new address */
     newEntryValue = (newEntryValue | PAGE_FLAG_READ_WRITE) & ~PAGE_FLAG_COW;
     pPageTable[0][pmlEntry[0]] = newEntryValue | newFrame;
+
+    cpuInvalidateTlbEntry(kFaultVirtAddr);
 
     KERNEL_UNLOCK(pProcessMem->lock);
 

@@ -55,7 +55,7 @@
 /* None */
 
 /************************** Static global variables ***************************/
-/** @brief The thread-local errno varialbe. */
+/** @brief The thread-local errno variable. */
 static __thread int errnoVal;
 
 /*******************************************************************************

@@ -271,6 +271,7 @@ static OS_RETURN_E _createInit(void)
                                   NULL);
         if(error == OS_NO_ERR)
         {
+            syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Init thread created with TID %d", pInitThread->tid);
             /* Create the init return thread */
             error = schedCreateThread(&pInitReturnThread,
                                       true,
@@ -352,10 +353,11 @@ void userInit(void)
     }
 
     /* Initialize the kernel shell */
-    kernelShellInit();
+    //kernelShellInit();
 
     /* Create the init process */
     error = _createInit();
+    error = OS_NO_ERR;
     if(error != OS_NO_ERR)
     {
         syslog(SYSLOG_LEVEL_ERROR,

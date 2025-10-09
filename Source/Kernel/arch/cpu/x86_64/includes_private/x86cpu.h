@@ -124,7 +124,7 @@ typedef struct
     /** @brief Stores the RSP value when saving the context in a system call */
     uint64_t rspSaveFromSyscall;
 
-    /** @brief Stores the kernel stack if the VCPU */
+    /** @brief Stores the kernel stack of the VCPU */
     uint64_t kernelStackEnd;
 } __attribute__((packed)) virtual_cpu_t;
 

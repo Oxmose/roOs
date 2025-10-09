@@ -179,11 +179,11 @@ static void* otherThread(void* args)
 
     kprintf("Registering signals in %d\n", pNewThreadHandle->tid);
 
-    error = signalRegister(THREAD_SIGNAL_ILL, signalHandlerIllegalInst);
-    error |= signalRegister(THREAD_SIGNAL_FPE, signalHandlerDivZero);
-    error |= signalRegister(THREAD_SIGNAL_USR1, signalHandlerSelf);
-    error |= signalRegister(THREAD_SIGNAL_SEGV, signalHandlerSegfault);
-    error |= signalRegister(THREAD_SIGNAL_USR2, signalHandlerRegular);
+    error = signalRegister(THREAD_SIGNAL_ILL, signalHandlerIllegalInst, false);
+    error |= signalRegister(THREAD_SIGNAL_FPE, signalHandlerDivZero, false);
+    error |= signalRegister(THREAD_SIGNAL_USR1, signalHandlerSelf, false);
+    error |= signalRegister(THREAD_SIGNAL_SEGV, signalHandlerSegfault, false);
+    error |= signalRegister(THREAD_SIGNAL_USR2, signalHandlerRegular, false);
     TEST_POINT_ASSERT_RCODE(TEST_SIGNAL_REGISTER(++lastVal),
                             error == OS_NO_ERR,
                             OS_NO_ERR,

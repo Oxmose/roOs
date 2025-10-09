@@ -16,15 +16,18 @@ int main(void)
     write(6, "Init running\n", 13);
     newPid = fork();
 
-    while(newPid == 0) {
-        retVal = 5;
-    }
+    
 
     memset(timeSec, 0, 32);
     itoa(newPid, timeSec, 10);
     write(6, "Fork: ", 6);
     write(6, timeSec, strlen(timeSec));
     write(6, "\n", 1);
+
+    while(newPid == 0) 
+    {   
+        retVal = 5;
+    }
 
     sleepTime.tv_nsec = 500000000;
     sleepTime.tv_sec = 0;
@@ -58,10 +61,6 @@ int main(void)
         }
 
         retVal = sched_yield();
-        memset(timeSec, 0, 32);
-        uitoa(retVal, timeSec, 10);
-        write(6, "Yield ", 6);
-        write(6, timeSec, strlen(timeSec));
         write(6, "\n", 1);
     }
 

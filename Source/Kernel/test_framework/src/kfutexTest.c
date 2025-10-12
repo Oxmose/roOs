@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>
 #include <kfutex.h>
 #include <scheduler.h>
 #include <kerneloutput.h>

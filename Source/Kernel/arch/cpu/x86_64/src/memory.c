@@ -959,11 +959,8 @@ static bool _pageFaultHandler(kernel_thread_t* pCurrentThread)
     pCurrentThread->errorTable.instAddr =
     cpuGetContextIP(pCurrentThread->pVCpu);
     pCurrentThread->errorTable.pExecVCpu = pCurrentThread->pVCpu;
-    while(1);
     error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
     MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
-
-    
 
     return true;
 }

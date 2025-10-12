@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>
 #include <critical.h>
 #include <scheduler.h>
 #include <stdint.h>

@@ -24,9 +24,10 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Standard int definitions */
-#include <stddef.h> /* Standard definitions */
-#include <kerror.h> /* Kernel errors */
+#include <stdint.h>     /* Standard int definitions */
+#include <stddef.h>     /* Standard definitions */
+#include <kerror.h>     /* Kernel errors */
+#include <ctrl_block.h> /* Kernel control blocks definitions */
 
 /*******************************************************************************
  * CONSTANTS

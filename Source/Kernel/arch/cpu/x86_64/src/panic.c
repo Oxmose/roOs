@@ -502,6 +502,10 @@ static void _panicNoSched(void)
 
     consoleSetColorScheme(&consoleScheme);
 
+#if TEST_PANIC_ENABLED
+    TEST_FRAMEWORK_END();
+#endif
+
     /* We will never return from interrupt */
     while(1)
     {

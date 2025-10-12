@@ -84,7 +84,7 @@ static volatile uint32_t counter = 0;
  * FUNCTIONS
  ******************************************************************************/
 
-static void incrementer_handler(kernel_thread_t* curr_thread)
+static bool incrementer_handler(kernel_thread_t* curr_thread)
 {
     (void)curr_thread;
 
@@ -92,14 +92,18 @@ static void incrementer_handler(kernel_thread_t* curr_thread)
     {
         counter += ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
+
+    return false;
 }
 
-static void decrementer_handler(kernel_thread_t* curr_thread)
+static bool decrementer_handler(kernel_thread_t* curr_thread)
 {
     if(counter > 0)
     {
         counter -= ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
+
+    return false;
 }
 
 static void test_sw_interupts(void)

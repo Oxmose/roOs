@@ -91,10 +91,10 @@ static void _end(void)
     TEST_FRAMEWORK_END();
 }
 
-static void _dummy(kernel_thread_t* curr_thread)
+static bool _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
-    cpuRequestSignal(curr_thread, _end);
+    cpuRequestSignal(curr_thread, _end, false);
 
     kprintf("Got exc\n");
 
@@ -103,6 +103,8 @@ static void _dummy(kernel_thread_t* curr_thread)
                             true,
                             true,
                             TEST_EXCEPTION_ENABLED);
+    
+    return false;
 }
 
 void exceptionTest(void)

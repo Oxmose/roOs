@@ -560,7 +560,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define ACPI_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -815,6 +815,7 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
     uintptr_t        searchRangeEnd;
     size_t           mapSize;
     uintptr_t        mapBase;
+    uintptr_t        mapPhys;
     uint64_t         signature;
 
 
@@ -844,6 +845,7 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
            searchRangeEnd);
 #endif
     /* Map the memory */
+    mapPhys = searchRangeStart;
     mapBase = searchRangeStart & ~PAGE_SIZE_MASK;
     mapSize = ((searchRangeEnd - mapBase) + PAGE_SIZE_MASK) & ~PAGE_SIZE_MASK;
 
@@ -870,8 +872,8 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
 #if ACPI_DEBUG_ENABLED
             syslog(SYSLOG_LEVEL_DEBUG,
                    MODULE_NAME,
-                   "RSDP found at 0x%p",
-                   searchRangeStart);
+                   "RSDP found at 0x%p (0x%p)",
+                   searchRangeStart, mapPhys);
 #endif
             /* Parse RSDP */
             _acpiParseRSDP((rsdp_descriptor_t*)searchRangeStart);
@@ -879,6 +881,7 @@ static OS_RETURN_E _acpiAttach(const fdt_node_t* pkFdtNode)
         }
 
         searchRangeStart += sizeof(uintptr_t);
+        mapPhys += sizeof(uintptr_t);
     }
 
     /* Unmap the memory */
@@ -942,8 +945,20 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
 #if ACPI_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
-           "Revision %d detected",
-           kpRsdpDesc->revision);
+           "==== ACPI INFO ==== \n\t"
+           "ACPI Revision %d\n\t"
+           "Checksum: 0x%02X\n\t"
+           "OEMID: %c%c%c%c%c%c\n\t"
+           "RSDT Address: 0x%p\n\t",
+           kpRsdpDesc->revision,
+           kpRsdpDesc->checksum,
+           kpRsdpDesc->oemid[0],
+           kpRsdpDesc->oemid[1],
+           kpRsdpDesc->oemid[2],
+           kpRsdpDesc->oemid[3],
+           kpRsdpDesc->oemid[4],
+           kpRsdpDesc->oemid[5],
+           kpRsdpDesc->rsdtAddress);
 #endif
 
     /* ACPI version check */
@@ -1030,7 +1045,7 @@ static void _acpiParseRSDP(const rsdp_descriptor_t* kpRsdpDesc)
     }
     else
     {
-        ACPI_ASSERT(FALSE,
+        ACPI_ASSERT(false,
                     "Unsupported ACPI version",
                     OS_ERR_NOT_SUPPORTED);
     }
@@ -1077,6 +1092,14 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
     ACPI_ASSERT((sum & 0xFF) == 0,
                 "RSDT Checksum failed",
                 OS_ERR_INCORRECT_VALUE);
+
+ #if ACPI_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "RSDT signature 0x%0X - Length: %d",
+           *((uint32_t*)kpRrsdtPtr->header.pSignature),
+           kpRrsdtPtr->header.length);
+#endif   
 
     ACPI_ASSERT(*((uint32_t*)kpRrsdtPtr->header.pSignature) == ACPI_RSDT_SIG,
                 "Wrong RSDT Signature",

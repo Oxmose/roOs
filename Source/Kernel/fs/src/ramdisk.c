@@ -26,12 +26,13 @@
 #include <ioctl.h>        /* IOCTL commands */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
-#include <mutex.h>        /* Kernel mutex */
+#include <kmutex.h>       /* Kernel mutex */
 #include <stdint.h>       /* Standard int definitions */
 #include <string.h>       /* String manipulation */
 #include <kerror.h>       /* Kernel errors */
 #include <memory.h>       /* Memory manager */
 #include <syslog.h>       /* Syslog service */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical management */
 #include <drivermgr.h>    /* Driver manager */
 
@@ -76,7 +77,7 @@ typedef struct
     vfs_driver_t vfsDriver;
 
     /** @brief The RamDisk driver lock */
-    mutex_t lock;
+    kmutex_t lock;
 } ramdisk_ctrl_t;
 
 
@@ -87,7 +88,7 @@ typedef struct
 typedef struct
 {
     /** @brief Access permissions */
-    bool_t isReadOnly;
+    bool isReadOnly;
 
     /** @brief Current read offset */
     size_t offset;
@@ -108,7 +109,7 @@ typedef struct
  *
 */
 #define RAMDISK_ASSERT(COND, MSG, ERROR) {                  \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -303,9 +304,9 @@ static OS_RETURN_E _ramdiskAttach(const fdt_node_t* pkFdtNode)
     ramdisk_ctrl_t*  pCtrl;
     OS_RETURN_E      retCode;
     OS_RETURN_E      error;
-    bool_t           isMutexSet;
+    bool             isMutexSet;
 
-    isMutexSet = FALSE;
+    isMutexSet = false;
 
     /* Create the driver controller structure */
     pCtrl = kmalloc(sizeof(ramdisk_ctrl_t));
@@ -316,13 +317,13 @@ static OS_RETURN_E _ramdiskAttach(const fdt_node_t* pkFdtNode)
     }
     memset(pCtrl, 0, sizeof(ramdisk_ctrl_t));
 
-    retCode = mutexInit(&pCtrl->lock,
-                        MUTEX_FLAG_QUEUING_PRIO | MUTEX_FLAG_PRIO_ELEVATION);
+    retCode = kmutexInit(&pCtrl->lock,
+                         KMUTEX_FLAG_QUEUING_PRIO | KMUTEX_FLAG_PRIO_ELEVATION);
     if(retCode != OS_NO_ERR)
     {
         goto ATTACH_END;
     }
-    isMutexSet = TRUE;
+    isMutexSet = true;
 
     /* Get the registers, giving the base physical address and size */
     kpPtrProp = fdtGetProp(pkFdtNode, RAMDISK_FDT_REG_PROP, &propLen);
@@ -379,9 +380,9 @@ static OS_RETURN_E _ramdiskAttach(const fdt_node_t* pkFdtNode)
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        if(isMutexSet == TRUE)
+        if(isMutexSet == true)
         {
-            error = mutexDestroy(&pCtrl->lock);
+            error = kmutexDestroy(&pCtrl->lock);
             RAMDISK_ASSERT(error == OS_NO_ERR,
                            "Failed to destroy mutex",
                            error);
@@ -440,11 +441,11 @@ static void* _ramdiskVfsOpen(void*       pDrvCtrl,
 
     if((flags & O_RDWR) == O_RDWR)
     {
-        pDesc->isReadOnly = FALSE;
+        pDesc->isReadOnly = false;
     }
     else
     {
-        pDesc->isReadOnly = TRUE;
+        pDesc->isReadOnly = true;
     }
 
     return pDesc;
@@ -484,7 +485,7 @@ static ssize_t _ramdiskVfsRead(void*  pDrvCtrl,
     pCtrl = pDrvCtrl;
     pDesc = pHandle;
 
-    error = mutexLock(&pCtrl->lock);
+    error = kmutexLock(&pCtrl->lock);
     if(error != OS_NO_ERR)
     {
         return -1;
@@ -501,7 +502,7 @@ static ssize_t _ramdiskVfsRead(void*  pDrvCtrl,
     }
     pDesc->offset += maxRead;
 
-    error = mutexUnlock(&pCtrl->lock);
+    error = kmutexUnlock(&pCtrl->lock);
     RAMDISK_ASSERT(error == OS_NO_ERR, "Failed to unlock mutex", error);
 
     return maxRead;
@@ -525,12 +526,12 @@ static ssize_t _ramdiskVfsWrite(void*       pDrvCtrl,
     pCtrl = pDrvCtrl;
     pDesc = pHandle;
 
-    if(pDesc->isReadOnly == TRUE)
+    if(pDesc->isReadOnly == true)
     {
         return -1;
     }
 
-    error = mutexLock(&pCtrl->lock);
+    error = kmutexLock(&pCtrl->lock);
     if(error != OS_NO_ERR)
     {
         return -1;
@@ -548,7 +549,7 @@ static ssize_t _ramdiskVfsWrite(void*       pDrvCtrl,
 
     pDesc->offset += maxWrite;
 
-    error = mutexUnlock(&pCtrl->lock);
+    error = kmutexUnlock(&pCtrl->lock);
     RAMDISK_ASSERT(error == OS_NO_ERR, "Failed to unlock mutex", error);
 
     return maxWrite;

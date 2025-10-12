@@ -26,15 +26,20 @@
 #include <vfs.h>          /* VFS service */
 #include <cpu.h>          /* CPU API*/
 #include <kheap.h>        /* Kernel Heap */
+#include <panic.h>        /* Kernel panic */
+#include <stdlib.h>       /* Standard lib */
 #include <signal.h>       /* Signal manager */
 #include <string.h>       /* String manipulation */
 #include <signal.h>       /* Signals */
 #include <syslog.h>       /* Syslog services */
+#include <memory.h>       /* Memory manager */
 #include <console.h>      /* Console driver */
 #include <graphics.h>     /* Graphics driver */
 #include <time_mgt.h>     /* Time manager */
-#include <semaphore.h>    /* Semaphore service */
+#include <ksemaphore.h>   /* Semaphore service */
 #include <scheduler.h>    /* Scheduler services */
+#include <interrupts.h>   /* Interrupt manager */
+#include <elfmanager.h>   /* ELF manager */
 #include <kerneloutput.h> /* Kernel output */
 
 /* Header file */
@@ -83,6 +88,12 @@ static void _shellList(const char* args);
 static void _shellCat(const char* args);
 static void _shellMount(const char* args);
 static void _shellTest(const char* args);
+static void _shellPanic(const char* args);
+static void _shellSleep(const char* args);
+static void _shellExit(const char* args);
+static void _shellFork(const char* args);
+static void _shellReadElf(const char* args);
+static void _shellGetMapping(const char* args);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -118,6 +129,12 @@ static const command_t sCommands[] = {
     {"mount", "Mount a device", _shellMount},
     {"cat", "Cat a file", _shellCat},
     {"test", "Current dev test for testing purpose", _shellTest},
+    {"panic", "Generates a kernel panic", _shellPanic},
+    {"sleep", "Sleeps for ns time", _shellSleep},
+    {"fork", "Tests the fork features", _shellFork},
+    {"relf", "Read the ELF", _shellReadElf},
+    {"map", "Get a thread memory mapping", _shellGetMapping},
+    {"exit", "Exit the shell", _shellExit},
     {"help", "Display this help", _shellHelp},
     {NULL, NULL, NULL}
 };
@@ -126,11 +143,96 @@ static const command_t sCommands[] = {
  * FUNCTIONS
  ******************************************************************************/
 
+static void _shellReadElf(const char* args)
+{
+    OS_RETURN_E error;
+    uintptr_t   entryPoint;
+    error = elfManagerLoadElf(args, &entryPoint);
+
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to check ELF %s\n", args);
+    }
+    else
+    {
+        kprintf("Valid ELF %s | Entry point 0x%p\n", args, entryPoint);
+    }
+}
+
+static void _shellFork(const char* args)
+{
+    (void)args;
+    OS_RETURN_E error;
+    int values[50];
+    int32_t newPid;
+    for(int i = 0; i < 50; ++i)
+    {
+        values[i] = i;
+    }
+
+    error = schedFork(&newPid);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to fork, error: %d\n", error);
+        return;
+    }
+    if(newPid == 0)
+    {
+        for(int i = 0; i < 50; ++i)
+        {
+            values[i] = i * 2;
+        }
+        schedSleep(1000000000);
+        kprintf("In children and values are:\n");
+        for(int i = 0; i < 50; ++i)
+        {
+            kprintf("Value: %d\n", values[i]);
+        }
+        schedThreadExit(THREAD_TERMINATE_CORRECTLY,
+                    THREAD_RETURN_STATE_RETURNED,
+                    0);
+    }
+    else
+    {
+        schedSleep(1000000000);
+        kprintf("In parent (pid of child is %d) and values are:\n", newPid);
+        for(int i = 0; i < 50; ++i)
+        {
+            kprintf("Value: %d\n", values[i]);
+        }
+    }
+}
+
+static void _shellExit(const char* args)
+{
+    int32_t retCode;
+
+    retCode = strtol(args, NULL, 10);
+
+    kprintf("Kernel shell exiting with code %i.\n", retCode);
+    schedThreadExit(THREAD_TERMINATE_CORRECTLY,
+                    THREAD_RETURN_STATE_RETURNED,
+                    (void*)(uintptr_t)retCode);
+}
+
+static void _shellSleep(const char* args)
+{
+    uint64_t time;
+    time = strtoul(args, NULL, 10);
+    schedSleep(time);
+}
+
+static void _shellPanic(const char* args)
+{
+    (void)args;
+    PANIC(OS_NO_ERR, "KERNEL_SHELL", "Kernel Shell Panic Generator");
+}
+
 static void _shellTest(const char* args)
 {
     (void)args;
-    _shellMount("/dev/storage/hd0 /hd ustar");
-    _shellCat("/hd/newfile2.txt");
+    _shellReadElf("/initrd/newfile2.txt");
+    _shellReadElf("/initrd/init");
 }
 
 static void _shellCat(const char* args)
@@ -223,16 +325,27 @@ static void _shellDrawTest(const char* args)
 {
     (void)args;
     uint32_t x;
-
-    consoleClear();
-    consolePutCursor(0, 0);
-
-    graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
-
-    for(x = 1; x < 1022; ++x)
+    uint32_t i;
+    uint32_t colors[3] = {
+        0xff33addf,
+        0xffdf33ad,
+        0xffad33df
+    };
+    for(i = 0; i < 3; ++i)
     {
-        graphicsDrawLine(x, 1, 500, 500, 0xff33addf);
-        schedSleep(333333);
+        consoleClear();
+        consolePutCursor(0, 0);
+
+        graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
+
+        
+        for(x = 1; x < 1022; ++x)
+        {
+            graphicsDrawLine(x, 1, 500, 500, colors[i]);
+            
+        }
+        schedSleep(1000000000);
+
     }
 }
 
@@ -299,7 +412,7 @@ static void _shellTimeTest(const char* args)
     }
 }
 
-static void* _shellCtxSwitchRoutineAlone(void* args)
+static void* _shellScheduleRoutineAlone(void* args)
 {
     int32_t tid;
     uint64_t endTime;
@@ -316,12 +429,12 @@ static void* _shellCtxSwitchRoutineAlone(void* args)
                                (endTime - sTimeSwitchStart[tid])) / (i + 1);
     }
 
-    kprintf("Switch time no resched: %llu\n", sTimeSwitchEnd[tid]);
+    kprintf("Schedule time alone: %llu\n", sTimeSwitchEnd[tid]);
 
     return NULL;
 }
 
-static void* _shellCtxSwitchRoutine(void* args)
+static void* _shellScheduleRoutine(void* args)
 {
     int32_t tid;
     uint64_t endTime;
@@ -341,7 +454,54 @@ static void* _shellCtxSwitchRoutine(void* args)
                                (endTime - sTimeSwitchStart[(tid + 1) % 2])) / (i + 1);
     }
 
-    kprintf("Switch time resched: %llu\n", sTimeSwitchEnd[(tid + 1) % 2]);
+    kprintf("Schedule time multiple: %llu\n", sTimeSwitchEnd[(tid + 1) % 2]);
+
+    return NULL;
+}
+
+static void* _shellCtxSwitchRoutineAlone(void* args)
+{
+    int32_t tid;
+    uint64_t endTime;
+    uint32_t i;
+
+    tid = (int32_t)(uintptr_t)args;
+
+    for(i = 0; i < 1000000; ++i)
+    {
+        sTimeSwitchStart[tid] = timeGetUptime();
+        cpuRaiseInterrupt(0x22);
+        endTime = timeGetUptime();
+        sTimeSwitchEnd[tid] = (sTimeSwitchEnd[tid] * i +
+                               (endTime - sTimeSwitchStart[tid])) / (i + 1);
+    }
+
+    kprintf("Context switch time alone: %llu\n", sTimeSwitchEnd[tid]);
+
+    return NULL;
+}
+
+static void* _shellCtxSwitchRoutine(void* args)
+{
+    int32_t tid;
+    uint64_t endTime;
+    uint32_t i;
+
+    tid = (int32_t)(uintptr_t)args;
+    spinlockAcquire(&threadStartedLock);
+    ++threadStarted;
+    spinlockRelease(&threadStartedLock);
+    while(threadStarted != 2) {}
+    for(i = 0; i < 100000; ++i)
+    {
+        sTimeSwitchStart[tid] = timeGetUptime();
+        cpuRaiseInterrupt(0x22);
+        endTime = timeGetUptime();
+        sTimeSwitchEnd[(tid + 1) % 2] = (sTimeSwitchEnd[(tid + 1) % 2] * i +
+                               (endTime - sTimeSwitchStart[(tid + 1) % 2])) / (i + 1);
+    }
+
+    kprintf("Context switch time multiple: %llu\n", sTimeSwitchEnd[(tid + 1) % 2]);
 
     return NULL;
 }
@@ -356,8 +516,8 @@ static void _shellCtxSwitchTime(const char* args)
     memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
     threadStarted = 0;
 
-    error = schedCreateKernelThread(&pShellThread[0],
-                                    KERNEL_LOWEST_PRIORITY - 1,
+    error = schedCreateThread(&pShellThread[0], true,
+                                    11,
                                     "kernelShellTime",
                                     0x1000,
                                     0x8,
@@ -380,12 +540,36 @@ static void _shellCtxSwitchTime(const char* args)
     memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
     threadStarted = 0;
 
+    error = schedCreateThread(&pShellThread[0], true,
+                                    11,
+                                    "kernelShellTime",
+                                    0x1000,
+                                    0x8,
+                                    _shellScheduleRoutineAlone,
+                                    (void*)0);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+
+    error = schedJoinThread(pShellThread[0], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+        return;
+    }
+
+    memset(sTimeSwitchStart, 0, sizeof(sTimeSwitchStart));
+    memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
+    threadStarted = 0;
+
     /* We don't keep the kernel shell thread handle, it the child of the main
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateKernelThread(&pShellThread[0],
-                                    KERNEL_LOWEST_PRIORITY - 1,
+    error = schedCreateThread(&pShellThread[0], true,
+                                    11,
                                     "kernelShellTime0",
                                     0x1000,
                                     0x8,
@@ -396,12 +580,56 @@ static void _shellCtxSwitchTime(const char* args)
         kprintf("Failed to start thread. Error %d\n", error);
         return;
     }
-    error = schedCreateKernelThread(&pShellThread[1],
-                                    KERNEL_LOWEST_PRIORITY - 1,
+    error = schedCreateThread(&pShellThread[1], true,
+                                    11,
                                     "kernelShellTime1",
                                     0x1000,
                                     0x8,
                                     _shellCtxSwitchRoutine,
+                                    (void*)1);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+
+    error = schedJoinThread(pShellThread[0], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+    }
+    error = schedJoinThread(pShellThread[1], NULL, NULL);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to join thread. Error %d\n", error);
+    }
+
+    memset(sTimeSwitchStart, 0, sizeof(sTimeSwitchStart));
+    memset(sTimeSwitchEnd, 0, sizeof(sTimeSwitchEnd));
+    threadStarted = 0;
+
+    /* We don't keep the kernel shell thread handle, it the child of the main
+     * kernel thread (IDLE) and will be fully destroyed on exit, without need
+     * of join.
+     */
+    error = schedCreateThread(&pShellThread[0], true,
+                                    11,
+                                    "kernelShellTime0",
+                                    0x1000,
+                                    0x8,
+                                    _shellScheduleRoutine,
+                                    (void*)0);
+    if(error != OS_NO_ERR)
+    {
+        kprintf("Failed to start thread. Error %d\n", error);
+        return;
+    }
+    error = schedCreateThread(&pShellThread[1], true,
+                                    11,
+                                    "kernelShellTime1",
+                                    0x1000,
+                                    0x8,
+                                    _shellScheduleRoutine,
                                     (void*)1);
     if(error != OS_NO_ERR)
     {
@@ -436,7 +664,7 @@ static void _shellSignalSelf(const char* args)
 
     spinlockAcquire(&sSignalLock);
 
-    error = signalRegister(THREAD_SIGNAL_USR1, _shellSignalHandler);
+    error = signalRegister(THREAD_SIGNAL_USR1, _shellSignalHandler, false);
     if(error != OS_NO_ERR)
     {
         kprintf("Failed to register signal handler with error %d\n", error);
@@ -482,36 +710,44 @@ static void _shellDisplayThreads(const char* args)
     size_t         i;
     uint32_t       j;
     size_t         prio;
-    thread_info_t* pThreadTable;
+    int32_t*       pThreadTable;
+    thread_info_t  threadInfo;
 
     threadCount = schedGetThreadCount();
-    pThreadTable = kmalloc(sizeof(thread_info_t) * threadCount);
+    pThreadTable = kmalloc(sizeof(int32_t) * threadCount);
     if(pThreadTable == NULL)
     {
         kprintf("Unable to allocate thread table memory\n");
         return;
     }
 
-    threadCount = schedGetThreads(pThreadTable, threadCount);
-    kprintf("#------------------------------------------------------------------------#\n");
-    kprintf("| PID  | NAME                           | TYPE   | PRIO | STATE    | CPU |\n");
-    kprintf("#------------------------------------------------------------------------#\n");
+    threadCount = schedGetThreadsIds(pThreadTable, threadCount);
+    kprintf("#---------------------------------------------------------------------------------------------------------#\n");
+    kprintf("|  PID  |  TID  | NAME                           | TYPE   | PRIO | STATE    | CPU | STACKS                |\n");
+    kprintf("#---------------------------------------------------------------------------------------------------------#\n");
     for(prio = KERNEL_HIGHEST_PRIORITY; prio <= KERNEL_LOWEST_PRIORITY; ++prio)
     {
         for(i = 0; i < threadCount; ++i)
         {
-            if(pThreadTable[i].priority != prio)
+            if(schedGetThreadInfo(&threadInfo, pThreadTable[i]) != OS_NO_ERR)
             {
                 continue;
             }
-            kprintf("| % 4d | %s", pThreadTable[i].tid, pThreadTable[i].pName);
+            if(threadInfo.priority != prio)
+            {
+                continue;
+            }
+            kprintf("| % 5d | % 5d | %s",
+                    threadInfo.pid,
+                    threadInfo.tid,
+                    threadInfo.pName);
             for(j = 0;
-                j < THREAD_NAME_MAX_LENGTH - strlen(pThreadTable[i].pName) - 1;
+                j < THREAD_NAME_MAX_LENGTH - strlen(threadInfo.pName) - 1;
                 ++j)
             {
                 kprintf(" ");
             }
-            switch(pThreadTable[i].type)
+            switch(threadInfo.type)
             {
                 case THREAD_TYPE_KERNEL:
                     kprintf("| KERNEL |");
@@ -523,8 +759,8 @@ static void _shellDisplayThreads(const char* args)
                     kprintf("| NONE   |");
                     break;
             }
-            kprintf("  % 3d |", pThreadTable[i].priority);
-            switch(pThreadTable[i].currentState)
+            kprintf("  % 3d |", threadInfo.priority);
+            switch(threadInfo.currentState)
             {
                 case THREAD_STATE_RUNNING:
                     kprintf(" RUNNING  |");
@@ -548,17 +784,54 @@ static void _shellDisplayThreads(const char* args)
                     kprintf(" UNKNOWN  |");
                     break;
             }
-            if(pThreadTable[i].currentState == THREAD_STATE_RUNNING)
+            if(threadInfo.currentState == THREAD_STATE_RUNNING)
             {
-                kprintf(" % 3d |\n", pThreadTable[i].schedCpu);
+                kprintf(" % 3d |", threadInfo.schedCpu);
             }
             else
             {
-                kprintf("   * |\n", pThreadTable[i].schedCpu);
+                kprintf("   * |", threadInfo.schedCpu);
             }
+            kprintf(" K: 0x%P |\n", threadInfo.kStack);
+            kprintf("|       |       |                                |        |      |          |     | U: 0x%P |\n", threadInfo.uStack);
+            kprintf("#---------------------------------------------------------------------------------------------------------#\n");
         }
     }
-    kprintf("#------------------------------------------------------------------------#\n");
+}
+
+static void _shellGetMapping(const char* args)
+{
+    int32_t            tid;
+    size_t             infoSize;
+    size_t             i;
+    memory_page_info_t infos[20];
+    kernel_thread_t*   pThread;
+    infoSize = 20;
+
+    tid = strtol(args, NULL, 10);
+    pThread = schedGetThread(tid);
+    if(pThread == NULL)
+    {
+        kprintf("Cannot find thread with ID %d.\n", tid);
+        return;
+    }
+
+    kprintf("Thread ID: %d | Name: %s\n", pThread->tid, pThread->pName);
+
+    /* Get the thread mapping */
+    memoryGetPagesInfo(pThread, infos, &infoSize);
+    kprintf("#--------------------------------------------------------------#\n");
+    kprintf("|      Physical      |      Virtual       |       Flags        |\n");
+    kprintf("#--------------------------------------------------------------#\n");
+
+    for(i = 0; i < infoSize; ++i)
+    {
+        kprintf("| 0x%p | 0x%p | 0x%p |\n", 
+                infos[i].physAddress, 
+                infos[i].virtAddress, 
+                infos[i].flags);
+    }
+    kprintf("#--------------------------------------------------------------#\n");
 }
 
 static void _shellExecuteCommand(void)
@@ -627,7 +900,7 @@ static void _shellGetCommand(void)
     consoleSetColorScheme(&saveScheme);
     kprintf(" ");
     kprintfFlush();
-    while(TRUE)
+    while(true)
     {
         readCount = consoleRead(&readChar, 1);
         if(readCount > 0)
@@ -663,12 +936,12 @@ static void* _shellEntry(void* args)
     (void)args;
 
     /* Wait for all the system to be up */
-    schedSleep(1000000000);
+    schedSleep(100000000);
 
     kprintf("\n");
 
 
-    while(TRUE)
+    while(true)
     {
         _shellGetCommand();
         _shellExecuteCommand();
@@ -686,13 +959,14 @@ void kernelShellInit(void)
      * kernel thread (IDLE) and will be fully destroyed on exit, without need
      * of join.
      */
-    error = schedCreateKernelThread(&pShellThread,
-                                    10,
-                                    "kernelShell",
-                                    0x1000,
-                                    0x2,
-                                    _shellEntry,
-                                    NULL);
+    error = schedCreateThread(&pShellThread,
+                              true,
+                              10,
+                              "kernelShell",
+                              0x1000,
+                              0x0,
+                              _shellEntry,
+                              NULL);
     if(error != OS_NO_ERR)
     {
         syslog(SYSLOG_LEVEL_ERROR,

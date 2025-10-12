@@ -26,13 +26,14 @@
 #include <ioctl.h>        /* IOCTL commands */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
-#include <mutex.h>        /* Kernel mutex */
+#include <kmutex.h>       /* Kernel mutex */
 #include <x86cpu.h>       /* CPU port manipulation */
 #include <stdint.h>       /* Standard int definitions */
 #include <string.h>       /* String manipulation */
 #include <kerror.h>       /* Kernel errors */
 #include <memory.h>       /* Memory manager */
 #include <syslog.h>       /* Syslog service */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical management */
 #include <drivermgr.h>    /* Driver manager */
 
@@ -125,13 +126,13 @@ typedef struct
     vfs_driver_t vfsDriver;
 
     /** @brief Defines if the device supported LBA48 addressing */
-    bool_t supportLBA48;
+    bool supportLBA48;
 
     /** @brief Drive size in bytes */
     size_t size;
 
     /** @brief The disk driver lock */
-    mutex_t lock;
+    kmutex_t lock;
 
     /** @brief Sector buffer used during write operations */
     uint8_t pBufferSectors[2][ATA_PIO_SECTOR_SIZE];
@@ -145,7 +146,7 @@ typedef struct
 typedef struct
 {
     /** @brief Access permissions */
-    bool_t isReadOnly;
+    bool isReadOnly;
 
     /** @brief Current offset in the disk */
     size_t offset;
@@ -238,7 +239,7 @@ typedef struct
  *
 */
 #define ATAPIO_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -551,9 +552,9 @@ static OS_RETURN_E _atapioAttach(const fdt_node_t* pkFdtNode)
     atapio_ctrl_t*  pCtrl;
     OS_RETURN_E     retCode;
     OS_RETURN_E     error;
-    bool_t          isMutexSet;
+    bool            isMutexSet;
 
-    isMutexSet = FALSE;
+    isMutexSet = false;
 
     /* Create the driver controller structure */
     pCtrl = kmalloc(sizeof(atapio_ctrl_t));
@@ -564,13 +565,13 @@ static OS_RETURN_E _atapioAttach(const fdt_node_t* pkFdtNode)
     }
     memset(pCtrl, 0, sizeof(atapio_ctrl_t));
 
-    retCode = mutexInit(&pCtrl->lock,
-                        MUTEX_FLAG_QUEUING_PRIO | MUTEX_FLAG_PRIO_ELEVATION);
+    retCode = kmutexInit(&pCtrl->lock,
+                         KMUTEX_FLAG_QUEUING_PRIO | KMUTEX_FLAG_PRIO_ELEVATION);
     if(retCode != OS_NO_ERR)
     {
         goto ATTACH_END;
     }
-    isMutexSet = TRUE;
+    isMutexSet = true;
 
     /* Get the type */
     kpUint32Prop = fdtGetProp(pkFdtNode, ATAPIO_FDT_TYPE_PROP, &propLen);
@@ -628,9 +629,9 @@ static OS_RETURN_E _atapioAttach(const fdt_node_t* pkFdtNode)
 ATTACH_END:
     if(retCode != OS_NO_ERR)
     {
-        if(isMutexSet == TRUE)
+        if(isMutexSet == true)
         {
-            error = mutexDestroy(&pCtrl->lock);
+            error = kmutexDestroy(&pCtrl->lock);
             ATAPIO_ASSERT(error == OS_NO_ERR,
                           "Failed to destroy mutex",
                           error);
@@ -682,11 +683,11 @@ static void* _atapioVfsOpen(void*       pDrvCtrl,
 
     if((flags & O_RDWR) == O_RDWR)
     {
-        pDesc->isReadOnly = FALSE;
+        pDesc->isReadOnly = false;
     }
     else
     {
-        pDesc->isReadOnly = TRUE;
+        pDesc->isReadOnly = true;
     }
 
     return pDesc;
@@ -748,7 +749,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
         return 0;
     }
 
-    error = mutexLock(&pCtrl->lock);
+    error = kmutexLock(&pCtrl->lock);
     if(error != OS_NO_ERR)
     {
         return -1;
@@ -756,7 +757,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
 
     pUintBuff = pBuffer;
 
-    if(pCtrl->supportLBA48 == TRUE)
+    if(pCtrl->supportLBA48 == true)
     {
         maxSector = 0x0000FFFFFFFFFFFF;
         maxSectorBurst = UINT16_MAX;
@@ -797,7 +798,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
         /* Get the number of sectors to read */
         sectorsToRead = MIN(maxSectorBurst, (sectorEnd - sectorStart) + 1);
 
-        if(pCtrl->supportLBA48 == TRUE)
+        if(pCtrl->supportLBA48 == true)
         {
             prepResult = _atapioPrepRead48(pCtrl, sectorsToRead, sectorStart);
         }
@@ -812,7 +813,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
                    MODULE_NAME,
                    "Failure preparing for reading disk");
 
-            error = mutexUnlock(&pCtrl->lock);
+            error = kmutexUnlock(&pCtrl->lock);
             ATAPIO_ASSERT(error == OS_NO_ERR,
                           "Failed to unlock mutex",
                           error);
@@ -830,7 +831,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
                        MODULE_NAME,
                        "Failure while reading disk");
 
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
@@ -848,7 +849,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
                        MODULE_NAME,
                        "Failure while reading disk");
 
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
@@ -915,7 +916,7 @@ static ssize_t _atapioVfsRead(void*  pDrvCtrl,
         sectorStart += sectorsToRead;
     }
 
-    error = mutexUnlock(&pCtrl->lock);
+    error = kmutexUnlock(&pCtrl->lock);
     ATAPIO_ASSERT(error == OS_NO_ERR, "Failed to unlock mutex", error);
 
     return pDesc->offset - readVal;
@@ -939,8 +940,8 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
     uint32_t       j;
     int32_t        retValue;
     uint8_t        status;
-    bool_t         partialStart;
-    bool_t         partialEnd;
+    bool           partialStart;
+    bool           partialEnd;
     uint64_t       diff;
     int32_t        prepResult;
     const uint8_t* kpUintBuff;
@@ -958,7 +959,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
     pCtrl = pDrvCtrl;
     pDesc = pHandle;
 
-    if(pDesc->isReadOnly == TRUE)
+    if(pDesc->isReadOnly == true)
     {
         return -1;
     }
@@ -969,7 +970,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
         return 0;
     }
 
-    error = mutexLock(&pCtrl->lock);
+    error = kmutexLock(&pCtrl->lock);
     if(error != OS_NO_ERR)
     {
         return -1;
@@ -977,7 +978,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
 
     kpUintBuff = (const uint8_t*)kpBuffer;
 
-    if(pCtrl->supportLBA48 == TRUE)
+    if(pCtrl->supportLBA48 == true)
     {
         maxSector = 0x0000FFFFFFFFFFFF;
         maxSectorBurst = UINT16_MAX;
@@ -1033,13 +1034,13 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                     MODULE_NAME,
                     "Failure while reading disk");
 
-            error = mutexUnlock(&pCtrl->lock);
+            error = kmutexUnlock(&pCtrl->lock);
             ATAPIO_ASSERT(error == OS_NO_ERR,
                           "Failed to unlock mutex",
                           error);
             return -1;
         }
-        partialStart = TRUE;
+        partialStart = true;
 
         diff = MIN(count,
                    ATA_PIO_SECTOR_SIZE - (pDesc->offset % ATA_PIO_SECTOR_SIZE));
@@ -1051,7 +1052,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
     }
     else
     {
-        partialStart = FALSE;
+        partialStart = false;
     }
 
     /* If the last sector will not be fully overwritten, we need to read
@@ -1070,26 +1071,26 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                 syslog(SYSLOG_LEVEL_ERROR,
                        MODULE_NAME,
                        "Failure while reading disk");
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
                 return -1;
             }
 
-            partialEnd = TRUE;
+            partialEnd = true;
 
             /* Partial copy */
             memcpy(pCtrl->pBufferSectors[1], kpUintBuff + count - diff, diff);
         }
         else
         {
-            partialEnd = FALSE;
+            partialEnd = false;
         }
     }
     else
     {
-        partialEnd = FALSE;
+        partialEnd = false;
     }
 
     /* Write the sectors */
@@ -1099,7 +1100,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
         /* Get the number of sectors to write */
         sectorsToWrite = MIN(maxSectorBurst, (sectorEnd - sectorStart) + 1);
 
-        if(pCtrl->supportLBA48 == TRUE)
+        if(pCtrl->supportLBA48 == true)
         {
             prepResult = _atapioPrepWrite48(pCtrl, sectorsToWrite, sectorStart);
         }
@@ -1113,7 +1114,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                    MODULE_NAME,
                    "Failure preparing for writing disk");
 
-            error = mutexUnlock(&pCtrl->lock);
+            error = kmutexUnlock(&pCtrl->lock);
             ATAPIO_ASSERT(error == OS_NO_ERR,
                           "Failed to unlock mutex",
                           error);
@@ -1132,7 +1133,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                        MODULE_NAME,
                        "Failure while writing disk");
 
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
@@ -1150,7 +1151,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                        MODULE_NAME,
                        "Failure while writing disk");
 
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
@@ -1159,7 +1160,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
             }
 
             /* Check if we need to write the partial start */
-            if(partialStart == TRUE)
+            if(partialStart == true)
             {
                 for(j = 0; j < ATA_PIO_SECTOR_SIZE; j += 2)
                 {
@@ -1172,10 +1173,10 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                            (pDesc->offset % ATA_PIO_SECTOR_SIZE));
                 pDesc->offset += diff;
                 count -= diff;
-                partialStart = FALSE;
+                partialStart = false;
             }
             /* Check if this is the last sector and we have a partial end */
-            else if(sectorStart == sectorEnd && partialEnd == TRUE)
+            else if(sectorStart == sectorEnd && partialEnd == true)
             {
                 for(j = 0; j < ATA_PIO_SECTOR_SIZE; j += 2)
                 {
@@ -1185,7 +1186,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
 
                 pDesc->offset += count;
                 count = 0;
-                partialEnd = FALSE;
+                partialEnd = false;
             }
             else
             {
@@ -1208,7 +1209,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
                        MODULE_NAME,
                        "Failure while flushing disk");
 
-                error = mutexUnlock(&pCtrl->lock);
+                error = kmutexUnlock(&pCtrl->lock);
                 ATAPIO_ASSERT(error == OS_NO_ERR,
                               "Failed to unlock mutex",
                               error);
@@ -1222,7 +1223,7 @@ static ssize_t _atapioVfsWrite(void*       pDrvCtrl,
     }
 
 
-    error = mutexUnlock(&pCtrl->lock);
+    error = kmutexUnlock(&pCtrl->lock);
     ATAPIO_ASSERT(error == OS_NO_ERR, "Failed to unlock mutex", error);
 
     return pDesc->offset - writeVal;
@@ -1435,7 +1436,7 @@ static OS_RETURN_E _atapioIdentify(atapio_ctrl_t* pCtrl)
 
     pCtrl->supportLBA48 = devData.lba48Supported;
 
-    if(pCtrl->supportLBA48 == TRUE)
+    if(pCtrl->supportLBA48 == true)
     {
         pCtrl->size = (size_t)devData.numLBA48Sectors * ATA_PIO_SECTOR_SIZE;
     }
@@ -1591,7 +1592,7 @@ static int32_t _atapioReadSector(atapio_ctrl_t* pCtrl,
     uint8_t  status;
     uint32_t i;
 
-    if(pCtrl->supportLBA48 == TRUE)
+    if(pCtrl->supportLBA48 == true)
     {
         prepResult = _atapioPrepRead48(pCtrl, 1, sector);
     }
@@ -1645,7 +1646,7 @@ static OS_RETURN_E _atapioFlush(atapio_ctrl_t* pCtrl)
 {
     uint8_t status;
 
-    if(pCtrl->supportLBA48 == TRUE)
+    if(pCtrl->supportLBA48 == true)
     {
         _cpuOutB(pCtrl->type == ATA_MASTER ? 0x40 : 0x50,
                  pCtrl->port + ATA_PIO_DEVICE_PORT_OFFSET);

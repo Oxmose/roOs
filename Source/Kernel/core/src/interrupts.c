@@ -31,9 +31,10 @@
 #include <stddef.h>         /* Standard definitions */
 #include <string.h>         /* String manipulation */
 #include <syslog.h>         /* Kernel Syslog */
+#include <stdbool.h>        /* Bool types */
 #include <critical.h>       /* Critical sections */
 #include <scheduler.h>      /* Kernel scheduler */
-#include <semaphore.h>      /* Kernel semaphores */
+#include <ksemaphore.h>     /* Kernel semaphores */
 
 /* Configuration files */
 #include <config.h>
@@ -95,7 +96,7 @@ typedef struct
  *
 */
 #define INTERRUPT_ASSERT(COND, MSG, ERROR) {                \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -112,7 +113,7 @@ typedef struct
  * @param enabled Unused.
  */
 static void _initDriverSetIrqMask(const uint32_t kIrqNumber,
-                                  const bool_t   kEnabled);
+                                  const bool     kEnabled);
 
 /**
  * @brief Initial placeholder for the IRQ EOI driver.
@@ -190,14 +191,14 @@ static kernel_thread_t* spDeferedIntThread;
 static kqueue_t* spDeferedIntQueue;
 
 /** @brief Defered interrupt semaphore */
-static semaphore_t sDefereIntQueueSem;
+static ksemaphore_t sDefereIntQueueSem;
 
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 static void _initDriverSetIrqMask(const uint32_t kIrqNumber,
-                                  const bool_t   kEnabled)
+                                  const bool     kEnabled)
 {
     (void)kIrqNumber;
     (void)kEnabled;
@@ -243,10 +244,10 @@ static void* _interruptDeferedRoutine(void* args)
 
     (void)args;
 
-    while(TRUE)
+    while(true)
     {
         /* Wait for a new job */
-        error = semWait(&sDefereIntQueueSem);
+        error = ksemWait(&sDefereIntQueueSem);
 
         if(error == OS_NO_ERR)
         {
@@ -294,6 +295,7 @@ void interruptMainHandler(void)
     custom_handler_t handler;
     kernel_thread_t* pCurrentThread;
     uint32_t         intId;
+    bool             schedule;
 
     /* Get the current thread */
     pCurrentThread = schedGetCurrentThread();
@@ -313,7 +315,7 @@ void interruptMainHandler(void)
     {
         _spuriousHandler();
         /* Schedule, we will never return */
-        schedScheduleNoInt(FALSE);
+        schedScheduleNoInt();
     }
 
 #if INTERRUPTS_DEBUG_ENABLED
@@ -336,10 +338,17 @@ void interruptMainHandler(void)
     }
 
     /* Execute the handler */
-    handler(pCurrentThread);
+    schedule = handler(pCurrentThread);
 
     /* Schedule, we will never return */
-    schedScheduleNoInt(FALSE);
+    if(schedule == true)
+    {
+        schedScheduleNoInt();
+    }
+    else
+    {
+        cpuRestoreContext(pCurrentThread);
+    }
     PANIC(OS_ERR_UNAUTHORIZED_ACTION, MODULE_NAME, "Schedule int returned");
 }
 
@@ -472,7 +481,7 @@ OS_RETURN_E interruptRemove(const uint32_t kInterruptLine)
     {
         KERNEL_UNLOCK(sKernelInterruptHandlerTableLock);
 
-        return OS_ERR_INTERRUPT_NOT_REGISTERED;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     pKernelInterruptHandlerTable[kInterruptLine] = NULL;
@@ -501,7 +510,7 @@ OS_RETURN_E interruptIRQRegister(const uint32_t   kIrqNumber,
     if(interruptLine < 0)
     {
 
-        return OS_ERR_NO_SUCH_IRQ;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     retCode = interruptRegister(interruptLine, handler);
@@ -520,7 +529,7 @@ OS_RETURN_E interruptIRQRemove(const uint32_t kIrqNumber)
     if(interruptLine < 0)
     {
 
-        return OS_ERR_NO_SUCH_IRQ;
+        return OS_ERR_NO_SUCH_ID;
     }
 
     retCode = interruptRemove(interruptLine);
@@ -555,7 +564,7 @@ uint32_t interruptDisable(void)
     return prevState;
 }
 
-void interruptIRQSetMask(const uint32_t kIrqNumber, const bool_t kEnabled)
+void interruptIRQSetMask(const uint32_t kIrqNumber, const bool kEnabled)
 {
 
 #if INTERRUPTS_DEBUG_ENABLED
@@ -584,21 +593,22 @@ void interruptDeferInit(void)
     OS_RETURN_E error;
 
     /* Create the defered interrupts queue */
-    spDeferedIntQueue = kQueueCreate(TRUE);
+    spDeferedIntQueue = kQueueCreate(true);
 
-    error = semInit(&sDefereIntQueueSem, 0, SEMAPHORE_FLAG_QUEUING_PRIO);
+    error = ksemInit(&sDefereIntQueueSem, 0, KSEMAPHORE_FLAG_QUEUING_PRIO);
     INTERRUPT_ASSERT(error == OS_NO_ERR,
                      "Failed to create defered interrupt semaphore",
                      error);
 
     /* Create the defered interrupts thread */
-    error = schedCreateKernelThread(&spDeferedIntThread,
-                                    DEFERED_INTERRUPT_THREAD_PRIO,
-                                    "defISR",
-                                    DEFERED_INTERRUPT_THREAD_STACK_SIZE,
-                                    DEFERED_INTERRUPT_THREAD_AFFINITY,
-                                    _interruptDeferedRoutine,
-                                    NULL);
+    error = schedCreateThread(&spDeferedIntThread,
+                              true,
+                              DEFERED_INTERRUPT_THREAD_PRIO,
+                              "defISR",
+                              DEFERED_INTERRUPT_THREAD_STACK_SIZE,
+                              DEFERED_INTERRUPT_THREAD_AFFINITY,
+                              _interruptDeferedRoutine,
+                              NULL);
     INTERRUPT_ASSERT(error == OS_NO_ERR,
                      "Failed to create defered interrupt thread",
                      error);
@@ -627,7 +637,7 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
     pDefererJob->args       = pArgs;
 
     /* Create defered node */
-    pNewNode = kQueueCreateNode(pDefererJob, FALSE);
+    pNewNode = kQueueCreateNode(pDefererJob, false);
     if(pNewNode == NULL)
     {
         kfree(pDefererJob);
@@ -639,10 +649,10 @@ OS_RETURN_E interruptDeferIsr(void (*pRoutine)(void*), void* pArgs)
     kQueuePush(pNewNode, spDeferedIntQueue);
 
     /* Notify the defered thread */
-    error = semPost(&sDefereIntQueueSem);
+    error = ksemPost(&sDefereIntQueueSem);
     if(error != OS_NO_ERR)
     {
-        kQueueRemove(spDeferedIntQueue, pNewNode, TRUE);
+        kQueueRemove(spDeferedIntQueue, pNewNode, true);
         kQueueDestroyNode(&pNewNode);
         kfree(pDefererJob);
     }

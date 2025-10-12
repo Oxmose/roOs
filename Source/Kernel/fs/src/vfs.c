@@ -23,6 +23,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <errno.h>        /* Errno values */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
 #include <stdint.h>       /* Standard int definitions */
@@ -31,7 +32,10 @@
 #include <vector.h>       /* Vectors library */
 #include <kqueue.h>       /* Kernel queues */
 #include <syslog.h>       /* Syslog service */
+#include <stdbool.h>      /* Bool types */
+#include <syscall.h>      /* System calls */
 #include <critical.h>     /* Kernel critical management */
+#include <scheduler.h>    /* Kernel scheduler */
 
 /* Configuration files */
 #include <config.h>
@@ -59,6 +63,19 @@
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
+/** @brief Defines a VFS file descriptor table */
+typedef struct
+{
+    /** @brief File descriptor table */
+    vector_t* pFdTable;
+
+    /** @brief Free file descriptor pool */
+    kqueue_t* pFdFreePool;
+
+    /** @brief File descriptor table lock */
+    kernel_spinlock_t lock;
+} vfs_fd_table_t;
+
 /** @brief VFS internal driver structure */
 typedef struct
 {
@@ -66,17 +83,17 @@ typedef struct
     void* pDriverData;
 
     /** @brief The open function hook pointer. */
-    VFS_OPEN_FUNC pOpen;
+    vfs_open_func_t pOpen;
     /** @brief The close function hook pointer. */
-    VFS_CLOSE_FUNC pClose;
+    vfs_close_func_t pClose;
     /** @brief The read function hook pointer. */
-    VFS_READ_FUNC pRead;
+    vfs_read_func_t pRead;
     /** @brief The write function hook pointer. */
-    VFS_WRITE_FUNC pWrite;
+    vfs_write_func_t pWrite;
     /** @brief The readdir function hook pointer. */
-    VFS_READDIR_FUNC pReadDir;
+    vfs_readdir_func_t pReadDir;
     /** @brief The ioctl function hook pointer. */
-    VFS_IOCTL_FUNC pIOCTL;
+    vfs_ioctl_func_t pIOCTL;
 
     /**
      * @brief Unmount function for the filesystem.
@@ -124,12 +141,9 @@ typedef struct vfs_node_t
     struct vfs_node_t* pParent;
 } vfs_node_t;
 
-/** @brief Defines the VFS internal file descriptor */
+/** @brief Stores the shared information for a file descriptor */
 typedef struct
 {
-    /** @brief The index of the FD in the FD table */
-    uint32_t tableId;
-
     /** @brief FD file path */
     char* pFilePath;
 
@@ -139,25 +153,28 @@ typedef struct
     /** @brief FD file driver */
     vfs_driver_internal_t* pDriver;
 
+    /** @brief Stores the reference count */
+    uint32_t refCount;
+
+    /** @brief The share lock */
+    kernel_spinlock_t lock;
+} vfs_intern_fd_shared_t;
+
+/** @brief Defines the VFS internal file descriptor */
+typedef struct
+{
+    /** @brief The index of the FD in the FD table */
+    uint32_t tableId;
+
+    /** @brief The file descriptor shared data */
+    vfs_intern_fd_shared_t* pShared;
+
     /** @brief Mode used when opening the file */
     int openMode;
 
     /** @brief Flags used when opening the file */
     int openFlags;
-} vfs_internal_fd;
-
-/** @brief Defines a VFS file descriptor table */
-typedef struct
-{
-    /** @brief File descriptor table */
-    vector_t* pFdTable;
-
-    /** @brief Free file descriptor pool */
-    kqueue_t* pFdFreePool;
-
-    /** @brief File descriptor table lock */
-    kernel_spinlock_t lock;
-} vfs_fd_table;
+} vfs_internal_fd_t;
 
 /** @brief Defines the generic descriptor for the generic VFS operations */
 typedef struct
@@ -168,6 +185,23 @@ typedef struct
     /** @brief Contains the next dir entry */
     vfs_node_t* pNextChildCursor;
 } vfs_generic_desc_t;
+
+/**
+ * @brief Defines the parameters for the write system call.
+ */
+typedef struct
+{
+    /** @brief Errno value to set */
+    syscall_min_params_t errnoVal;
+    /** @brief Size in bytes to write */
+    size_t toWrite;
+    /** @brief Size in bytes written */
+    ssize_t written;
+    /** @brief The buffer to write */
+    const void* pBuffer;
+    /** @brief The file descriptor to use */
+    int32_t fd;
+} syscall_write_params_t;
 
 
 /*******************************************************************************
@@ -185,7 +219,7 @@ typedef struct
  *
 */
 #define VFS_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -230,10 +264,10 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath);
  *
  * @param[out] pNode The node to clean.
  *
- * @return The function returns TRUE if the node implements a driver, FALSE
+ * @return The function returns true if the node implements a driver, false
  * otherwise and if cleaned.
  */
-static bool_t _cleanNode(vfs_node_t* pNode);
+static bool _cleanNode(vfs_node_t* pNode);
 
 /**
  * @brief Adds a node to the mount point graph.
@@ -270,11 +304,11 @@ static vfs_node_t* _addNode(vfs_node_t*  pParent,
  * @return The function return the node corresponding to the search criteria.
  * If no node is found, NULL is returned.
  */
-static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
-                                     const char*  kpPath,
-                                     size_t       kPathSize,
-                                     const bool_t kSearchDriver,
-                                     const bool_t kFindExactNode);
+static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
+                                     const char* kpPath,
+                                     size_t      kPathSize,
+                                     const bool  kSearchDriver,
+                                     const bool  kFindExactNode);
 
 /**
  * @brief Adds a driver with a given path to the mount point graph.
@@ -311,13 +345,16 @@ static OS_RETURN_E _vfsRemoveDriver(vfs_node_t* pNode);
  * @details Gets the file internal file descriptor associated to a generic file
  * descriptor.
  *
+ * @param[in, out] pTable The process file descriptor table.
  * @param[in] kFd The generic file descriptor to use.
  * @param[out] ppInternalFd A buffer to the internal file descriptor pointer to
  * retrieve.
  *
  * @return The function returns the success or error state.
  */
-static OS_RETURN_E _getFd(const int32_t kFd, vfs_internal_fd** ppInternalFd);
+static OS_RETURN_E _getFd(vfs_fd_table_t*     pTable,
+                          const int32_t       kFd,
+                          vfs_internal_fd_t** ppInternalFd);
 
 /**
  * @brief Releases a file descriptor to the free fd table.
@@ -325,9 +362,10 @@ static OS_RETURN_E _getFd(const int32_t kFd, vfs_internal_fd** ppInternalFd);
  * @details Releases a file descriptor to the free fd table. The resources
  * associated to the file descritptor are freed.
  *
+ * @param[in, out] pTable The process file descriptor table.
  * @param[in] fd The generic file descriptor to use.
  */
-static void _releaseFileDescriptor(const int32_t fd);
+static void _releaseFileDescriptor(vfs_fd_table_t* pTable, const int32_t fd);
 
 /**
  * @brief Creates a new file descriptor.
@@ -335,6 +373,7 @@ static void _releaseFileDescriptor(const int32_t fd);
  * @details Creates a new file descriptor. The descriptor is populated with the
  * data given as parameter.
  *
+ * @param[in, out] pTable The process file descriptor table.
  * @param[in] pDriver The driver to associate to the file descriptor.
  * @param[in] pFileHandle The file handle generated by the underlying driver.
  * @param[in] kpPath The absolute path of the file corresponding to the fd.
@@ -344,7 +383,8 @@ static void _releaseFileDescriptor(const int32_t fd);
  * @return The function returns the value of the newly created file descriptor.
  * On error the function returns -1.
  */
-static int32_t _createFileDescriptor(vfs_driver_internal_t* pDriver,
+static int32_t _createFileDescriptor(vfs_fd_table_t*        pTable,
+                                     vfs_driver_internal_t* pDriver,
                                      void*                  pFileHandle,
                                      const char*            kpPath,
                                      const int              kFlags,
@@ -467,8 +507,6 @@ extern uintptr_t _START_FS_TABLE_ADDR;
 /* None */
 
 /************************** Static global variables ***************************/
-/** @brief Kernel file descriptor table */
-static vfs_fd_table sKernelFdTable;
 
 /** @brief VFS mount point graph */
 static vfs_node_t* spRootPoint = NULL;
@@ -496,7 +534,7 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
     size_t size;
     size_t newSize;
     size_t i;
-    bool_t firstDelim;
+    bool   firstDelim;
 
     size = strlen(kpOriginalPath);
 
@@ -507,24 +545,24 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
     }
 
     /* Copy while removing multiple delimiters */
-    firstDelim = FALSE;
+    firstDelim = false;
     newSize = 0;
     for(i = 0; i < size; ++i)
     {
         if(kpOriginalPath[i] == VFS_PATH_DELIMITER)
         {
-            if(firstDelim == TRUE)
+            if(firstDelim == true)
             {
                 continue;
             }
             else
             {
-                firstDelim = TRUE;
+                firstDelim = true;
             }
         }
         else
         {
-            firstDelim = FALSE;
+            firstDelim = false;
         }
         pCleanPath[newSize++] = kpOriginalPath[i];
     }
@@ -556,11 +594,11 @@ static ssize_t _getNextPathToken(const char* kpPath)
     return nextStop;
 }
 
-static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
-                                     const char*  kpPath,
-                                     size_t       kPathSize,
-                                     const bool_t kSearchDriver,
-                                     const bool_t kFindExactNode)
+static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
+                                     const char* kpPath,
+                                     size_t      kPathSize,
+                                     const bool  kSearchDriver,
+                                     const bool  kFindExactNode)
 {
     ssize_t     nextInternalPathStop;
     vfs_node_t* kpFoundNode;
@@ -588,8 +626,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
     /* End of path */
     if(nextInternalPathStop < 0)
     {
-        if(kFindExactNode == TRUE ||
-            (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+        if(kFindExactNode == true ||
+            (kSearchDriver == true && pRoot->pDriver != NULL))
         {
             return pRoot;
         }
@@ -617,8 +655,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
             /* Check if we reached the end of the path */
             if(*kpPath == 0)
             {
-                if(kFindExactNode == TRUE ||
-                   (kSearchDriver == TRUE && pRoot->pDriver != NULL))
+                if(kFindExactNode == true ||
+                   (kSearchDriver == true && pRoot->pDriver != NULL))
                 {
                     return pRoot;
                 }
@@ -638,8 +676,8 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t*  pRoot,
             /* If the found node is still NULL, this means we are the
              * manager if we have a driver registered.
              */
-            if(kpFoundNode == NULL && kFindExactNode == FALSE &&
-               (kSearchDriver == FALSE || pRoot->pDriver != NULL))
+            if(kpFoundNode == NULL && kFindExactNode == false &&
+               (kSearchDriver == false || pRoot->pDriver != NULL))
             {
                 kpFoundNode = pRoot;
             }
@@ -801,24 +839,24 @@ static vfs_node_t* _addNode(vfs_node_t*  pParent,
     return pNewNode;
 }
 
-static bool_t _cleanNode(vfs_node_t* pNode)
+static bool _cleanNode(vfs_node_t* pNode)
 {
-    bool_t      hasDriver;
+    bool        hasDriver;
     vfs_node_t* pChild;
 
     /* Check if we have a driver */
     if(pNode->pDriver != NULL)
     {
-        return TRUE;
+        return true;
     }
 
     /* Check if children have drivers */
-    hasDriver = FALSE;
+    hasDriver = false;
     pChild = pNode->pFirstChild;
     while(pChild != NULL)
     {
         hasDriver = _cleanNode(pChild);
-        if(hasDriver == TRUE)
+        if(hasDriver == true)
         {
             break;
         }
@@ -827,7 +865,7 @@ static bool_t _cleanNode(vfs_node_t* pNode)
     }
 
     /* If the children have no drivers, clean ourselves */
-    if(hasDriver == FALSE)
+    if(hasDriver == false)
     {
         /* Unlink */
         if(pNode->pParent->pFirstChild == pNode)
@@ -865,8 +903,8 @@ static vfs_node_t* _vfsAddDriver(const char*            kpPath,
     pNode = _findNodeFromPath(spRootPoint,
                               kpPath,
                               strlen(kpPath),
-                              FALSE,
-                              FALSE);
+                              false,
+                              false);
     if(pNode == NULL)
     {
         return VFS_DRIVER_INVALID;
@@ -927,101 +965,126 @@ static OS_RETURN_E _vfsRemoveDriver(vfs_node_t* pNode)
     return OS_NO_ERR;
 }
 
-static int32_t _createFileDescriptor(vfs_driver_internal_t* pDriver,
+static int32_t _createFileDescriptor(vfs_fd_table_t*        pTable,
+                                     vfs_driver_internal_t* pDriver,
                                      void*                  pFileHandle,
                                      const char*            kpPath,
                                      const int              kFlags,
                                      const int              kMode)
 {
-    kqueue_node_t*   pFdNode;
-    vfs_internal_fd* pInternalFd;
-    size_t           pathSize;
-    OS_RETURN_E      error;
+    kqueue_node_t*     pFdNode;
+    vfs_internal_fd_t* pInternalFd;
+    size_t             pathSize;
+    OS_RETURN_E        error;
 
     pathSize = strlen(kpPath);
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    KERNEL_LOCK(pTable->lock);
 
     /* Get a new file descriptor */
-    pFdNode = kQueuePop(sKernelFdTable.pFdFreePool);
+    pFdNode = kQueuePop(pTable->pFdFreePool);
     if(pFdNode == NULL)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
+        KERNEL_UNLOCK(pTable->lock);
         return -1;
     }
 
     /* Initialize the FD */
     pInternalFd = pFdNode->pData;
-    pInternalFd->pFilePath = kmalloc(pathSize + 1);
-    if(pInternalFd->pFilePath == NULL)
+    pInternalFd->pShared = kmalloc(sizeof(vfs_intern_fd_shared_t));
+    if(pInternalFd->pShared == NULL)
     {
-        kQueuePush(pFdNode, sKernelFdTable.pFdFreePool);
-        KERNEL_UNLOCK(sKernelFdTable.lock);
+        kQueuePush(pFdNode, pTable->pFdFreePool);
+        KERNEL_UNLOCK(pTable->lock);
+        return -1;
+    }
+
+    KERNEL_SPINLOCK_INIT(pInternalFd->pShared->lock);
+    KERNEL_LOCK(pInternalFd->pShared->lock);
+
+    pInternalFd->pShared->pFilePath = kmalloc(pathSize + 1);
+    if(pInternalFd->pShared->pFilePath == NULL)
+    {
+        KERNEL_UNLOCK(pInternalFd->pShared->lock);
+        kfree(pInternalFd->pShared);
+        kQueuePush(pFdNode, pTable->pFdFreePool);
+        KERNEL_UNLOCK(pTable->lock);
         return -1;
     }
 
     /* Set the file descriptor in the table */
-    error = vectorSet(sKernelFdTable.pFdTable,
+    error = vectorSet(pTable->pFdTable,
                       pInternalFd->tableId,
                       pFdNode);
     VFS_ASSERT(error == OS_NO_ERR,
                "Failed to register FD in the FD table",
                error);
 
-    KERNEL_UNLOCK(sKernelFdTable.lock);
-
-    memcpy(pInternalFd->pFilePath, kpPath, pathSize);
-    pInternalFd->pFilePath[pathSize] = 0;
+    memcpy(pInternalFd->pShared->pFilePath, kpPath, pathSize);
+    pInternalFd->pShared->pFilePath[pathSize] = 0;
 
     pInternalFd->openFlags   = kFlags;
     pInternalFd->openMode    = kMode;
-    pInternalFd->pDriver     = pDriver;
-    pInternalFd->pFileHandle = pFileHandle;
+
+    pInternalFd->pShared->pDriver     = pDriver;
+    pInternalFd->pShared->pFileHandle = pFileHandle;
+    pInternalFd->pShared->refCount    = 1;
+
+    KERNEL_UNLOCK(pInternalFd->pShared->lock);
+    KERNEL_UNLOCK(pTable->lock);
 
     return pInternalFd->tableId;
 }
 
-static void _releaseFileDescriptor(const int32_t fd)
+static void _releaseFileDescriptor(vfs_fd_table_t* pTable, const int32_t fd)
 {
-    vfs_internal_fd* pInternalFd;
-    kqueue_node_t*   pFdNode;
-    OS_RETURN_E      error;
+    vfs_internal_fd_t* pInternalFd;
+    kqueue_node_t*     pFdNode;
+    OS_RETURN_E        error;
 
     /* Check that the FD is open */
-    error = vectorGet(sKernelFdTable.pFdTable, fd, (void**)&pFdNode);
+    error = vectorGet(pTable->pFdTable, fd, (void**)&pFdNode);
     VFS_ASSERT(error == OS_NO_ERR && pFdNode != NULL,
                "Invalid FD released",
                OS_ERR_NO_SUCH_ID);
 
-    /* Release the resources */
     pInternalFd = pFdNode->pData;
-    if(pInternalFd->pFilePath != NULL)
+    KERNEL_LOCK(pInternalFd->pShared->lock);
+    /* Release the resources if not shared */
+    if(pInternalFd->pShared->refCount == 0)
     {
-        kfree(pInternalFd->pFilePath);
+        if(pInternalFd->pShared->pFilePath != NULL)
+        {
+            kfree(pInternalFd->pShared->pFilePath);
+        }
+        kfree(pInternalFd->pShared);
     }
+    KERNEL_UNLOCK(pInternalFd->pShared->lock);
 
     /* Release the FD */
-    error = vectorSet(sKernelFdTable.pFdTable, fd, NULL);
+    error = vectorSet(pTable->pFdTable, fd, NULL);
     VFS_ASSERT(error == OS_NO_ERR && pFdNode != NULL,
                "Invalid FD released",
                OS_ERR_NO_SUCH_ID);
 
-    kQueuePush(pFdNode, sKernelFdTable.pFdFreePool);
+    kQueuePush(pFdNode, pTable->pFdFreePool);
 }
 
-static OS_RETURN_E _getFd(const int32_t kFd, vfs_internal_fd** ppInternalFd)
+static OS_RETURN_E _getFd(vfs_fd_table_t*     pTable,
+                          const int32_t       kFd,
+                          vfs_internal_fd_t** ppInternalFd)
 {
     OS_RETURN_E    error;
     kqueue_node_t* pFdNode;
 
     /* Check that the FD is valid */
-    if((size_t)kFd >= sKernelFdTable.pFdTable->size)
+    if((size_t)kFd >= pTable->pFdTable->size)
     {
         return OS_ERR_NO_SUCH_ID;
     }
 
     /* Check that the FD is open */
-    error = vectorGet(sKernelFdTable.pFdTable, kFd, (void**)&pFdNode);
+    error = vectorGet(pTable->pFdTable, kFd, (void**)&pFdNode);
     if(error != OS_NO_ERR)
     {
         return error;
@@ -1056,8 +1119,8 @@ static void* _vfsGenericOpen(void*       pDrvCtrl,
     pMountPt = _findNodeFromPath(spRootPoint,
                                  kpPath,
                                  strlen(kpPath),
-                                 FALSE,
-                                 TRUE);
+                                 false,
+                                 true);
     if(pMountPt != NULL)
     {
         pDesc = kmalloc(sizeof(vfs_generic_desc_t));
@@ -1195,36 +1258,6 @@ static ssize_t _vfsGenericIOCTL(void*    pDriverData,
 
 void vfsInit(void)
 {
-    OS_RETURN_E      error;
-    uint32_t         i;
-    vfs_internal_fd* pNewFd;
-
-    /* Initialize the kernel file descriptor table */
-    sKernelFdTable.pFdTable = vectorCreate(VECTOR_ALLOCATOR(kmalloc, kfree),
-                                           NULL,
-                                           VFS_INITIAL_FD_COUNT,
-                                           &error);
-    VFS_ASSERT(error == OS_NO_ERR,
-               "Failed to create the VFS kernel FD table",
-               error);
-    sKernelFdTable.pFdFreePool = kQueueCreate(TRUE);
-    for(i = 0; i < VFS_INITIAL_FD_COUNT; ++i)
-    {
-        pNewFd = kmalloc(sizeof(vfs_internal_fd));
-        VFS_ASSERT(pNewFd != NULL,
-                   "Failed to create the VFS kernel FD list",
-                   error);
-        pNewFd->pFilePath = NULL;
-        pNewFd->tableId   = i;
-        error = vectorSet(sKernelFdTable.pFdTable,
-                          i,
-                          kQueueCreateNode(pNewFd, TRUE));
-        VFS_ASSERT(error == OS_NO_ERR, "Failed to create the FD list", error);
-        _releaseFileDescriptor(i);
-    }
-
-    KERNEL_SPINLOCK_INIT(sKernelFdTable.lock);
-
     /* Initialize the mount point graph */
     KERNEL_SPINLOCK_INIT(sMountPointLock);
     spRootPoint = kmalloc(sizeof(vfs_node_t));
@@ -1245,14 +1278,369 @@ void vfsInit(void)
     spRootPoint->pParent          = NULL;
 }
 
+OS_RETURN_E vfsCreateProcessFdTable(kernel_process_t* pProcess)
+{
+    OS_RETURN_E        error;
+    OS_RETURN_E        newError;
+    int32_t            i;
+    vfs_internal_fd_t* pNewFd;
+    kqueue_node_t*     pNewNode;
+    vfs_fd_table_t*    pNewTable;
+
+    /* Allocate the fd table */
+    pNewTable = kmalloc(sizeof(vfs_fd_table_t));
+    if(pNewTable == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Initialize the kernel file descriptor table */
+    pNewTable->pFdTable = vectorCreate(VECTOR_ALLOCATOR(kmalloc, kfree),
+                                       NULL,
+                                       VFS_INITIAL_FD_COUNT,
+                                       &error);
+    if(error != OS_NO_ERR)
+    {
+        kfree(pNewTable);
+        return error;
+    }
+
+    pNewTable->pFdFreePool = kQueueCreate(false);
+    if(pNewTable->pFdFreePool == NULL)
+    {
+        error = vectorDestroy(pNewTable->pFdTable);
+        VFS_ASSERT(error == OS_NO_ERR,
+                   "Failed to destroy fd table vector",
+                   error);
+
+        kfree(pNewTable);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    error = OS_NO_ERR;
+    for(i = 0; i < VFS_INITIAL_FD_COUNT; ++i)
+    {
+        pNewFd = kmalloc(sizeof(vfs_internal_fd_t));
+        if(pNewFd == NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            break;
+        }
+        pNewFd->tableId = i;
+
+        pNewNode = kQueueCreateNode(pNewFd, false);
+        if(pNewNode == NULL)
+        {
+            kfree(pNewFd);
+            error = OS_ERR_NO_MORE_MEMORY;
+            break;
+        }
+
+        error = vectorSet(pNewTable->pFdTable, i, NULL);
+        if(error != OS_NO_ERR)
+        {
+            kQueueDestroyNode(&pNewNode);
+            kfree(pNewFd);
+            break;
+        }
+
+        kQueuePush(pNewNode, pNewTable->pFdFreePool);
+    }
+
+    /* Check if we had an error */
+    if(error != OS_NO_ERR)
+    {
+        pNewNode = kQueuePop(pNewTable->pFdFreePool);
+        while(pNewNode != NULL)
+        {
+            kfree(pNewNode->pData);
+            kQueueDestroyNode(&pNewNode);
+        }
+
+        kQueueDestroy(&pNewTable->pFdFreePool);
+
+        newError = vectorDestroy(pNewTable->pFdTable);
+        VFS_ASSERT(newError == OS_NO_ERR,
+                   "Failed to destroy fd table vector",
+                   newError);
+
+        kfree(pNewTable);
+    }
+    else
+    {
+        pProcess->pFdTable = pNewTable;
+        KERNEL_SPINLOCK_INIT(pNewTable->lock);
+    }
+
+    return error;
+}
+
+OS_RETURN_E vfsDestroyProcessFdTable(kernel_process_t* pProcess)
+{
+    OS_RETURN_E        error;
+    size_t             i;
+    vfs_internal_fd_t* pInternalFd;
+    kqueue_node_t*     pNode;
+    vfs_fd_table_t*    pTable;
+
+    pTable = pProcess->pFdTable;
+
+    KERNEL_LOCK(pTable->lock);
+
+    /* Release the resources */
+    for(i = 0; i < pTable->pFdTable->size; ++i)
+    {
+        /* Close all descriptors */
+        error = vectorGet(pTable->pFdTable, i, (void**)&pNode);
+        VFS_ASSERT(error == OS_NO_ERR,
+                   "Failed to get fd table vector",
+                   error);
+
+        if(pNode != NULL)
+        {
+            pInternalFd = pNode->pData;
+            /* Close the FD */
+            KERNEL_LOCK(pInternalFd->pShared->lock);
+
+            /* Release the resources if not shared */
+            if(pInternalFd->pShared->refCount == 1)
+            {
+                if(pInternalFd->pShared->pDriver->pClose != NULL)
+                {
+                    pInternalFd->pShared->pDriver->pClose(
+                                    pInternalFd->pShared->pDriver->pDriverData,
+                                    pInternalFd->pShared->pFileHandle);
+                }
+                if(pInternalFd->pShared->pFilePath != NULL)
+                {
+                    kfree(pInternalFd->pShared->pFilePath);
+                }
+                kfree(pInternalFd->pShared);
+            }
+            else
+            {
+                --pInternalFd->pShared->refCount;
+            }
+            KERNEL_UNLOCK(pInternalFd->pShared->lock);
+
+            /* Remove the node */
+            kfree(pNode->pData);
+            kQueueDestroyNode(&pNode);
+        }
+
+    }
+    /* Release the free fd and the free queue */
+    pNode = kQueuePop(pTable->pFdFreePool);
+    while(pNode != NULL)
+    {
+        kfree(pNode->pData);
+        kQueueDestroyNode(&pNode);
+    }
+    kQueueDestroy(&pTable->pFdFreePool);
+
+    error = vectorDestroy(pTable->pFdTable);
+    VFS_ASSERT(error == OS_NO_ERR,
+               "Failed to destroy fd table vector",
+               error);
+
+    kfree(pTable);
+
+    return OS_NO_ERR;
+}
+
+OS_RETURN_E vfsCopyProcessFdTable(kernel_process_t* pDstProcess,
+                                  kernel_process_t* pSrcProcess)
+{
+    OS_RETURN_E        error;
+    OS_RETURN_E        newError;
+    int32_t            i;
+    vfs_internal_fd_t* pNewFd;
+    vfs_internal_fd_t* pSrcFd;
+    kqueue_node_t*     pNewNode;
+    kqueue_node_t*     pSrcNode;
+    vfs_fd_table_t*    pNewTable;
+    vfs_fd_table_t*    pSrcTable;
+
+    /* Allocate the fd table */
+    pNewTable = kmalloc(sizeof(vfs_fd_table_t));
+    if(pNewTable == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    pSrcTable = pSrcProcess->pFdTable;
+    KERNEL_LOCK(pSrcTable->lock);
+    /* Initialize the kernel file descriptor table */
+    pNewTable->pFdTable = vectorCreate(VECTOR_ALLOCATOR(kmalloc, kfree),
+                                       NULL,
+                                       pSrcTable->pFdTable->size,
+                                       &error);
+    if(error != OS_NO_ERR)
+    {
+        KERNEL_UNLOCK(pSrcTable->lock);
+        kfree(pNewTable);
+        return error;
+    }
+
+    pNewTable->pFdFreePool = kQueueCreate(false);
+    if(pNewTable->pFdFreePool == NULL)
+    {
+        KERNEL_UNLOCK(pSrcTable->lock);
+        error = vectorDestroy(pNewTable->pFdTable);
+        VFS_ASSERT(error == OS_NO_ERR,
+                   "Failed to destroy fd table vector",
+                   error);
+
+        kfree(pNewTable);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    error = OS_NO_ERR;
+    for(i = 0; i < (int32_t)pSrcTable->pFdTable->size; ++i)
+    {
+        pNewFd = kmalloc(sizeof(vfs_internal_fd_t));
+        if(pNewFd == NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            break;
+        }
+        pNewFd->tableId = i;
+
+        pNewNode = kQueueCreateNode(pNewFd, false);
+        if(pNewNode == NULL)
+        {
+            kfree(pNewFd);
+            error = OS_ERR_NO_MORE_MEMORY;
+            break;
+        }
+
+        /* Check if the fd is used */
+        error = vectorGet(pSrcTable->pFdTable, i, (void**)&pSrcNode);
+        if(error != OS_NO_ERR)
+        {
+            kQueueDestroyNode(&pNewNode);
+            kfree(pNewFd);
+            break;
+        }
+
+        if(pSrcNode != NULL)
+        {
+            /* If used, copy the FD and add to the fd used table */
+            pSrcFd = pSrcNode->pData;
+            memcpy(pNewFd, pSrcFd, sizeof(vfs_internal_fd_t));
+            KERNEL_LOCK(pNewFd->pShared->lock);
+            error = vectorSet(pNewTable->pFdTable, i, pNewNode);
+            if(error != OS_NO_ERR)
+            {
+                kQueueDestroyNode(&pNewNode);
+                kfree(pNewFd);
+                KERNEL_UNLOCK(pNewFd->pShared->lock);
+                break;
+            }
+            else
+            {
+                /* Increment the reference count */
+                ++pNewFd->pShared->refCount;
+            }
+            KERNEL_UNLOCK(pNewFd->pShared->lock);
+        }
+        else
+        {
+            error = vectorSet(pNewTable->pFdTable, i, NULL);
+            if(error != OS_NO_ERR)
+            {
+                kQueueDestroyNode(&pNewNode);
+                kfree(pNewFd);
+                KERNEL_UNLOCK(pNewFd->pShared->lock);
+                break;
+            }
+
+            /* If not used, put in the free descriptors */
+            kQueuePush(pNewNode, pNewTable->pFdFreePool);
+        }
+    }
+
+    /* Check if we had an error */
+    if(error != OS_NO_ERR)
+    {
+        /* Discard the last operation that was already released */
+        --i;
+
+        /* Release the resources */
+        while(i >= 0)
+        {
+            newError = vectorGet(pNewTable->pFdTable, i, (void**)&pNewNode);
+            VFS_ASSERT(newError == OS_NO_ERR,
+                       "Failed to get fd table vector",
+                       newError);
+            if(pNewNode != NULL)
+            {
+                pNewFd = pNewNode->pData;
+                KERNEL_LOCK(pNewFd->pShared->lock);
+                /* Release the resources if not shared */
+                if(pNewFd->pShared->refCount == 1)
+                {
+                    if(pNewFd->pShared->pDriver->pClose != NULL)
+                    {
+                        pNewFd->pShared->pDriver->pClose(
+                                        pNewFd->pShared->pDriver->pDriverData,
+                                        pNewFd->pShared->pFileHandle);
+                    }
+                    if(pNewFd->pShared->pFilePath != NULL)
+                    {
+                        kfree(pNewFd->pShared->pFilePath);
+                    }
+                    kfree(pNewFd->pShared);
+                }
+                else
+                {
+                    /* Decrement the reference count */
+                    --pNewFd->pShared->refCount;
+                }
+                KERNEL_UNLOCK(pNewFd->pShared->lock);
+
+                kfree(pNewNode->pData);
+                kQueueDestroyNode(&pNewNode);
+            }
+
+            --i;
+        }
+
+        /* Release the free fd and the free queue */
+        pNewNode = kQueuePop(pNewTable->pFdFreePool);
+        while(pNewNode != NULL)
+        {
+            kfree(pNewNode->pData);
+            kQueueDestroyNode(&pNewNode);
+        }
+        kQueueDestroy(&pNewTable->pFdFreePool);
+
+        newError = vectorDestroy(pNewTable->pFdTable);
+        VFS_ASSERT(newError == OS_NO_ERR,
+                   "Failed to destroy fd table vector",
+                   newError);
+
+        kfree(pNewTable);
+    }
+    else
+    {
+        pDstProcess->pFdTable = pNewTable;
+        KERNEL_SPINLOCK_INIT(pNewTable->lock);
+    }
+
+    KERNEL_UNLOCK(pSrcTable->lock);
+
+    return error;
+}
+
 vfs_driver_t vfsRegisterDriver(const char*      kpPath,
                                void*            pDriverData,
-                               VFS_OPEN_FUNC    pOpen,
-                               VFS_CLOSE_FUNC   pClose,
-                               VFS_READ_FUNC    pRead,
-                               VFS_WRITE_FUNC   pWrite,
-                               VFS_READDIR_FUNC pReadDir,
-                               VFS_IOCTL_FUNC   pIOCTL)
+                               vfs_open_func_t    pOpen,
+                               vfs_close_func_t   pClose,
+                               vfs_read_func_t    pRead,
+                               vfs_write_func_t   pWrite,
+                               vfs_readdir_func_t pReadDir,
+                               vfs_ioctl_func_t   pIOCTL)
 {
     vfs_driver_t           newDriver;
     vfs_driver_internal_t* pInternalHandle;
@@ -1285,7 +1673,7 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     KERNEL_LOCK(sMountPointLock);
 
     /* Check something is already mounted in the mount point */
-    if(_findNodeFromPath(spRootPoint, pCleanPath, pathLen, TRUE, TRUE) != NULL)
+    if(_findNodeFromPath(spRootPoint, pCleanPath, pathLen, true, true) != NULL)
     {
         KERNEL_UNLOCK(sMountPointLock);
         kfree(pCleanPath);
@@ -1363,6 +1751,7 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
     int32_t                fd;
     size_t                 pathSize;
     char*                  pCleanPath;
+    vfs_fd_table_t*        pTable;
 
     pathSize = strlen(kpPath);
     pCleanPath = kmalloc(pathSize);
@@ -1376,8 +1765,8 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
     pMountPt = _findNodeFromPath(spRootPoint,
                                  pCleanPath,
                                  pathSize,
-                                 TRUE,
-                                 FALSE);
+                                 true,
+                                 false);
 
     /* If there is a driver */
     if(pMountPt != NULL)
@@ -1401,8 +1790,8 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
         pMountPt = _findNodeFromPath(spRootPoint,
                                      pCleanPath,
                                      pathSize,
-                                     FALSE,
-                                     TRUE);
+                                     false,
+                                     true);
         if(pMountPt != NULL)
         {
             /* Handle with the generic VFS driver */
@@ -1428,7 +1817,9 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
     }
 
     /* Get a free file descriptor and set its attributes */
-    fd = _createFileDescriptor(pDriver,
+    pTable = schedGetCurrentProcess()->pFdTable;
+    fd = _createFileDescriptor(pTable,
+                               pDriver,
                                pHandle,
                                pCleanPath,
                                flags,
@@ -1450,40 +1841,56 @@ int32_t vfsOpen(const char* kpPath, int flags, int mode)
 
 int32_t vfsClose(int32_t fd)
 {
-    vfs_internal_fd* pInternalFd;
-    OS_RETURN_E      error;
-    int32_t          retVal;
+    vfs_fd_table_t*    pTable;
+    vfs_internal_fd_t* pInternalFd;
+    OS_RETURN_E        error;
+    int32_t            retVal;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    pTable = schedGetCurrentProcess()->pFdTable;
+
+    KERNEL_LOCK(pTable->lock);
 
     /* Check that the FD is valid */
-    error = _getFd(fd, &pInternalFd);
+    error = _getFd(pTable, fd, &pInternalFd);
     if(error != OS_NO_ERR)
     {
         return -1;
     }
 
-    /* Close to the driver */;
-    if(pInternalFd->pDriver->pClose != NULL)
+    /* Lock and check is shared */
+    KERNEL_LOCK(pInternalFd->pShared->lock);
+    /* Release the resources if not shared */
+    if(pInternalFd->pShared->refCount == 1)
     {
-        retVal = pInternalFd->pDriver->pClose(pInternalFd->pDriver->pDriverData,
-                                              pInternalFd->pFileHandle);
+        /* Close to the driver */
+        if(pInternalFd->pShared->pDriver->pClose != NULL)
+        {
+            retVal = pInternalFd->pShared->pDriver->pClose(
+                                    pInternalFd->pShared->pDriver->pDriverData,
+                                    pInternalFd->pShared->pFileHandle);
+        }
+        else
+        {
+            retVal = 0;
+        }
     }
     else
     {
         retVal = 0;
     }
+    --pInternalFd->pShared->refCount;
+    KERNEL_UNLOCK(pInternalFd->pShared->lock);
 
     if(retVal < 0)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
+        KERNEL_UNLOCK(pTable->lock);
         return -1;
     }
 
     /* Release the FD on success */
-    _releaseFileDescriptor(fd);
+    _releaseFileDescriptor(pTable, fd);
 
-    KERNEL_UNLOCK(sKernelFdTable.lock);
+    KERNEL_UNLOCK(pTable->lock);
 
     return 0;
 }
@@ -1492,32 +1899,32 @@ ssize_t vfsRead(int32_t fd, void* pBuffer, size_t count)
 {
     OS_RETURN_E            error;
     ssize_t                bytesRead;
-    vfs_internal_fd*       pInternalFd;
+    vfs_internal_fd_t*     pInternalFd;
     vfs_driver_internal_t* pDriver;
+    vfs_fd_table_t*        pTable;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    pTable = schedGetCurrentProcess()->pFdTable;
 
-    error = _getFd(fd, &pInternalFd);
+    KERNEL_LOCK(pTable->lock);
+    error = _getFd(pTable, fd, &pInternalFd);
+    KERNEL_UNLOCK(pTable->lock);
+
     if(error != OS_NO_ERR)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
     }
 
     if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
     }
 
-    pDriver = pInternalFd->pDriver;
-
-    KERNEL_UNLOCK(sKernelFdTable.lock);
+    pDriver = pInternalFd->pShared->pDriver;
 
     if(pDriver->pRead != NULL)
     {
         bytesRead = pDriver->pRead(pDriver->pDriverData,
-                                   pInternalFd->pFileHandle,
+                                   pInternalFd->pShared->pFileHandle,
                                    pBuffer,
                                    count);
     }
@@ -1533,38 +1940,37 @@ ssize_t vfsWrite(int32_t fd, const void* pBuffer, size_t count)
 {
     OS_RETURN_E            error;
     ssize_t                bytesWritten;
-    vfs_internal_fd*       pInternalFd;
+    vfs_internal_fd_t*     pInternalFd;
     vfs_driver_internal_t* pDriver;
+    vfs_fd_table_t*        pTable;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    pTable = schedGetCurrentProcess()->pFdTable;
 
-    error = _getFd(fd, &pInternalFd);
+    KERNEL_LOCK(pTable->lock);
+    error = _getFd(pTable, fd, &pInternalFd);
+    KERNEL_UNLOCK(pTable->lock);
+
     if(error != OS_NO_ERR)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
-        return -1;
+        return -EBADF;
     }
 
     if((pInternalFd->openFlags & VFS_PERM_WRITE) == 0)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
-        return -1;
+        return -EINVAL;
     }
-
-    pDriver = pInternalFd->pDriver;
-
-    KERNEL_UNLOCK(sKernelFdTable.lock);
+    pDriver = pInternalFd->pShared->pDriver;
 
     if(pDriver->pWrite != NULL)
     {
         bytesWritten = pDriver->pWrite(pDriver->pDriverData,
-                                       pInternalFd->pFileHandle,
+                                       pInternalFd->pShared->pFileHandle,
                                        pBuffer,
                                        count);
     }
     else
     {
-        bytesWritten = -1;
+        bytesWritten = -EINVAL;
     }
 
     return bytesWritten;
@@ -1574,32 +1980,34 @@ int32_t vfsReaddir(int32_t fd, dirent_t* pDirEntry)
 {
     OS_RETURN_E            error;
     ssize_t                retVal;
-    vfs_internal_fd*       pInternalFd;
+    vfs_internal_fd_t*     pInternalFd;
     vfs_driver_internal_t* pDriver;
+    vfs_fd_table_t*        pTable;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    pTable = schedGetCurrentProcess()->pFdTable;
 
-    error = _getFd(fd, &pInternalFd);
+    KERNEL_LOCK(pTable->lock);
+    error = _getFd(pTable, fd, &pInternalFd);
+    KERNEL_UNLOCK(pTable->lock);
+
     if(error != OS_NO_ERR)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
     }
 
     if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
     }
 
-    pDriver = pInternalFd->pDriver;
+    pDriver = pInternalFd->pShared->pDriver;
 
-    KERNEL_UNLOCK(sKernelFdTable.lock);
+    KERNEL_UNLOCK(pTable->lock);
 
     if(pDriver->pReadDir != NULL)
     {
         retVal = pDriver->pReadDir(pDriver->pDriverData,
-                                   pInternalFd->pFileHandle,
+                                   pInternalFd->pShared->pFileHandle,
                                    pDirEntry);
     }
     else
@@ -1614,32 +2022,35 @@ int32_t vfsIOCTL(int32_t fd, uint32_t operation, void* pArgs)
 {
     OS_RETURN_E            error;
     ssize_t                retVal;
-    vfs_internal_fd*       pInternalFd;
+    vfs_internal_fd_t*     pInternalFd;
     vfs_driver_internal_t* pDriver;
+    vfs_fd_table_t*        pTable;
 
-    KERNEL_LOCK(sKernelFdTable.lock);
+    pTable = schedGetCurrentProcess()->pFdTable;
 
-    error = _getFd(fd, &pInternalFd);
+    KERNEL_LOCK(pTable->lock);
+    error = _getFd(pTable, fd, &pInternalFd);
+    KERNEL_UNLOCK(pTable->lock);
+
     if(error != OS_NO_ERR)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
         return -1;
     }
 
     if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
     {
-        KERNEL_UNLOCK(sKernelFdTable.lock);
+        KERNEL_UNLOCK(pTable->lock);
         return -1;
     }
 
-    pDriver = pInternalFd->pDriver;
+    pDriver = pInternalFd->pShared->pDriver;
 
-    KERNEL_UNLOCK(sKernelFdTable.lock);
+    KERNEL_UNLOCK(pTable->lock);
 
     if(pDriver->pIOCTL != NULL)
     {
         retVal = pDriver->pIOCTL(pDriver->pDriverData,
-                                 pInternalFd->pFileHandle,
+                                 pInternalFd->pShared->pFileHandle,
                                  operation,
                                  pArgs);
     }
@@ -1765,7 +2176,7 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
 {
     size_t                 pathLen;
     char*                  pCleanPath;
-    bool_t                 addDelimiter;
+    bool                   addDelimiter;
     vfs_node_t*            pDriverNode;
     OS_RETURN_E            retCode;
 
@@ -1784,11 +2195,11 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     if(kpPath[pathLen - 1] != VFS_PATH_DELIMITER)
     {
         ++pathLen;
-        addDelimiter = TRUE;
+        addDelimiter = true;
     }
     else
     {
-        addDelimiter = FALSE;
+        addDelimiter = false;
     }
 
     /* Allocate the clean path buffer */
@@ -1800,7 +2211,7 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     _cleanPath(pCleanPath, kpPath);
     pathLen = strlen(pCleanPath);
 
-    if(addDelimiter == TRUE)
+    if(addDelimiter == true)
     {
         pCleanPath[pathLen]     = VFS_PATH_DELIMITER;
         pCleanPath[pathLen + 1] = 0;
@@ -1812,8 +2223,8 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     pDriverNode = _findNodeFromPath(spRootPoint,
                                     pCleanPath,
                                     pathLen,
-                                    TRUE,
-                                    TRUE);
+                                    true,
+                                    true);
     kfree(pCleanPath);
     KERNEL_UNLOCK(sMountPointLock);
     if(pDriverNode == NULL)
@@ -1839,5 +2250,34 @@ OS_RETURN_E vfsUnmount(const char* kpPath)
     }
 
     return retCode;
+}
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+void vfsSyscallHandleWrite(void* pParams)
+{
+    ssize_t                 written;
+    syscall_write_params_t* pSyscallParams;
+
+    if(pParams == NULL)
+    {
+        return;
+    }
+
+    pSyscallParams = pParams;
+
+    written = vfsWrite(pSyscallParams->fd,
+                       pSyscallParams->pBuffer,
+                       pSyscallParams->toWrite);
+    if(written < 0)
+    {
+        pSyscallParams->errnoVal = -written;
+        pSyscallParams->written = -1;
+    }
+    else
+    {
+        pSyscallParams->written = written;
+    }
 }
 /************************************ EOF *************************************/

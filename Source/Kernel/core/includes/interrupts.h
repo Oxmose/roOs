@@ -25,6 +25,7 @@
 #include <stdint.h>     /* Generic int types */
 #include <stddef.h>     /* Standard definitions */
 #include <kerror.h>     /* Kernel error codes */
+#include <stdbool.h>    /* Bool types */
 #include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
@@ -62,8 +63,10 @@ typedef enum
  *
  * @param[in, out] pCurrThread The current thread scheduled at the moment of the
  * exception.
+ *
+ * @return The function returns if the scheduler shall be called on return.
  */
-typedef void(*custom_handler_t)(kernel_thread_t* pCurrThread);
+typedef bool (*custom_handler_t)(kernel_thread_t* pCurrThread);
 
 /** @brief Defines the basic interface for an interrupt management driver (let
  * it be PIC or IO APIC for instance).
@@ -77,10 +80,10 @@ typedef struct
      * used as parameter.
      *
      * @param[in] kIrqNumber The number of the IRQ to enable/disable.
-     * @param[in] kEnabled Must be set to TRUE to enable the IRQ and FALSE to
+     * @param[in] kEnabled Must be set to true to enable the IRQ and false to
      * disable the IRQ.
      */
-    void (*pSetIrqMask)(const uint32_t kIrqNumber, const bool_t kEnabled);
+    void (*pSetIrqMask)(const uint32_t kIrqNumber, const bool kEnabled);
 
     /**
      * @brief The function should acknowleges an IRQ.
@@ -203,7 +206,7 @@ OS_RETURN_E interruptIRQRegister(const uint32_t   kIrqNumber,
  * - OS_NO_ERR is returned if no error is encountered.
  * - OR_ERR_UNAUTHORIZED_INTERRUPT_LINE is returned if the IRQ attached to the
  * interrupt line is not allowed.
- * - OS_ERR_NO_SUCH_IRQ_LINE is returned if the IRQ number is not supported.
+ * - OS_ERR_NO_SUCH_ID is returned if the IRQ number is not supported.
  * - OS_ERR_INTERRUPT_NOT_REGISTERED is returned if the IRQ has no handler
  * attached.
  */
@@ -271,7 +274,7 @@ uint32_t interruptDisable(void);
  * @param[in] kEnabled Must be set to 1 to enable the IRQ or 0 to disable the
  * IRQ.
  */
-void interruptIRQSetMask(const uint32_t kIrqNumber, const bool_t kEnabled);
+void interruptIRQSetMask(const uint32_t kIrqNumber, const bool kEnabled);
 
 /**
  * @brief Acknowleges an IRQ.

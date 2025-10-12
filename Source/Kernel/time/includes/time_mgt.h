@@ -64,7 +64,7 @@ typedef struct
     uint8_t minutes;
     /** @brief Seconds. */
     uint8_t seconds;
-} time_t;
+} daytime_t;
 
 /** @brief Defines the types of timers available. */
 typedef enum
@@ -143,7 +143,7 @@ typedef struct
      *
      * @return The current daytime.
      */
-    time_t (*pGetDaytime)(void* pDriverCtrl);
+    daytime_t (*pGetDaytime)(void* pDriverCtrl);
 
     /**
      * @brief The function should enable the timer's interrupt.
@@ -185,7 +185,7 @@ typedef struct
      *   registered for the timer.
      */
     OS_RETURN_E (*pSetHandler)(void* pDriverCtrl,
-                               void(*handler)(kernel_thread_t*));
+                               bool (*handler)(kernel_thread_t*));
 
     /**
      * @brief The function should remove the timer tick handler.
@@ -221,6 +221,37 @@ typedef struct
      */
     void* pDriverCtrl;
 } kernel_timer_t;
+
+/** @brief Clock ID for the clock and timer functions */
+typedef enum
+{
+    /**
+     * @brief System-wide realtime clock. Setting this clock requires
+     * appropriate privileges.
+     */
+    CLOCK_REALTIME = 0,
+    /**
+     * @brief Clock that cannot be set and represents monotonic time since some
+     * unspecified starting point.
+     */
+    CLOCK_MONOTONIC = 1,
+} clockid_t;
+
+/** @brief Real arithmetic type capable of representing times. */
+typedef int64_t time_t;
+
+/**
+ * @brief Structure holding an interval broken down into seconds and
+ * nanoseconds.
+ */
+struct timespec
+{
+    /** @brief Whole seconds (valid values are >= 0) */
+    time_t tv_sec;
+
+    /** @brief Nanoseconds (valid values are [0, 999999999]) */
+    long int tv_nsec;
+};
 
 /*******************************************************************************
  * MACROS
@@ -270,7 +301,7 @@ uint64_t timeGetUptime(void);
  *
  * @return The current daytime from RTC.
  */
-time_t timeGetDayTime(void);
+daytime_t timeGetDayTime(void);
 
 /**
  * @brief Returns the current date from RTC.
@@ -304,6 +335,26 @@ uint64_t timeGetTicks(const uint8_t kCpuId);
  * running. Otherwise the function will have undefined behavior.
  */
 void timeWaitNoScheduler(const uint64_t kNs);
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+
+/**
+ * @brief System call handler for clock_gettime.
+ *
+ * @details System call handler for clock_gettime. This function will provide
+ * the current time that is exposed by a given clock. The clock is selected
+ * in the parameters of the system call.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. The parameter must contain an attribute of type
+ * syscall_min_params_t at the very begining of the structure. Otherwise, the
+ * existing attribute will be overwritten.
+ *
+ * @param[out] pParams The pointer to system call parameter structure.
+ */
+void timeSyscallHandleClockGetTime(void* pParams);
 
 #endif /* #ifndef __TIME_TIME_MGT_H_ */
 

@@ -24,7 +24,6 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <interrupts.h> /* Interrupts management */
 #include <atomic.h>     /* Atomic sturctures */
 
 /*******************************************************************************
@@ -75,7 +74,7 @@
  * @param[in, out] LOCK The lock to lock.
 */
 #define KERNEL_LOCK(LOCK) {                                     \
-    KernelLock(&(LOCK));                                        \
+    kernelLock(&(LOCK));                                        \
 }
 
 /**
@@ -86,7 +85,7 @@
  * @param[out] LOCK The lock to unlock.
 */
 #define KERNEL_UNLOCK(LOCK) {                                   \
-    KernelUnlock(&(LOCK));                                      \
+    kernelUnlock(&(LOCK));                                      \
 }
 
 /*******************************************************************************
@@ -94,7 +93,9 @@
  ******************************************************************************/
 
 /************************* Imported global variables **************************/
-/* None */
+/** @brief See interrupt.h */
+extern void interruptRestore(const uint32_t kPreviousState);
+extern uint32_t interruptDisable(void);
 
 /************************* Exported global variables **************************/
 /* None */
@@ -113,7 +114,7 @@
  *
  * @param[in, out] pLock The pointer to the lock to lock.
 */
-void KernelLock(kernel_spinlock_t* pLock);
+void kernelLock(kernel_spinlock_t* pLock);
 
 /**
  * @brief Unlocks a kernel spinlock.
@@ -122,7 +123,7 @@ void KernelLock(kernel_spinlock_t* pLock);
  *
  * @param[out] pLock The pointer to the lock to unlock.
 */
-void KernelUnlock(kernel_spinlock_t* pLock);
+void kernelUnlock(kernel_spinlock_t* pLock);
 
 #endif /* #ifndef __CPU_CRITICAL_H_ */
 

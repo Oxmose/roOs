@@ -23,9 +23,12 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic int types */
-#include <stddef.h> /* Standard definition type */
-#include <atomic.h> /* Critical sections spinlock */
+#include <stdint.h>     /* Generic int types */
+#include <stddef.h>     /* Standard definition type */
+#include <atomic.h>     /* Critical sections spinlock */
+#include <stdbool.h>    /* Bool types */
+#include <kqueue.h>     /* Kernel queue */
+#include <uhashtable.h> /* Hahsing table */
 
 /*******************************************************************************
  * CONSTANTS
@@ -36,15 +39,21 @@
 #error "Affinity cannot handle enough processor"
 #endif
 
-/** @brief Maximal thead's name length. */
+/** @brief Maximal thread's name length. */
 #define THREAD_NAME_MAX_LENGTH 32
 
 /** @brief Maximal number of signals a thread can support */
 #define THREAD_MAX_SIGNALS 32
 
+/** @brief Maximal process' name length. */
+#define PROCESS_NAME_MAX_LENGTH 32
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
+
+/** @brief Kernel thread forward declaration */
+struct kernel_thread_t;
 
 /** @brief Thread's scheduling state. */
 typedef enum
@@ -67,12 +76,12 @@ typedef enum
 typedef enum
 {
     /** @brief Thread is waiting on a futex */
-    THREAD_WAIT_RESOURCE_FUTEX,
+    THREAD_WAIT_RESOURCE_KFUTEX,
     /** @brief Thread is waiting on a semapore */
-    THREAD_WAIT_RESOURCE_SEMAPHORE,
+    THREAD_WAIT_RESOURCE_KSEMAPHORE,
     /** @brief Thread is waiting on a mutex */
-    THREAD_WAIT_RESOURCE_MUTEX,
-} THREAD_WAIT_RESOURCE_TYPE_E;
+    THREAD_WAIT_RESOURCE_KMUTEX,
+} THREAD_RESOURCE_TYPE_E;
 
 /** @brief Defines the possitble return state of a thread. */
 typedef enum
@@ -128,7 +137,33 @@ typedef struct
      * @param[in] pResourceData The resource data used by the release function.
      */
     void (*pReleaseResource)(void* pResourceData);
+
+    /** @brief The waiting list on which the thread waits for the resource, can
+     * be NULL is no wait.
+     */
+    void* pWaitingQueue;
+
+    /** @brief The list handle created by the kernel. */
+    void* pQueueNode;
+
+    /** @brief The resource handle created by the kernel. */
+    void* pResourceNode;
+
+    /** @brief The thread waiting on the resource */
+    struct kernel_thread_t* pThread;
 } thread_resource_t;
+
+/**
+ * @brief This structure defines the signal handling data.
+ */
+typedef struct
+{
+    /** @brief Signal handler function */
+    void* handler;
+
+    /** @brief Defines if the handler shall be called in kernel or user mode. */
+    bool isUser;
+} signal_t;
 
 /**
  * @brief Defines a thread error information table.
@@ -147,6 +182,98 @@ typedef struct
     /** @brief Stores the virtual CPU at the moment of the error */
     void* pExecVCpu;
 } thread_error_table_t;
+
+/**
+ * @brief This is the representation of a process for the kernel.
+ */
+typedef struct kernel_process_t
+{
+    /**************************************
+     * Process properties
+     *************************************/
+    /** @brief Process' identifier. */
+    int32_t pid;
+
+    /** @brief Process' name. */
+    char pName[PROCESS_NAME_MAX_LENGTH + 1];
+
+    /**************************************
+     * Scheduler management
+     *************************************/
+
+    /** @brief Process' parent process */
+    struct kernel_process_t* pParent;
+
+    /** @brief List of children processes */
+    kqueue_t* pChildren;
+
+    /**
+     * @brief Process' main thread, this is also the first thread in the
+     * thread list.
+     */
+    struct kernel_thread_t* pMainThread;
+
+    /** @brief Tails of the threads list. */
+    struct kernel_thread_t* pThreadListTail;
+
+    /** @brief Table of the thread list. */
+    uhashtable_t* pThreadTable;
+
+    /**************************************
+     * Resources management
+     *************************************/
+
+    /** @brief Stores the process futex table. */
+    uhashtable_t* pFutexTable;
+
+    /** @brief Stores the process futex table lock */
+    kernel_spinlock_t futexTableLock;
+
+    /** @brief Stores the memory management data for the process */
+    void* pMemoryData;
+
+    /** @brief Stores the file descriptors for the process */
+    void* pFdTable;
+
+    /** @brief Stores the main TLS size */
+    size_t mainTlsSize;
+
+    /** @brief Stores the main TLS initialized data size */
+    size_t mainTlsInitDataSize;
+
+    /** @brief Stores the main TLS data */
+    void* pMainTlsData;
+
+    /** @brief Stores the main TLS alignement */
+    size_t mainTlsAlign;
+
+    /** @brief Stores the TLS mapping flags */
+    uint64_t mainTlsMappingFlags;
+
+    /** @brief The process' structure lock */
+    kernel_spinlock_t lock;
+} kernel_process_t;
+
+/** @brief Stores the thread user data, used for fast access to thread
+ * properties in the user space.
+ */
+typedef struct user_thread_t
+{
+    /** @brief The thread's self pointer. */
+    struct user_thread_t* pSelfPointer;
+
+    /** @brief Thread's process identifier. */
+    int32_t pid;
+
+    /** @brief Thread's identifier. */
+    int32_t tid;
+
+    /** @brief The thread's priority */
+    uint8_t priority;
+
+    /** @brief The thread local storage size */
+    ssize_t tlsSize;
+} user_thread_t;
 
 /** @brief This is the representation of the thread for the kernel. */
 typedef struct kernel_thread_t
@@ -175,6 +302,9 @@ typedef struct kernel_thread_t
     /** @brief Thread's type. */
     THREAD_TYPE_E type;
 
+    /** @brief The thread local storage region pointer. */
+    user_thread_t* pUserThreadData;
+
     /**************************************
      * System interface
      *************************************/
@@ -182,8 +312,11 @@ typedef struct kernel_thread_t
     /** @brief Thread's start arguments. */
     void* pArgs;
 
+    /** @brief Thread's entry point. */
+    void* pEntryPoint;
+
     /** @brief Thread's routine. */
-    void* (*pEntryPoint)(void*);
+    void* (*pRoutine)(void*);
 
     /** @brief Thread's return value. */
     void* retValue;
@@ -230,6 +363,7 @@ typedef struct kernel_thread_t
     /**************************************
      * Scheduler management
      *************************************/
+
     /** @brief Thread's current priority. */
     uint8_t priority;
 
@@ -240,7 +374,10 @@ typedef struct kernel_thread_t
     THREAD_STATE_E nextState;
 
     /** @brief Associated queue node in the scheduler */
-    void* pThreadNode;
+    kqueue_node_t* pThreadNode;
+
+    /** @brief Thread list node */
+    kqueue_node_t* pThreadListNode;
 
     /** @brief Thread's CPU affinity */
     uint64_t affinity;
@@ -248,23 +385,17 @@ typedef struct kernel_thread_t
     /** @brief Thread's currently mapped CPU */
     uint8_t schedCpu;
 
-    /** @brief Tells if the thread should be scheduled */
-    bool_t requestSchedule;
-
     /** @brief Tells if the thread has preemption disabled */
-    bool_t preemptionDisabled;
+    bool preemptionDisabled;
 
-    /** @brief Parent thread */
-    struct kernel_thread_t* pParentThread;
+    /** @brief Process */
+    struct kernel_process_t* pProcess;
 
     /** @brief Joining thread */
     struct kernel_thread_t* pJoiningThread;
 
     /** @brief Currently joined thread */
     struct kernel_thread_t* pJoinedThread;
-
-    /** @brief Information node in the thread information table */
-    void* pInfoNode;
 
     /**************************************
      * Signals
@@ -274,7 +405,7 @@ typedef struct kernel_thread_t
     uint32_t signal;
 
     /** @brief Thread's signal handlers table */
-    void* signalHandlers[THREAD_MAX_SIGNALS];
+    signal_t signalHandlers[THREAD_MAX_SIGNALS];
 
     /** @brief Thread's error table */
     thread_error_table_t errorTable;
@@ -282,14 +413,21 @@ typedef struct kernel_thread_t
     /**************************************
      * Resources management
      *************************************/
+
     /** @brief Type of resource the thread is blocked on. */
-    THREAD_WAIT_RESOURCE_TYPE_E resourceBlockType;
+    THREAD_RESOURCE_TYPE_E resourceBlockType;
 
     /** @brief Resource queue pointer */
-    void* pThreadResources;
+    kqueue_t* pThreadResources;
 
     /** @brief The thread's structure lock */
     kernel_spinlock_t lock;
+
+    /** @brief Thread's next node in the list */
+    struct kernel_thread_t* pNext;
+
+    /** @brief Thread's previous node in the list */
+    struct kernel_thread_t* pPrev;
 } kernel_thread_t;
 
 /*******************************************************************************

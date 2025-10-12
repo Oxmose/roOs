@@ -22,18 +22,20 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <vfs.h>       /* Virtual File System*/
-#include <ioctl.h>     /* IOCTL commands */
-#include <panic.h>     /* Kernel panic */
-#include <kheap.h>     /* Memory allocation */
-#include <x86cpu.h>    /* CPU port manipulation */
-#include <stdint.h>    /* Generic int types */
-#include <string.h>    /* String manipualtion */
-#include <kerror.h>    /* Kernel error */
-#include <devtree.h>   /* Device tree */
-#include <critical.h>  /* Kernel locks */
-#include <drivermgr.h> /* Driver manager service */
-#include <semaphore.h> /* Kernel semaphores */
+#include <vfs.h>        /* Virtual File System*/
+#include <ioctl.h>      /* IOCTL commands */
+#include <panic.h>      /* Kernel panic */
+#include <kheap.h>      /* Memory allocation */
+#include <x86cpu.h>     /* CPU port manipulation */
+#include <stdint.h>     /* Generic int types */
+#include <string.h>     /* String manipualtion */
+#include <kerror.h>     /* Kernel error */
+#include <devtree.h>    /* Device tree */
+#include <stdbool.h>    /* Bool types */
+#include <critical.h>   /* Kernel locks */
+#include <drivermgr.h>  /* Driver manager service */
+#include <interrupts.h> /* Interrupt manager */
+#include <ksemaphore.h> /* Kernel semaphores */
 
 /* Configuration files */
 #include <config.h>
@@ -114,7 +116,7 @@ typedef struct
     kernel_spinlock_t inputBufferLock;
 
     /** @brief Input buffer semaphore */
-    semaphore_t inputBufferSem;
+    ksemaphore_t inputBufferSem;
 
     /** @brief Keyboard state flags */
     uint32_t flags;
@@ -142,7 +144,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define KBD_ASSERT(COND, MSG, ERROR) {                      \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -172,8 +174,10 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode);
  * data and unblock a thread if it is blocked on the input.
  *
  * @param[in] pCurrentThread Unused.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread);
+static bool _kbdInterruptHandler(kernel_thread_t* pCurrentThread);
 
 /**
  * @brief Reads data from the keyboard input buffer.
@@ -468,11 +472,11 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     OS_RETURN_E      retCode;
     OS_RETURN_E      error;
     kbd_controler_t* pDrvCtrl;
-    bool_t           isSemInit;
-    bool_t           isInputBufferSet;
+    bool             isSemInit;
+    bool             isInputBufferSet;
 
-    isSemInit        = FALSE;
-    isInputBufferSet = FALSE;
+    isSemInit        = false;
+    isInputBufferSet = false;
 
     /* Init structures */
     pDrvCtrl = kmalloc(sizeof(kbd_controler_t));
@@ -519,17 +523,17 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
         retCode = OS_ERR_NO_MORE_MEMORY;
         goto ATTACH_END;
     }
-    isInputBufferSet = TRUE;
+    isInputBufferSet = true;
     KERNEL_SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
 
-    retCode = semInit(&pDrvCtrl->inputBufferSem,
-                      0,
-                      SEMAPHORE_FLAG_QUEUING_PRIO | SEMAPHORE_FLAG_BINARY);
+    retCode = ksemInit(&pDrvCtrl->inputBufferSem,
+                       0,
+                       KSEMAPHORE_FLAG_QUEUING_PRIO | KSEMAPHORE_FLAG_BINARY);
     if(retCode != OS_NO_ERR)
     {
         goto ATTACH_END;
     }
-    isSemInit = TRUE;
+    isSemInit = true;
 
     pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
@@ -551,7 +555,7 @@ static OS_RETURN_E _kbdAttach(const fdt_node_t* pkFdtNode)
     _cpuInB(pDrvCtrl->cpuDataPort);
 
     /* Set the interrupt mask */
-    interruptIRQSetMask(pDrvCtrl->irqNumber, TRUE);
+    interruptIRQSetMask(pDrvCtrl->irqNumber, true);
     interruptIRQSetEOI(pDrvCtrl->irqNumber);
 
     /* Set the input driver */
@@ -584,11 +588,11 @@ ATTACH_END:
 
     if(retCode != OS_NO_ERR)
     {
-        if(isSemInit == TRUE)
+        if(isSemInit == true)
         {
-            semDestroy(&pDrvCtrl->inputBufferSem);
+            ksemDestroy(&pDrvCtrl->inputBufferSem);
         }
-        if(isInputBufferSet == TRUE)
+        if(isInputBufferSet == true)
         {
             kfree(pDrvCtrl->pInputBuffer);
         }
@@ -612,7 +616,7 @@ ATTACH_END:
     return retCode;
 }
 
-static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
+static bool _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 {
     uint8_t     data;
     OS_RETURN_E error;
@@ -622,7 +626,7 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
 
     if(spInputCtrl == NULL)
     {
-        return;
+        return false;
     }
 
     /* Check is we received a data */
@@ -662,12 +666,13 @@ static void _kbdInterruptHandler(kernel_thread_t* pCurrentThread)
         KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* Post the semaphore */
-        error = semPost(&spInputCtrl->inputBufferSem);
+        error = ksemPost(&spInputCtrl->inputBufferSem);
         KBD_ASSERT(error == OS_NO_ERR,
                    "Failed to post keyboard semaphore",
                    error);
-
     }
+
+    return false;
 }
 
 static ssize_t _kbdRead(void*        pDrvCtrl,
@@ -689,7 +694,7 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
     while(toRead != 0)
     {
         /* Copy if we can */
-        error = semWait(&spInputCtrl->inputBufferSem);
+        error = ksemWait(&spInputCtrl->inputBufferSem);
         KBD_ASSERT(error == OS_NO_ERR,
                    "Failed to wait keyboard semaphore",
                    error);
@@ -734,7 +739,7 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
          */
         if(usedSpace > 0)
         {
-            error = semPost(&spInputCtrl->inputBufferSem);
+            error = ksemPost(&spInputCtrl->inputBufferSem);
             KBD_ASSERT(error == OS_NO_ERR,
                        "Failed to post keyboard semaphore",
                        error);
@@ -747,34 +752,34 @@ static ssize_t _kbdRead(void*        pDrvCtrl,
 
 static char _manageKeycode(const int8_t kKey)
 {
-    char   retChar;
-    bool_t mod;
-    bool_t shifted;
+    char retChar;
+    bool mod;
+    bool shifted;
 
     retChar = 0;
 
     /* Manage push of release */
     if(kKey >= 0)
     {
-        mod = FALSE;
+        mod = false;
 
         /* Manage modifiers */
         switch(ksQwertyMap.regular[kKey])
         {
             case KEY_LSHIFT:
                 spInputCtrl->flags |= KEY_LSHIFT;
-                mod = TRUE;
+                mod = true;
                 break;
             case KEY_RSHIFT:
                 spInputCtrl->flags |= KEY_RSHIFT;
-                mod = TRUE;
+                mod = true;
                 break;
             default:
                 break;
         }
 
         /* Manage only set characters */
-        if(mod == FALSE &&
+        if(mod == false &&
            (ksQwertyMap.regular[kKey] != 0 ||
             ksQwertyMap.shifted[kKey] != 0))
         {

@@ -27,6 +27,8 @@
 #include <stdint.h>     /* Standard int definitions */
 #include <kerror.h>     /* Kernel error codes */
 #include <signal.h>     /* Thread signals */
+#include <kqueue.h>     /* Kernel queues */
+#include <stdbool.h>    /* Bool types */
 #include <ctrl_block.h> /* Kernel control blocks */
 
 /*******************************************************************************
@@ -47,6 +49,9 @@
 /** @brief Defines the thread information structure */
 typedef struct
 {
+    /** @brief Thread's process identifier.  */
+    int32_t pid;
+
     /** @brief Thread's identifier. */
     int32_t tid;
 
@@ -67,6 +72,12 @@ typedef struct
 
     /** @brief Thread's currently mapped CPU */
     uint8_t schedCpu;
+
+    /* Kernel stack end address */
+    uintptr_t kStack;
+
+    /* User stack end address */
+    uintptr_t uStack;
 } thread_info_t;
 
 
@@ -111,42 +122,22 @@ void schedInit(void);
  * @details Calls the scheduler. This function will select the next thread to
  * schedule and execute it.
  *
- * @param[in] kForceSwitch For the current task to be switched.
- *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
  * the thread's context was saved. Use schedSchedule to save the context.
  */
 
-void schedScheduleNoInt(const bool_t kForceSwitch);
+void schedScheduleNoInt(void);
 
 /**
- * @brief Calls the scheduler dispatch function by generating an interrupt.
+ * @brief Calls the scheduler dispatch function using a system call.
  *
- * @details Calls the scheduler dispatch function by generating an interrupt.
+ * @details Calls the scheduler dispatch function using a system call.
  * This function will select the next thread to schedule and execute it. The
  * context of the calling thread is saved before scheduling.
  */
 
 void schedSchedule(void);
-
-/**
- * @brief Releases a thread to the scheduler.
- *
- * @details Releases a thread to the scheduler. This function is used to
- * put back a thread in the scheduler after locking it in, for instance, a
- * semaphore.
- *
- * @param[in] pThread The thread to release.
- * @param[in] kIsLocked Tells if the thread lock is already acquired.
- * @param[in] kState The release state.
- * @param[in] kSchedSameCpu Request schedule is a more prioritary thread can be
- * awaken on the same CPU.
- */
-void schedReleaseThread(kernel_thread_t*     pThread,
-                        const bool_t         kIsLocked,
-                        const THREAD_STATE_E kState,
-                        const bool_t         kSchedSameCpu);
 
 /**
  * @brief Puts the calling thread to sleep.
@@ -184,18 +175,16 @@ size_t schedGetThreadCount(void);
 kernel_thread_t* schedGetCurrentThread(void);
 
 /**
- * @brief Creates a new kernel thread in the thread table.
+ * @brief Creates a new thread in the thread table.
  *
  * @details Creates a new thread added in the ready threads table. The thread
  * might not be directly scheduled depending on its priority and the current
  * system's load.
  * A handle to the thread is given as parameter and set on success.
  *
- * @warning These are kernel threads, sharing the kernel memory space and using
- * the kernel memory map and heap.
- *
  * @param[out] ppThread The pointer to the thread structure. This is the handle
  * of the thread for the user.
+ * @param[in] kIsKernel Tells if the created thread is a kernel or user thread.
  * @param[in] kPriority The priority of the thread.
  * @param[in] kpName The name of the thread.
  * @param[in] kStackSize The thread's stack size in bytes, must be a multiple of
@@ -215,13 +204,14 @@ kernel_thread_t* schedGetCurrentThread(void);
  * - OS_ERR_UNAUTHORIZED_ACTION is the stack is not a multiple of the system's
  * page size.
  */
-OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
-                                    const uint8_t     kPriority,
-                                    const char*       kpName,
-                                    const size_t      kStackSize,
-                                    const uint64_t    kAffinitySet,
-                                    void*             (*pRoutine)(void*),
-                                    void*             args);
+OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
+                              const bool        kIsKernel,
+                              const uint8_t     kPriority,
+                              const char*       kpName,
+                              const size_t      kStackSize,
+                              const uint64_t    kAffinitySet,
+                              void*             (*pRoutine)(void*),
+                              void*             args);
 
 /**
  * @brief Remove a thread from the threads table.
@@ -260,17 +250,6 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
 uint64_t schedGetCpuLoad(const uint8_t kCpuId);
 
 /**
- * @brief Sets the thread's state to waiting on a resource.
- *
- * @details Sets the thread's state to waiting on a resource. No scheduling
- * operation is called, the thread is simply put in waiting state, waiting on a
- * resource of the type passed as parameter.
- *
- * @param[in] kResource The type of waiting resource.
- */
-void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource);
-
-/**
  * @brief Updates the thread's priority.
  *
  * @details Updates the thread's priority. This will affect both running and
@@ -279,32 +258,7 @@ void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource);
  * ­@param[out] pThread The thread to update.
  * @param[in] kPrio The new priority to set.
  */
-void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
-
-/**
- * @brief Adds a resource to the thread's resource queue.
- *
- * @details Adds a resource to the thread's resource queue. The resource will
- * be freed when the thread is killed or exits.
- *
- * @param[in] kpResource The thread's resource to add.
- *
- * @return The handle to the added thread resource is returned.
- */
-void* schedThreadAddResource(const thread_resource_t* kpResource);
-
-/**
- * @brief Removes a resource from the thread's resource queue.
- *
- * @details Removes a resource from the thread's resource queue. The resource
- * release function is not called in that case, the resource is simply
- * removed from the resource queue.
- *
- * @param[in] pResourceHandle The handle to the resource to be removed.
- *
- * @return The function returnsthe error or success status.
- */
-OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle);
+OS_RETURN_E schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio);
 
 /**
  * @brief Terminates a thread.
@@ -351,7 +305,20 @@ void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
  * @return The function returns the number of threads that were filled in the
  * table.
  */
-size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize);
+size_t schedGetThreadsIds(int32_t* pThreadTable, const size_t kTableSize);
+
+/**
+ * @brief Fills the thread information structure.
+ *
+ * @details Fills the thread information structure with the information of the
+ * thread with the specified thread id.
+ *
+ * @param[out] pInfo The thread information structure to fill.
+ * @param[in] kTid The identifier of the thread to get the information of.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedGetThreadInfo(thread_info_t* pInfo, const int32_t kTid);
 
 /**
  * @brief Disables preemption for the current thread.
@@ -368,6 +335,154 @@ void schedDisablePreemption(void);
  * switched.
  */
 void schedEnablePreemption(void);
+
+/**
+ * @brief Returns the handle to the current running process.
+ *
+ * @details Returns the handle to the current running process. This value should
+ * never be NULL as a process should always be elected for running.
+ *
+ * @return A handle to the current running process is returned.
+ */
+kernel_process_t* schedGetCurrentProcess(void);
+
+/**
+ * @brief Sets a thread to the ready state.
+ *
+ * @details Sets a thread to the ready state. This function releases the thread
+ * to the ready list and manage it appartenance to any other scheduler lists.
+ *
+ * @param[out] pThread The thread to set to ready.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedSetThreadToReady(kernel_thread_t* pThread);
+
+/**
+ * @brief Sets the current thread to the waiting state.
+ *
+ * @details Sets the current thread to the waiting state. This function prevents
+ * putting back the thread to the ready list when the scheduler kicks in.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedThreadSetWaiting(void);
+
+/**
+ * @brief Tells if the sheduler has been initialized.
+ *
+ * @return true is returned if the scheduler has been initialized. false
+ * otherwise.
+ */
+bool schedIsInit(void);
+
+/**
+ * @brief Tells if the sheduler is running
+ *
+ * @return true is returned if the scheduler is running. false
+ * otherwise.
+ */
+bool schedIsRunning(void);
+
+/**
+ * @brief Returns if a thread is valid.
+ *
+ * @details Returns if a thread is valid. A thread is valid if it is still
+ * registered in the process that owns it.
+ *
+ * @param[in] pThread The thread to check.
+ *
+ * @return true is returned is the thread is value, false otherwise.
+ */
+bool schedIsThreadValid(kernel_thread_t* pThread);
+
+/**
+ * @brief Tells if the thread is an idle thread.
+ *
+ * @details Tells if the thread is an idle thread.
+ *
+ * @param[in] kpThread The thread to test.
+ *
+ * @return The function returns true is the thread is an idle thread, false
+ * otherwise.
+ */
+bool schedIsIdleThread(const kernel_thread_t* kpThread);
+
+/**
+ * @brief Forks the current process.
+ *
+ * @details Forks the current process. A complete copy of the current process
+ * will be done and memory will be marked as COW for both new and current
+ * process. Only the calling thread will be copied to the new process.
+ *
+ * @param[out] pNewPid The new forked process PID. This value is 0 for the new
+ * process and the actual new process PID for the caller. -1 is set on error.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E schedFork(int32_t* pNewPid);
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+
+/**
+ * @brief System call handler to sleep.
+ *
+ * @details System call handler to sleep. Puts the calling thread to sleep for
+ * at least the required amount of time. The sleeping time can be greater
+ * depending on the time granularity and the system's load.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the sleep parameter structure.
+ */
+void schedSyscallHandleSleep(void* pParams);
+
+/**
+ * @brief System call handler to schedule the current thread.
+ *
+ * @details System call handler to schedule the current thread. Calls the
+ * scheduler dispatch function.This function will select the next thread to
+ * schedule and execute it. The context of the calling thread is saved before
+ * scheduling.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the schedule parameter structure.
+ */
+void schedSyscallHandleSchedule(void* pParams);
+
+/**
+ * @brief System call handler to fork the current process.
+ *
+ * @details System call handler to fork the current process. A complete copy of
+ * the current process will be done and memory will be marked as COW for both
+ * new and current process. Only the calling thread will be copied to the new
+ * process.
+ *
+ * @warning This function must be called only after handling the associated
+ * system call. Otherwise the current thread's context is not correctly saved.
+ *
+ * @param[out] pParams The pointer to the fork parameter structure.
+ */
+void schedSyscallHandleFork(void* pParams);
+
+/**
+ * @brief Returns the thread structure corresponding to the TID provided as 
+ * parameter.
+ * 
+ * @details Returns the thread structure corresponding to the TID provided as 
+ * parameter. NULL is returned if no thread with such TID was found.
+ * 
+ * @param[in] kTid The Thread ID of the thread structure to return.
+ * 
+ * @return The thread structure corresponding to the TID provided as 
+ * parameter is returned. NULL is returned if no thread with such TID was found.
+ */
+kernel_thread_t* schedGetThread(const int32_t kTid);
 
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 

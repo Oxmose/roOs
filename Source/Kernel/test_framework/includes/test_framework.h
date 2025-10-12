@@ -24,9 +24,9 @@
  * INCLUDES
  ******************************************************************************/
 
+#include <kerror.h>    /* Kernel error */
+#include <stdbool.h>   /* Bool types */
 #include <test_list.h> /* Test list */
-#include <kerror.h> /* Kernel error */
-
 #ifdef _TESTING_FRAMEWORK_ENABLED
 
 /*******************************************************************************
@@ -161,62 +161,62 @@ void testFrameworkInit(void);
 void testFrameworkEnd(void);
 
 void testFrameworkAssertUint(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const uint32_t expected,
                                 const uint32_t value);
 
 void testFrameworkAssertInt(const uint32_t test_id,
-                               const bool_t condition,
+                               const bool condition,
                                const int32_t expected,
                                const int32_t value);
 
 void testFrameworkAssertHuint(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const uint16_t expected,
                                  const uint16_t value);
 
 void testFrameworkAssertHint(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const int16_t expected,
                                 const int16_t value);
 
 void testFrameworkAssertUbyte(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const uint8_t expected,
                                  const uint8_t value);
 
 void testFrameworkAssertByte(const uint32_t test_id,
-                                const bool_t condition,
+                                const bool condition,
                                 const uint8_t expected,
                                 const uint8_t value);
 
 void testFrameworkAssertUdword(const uint32_t test_id,
-                                  const bool_t condition,
+                                  const bool condition,
                                   const uint64_t expected,
                                   const uint64_t value);
 
 void testFrameworkAssertDword(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const int64_t expected,
                                  const int64_t value);
 
 void testFrameworkAssertFloat(const uint32_t test_id,
-                                 const bool_t condition,
+                                 const bool condition,
                                  const float expected,
                                  const float value);
 
 void testFrameworkAssertDouble(const uint32_t test_id,
-                                  const bool_t condition,
+                                  const bool condition,
                                   const double expected,
                                   const double value);
 
 void testFrameworkAssertErrCode(const uint32_t test_id,
-                                   const bool_t condition,
+                                   const bool condition,
                                    const OS_RETURN_E expected,
                                    const OS_RETURN_E value);
 
 void testFrameworkAssertPointer(const uint32_t test_id,
-                                   const bool_t condition,
+                                   const bool condition,
                                    const uintptr_t expected,
                                    const uintptr_t value);
 

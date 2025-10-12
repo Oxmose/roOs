@@ -32,6 +32,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* Device tree library */
+#include <stdbool.h>      /* Bool types */
 #include <console.h>      /* Console service */
 #include <critical.h>     /* Critical sections */
 #include <drivermgr.h>    /* Driver manager */
@@ -91,7 +92,7 @@
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define CORE_MGT_ASSERT(COND, MSG, ERROR) {                 \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -109,8 +110,12 @@
  * dispatches the IPI request.
  *
  * @param[in] pCurrThread The executing thread at the moment of the IPI.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _ipiInterruptHandler(kernel_thread_t* pCurrThread);
+static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread);
+
+#endif /* #if SOC_CPU_COUNT > 1 */
 
 /**
  * @brief Attaches the Core Manager driver to the system.
@@ -129,6 +134,8 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
+
+#if SOC_CPU_COUNT > 1
 
 /************************* Imported global variables **************************/
 /** @brief Stores the number of enabled (running) cores in the system. */
@@ -160,7 +167,7 @@ static kqueue_t* sIpiParametersList[SOC_CPU_COUNT];
 static driver_t sX86CPUDriver = {
     .pName         = "X86 CPU Driver",
     .pDescription  = "X86 CPU Driver for roOs",
-    .pCompatible   = "generic,i386",
+    .pCompatible   = "generic,x86_64",
     .pVersion      = "1.0",
     .pDriverAttach = _coreMgtAttach
 };
@@ -189,11 +196,12 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode)
 }
 
 #if SOC_CPU_COUNT > 1
-static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
+static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
     kqueue_node_t* pNode;
     ipi_params_t   params;
     uint8_t        cpuId;
+    bool           doSchedule;
 
     interruptIRQSetEOI(sIpiInterruptLine);
 
@@ -209,6 +217,7 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
     kQueueDestroyNode(&pNode);
 
     /* Dispatch */
+    doSchedule = false;
     switch(params.function)
     {
         case IPI_FUNC_PANIC:
@@ -219,13 +228,15 @@ static void _ipiInterruptHandler(kernel_thread_t* pCurrThread)
             break;
         case IPI_FUNC_SCHEDULE:
             /* Request a schedule */
-            pCurrThread->requestSchedule = TRUE;
+            doSchedule = true;
             break;
         default:
             PANIC(OS_ERR_INCORRECT_VALUE,
                   MODULE_NAME,
                   "Unknown IPI function");
     }
+
+    return doSchedule;
 }
 
 void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)
@@ -278,7 +289,7 @@ void coreMgtInit(void)
     /* Initializes the IPI parameters locks */
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
-        sIpiParametersList[i] = kQueueCreate(TRUE);
+        sIpiParametersList[i] = kQueueCreate(true);
     }
 
     /* Init the current core information */
@@ -331,7 +342,7 @@ void coreMgtApInit(const uint8_t kCpuId)
 
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  kpParams,
-                   const bool_t   kAllocateParam)
+                   const bool     kAllocateParam)
 {
     uint8_t        i;
     uint8_t        destCpuId;
@@ -357,7 +368,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         /* Check if in bounds */
         if(destCpuId < _bootedCPUCount)
         {
-            if(kAllocateParam == TRUE)
+            if(kAllocateParam == true)
             {
                 pParams = kmalloc(sizeof(ipi_params_t));
                 CORE_MGT_ASSERT(pParams != NULL,
@@ -369,7 +380,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
             {
                 pParams = kpParams;
             }
-            pNode = kQueueCreateNode(pParams, TRUE);
+            pNode = kQueueCreateNode(pParams, true);
             kQueuePush(pNode, sIpiParametersList[destCpuId]);
 
             kspLapicDriver->pSendIPI(sCoreIds[destCpuId], sIpiInterruptLine);
@@ -381,7 +392,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         /* Send to all */
         for(i = 0; i < _bootedCPUCount; ++i)
         {
-            if(kAllocateParam == TRUE)
+            if(kAllocateParam == true)
             {
                 pParams = kmalloc(sizeof(ipi_params_t));
                 CORE_MGT_ASSERT(pParams != NULL,
@@ -393,7 +404,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
             {
                 pParams = kpParams;
             }
-            pNode = kQueueCreateNode(pParams, TRUE);
+            pNode = kQueueCreateNode(pParams, true);
             kQueuePush(pNode, sIpiParametersList[i]);
 
             kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
@@ -408,7 +419,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
         {
             if(i != srcCpuId)
             {
-                if(kAllocateParam == TRUE)
+                if(kAllocateParam == true)
                 {
                     pParams = kmalloc(sizeof(ipi_params_t));
                     CORE_MGT_ASSERT(pParams != NULL,
@@ -420,7 +431,7 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                 {
                     pParams = kpParams;
                 }
-                pNode = kQueueCreateNode(pParams, TRUE);
+                pNode = kQueueCreateNode(pParams, true);
                 kQueuePush(pNode, sIpiParametersList[i]);
 
                 kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
@@ -457,10 +468,11 @@ void coreMgtApInit(const uint8_t kCpuId)
 
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  pParams,
-                   const bool_t   kAllocateParam)
+                   const bool     kAllocateParam)
 {
     (void)kFlags;
-    (void)kpParams;
+    (void)pParams;
+    (void)kAllocateParam;
 }
 
 #endif /* SOC_CPU_COUNT > 1 */

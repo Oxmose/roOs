@@ -17,14 +17,15 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __X664_X86_MEMORY_H_
-#define __X664_X86_MEMORY_H_
+#ifndef __X64_X86_MEMORY_H_
+#define __X64_X86_MEMORY_H_
 
 /*******************************************************************************
  * INCLUDES
  ******************************************************************************/
 
-/* None */
+#include <kqueue.h>   /* Kernel queues */
+#include <critical.h> /* Kernel critical */
 
 /*******************************************************************************
  * CONSTANTS
@@ -35,23 +36,53 @@
 
 /** @brief Defines the limit address allocable by the kernel (excludes recursive
  * mapping). */
-#define KERNEL_VIRTUAL_ADDR_MAX 0xFFFFFFFFFFFFEFFF
+#define KERNEL_VIRTUAL_ADDR_MAX 0xFFFFFFFFFFFFEFFFULL
 
 /**
  * @brief Kernel virtual memory offset
  * @warning This value should be updated to fit other configuration files
  */
-#define KERNEL_MEM_OFFSET 0xFFFFFFFF80000000
+#define KERNEL_MEM_OFFSET 0xFFFFFFFF80000000ULL
 
 /** @brief Kernel physical memory offset */
-#define KERNEL_MEM_START 0x00100000
+#define KERNEL_MEM_START 0x00100000ULL
+
+/** @brief User total memory start. */
+#define USER_MEMORY_START 0x0000000000100000ULL
+
+/** @brief User total memory end. */
+#define USER_MEMORY_END 0x0000800000000000ULL
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
 
-/* None */
+/** @brief Defines a memory list */
+typedef struct
+{
+    /** @brief The memory list structure  */
+    kqueue_t* pQueue;
 
+    /** @brief The memory list lock */
+    kernel_spinlock_t lock;
+} mem_list_t;
+
+
+/**
+ * @brief Defines the structure that contains the memory information for a
+ * process.
+ */
+typedef struct
+{
+    /** @brief The physical address of the process page directory. */
+    uintptr_t pageDir;
+
+    /** @brief The free page table of the process. */
+    mem_list_t freePageTable;
+
+    /** @brief The memory management lock for the process */
+    kernel_spinlock_t lock;
+} memproc_info_t;
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -75,35 +106,8 @@
  * FUNCTIONS
  ******************************************************************************/
 
-/**
- * @brief Maps a stack in the kernel memory region and returns its address.
- *
- * @details Maps a stack in the kernel memory region and returns its address.
- * One more page after the stack is allocated but not mapped to catch overflows.
- * The required frames are also allocated.
- *
- * @param[in] kSize The size of the stack. If not aligned with the kernel page
- * size, the actual mapped size will be aligned up on page boundaries.
- *
- * @return The base address of the stack in kernel memory is returned.
- */
-void* memoryKernelMapStack(const size_t kSize);
+/* None */
 
-/**
- * @brief Unmaps a stack in the kernel memory region and frees the associated
- * physical memory.
- *
- * @details Maps a stack in the kernel memory region and frees the associated
- * physical memory.
- * The additional overflow page is also freed.
- *
- * @param[in] kBaseAddress The base address of the stack to unmap. If not
- * aligned with the kernel page size, a panic is generated.
- * @param[in] kSize The size of the stack. If not aligned with the kernel page
- * size, a panic is generated.
- */
-void memoryKernelUnmapStack(const uintptr_t kBaseAddress, const size_t kSize);
-
-#endif /* #ifndef __I386_X86_MEMORY_H_ */
+#endif /* #ifndef __X64_X86_MEMORY_H_ */
 
 /************************************ EOF *************************************/

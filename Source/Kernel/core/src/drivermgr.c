@@ -70,7 +70,7 @@
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define DRVMGR_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -223,6 +223,7 @@ OS_RETURN_E driverManagerSetDeviceData(const fdt_node_t* pkFdtNode,
                                        void*             pData)
 {
     OS_RETURN_E retCode;
+
 
     /* Check parameters */
     if(pkFdtNode != NULL)

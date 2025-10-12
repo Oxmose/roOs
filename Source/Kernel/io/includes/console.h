@@ -25,9 +25,10 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stdint.h> /* Generic int types and bool_t */
-#include <stddef.h> /* Standard definition */
-#include <kerror.h> /* Kernel error codes */
+#include <stdint.h>  /* Generic int types */
+#include <stddef.h>  /* Standard definition */
+#include <kerror.h>  /* Kernel error codes */
+#include <stdbool.h> /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
@@ -142,7 +143,7 @@ typedef struct
      * @brief Set to 1 if using the VGA color designation for foreground and
      * background. If set to 0, then regular 32 bits RGBA designation is used.
      */
-    bool_t vgaColor;
+    bool vgaColor;
 } colorscheme_t;
 
 /** @brief Defines the IOCTL arguments for a scroll operation. */

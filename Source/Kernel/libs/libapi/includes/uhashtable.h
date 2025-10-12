@@ -27,9 +27,10 @@
  * INCLUDES
  ******************************************************************************/
 
-#include <stddef.h> /* Standard definitons */
-#include <stdint.h> /* Generic int types */
-#include <kerror.h> /* Kernel error codes */
+#include <stddef.h>  /* Standard definitons */
+#include <stdint.h>  /* Generic int types */
+#include <kerror.h>  /* Kernel error codes */
+#include <stdbool.h> /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
@@ -74,7 +75,7 @@ typedef struct
     void* pData;
 
     /** @brief Tells if the entry is used or not. */
-    bool_t isUsed;
+    bool isUsed;
 } uhashtable_entry_t;
 
 /** @brief Unsigned hash table structure. */

@@ -25,7 +25,7 @@
 #include <vfs.h>       /* Virtual Filesystem */
 #include <ioctl.h>     /* IOCTL commands */
 #include <string.h>    /* String manipulation */
-#include <stdint.h>    /* Generic int types and bool_t */
+#include <stdint.h>    /* Generic int types */
 #include <stddef.h>    /* Standard definition */
 #include <syslog.h>    /* Syslog service */
 #include <kerror.h>    /* Kernel error codes */

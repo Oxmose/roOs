@@ -25,7 +25,7 @@
 
 /* Included headers */
 #include <interrupts.h>
-#include <cpu_interrupt.h>
+#include <cpuInterrupt.h>
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>
@@ -84,7 +84,7 @@ static volatile uint32_t counter = 0;
  * FUNCTIONS
  ******************************************************************************/
 
-static void incrementer_handler(kernel_thread_t* curr_thread)
+static bool incrementer_handler(kernel_thread_t* curr_thread)
 {
     (void)curr_thread;
 
@@ -92,14 +92,18 @@ static void incrementer_handler(kernel_thread_t* curr_thread)
     {
         counter += ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
+
+    return false;
 }
 
-static void decrementer_handler(kernel_thread_t* curr_thread)
+static bool decrementer_handler(kernel_thread_t* curr_thread)
 {
     if(counter > 0)
     {
         counter -= ((virtual_cpu_t*)(curr_thread->pVCpu))->intContext.intId;
     }
+
+    return false;
 }
 
 static void test_sw_interupts(void)
@@ -158,8 +162,8 @@ static void test_sw_interupts(void)
     /* TEST REMOVE WHEN NOT REGISTERED */
     err = interruptRemove(MIN_INTERRUPT_LINE);
     TEST_POINT_ASSERT_RCODE(TEST_INTERRUPT_SW_REM_BAD_HANDLER2_ID,
-                            err == OS_ERR_INTERRUPT_NOT_REGISTERED,
-                            OS_ERR_INTERRUPT_NOT_REGISTERED,
+                            err == OS_ERR_NO_SUCH_ID,
+                            OS_ERR_NO_SUCH_ID,
                             err,
                             TEST_INTERRUPT_ENABLED);
 

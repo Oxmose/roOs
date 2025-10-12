@@ -198,7 +198,7 @@ typedef struct lapic_controler_t
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define LAPIC_ASSERT(COND, MSG, ERROR) {                    \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \

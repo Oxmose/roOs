@@ -152,7 +152,6 @@ static void signalHandlerSelf(void)
     schedThreadExit(THREAD_TERMINATE_CORRECTLY,
                     THREAD_RETURN_STATE_RETURNED,
                     NULL);
-
 }
 
 static void signalHandlerRegular(void)
@@ -178,13 +177,13 @@ static void* otherThread(void* args)
 
     pNewThreadHandle = schedGetCurrentThread();
 
-    kprintf("Registering signals\n");
+    kprintf("Registering signals in %d\n", pNewThreadHandle->tid);
 
-    error = signalRegister(THREAD_SIGNAL_ILL, signalHandlerIllegalInst);
-    error |= signalRegister(THREAD_SIGNAL_FPE, signalHandlerDivZero);
-    error |= signalRegister(THREAD_SIGNAL_USR1, signalHandlerSelf);
-    error |= signalRegister(THREAD_SIGNAL_SEGV, signalHandlerSegfault);
-    error |= signalRegister(THREAD_SIGNAL_USR2, signalHandlerRegular);
+    error = signalRegister(THREAD_SIGNAL_ILL, signalHandlerIllegalInst, false);
+    error |= signalRegister(THREAD_SIGNAL_FPE, signalHandlerDivZero, false);
+    error |= signalRegister(THREAD_SIGNAL_USR1, signalHandlerSelf, false);
+    error |= signalRegister(THREAD_SIGNAL_SEGV, signalHandlerSegfault, false);
+    error |= signalRegister(THREAD_SIGNAL_USR2, signalHandlerRegular, false);
     TEST_POINT_ASSERT_RCODE(TEST_SIGNAL_REGISTER(++lastVal),
                             error == OS_NO_ERR,
                             OS_NO_ERR,
@@ -236,7 +235,7 @@ static void* testThread(void* args)
 
     /* Division by zero */
     kprintf("Div by zero signal\n");
-    error = schedCreateKernelThread(&pNewThread,
+    error = schedCreateThread(&pNewThread, true,
                                     1,
                                     "DEF_SIG_HAND",
                                     0x1000,
@@ -262,7 +261,7 @@ static void* testThread(void* args)
 
     /* Segfault */
     kprintf("Segfault signal\n");
-    error = schedCreateKernelThread(&pNewThread,
+    error = schedCreateThread(&pNewThread, true,
                                     1,
                                     "DEF_SIG_HAND",
                                     0x1000,
@@ -288,7 +287,7 @@ static void* testThread(void* args)
 
     /* Illegal instruction */
     kprintf("Illegal instruction signal\n");
-    error = schedCreateKernelThread(&pNewThread,
+    error = schedCreateThread(&pNewThread, true,
                                     1,
                                     "DEF_SIG_HAND",
                                     0x1000,
@@ -314,7 +313,7 @@ static void* testThread(void* args)
 
     /* Custom signal */
     kprintf("Custom signal\n");
-    error = schedCreateKernelThread(&pNewThread,
+    error = schedCreateThread(&pNewThread, true,
                                     1,
                                     "DEF_SIG_HAND",
                                     0x1000,
@@ -347,7 +346,7 @@ static void* testThread(void* args)
 
     /* Self signal */
     kprintf("Self signal\n");
-    error = schedCreateKernelThread(&pNewThread,
+    error = schedCreateThread(&pNewThread, true,
                                     1,
                                     "DEF_SIG_HAND",
                                     0x1000,
@@ -371,6 +370,7 @@ static void* testThread(void* args)
                            retValue,
                            TEST_SIGNAL_ENABLED);
 
+    kprintf("Test end\n");
 
     TEST_FRAMEWORK_END();
     return NULL;
@@ -382,7 +382,7 @@ void signalTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     1,
                                     "DEF_SIG_MAIN",
                                     0x1000,

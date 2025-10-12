@@ -32,6 +32,7 @@
 #include <string.h>       /* String manipulation */
 #include <kerror.h>       /* Kernel errors */
 #include <syslog.h>       /* Syslog service */
+#include <stdbool.h>      /* Bool types */
 
 /* Configuration files */
 #include <config.h>
@@ -202,7 +203,7 @@ typedef struct
     uint8_t type;
 
     /** @brief Bootable partition flags */
-    bool_t active;
+    bool active;
 
     /** @brief Partition's disk base path */
     const char* pDiskPath;
@@ -250,7 +251,7 @@ typedef struct
  *
 */
 #define DSKMGR_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -281,9 +282,9 @@ static void _detectPartitions(const char* kpBasePath);
  *
  * @param[in] kpBasePath The device path where to search for partitions.
  *
- * @return The function shall return TRUE on success and FALSE on error.
+ * @return The function shall return true on success and false on error.
  */
-static bool_t _detectAndCreateMBRParts(const char* kpBasePath);
+static bool _detectAndCreateMBRParts(const char* kpBasePath);
 
 /**
  * @brief Detects partition in a GPT mount point.
@@ -295,9 +296,9 @@ static bool_t _detectAndCreateMBRParts(const char* kpBasePath);
  *
  * @param[in] kpBasePath The device path where to search for partitions.
  *
- * @return The function shall return TRUE on success and FALSE on error.
+ * @return The function shall return true on success and false on error.
  */
-static bool_t _detectAndCreateGPTParts(const char* kpBasePath);
+static bool _detectAndCreateGPTParts(const char* kpBasePath);
 
 /**
  * @brief Partition VFS open hook.
@@ -520,7 +521,7 @@ static uint32_t sCrc32Table[256] = {
  * FUNCTIONS
  ******************************************************************************/
 
-static bool_t _detectAndCreateMBRParts(const char* kpBasePath)
+static bool _detectAndCreateMBRParts(const char* kpBasePath)
 {
     mbr_data_t   mbrData;
     int32_t      fd;
@@ -537,7 +538,7 @@ static bool_t _detectAndCreateMBRParts(const char* kpBasePath)
         syslog(SYSLOG_LEVEL_ERROR,
                "Failed to open partition at %s",
                kpBasePath);
-        return FALSE;
+        return false;
     }
 
 #if DISKMGR_DEBUG_ENABLED
@@ -628,7 +629,7 @@ static bool_t _detectAndCreateMBRParts(const char* kpBasePath)
         }
         else
         {
-            return FALSE;
+            return false;
         }
     }
     else
@@ -637,15 +638,15 @@ static bool_t _detectAndCreateMBRParts(const char* kpBasePath)
                MODULE_NAME,
                "Failed to read partition first sector. Read %dB",
                readSize);
-        return FALSE;
+        return false;
     }
 
     vfsClose(fd);
 
-    return TRUE;
+    return true;
 }
 
-static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
+static bool _detectAndCreateGPTParts(const char* kpBasePath)
 {
     gpt_table_header_t tableHeader;
     gpt_table_entry_t  tableEntry;
@@ -671,7 +672,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
         syslog(SYSLOG_LEVEL_ERROR,
                "Failed to open partition at %s",
                kpBasePath);
-        return FALSE;
+        return false;
     }
 
     /* Moving to LBA 1 */
@@ -680,7 +681,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
     if(retVal < 0)
     {
         syslog(SYSLOG_LEVEL_ERROR, MODULE_NAME, "Failed to seek GPT header");
-        return FALSE;
+        return false;
     }
 
 #if DISKMGR_DEBUG_ENABLED
@@ -711,7 +712,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
                        "Failed to match CRC32 header table: %x vs %x",
                        savedCrc,
                        crc32Val);
-                return FALSE;
+                return false;
             }
 
             /* TODO: Compute the table CRC */
@@ -726,7 +727,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
                 syslog(SYSLOG_LEVEL_ERROR,
                        MODULE_NAME,
                        "Failed to seek GPT entry");
-                return FALSE;
+                return false;
             }
 
             for(partId = 0; partId < tableHeader.partitionCount; ++partId)
@@ -738,7 +739,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
                            MODULE_NAME,
                            "Failed to read GPT entry. Read size %dB.",
                            readSize);
-                    return FALSE;
+                    return false;
                 }
 
                 /* Seek the rest of the entry if it was bigger */
@@ -751,7 +752,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
                     syslog(SYSLOG_LEVEL_ERROR,
                            MODULE_NAME,
                            "Failed to seek GPT entry");
-                    return FALSE;
+                    return false;
                 }
 
                 /* Check if used */
@@ -844,7 +845,7 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
         }
         else
         {
-            return FALSE;
+            return false;
         }
     }
     else
@@ -853,12 +854,12 @@ static bool_t _detectAndCreateGPTParts(const char* kpBasePath)
                MODULE_NAME,
                "Failed to read partition first sector. Read %dB",
                readSize);
-        return FALSE;
+        return false;
     }
 
     vfsClose(fd);
 
-    return TRUE;
+    return true;
 }
 
 static void _detectPartitions(const char* kpBasePath)
@@ -914,7 +915,7 @@ static void _detectPartitions(const char* kpBasePath)
             while(pDriver->createPartitions != NULL)
             {
                 /* Call the detection */
-                if(pDriver->createPartitions(pNewPath) == TRUE)
+                if(pDriver->createPartitions(pNewPath) == true)
                 {
                     break;
                 }

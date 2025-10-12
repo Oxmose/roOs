@@ -174,10 +174,10 @@ __kinitInitPGdir:
     or  eax, 0xA0
     mov cr4, eax
 
-    ; Switch to compatibility mode and NXE
+    ; Switch to compatibility mode, enable NXE and SYSCALL/SYSRET
     mov ecx, 0xC0000080
     rdmsr
-    or  eax, 0x00000900
+    or  eax, 0x00000901
     wrmsr
 
     ; Set CR3

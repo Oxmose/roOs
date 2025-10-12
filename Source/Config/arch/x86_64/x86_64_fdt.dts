@@ -10,19 +10,19 @@
         #address-cells = <2>;
         #size-cells = <0>;
         cpu@0 {
-            compatible = "generic,i386";
+            compatible = "generic,x86_64";
             reg = <0x0 0x0>;
         };
         cpu@1 {
-            compatible = "generic,i386";
+            compatible = "generic,x86_64";
             reg = <0x0 0x1>;
         };
         cpu@2 {
-            compatible = "generic,i386";
+            compatible = "generic,x86_64";
             reg = <0x0 0x2>;
         };
         cpu@3 {
-            compatible = "generic,i386";
+            compatible = "generic,x86_64";
             reg = <0x0 0x3>;
         };
     };
@@ -96,7 +96,7 @@
         interrupt-controllers {
             pic {
                 compatible = "x86,x86-pic";
-                //interrupt-controller;
+                #interrupt-controller;
                 #address-cells = <0>;
                 #interrupt-cells = <2>;
                 int-offset = <0x30>;
@@ -104,7 +104,7 @@
                 comm = <0x20 0x21 0xA0 0xA1>;
             };
 
-            io-apic {
+            int_ctrl: io-apic {
                 compatible = "x86,x86-io-apic";
                 interrupt-controller;
                 #address-cells = <0>;
@@ -150,6 +150,7 @@
         timers {
             auxtimer0: pit {
                 compatible = "x86,x86-pit";
+                interrupt-parent = <&int_ctrl>;
                 interrupts = <1 0>; /* 0: is IRQ; 1: IRQ line */
                 comm = <0x34 0x40>;
                 qartz-freq = <0x1234DD>;
@@ -159,6 +160,7 @@
 
             auxtimer1: hpet {
                 compatible = "x86,x86-hpet";
+                interrupt-parent = <&int_ctrl>;
                 interrupts = <1 20>; /* 0: is IRQ; 1: IRQ line */
                 freq = <5000>;
                 acpi-node = <&acpi>;
@@ -166,6 +168,7 @@
 
             rtctimer: rtc {
                 compatible = "x86,x86-rtc";
+                interrupt-parent = <&int_ctrl>;
                 interrupts = <1 8>; /* 0: is IRQ; 1: IRQ line */
                 comm = <0x70 0x71>;
                 qartz-freq = <32768>;
@@ -180,6 +183,7 @@
 
             maintimer: lapic-timer {
                 compatible = "x86,x86-lapic-timer";
+                interrupt-parent = <&int_ctrl>;
                 interrupts = <0 0x21>; /* 0: is not IRQ; 1: Int line */
                 freq = <500>;
                 bus-freq-divider = <16>;
@@ -210,6 +214,7 @@
         kdb: keyboard {
             compatible = "x86,x86-generic-keyboard";
             comm = <0x64 0x60>;
+            interrupt-parent = <&int_ctrl>;
             interrupts = <1 1>; /* 0: is IRQ; 1: IRQ line */
             device = "/dev/kbd";
         };
@@ -218,6 +223,7 @@
             compatible = "x86,x86-generic-serial";
             comm = <0x3F8>;
             baudrate = <115200>;
+            interrupt-parent = <&int_ctrl>;
             interrupts = <1 4>; /* 0: is IRQ; 1: IRQ line */
             device = "/dev/uart/0";
         };

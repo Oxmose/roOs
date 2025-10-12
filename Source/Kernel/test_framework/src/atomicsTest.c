@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>
 #include <critical.h>
 #include <scheduler.h>
 #include <stdint.h>
@@ -152,7 +153,7 @@ static void testSpinlock(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "SPINLOCK_TEST",
                                         0x1000,
@@ -209,7 +210,7 @@ static void testIncrement(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "ATOMIC_INC_TEST",
                                         0x1000,
@@ -266,7 +267,7 @@ static void testDecrement(void)
 
     for(i = 0; i < 10; ++i)
     {
-        error = schedCreateKernelThread(&pThreads[i],
+        error = schedCreateThread(&pThreads[i], true,
                                         1,
                                         "ATOMIC_DEC_TEST",
                                         0x1000,
@@ -334,7 +335,7 @@ void atomicsTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     0,
                                     "ATOMICS_TEST",
                                     0x1000,

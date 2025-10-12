@@ -187,7 +187,7 @@ static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*   pTable,
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
     while(pTable->ppEntries[entryIdx] != NULL &&
-          pTable->ppEntries[entryIdx]->isUsed == TRUE)
+          pTable->ppEntries[entryIdx]->isUsed == true)
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey)
@@ -209,19 +209,18 @@ static OS_RETURN_E _uhashtableSetEntry(uhashtable_t*   pTable,
         {
             return OS_ERR_NO_MORE_MEMORY;
         }
-
-        ++pTable->size;
     }
     else
     {
         /* We found an entry from the graveyard, remove it */
         --pTable->graveyardSize;
     }
+    ++pTable->size;
 
     /* Set the data */
     pTable->ppEntries[entryIdx]->key    = kKey;
     pTable->ppEntries[entryIdx]->pData  = pData;
-    pTable->ppEntries[entryIdx]->isUsed = TRUE;
+    pTable->ppEntries[entryIdx]->isUsed = true;
 
     return OS_NO_ERR;
 }
@@ -233,14 +232,14 @@ static void _uhashtableRehashEntry(uhashtable_t*       pTable,
     size_t   entryIdx;
 
     /* Get the hash and ensure it does not overflow the current capacity */
-    hash        = _uhash64(pEntry->key);
+    hash     = _uhash64(pEntry->key);
     entryIdx = (size_t)(hash & (uint64_t)(pTable->capacity - 1));
 
     /* Search for the entry in the table. Note that due to the fact that our
      * load factor should always be under 1.0, there is at least one entry that
      * is NULL. Hence we cannot have an infinite loop here. */
     while(pTable->ppEntries[entryIdx] != NULL &&
-          pTable->ppEntries[entryIdx]->isUsed == TRUE)
+          pTable->ppEntries[entryIdx]->isUsed == true)
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == pEntry->key)
@@ -268,7 +267,7 @@ static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth)
     newCapacity = (size_t)((float)pTable->capacity * kGrowth);
 
     /* Check if did not overflow on the size */
-    if(newCapacity <= pTable->capacity)
+    if(newCapacity < pTable->capacity)
     {
         return OS_ERR_OUT_OF_BOUND;
     }
@@ -295,7 +294,7 @@ static OS_RETURN_E _uhashtableRehash(uhashtable_t* pTable, const float kGrowth)
         if(ppOldEnt[i] != NULL)
         {
             /* Check if it was an entry that was used */
-            if(ppOldEnt[i]->isUsed == TRUE)
+            if(ppOldEnt[i]->isUsed == true)
             {
                 _uhashtableRehashEntry(pTable, ppOldEnt[i]);
             }
@@ -386,10 +385,10 @@ OS_RETURN_E uhashtableDestroy(uhashtable_t* pTable)
     pTable->allocator.pFree(pTable->ppEntries);
 
     /* Reset attributes */
-    pTable->size           = 0;
-    pTable->capacity       = 0;
+    pTable->size          = 0;
+    pTable->capacity      = 0;
     pTable->graveyardSize = 0;
-    pTable->ppEntries        = NULL;
+    pTable->ppEntries     = NULL;
 
     /* Free memory */
     pTable->allocator.pFree(pTable);
@@ -420,7 +419,7 @@ OS_RETURN_E uhashtableGet(const uhashtable_t* pTable,
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey &&
-           pTable->ppEntries[entryIdx]->isUsed == TRUE)
+           pTable->ppEntries[entryIdx]->isUsed == true)
         {
             *ppData = pTable->ppEntries[entryIdx]->pData;
             return OS_NO_ERR;
@@ -445,7 +444,7 @@ OS_RETURN_E uhashtableSet(uhashtable_t*   pTable,
     }
 
     /* Check if the current load is under the threshold, double the size */
-    if((float)pTable->capacity * HT_MAX_LOAD_FACTOR <
+    if((size_t)((float)pTable->capacity * HT_MAX_LOAD_FACTOR) <=
        pTable->size + pTable->graveyardSize)
     {
         err = _uhashtableRehash(pTable, 2);
@@ -495,13 +494,13 @@ OS_RETURN_E uhashtableRemove(uhashtable_t*   pTable,
     {
         /* Found the entry */
         if(pTable->ppEntries[entryIdx]->key == kKey &&
-           pTable->ppEntries[entryIdx]->isUsed == TRUE)
+           pTable->ppEntries[entryIdx]->isUsed == true)
         {
             if(ppData != NULL)
             {
                 *ppData = pTable->ppEntries[entryIdx]->pData;
             }
-            pTable->ppEntries[entryIdx]->isUsed = FALSE;
+            pTable->ppEntries[entryIdx]->isUsed = false;
 
             ++pTable->graveyardSize;
             --pTable->size;

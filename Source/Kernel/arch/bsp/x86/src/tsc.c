@@ -131,7 +131,7 @@ static uint32_t _tscGetFrequency(void* pDrvCtrl);
  * @return OS_ERR_NOT_SUPPORTED is always returned.
  */
 static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*));
+                                  bool(*pHandler)(kernel_thread_t*));
 
 /**
  * @brief Unused, TSC does not support interrupts.
@@ -270,7 +270,7 @@ static uint32_t _tscGetFrequency(void* pDrvCtrl)
 }
 
 static OS_RETURN_E _tscSetHandler(void* pDrvCtrl,
-                                  void(*pHandler)(kernel_thread_t*))
+                                  bool(*pHandler)(kernel_thread_t*))
 {
     (void)pDrvCtrl;
     (void)pHandler;
@@ -304,18 +304,6 @@ static uint64_t _tscGetTimeNs(void* pDrvCtrl)
 
     return time;
 }
-
-#ifdef _TRACING_ENABLED
-uint64_t tracingTimerGetTick(void)
-{
-    uint32_t highPart;
-    uint32_t lowPart;
-
-    /* Get time */
-    __asm__ __volatile__ ("rdtsc" : "=a"(lowPart), "=d"(highPart));
-    return (((uint64_t)highPart << 32) | (uint64_t)lowPart);
-}
-#endif
 
 /***************************** DRIVER REGISTRATION ****************************/
 DRIVERMGR_REG_FDT(sX86TSCDriver);

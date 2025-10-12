@@ -116,39 +116,39 @@ static void _handleSignalException(void);
 /************************** Static global variables ***************************/
 
 /** @brief Signal handlers table */
-static void* spInitSignalHandler[THREAD_MAX_SIGNALS] = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    _handleSignalIllegalInstructionExc, // THREAD_SIGNAL_ILL
-    NULL,
-    NULL,
-    NULL,
-    _handleSignalFloatingPointExc,      // THREAD_SIGNAL_FPE
-    _handleSignalKill,                  // THREAD_SIGNAL_KILL
-    NULL,                               // THREAD_SIGNAL_USR1
-    _handleSignalSegFault,              // THREAD_SIGNAL_SEGV
-    NULL,                               // THREAD_SIGNAL_USR2
-    NULL,
-    NULL,
-    NULL,
-    _handleSignalException,             // THREAD_SIGNAL_EXC
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+static signal_t spInitSignalHandler[THREAD_MAX_SIGNALS] = {
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {_handleSignalIllegalInstructionExc, false}, // THREAD_SIGNAL_ILL
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {_handleSignalFloatingPointExc, false},      // THREAD_SIGNAL_FPE
+    {_handleSignalKill, false},                  // THREAD_SIGNAL_KILL
+    {NULL, false},                               // THREAD_SIGNAL_USR1
+    {_handleSignalSegFault, false},              // THREAD_SIGNAL_SEGV
+    {NULL, false},                               // THREAD_SIGNAL_USR2
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {_handleSignalException, false},             // THREAD_SIGNAL_EXC
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false},
+    {NULL, false}
 };
 
 /*******************************************************************************
@@ -179,7 +179,15 @@ static void _handleSignalSegFault(void)
            pThread->errorTable.segfaultAddr,
            pThread->errorTable.instAddr);
 
+    while(1)
+    {
+        pThread->currentState = THREAD_STATE_ZOMBIE;
+        pThread->nextState = THREAD_STATE_ZOMBIE;
+        schedScheduleNoInt();
+    }
     cpuCoreDump(pThread->errorTable.pExecVCpu);
+
+    
 
 
     /* We are terminating ourselves just go to the exit point */
@@ -270,10 +278,10 @@ void signalManage(kernel_thread_t* pThread)
     {
         /* Find the next signal to handle */
         if(((1ULL << i) & pThread->signal) != 0 &&
-           pThread->signalHandlers[i] != NULL)
+           pThread->signalHandlers[i].handler != NULL)
         {
             /* Redirect execution and clear signal */
-            cpuRequestSignal(pThread, pThread->signalHandlers[i]);
+            cpuRequestSignal(pThread, pThread->signalHandlers[i].handler, pThread->signalHandlers[i].isUser);
             pThread->signal &= ~(1ULL << i);
             break;
         }
@@ -281,7 +289,8 @@ void signalManage(kernel_thread_t* pThread)
 }
 
 OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
-                           void                  (*pHandler)(void))
+                           void                  (*pHandler)(void),
+                           const bool            kIsUser)
 {
     kernel_thread_t* pThread;
 
@@ -299,7 +308,8 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
 
     /* Register the handler in the table */
     KERNEL_LOCK(pThread->lock);
-    pThread->signalHandlers[kSignal] = (void*)pHandler;
+    pThread->signalHandlers[kSignal].handler = (void*)pHandler;
+    pThread->signalHandlers[kSignal].isUser = kIsUser;
     KERNEL_UNLOCK(pThread->lock);
     return OS_NO_ERR;
 }
@@ -319,24 +329,33 @@ OS_RETURN_E signalThread(kernel_thread_t*      pThread,
         return OS_ERR_INCORRECT_VALUE;
     }
 
-    KERNEL_LOCK(pThread->lock);
-    if(pThread->currentState != THREAD_STATE_ZOMBIE)
+    if(schedIsIdleThread(pThread) == true)
     {
-        if(pThread->signalHandlers[kSignal] != NULL)
-        {
-            pThread->signal |= (1ULL << kSignal);
-            error = OS_NO_ERR;
-        }
-        else
-        {
-            error = OS_ERR_INCORRECT_VALUE;
-        }
+        return OS_ERR_UNAUTHORIZED_ACTION;
+    }
+
+    KERNEL_LOCK(pThread->lock);
+
+    /* Check if the thread is still valid */
+    if(schedIsThreadValid(pThread) == false)
+    {
+        KERNEL_UNLOCK(pThread->lock);
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    if(pThread->signalHandlers[kSignal].handler != NULL)
+    {
+        pThread->signal |= (1ULL << kSignal);
+
+        KERNEL_UNLOCK(pThread->lock);
+        /* Release the thread */
+        error = schedSetThreadToReady(pThread);
     }
     else
     {
-        error = OS_ERR_NO_SUCH_ID;
+        KERNEL_UNLOCK(pThread->lock);
+        error = OS_ERR_INCORRECT_VALUE;
     }
-    KERNEL_UNLOCK(pThread->lock);
 
     return error;
 }

@@ -34,10 +34,12 @@
 #include <string.h>       /* String manipualtion */
 #include <kerror.h>       /* Kernel error */
 #include <devtree.h>      /* Device tree */
+#include <stdbool.h>      /* Bool types */
 #include <console.h>      /* Console driver manager */
 #include <critical.h>     /* Kernel locks */
 #include <drivermgr.h>    /* Driver manager service */
-#include <semaphore.h>    /* Kernel semaphores */
+#include <ksemaphore.h>   /* Kernel semaphores */
+#include <interrupts.h>   /* Interrupt manager */
 #include <kerneloutput.h> /* Kernel output manager */
 
 /* Configuration files */
@@ -236,7 +238,7 @@ typedef struct
     kernel_spinlock_t inputBufferLock;
 
     /** @brief Input buffer semaphore */
-    semaphore_t inputBufferSem;
+    ksemaphore_t inputBufferSem;
 
     /** @brief Stores the VFS driver */
     vfs_driver_t vfsDriver;
@@ -260,7 +262,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define UART_ASSERT(COND, MSG, ERROR) {                     \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -374,8 +376,10 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate);
  * and unblock a thread if it is blocked on the input.
  *
  * @param[in] pCurrentThread Unused.
+ *
+ * @return Returns if the scheduler must be called on return.
  */
-static void _uartInterruptHandler(kernel_thread_t* pCurrentThread);
+static bool _uartInterruptHandler(kernel_thread_t* pCurrentThread);
 
 /**
  * @brief Reads data from the UART input buffer.
@@ -516,11 +520,11 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
     OS_RETURN_E       retCode;
     OS_RETURN_E       error;
     uart_controler_t* pDrvCtrl;
-    bool_t            isSemInit;
-    bool_t            isInputBufferSet;
+    bool              isSemInit;
+    bool              isInputBufferSet;
 
-    isSemInit        = FALSE;
-    isInputBufferSet = FALSE;
+    isSemInit        = false;
+    isInputBufferSet = false;
 
     /* Init structures */
     pDrvCtrl = kmalloc(sizeof(uart_controler_t));
@@ -582,17 +586,17 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
             retCode = OS_ERR_NO_MORE_MEMORY;
             goto ATTACH_END;
         }
-        isInputBufferSet = TRUE;
+        isInputBufferSet = true;
         KERNEL_SPINLOCK_INIT(pDrvCtrl->inputBufferLock);
 
-        retCode = semInit(&pDrvCtrl->inputBufferSem,
-                          0,
-                          SEMAPHORE_FLAG_QUEUING_PRIO | SEMAPHORE_FLAG_BINARY);
+        retCode = ksemInit(&pDrvCtrl->inputBufferSem,
+                           0,
+                           KSEMAPHORE_FLAG_QUEUING_PRIO | KSEMAPHORE_FLAG_BINARY);
         if(retCode != OS_NO_ERR)
         {
             goto ATTACH_END;
         }
-        isSemInit = TRUE;
+        isSemInit = true;
 
         pDrvCtrl->irqNumber = (uint8_t)FDTTOCPU32(*(kpUintProp + 1));
 
@@ -607,7 +611,7 @@ static OS_RETURN_E _uartAttach(const fdt_node_t* pkFdtNode)
         }
 
         /* Set the interrupt mask */
-        interruptIRQSetMask(pDrvCtrl->irqNumber, TRUE);
+        interruptIRQSetMask(pDrvCtrl->irqNumber, true);
         interruptIRQSetEOI(pDrvCtrl->irqNumber);
 
         /* Enable interrupt on receive */
@@ -649,11 +653,11 @@ ATTACH_END:
 
     if(retCode != OS_NO_ERR)
     {
-        if(isSemInit == TRUE)
+        if(isSemInit == true)
         {
-            semDestroy(&pDrvCtrl->inputBufferSem);
+            ksemDestroy(&pDrvCtrl->inputBufferSem);
         }
-        if(isInputBufferSet == TRUE)
+        if(isInputBufferSet == true)
         {
             kfree(pDrvCtrl->pInputBuffer);
         }
@@ -803,7 +807,7 @@ static SERIAL_BAUDRATE_E _uartGetCanonicalRate(const uint32_t kBaudrate)
     }
 }
 
-static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
+static bool _uartInterruptHandler(kernel_thread_t* pCurrentThread)
 {
     uint8_t     intStatus;
     uint8_t     data;
@@ -816,7 +820,7 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
     {
         /* Set EOI */
         interruptIRQSetEOI(spInputCtrl->irqNumber);
-        return;
+        return false;
     }
 
     /* Check is we received a data */
@@ -854,13 +858,15 @@ static void _uartInterruptHandler(kernel_thread_t* pCurrentThread)
         KERNEL_UNLOCK(spInputCtrl->inputBufferLock);
 
         /* Post the semaphore */
-        error = semPost(&spInputCtrl->inputBufferSem);
+        error = ksemPost(&spInputCtrl->inputBufferSem);
         UART_ASSERT(error == OS_NO_ERR, "Failed to post UART semaphore", error);
 
     }
 
     /* Set EOI */
     interruptIRQSetEOI(spInputCtrl->irqNumber);
+
+    return false;
 }
 
 static ssize_t _uartRead(void*        pDrvCtrl,
@@ -882,7 +888,7 @@ static ssize_t _uartRead(void*        pDrvCtrl,
     while(toRead != 0)
     {
         /* Copy if we can */
-        error = semWait(&spInputCtrl->inputBufferSem);
+        error = ksemWait(&spInputCtrl->inputBufferSem);
         UART_ASSERT(error == OS_NO_ERR,
                     "Failed to wait UART semaphore",
                     error);
@@ -927,7 +933,7 @@ static ssize_t _uartRead(void*        pDrvCtrl,
          */
         if(usedSpace > 0)
         {
-            error = semPost(&spInputCtrl->inputBufferSem);
+            error = ksemPost(&spInputCtrl->inputBufferSem);
             UART_ASSERT(error == OS_NO_ERR,
                         "Failed to post UART semaphore",
                         error);

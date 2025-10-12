@@ -28,6 +28,7 @@
 #include <stddef.h>    /* Standard definitons */
 #include <stdint.h>    /* Generic int types */
 #include <kerror.h>    /* Kernel error */
+#include <stdbool.h>   /* Bool types */
 
 /*******************************************************************************
  * CONSTANTS
@@ -72,7 +73,7 @@ typedef struct queue_node
     struct queue_node* pPrev;
 
     /** @brief Tell if the node is present in a queue or stands alone. */
-    bool_t enlisted;
+    bool enlisted;
 
     /** @brief Node's priority, used when the queue is a priority queue. */
     uint64_t priority;

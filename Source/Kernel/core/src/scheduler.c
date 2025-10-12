@@ -36,8 +36,11 @@
 #include <atomic.h>       /* Spinlocks */
 #include <syslog.h>       /* Kernel Syslog */
 #include <signal.h>       /* Thread signals */
+#include <stdbool.h>      /* Bool types */
+#include <syscall.h>      /* System call manager */
 #include <time_mgt.h>     /* Time management services */
 #include <critical.h>     /* Kernel critical */
+#include <cpuSyscall.h>   /* CPU System call manager */
 #include <ctrl_block.h>   /* Threads and processes control block */
 #include <interrupts.h>   /* Interrupt manager */
 
@@ -73,7 +76,6 @@
 /** @brief Defines the thread table structure */
 typedef struct
 {
-
     /**
      * @brief Stores the current highest priority in the ready tables
      */
@@ -91,7 +93,7 @@ typedef struct
     kernel_spinlock_t lock;
 } thread_table_t;
 
-/** @brief Defines the thread sleeping table structure */
+/** @brief Defines the thread general table structure */
 typedef struct
 {
     /** @brief Stores the number of threads in the table */
@@ -105,31 +107,6 @@ typedef struct
     /** @brief List lock */
     kernel_spinlock_t lock;
 } thread_general_table_t;
-
-/** @brief Defines the thread information structure */
-typedef struct
-{
-    /** @brief Thread's identifier. */
-    int32_t tid;
-
-    /** @brief Thread's name. */
-    char* pName;
-
-    /** @brief Thread's type. */
-    THREAD_TYPE_E type;
-
-    /** @brief Thread's current priority. */
-    uint8_t* pPriority;
-
-    /** @brief Thread's current state. */
-    THREAD_STATE_E* pCurrentState;
-
-    /** @brief Thread's CPU affinity */
-    uint64_t* pAffinity;
-
-    /** @brief Thread's currently mapped CPU */
-    uint8_t* pSchedCpu;
-} internal_thread_info_t;
 
 /** @brief Scheduler VFS entry types */
 typedef enum
@@ -153,6 +130,61 @@ typedef struct
     int32_t tid;
 } sched_vfs_entry_t;
 
+/** @brief CPU statistics structure */
+typedef struct
+{
+    /** @brief Stores the number of times the CPU was scheduled */
+    uint64_t schedCount;
+
+    /** @brief Stores the times spent in idle in the last window */
+    uint64_t idleTimes[CPU_LOAD_TICK_WINDOW];
+
+    /** @brief Stores the total time in the last window */
+    uint64_t totalTimes[CPU_LOAD_TICK_WINDOW];
+
+    /** @brief Stores the current idle time */
+    uint64_t idleTime;
+
+    /** @brief Stores the current total time */
+    uint64_t totalTime;
+
+    /** @brief Index in the times table */
+    uint32_t timesIdx;
+
+    /** @brief Stats lock */
+    kernel_spinlock_t lock;
+} cpu_stat_t;
+
+/** @brief Sleep system call parameters */
+typedef struct
+{
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
+
+    /** @brief Time to sleep in nanoseconds for the calling thread. */
+    uint64_t timeToSleepNs;
+} syscall_sleep_param_t;
+
+/** @brief Schedule system call parameters */
+typedef struct
+{
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
+} syscall_schedule_param_t;
+
+/** @brief Fork system call parameters */
+typedef struct
+{
+    /** @brief Errno value */
+    syscall_min_params_t errnoVal;
+
+    /**
+     * @brief When the return code is OS_NO_ERROR, this contains the new
+     * forked process PID.
+     */
+    int32_t newPid;
+} syscall_fork_param_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -170,7 +202,7 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define SCHED_ASSERT(COND, MSG, ERROR) {                    \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
         PANIC(ERROR, MODULE_NAME, MSG);                     \
     }                                                       \
@@ -195,19 +227,19 @@ typedef struct
 static void* _idleRoutine(void* pArgs);
 
 /**
- * @brief Thread entry point routine wrapper.
+ * @brief Kernel thread entry point routine wrapper.
  *
- * @details Thread launch routine. Wrapper for the actual thread routine. The
- * wrapper will call the thread routine, pass its arguments and gather the
+ * @details Kernel thread launch routine. Wrapper for the actual thread routine.
+ * The wrapper will call the thread routine, pass its arguments and gather the
  * return value of the thread function to allow the joining thread to retreive
  * it. Some statistics about the thread might be added in this function.
  */
-static void _threadEntryPoint(void);
+static void _kernelThreadEntryPoint(void);
 
 /**
- * @brief Thread's exit point.
+ * @brief Kernel thread exit point.
  *
- * @details Exit point of a thread. The function will release the resources of
+ * @details Kernel thread exit point. The function will release the resources of
  * the thread and manage its children. Put the thread
  * in a THREAD_STATE_ZOMBIE state. If an other thread is already joining the
  * active thread, then the joining thread will switch from blocked to ready
@@ -217,9 +249,9 @@ static void _threadEntryPoint(void);
  * @param[in] kRetState The thread return state.
  * @param[in] pRetVal The thread return value.
  */
-static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
-                             const THREAD_RETURN_STATE_E    kRetState,
-                             void*                          pRetVal);
+static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
+                                   const THREAD_RETURN_STATE_E    kRetState,
+                                   void*                          pRetVal);
 
 /**
  * @brief Creates the IDLE threads.
@@ -240,6 +272,16 @@ static void _createIdleThreads(void);
  * scheduler.
  */
 static void _updateSleepingThreads(void);
+
+/**
+ * @brief Cancels the sleep of a thread.
+ *
+ * @details Cancels the sleep of a thread and puts it back in the ready list.
+ * The thread will start executing as if its sleeping time was elapsed.
+ *
+ * @param[in] pThread The thread to wakeup.
+ */
+static void _cancelSleepThread(kernel_thread_t* pThread);
 
 /**
  * @brief Retreive the next thread to execute from a thread table.
@@ -274,12 +316,14 @@ static void _schedCleanThread(kernel_thread_t* pThread);
  *
  * @param[in] pThread Unused.
  *
+ * @return Returns if the scheduler shall be called on return.
+ *
  * @warning The current thread's context must be saved before calling this
  * function. Usually, this function is only called in interrupt handlers after
  * the thread's context was saved.
  */
 
-static void _schedScheduleHandler(kernel_thread_t* pThread);
+static bool _schedScheduleHandler(kernel_thread_t* pThread);
 
 /**
  * @brief Creates the threads sysfs directory for the scheduler.
@@ -396,6 +440,59 @@ static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
                                      uint32_t operation,
                                      void*    pArgs);
 
+/**
+ * @brief Releases a thread to the scheduler.
+ *
+ * @details Releases a thread to the scheduler. This function is used to
+ * put back a thread in the scheduler after locking it in, for instance, a
+ * semaphore.
+ *
+ * @param[in] pThread The thread to release.
+ * @param[in] kIsLocked Tells if the thread lock is already acquired.
+ */
+static void _schedReleaseThread(kernel_thread_t* pThread,
+                                const bool       kIsLocked);
+
+/**
+ * @brief Manages the thread's next state.
+ *
+ * @details Manages the thread's next state. Depending on the thread's status
+ * and its next state, the thread actual next state us updated.
+ *
+ * @param[in, out] pThread The thread to manage.
+ */
+static void _manageNextState(kernel_thread_t* pThread);
+
+/**
+ * @brief Creates the kernel process.
+ *
+ * @details Creates the kernel process. The function will initialize the process
+ * and its attributes and allocate the required resources.
+ *
+ * @param[out] ppProcess The handle buffer that receives the new process'
+ * handle.
+ * @param[in] kpName The name of the new process.
+ *
+ * @return The function returns the success or error status.
+ */
+static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
+                                             const char*        kpName);
+
+/**
+ * @brief Makes a copy of the running thread.
+ *
+ * @details Makes a copy of the running thread. The destination thread will be
+ * allocated as well as the necessary resources. The destination thread is
+ * not put in any queue and the links to any process or queue present in the
+ * source thread are not copied.
+ *
+ * @param[out] ppDstThread The pointer to the destination thread.
+ * @param[in/out] pProcess The process of the new destination thread.
+ *
+ * @return The function returns the success or error status.
+ */
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread, 
+                               kernel_process_t* pProcess);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -405,20 +502,33 @@ static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
 
 /************************* Exported global variables **************************/
 /**
- * @brief Pointers to the current kernel thread. One per CPU.
+ * @brief Pointers to the current thread. One per CPU.
  * Used in assembly code
  */
 kernel_thread_t* pCurrentThreadsPtr[SOC_CPU_COUNT] = {NULL};
 
+
 /************************** Static global variables ***************************/
+
+/** @brief CPUs statistics */
+static cpu_stat_t sCpuStats[SOC_CPU_COUNT];
+
+/**
+ * @brief Pointers to the current process. One per CPU.
+ */
+static kernel_process_t* spCurrentProcessPtr[SOC_CPU_COUNT] = {NULL};
+
+/** @brief The last PID given by the kernel. */
+static u32_atomic_t sLastGivenPid;
+
 /** @brief The last TID given by the kernel. */
 static u32_atomic_t sLastGivenTid;
 
 /** @brief The number of thread in the system. */
 static u32_atomic_t sThreadCount;
 
-/** @brief Count of the number of times the scheduler was called per CPU. */
-static uint64_t sScheduleCount[SOC_CPU_COUNT];
+/** @brief The number of processes in the system. */
+static u32_atomic_t sProcessCount;
 
 /** @brief Stores the thread tables for all CPUs */
 static thread_table_t sThreadTables[SOC_CPU_COUNT];
@@ -426,29 +536,20 @@ static thread_table_t sThreadTables[SOC_CPU_COUNT];
 /** @brief Stores the list of sleeping threads */
 static thread_general_table_t sSleepingThreadsTable[SOC_CPU_COUNT];
 
-/** @brief Stores the list of zombie threads */
-static thread_general_table_t sZombieThreadsTable;
+/** @brief Stores the list of all threads */
+static thread_general_table_t sTotalThreadsList;
 
 /** @brief Pointers to the idle threads allocated per CPU. */
 static kernel_thread_t* spIdleThread[SOC_CPU_COUNT];
 
-/** @brief The number of time IDLE was scheduled during the last window. */
-static uint64_t sIdleSchedCount[SOC_CPU_COUNT];
-
-/** @brief Stores the thread's information table */
-static kqueue_t* spThreadList;
-
-/** @brief Thread information table lock */
-static kernel_spinlock_t sThreadListLock;
-
-/** @brief Stores the calculated CPU load for the last window */
-static uint64_t sCpuLoad[SOC_CPU_COUNT];
-
 /** @brief Stores the scheduler interrupt line */
 static uint32_t sSchedulerInterruptLine;
 
-/** @brief Tells if the scheduler was forced at least once */
-static bool_t sFirstSched[SOC_CPU_COUNT] = {FALSE};
+/** @brief Tells the scheduler initialization state */
+static bool sIsInit = false;
+
+/** @brief Tells if the scheduler is running */
+static bool sIsRunning = false;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -467,18 +568,18 @@ static void* _idleRoutine(void* pArgs)
            cpuGetId());
 #endif
 
-    while(TRUE)
+    while(true)
     {
         interruptRestore(1);
         cpuHalt();
     }
 
     /* If we return better go away and cry in a corner */
-    SCHED_ASSERT(FALSE, "IDLE returned", OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(false, "IDLE returned", OS_ERR_UNAUTHORIZED_ACTION);
     return NULL;
 }
 
-static void _threadEntryPoint(void)
+static void _kernelThreadEntryPoint(void)
 {
     void*            pThreadReturnValue;
     kernel_thread_t* pCurrThread;
@@ -489,17 +590,17 @@ static void _threadEntryPoint(void)
     pCurrThread->startTime = timeGetUptime();
 
     /* Call the thread routine */
-    pThreadReturnValue = pCurrThread->pEntryPoint(pCurrThread->pArgs);
+    pThreadReturnValue = pCurrThread->pRoutine(pCurrThread->pArgs);
 
     /* Call the exit function */
-    _threadExitPoint(THREAD_TERMINATE_CORRECTLY,
-                     THREAD_RETURN_STATE_RETURNED,
-                     pThreadReturnValue);
+    _kernelThreadExitPoint(THREAD_TERMINATE_CORRECTLY,
+                           THREAD_RETURN_STATE_RETURNED,
+                           pThreadReturnValue);
 }
 
-static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
-                             const THREAD_RETURN_STATE_E    kRetState,
-                             void*                          pRetVal)
+static void _kernelThreadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
+                                   const THREAD_RETURN_STATE_E    kRetState,
+                                   void*                          pRetVal)
 {
     kernel_thread_t* pJoiningThread;
     kernel_thread_t* pCurThread;
@@ -516,13 +617,8 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
                  OS_ERR_UNAUTHORIZED_ACTION);
 
     /* Set new thread state and put in zombie queue */
-    pCurThread->nextState    = THREAD_STATE_ZOMBIE;
     pCurThread->currentState = THREAD_STATE_ZOMBIE;
-
-    KERNEL_LOCK(sZombieThreadsTable.lock);
-    kQueuePush(pCurThread->pThreadNode, sZombieThreadsTable.pThreadList);
-    ++sZombieThreadsTable.threadCount;
-    KERNEL_UNLOCK(sZombieThreadsTable.lock);
+    pCurThread->nextState = THREAD_STATE_ZOMBIE;
 
     /* Set the thread's stats and state */
     pCurThread->endTime        = timeGetUptime();
@@ -530,8 +626,17 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
     pCurThread->terminateCause = kCause;
     pCurThread->returnState    = kRetState;
 
-    /* This thread's parent will inherit its children TODO: */
+    /* If this is the main thread, kill all other threads in the process */
+    if(pCurThread->pProcess->pMainThread == pCurThread)
+    {
+        /* We will never return from here */
+        KERNEL_UNLOCK(pCurThread->lock);
+        /* TODO: */
 
+        SCHED_ASSERT(false,
+                     "Main thread returned from process kill",
+                     OS_ERR_UNAUTHORIZED_ACTION);
+    }
 
     /* Search for joining thread */
     if(pCurThread->pJoiningThread != NULL)
@@ -540,7 +645,7 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
         KERNEL_LOCK(pCurThread->pJoiningThread->lock);
 
         /* Release the joining thread */
-        schedReleaseThread(pJoiningThread, TRUE, THREAD_STATE_READY, FALSE);
+        _schedReleaseThread(pJoiningThread, true);
 
         KERNEL_UNLOCK(pCurThread->pJoiningThread->lock);
     }
@@ -550,23 +655,28 @@ static void _threadExitPoint(const THREAD_TERMINATE_CAUSE_E kCause,
     /* Schedule thread, no need for interrupt, the context does not need to be
      * saved.
      */
-    schedScheduleNoInt(TRUE);
+    schedScheduleNoInt();
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
     /* We should never return */
-    SCHED_ASSERT(FALSE,
+    SCHED_ASSERT(false,
                  "Thread retuned after exiting",
                  OS_ERR_UNAUTHORIZED_ACTION);
 }
 
 static void _createIdleThreads(void)
 {
-    uint32_t                i;
-    kqueue_node_t*          pNewNode;
-    internal_thread_info_t* pInfoNode;
+    uint32_t    i;
+    OS_RETURN_E error;
 
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
+        /* Init the process, at the moment of idle threads creation the kernel
+         * main process is stores in spCurrentProcessPtr[0]
+         */
+        spCurrentProcessPtr[i] = spCurrentProcessPtr[0];
+
         /* Allocate new structure */
         spIdleThread[i] = kmalloc(sizeof(kernel_thread_t));
         SCHED_ASSERT(spIdleThread[i] != NULL,
@@ -574,7 +684,7 @@ static void _createIdleThreads(void)
                      OS_ERR_NO_MORE_MEMORY);
 
         /* Create a new node for the threads lists */
-        pNewNode = kQueueCreateNode(spIdleThread[i], TRUE);
+        spIdleThread[i]->pThreadNode  = kQueueCreateNode(spIdleThread[i], true);
 
         /* Set the thread's information */
         spIdleThread[i]->affinity           = (1ULL << i);
@@ -583,10 +693,10 @@ static void _createIdleThreads(void)
         spIdleThread[i]->type               = THREAD_TYPE_KERNEL;
         spIdleThread[i]->priority           = KERNEL_LOWEST_PRIORITY;
         spIdleThread[i]->pArgs              = (void*)(uintptr_t)i;
-        spIdleThread[i]->pEntryPoint        = _idleRoutine;
-        spIdleThread[i]->pParentThread      = NULL;
-        spIdleThread[i]->requestSchedule    = TRUE;
-        spIdleThread[i]->preemptionDisabled = FALSE;
+        spIdleThread[i]->pEntryPoint        = _kernelThreadEntryPoint;
+        spIdleThread[i]->pRoutine           = _idleRoutine;
+        spIdleThread[i]->preemptionDisabled = false;
+        spIdleThread[i]->pProcess           = spCurrentProcessPtr[i];
 
         memcpy(spIdleThread[i]->pName, "idle", 5);
 
@@ -594,28 +704,27 @@ static void _createIdleThreads(void)
         KERNEL_SPINLOCK_INIT(spIdleThread[i]->lock);
 
         /* Set the thread's resources */
-        spIdleThread[i]->pThreadResources = kQueueCreate(TRUE);
+        spIdleThread[i]->pThreadResources = kQueueCreate(true);
 
         /* Set the thread's stack for both interrupt and main */
-        spIdleThread[i]->stackEnd = cpuCreateKernelStack(KERNEL_STACK_SIZE);
-        SCHED_ASSERT(spIdleThread[i]->stackEnd != (uintptr_t)NULL,
+        spIdleThread[i]->kernelStackEnd = memoryMapStack(KERNEL_STACK_SIZE,
+                                                         true,
+                                                         NULL);
+        SCHED_ASSERT(spIdleThread[i]->kernelStackEnd != (uintptr_t)NULL,
                      "Failed to allocate IDLE thread stack",
                      OS_ERR_NO_MORE_MEMORY);
-
-        spIdleThread[i]->stackSize       = KERNEL_STACK_SIZE;
-        spIdleThread[i]->kernelStackEnd  = spIdleThread[i]->stackEnd;
         spIdleThread[i]->kernelStackSize = KERNEL_STACK_SIZE;
+        spIdleThread[i]->stackEnd  = (uintptr_t)NULL;
+        spIdleThread[i]->stackSize = 0;
 
         /* Allocate the vCPU */
         spIdleThread[i]->pThreadVCpu =
-                                  (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                                             spIdleThread[i]);
+                (void*)cpuCreateVirtualCPU(spIdleThread[i], true);
         SCHED_ASSERT(spIdleThread[i]->pThreadVCpu != NULL,
                      "Failed to allocate IDLE thread VCPU",
                      OS_ERR_NO_MORE_MEMORY);
         spIdleThread[i]->pSignalVCpu =
-                                  (void*)cpuCreateVirtualCPU(NULL,
-                                                             spIdleThread[i]);
+                (void*)cpuCreateVirtualCPU(spIdleThread[i], false);
         SCHED_ASSERT(spIdleThread[i]->pSignalVCpu != NULL,
                      "Failed to allocate IDLE thread signal VCPU",
                      OS_ERR_NO_MORE_MEMORY);
@@ -624,30 +733,24 @@ static void _createIdleThreads(void)
         spIdleThread[i]->pVCpu = spIdleThread[i]->pThreadVCpu;
 
         /* Set idle to READY */
-        spIdleThread[i]->currentState  = THREAD_STATE_RUNNING;
-        spIdleThread[i]->nextState     = THREAD_STATE_READY;
+        spIdleThread[i]->currentState = THREAD_STATE_RUNNING;
+        spIdleThread[i]->nextState = THREAD_STATE_READY;
 
-        /* Set the information node */
-        pInfoNode = kmalloc(sizeof(internal_thread_info_t));
-        SCHED_ASSERT(pInfoNode != NULL,
-                     "Failed to allocated IDLE info node",
+        /* Init TLS */
+        error = cpuCreateLocalStorage(spIdleThread[i]);
+        SCHED_ASSERT(error == OS_NO_ERR,
+                     "Failed to create Idle thread TLS",
                      OS_ERR_NO_MORE_MEMORY);
-        pInfoNode->tid           = spIdleThread[i]->tid;
-        pInfoNode->pName         = spIdleThread[i]->pName;
-        pInfoNode->type          = spIdleThread[i]->type;
-        pInfoNode->pPriority     = &spIdleThread[i]->priority;
-        pInfoNode->pCurrentState = &spIdleThread[i]->currentState;
-        pInfoNode->pAffinity     = &spIdleThread[i]->affinity;
-        pInfoNode->pSchedCpu     = &spIdleThread[i]->schedCpu;
-        spIdleThread[i]->pInfoNode = kQueueCreateNode(pInfoNode, TRUE);
-        kQueuePush(spIdleThread[i]->pInfoNode, spThreadList);
-
-        /* Set idle node */
-        spIdleThread[i]->pThreadNode = pNewNode;
 
         /* Init signal */
         signalInitSignals(spIdleThread[i]);
 
+        /* Add thread to thread list */
+        spIdleThread[i]->pThreadListNode = kQueueCreateNode(spIdleThread[i],
+                                                            true);
+        kQueuePush(spIdleThread[i]->pThreadListNode,
+                   sTotalThreadsList.pThreadList);
+        ++sTotalThreadsList.threadCount;
         ++sThreadTables[i].threadCount;
         atomicIncrement32(&sThreadCount);
     }
@@ -670,6 +773,9 @@ static kernel_thread_t* _electNextThreadFromTable(thread_table_t* pTable)
         /* Get a thread from the list */
         --pTable->threadCount;
         pThreadNode = kQueuePop(pTable->pReadyList[nextPrio]);
+
+        /* Lock the thread */
+        KERNEL_LOCK(((kernel_thread_t*)pThreadNode->pData)->lock);
     }
     SCHED_ASSERT(pThreadNode != NULL,
                  "Got a NULL thread node",
@@ -686,9 +792,7 @@ static kernel_thread_t* _electNextThreadFromTable(thread_table_t* pTable)
     }
     pTable->highestPriority = i;
 
-    /* Lock the thread */
     KERNEL_UNLOCK(pTable->lock);
-    KERNEL_LOCK(((kernel_thread_t*)pThreadNode->pData)->lock);
 
     return pThreadNode->pData;
 }
@@ -728,13 +832,75 @@ static void _updateSleepingThreads(void)
                          OS_ERR_NULL_POINTER);
 
             /* Release the thread */
-            schedReleaseThread(pThreadNode->pData,
-                               FALSE,
-                               THREAD_STATE_READY,
-                               FALSE);
+            _schedReleaseThread(pThreadNode->pData, false);
         }
     }
     KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+}
+
+static void _cancelSleepThread(kernel_thread_t* pThread)
+{
+    kqueue_node_t* pCursor;
+    uint8_t        cpuId;
+    uint64_t       wakeupTime;
+    bool           found;
+
+    /* Check if sleeping */
+    if(pThread->currentState != THREAD_STATE_SLEEPING)
+    {
+        if(pThread->nextState == THREAD_STATE_SLEEPING)
+        {
+            pThread->nextState = THREAD_STATE_READY;
+        }
+        return;
+    }
+
+    wakeupTime = pThread->wakeupTime;
+    found = false;
+    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    {
+        KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
+        if(sSleepingThreadsTable[cpuId].threadCount != 0)
+        {
+            /* Get the current time and compate to threads in the sleeping list */
+            pCursor = sSleepingThreadsTable[cpuId].pThreadList->pTail;
+            while(pCursor != NULL)
+            {
+                /* Check if we have to wake up the thread */
+                if(pCursor->priority > wakeupTime)
+                {
+                    /* Stop here, the list if sorted */
+                    break;
+                }
+
+                /* If found remove the node */
+                if(pCursor == pThread->pThreadNode)
+                {
+                    kQueueRemove(sSleepingThreadsTable[cpuId].pThreadList,
+                                 pCursor,
+                                 true);
+                    --sSleepingThreadsTable[cpuId].threadCount;
+
+                    /* Release the thread */
+                    _schedReleaseThread(pThread, true);
+
+                    found = true;
+                    break;
+                }
+                else
+                {
+                    /* Update cursor before we remove the node */
+                    pCursor = pCursor->pPrev;
+                }
+            }
+            if(found == true)
+            {
+                KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+                break;
+            }
+        }
+        KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+    }
 }
 
 static void _schedCleanThread(kernel_thread_t* pThread)
@@ -742,12 +908,15 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     kqueue_node_t*     pRes;
     kqueue_t*          pResQueue;
     thread_resource_t* pResourceInfo;
+    OS_RETURN_E        error;
 
     SCHED_ASSERT(pThread != schedGetCurrentThread(),
-                 "Thread cannot clean themselves!",
+                 "Threads cannot clean themselves!",
                  OS_ERR_UNAUTHORIZED_ACTION);
 
-    KERNEL_LOCK(pThread->lock);
+    SCHED_ASSERT(pThread->currentState == THREAD_STATE_ZOMBIE,
+                 "Can only clean zombies!",
+                 OS_ERR_UNAUTHORIZED_ACTION);
 
     /* Clear the resources */
     pResQueue = pThread->pThreadResources;
@@ -765,27 +934,63 @@ static void _schedCleanThread(kernel_thread_t* pThread)
     kQueueDestroy((kqueue_t**)&pThread->pThreadResources);
 
     /* Destroy the kernel stack */
-    cpuDestroyKernelStack(pThread->kernelStackEnd,
-                          pThread->kernelStackSize);
+    memoryUnmapStack(pThread->kernelStackEnd,
+                     pThread->kernelStackSize,
+                     true,
+                     NULL);
 
-    /* TODO: Destroy the regular stack */
+    /* Destroy the regular stack */
+    if(pThread->stackEnd != (uintptr_t)NULL)
+    {
+        memoryUnmapStack(pThread->stackEnd,
+                         pThread->stackSize,
+                         false,
+                         pThread->pProcess);
+    }
 
-    /* Destroy the virutal CPUs */
+    /* Destroy the virtual CPUs */
     cpuDestroyVirtualCPU((uintptr_t)pThread->pThreadVCpu);
     cpuDestroyVirtualCPU((uintptr_t)pThread->pSignalVCpu);
+
+    /* Destroy the thread local storage and user thread structure */
+    cpuDestroyLocalStorage(pThread);
 
     /* Clear the active thread node, it should not be in any queue */
     kQueueDestroyNode((kqueue_node_t**)&pThread->pThreadNode);
 
     /* Release the thread info node */
-    kQueueRemove(spThreadList, (kqueue_node_t*)pThread->pInfoNode, TRUE);
-    kfree(((kqueue_node_t*)(pThread->pInfoNode))->pData);
-    kQueueDestroyNode((kqueue_node_t**)&pThread->pInfoNode);
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    kQueueRemove(sTotalThreadsList.pThreadList,
+                 (kqueue_node_t*)pThread->pThreadListNode,
+                 true);
+    kQueueDestroyNode((kqueue_node_t**)&pThread->pThreadListNode);
+    --sTotalThreadsList.threadCount;
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
+
+    /* Remove from process link */
+    KERNEL_LOCK(pThread->pProcess->lock);
+    if(pThread->pNext != NULL)
+    {
+        pThread->pNext->pPrev = pThread->pPrev;
+    }
+    else if(pThread->pProcess->pThreadListTail == pThread)
+    {
+        pThread->pProcess->pThreadListTail = pThread->pPrev;
+    }
+    if(pThread->pPrev != NULL)
+    {
+        pThread->pPrev->pNext = pThread->pNext;
+    }
+    error = uhashtableRemove(pThread->pProcess->pThreadTable,
+                             (uintptr_t)pThread,
+                             NULL);
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to remove thread from process threads table",
+                 error);
+    KERNEL_UNLOCK(pThread->pProcess->lock);
 
     /* Decrement thread count */
     atomicDecrement32(&sThreadCount);
-
-    KERNEL_UNLOCK(pThread->lock);
 
     /* Free the thread */
     kfree(pThread);
@@ -821,11 +1026,10 @@ static void* _schedVfsThreadsOpen(void*       pDrvCtrl,
     (void)pDrvCtrl;
     (void)mode;
 
-    sched_vfs_entry_t*      pEntry;
-    int32_t                 tid;
-    kqueue_node_t*          pNode;
-    internal_thread_info_t* pInfo;
-    char*                   pStr;
+    sched_vfs_entry_t* pEntry;
+    int32_t            tid;
+    kqueue_node_t*     pNode;
+    char*              pStr;
 
     if(flags != O_RDONLY)
     {
@@ -852,19 +1056,18 @@ static void* _schedVfsThreadsOpen(void*       pDrvCtrl,
         }
 
         /* This is an entry, check if it exists */
-        KERNEL_LOCK(sThreadListLock);
-        pNode = spThreadList->pHead;
+        KERNEL_LOCK(sTotalThreadsList.lock);
+        pNode = sTotalThreadsList.pThreadList->pHead;
         while(pNode != NULL)
         {
-            pInfo = (internal_thread_info_t*)pNode->pData;
-            if(pInfo->tid == tid)
+            if(((kernel_thread_t*)pNode->pData)->tid == tid)
             {
                 pEntry->tid = tid;
                 break;
             }
             pNode = pNode->pNext;
         }
-        KERNEL_UNLOCK(sThreadListLock);
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
 
         if(pNode == NULL)
         {
@@ -916,7 +1119,7 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
                                     size_t count)
 {
     kqueue_node_t*          pNode;
-    internal_thread_info_t* pInfo;
+    kernel_thread_t*        pThread;
     int32_t                 formatSize;
     char*                   pState;
     char*                   pType;
@@ -941,14 +1144,14 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
         return -1;
     }
     /* Get the thread info */
-    KERNEL_LOCK(sThreadListLock);
-    pNode = spThreadList->pTail;
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pTail;
 
     /* Got to the offset node */
     while(pNode != NULL)
     {
-        pInfo = pNode->pData;
-        if(pInfo->tid == pEntry->tid)
+        pThread = pNode->pData;
+        if(pThread->tid == pEntry->tid)
         {
             break;
         }
@@ -958,12 +1161,12 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
     /* We reached the end of threads, return -1 */
     if(pNode == NULL)
     {
-        KERNEL_UNLOCK(sThreadListLock);
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
         return -1;
     }
 
     /* Format */
-    switch(pInfo->type)
+    switch(pThread->type)
     {
         case THREAD_TYPE_KERNEL:
             pType = "kernel";
@@ -974,7 +1177,7 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
         default:
             pType = "unknown";
     }
-    switch(*pInfo->pCurrentState)
+    switch(pThread->currentState)
     {
         case THREAD_STATE_RUNNING:
             pState = "RUNNING";
@@ -999,21 +1202,25 @@ static ssize_t _schedVfsThreadsRead(void*  pDrvCtrl,
     }
     formatSize = snprintf(buffer,
                           512,
-                          "Id: %d\n"
+                          "PID: %d\n"
+                          "Process: %s\n"
+                          "TID: %d\n"
                           "Name: %s\n"
                           "Priority: %d\n"
                           "Type: %s\n"
                           "State: %s\n"
                           "Affinity: 0x%lx\n"
                           "CPU: %d",
-                          pInfo->tid,
-                          pInfo->pName,
-                          *pInfo->pPriority,
+                          pThread->pProcess->pid,
+                          pThread->pProcess->pName,
+                          pThread->tid,
+                          pThread->pName,
+                          pThread->priority,
                           pType,
                           pState,
-                          *pInfo->pAffinity,
-                          *pInfo->pSchedCpu);
-    KERNEL_UNLOCK(sThreadListLock);
+                          pThread->affinity,
+                          pThread->schedCpu);
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
     /* Add null terminator */
     ++formatSize;
 
@@ -1040,7 +1247,7 @@ static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
     sched_vfs_entry_t*      pEntry;
     size_t                  i;
     kqueue_node_t*          pNode;
-    internal_thread_info_t* pInfo;
+    kernel_thread_t*        pThread;
 
     (void)pDriverData;
 
@@ -1056,8 +1263,8 @@ static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
         return -1;
     }
 
-    KERNEL_LOCK(sThreadListLock);
-    pNode = spThreadList->pTail;
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pTail;
 
     /* Got to the offset node */
     for(i = 0; i < pEntry->offset && pNode != NULL; ++i)
@@ -1068,7 +1275,7 @@ static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
     /* We reached the end of threads, return -1 */
     if(pNode == NULL)
     {
-        KERNEL_UNLOCK(sThreadListLock);
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
         return -1;
     }
 
@@ -1077,19 +1284,19 @@ static int32_t _schedVfsThreadsReadDir(void*     pDriverData,
     ++pEntry->offset;
 
     /* Otherwise, set the entry */
-    pInfo = pNode->pData;
-    snprintf(pDirEntry->pName, VFS_FILENAME_MAX_LENGTH, "%d", pInfo->tid);
+    pThread = pNode->pData;
+    snprintf(pDirEntry->pName, VFS_FILENAME_MAX_LENGTH, "%d", pThread->tid);
 
     pDirEntry->type = VFS_FILE_TYPE_FILE;
 
     if(pNode->pPrev == NULL)
     {
-        KERNEL_UNLOCK(sThreadListLock);
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
         return 0;
     }
     else
     {
-        KERNEL_UNLOCK(sThreadListLock);
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
         return 1;
     }
 }
@@ -1108,12 +1315,429 @@ static ssize_t _schedVfsThreadsIOCTL(void*    pDriverData,
     return -1;
 }
 
-static void _schedScheduleHandler(kernel_thread_t* pThread)
+static bool _schedScheduleHandler(kernel_thread_t* pThread)
 {
     (void)pThread;
 
     /* Just call the scheduler */
-    schedScheduleNoInt(FALSE);
+    schedScheduleNoInt();
+
+    return true;
+}
+
+static void _schedReleaseThread(kernel_thread_t* pThread,
+                                const bool       kIsLocked)
+{
+    uint64_t     i;
+    uint8_t      cpuId;
+    uint64_t     lastCpuLoad;
+    uint64_t     cpuLoad;
+    uint32_t     intState;
+
+    /* Get the CPU list to release to */
+    lastCpuLoad = 1000;
+    cpuId       = SOC_CPU_COUNT;
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+
+    /* Update the thread state and push to queue */
+    if(kIsLocked == false)
+    {
+        KERNEL_LOCK(pThread->lock);
+    }
+
+    /* We do not add back zombie threads */
+    if(pThread->currentState == THREAD_STATE_ZOMBIE)
+    {
+        if(kIsLocked == false)
+        {
+            KERNEL_UNLOCK(pThread->lock);
+        }
+
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        return;
+    }
+
+    if(pThread->affinity != 0)
+    {
+        for(i = 0; i < SOC_CPU_COUNT; ++i)
+        {
+            if(((1ULL << i) & pThread->affinity) != 0)
+            {
+                KERNEL_LOCK(sCpuStats[i].lock);
+                if(sCpuStats[i].totalTime != 0)
+                {
+                    cpuLoad = 100 -
+                              (100 * sCpuStats[i].idleTime /
+                               sCpuStats[i].totalTime);
+                }
+                else
+                {
+                    cpuLoad = 0;
+                }
+                KERNEL_UNLOCK(sCpuStats[i].lock);
+                if(lastCpuLoad > cpuLoad)
+                {
+                    lastCpuLoad = cpuLoad;
+                    cpuId       = i;
+                }
+            }
+        }
+    }
+    else
+    {
+        for(i = 0; i < SOC_CPU_COUNT; ++i)
+        {
+            KERNEL_LOCK(sCpuStats[i].lock);
+            if(sCpuStats[i].totalTime != 0)
+            {
+                cpuLoad = 100 -
+                         (100 * sCpuStats[i].idleTime / sCpuStats[i].totalTime);
+            }
+            else
+            {
+                cpuLoad = 0;
+            }
+            KERNEL_UNLOCK(sCpuStats[i].lock);
+
+            if(lastCpuLoad > cpuLoad)
+            {
+                lastCpuLoad = cpuLoad;
+                cpuId       = i;
+            }
+        }
+    }
+
+    SCHED_ASSERT(cpuId != SOC_CPU_COUNT,
+                 "Failed to find a CPU to release the thread",
+                 OS_ERR_INCORRECT_VALUE);
+    pThread->currentState = THREAD_STATE_READY;
+    pThread->nextState    = THREAD_STATE_READY;
+    pThread->schedCpu     = cpuId;
+
+    KERNEL_LOCK(sThreadTables[cpuId].lock);
+
+    kQueuePush(pThread->pThreadNode,
+               sThreadTables[cpuId].pReadyList[pThread->priority]);
+    ++sThreadTables[cpuId].threadCount;
+    if(sThreadTables[cpuId].highestPriority > pThread->priority)
+    {
+        sThreadTables[cpuId].highestPriority = pThread->priority;
+    }
+
+    KERNEL_UNLOCK(sThreadTables[cpuId].lock);
+
+    if(kIsLocked == false)
+    {
+        KERNEL_UNLOCK(pThread->lock);
+    }
+
+#if SCHED_DEBUG_ENABLED
+    syslog(SYSLOG_LEVEL_DEBUG,
+           MODULE_NAME,
+           "Mapped thread %d to CPU %d",
+           pThread->tid,
+           cpuId);
+#endif
+
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+}
+
+static void _manageNextState(kernel_thread_t* pThread)
+{
+    uint8_t cpuId;
+
+    /* If thread is zombie, exist */
+    if(pThread->currentState == THREAD_STATE_ZOMBIE ||
+       pThread->nextState == THREAD_STATE_ZOMBIE)
+    {
+        return;
+    }
+
+    /* Check if the thread has signals, in that case it needs to run */
+    if(pThread->signal != 0)
+    {
+        pThread->nextState = THREAD_STATE_READY;
+    }
+    /* Check if the thread is elected for sleeping */
+    else if(pThread->nextState == THREAD_STATE_SLEEPING)
+    {
+        cpuId = cpuGetId();
+
+        /* Add to the sleeping queue */
+        KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
+
+        kQueuePushPrio(pThread->pThreadNode,
+                       sSleepingThreadsTable[cpuId].pThreadList,
+                       pThread->wakeupTime);
+        ++sSleepingThreadsTable[cpuId].threadCount;
+
+        KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+    }
+
+    /* Otherwise, just update the current state */
+    pThread->currentState = pThread->nextState;
+}
+
+static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
+                                             const char*        kpName)
+{
+    OS_RETURN_E       error;
+    kernel_process_t* pProcess;
+
+    if(ppProcess == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Allocate the structure */
+    pProcess = kmalloc(sizeof(kernel_process_t));
+    if(pProcess == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+    memset(pProcess, 0, sizeof(kernel_process_t));
+
+    /* Create process memory information */
+    pProcess->pMemoryData = memoryCreateProcessMemoryData();
+    if(pProcess->pMemoryData == NULL)
+    {
+        kfree(pProcess);
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Create the file descriptor table */
+    error = vfsCreateProcessFdTable(pProcess);
+    if(error != OS_NO_ERR)
+    {
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Create the thread table */
+    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                   kfree),
+                                                &error);
+    if(error != OS_NO_ERR)
+    {
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return error;
+    }
+
+    /* Create the futex table */
+    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                  kfree),
+                                               &error);
+    if(error != OS_NO_ERR)
+    {
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
+                     "Failed to remove threads table.",
+                     error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return error;
+    }
+
+    pProcess->pChildren = kQueueCreate(false);
+    if(pProcess->pChildren == NULL)
+    {
+        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
+                     "Failed to destroy fd table.",
+                     error);
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
+                     "Failed to remove threads table.",
+                     error);
+        SCHED_ASSERT(uhashtableDestroy(pProcess->pFutexTable) == OS_NO_ERR,
+                     "Failed to remove futex table.",
+                     error);
+        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+        kfree(pProcess);
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+
+    /* Setup the process attributes */
+    pProcess->pid = atomicIncrement32(&sLastGivenPid);
+    pProcess->pChildren = kQueueCreate(true);
+    pProcess->pParent = NULL;
+    memcpy(pProcess->pName,
+           kpName,
+           MIN(PROCESS_NAME_MAX_LENGTH, strlen(kpName) + 1));
+    pProcess->pName[PROCESS_NAME_MAX_LENGTH] = 0;
+
+    KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
+    KERNEL_SPINLOCK_INIT(pProcess->lock);
+
+    *ppProcess = pProcess;
+
+    atomicIncrement32(&sProcessCount);
+    return OS_NO_ERR;
+}
+
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread,
+                               kernel_process_t* pProcess)
+{
+    kernel_thread_t*       pNewThread;
+    OS_RETURN_E            error;
+    const kernel_thread_t* pSrcThread;
+
+    if(ppDstThread == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    pSrcThread = schedGetCurrentThread();
+
+    /* Only user mode can copy threads */
+    if(pSrcThread->type == THREAD_TYPE_KERNEL)
+    {
+        return OS_ERR_UNAUTHORIZED_ACTION;
+    }
+
+    SCHED_ASSERT(*ppDstThread == NULL,
+                 "Trying to copy thread on non NULL destination.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+
+    /* Allocate the new thread */
+    pNewThread = kmalloc(sizeof(kernel_thread_t));
+    if(pNewThread == NULL)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Copy the attributes */
+    memcpy(pNewThread, pSrcThread, sizeof(kernel_thread_t));
+
+    /* Reset unique attributes */
+    pNewThread->pProcess         = pProcess;
+    pNewThread->kernelStackEnd   = (uintptr_t)NULL;
+    pNewThread->pUserThreadData  = NULL;
+    pNewThread->pThreadVCpu      = NULL;
+    pNewThread->pSignalVCpu      = NULL;
+    pNewThread->pThreadNode      = NULL;
+    pNewThread->pThreadListNode  = NULL;
+    pNewThread->pThreadResources = NULL;
+    pNewThread->pNext            = NULL;
+    pNewThread->pPrev            = NULL;
+    pNewThread->pJoiningThread   = NULL;
+    pNewThread->pJoinedThread    = NULL;
+    KERNEL_SPINLOCK_INIT(pNewThread->lock);
+
+    /* Allocate a new thread Id */
+    pNewThread->tid = atomicIncrement32(&sLastGivenTid);
+    if(pNewThread->tid >= INT32_MAX || pNewThread->tid == 0)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
+    /* Create the resource queue */
+    pNewThread->pThreadResources = kQueueCreate(false);
+    if(pNewThread->pThreadResources == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Create the list nodes */
+    pNewThread->pThreadNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+    pNewThread->pThreadListNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadListNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Create the new kernel stack */
+    pNewThread->kernelStackEnd = memoryMapStack(pNewThread->kernelStackSize,
+                                                true,
+                                                NULL);
+    if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto COPY_CLEANUP;
+    }
+
+    /* Copy the kernel stack */
+    memcpy((void*)(pNewThread->kernelStackEnd - pNewThread->kernelStackSize),
+           (void*)(pSrcThread->kernelStackEnd - pSrcThread->kernelStackSize),
+           pSrcThread->kernelStackSize);
+
+    /* Copy the VCPUs */
+    error = cpuCopyVirtualCPUs(pSrcThread, pNewThread);
+    if(error != OS_NO_ERR)
+    {
+        goto COPY_CLEANUP;
+    }
+
+    /* Create the thread local storage */
+    error = cpuCopyLocalStorage(pNewThread, pSrcThread);
+    if(error != OS_NO_ERR)
+    {
+        goto COPY_CLEANUP;
+    }
+    pNewThread->pUserThreadData->pSelfPointer = pNewThread->pUserThreadData;
+    pNewThread->pUserThreadData->pid = pNewThread->pProcess->pid;
+    pNewThread->pUserThreadData->tid = pNewThread->tid;
+    pNewThread->pUserThreadData->priority = pNewThread->priority;
+
+    error = OS_NO_ERR;
+    /* Assign the new thread */
+    *ppDstThread = pNewThread;
+
+COPY_CLEANUP:
+    if(error != OS_NO_ERR)
+    {
+        if(pNewThread != NULL)
+        {
+            if(pNewThread->kernelStackEnd != (uintptr_t)NULL)
+            {
+                memoryUnmapStack(pNewThread->kernelStackEnd,
+                                 pNewThread->kernelStackSize,
+                                 true,
+                                 NULL);
+            }
+            if(pNewThread->pThreadResources != NULL)
+            {
+                kQueueDestroy(&pNewThread->pThreadResources);
+            }
+            if(pNewThread->pThreadNode != NULL)
+            {
+                kQueueDestroyNode(&pNewThread->pThreadNode);
+            }
+            if(pNewThread->pThreadListNode != NULL)
+            {
+                kQueueDestroyNode(&pNewThread->pThreadListNode);
+            }
+            if(pNewThread->pThreadVCpu != NULL)
+            {
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pThreadVCpu);
+            }
+            if(pNewThread->pSignalVCpu != NULL)
+            {
+                cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
+            }
+            if(pNewThread->pUserThreadData != NULL)
+            {
+                cpuDestroyLocalStorage(pNewThread);
+            }
+
+            kfree(pNewThread);
+        }
+    }
+    return error;
 }
 
 void schedInit(void)
@@ -1124,42 +1748,73 @@ void schedInit(void)
 
     /* Init values */
     sLastGivenTid = 0;
+    sLastGivenPid = 0;
     sThreadCount  = 0;
+    sProcessCount = 0;
     memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * SOC_CPU_COUNT);
-    memset(sScheduleCount, 0, sizeof(uint64_t) * SOC_CPU_COUNT);
-    memset(sIdleSchedCount, 0, sizeof(uint64_t) * SOC_CPU_COUNT);
+    memset(spCurrentProcessPtr, 0, sizeof(kernel_process_t) * SOC_CPU_COUNT);
+    memset(sCpuStats, 0, sizeof(cpu_stat_t) * SOC_CPU_COUNT);
+
+    /* Create the kernel main process */
+    error = _schedCreateKernelProcess(&spCurrentProcessPtr[0], "ROOS_KERNEL");
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to create main process.",
+                 OS_ERR_NO_MORE_MEMORY);
 
     /* Initialize the thread table */
     for(j = 0; j < SOC_CPU_COUNT; ++j)
     {
+        KERNEL_SPINLOCK_INIT(sCpuStats[j].lock);
         sThreadTables[j].highestPriority = KERNEL_LOWEST_PRIORITY;
         sThreadTables[j].threadCount     = 0;
         KERNEL_SPINLOCK_INIT(sThreadTables[j].lock);
         for(i = 0; i <= KERNEL_LOWEST_PRIORITY; ++i)
         {
-            sThreadTables[j].pReadyList[i]  = kQueueCreate(TRUE);
+            sThreadTables[j].pReadyList[i]  = kQueueCreate(true);
         }
         /* Initialize the sleeping threads list */
         sSleepingThreadsTable[j].threadCount = 0;
-        sSleepingThreadsTable[j].pThreadList = kQueueCreate(TRUE);
+        sSleepingThreadsTable[j].pThreadList = kQueueCreate(true);
         KERNEL_SPINLOCK_INIT(sSleepingThreadsTable[j].lock);
     }
 
-    /* Initialize the zombie threads list */
-    sZombieThreadsTable.threadCount = 0;
-    sZombieThreadsTable.pThreadList = kQueueCreate(TRUE);
-    KERNEL_SPINLOCK_INIT(sZombieThreadsTable.lock);
-
-    /* Initialize the thread information table */
-    spThreadList = kQueueCreate(TRUE);
-    KERNEL_SPINLOCK_INIT(sThreadListLock);
+    /* Initialize the global threads list */
+    sTotalThreadsList.threadCount = 0;
+    sTotalThreadsList.pThreadList = kQueueCreate(true);
+    KERNEL_SPINLOCK_INIT(sTotalThreadsList.lock);
 
     /* Create the idle process for each CPU */
     _createIdleThreads();
 
-    /* Set idle as current thread for all CPUs */
+    spCurrentProcessPtr[0]->pMainThread = spIdleThread[0];
+    /* Set idle as current thread for all CPUs and link process */
     for(i = 0; i < SOC_CPU_COUNT; ++i)
     {
+        error = uhashtableSet(spCurrentProcessPtr[0]->pThreadTable,
+                              (uintptr_t)spIdleThread[i],
+                              NULL);
+        SCHED_ASSERT(error == OS_NO_ERR,
+                     "Failed to register idle thread in process",
+                     error);
+
+        if(i != 0)
+        {
+            spIdleThread[i]->pPrev = spIdleThread[i - 1];
+        }
+        else
+        {
+            spIdleThread[i]->pPrev = NULL;
+        }
+
+        if(i == SOC_CPU_COUNT - 1)
+        {
+            spCurrentProcessPtr[0]->pThreadListTail = spIdleThread[i];
+            spIdleThread[i]->pNext = NULL;
+        }
+        else
+        {
+            spIdleThread[i]->pNext = spIdleThread[i + 1];
+        }
         pCurrentThreadsPtr[i] = spIdleThread[i];
     }
 
@@ -1176,39 +1831,62 @@ void schedInit(void)
                  "Failed to register scheduler threads sysfs",
                  error);
 
+    sIsInit = true;
+
 #if SCHED_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Scheduler initialization end");
 #endif
 }
 
-void schedScheduleNoInt(const bool_t kForceSwitch)
+void schedScheduleNoInt(void)
 {
     uint8_t          cpuId;
     uint8_t          currPrio;
     uint8_t          nextPrio;
+    uint64_t         upTime;
     thread_table_t*  pCurrentTable;
     kernel_thread_t* pThread;
+    uint32_t         timeIdx;
 
     SCHED_ASSERT(cpuGetIntState() == 0,
                  "Called scheduler no int with interrupt enabled",
                  OS_ERR_UNAUTHORIZED_ACTION);
 
+    /* Get current CPU ID */
+    cpuId = cpuGetId();
+
+    sIsRunning = true;
+    pThread = pCurrentThreadsPtr[cpuId];
+
+    /* Update the CPU statistics */
+    upTime = timeGetUptime();
+    KERNEL_LOCK(sCpuStats[cpuId].lock);
+    timeIdx = sCpuStats[cpuId].timesIdx;
+    if(pThread == spIdleThread[cpuId])
+    {
+        sCpuStats[cpuId].idleTimes[timeIdx] = upTime -
+                                            sCpuStats[cpuId].idleTimes[timeIdx];
+    }
+    sCpuStats[cpuId].totalTimes[timeIdx] = upTime -
+                                           sCpuStats[cpuId].totalTimes[timeIdx];
+
+    sCpuStats[cpuId].totalTime += sCpuStats[cpuId].totalTimes[timeIdx];
+    sCpuStats[cpuId].idleTime  += sCpuStats[cpuId].idleTimes[timeIdx];
+    KERNEL_UNLOCK(sCpuStats[cpuId].lock);
 
     /* Wakeup sleeping threads if needed */
     _updateSleepingThreads();
 
-    /* Get current CPU ID */
-    cpuId = cpuGetId();
-    sFirstSched[cpuId] = TRUE;
-
-    pThread = pCurrentThreadsPtr[cpuId];
     KERNEL_LOCK(pThread->lock);
+    /* Update the thread states */
+    _manageNextState(pThread);
+
     pCurrentTable = &sThreadTables[cpuId];
     KERNEL_LOCK(pCurrentTable->lock);
 
     /* If the current process can still run */
-    if(pThread->currentState == THREAD_STATE_RUNNING &&
-       pThread->preemptionDisabled == FALSE)
+    if(pThread->nextState == THREAD_STATE_READY &&
+       pThread->preemptionDisabled == false)
     {
         nextPrio = pCurrentTable->highestPriority;
         currPrio = pThread->priority;
@@ -1217,8 +1895,7 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
          * priority and schedule was requested.
          */
         if(nextPrio < currPrio ||
-           (pCurrentTable->pReadyList[currPrio]->pHead != NULL &&
-           (pThread->requestSchedule == TRUE || kForceSwitch == TRUE)))
+           (pCurrentTable->pReadyList[currPrio]->pHead != NULL))
         {
             /* Put back the thread in the list, the highest priority will be
              * updated by the next _electNextThreadFromTable.
@@ -1227,7 +1904,7 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
              */
             KERNEL_UNLOCK(pCurrentTable->lock);
 
-            schedReleaseThread(pThread, TRUE, THREAD_STATE_READY, FALSE);
+            _schedReleaseThread(pThread, true);
 
             KERNEL_UNLOCK(pThread->lock);
 
@@ -1241,9 +1918,9 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
             KERNEL_UNLOCK(pCurrentTable->lock);
         }
     }
-    else if(pThread->currentState != THREAD_STATE_RUNNING)
+    else if(pThread->nextState != THREAD_STATE_READY)
     {
-        SCHED_ASSERT(pThread->preemptionDisabled == FALSE,
+        SCHED_ASSERT(pThread->preemptionDisabled == false,
                      "Non running thread has preemption disabled",
                      OS_ERR_UNAUTHORIZED_ACTION);
 
@@ -1255,223 +1932,72 @@ void schedScheduleNoInt(const bool_t kForceSwitch)
         pThread = pCurrentThreadsPtr[cpuId];
     }
 
-    SCHED_ASSERT(pThread->nextState == THREAD_STATE_READY,
+    SCHED_ASSERT(pThread->currentState == THREAD_STATE_READY,
                  "Scheduled non ready thread",
                  OS_ERR_UNAUTHORIZED_ACTION);
-    pThread->currentState    = THREAD_STATE_RUNNING;
-    pThread->requestSchedule = FALSE;
+
+    /* Update the new process and switch memory config */
+    cpuUpdateMemoryConfig(pThread);
+
+    spCurrentProcessPtr[cpuId] = pThread->pProcess;
+    pThread->currentState      = THREAD_STATE_RUNNING;
 
     signalManage(pThread);
 
-    KERNEL_UNLOCK(pThread->lock);
+    /* Update the CPU statistics */
+    KERNEL_LOCK(sCpuStats[cpuId].lock);
+    timeIdx = (sCpuStats[cpuId].timesIdx + 1) %
+                                CPU_LOAD_TICK_WINDOW;
+    sCpuStats[cpuId].timesIdx = timeIdx;
+    sCpuStats[cpuId].totalTime -=
+        sCpuStats[cpuId].totalTimes[timeIdx];
+    sCpuStats[cpuId].idleTime -=
+        sCpuStats[cpuId].idleTimes[timeIdx];
 
-    /* Update the load */
-    if(pThread == spIdleThread[cpuId] &&
-       sIdleSchedCount[cpuId] < CPU_LOAD_TICK_WINDOW)
+    if(pThread == spIdleThread[cpuId])
     {
-        ++sIdleSchedCount[cpuId];
-    }
-    else if(pThread != spIdleThread[cpuId] && sIdleSchedCount[cpuId] > 0)
-    {
-        --sIdleSchedCount[cpuId];
-    }
-
-    sCpuLoad[cpuId] = sIdleSchedCount[cpuId];
-
-    ++sScheduleCount[cpuId];
-
-#if SCHED_DEBUG_ENABLED
-    syslog(SYSLOG_LEVEL_DEBUG,
-           MODULE_NAME,
-           "Selected thread %d for RUN on CPU %d (%d)",
-           pThread->tid,
-           cpuId,
-           (uint32_t)sIdleSchedCount[cpuId]);
-#endif
-
-    /* We should never come back */
-    cpuRestoreContext(pThread);
-
-    SCHED_ASSERT(FALSE,
-                 "Schedule returned",
-                 OS_ERR_UNAUTHORIZED_ACTION);
-}
-
-void schedSchedule(void)
-{
-    /* Request schedule */
-    schedGetCurrentThread()->requestSchedule = TRUE;
-
-    /* Just generate a scheduler interrupt */
-    cpuRaiseInterrupt(sSchedulerInterruptLine);
-}
-
-void schedReleaseThread(kernel_thread_t*     pThread,
-                        const bool_t         kIsLocked,
-                        const THREAD_STATE_E kState,
-                        const bool_t         kSchedSameCpu)
-{
-    uint64_t     i;
-    uint8_t      cpuId;
-    uint64_t     lastCpuLoad;
-    uint32_t     intState;
-    int32_t      requestSched;
-    ipi_params_t ipiParams;
-
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-
-    /* Get the CPU list to release to */
-    lastCpuLoad = 1000.0;
-    cpuId       = SOC_CPU_COUNT;
-
-    if(pThread->affinity != 0)
-    {
-        for(i = 0; i < SOC_CPU_COUNT; ++i)
-        {
-            if(((1ULL << i) & pThread->affinity) != 0)
-            {
-                if(lastCpuLoad > sCpuLoad[i])
-                {
-                    lastCpuLoad = sCpuLoad[i];
-                    cpuId       = i;
-                }
-            }
-        }
+        sCpuStats[cpuId].idleTimes[timeIdx] = upTime;
     }
     else
     {
-        for(i = 0; i < SOC_CPU_COUNT; ++i)
-        {
-            if(lastCpuLoad > sCpuLoad[i])
-            {
-                lastCpuLoad = sCpuLoad[i];
-                cpuId       = i;
-            }
-        }
+        sCpuStats[cpuId].idleTimes[timeIdx] = 0;
     }
+    sCpuStats[cpuId].totalTimes[timeIdx] = upTime;
 
-    SCHED_ASSERT(cpuId != SOC_CPU_COUNT,
-                 "Failed to find a CPU to relase the thread",
-                 OS_ERR_INCORRECT_VALUE);
 
-    /* Update the thread state and push to queue */
-    if(kIsLocked == FALSE)
-    {
-        KERNEL_LOCK(pThread->lock);
-    }
+    ++sCpuStats[cpuId].schedCount;
+    KERNEL_UNLOCK(sCpuStats[cpuId].lock);
 
-    /* We do not add back zombie threads */
-    if(pThread->currentState == THREAD_STATE_ZOMBIE)
-    {
-        if(kIsLocked == FALSE)
-        {
-            KERNEL_UNLOCK(pThread->lock);
-        }
-
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
-        return;
-    }
-
-    KERNEL_LOCK(sThreadTables[cpuId].lock);
-
-    requestSched = -1;
-
-    kQueuePush(pThread->pThreadNode,
-               sThreadTables[cpuId].pReadyList[pThread->priority]);
-    ++sThreadTables[cpuId].threadCount;
-    if(sThreadTables[cpuId].highestPriority > pThread->priority)
-    {
-        sThreadTables[cpuId].highestPriority = pThread->priority;
-        /* Request scheduling */
-        requestSched = cpuId;
-    }
-
-    pThread->currentState = kState;
-    pThread->nextState    = kState;
-    pThread->schedCpu     = cpuId;
-
-    KERNEL_UNLOCK(sThreadTables[cpuId].lock);
-
-    if(kIsLocked == FALSE)
-    {
-        KERNEL_UNLOCK(pThread->lock);
-    }
-
-    if(sFirstSched[cpuId] == TRUE && requestSched != -1)
-    {
-        if(requestSched == cpuGetId())
-        {
-            if(kSchedSameCpu == TRUE)
-            {
-                /* Check if the context is saved */
-                if(cpuIsVCPUSaved(schedGetCurrentThread()->pVCpu) == TRUE)
-                {
-                    schedScheduleNoInt(TRUE);
-                }
-                else
-                {
-                    schedSchedule();
-                }
-            }
-        }
-        else
-        {
-            /* Request schedule on other CPU */
-            ipiParams.function = IPI_FUNC_SCHEDULE;
-            cpuMgtSendIpi(CPU_IPI_SEND_TO(requestSched), &ipiParams, TRUE);
-        }
-    }
+    KERNEL_UNLOCK(pThread->lock);
 
 #if SCHED_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
-           "Mapped thread %d to CPU %d",
+           "Selected thread %d for RUN on CPU %d",
            pThread->tid,
            cpuId);
 #endif
 
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
-}
-
-OS_RETURN_E schedSleep(const uint64_t kTimeNs)
-{
-    kernel_thread_t* pCurrThread;
-    uint32_t         intState;
-    uint8_t          cpuId;
-
-    /* Check the current thread */
-    pCurrThread = schedGetCurrentThread();
-    if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
+    /* Check if we should restore the full context or the syscall context */
+    if(cpuIsContextFromInt(pThread->pVCpu) == true)
     {
-        return OS_ERR_UNAUTHORIZED_ACTION;
+        cpuRestoreContext(pThread);
+    }
+    else if(cpuIsContextFromSyscall(pThread->pVCpu) == true)
+    {
+        if(pThread->type == THREAD_TYPE_KERNEL)
+        {
+            cpuRestoreKernelSyscallContext(pThread);
+        }
+        else
+        {
+            cpuRestoreUserSyscallContext(pThread);
+        }
     }
 
-
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    KERNEL_LOCK(pCurrThread->lock);
-
-    cpuId = cpuGetId();
-
-    /* Get the current time and set as sleeping*/
-    pCurrThread->wakeupTime = timeGetUptime() + kTimeNs;
-
-    KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
-
-    /* Put the thread in the sleeping queue */
-    pCurrThread->currentState = THREAD_STATE_SLEEPING;
-    kQueuePushPrio(pCurrThread->pThreadNode,
-                   sSleepingThreadsTable[cpuId].pThreadList,
-                   pCurrThread->wakeupTime);
-    ++sSleepingThreadsTable[cpuId].threadCount;
-
-    KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
-    KERNEL_UNLOCK(pCurrThread->lock);
-
-    /* Request scheduling */
-    schedSchedule();
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    return OS_NO_ERR;
+    SCHED_ASSERT(false,
+                 "Schedule returned",
+                 OS_ERR_UNAUTHORIZED_ACTION);
 }
 
 size_t schedGetThreadCount(void)
@@ -1491,23 +2017,21 @@ kernel_thread_t* schedGetCurrentThread(void)
     return pCur;
 }
 
-OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
-                                    const uint8_t     kPriority,
-                                    const char*       kpName,
-                                    const size_t      kStackSize,
-                                    const uint64_t    kAffinitySet,
-                                    void*             (*pRoutine)(void*),
-                                    void*             args)
+OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
+                              const bool        kIsKernel,
+                              const uint8_t     kPriority,
+                              const char*       kpName,
+                              const size_t      kStackSize,
+                              const uint64_t    kAffinitySet,
+                              void*             (*pRoutine)(void*),
+                              void*             args)
 {
-    internal_thread_info_t* pThreadInfo;
-    kernel_thread_t*        pNewThread;
-    kqueue_node_t*          pNewNode;
-    OS_RETURN_E             error;
+    kernel_thread_t* pNewThread;
+    OS_RETURN_E      error;
+    int32_t          newTid;
 
-    pNewThread   = NULL;
-    pNewNode     = NULL;
-    pThreadInfo  = NULL;
-    error        = OS_NO_ERR;
+    pNewThread = NULL;
+    error      = OS_NO_ERR;
 
     /* Validate parameters */
     if((kAffinitySet >> SOC_CPU_COUNT) != 0 ||
@@ -1521,6 +2045,12 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
         goto SCHED_CREATE_KTHREAD_END;
     }
 
+    newTid = atomicIncrement32(&sLastGivenTid);
+    if(newTid >= INT32_MAX || newTid == 0)
+    {
+        return OS_ERR_NO_MORE_MEMORY;
+    }
+
     /* Allocate new structure */
     pNewThread = kmalloc(sizeof(kernel_thread_t));
     if(pNewThread == NULL)
@@ -1531,8 +2061,8 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     memset(pNewThread, 0, sizeof(kernel_thread_t));
 
     /* Create a new node for the threads lists */
-    pNewNode = kQueueCreateNode(pNewThread, FALSE);
-    if(pNewNode == NULL)
+    pNewThread->pThreadNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadNode == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
         goto SCHED_CREATE_KTHREAD_END;
@@ -1540,40 +2070,68 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
 
     /* Set the thread's information */
     pNewThread->affinity           = kAffinitySet;
-    pNewThread->tid                = atomicIncrement32(&sLastGivenTid);
-    pNewThread->type               = THREAD_TYPE_KERNEL;
+    pNewThread->tid                = newTid;
     pNewThread->priority           = kPriority;
     pNewThread->pArgs              = args;
-    pNewThread->pEntryPoint        = pRoutine;
-    pNewThread->pParentThread      = schedGetCurrentThread();
-    pNewThread->requestSchedule    = TRUE;
-    pNewThread->preemptionDisabled = FALSE;
+    pNewThread->pRoutine           = pRoutine;
+    pNewThread->preemptionDisabled = false;
+    pNewThread->pProcess           = schedGetCurrentProcess();
 
     strncpy(pNewThread->pName, kpName, THREAD_NAME_MAX_LENGTH);
     pNewThread->pName[THREAD_NAME_MAX_LENGTH] = 0;
 
-    /* Set the thread's stack for both interrupt and main */
-    pNewThread->stackEnd = cpuCreateKernelStack(kStackSize);
-    if(pNewThread->stackEnd == (uintptr_t)NULL)
+    if(kIsKernel == true)
     {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
+        /* Set the thread's stack for both interrupt and main */
+        pNewThread->kernelStackEnd = memoryMapStack(kStackSize,
+                                                    true,
+                                                    NULL);
+        if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->kernelStackSize = kStackSize;
+
+        pNewThread->type = THREAD_TYPE_KERNEL;
+        pNewThread->pEntryPoint = _kernelThreadEntryPoint;
+    }
+    else
+    {
+        /* Set the thread's stack for both interrupt */
+        pNewThread->kernelStackEnd = memoryMapStack(KERNEL_STACK_SIZE,
+                                                    true,
+                                                    NULL);
+        if(pNewThread->kernelStackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->kernelStackSize = KERNEL_STACK_SIZE;
+
+        /* Set the thread's stack for user */
+        pNewThread->stackEnd = memoryMapStack(kStackSize,
+                                              false,
+                                              pNewThread->pProcess);
+        if(pNewThread->stackEnd == (uintptr_t)NULL)
+        {
+            error = OS_ERR_NO_MORE_MEMORY;
+            goto SCHED_CREATE_KTHREAD_END;
+        }
+        pNewThread->stackSize = kStackSize;
+
+        pNewThread->type = THREAD_TYPE_USER;
+        pNewThread->pEntryPoint = pRoutine;
     }
 
-    pNewThread->stackSize       = kStackSize;
-    pNewThread->kernelStackEnd  = pNewThread->stackEnd;
-    pNewThread->kernelStackSize = kStackSize;
-
     /* Allocate the vCPUs */
-    pNewThread->pThreadVCpu = (void*)cpuCreateVirtualCPU(_threadEntryPoint,
-                                                         pNewThread);
+    pNewThread->pThreadVCpu = (void*)cpuCreateVirtualCPU(pNewThread, true);
     if(pNewThread->pThreadVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
         goto SCHED_CREATE_KTHREAD_END;
     }
-    pNewThread->pSignalVCpu = (void*)cpuCreateVirtualCPU(NULL,
-                                                         pNewThread);
+    pNewThread->pSignalVCpu = (void*)cpuCreateVirtualCPU(pNewThread, false);
     if(pNewThread->pSignalVCpu == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1583,15 +2141,23 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     /* Set the current vCPU as the regular thread vCPU */
     pNewThread->pVCpu = pNewThread->pThreadVCpu;
 
-    /* Set thread to READY */
-    pNewThread->currentState  = THREAD_STATE_READY;
-    pNewThread->nextState     = THREAD_STATE_READY;
+    /* Initialize the user-specific data */
+    error = cpuCreateLocalStorage(pNewThread);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+    pNewThread->pUserThreadData->pSelfPointer = pNewThread->pUserThreadData;
+    pNewThread->pUserThreadData->pid = pNewThread->pProcess->pid;
+    pNewThread->pUserThreadData->tid = pNewThread->tid;
+    pNewThread->pUserThreadData->priority = pNewThread->priority;
 
-    /* Set the node node */
-    pNewThread->pThreadNode = pNewNode;
+    /* Set thread to READY */
+    pNewThread->currentState = THREAD_STATE_READY;
+    pNewThread->nextState    = THREAD_STATE_READY;
 
     /* Set the thread's resources */
-    pNewThread->pThreadResources = kQueueCreate(FALSE);
+    pNewThread->pThreadResources = kQueueCreate(false);
     if(pNewThread->pThreadResources == NULL)
     {
         error = OS_ERR_NO_MORE_MEMORY;
@@ -1601,38 +2167,47 @@ OS_RETURN_E schedCreateKernelThread(kernel_thread_t** ppThread,
     /* Initialize the lock */
     KERNEL_SPINLOCK_INIT(pNewThread->lock);
 
-    /* Set the information node */
-    pThreadInfo = kmalloc(sizeof(internal_thread_info_t));
-
-    if(pThreadInfo == NULL)
-    {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
-    }
-    pThreadInfo->tid           = pNewThread->tid;
-    pThreadInfo->pName         = pNewThread->pName;
-    pThreadInfo->type          = pNewThread->type;
-    pThreadInfo->pPriority     = &pNewThread->priority;
-    pThreadInfo->pCurrentState = &pNewThread->currentState;
-    pThreadInfo->pAffinity     = &pNewThread->affinity;
-    pThreadInfo->pSchedCpu     = &pNewThread->schedCpu;
-
-    pNewThread->pInfoNode = kQueueCreateNode(pThreadInfo, FALSE);
-    if(pNewThread->pInfoNode == NULL)
-    {
-        error = OS_ERR_NO_MORE_MEMORY;
-        goto SCHED_CREATE_KTHREAD_END;
-    }
-    kQueuePush(pNewThread->pInfoNode, spThreadList);
-
     /* Init signal */
     signalInitSignals(pNewThread);
+
+    /* Setup the process link */
+    pNewThread->pNext = NULL;
+
+    KERNEL_LOCK(pNewThread->pProcess->lock);
+
+    KERNEL_LOCK(pNewThread->pProcess->pThreadListTail->lock);
+    pNewThread->pProcess->pThreadListTail->pNext = pNewThread;
+    KERNEL_UNLOCK(pNewThread->pProcess->pThreadListTail->lock);
+
+    pNewThread->pPrev = pNewThread->pProcess->pThreadListTail;
+    pNewThread->pProcess->pThreadListTail = pNewThread;
+    error = uhashtableSet(pNewThread->pProcess->pThreadTable,
+                          (uintptr_t)pNewThread,
+                          NULL);
+    KERNEL_UNLOCK(pNewThread->pProcess->lock);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+
+    /* Add to the global list */
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNewThread->pThreadListNode = kQueueCreateNode(pNewThread, false);
+    if(pNewThread->pThreadListNode == NULL)
+    {
+        KERNEL_UNLOCK(sTotalThreadsList.lock);
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_CREATE_KTHREAD_END;
+    }
+    kQueuePush(pNewThread->pThreadListNode, sTotalThreadsList.pThreadList);
+    ++sTotalThreadsList.threadCount;
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
 
     /* Increase the global number of threads */
     atomicIncrement32(&sThreadCount);
 
     /* Release the thread */
-    schedReleaseThread(pNewThread, FALSE, THREAD_STATE_READY, TRUE);
+    _schedReleaseThread(pNewThread, false);
 
 SCHED_CREATE_KTHREAD_END:
     if(error != OS_NO_ERR)
@@ -1641,8 +2216,18 @@ SCHED_CREATE_KTHREAD_END:
         {
             if(pNewThread->stackEnd != (uintptr_t)NULL)
             {
-                cpuDestroyKernelStack(pNewThread->kernelStackEnd,
-                                      pNewThread->kernelStackSize);
+                memoryUnmapStack(pNewThread->stackEnd,
+                                 pNewThread->stackSize,
+                                 false,
+                                 pNewThread->pProcess);
+            }
+            if(pNewThread->kernelStackEnd != (uintptr_t)NULL)
+            {
+
+                memoryUnmapStack(pNewThread->kernelStackEnd,
+                                 pNewThread->kernelStackSize,
+                                 true,
+                                 NULL);
 
             }
             if(pNewThread->pThreadVCpu != NULL)
@@ -1653,24 +2238,63 @@ SCHED_CREATE_KTHREAD_END:
             {
                 cpuDestroyVirtualCPU((uintptr_t)pNewThread->pSignalVCpu);
             }
+            if(pNewThread->pUserThreadData != NULL)
+            {
+                cpuDestroyLocalStorage(pNewThread);
+            }
             if(pNewThread->pThreadResources != NULL)
             {
                 kQueueDestroy((kqueue_t**)&pNewThread->pThreadResources);
             }
-            if(pNewThread->pInfoNode != NULL)
+            if(pNewThread->pThreadListNode != NULL)
             {
-                kQueueDestroyNode((kqueue_node_t**)&pNewThread->pInfoNode);
+                KERNEL_LOCK(sTotalThreadsList.lock);
+                kQueueRemove(sTotalThreadsList.pThreadList,
+                             pNewThread->pThreadListNode,
+                             true);
+                kQueueDestroyNode((kqueue_node_t**)
+                                  &pNewThread->pThreadListNode);
+                --sTotalThreadsList.threadCount;
+                KERNEL_UNLOCK(sTotalThreadsList.lock);
+            }
+            if(pNewThread->pThreadNode != NULL)
+            {
+                kQueueDestroyNode((kqueue_node_t**)&pNewThread->pThreadNode);
+            }
+
+            if(pNewThread->pProcess != NULL)
+            {
+                KERNEL_LOCK(pNewThread->pProcess->lock);
+
+                if(pNewThread->pProcess->pThreadListTail == pNewThread)
+                {
+                    pNewThread->pProcess->pThreadListTail = pNewThread->pPrev;
+                }
+
+                if(pNewThread->pNext != NULL)
+                {
+                    KERNEL_LOCK(pNewThread->pNext->lock);
+                    pNewThread->pNext->pPrev = pNewThread->pPrev;
+                    KERNEL_UNLOCK(pNewThread->pNext->lock);
+                }
+
+                if(pNewThread->pPrev != NULL)
+                {
+                    KERNEL_LOCK(pNewThread->pPrev->lock);
+                    pNewThread->pPrev->pNext = pNewThread->pNext;
+                    KERNEL_UNLOCK(pNewThread->pPrev->lock);
+                }
+
+                pNewThread->pPrev = pNewThread->pProcess->pThreadListTail;
+                pNewThread->pProcess->pThreadListTail = pNewThread;
+                uhashtableRemove(pNewThread->pProcess->pThreadTable,
+                                 (uintptr_t)pNewThread,
+                                 NULL);
+
+                KERNEL_UNLOCK(pNewThread->pProcess->lock);
             }
 
             kfree(pNewThread);
-        }
-        if(pNewNode != NULL)
-        {
-            kQueueDestroyNode(&pNewNode);
-        }
-        if(pThreadInfo != NULL)
-        {
-            kfree(pThreadInfo);
         }
 
         *ppThread = NULL;
@@ -1690,6 +2314,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
     kernel_thread_t* pCurThread;
     uint8_t          cpuId;
     uint32_t         intState;
+
     if(pThread == NULL)
     {
         return OS_ERR_NULL_POINTER;
@@ -1711,94 +2336,104 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
         }
     }
 
-    KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    KERNEL_LOCK(pThread->lock);
-    KERNEL_LOCK(pCurThread->lock);
-
-    /* Check if a thread is already joining */
-    if(pThread->pJoiningThread != NULL)
+    /* Check if the thread is in the same process */
+    if(pCurThread->pProcess != pThread->pProcess)
     {
-        KERNEL_UNLOCK(pCurThread->lock);
-        KERNEL_UNLOCK(pThread->lock);
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
         return OS_ERR_UNAUTHORIZED_ACTION;
     }
 
-    /* Check if the thread is already exited */
-    if(pThread->currentState == THREAD_STATE_ZOMBIE)
+    /* Check if the thread is the process's main thread */
+    if(pCurThread->pProcess->pMainThread == pThread)
     {
-        if(ppRetVal != NULL)
+        return OS_ERR_UNAUTHORIZED_ACTION;
+    }
+
+    do
+    {
+        KERNEL_ENTER_CRITICAL_LOCAL(intState);
+        KERNEL_LOCK(pThread->lock);
+        KERNEL_LOCK(pCurThread->lock);
+
+        /* Check if the thread is still valid */
+        if(schedIsThreadValid(pThread) == false)
         {
-            *ppRetVal = pThread->retValue;
-        }
-        if(pTerminationCause != NULL)
-        {
-            *pTerminationCause = pThread->terminateCause;
+            KERNEL_UNLOCK(pCurThread->lock);
+            KERNEL_UNLOCK(pThread->lock);
+            KERNEL_EXIT_CRITICAL_LOCAL(intState);
+            return OS_ERR_NO_SUCH_ID;
         }
 
-        /* Remove thread from zombie list */
-        KERNEL_LOCK(sZombieThreadsTable.lock);
-        kQueueRemove(sZombieThreadsTable.pThreadList,
-                     pThread->pThreadNode,
-                     TRUE);
-        --sZombieThreadsTable.threadCount;
-        KERNEL_UNLOCK(sZombieThreadsTable.lock);
+        /* Check if a thread is already joining */
+        if(pThread->pJoiningThread != NULL &&
+           pThread->pJoiningThread != pCurThread)
+        {
+            KERNEL_UNLOCK(pCurThread->lock);
+            KERNEL_UNLOCK(pThread->lock);
+            KERNEL_EXIT_CRITICAL_LOCAL(intState);
+            return OS_ERR_UNAUTHORIZED_ACTION;
+        }
+
+        /* Check if the thread is already exited */
+        if(pThread->currentState == THREAD_STATE_ZOMBIE)
+        {
+            if(ppRetVal != NULL)
+            {
+                *ppRetVal = pThread->retValue;
+            }
+            if(pTerminationCause != NULL)
+            {
+                *pTerminationCause = pThread->terminateCause;
+            }
+            KERNEL_UNLOCK(pCurThread->lock);
+            KERNEL_UNLOCK(pThread->lock);
+            KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+            /* Clean the thread */
+            _schedCleanThread(pThread);
+
+            return OS_NO_ERR;
+        }
+
+        /* The thread is no yet exited, add to the joining thread and lock the
+         * caller thread.
+         */
+
+        pThread->pJoiningThread   = pCurThread;
+        pCurThread->pJoinedThread = pThread;
+        pCurThread->nextState     = THREAD_STATE_JOINING;
+
         KERNEL_UNLOCK(pCurThread->lock);
         KERNEL_UNLOCK(pThread->lock);
-        KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
-        /* Clean the thread */
-        _schedCleanThread(pThread);
+        /* Request scheduling */
+        schedSchedule();
 
-        return OS_NO_ERR;
-    }
-
-    /* The thread is no yet exited, add to the joining thread and lock the
-     * caller thread.
-     */
-
-    pThread->pJoiningThread   = pCurThread;
-    pCurThread->pJoinedThread = pThread;
-    pCurThread->currentState  = THREAD_STATE_JOINING;
-
-    KERNEL_UNLOCK(pCurThread->lock);
-    KERNEL_UNLOCK(pThread->lock);
-
-    /* Request scheduling */
-    schedSchedule();
-    KERNEL_EXIT_CRITICAL_LOCAL(intState);
-
-    pCurThread->pJoinedThread = NULL;
-
-    /* Remove thread from zombie list */
-    KERNEL_LOCK(sZombieThreadsTable.lock);
-    kQueueRemove(sZombieThreadsTable.pThreadList,
-                 pThread->pThreadNode,
-                 TRUE);
-    --sZombieThreadsTable.threadCount;
-
-    KERNEL_UNLOCK(sZombieThreadsTable.lock);
-
-    /* We returned from schedule, get the return value and clean the thread */
-    if(ppRetVal != NULL)
-    {
-        *ppRetVal = pThread->retValue;
-    }
-    if(pTerminationCause != NULL)
-    {
-        *pTerminationCause = pThread->terminateCause;
-    }
-
-    _schedCleanThread(pThread);
+        /* Retry to join after wake up */
+    } while(true);
 
     return OS_NO_ERR;
 }
 
 uint64_t schedGetCpuLoad(const uint8_t kCpuId)
 {
+    uint64_t cpuLoad;
+
     if(kCpuId < SOC_CPU_COUNT)
     {
-        return sCpuLoad[kCpuId];
+        KERNEL_LOCK(sCpuStats[kCpuId].lock);
+        if(sCpuStats[kCpuId].totalTime != 0)
+        {
+            cpuLoad = 100 -
+                      (100 * sCpuStats[kCpuId].idleTime /
+                       sCpuStats[kCpuId].totalTime);
+        }
+        else
+        {
+            cpuLoad = 0;
+        }
+        KERNEL_UNLOCK(sCpuStats[kCpuId].lock);
+
+        return cpuLoad;
     }
     else
     {
@@ -1806,31 +2441,31 @@ uint64_t schedGetCpuLoad(const uint8_t kCpuId)
     }
 }
 
-void schedWaitThreadOnResource(const THREAD_WAIT_RESOURCE_TYPE_E kResource)
-{
-    kernel_thread_t* pThread;
-
-    pThread = schedGetCurrentThread();
-
-    KERNEL_LOCK(pThread->lock);
-
-    pThread->currentState      = THREAD_STATE_WAITING;
-    pThread->resourceBlockType = kResource;
-
-    KERNEL_UNLOCK(pThread->lock);
-}
-
-void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
+OS_RETURN_E schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
 {
     uint8_t cpuId;
 
     /* Check parameters */
-    if(kPrio > KERNEL_LOWEST_PRIORITY || kPrio == pThread->priority)
+    if(kPrio > KERNEL_LOWEST_PRIORITY)
     {
-        return;
+        return OS_ERR_INCORRECT_VALUE;
     }
 
     KERNEL_LOCK(pThread->lock);
+
+    /* Check if the thread is still valid */
+    if(schedIsThreadValid(pThread) == false)
+    {
+        KERNEL_UNLOCK(pThread->lock);
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    if(kPrio == pThread->priority)
+    {
+        return OS_NO_ERR;
+        KERNEL_UNLOCK(pThread->lock);
+    }
+
     cpuId = pThread->schedCpu;
     KERNEL_LOCK(sThreadTables[cpuId].lock);
     /* Check if the thread is running, if it is not, we have to update the
@@ -1843,7 +2478,7 @@ void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
         /* Update the table */
         kQueueRemove(sThreadTables[cpuId].pReadyList[pThread->priority],
                      pThread->pThreadNode,
-                     TRUE);
+                     true);
 
         kQueuePush(pThread->pThreadNode,
                    sThreadTables[cpuId].pReadyList[kPrio]);
@@ -1857,71 +2492,16 @@ void schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
     KERNEL_UNLOCK(sThreadTables[cpuId].lock);
 
     pThread->priority = kPrio;
-    KERNEL_UNLOCK(pThread->lock);
-}
-
-void* schedThreadAddResource(const thread_resource_t* kpResource)
-{
-    kernel_thread_t* pThread;
-    kqueue_node_t*   pNewNode;
-
-    /* Check the parameters */
-    if(kpResource == NULL || kpResource->pReleaseResource == NULL)
-    {
-        return NULL;
-    }
-
-    pThread = schedGetCurrentThread();
-    KERNEL_LOCK(pThread->lock);
-
-    /* Create the new node for the resource */
-    pNewNode = kQueueCreateNode((void*)kpResource, FALSE);
-    if(pNewNode == NULL)
-    {
-        KERNEL_UNLOCK(pThread->lock);
-        return NULL;
-    }
-
-    /* Add the node to the thread's queue */
-    kQueuePush(pNewNode, pThread->pThreadResources);
+    pThread->pUserThreadData->priority = kPrio;
     KERNEL_UNLOCK(pThread->lock);
 
-    return pNewNode;
-}
-
-OS_RETURN_E schedThreadRemoveResource(void* pResourceHandle)
-{
-    kernel_thread_t* pThread;
-    kqueue_node_t*   pNode;
-
-    /* Check the parameters */
-    if(pResourceHandle == NULL)
-    {
-        return OS_ERR_NULL_POINTER;
-    }
-
-    pNode = pResourceHandle;
-    pThread = schedGetCurrentThread();
-
-    KERNEL_LOCK(pThread->lock);
-
-    /* Check the handle validity */
-    if(pNode->pQueuePtr != pThread->pThreadResources)
-    {
-        KERNEL_UNLOCK(pThread->lock);
-
-        return OS_ERR_INCORRECT_VALUE;
-    }
-    kQueueRemove(pThread->pThreadResources, pNode, TRUE);
-    kQueueDestroyNode(&pNode);
-
-    KERNEL_UNLOCK(pThread->lock);
     return OS_NO_ERR;
 }
 
 OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
                                  const THREAD_TERMINATE_CAUSE_E kCause)
 {
+    /* TODO Redo this function is not ok concurrecncy*/
     uint8_t     cpuId;
     OS_RETURN_E error;
     uint32_t    intState;
@@ -1943,6 +2523,15 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     /* Nothing to do if zombie */
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
     KERNEL_LOCK(pThread->lock);
+
+    /* Check if the thread is still valid */
+    if(schedIsThreadValid(pThread) == false)
+    {
+        KERNEL_UNLOCK(pThread->lock);
+        KERNEL_EXIT_CRITICAL_LOCAL(intState);
+        return OS_ERR_NO_SUCH_ID;
+    }
+
     if(pThread->currentState == THREAD_STATE_ZOMBIE)
     {
         KERNEL_UNLOCK(pThread->lock);
@@ -1957,8 +2546,8 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
         KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
         /* If we are terminating ourselves just go to the exit point */
-        _threadExitPoint(kCause, THREAD_RETURN_STATE_KILLED, NULL);
-        SCHED_ASSERT(FALSE,
+        _kernelThreadExitPoint(kCause, THREAD_RETURN_STATE_KILLED, NULL);
+        SCHED_ASSERT(false,
                      "Exit point returned on terminate",
                      OS_ERR_UNAUTHORIZED_ACTION);
     }
@@ -1967,6 +2556,15 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     pThread->terminateCause = kCause;
     KERNEL_UNLOCK(pThread->lock);
     error = signalThread(pThread, THREAD_SIGNAL_KILL);
+
+    if(error == OS_NO_ERR)
+    {
+        /* Set the thread to the highest priority */
+        error = schedUpdatePriority(pThread, KERNEL_HIGHEST_PRIORITY);
+        SCHED_ASSERT(error == OS_NO_ERR,
+                     "Failed to change thread priority",
+                     error);
+    }
 
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
@@ -1977,39 +2575,69 @@ void schedThreadExit(const THREAD_TERMINATE_CAUSE_E kCause,
                      const THREAD_RETURN_STATE_E    kRetState,
                      void*                          pRetVal)
 {
-    _threadExitPoint(kCause, kRetState, pRetVal);
+    _kernelThreadExitPoint(kCause, kRetState, pRetVal);
 }
 
-size_t schedGetThreads(thread_info_t* pThreadTable, const size_t kTableSize)
+size_t schedGetThreadsIds(int32_t* pThreadTable, const size_t kTableSize)
 {
-    size_t                  i;
-    kqueue_node_t*          pNode;
-    internal_thread_info_t* pInfo;
+    size_t           i;
+    kqueue_node_t*   pNode;
+    kernel_thread_t* pThread;
 
     if(pThreadTable == NULL)
     {
         return 0;
     }
 
-    KERNEL_LOCK(sThreadListLock);
-    pNode = spThreadList->pHead;
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pHead;
     for(i = 0; i < kTableSize && pNode != NULL; ++i)
     {
-        pInfo = (internal_thread_info_t*)pNode->pData;
-
-        pThreadTable[i].tid          = pInfo->tid;
-        pThreadTable[i].type         = pInfo->type;
-        pThreadTable[i].priority     = *(pInfo->pPriority);
-        pThreadTable[i].currentState = *(pInfo->pCurrentState);
-        pThreadTable[i].affinity     = *(pInfo->pAffinity);
-        pThreadTable[i].schedCpu     = *(pInfo->pSchedCpu);
-        memcpy(pThreadTable[i].pName, pInfo->pName, THREAD_NAME_MAX_LENGTH);
-
+        pThread = (kernel_thread_t*)pNode->pData;
+        pThreadTable[i] = pThread->tid;
         pNode = pNode->pNext;
     }
-    KERNEL_UNLOCK(sThreadListLock);
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
 
     return i;
+}
+
+OS_RETURN_E schedGetThreadInfo(thread_info_t* pInfo, const int32_t kTid)
+{
+    kqueue_node_t*   pNode;
+    kernel_thread_t* pThread;
+
+    if(pInfo == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pHead;
+    while(pNode != NULL)
+    {
+        pThread = (kernel_thread_t*)pNode->pData;
+        if(pThread->tid == kTid)
+        {
+            pInfo->pid          = pThread->pProcess->pid;
+            pInfo->tid          = pThread->tid;
+            pInfo->type         = pThread->type;
+            pInfo->priority     = pThread->priority;
+            pInfo->currentState = pThread->currentState;
+            pInfo->affinity     = pThread->affinity;
+            pInfo->schedCpu     = pThread->schedCpu;
+            pInfo->kStack       = pThread->kernelStackEnd;
+            pInfo->uStack       = pThread->stackEnd;
+            memcpy(pInfo->pName, pThread->pName, THREAD_NAME_MAX_LENGTH);
+
+            KERNEL_UNLOCK(sTotalThreadsList.lock);
+            return OS_NO_ERR;
+        }
+        pNode = pNode->pNext;
+    }
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
+
+    return OS_ERR_NO_SUCH_ID;
 }
 
 void schedDisablePreemption(void)
@@ -2019,7 +2647,7 @@ void schedDisablePreemption(void)
     pThread = schedGetCurrentThread();
     KERNEL_LOCK(pThread->lock);
 
-    pThread->preemptionDisabled = TRUE;
+    pThread->preemptionDisabled = true;
 
     KERNEL_UNLOCK(pThread->lock);
 }
@@ -2031,10 +2659,493 @@ void schedEnablePreemption(void)
     pThread = schedGetCurrentThread();
     KERNEL_LOCK(pThread->lock);
 
-    pThread->preemptionDisabled = FALSE;
+    pThread->preemptionDisabled = false;
 
     KERNEL_UNLOCK(pThread->lock);
 }
 
+kernel_process_t* schedGetCurrentProcess(void)
+{
+    kernel_process_t* pCur;
+    uint32_t          intState;
 
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    pCur = spCurrentProcessPtr[cpuGetId()];
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    return pCur;
+}
+
+OS_RETURN_E schedSetThreadToReady(kernel_thread_t* pThread)
+{
+    OS_RETURN_E retCode;
+
+    KERNEL_LOCK(pThread->lock);
+
+    /* Check if the thread is still valid */
+    if(schedIsThreadValid(pThread) == false)
+    {
+        KERNEL_UNLOCK(pThread->lock);
+        return OS_ERR_NO_SUCH_ID;
+    }
+
+    if(pThread->currentState != THREAD_STATE_ZOMBIE)
+    {
+        if(pThread->currentState == THREAD_STATE_SLEEPING ||
+           pThread->nextState == THREAD_STATE_SLEEPING)
+        {
+            _cancelSleepThread(pThread);
+            retCode = OS_NO_ERR;
+        }
+        else if(pThread->currentState != THREAD_STATE_RUNNING)
+        {
+            if(pThread->nextState != THREAD_STATE_READY)
+            {
+                _schedReleaseThread(pThread, true);
+            }
+            retCode = OS_NO_ERR;
+        }
+        else
+        {
+            retCode = OS_NO_ERR;
+        }
+        pThread->nextState = THREAD_STATE_READY;
+    }
+    else
+    {
+        retCode = OS_ERR_NO_SUCH_ID;
+    }
+    KERNEL_UNLOCK(pThread->lock);
+
+    return retCode;
+}
+
+OS_RETURN_E schedThreadSetWaiting(void)
+{
+    kernel_thread_t* pThread;
+    OS_RETURN_E retCode;
+
+    pThread = schedGetCurrentThread();
+
+    KERNEL_LOCK(pThread->lock);
+    if(pThread->currentState == THREAD_STATE_RUNNING)
+    {
+        pThread->nextState = THREAD_STATE_WAITING;
+        retCode = OS_NO_ERR;
+    }
+    else
+    {
+        retCode = OS_ERR_UNAUTHORIZED_ACTION;
+    }
+    KERNEL_UNLOCK(pThread->lock);
+
+    return retCode;
+}
+
+bool schedIsInit(void)
+{
+    return sIsInit;
+}
+
+bool schedIsRunning(void)
+{
+    return sIsRunning;
+}
+
+bool schedIsThreadValid(kernel_thread_t* pThread)
+{
+    OS_RETURN_E err;
+    void*       data;
+
+    KERNEL_LOCK(pThread->pProcess->lock);
+    err = uhashtableGet(pThread->pProcess->pThreadTable,
+                        (uintptr_t)pThread,
+                        &data);
+    KERNEL_UNLOCK(pThread->pProcess->lock);
+
+    return (err == OS_NO_ERR);
+}
+
+bool schedIsIdleThread(const kernel_thread_t* kpThread)
+{
+    uint8_t cpuId;
+
+    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    {
+        if(kpThread == spIdleThread[cpuId])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*******************************************************************************
+ * SYSTEM CALL PERFORMERS
+ ******************************************************************************/
+OS_RETURN_E schedSleep(const uint64_t kTimeNs)
+{
+    syscall_sleep_param_t sleepParam;
+    OS_RETURN_E           error;
+
+    /* Prepare the system call */
+    sleepParam.timeToSleepNs = kTimeNs;
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_SLEEP, &sleepParam);
+    if(error == OS_NO_ERR)
+    {
+        error = sleepParam.errnoVal;
+    }
+
+    return error;
+}
+
+void schedSchedule(void)
+{
+    syscall_schedule_param_t schedParam;
+    OS_RETURN_E              error;
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_SCHEDULE, &schedParam);
+    SCHED_ASSERT(error == OS_NO_ERR && schedParam.errnoVal == OS_NO_ERR,
+                 "Failed to schedule thread",
+                 error);
+}
+
+OS_RETURN_E schedFork(int32_t* pNewPid)
+{
+    syscall_fork_param_t forkParam;
+    OS_RETURN_E          error;
+
+    if(pNewPid == NULL)
+    {
+        return OS_ERR_NULL_POINTER;
+    }
+
+    /* Perform the system call */
+    error = syscallPerform(SYSCALL_FORK, &forkParam);
+    if(error == OS_NO_ERR)
+    {
+        error = forkParam.errnoVal;
+        if(error == OS_NO_ERR)
+        {
+            *pNewPid = forkParam.newPid;
+        }
+        else
+        {
+            *pNewPid = -1;
+        }
+    }
+
+    return error;
+}
+
+/*************************
+ * SYSTEM CALL HANDLERS
+ *************************/
+void schedSyscallHandleSleep(void* pParams)
+{
+    kernel_thread_t*       pCurrThread;
+    uint32_t               intState;
+    syscall_sleep_param_t* pSleepParam;
+    uint64_t               wakeupTime;
+    uint64_t               currentTime;
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(schedGetCurrentThread()->pVCpu),
+                 "Called sleep handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Sleep parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pSleepParam = pParams;
+    pSleepParam->errnoVal = OS_NO_ERR;
+
+    /* Check the current thread */
+    pCurrThread = schedGetCurrentThread();
+    if(pCurrThread == spIdleThread[pCurrThread->schedCpu])
+    {
+        pSleepParam->errnoVal = OS_ERR_UNAUTHORIZED_ACTION;
+        return;
+    }
+
+    /* Calculate the wakeup time and check for rollback */
+    currentTime = timeGetUptime();
+    wakeupTime  = currentTime + pSleepParam->timeToSleepNs;
+    if(wakeupTime < currentTime)
+    {
+        pSleepParam->errnoVal = OS_ERR_INCORRECT_VALUE;
+        return;
+    }
+
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    KERNEL_LOCK(pCurrThread->lock);
+    /* Get the current time and set as sleeping*/
+    pCurrThread->wakeupTime = wakeupTime;
+    pCurrThread->nextState = THREAD_STATE_SLEEPING;
+    KERNEL_UNLOCK(pCurrThread->lock);
+
+    /* Request scheduling */
+    schedScheduleNoInt();
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    SCHED_ASSERT(false,
+                 "Sleep system call handler returned",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+}
+
+void schedSyscallHandleSchedule(void* pParams)
+{
+    uint32_t                  intState;
+    syscall_schedule_param_t* pSchedParam;
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(schedGetCurrentThread()->pVCpu),
+                 "Called schedule handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Schedule parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pSchedParam = pParams;
+    pSchedParam->errnoVal = OS_NO_ERR;
+
+    /* Request schedule */
+    KERNEL_ENTER_CRITICAL_LOCAL(intState);
+    schedScheduleNoInt();
+    KERNEL_EXIT_CRITICAL_LOCAL(intState);
+
+    SCHED_ASSERT(false,
+                 "Schedule system call handler returned",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+}
+
+void schedSyscallHandleFork(void* pParams)
+{
+    OS_RETURN_E           error;
+    OS_RETURN_E           newError;
+    kernel_process_t*     pProcess;
+    kernel_process_t*     pCurrentProcess;
+    kernel_thread_t*      pCurrentThread;
+    kernel_thread_t*      pMainThread;
+    kqueue_node_t*        pNewProcessNode;
+    syscall_fork_param_t* pForkParam;
+
+    pMainThread = NULL;
+
+    pCurrentThread = schedGetCurrentThread();
+
+    SCHED_ASSERT(cpuIsContextFromSyscall(pCurrentThread->pVCpu),
+                 "Called fork handler without performing system call.",
+                 OS_ERR_UNAUTHORIZED_ACTION);
+    SCHED_ASSERT(pParams != NULL,
+                 "Fork parameters are NULL",
+                 OS_ERR_NULL_POINTER);
+
+    pForkParam = pParams;
+    /* Only user mode can fork */
+    if(pCurrentThread->type == THREAD_TYPE_KERNEL)
+    {
+        pForkParam->errnoVal = OS_ERR_UNAUTHORIZED_ACTION;
+        return;
+    }
+
+    pCurrentProcess = schedGetCurrentProcess();
+
+    /* Allocate the structure */
+    pProcess = kmalloc(sizeof(kernel_process_t));
+    if(pProcess == NULL)
+    {
+        pForkParam->errnoVal = OS_ERR_NO_MORE_MEMORY;
+        return;
+    }
+    memset(pProcess, 0, sizeof(kernel_process_t));
+
+    /* Create process memory information */
+    pProcess->pMemoryData = memoryCreateProcessMemoryData();
+    if(pProcess->pMemoryData == NULL)
+    {
+        error = OS_ERR_NULL_POINTER;
+        goto SCHED_FORK_END;
+    }
+
+    /* Create the thread table */
+    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                   kfree),
+                                              &error);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Create the futex table */
+    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                  kfree),
+                                             &error);
+    if(error != OS_NO_ERR)
+    {
+
+        goto SCHED_FORK_END;
+    }
+
+    /* Copy the file descriptors */
+    error = vfsCopyProcessFdTable(pProcess, pCurrentProcess);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Copy the mapping of the current process */
+    error = memoryCloneProcessMemory(pProcess);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Create the main thread (copy from the current thread) */
+    error = _copyThread(&pMainThread, pProcess);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Setup the process attributes */
+    memcpy(pProcess->pName, pCurrentProcess->pName, PROCESS_NAME_MAX_LENGTH);
+    pProcess->pName[PROCESS_NAME_MAX_LENGTH] = 0;
+    pProcess->pid = atomicIncrement32(&sLastGivenPid);
+    KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
+    KERNEL_SPINLOCK_INIT(pProcess->lock);
+
+    /* Add the thread to the process */
+    pProcess->pMainThread = pMainThread;
+    pProcess->pThreadListTail = pMainThread;
+    pMainThread->pProcess = pProcess;
+    error = uhashtableSet(pProcess->pThreadTable, (uintptr_t)pMainThread, NULL);
+    if(error != OS_NO_ERR)
+    {
+        goto SCHED_FORK_END;
+    }
+
+    /* Create the children list */
+    pProcess->pChildren = kQueueCreate(false);
+    if(pProcess->pChildren == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_FORK_END;
+    }
+
+    /* Add to parent's children */
+    pProcess->pParent = pCurrentProcess;
+    pNewProcessNode = kQueueCreateNode(pProcess, false);
+    if(pNewProcessNode == NULL)
+    {
+        error = OS_ERR_NO_MORE_MEMORY;
+        goto SCHED_FORK_END;
+    }
+
+    /* Add the thread to the thread list */
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    kQueuePush(pMainThread->pThreadListNode, sTotalThreadsList.pThreadList);
+    ++sTotalThreadsList.threadCount;
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
+
+    atomicIncrement32(&sProcessCount);
+    atomicIncrement32(&sThreadCount);
+
+    KERNEL_LOCK(pProcess->lock);
+    kQueuePush(pNewProcessNode, pCurrentProcess->pChildren);
+
+    /* Release main thread */
+    pProcess->pMainThread->currentState = THREAD_STATE_READY;
+    _schedReleaseThread(pProcess->pMainThread, true);
+    KERNEL_UNLOCK(pProcess->lock);
+
+    /* Update the new PID */
+    pForkParam->newPid = pProcess->pid;
+
+    error = OS_NO_ERR;
+
+SCHED_FORK_END:
+    if(error != OS_NO_ERR)
+    {
+        if(pProcess != NULL)
+        {
+            if(pProcess->pMemoryData != NULL)
+            {
+                memoryDestroyProcessMemoryData(pProcess->pMemoryData);
+            }
+
+            if(pProcess->pThreadTable != NULL)
+            {
+                newError = uhashtableDestroy(pProcess->pThreadTable);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                            "Failed to remove threads table.",
+                            newError);
+            }
+
+            if(pProcess->pFutexTable != NULL)
+            {
+                newError = uhashtableDestroy(pProcess->pFutexTable);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                             "Failed to remove futex table.",
+                             newError);
+            }
+
+            if(pProcess->pChildren != NULL)
+            {
+                kQueueDestroy(&pProcess->pChildren);
+            }
+
+            if(pNewProcessNode != NULL)
+            {
+                kQueueRemove(pCurrentProcess->pChildren, pNewProcessNode, true);
+                kQueueDestroyNode(&pNewProcessNode);
+            }
+
+            if(pMainThread != NULL)
+            {
+                pMainThread->currentState = THREAD_STATE_ZOMBIE;
+                _schedCleanThread(pMainThread);
+            }
+
+            if(pProcess->pFdTable != NULL)
+            {
+                newError = vfsDestroyProcessFdTable(pProcess);
+                SCHED_ASSERT(newError == OS_NO_ERR,
+                             "Failed to destroy file descriptor table.",
+                             newError);
+            }
+
+            kfree(pProcess);
+        }
+    }
+
+    pForkParam->errnoVal = error;
+}
+
+kernel_thread_t* schedGetThread(const int32_t kTid)
+{
+    kqueue_node_t*   pNode;
+    kernel_thread_t* pThread;
+
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pHead;
+    while(pNode != NULL)
+    {
+        pThread = (kernel_thread_t*)pNode->pData;
+        if(kTid == pThread->tid)
+        {
+            break;
+        }
+        pNode = pNode->pNext;
+    }
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
+
+    if(pNode != NULL)
+    {
+        return pThread;
+    }
+    return NULL;
+}
 /************************************ EOF *************************************/

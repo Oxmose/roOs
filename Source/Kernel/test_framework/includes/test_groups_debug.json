@@ -1,6 +1,6 @@
 [
     {
-        "name": "UHashTable Tests Suite",
-        "testname": "MUTEX"
+        "name": "Kernel Panic",
+        "testname": "PANIC"
     }
 ]

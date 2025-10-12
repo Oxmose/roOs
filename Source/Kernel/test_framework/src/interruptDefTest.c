@@ -25,7 +25,7 @@
 
 /* Included headers */
 #include <interrupts.h>
-#include <cpu_interrupt.h>
+#include <cpuInterrupt.h>
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>
@@ -88,7 +88,7 @@ void defIntRoutine(void* args)
 
     TEST_POINT_ASSERT_INT(TEST_DEF_TID_VALUE,
                           schedGetCurrentThread()->tid != mainTid,
-                          0,
+                          mainTid,
                           schedGetCurrentThread()->tid,
                           TEST_DEF_INTERRUPT_ENABLED);
 
@@ -136,6 +136,8 @@ void* testThread(void* args)
     /* Schedule so we let the defered interrupt execute */
     schedSchedule();
 
+    while(counter != 100000){}
+
     TEST_POINT_ASSERT_UINT(TEST_DEF_INT_VALUE,
                            counter == 100000,
                            100000,
@@ -153,7 +155,7 @@ void interruptDefferTest(void)
     kernel_thread_t* pTestThread;
 
     /* Spawn the test thread */
-    error = schedCreateKernelThread(&pTestThread,
+    error = schedCreateThread(&pTestThread, true,
                                     1,
                                     "DEF_INT_MAIN",
                                     0x1000,

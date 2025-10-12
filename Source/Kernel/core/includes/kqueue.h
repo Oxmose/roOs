@@ -29,7 +29,10 @@
 
 #include <stddef.h>    /* Standard definitons */
 #include <stdint.h>    /* Generic int types */
+#include <kerror.h>    /* Kernel errors */
+#include <stdbool.h>   /* Bool types */
 #include <critical.h>  /* Kernel locks */
+
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -106,11 +109,11 @@ typedef struct
  *
  * @param[in] pData The pointer to the data to carry in the node.
  * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
- * is TRUE and the queue cannot be created, a kernel panic is generated.
+ * is true and the queue cannot be created, a kernel panic is generated.
  *
  * @return The node pointer is returned.
  */
-kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical);
+kqueue_node_t* kQueueCreateNode(void* pData, const bool kIsCritical);
 
 /**
  * @brief Initializes a new queue node.
@@ -123,7 +126,7 @@ kqueue_node_t* kQueueCreateNode(void* pData, const bool_t kIsCritical);
  * @param[in] pNode The pointer to the node to initialize to carry in the node.
  * @param[in] pData The pointer to the data to carry in the node.
  * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
- * is TRUE and the queue cannot be created, a kernel panic is generated.
+ * is true and the queue cannot be created, a kernel panic is generated.
  */
 void kQueueInitNode(kqueue_node_t* pNode,
                     void*          pData);
@@ -145,9 +148,9 @@ void kQueueDestroyNode(kqueue_node_t** ppNode);
  * ready to be used.
  *
  * @param[in] kIsCritical Tells if the creation of the queue is critical. If it
- * is TRUE and the queue cannot be created, a kernel panic is generated.
+ * is true and the queue cannot be created, a kernel panic is generated.
  */
-kqueue_t* kQueueCreate(const bool_t kIsCritical);
+kqueue_t* kQueueCreate(const bool kIsCritical);
 
 /**
  * @brief Deletes a previously created queue.
@@ -220,7 +223,34 @@ kqueue_node_t* kQueueFind(kqueue_t* pQueue, const void* kpData);
  * @param[in] kPanic Tells if the function should generate a kernel panic if the
  * node is not found.
  */
-void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool_t kPanic);
+void kQueueRemove(kqueue_t* pQueue, kqueue_node_t* pNode, const bool kPanic);
+
+/**
+ * @brief Returns the size of a queue.
+ *
+ * @details Returns the size of a queue. If the queue does not exists 0 is
+ * returned.
+ *
+ * @param[in] kpQueue The queue of which the size should be returned.
+ *
+ * @return Returns the size of a queue. If the queue does not exists 0 is
+ * returned.
+ */
+size_t kQueueSize(const kqueue_t* kpQueue);
+
+/**
+ * @brief Cleans a queue. Removes all its node and destroy them.
+ *
+ * @details Cleans a queue. Removes all its node and destroy them. The memory
+ * used by the node is released. In the case the user set the parameter
+ * kCleanData to true and the nodes data are not NULL, the nodes data are also
+ * freed using the kfree function.
+ *
+ * @param[in, out] pQueue The queue to clean.
+ * @param[in] kCleanData Tells if the data in the detroyed node should be freed
+ * using the kfree function.
+ */
+void kQueueClean(kqueue_t* pQueue, const bool kCleanData);
 
 
 #endif /* #ifndef __CORE_KQUEUE_H_ */

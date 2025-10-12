@@ -22,10 +22,12 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>      /* CPU API */
 #include <string.h>   /* memset, strlen */
 #include <stdlib.h>   /* uitoa, itoa */
 #include <atomic.h>   /* Spinlocks */
 #include <console.h>  /* Console driver */
+#include <stdbool.h>  /* Bool types */
 #include <time_mgt.h> /* System time management */
 #include <critical.h> /* Kernel critical sections */
 
@@ -76,35 +78,58 @@ typedef struct
 }
 
 /**
- * @brief Get a sequence value argument.
+ * @brief Get a sequence value argument for floats.
  */
-#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD)                     \
-{                                                              \
-                                                               \
-    /* Harmonize length */                                     \
-    if(LENGTH_MOD > 8)                                         \
-    {                                                          \
-        LENGTH_MOD = 8;                                        \
-    }                                                          \
-                                                               \
-    switch(LENGTH_MOD)                                         \
-    {                                                          \
-        case 1:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFF);   \
-            break;                                             \
-        case 2:                                                \
-            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF); \
-            break;                                             \
-        case 4:                                                \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
-            break;                                             \
-        case 8:                                                \
-            VAL = __builtin_va_arg(ARGS, uint64_t);            \
-            break;                                             \
-        default:                                               \
-            VAL = __builtin_va_arg(ARGS, uint32_t);            \
-    }                                                          \
-                                                               \
+#define GET_SEQ_VAL_DOUBLE(VAL, ARGS, LENGTH_MOD)   \
+{                                                   \
+    VAL = __builtin_va_arg(ARGS, double);           \
+}
+
+/**
+ * @brief Get a sequence value argument for integers.
+ */
+#define GET_SEQ_VAL(VAL, ARGS, LENGTH_MOD, EXTEND)                  \
+{                                                                   \
+                                                                    \
+    /* Harmonize length */                                          \
+    if(LENGTH_MOD > 8)                                              \
+    {                                                               \
+        LENGTH_MOD = 8;                                             \
+    }                                                               \
+                                                                    \
+    switch(LENGTH_MOD)                                              \
+    {                                                               \
+        case 1:                                                     \
+            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFF);        \
+            if(((uint64_t)VAL & 0x80) != 0 && EXTEND == true)       \
+            {                                                       \
+                VAL |= 0xFFFFFFFFFFFFFF00;                          \
+            }                                                       \
+            break;                                                  \
+        case 2:                                                     \
+            VAL = (__builtin_va_arg(ARGS, uint32_t) & 0xFFFF);      \
+            if(((uint64_t)VAL & 0x8000) != 0 && EXTEND == true)     \
+            {                                                       \
+                VAL |= 0xFFFFFFFFFFFF0000;                          \
+            }                                                       \
+            break;                                                  \
+        case 4:                                                     \
+            VAL = __builtin_va_arg(ARGS, uint32_t);                 \
+            if(((uint64_t)VAL & 0x80000000) != 0 && EXTEND == true) \
+            {                                                       \
+                VAL |= 0xFFFFFFFF00000000;                          \
+            }                                                       \
+            break;                                                  \
+        case 8:                                                     \
+            VAL = __builtin_va_arg(ARGS, uint64_t);                 \
+            break;                                                  \
+        default:                                                    \
+            VAL = __builtin_va_arg(ARGS, uint32_t);                 \
+            if(((uint64_t)VAL & 0x80000000) != 0 && EXTEND == true) \
+            {                                                       \
+                VAL |= 0xFFFFFFFF00000000;                          \
+            }                                                       \
+    }                                                               \
 }
 
 /*******************************************************************************
@@ -174,6 +199,20 @@ static inline void _toBufferStr(const char* kpString);
 */
 static inline void _toBufferChar(const char kCharacter);
 
+/**
+ * @brief Converts a double or float value to a string.
+ *
+ * @details Converts a double or float value to a string.
+ *
+ * @param[in] value The value to convert.
+ * @param[out] pBuffer The buffer that receives the converted value.
+ * @param[in, out] pSignificant The number of decimal after the decimal point.
+ * This value is updated to substract the number of decimal actually set.
+ */
+static inline void _floatToStr(double   value,
+                               char*    pBuffer,
+                               uint8_t* pSignificant);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -205,7 +244,7 @@ static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
  * FUNCTIONS
  ******************************************************************************/
 
-static void _toUpper(char* pString)
+static inline void _toUpper(char* pString)
 {
     /* For each character of the string */
     while(*pString != 0)
@@ -219,7 +258,7 @@ static void _toUpper(char* pString)
     }
 }
 
-static void _toLower(char* pString)
+static inline void _toLower(char* pString)
 {
     /* For each character of the string */
     while(*pString != 0)
@@ -238,11 +277,12 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     size_t   pos;
     size_t   strLength;
     uint64_t seqVal;
+    double   seqValFloat;
     size_t   strSize;
     uint8_t  modifier;
     uint8_t  lengthMod;
     uint8_t  paddingMod;
-    bool_t   upperMod;
+    bool     upperMod;
     char     padCharMod;
     char     tmpSeq[128];
     char*    pArgsValue;
@@ -250,7 +290,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
     modifier   = 0;
     lengthMod  = 4;
     paddingMod = 0;
-    upperMod   = FALSE;
+    upperMod   = false;
     padCharMod = ' ';
     strLength  = strlen(kpStr);
 
@@ -290,28 +330,28 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     break;
                 case 'd':
                 case 'i':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, true);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     itoa(seqVal, tmpSeq, 10);
                     PAD_SEQ
                     _toBufferStr(tmpSeq);
                     break;
                 case 'u':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 10);
                     PAD_SEQ
                     _toBufferStr(tmpSeq);
                     break;
                 case 'X':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'x':
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -321,18 +361,24 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     }
                     _toBufferStr(tmpSeq);
                     break;
+                case 'f':
+                    GET_SEQ_VAL_DOUBLE(seqValFloat, args, lengthMod);
+                    memset(tmpSeq, 0, sizeof(tmpSeq));
+                    _floatToStr(seqValFloat, tmpSeq, &paddingMod);
+                    _toBufferStr(tmpSeq);
+                    break;
                 case 'P':
-                    upperMod = TRUE;
+                    upperMod = true;
                     __attribute__ ((fallthrough));
                 case 'p':
                     paddingMod  = 2 * sizeof(uintptr_t);
                     padCharMod = '0';
                     lengthMod = sizeof(uintptr_t);
-                    GET_SEQ_VAL(seqVal, args, lengthMod);
+                    GET_SEQ_VAL(seqVal, args, lengthMod, false);
                     memset(tmpSeq, 0, sizeof(tmpSeq));
                     uitoa(seqVal, tmpSeq, 16);
                     PAD_SEQ
-                    if(upperMod == TRUE)
+                    if(upperMod == true)
                     {
                         _toUpper(tmpSeq);
                     }
@@ -344,7 +390,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
                     break;
                 case 'c':
                     lengthMod = sizeof(char);
-                    GET_SEQ_VAL(tmpSeq[0], args, lengthMod);
+                    GET_SEQ_VAL(tmpSeq[0], args, lengthMod, false);
                     _toBufferChar(tmpSeq[0]);
                     break;
 
@@ -398,7 +444,7 @@ static void _formater(const char* kpStr, __builtin_va_list args)
         /* Reinit mods */
         lengthMod  = 4;
         paddingMod = 0;
-        upperMod   = FALSE;
+        upperMod   = false;
         padCharMod = ' ';
         modifier   = 0;
     }
@@ -464,6 +510,48 @@ static inline void _toBufferChar(const char kCharacter)
     }
 }
 
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+static inline void _floatToStr(double   value,
+                               char*    pBuffer,
+                               uint8_t* pSignificant)
+{
+    uint64_t intValue;
+    bool     isNeg;
+
+    isNeg = (value < 0);
+    if(isNeg)
+    {
+        *pBuffer = '-';
+        ++pBuffer;
+        value = -value;
+    }
+
+    /* Setup the integer part */
+    intValue = (uint64_t)value;
+    uitoa(intValue, pBuffer, 10);
+    pBuffer += strlen(pBuffer) + (isNeg ? 1 : 0);
+    value -= intValue;
+
+    if(*pSignificant == 0)
+    {
+        *pSignificant = 10;
+    }
+
+    *pBuffer = '.';
+    ++pBuffer;
+
+    /* Now setup the decimal part */
+    while(*pSignificant > 0)
+    {
+        intValue = (uint64_t)(value * 10.0);
+        *pBuffer = ((char)intValue) + '0';
+        ++pBuffer;
+        --*pSignificant;
+    }
+
+    pBuffer = 0;
+}
+
 void kprintfPanic(const char* kpFmt, ...)
 {
     __builtin_va_list args;
@@ -520,7 +608,7 @@ void kprintfError(const char* kpFmt, ...)
 
     newScheme.foreground = FG_RED;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -557,7 +645,7 @@ void kprintfSuccess(const char* kpFmt, ...)
 
     newScheme.foreground = FG_GREEN;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -594,7 +682,7 @@ void kprintfInfo(const char* kpFmt, ...)
 
     newScheme.foreground = FG_CYAN;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);
@@ -632,7 +720,7 @@ void kprintfDebug(const char* kpFmt, ...)
 
     newScheme.foreground = FG_YELLOW;
     newScheme.background = BG_BLACK;
-    newScheme.vgaColor   = TRUE;
+    newScheme.vgaColor   = true;
 
     /* No need to test return value */
     consoleSaveColorScheme(&buffer);

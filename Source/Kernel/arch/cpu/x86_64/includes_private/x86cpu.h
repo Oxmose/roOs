@@ -118,8 +118,14 @@ typedef struct
     /** @brief FXSAVE / FXRSTOR data region */
     uint8_t fxData[FXDATA_REGION_SIZE];
 
-    /** @brief Last context save status */
-    uint64_t isContextSaved;
+    /** @brief Tells if the context was saved from an interrupt */
+    uint64_t isContextFromInt;
+
+    /** @brief Stores the RSP value when saving the context in a system call */
+    uint64_t rspSaveFromSyscall;
+
+    /** @brief Stores the kernel stack of the VCPU */
+    uint64_t kernelStackEnd;
 } __attribute__((packed)) virtual_cpu_t;
 
 /** @brief Defines the memory layout of the FXData region */
@@ -170,7 +176,6 @@ typedef struct
     /** @brief Padding */
     uint8_t pad[6];
 } __attribute__((__packed__)) bios_int_regs_t;
-
 
 /*******************************************************************************
  * MACROS
@@ -436,6 +441,20 @@ void cpuBiosCall(bios_int_regs_t* pRegs,
  * put in the thread's VCPU along with the stack modification that it requires.
  */
 void cpuSignalHandler(void);
+
+/**
+ * @brief Initializes the system calls for the calling processor.
+ *
+ * @details Initializes the system calls for the calling processor. This
+ * function setups the MSRs used when using the system call functions.
+ *
+ * @param[in] syscallHandlerAddr The system call main handler function address.
+ * @param[in] kernelSelector The kernel selector to use when raising a syscall.
+ * @param[in] userSelector The user selector to use when raising a syscall.
+ */
+void cpuSystemCallInit(uintptr_t syscallHandlerAddr,
+                       uint64_t  kernelSelector,
+                       uint64_t  userSelector);
 
 #endif /* #ifndef __X8664_X86_CPU_H_ */
 

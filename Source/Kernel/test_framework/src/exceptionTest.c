@@ -25,7 +25,7 @@
 
 /* Included headers */
 #include <exceptions.h>
-#include <cpu_interrupt.h>
+#include <cpuInterrupt.h>
 #include <panic.h>
 #include <kerneloutput.h>
 #include <cpu.h>
@@ -84,25 +84,27 @@ static void _end(void)
 {
     kprintf("In end\n");
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER1_ID,
-                            TRUE,
-                            TRUE,
-                            TRUE,
+                            true,
+                            true,
+                            true,
                             TEST_EXCEPTION_ENABLED);
     TEST_FRAMEWORK_END();
 }
 
-static void _dummy(kernel_thread_t* curr_thread)
+static bool _dummy(kernel_thread_t* curr_thread)
 {
     /* Update the return of interrupt instruction pointer */
-    cpuRequestSignal(curr_thread, _end);
+    cpuRequestSignal(curr_thread, _end, false);
 
     kprintf("Got exc\n");
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_DIV_HANDLER0_ID,
-                            TRUE,
-                            TRUE,
-                            TRUE,
+                            true,
+                            true,
+                            true,
                             TEST_EXCEPTION_ENABLED);
+    
+    return false;
 }
 
 void exceptionTest(void)
@@ -188,9 +190,9 @@ void exceptionTest(void)
     (void)m;
 
     TEST_POINT_ASSERT_RCODE(TEST_EXCEPTION_NOT_CAUGHT_ID,
-                            FALSE,
-                            TRUE,
-                            FALSE,
+                            false,
+                            true,
+                            false,
                             TEST_EXCEPTION_ENABLED);
 }
 

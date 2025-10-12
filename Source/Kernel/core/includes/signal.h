@@ -106,11 +106,13 @@ void signalInitSignals(kernel_thread_t* pThread);
  *
  * @param[in] kSignal The signal to register the handler for.
  * @param[in] pHandler The handler to register.
+ * @param[in] kIsUser Tells if the handler is to be executed in user mode.
  *
  * @return The function returns the error or success status.
  */
 OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
-                           void                  (*pHandler)(void));
+                           void                  (*pHandler)(void),
+                           const bool            kIsUser);
 
 /**
  * @brief Signals a thread.
@@ -121,7 +123,7 @@ OS_RETURN_E signalRegister(const THREAD_SIGNAL_E kSignal,
  * @param[in] pThread The thread to signal.
  * @param[in] kSignal The signal to send.
  *
- * @return The function returnsthe error or success status.
+ * @return The function returns the error or success status.
  */
 OS_RETURN_E signalThread(kernel_thread_t*      pThread,
                          const THREAD_SIGNAL_E kSignal);

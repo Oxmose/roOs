@@ -27,6 +27,7 @@
 #include <stdint.h>       /* Generic int types */
 #include <stddef.h>       /* Standard definitions */
 #include <kerror.h>       /* Kernel error */
+#include <stdbool.h>      /* Bool types */
 #include <ctrl_block.h>   /* Kernel control blocks */
 
 /*******************************************************************************
@@ -204,45 +205,19 @@ void cpuHalt(void);
 uint8_t cpuGetId(void);
 
 /**
- * @brief Creates and allocates a kernel stack.
- *
- * @details Creates and allocates a kernel stack. The stack will be mapped
- * to the kernel's virtual memory. The function aligns the end pointer of the
- * stack based on the CPU requirements and returns this end pointer.
- *
- * @param[in] kStackSize The stack size in bytes.
- *
- * @return The end address (high address) with CPU required alignement is
- * returned.
- */
-uintptr_t cpuCreateKernelStack(const size_t kStackSize);
-
-/**
- * @brief Destroys and deallocates a kernel stack.
- *
- * @details Destroys and deallocates a kernel stack. The stack will be unmapped
- * from the kernel's virtual memory.
- *
- * @param[in] kStackEndAddr The stack end address to destroy.
- * @param[in] kStackSize The stack size in bytes.
- */
-void cpuDestroyKernelStack(const uintptr_t kStackEndAddr,
-                           const size_t kStackSize);
-
-/**
  * @brief Creates a thread's virtual CPU.
  *
  * @details Initializes the thread's virtual CPU structure later used by the
  * CPU. This structure is private to the architecture and should not be used
  * elsewhere than the CPU module.
  *
- * @param[in] kpEntryPoint The thread's entry point used to initialize the vCPU.
- * @param[out] pThread The thread's structure to update.
+ * @param[in] pThread The thread to initialize the vCPU of.
+ * @param[in] kSetEntry Tells if the entry point (and associated arguments) need
+ * to be set.
  *
  * @return The address of the newly created VCPU is returned.
  */
-uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
-                              kernel_thread_t* pThread);
+uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry);
 
 /**
  * @brief Detroys a thread's virtual CPU.
@@ -253,6 +228,21 @@ uintptr_t cpuCreateVirtualCPU(void             (*kEntryPoint)(void),
  * @param[out] pThread The thread's structure to update.
  */
 void cpuDestroyVirtualCPU(const uintptr_t kVCpuAddress);
+
+/**
+ * @brief Copies a thread's virtual CPUs.
+ *
+ * @details Copies the thread's virtual CPU structures. The new VCPUs are
+ * allocated, the kernel stack of the new thread is taken into account and the
+ * current VCPU is selected.
+ *
+ * @param[in] kpSrcThread The thread that contains VCPUs to copy.
+ * @param[in] kStackEndAddr The thread that will receive the copied VPUs
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
+                               kernel_thread_t*       pDstThread);
 
 /**
  * @brief Restores the CPU context of a thread.
@@ -272,11 +262,14 @@ void cpuRestoreContext(const kernel_thread_t* kpThread);
  *
  * @param[in] pThread The thread for which the redirection is done.
  * @param[in] instructionAddr The address to which the execution flow is done.
+ * @param[in] kIsUser Tells if the signal is executed in user or kernel mode.
  *
  * @warning This function shall only be called in the scheduler it is restoring
  * the thread's context.
  */
-void cpuRequestSignal(kernel_thread_t* pThread, void* instructionAddr);
+void cpuRequestSignal(kernel_thread_t* pThread, 
+                      void*            instructionAddr, 
+                      const bool       kIsUser);
 
 /**
  * @brief Registers the CPU exceptions.
@@ -312,7 +305,7 @@ void cpuManageThreadException(kernel_thread_t* pThread);
  */
 void cpuMgtSendIpi(const uint32_t kFlags,
                    ipi_params_t*  pParams,
-                   const bool_t   kAllocateParam);
+                   const bool     kAllocateParam);
 
 
 /**
@@ -323,9 +316,9 @@ void cpuMgtSendIpi(const uint32_t kFlags,
  *
  * @param[in] kpVCpu The VCPU to check.
  *
- * @return Returns TRUE is the last VCPU's context was saved, FALSE otherwise.
+ * @return Returns true is the last VCPU's context was saved, false otherwise.
  */
-bool_t cpuIsVCPUSaved(const void* kpVCpu);
+bool cpuIsVCPUSaved(const void* kpVCpu);
 
 /**
  * @brief Prints the virtual CPU core dump.
@@ -336,6 +329,93 @@ bool_t cpuIsVCPUSaved(const void* kpVCpu);
  * @param[in] kpVCpu The VCPU to use.
  */
 void cpuCoreDump(const void* kpVCpu);
+
+/**
+ * @brief Updates the memory configuration for the running thread.
+ *
+ * @details Updates the memory configuration for the running thread. Depending
+ * on the architecture, this might entails MMU/MPU configuration changes for
+ * instance.
+ *
+ * @param[in, out] pCurrentThread The current thread to update the memory
+ * configuration for.
+ */
+void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread);
+
+/**
+ * @brief Tells if the saved context of the virtual CPU is saved from an
+ * interrupt.
+ *
+ * @details Tells if the saved context of the virtual CPU is saved from an
+ * interrupt.
+ *
+ * @param[in] kpVCpu The virtual CPU to check.
+ *
+ * @return The function returns true if the current virtual CPU context was
+ * saved in an interrupt context, false otherwise
+ */
+bool cpuIsContextFromInt(const void* kpVCpu);
+
+/**
+ * @brief Tells if the saved context of the virtual CPU is saved from a system
+ * call.
+ *
+ * @details Tells if the saved context of the virtual CPU is saved from a system
+ * call
+ *
+ * @param[in] kpVCpu The virtual CPU to check.
+ *
+ * @return The function returns true if the current virtual CPU context was
+ * saved in a system call context, false otherwise
+ */
+bool cpuIsContextFromSyscall(const void* kpVCpu);
+
+/**
+ * @brief Creates the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Creates the local thread storage for the thread provided in
+ * parameters. The memory and other resources are allocated and the master
+ * TLS is copied. This function also allocates the user thread data but does not
+ * initialize it.
+ *
+ * @param[in] pThread The thread for which the thread local storage shall be
+ * created.
+ *
+ * @return The function returns the error or success status.
+ */
+OS_RETURN_E cpuCreateLocalStorage(kernel_thread_t* pThread);
+
+/**
+ * @brief Copies the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Copies the local thread storage for the thread provided in
+ * parameters. The memory and other resources are allocated. This function also
+ * allocates the user thread data but does not initialize it.
+ *
+ * @param[in] pThread The destination thread that will receive the copy.
+ * @param[in] kpSrcThread The thread for which the thread local storage shall be
+ * copied.
+ *
+ * @return The function returns the error or success status.
+ */
+OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
+                                const kernel_thread_t* kpSrcThread);
+
+/**
+ * @brief Destroys the local thread storage for the thread provided in
+ * parameters.
+ *
+ * @details Destroys the local thread storage for the thread provided in
+ * parameters. The memory and other resources are released and the master
+ * TLS is copied.
+ *
+ * @param[in] pThread The thread for which the thread local storage shall be
+ * destroyed.
+ */
+void cpuDestroyLocalStorage(kernel_thread_t* pThread);
+
 #endif /* #ifndef __CPU_H_ */
 
 /************************************ EOF *************************************/

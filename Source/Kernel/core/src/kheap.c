@@ -308,8 +308,6 @@ size_t kHeapMonitorValue = 0;
 #endif
 
 /************************** Static global variables ***************************/
-/** @brief Kernel's heap initialization state. */
-static bool_t sInit = FALSE;
 
 /* Heap data */
 /** @brief Kernel's heap free memory chunks. */
@@ -415,7 +413,7 @@ static inline void _removeFrom(list_t** ppList, list_t* pNode)
 static inline void _memoryChunkInit(mem_chunk_t* pChunk)
 {
     LIST_INIT(pChunk, all);
-    pChunk->used = FALSE;
+    pChunk->used = false;
     LIST_INIT(pChunk, free);
 }
 
@@ -481,8 +479,8 @@ void kHeapInit(void)
     _insertAfter(&spFirstChunk->all, &pSecond->all);
     _insertAfter(&pSecond->all, &spLastChunk->all);
 
-    spFirstChunk->used = TRUE;
-    spLastChunk->used  = TRUE;
+    spFirstChunk->used = true;
+    spLastChunk->used  = true;
 
     len = _memoryChunkSize(pSecond);
     n   = _memoryChunkSlot(len);
@@ -492,8 +490,6 @@ void kHeapInit(void)
     sMemMeta = sizeof(mem_chunk_t) * 2 + HEADER_SIZE;
 
     KERNEL_SPINLOCK_INIT(sLock);
-
-    sInit = TRUE;
 
 #if KHEAP_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, KHEAP_DEBUG_ENABLED, "KHEAP",
@@ -518,7 +514,7 @@ void* kmalloc(size_t size)
                  sMemUsed);
 #endif
 
-    if(sInit == FALSE || size == 0)
+    if(size == 0)
     {
         return NULL;
     }
@@ -571,7 +567,7 @@ void* kmalloc(size_t size)
         sMemFree += len;
     }
 
-    pChunk->used = TRUE;
+    pChunk->used = true;
 
     sMemFree -= size2;
     sMemUsed += size2 - len - HEADER_SIZE;
@@ -603,7 +599,7 @@ void kfree(void *ptr)
     mem_chunk_t* pNext;
     mem_chunk_t* pPrev;
 
-    if(ptr == NULL || sInit == FALSE)
+    if(ptr == NULL)
     {
         return;
     }
@@ -624,7 +620,7 @@ void kfree(void *ptr)
 
     sMemUsed -= _memoryChunkSize(pChunk);
 
-    if (pNext->used == FALSE)
+    if (pNext->used == false)
     {
         _removeFree(pNext);
         _remove(&pNext->all);
@@ -633,7 +629,7 @@ void kfree(void *ptr)
         sMemFree += HEADER_SIZE;
     }
 
-    if (pPrev->used == FALSE)
+    if (pPrev->used == false)
     {
         _removeFree(pPrev);
         _remove(&pChunk->all);
@@ -644,7 +640,7 @@ void kfree(void *ptr)
     }
     else
     {
-        pChunk->used = FALSE;
+        pChunk->used = false;
         LIST_INIT(pChunk, free);
         _pushFree(pChunk);
     }

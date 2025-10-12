@@ -32,6 +32,7 @@
 #include <kerror.h>       /* Kernel error */
 #include <syslog.h>       /* Kernel Syslog */
 #include <memory.h>       /* Memory manager */
+#include <stdbool.h>      /* Bool types */
 #include <critical.h>     /* Kernel critical locks */
 #include <time_mgt.h>     /* Timers manager */
 #include <drivermgr.h>    /* Driver manager */
@@ -135,7 +136,7 @@ typedef struct
     uint8_t interruptNumber;
 
     /* @brief Stores if the counter is 32bits or 64bits wide */
-    bool_t countIs64Bits;
+    bool countIs64Bits;
 
     /** @brief Number of supported comparators */
     uint8_t comparatorsCount;
@@ -173,9 +174,9 @@ typedef struct
  * @param[in] ERROR The error code to use in case of kernel panic.
  */
 #define LAPICT_ASSERT(COND, MSG, ERROR) {                   \
-    if((COND) == FALSE)                                     \
+    if((COND) == false)                                     \
     {                                                       \
-        PANIC(ERROR, MODULE_NAME, MSG, TRUE);               \
+        PANIC(ERROR, MODULE_NAME, MSG, true);               \
     }                                                       \
 }
 

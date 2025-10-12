@@ -74,7 +74,7 @@
  * FUNCTIONS
  ******************************************************************************/
 
-void KernelLock(kernel_spinlock_t* pLock)
+void kernelLock(kernel_spinlock_t* pLock)
 {
     uint32_t interruptState;
 
@@ -84,7 +84,7 @@ void KernelLock(kernel_spinlock_t* pLock)
     pLock->interruptState = interruptState;
 }
 
-void KernelUnlock(kernel_spinlock_t* pLock)
+void kernelUnlock(kernel_spinlock_t* pLock)
 {
     uint32_t interruptState;
 

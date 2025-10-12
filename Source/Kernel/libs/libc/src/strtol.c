@@ -98,7 +98,7 @@ long strtol(const char *pStr, char **ppEnd, int base)
         newStr = pStr;
     }
 
-    value = (long)strtoul(pStr, ppEnd, base);
+    value = (long)strtoul(newStr, ppEnd, base);
     if(ppEnd != NULL)
     {
         if(*ppEnd == newStr)

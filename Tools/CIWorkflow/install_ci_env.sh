@@ -3,7 +3,7 @@
 # Install dependencies
 sudo apt update
 sudo apt install g++ \
-                gcc-12 \
+                gcc-13 \
                 nasm \
                 xorriso \
                 grub-common \
@@ -49,5 +49,5 @@ sudo apt install g++ \
                 ninja-build \
                 device-tree-compiler
 
-which gcc-12
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 60
+which gcc-13
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 60

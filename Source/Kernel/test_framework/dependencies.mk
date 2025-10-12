@@ -6,8 +6,6 @@ DEP_INCLUDES += -I ../arch/cpu/includes
 DEP_INCLUDES += -I ../sync/includes
 DEP_INCLUDES += -I ../fs/includes
 
-ifeq ($(target), x86_i386)
-	DEP_INCLUDES += -I ../arch/cpu/i386/includes_private
-else ifeq ($(target), x86_64)
+ifeq ($(target), x86_64)
 	DEP_INCLUDES += -I ../arch/cpu/x86_64/includes_private
 endif

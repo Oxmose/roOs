@@ -11,8 +11,8 @@
 # architecture
 ################################################################################
 
-CPU_ARCH_LIST= i386,x86_64
-TARGET_LIST= x86_i386,x86_64
+CPU_ARCH_LIST= x86_64
+TARGET_LIST= x86_64
 KERNEL_SRC_DIR= ./Kernel
 USER_SRC_DIR = ./User
 CONFIG_DIR= ./Config
@@ -27,9 +27,7 @@ KERNEL = roOs
 all: init build_kernel
 
 init:
-ifeq ($(target), x86_i386)
-	$(CONFIG_DIR)/arch/x86_i386/init_build.sh
-else ifeq ($(target), x86_64)
+ifeq ($(target), x86_64)
 	$(CONFIG_DIR)/arch/x86_64/init_build.sh
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
@@ -42,9 +40,7 @@ build_modules:
 	@echo "\e[1m\e[34m| Building kernel modules for target $(target)\e[22m\e[39m"
 	@echo "\e[1m\e[34m#-------------------------------------------------------------------------------\n\e[22m\e[39m"
 
-ifeq ($(target), x86_i386)
-	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=i386
-else ifeq ($(target), x86_64)
+ifeq ($(target), x86_64)
 	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=x86_64
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown target $(target)\e[22m\e[39m"
@@ -120,12 +116,9 @@ clean:
 	@touch User/ARTIFACTS/settings.mk
 
 # Clean modules
-ifeq ($(target), x86_i386)
-	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=i386 clean
-else ifeq ($(target), x86_64)
+ifeq ($(target), x86_64)
 	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=x86_64 clean
 else
-	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=i386 clean
 	@make -C $(KERNEL_SRC_DIR)/arch target_board=x86 target_cpu=x86_64 clean
 endif
 

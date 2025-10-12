@@ -167,7 +167,7 @@ static kqueue_t* sIpiParametersList[SOC_CPU_COUNT];
 static driver_t sX86CPUDriver = {
     .pName         = "X86 CPU Driver",
     .pDescription  = "X86 CPU Driver for roOs",
-    .pCompatible   = "generic,i386",
+    .pCompatible   = "generic,x86_64",
     .pVersion      = "1.0",
     .pDriverAttach = _coreMgtAttach
 };

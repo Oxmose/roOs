@@ -17,8 +17,8 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __X664_X86_MEMORY_H_
-#define __X664_X86_MEMORY_H_
+#ifndef __X64_X86_MEMORY_H_
+#define __X64_X86_MEMORY_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -108,6 +108,6 @@ typedef struct
 
 /* None */
 
-#endif /* #ifndef __I386_X86_MEMORY_H_ */
+#endif /* #ifndef __X64_X86_MEMORY_H_ */
 
 /************************************ EOF *************************************/

@@ -9,9 +9,7 @@ DEP_INCLUDES += -I ../../cpu/includes
 DEP_INCLUDES += -I ../../../user/includes
 DEP_INCLUDES += -I ../../../fs/includes
 
-ifeq ($(target_cpu), i386)
-	DEP_INCLUDES += -I ../../cpu/i386/includes_private
-else ifeq ($(target_cpu), x86_64)
+ifeq ($(target_cpu), x86_64)
 	DEP_INCLUDES += -I ../../cpu/x86_64/includes_private
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown CPU architecture $(target_cpu)\e[22m\e[39m"

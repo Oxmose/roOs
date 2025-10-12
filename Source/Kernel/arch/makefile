@@ -9,7 +9,7 @@
 # for the desired target.
 ################################################################################
 
-CPU_ARCH_LIST=i386,x86_64
+CPU_ARCH_LIST=x86_64
 BOARD_ARCH_LIST=x86
 
 BUILD_DIR  = ./build
@@ -26,9 +26,7 @@ init:
 build_cpu:
 ################################################################################
 # Build the CPU target arch module
-ifeq ($(target_cpu), i386)
-	@$(MAKE) -C ./cpu/i386
-else ifeq ($(target_cpu), x86_64)
+ifeq ($(target_cpu), x86_64)
 	@$(MAKE) -C ./cpu/x86_64
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown CPU architecture $(target_cpu)\e[22m\e[39m"
@@ -56,9 +54,7 @@ build_modules: build_cpu build_board
 clean:
 ################################################################################
 # Clean the CPU target arch module
-ifeq ($(target_cpu), i386)
-	@$(MAKE) -C ./cpu/i386 clean
-else ifeq ($(target_cpu), x86_64)
+ifeq ($(target_cpu), x86_64)
 	@$(MAKE) -C ./cpu/x86_64 clean
 else
 	@echo "\e[1m\e[31m\n=== ERROR: Unknown CPU architecture $(target_cpu)\e[22m\e[39m"

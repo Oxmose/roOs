@@ -487,10 +487,12 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
  * source thread are not copied.
  *
  * @param[out] ppDstThread The pointer to the destination thread.
+ * @param[in/out] pProcess The process of the new destination thread.
  *
  * @return The function returns the success or error status.
  */
-static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread);
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread, 
+                               kernel_process_t* pProcess);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
@@ -1580,7 +1582,8 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
     return OS_NO_ERR;
 }
 
-static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread,
+                               kernel_process_t* pProcess)
 {
     kernel_thread_t*       pNewThread;
     OS_RETURN_E            error;
@@ -1614,6 +1617,7 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread)
     memcpy(pNewThread, pSrcThread, sizeof(kernel_thread_t));
 
     /* Reset unique attributes */
+    pNewThread->pProcess         = pProcess;
     pNewThread->kernelStackEnd   = (uintptr_t)NULL;
     pNewThread->pUserThreadData  = NULL;
     pNewThread->pThreadVCpu      = NULL;
@@ -2999,10 +3003,8 @@ void schedSyscallHandleFork(void* pParams)
         goto SCHED_FORK_END;
     }
 
-    /* Create the main thread (copy from the current thread) and add to the
-     * new process thread table
-     */
-    error = _copyThread(&pMainThread);
+    /* Create the main thread (copy from the current thread) */
+    error = _copyThread(&pMainThread, pProcess);
     if(error != OS_NO_ERR)
     {
         goto SCHED_FORK_END;
@@ -3120,5 +3122,30 @@ SCHED_FORK_END:
     }
 
     pForkParam->errnoVal = error;
+}
+
+kernel_thread_t* schedGetThread(const int32_t kTid)
+{
+    kqueue_node_t*   pNode;
+    kernel_thread_t* pThread;
+
+    KERNEL_LOCK(sTotalThreadsList.lock);
+    pNode = sTotalThreadsList.pThreadList->pHead;
+    while(pNode != NULL)
+    {
+        pThread = (kernel_thread_t*)pNode->pData;
+        if(kTid == pThread->tid)
+        {
+            break;
+        }
+        pNode = pNode->pNext;
+    }
+    KERNEL_UNLOCK(sTotalThreadsList.lock);
+
+    if(pNode != NULL)
+    {
+        return pThread;
+    }
+    return NULL;
 }
 /************************************ EOF *************************************/

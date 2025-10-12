@@ -115,6 +115,8 @@
  */
 static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread);
 
+#endif /* #if SOC_CPU_COUNT > 1 */
+
 /**
  * @brief Attaches the Core Manager driver to the system.
  *
@@ -132,6 +134,8 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode);
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
+
+#if SOC_CPU_COUNT > 1
 
 /************************* Imported global variables **************************/
 /** @brief Stores the number of enabled (running) cores in the system. */
@@ -467,7 +471,8 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                    const bool     kAllocateParam)
 {
     (void)kFlags;
-    (void)kpParams;
+    (void)pParams;
+    (void)kAllocateParam;
 }
 
 #endif /* SOC_CPU_COUNT > 1 */

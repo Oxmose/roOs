@@ -269,7 +269,6 @@ cpuSignalHandlerLoop:
 ; Param:
 ;     Input: rdi: The address to return to when restoring the context
 ;            rsi: The current thread
-
 cpuSwitchKernelSyscallContext:
     ; Save the return address in rcx
     pop rcx

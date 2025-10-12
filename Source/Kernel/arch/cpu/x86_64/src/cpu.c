@@ -4935,6 +4935,9 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
                                        pStackOffset;
     }
 
+    /* Update kernel stack end */
+    pCurVCpu->kernelStackEnd = pDstThread->kernelStackEnd - 0x10;
+
     return OS_NO_ERR;
 }
 
@@ -5425,10 +5428,8 @@ OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
     size_t      align;
     size_t      size;
     OS_RETURN_E error;
-    OS_RETURN_E intError;
-    uintptr_t   tls;
-    uintptr_t   tlsPhys;
-    void*       pTmpData;
+    uintptr_t   srcTls;
+    uintptr_t   srcTlsPhys;
 
     if(pThread->type == THREAD_TYPE_KERNEL)
     {
@@ -5444,68 +5445,39 @@ OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
         return OS_NO_ERR;
     }
 
-    /* Compute the memory size with alignement */
+    
+    /* Get the original thread TLS virtual and physical addresses */
     align = MAX(pThread->pProcess->mainTlsAlign, __alignof__(user_thread_t));
-    /* We do not support more than a page alignement */
-    if(align > KERNEL_PAGE_SIZE)
-    {
-        return OS_ERR_NOT_SUPPORTED;
-    }
+    srcTls = (uintptr_t)kpSrcThread->pUserThreadData -
+             ALIGN_UP(pThread->pProcess->mainTlsSize, align);
+    srcTlsPhys = memoryMgrGetPhysAddr(srcTls, kpSrcThread->pProcess, NULL);
 
+    /* Copy the thread local storage that was COW */
     size = ALIGN_UP(pThread->pProcess->mainTlsSize, align) +
            sizeof(user_thread_t);
 
     /* Align to page size */
     size = ALIGN_UP(size, KERNEL_PAGE_SIZE);
-
-    pThread->pUserThreadData = memoryUserAllocate(size,
-                                                  MEMMGR_MAP_RW |
-                                                  MEMMGR_MAP_USER,
-                                                  pThread->pProcess,
-                                                  &error);
-    if(error != OS_NO_ERR)
+    while(size > 0)
     {
-        return error;
+        error = memoryManageCOW(srcTls, srcTlsPhys, pThread);
+        if(error != OS_NO_ERR)
+        {
+            return error;
+        }
+        error = memoryManageCOW(srcTls, srcTlsPhys, kpSrcThread);
+        if(error != OS_NO_ERR)
+        {
+            return error;
+        }
+        size -= KERNEL_PAGE_SIZE;
+        srcTls += KERNEL_PAGE_SIZE;
+        srcTlsPhys += KERNEL_PAGE_SIZE;
     }
-
-    tlsPhys = memoryMgrGetPhysAddr((uintptr_t)pThread->pUserThreadData,
-                                   pThread->pProcess,
-                                   NULL);
-    CPU_ASSERT(tlsPhys != MEMMGR_PHYS_ADDR_ERROR,
-               "Failed to get mapped physical address",
-                OS_ERR_INCORRECT_VALUE);
-
-    pTmpData = memoryKernelMap((void*)tlsPhys,
-                               size,
-                               MEMMGR_MAP_KERNEL | MEMMGR_MAP_RW,
-                               &error);
-    if(error != OS_NO_ERR)
-    {
-        intError = memoryUserFree(pThread->pUserThreadData,
-                                  size,
-                                  pThread->pProcess);
-        CPU_ASSERT(intError == OS_NO_ERR,
-                   "Failed to free allocated memory",
-                    OS_ERR_INCORRECT_VALUE);
-        return error;
-    }
-
-    /* Get the TLS and copy */
-    tls = (uintptr_t)kpSrcThread->pUserThreadData -
-          ALIGN_UP(pThread->pProcess->mainTlsSize, align);
-    memcpy(pTmpData,
-           (void*)tls,
-           (uintptr_t)kpSrcThread->pUserThreadData - tls);
-
-    intError = memoryKernelUnmap(pTmpData, size);
-    CPU_ASSERT(intError == OS_NO_ERR,
-               "Failed to unmap mapped memory",
-               OS_ERR_INCORRECT_VALUE);
 
     /* Setup the user data pointer */
-    pThread->pUserThreadData = (void*)((uintptr_t)pThread->pUserThreadData +
-                               ALIGN_UP(pThread->pProcess->mainTlsSize, align));
-
+    pThread->pUserThreadData = kpSrcThread->pUserThreadData;
+    
     return OS_NO_ERR;
 }
 

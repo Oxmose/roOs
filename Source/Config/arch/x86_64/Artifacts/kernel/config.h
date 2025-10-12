@@ -27,7 +27,7 @@
 #define KERNEL_STACK_SIZE 0x1000
 
 /* Maximal number of CPU supported by the architecture */
-#define SOC_CPU_COUNT 4
+#define SOC_CPU_COUNT 1
 
 /* Kernel log level */
 #define KERNEL_LOG_LEVEL DEBUG_LOG_LEVEL

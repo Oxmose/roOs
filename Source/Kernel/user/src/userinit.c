@@ -59,6 +59,9 @@
 
 /** @brief Defines the init ELF path configuration variable */
 #define CONF_INIT_PATH_VAR_NAME "INIT="
+
+/** @brief Setup the INIT process priority */
+#define INIT_MAIN_THREAD_PRIO 20
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -263,7 +266,7 @@ static OS_RETURN_E _createInit(void)
         /* Create the init thread */
         error = schedCreateThread(&pInitThread,
                                   false,
-                                  20,
+                                  INIT_MAIN_THREAD_PRIO,
                                   "init",
                                   KERNEL_STACK_SIZE,
                                   0,
@@ -353,11 +356,12 @@ void userInit(void)
     }
 
     /* Initialize the kernel shell */
-    //kernelShellInit();
+    kernelShellInit();
 
     /* Create the init process */
     error = _createInit();
-    error = OS_NO_ERR;
+    //(void)_createInit;
+    //error = OS_NO_ERR;
     if(error != OS_NO_ERR)
     {
         syslog(SYSLOG_LEVEL_ERROR,

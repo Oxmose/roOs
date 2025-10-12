@@ -112,7 +112,7 @@
 #define ELF_SEG_TYPE_SHLIB 0x00000005
 /** @brief ELF segment type: contains the program header itself */
 #define ELF_SEG_TYPE_PHDR 0x00000006
-/** @brief ELF segment type: thread local storage templace */
+/** @brief ELF segment type: thread local storage template */
 #define ELF_SEG_TYPE_TLS 0x00000007
 /** @brief ELF segment type: low OS */
 #define ELF_SEG_TYPE_LOOS 0x60000000

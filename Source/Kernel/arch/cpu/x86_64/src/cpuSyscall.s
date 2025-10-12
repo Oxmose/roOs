@@ -91,6 +91,8 @@ cpuSystemCallInit:
 ;     Input: rdi: The systen call ID
 ;            rsi: A pointer to the system call parameters.
 cpuUserSyscallHandler:
+    cli
+
     ; Save the user stack
     push r11
     push rcx
@@ -120,18 +122,29 @@ cpuUserSyscallHandler:
     mov  [r12 + VCPU_OFF_SYSCALL_RSP], rsp
 
     ; Call the main C handler
+    sti
     call syscallHandle
 
     ; Discard the scheduler return that was pushed in case the call generated a
     ; scheduling.
     add rsp, 8
 
+    ; Get the current thread handle and VCPU
+    push rdi
+    push rsi
+    call schedGetCurrentThread
+    pop rsi
+    pop rdi
+    mov rax, [rax]
+
     ; Clear the syscall stack registration
-    xor rax, rax
-    mov [r12 + VCPU_OFF_SYSCALL_RSP], rax
+    xor rbx, rbx
+    mov [rax + VCPU_OFF_SYSCALL_RSP], rbx
 
 
 __cpuUserSyscallReturn:
+    cli
+
     ; Restore the user stack
     pop rax
     mov rsp, rax
@@ -148,6 +161,7 @@ __cpuUserSyscallReturn:
 
     ; Return from syscall
     o64 sysret
+    
 
 ;-------------------------------------------------------------------------------
 ; Raise a kernel space system call.

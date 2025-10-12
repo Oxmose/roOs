@@ -858,9 +858,9 @@ static void _pageFaultHandler(kernel_thread_t* pCurrentThread)
                 /* Check if the entry is set as COW */
                 if((flags & MEMMGR_MAP_COW) == MEMMGR_MAP_COW)
                 {
-                    error = _memoryManageCOW(faultAddress,
-                                             physAddr,
-                                             pCurrentThread);
+                    error = memoryManageCOW(faultAddress,
+                                            physAddr,
+                                            pCurrentThread);
                     if(error != OS_NO_ERR)
                     {
                         staleEntry = false;

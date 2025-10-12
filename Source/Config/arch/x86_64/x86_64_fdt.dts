@@ -203,7 +203,7 @@
             compatible = "x86,x86-vesa";
             resolution = <1024 768>;
             depth = <32>;
-            refresh-rate = <1>;
+            refresh-rate = <60>;
             device = "/dev/vesa";
         };
 

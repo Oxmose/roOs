@@ -76,6 +76,17 @@ typedef struct
     uintptr_t limit;
 } mem_range_t;
 
+/** @brief Structure that defines an information about a memory page. */
+typedef struct 
+{
+    /** @brief Virtual address of the memory page. */
+    uintptr_t virtAddress;
+    /** @brief Physical address of the memory page. */
+    uintptr_t physAddress;
+    /** @brief Mapping flags */
+    uintptr_t flags;
+} memory_page_info_t;
+
 /*******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -370,10 +381,10 @@ OS_RETURN_E memoryUserMapDirect(const void*       kPhysicalAddress,
                                 kernel_process_t* pProcess);
 
 /**
- * @brief Unmaps a virtual region (memory or hardware) from the kernel address
+ * @brief Unmaps a virtual region (memory or hardware) from the user address
  * space.
  *
- * @details Unmaps a virtual region (memory or hardware) from the kernel address
+ * @details Unmaps a virtual region (memory or hardware) from the user address
  * space. The virtual address and the size must be aligned on page
  * boundaries. If not, the unmapping fails and an error is returned.
  *
@@ -436,6 +447,38 @@ OS_RETURN_E memoryUserFree(const void*       kVirtualAddress,
                            const size_t      kSize,
                            kernel_process_t* pProcess);
 
+/**
+ * @brief Handles a CopyOnWrite event.
+ *
+ * @details Handles a CopyOnWrite event. If the faulted page is COW, copies it
+ * if the reference count is greater than 1, otherwise simply set the page as
+ * writable.
+ *
+ * @param[in] kFaultVirtAddr The virtual address that generated to fault.
+ * @param[in] kPhysAddr The physical address that corresponds to the faulted
+ * page.
+ * @param[in] kpThread The thread that raised the COW exception.
+ *
+ * @return The function returns the success or error status.
+ */
+OS_RETURN_E memoryManageCOW(const uintptr_t        kFaultVirtAddr,
+                            const uintptr_t        kPhysAddr,
+                            const kernel_thread_t* kpThread);
+
+/**
+ * @brief Returns the page informations of a thread.
+ * 
+ * @details Returns the page informations of a thread. This function will fill
+ * the table given as parameter with the page information of the given thread.
+ * 
+ * @param[in] kpThread The thread for which the information should be extracted.
+ * @param[out] pPageInfo The table to fill.
+ * @param[in/out] pSize The size of the table. This value is updated with the 
+ * actual size of the table after filling it.
+ */
+void memoryGetPagesInfo(const kernel_thread_t* kpThread,
+                        memory_page_info_t*    pPageInfo,
+                        size_t*                pSize);
 #endif /* #ifndef __MEMORY_MGR_ */
 
 /************************************ EOF *************************************/

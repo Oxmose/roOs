@@ -42,6 +42,23 @@ __intHandler%1:
     jmp     __intHandlerEntry       ; jump to the common handler
 %endmacro
 
+%macro ERR_CODE_INT_HANDLER_DBG 1       ; Interrupt that do not come with an
+                                        ; err code.
+
+global __intHandler%1
+__intHandler%1:
+    cli
+    pop rax
+    pop rbx
+    pop rcx
+    pop rdx
+    pop r8
+    mov rsp, r8
+_dbg_loop%1:
+    cli
+    jmp     _dbg_loop%1       ; jump to the common handler
+%endmacro
+
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
@@ -77,11 +94,11 @@ __intHandlerEntry:
     call interruptMainHandler
 
 ; Now create handlers for each interrupt
-ERR_CODE_INT_HANDLER 8
+ERR_CODE_INT_HANDLER_DBG 8
 ERR_CODE_INT_HANDLER 10
 ERR_CODE_INT_HANDLER 11
 ERR_CODE_INT_HANDLER 12
-ERR_CODE_INT_HANDLER 13
+ERR_CODE_INT_HANDLER_DBG 13
 ERR_CODE_INT_HANDLER 14
 ERR_CODE_INT_HANDLER 17
 ERR_CODE_INT_HANDLER 30

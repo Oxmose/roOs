@@ -547,24 +547,6 @@ static void _releaseUserPages(const uintptr_t         kBaseAddress,
                               const kernel_process_t* kpProcess);
 
 /**
- * @brief Handles a CopyOnWrite event.
- *
- * @details Handles a CopyOnWrite event. If the faulted page is COW, copies it
- * if the reference count is greater than 1, otherwise simply set the page as
- * writable.
- *
- * @param[in] kFaultVirtAddr The virtual address that generated to fault.
- * @param[in] kPhysAddr The physical address that corresponds to the faulted
- * page.
- * @param[in] kpThread The thread that raised the COW exception.
- *
- * @return The function returns the success or error status.
- */
-static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
-                                    const uintptr_t        kPhysAddr,
-                                    const kernel_thread_t* kpThread);
-
-/**
  * @brief Copies a page directory entry.
  *
  * @details Copies a page directory entry. This recursive function copies the
@@ -932,9 +914,9 @@ static bool _pageFaultHandler(kernel_thread_t* pCurrentThread)
                 /* Check if the entry is set as COW */
                 if((flags & MEMMGR_MAP_COW) == MEMMGR_MAP_COW)
                 {
-                    error = _memoryManageCOW(faultAddress,
-                                             physAddr,
-                                             pCurrentThread);
+                    error = memoryManageCOW(faultAddress,
+                                            physAddr,
+                                            pCurrentThread);
                     if(error != OS_NO_ERR)
                     {
                         staleEntry = false;
@@ -968,16 +950,20 @@ static bool _pageFaultHandler(kernel_thread_t* pCurrentThread)
         }
     }
 
+    
     /* Set reason page fault and reason data the address,
-     * also get the reason code in the interrupt info
-     */
+    * also get the reason code in the interrupt info
+    */
     pCurrentThread->errorTable.exceptionId  = PAGE_FAULT_EXC_LINE;
     pCurrentThread->errorTable.segfaultAddr = faultAddress;
     pCurrentThread->errorTable.instAddr =
-        cpuGetContextIP(pCurrentThread->pVCpu);
+    cpuGetContextIP(pCurrentThread->pVCpu);
     pCurrentThread->errorTable.pExecVCpu = pCurrentThread->pVCpu;
+    while(1);
     error = signalThread(pCurrentThread, THREAD_SIGNAL_SEGV);
     MEM_ASSERT(error == OS_NO_ERR, "Failed to signal segfault", error);
+
+    
 
     return true;
 }
@@ -3128,97 +3114,6 @@ static OS_RETURN_E _memoryMgrUnmapUser(uintptr_t*     pTableLevel,
     return error;
 }
 
-#include <kerneloutput.h>
-static OS_RETURN_E _memoryManageCOW(const uintptr_t        kFaultVirtAddr,
-                                    const uintptr_t        kPhysAddr,
-                                    const kernel_thread_t* kpThread)
-{
-    uint16_t*       refCount;
-    uintptr_t       baseVirt;
-    uintptr_t       newFrame;
-    uintptr_t       newPage;
-    int8_t          i;
-    uint32_t        pmlEntry[4];
-    uintptr_t*      pPageTable[4];
-    uintptr_t       nextPtable;
-    uintptr_t       newEntryValue;
-    memproc_info_t* pProcessMem;
-
-    /* Lock the process to avoid frame modification during the mapping */
-    pProcessMem = kpThread->pProcess->pMemoryData;
-    KERNEL_LOCK(pProcessMem->lock);
-
-    /* Update the page table and the reference count */
-    baseVirt = GET_VIRT_MEM_ADDR(kPhysAddr) & ~PAGE_SIZE_MASK;
-    refCount = _getAndLockReferenceCount(kPhysAddr);
-    MEM_ASSERT(*refCount > 0,
-               "Invalid reference count zero",
-               OS_ERR_INCORRECT_VALUE);
-    
-    /* If the reference count is greater than 1, we need to copy
-     * the frame.
-     */
-    if(*refCount > 1)
-    {
-
-        /* Allocate the new frame */
-        newFrame = _allocateFrames(1);
-        if(newFrame == (uintptr_t)NULL)
-        {
-            _unlockReferenceCount(kPhysAddr);
-            return OS_ERR_NO_MORE_MEMORY;
-        }
-        newPage = GET_VIRT_MEM_ADDR(newFrame);
-
-        /* Copy the frame */
-        memcpy((uintptr_t*)newPage, (uintptr_t*)baseVirt, KERNEL_PAGE_SIZE);
-
-        /* Release the reference */
-        *refCount = *refCount - 1;
-        _unlockReferenceCount(kPhysAddr);
-    }
-    else
-    {
-        _unlockReferenceCount(kPhysAddr);
-        newFrame = _makeCanonical(kPhysAddr, true) & ~PAGE_SIZE_MASK;
-    }
-
-    /* Update the mapping */
-    pmlEntry[3] = (kFaultVirtAddr >> PML4_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
-    pmlEntry[2] = (kFaultVirtAddr >> PML3_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
-    pmlEntry[1] = (kFaultVirtAddr >> PML2_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
-    pmlEntry[0] = (kFaultVirtAddr >> PML1_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
-
-    for(i = 3; i >= 0; --i)
-    {
-        if(i == 3)
-        {
-            pPageTable[i] = (uintptr_t*)GET_VIRT_MEM_ADDR(pProcessMem->pageDir);
-        }
-        else
-        {
-            nextPtable = _makeCanonical(pPageTable[i + 1][pmlEntry[i + 1]] &
-                                        ~PAGE_SIZE_MASK,
-                                        true);
-            pPageTable[i] = (uintptr_t*)GET_VIRT_MEM_ADDR(nextPtable);
-        }
-    }
-
-    /* Get the flags */
-    newEntryValue = pPageTable[0][pmlEntry[0]] &
-                    ~(sPhysAddressWidthMask & ~PAGE_SIZE_MASK);
-
-    /* Remove COW and add new address */
-    newEntryValue = (newEntryValue | PAGE_FLAG_READ_WRITE) & ~PAGE_FLAG_COW;
-    pPageTable[0][pmlEntry[0]] = newEntryValue | newFrame;
-
-    cpuInvalidateTlbEntry(kFaultVirtAddr);
-
-    KERNEL_UNLOCK(pProcessMem->lock);
-
-    return OS_NO_ERR;
-}
-
 static inline void _getReferenceIndexTable(const uintptr_t      kPhysAddr,
                                            frame_meta_table_t** ppTable,
                                            size_t*              pEntryIdx)
@@ -4213,7 +4108,7 @@ OS_RETURN_E memoryUserUnmap(const void*       kVirtualAddress,
     if(_memoryMgrIsMapped((uintptr_t)kVirtualAddress,
                           pageCount,
                           pMemProcInfo->pageDir,
-                          true) == true)
+                          true) == false)
     {
         KERNEL_UNLOCK(pMemProcInfo->lock);
         return OS_ERR_NO_SUCH_ID;
@@ -4231,6 +4126,7 @@ OS_RETURN_E memoryUserUnmap(const void*       kVirtualAddress,
 
     if(error == OS_NO_ERR && kAddToPagePool == true)
     {
+        pageCount = kSize / KERNEL_PAGE_SIZE;
         _releaseUserPages((uintptr_t)kVirtualAddress, pageCount, pProcess);
     }
 
@@ -4420,6 +4316,208 @@ OS_RETURN_E memoryUserFree(const void*       kVirtualAddress,
     _releaseUserPages((uintptr_t)kVirtualAddress, pageCount, pProcess);
 
     return error;
+}
+
+OS_RETURN_E memoryManageCOW(const uintptr_t        kFaultVirtAddr,
+                            const uintptr_t        kPhysAddr,
+                            const kernel_thread_t* kpThread)
+{
+    uint16_t*       refCount;
+    uintptr_t       baseVirt;
+    uintptr_t       newFrame;
+    uintptr_t       newPage;
+    int8_t          i;
+    uint32_t        pmlEntry[4];
+    uintptr_t*      pPageTable[4];
+    uintptr_t       nextPtable;
+    uintptr_t       newEntryValue;
+    memproc_info_t* pProcessMem;
+
+    /* Lock the process to avoid frame modification during the mapping */
+    pProcessMem = kpThread->pProcess->pMemoryData;
+    KERNEL_LOCK(pProcessMem->lock);
+
+    /* Update the page table and the reference count */
+    baseVirt = GET_VIRT_MEM_ADDR(kPhysAddr) & ~PAGE_SIZE_MASK;
+    refCount = _getAndLockReferenceCount(kPhysAddr);
+    MEM_ASSERT(*refCount > 0,
+               "Invalid reference count zero",
+               OS_ERR_INCORRECT_VALUE);
+    
+    /* If the reference count is greater than 1, we need to copy
+     * the frame.
+     */
+    if(*refCount > 1)
+    {
+        /* Allocate the new frame */
+        newFrame = _allocateFrames(1);
+        if(newFrame == (uintptr_t)NULL)
+        {
+            _unlockReferenceCount(kPhysAddr);
+            return OS_ERR_NO_MORE_MEMORY;
+        }
+        newPage = GET_VIRT_MEM_ADDR(newFrame);
+
+        /* Copy the frame */
+        memcpy((uintptr_t*)newPage, (uintptr_t*)baseVirt, KERNEL_PAGE_SIZE);
+
+        /* Release the reference */
+        *refCount = *refCount - 1;
+        _unlockReferenceCount(kPhysAddr);
+    }
+    else
+    {
+        _unlockReferenceCount(kPhysAddr);
+        newFrame = _makeCanonical(kPhysAddr, true) & ~PAGE_SIZE_MASK;
+    }
+
+    /* Update the mapping */
+    pmlEntry[3] = (kFaultVirtAddr >> PML4_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
+    pmlEntry[2] = (kFaultVirtAddr >> PML3_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
+    pmlEntry[1] = (kFaultVirtAddr >> PML2_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
+    pmlEntry[0] = (kFaultVirtAddr >> PML1_ENTRY_OFFSET) & PG_ENTRY_OFFSET_MASK;
+
+    for(i = 3; i >= 0; --i)
+    {
+        if(i == 3)
+        {
+            pPageTable[i] = (uintptr_t*)GET_VIRT_MEM_ADDR(pProcessMem->pageDir);
+        }
+        else
+        {
+            nextPtable = _makeCanonical(pPageTable[i + 1][pmlEntry[i + 1]] &
+                                        ~PAGE_SIZE_MASK,
+                                        true);
+            pPageTable[i] = (uintptr_t*)GET_VIRT_MEM_ADDR(nextPtable);
+        }
+    }
+
+    /* Get the flags */
+    newEntryValue = pPageTable[0][pmlEntry[0]] &
+                    ~(sPhysAddressWidthMask & ~PAGE_SIZE_MASK);
+
+    /* Remove COW and add new address */
+    newEntryValue = (newEntryValue | PAGE_FLAG_READ_WRITE) & ~PAGE_FLAG_COW;
+    pPageTable[0][pmlEntry[0]] = newEntryValue | newFrame;
+
+    cpuInvalidateTlbEntry(kFaultVirtAddr);
+
+    KERNEL_UNLOCK(pProcessMem->lock);
+
+    return OS_NO_ERR;
+}
+
+void memoryGetPagesInfo(const kernel_thread_t* kpThread,
+                        memory_page_info_t*    pPageInfo,
+                        size_t*                pSize)
+{
+    uint32_t        i;
+    uint32_t        j;
+    uint32_t        k;
+    uint32_t        l;
+    uintptr_t*      currentPagePtr[4];
+    uintptr_t       currentPage[4];
+    size_t          currentSize;
+    memproc_info_t* pProcessMem;
+
+    /* Lock the process to avoid frame modification during the mapping */
+    pProcessMem = kpThread->pProcess->pMemoryData;
+    KERNEL_LOCK(pProcessMem->lock);
+    
+    currentSize = 0;
+    for(i = 0; i < KERNEL_PGDIR_ENTRY_COUNT; ++i)
+    {
+        /* Skip recursive mapping */
+        if(i == KERNEL_MEM_PML4_ENTRY)
+        {
+            continue;
+        }
+        /* Get level 1 mapping */
+        currentPagePtr[0] = (uintptr_t*)GET_VIRT_MEM_ADDR(pProcessMem->pageDir);
+        currentPage[0] = currentPagePtr[0][i];
+
+        /* Check if present */
+        if((currentPage[0] & PAGE_FLAG_PRESENT) != PAGE_FLAG_PRESENT)
+        {
+            continue;
+        }
+
+        for(j = 0; j < KERNEL_PGDIR_ENTRY_COUNT; ++j)
+        {
+            /* Get level 2 mapping */
+            currentPage[1] = _makeCanonical(currentPage[0] & ~PAGE_SIZE_MASK, 
+                                            true);
+            currentPagePtr[1] = (uintptr_t*)GET_VIRT_MEM_ADDR(currentPage[1]);
+            currentPage[1] = currentPagePtr[1][j];
+
+            /* Check if present */
+            if((currentPage[1] & PAGE_FLAG_PRESENT) != PAGE_FLAG_PRESENT)
+            {
+                continue;
+            }
+
+            for(k = 0; k < KERNEL_PGDIR_ENTRY_COUNT; ++k)
+            {
+                /* Get level 3 mapping */
+                currentPage[2] = _makeCanonical(currentPage[1] & 
+                                                ~PAGE_SIZE_MASK, 
+                                                true);
+                currentPagePtr[2] = (uintptr_t*)GET_VIRT_MEM_ADDR(
+                    currentPage[2]);
+                currentPage[2] = currentPagePtr[2][k];
+
+                /* Check if present */
+                if((currentPage[2] & PAGE_FLAG_PRESENT) != PAGE_FLAG_PRESENT)
+                {
+                    continue;
+                }
+
+                for(l = 0; l < KERNEL_PGDIR_ENTRY_COUNT; ++l)
+                {
+                    /* Get level 3 mapping */
+                    currentPage[3] = _makeCanonical(currentPage[2] & 
+                                                    ~PAGE_SIZE_MASK, 
+                                                    true);
+                    currentPagePtr[3] = (uintptr_t*)GET_VIRT_MEM_ADDR(
+                        currentPage[3]);
+                    currentPage[3] = currentPagePtr[3][l];
+
+                    /* Check if present */
+                    if((currentPage[3] & PAGE_FLAG_PRESENT) != PAGE_FLAG_PRESENT)
+                    {
+                        continue;
+                    }
+
+                    /* Copy mapping */
+                    if(currentSize < *pSize)
+                    {
+                        pPageInfo[currentSize].virtAddress = 
+                            i * (1ULL << PML4_ENTRY_OFFSET) + 
+                            j * (1ULL << PML3_ENTRY_OFFSET) + 
+                            k * (1ULL << PML2_ENTRY_OFFSET) + 
+                            l * (1ULL << PML1_ENTRY_OFFSET);
+                        pPageInfo[currentSize].physAddress = _makeCanonical(
+                            currentPage[3] & ~PAGE_SIZE_MASK, 
+                            true);
+                        pPageInfo[currentSize].flags = currentPage[3] & 
+                                                       PAGE_SIZE_MASK;
+                        ++currentSize;
+                    }
+                    else 
+                    {
+                        i = KERNEL_PGDIR_ENTRY_COUNT;
+                        j = KERNEL_PGDIR_ENTRY_COUNT;
+                        k = KERNEL_PGDIR_ENTRY_COUNT;
+                        l = KERNEL_PGDIR_ENTRY_COUNT - 1;
+                    }
+                }
+            }
+        }
+    }
+
+    KERNEL_UNLOCK(pProcessMem->lock);
+
+    *pSize = currentSize;
 }
 
 /************************************ EOF *************************************/

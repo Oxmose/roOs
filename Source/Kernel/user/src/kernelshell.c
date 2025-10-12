@@ -32,6 +32,7 @@
 #include <string.h>       /* String manipulation */
 #include <signal.h>       /* Signals */
 #include <syslog.h>       /* Syslog services */
+#include <memory.h>       /* Memory manager */
 #include <console.h>      /* Console driver */
 #include <graphics.h>     /* Graphics driver */
 #include <time_mgt.h>     /* Time manager */
@@ -92,6 +93,7 @@ static void _shellSleep(const char* args);
 static void _shellExit(const char* args);
 static void _shellFork(const char* args);
 static void _shellReadElf(const char* args);
+static void _shellGetMapping(const char* args);
 static void _shellExecuteCommand(void);
 static void _shellGetCommand(void);
 static void* _shellEntry(void* args);
@@ -131,6 +133,7 @@ static const command_t sCommands[] = {
     {"sleep", "Sleeps for ns time", _shellSleep},
     {"fork", "Tests the fork features", _shellFork},
     {"relf", "Read the ELF", _shellReadElf},
+    {"map", "Get a thread memory mapping", _shellGetMapping},
     {"exit", "Exit the shell", _shellExit},
     {"help", "Display this help", _shellHelp},
     {NULL, NULL, NULL}
@@ -322,16 +325,27 @@ static void _shellDrawTest(const char* args)
 {
     (void)args;
     uint32_t x;
-
-    consoleClear();
-    consolePutCursor(0, 0);
-
-    graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
-
-    for(x = 1; x < 1022; ++x)
+    uint32_t i;
+    uint32_t colors[3] = {
+        0xff33addf,
+        0xffdf33ad,
+        0xffad33df
+    };
+    for(i = 0; i < 3; ++i)
     {
-        graphicsDrawLine(x, 1, 500, 500, 0xff33addf);
-        schedSleep(333333);
+        consoleClear();
+        consolePutCursor(0, 0);
+
+        graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
+
+        
+        for(x = 1; x < 1022; ++x)
+        {
+            graphicsDrawLine(x, 1, 500, 500, colors[i]);
+            
+        }
+        schedSleep(1000000000);
+
     }
 }
 
@@ -783,7 +797,41 @@ static void _shellDisplayThreads(const char* args)
             kprintf("#---------------------------------------------------------------------------------------------------------#\n");
         }
     }
+}
 
+static void _shellGetMapping(const char* args)
+{
+    int32_t            tid;
+    size_t             infoSize;
+    size_t             i;
+    memory_page_info_t infos[20];
+    kernel_thread_t*   pThread;
+    infoSize = 20;
+
+    tid = strtol(args, NULL, 10);
+    pThread = schedGetThread(tid);
+    if(pThread == NULL)
+    {
+        kprintf("Cannot find thread with ID %d.\n", tid);
+        return;
+    }
+
+    kprintf("Thread ID: %d | Name: %s\n", pThread->tid, pThread->pName);
+
+    /* Get the thread mapping */
+    memoryGetPagesInfo(pThread, infos, &infoSize);
+    kprintf("#--------------------------------------------------------------#\n");
+    kprintf("|      Physical      |      Virtual       |       Flags        |\n");
+    kprintf("#--------------------------------------------------------------#\n");
+
+    for(i = 0; i < infoSize; ++i)
+    {
+        kprintf("| 0x%p | 0x%p | 0x%p |\n", 
+                infos[i].physAddress, 
+                infos[i].virtAddress, 
+                infos[i].flags);
+    }
+    kprintf("#--------------------------------------------------------------#\n");
 }
 
 static void _shellExecuteCommand(void)

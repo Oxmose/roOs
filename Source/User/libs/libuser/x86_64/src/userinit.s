@@ -37,7 +37,8 @@
 ;-------------------------------------------------------------------------------
 ; EXTERN DATA
 ;-------------------------------------------------------------------------------
-; None
+extern _USER_START_BSS_ADDR
+extern _USER_END_BSS_ADDR
 
 ;-------------------------------------------------------------------------------
 ; EXTERN FUNCTIONS
@@ -61,12 +62,36 @@ global __user_entry
 section .init
 align 4
 __user_entry:
-    ; TODO: init BSS
+    ; Align stack 
+    and rsp, 0xFFFFFFFFFFFFFFF0
+
+    ; Init BSS
+    call _user_bss_init
+
     ; TODO: init Heap
     call main
 
     ; TODO: call exit
 
+;-------------------------------------------------------------------------------
+; Initializes the user BSS section.
+;
+; Param:
+;     None.
+_user_bss_init:
+    xor rax, rax
+    mov r8, _USER_START_BSS_ADDR
+    mov r9, _USER_END_BSS_ADDR
+
+_init_bss_loop:
+    cmp r8, r9
+    je _init_bss_end
+    mov [r8], al
+    inc r8
+    jmp _init_bss_loop
+
+_init_bss_end:
+    ret
 ;-------------------------------------------------------------------------------
 ; DATA
 ;-------------------------------------------------------------------------------

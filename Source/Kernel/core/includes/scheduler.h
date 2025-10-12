@@ -470,6 +470,20 @@ void schedSyscallHandleSchedule(void* pParams);
  */
 void schedSyscallHandleFork(void* pParams);
 
+/**
+ * @brief Returns the thread structure corresponding to the TID provided as 
+ * parameter.
+ * 
+ * @details Returns the thread structure corresponding to the TID provided as 
+ * parameter. NULL is returned if no thread with such TID was found.
+ * 
+ * @param[in] kTid The Thread ID of the thread structure to return.
+ * 
+ * @return The thread structure corresponding to the TID provided as 
+ * parameter is returned. NULL is returned if no thread with such TID was found.
+ */
+kernel_thread_t* schedGetThread(const int32_t kTid);
+
 #endif /* #ifndef __CORE_SCHEDULER_H_ */
 
 /************************************ EOF *************************************/

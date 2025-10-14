@@ -102,8 +102,8 @@ typedef struct
  */
 typedef void* (*vfs_open_func_t)(void*       pDriverData,
                                  const char* kpPath,
-                                 int         flags,
-                                 int         mode);
+                                 int32_t     flags,
+                                 int32_t     mode);
 
 /**
  * @brief Defines the function pointer for the close hook function.
@@ -369,8 +369,8 @@ OS_RETURN_E vfsCopyProcessFdTable(kernel_process_t* pDstProcess,
  * @return On success the VFS driver handle is returned, otherwise
  * VFS_DRIVER_INVALID is returned on error.
  */
-vfs_driver_t vfsRegisterDriver(const char*      kpPath,
-                               void*            pDriverData,
+vfs_driver_t vfsRegisterDriver(const char*       kpPath,
+                               void*             pDriverData,
                                vfs_open_func_t    pOpen,
                                vfs_close_func_t   pClose,
                                vfs_read_func_t    pRead,
@@ -405,7 +405,7 @@ OS_RETURN_E vfsUnregisterDriver(vfs_driver_t* pDriver);
  * @return The function returns a file descriptor pointing to the opened file.
  * On error, the function returns -1.
  */
-int32_t vfsOpen(const char* kpPath, int flags, int mode);
+int32_t vfsOpen(const char* kpPath, int32_t flags, int32_t mode);
 
 /**
  * @brief Closes an opened file.

@@ -2002,8 +2002,6 @@ int32_t vfsReaddir(int32_t fd, dirent_t* pDirEntry)
 
     pDriver = pInternalFd->pShared->pDriver;
 
-    KERNEL_UNLOCK(pTable->lock);
-
     if(pDriver->pReadDir != NULL)
     {
         retVal = pDriver->pReadDir(pDriver->pDriverData,
@@ -2039,13 +2037,10 @@ int32_t vfsIOCTL(int32_t fd, uint32_t operation, void* pArgs)
 
     if((pInternalFd->openFlags & VFS_PERM_READ) == 0)
     {
-        KERNEL_UNLOCK(pTable->lock);
         return -1;
     }
 
     pDriver = pInternalFd->pShared->pDriver;
-
-    KERNEL_UNLOCK(pTable->lock);
 
     if(pDriver->pIOCTL != NULL)
     {

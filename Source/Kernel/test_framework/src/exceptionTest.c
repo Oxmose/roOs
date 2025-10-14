@@ -103,7 +103,7 @@ static bool _dummy(kernel_thread_t* curr_thread)
                             true,
                             true,
                             TEST_EXCEPTION_ENABLED);
-    
+
     return false;
 }
 

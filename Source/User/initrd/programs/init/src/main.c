@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sched.h>
 
+#if 0
 int main(void)
 {
     pid_t newPid;
@@ -13,9 +14,9 @@ int main(void)
     struct timespec time;
     struct timespec sleepTime;
 
-    
+
     write(6, "Init running\n", 13);
-    
+
     newPid = fork();
 
     memset(timeSec, 0, 32);
@@ -36,7 +37,7 @@ int main(void)
     {
         if(newPid != 0)
         {
-            nanosleep(&sleepTime, NULL);
+            //nanosleep(&sleepTime, NULL);
             memset(timeSec, 0, 32);
             retVal = clock_gettime(CLOCK_MONOTONIC, &time);
             if(retVal == 0)
@@ -54,7 +55,7 @@ int main(void)
         }
         else
         {
-            sleep(1);
+            //sleep(1);
             memset(timeSec, 0, 32);
             retVal = clock_gettime(CLOCK_MONOTONIC, &time);
             if(retVal == 0)
@@ -75,3 +76,14 @@ int main(void)
 
     return 0;
 }
+#else
+int main(void)
+{
+    while(1)
+    {
+        sleep(1);
+    }
+
+    return 0;
+}
+#endif

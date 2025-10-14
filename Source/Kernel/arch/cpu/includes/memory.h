@@ -78,7 +78,7 @@ typedef struct
 } mem_range_t;
 
 /** @brief Structure that defines an information about a memory page. */
-typedef struct 
+typedef struct
 {
     /** @brief Virtual address of the memory page. */
     uintptr_t virtAddress;
@@ -468,13 +468,13 @@ OS_RETURN_E memoryManageCOW(const uintptr_t        kFaultVirtAddr,
 
 /**
  * @brief Returns the page informations of a thread.
- * 
+ *
  * @details Returns the page informations of a thread. This function will fill
  * the table given as parameter with the page information of the given thread.
- * 
+ *
  * @param[in] kpThread The thread for which the information should be extracted.
  * @param[out] pPageInfo The table to fill.
- * @param[in/out] pSize The size of the table. This value is updated with the 
+ * @param[in/out] pSize The size of the table. This value is updated with the
  * actual size of the table after filling it.
  */
 void memoryGetPagesInfo(const kernel_thread_t* kpThread,

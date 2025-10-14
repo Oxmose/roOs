@@ -267,8 +267,8 @@ void cpuRestoreContext(const kernel_thread_t* kpThread);
  * @warning This function shall only be called in the scheduler it is restoring
  * the thread's context.
  */
-void cpuRequestSignal(kernel_thread_t* pThread, 
-                      void*            instructionAddr, 
+void cpuRequestSignal(kernel_thread_t* pThread,
+                      void*            instructionAddr,
                       const bool       kIsUser);
 
 /**

@@ -1952,6 +1952,9 @@ extern uint8_t physAddressWidth;
 /** @brief CPU virtual addressing width */
 extern uint8_t virtAddressWidth;
 
+/** @brief CPU virtual 1GB page support */
+extern bool cpu1GBPageSupport;
+
 /************************* Exported global variables **************************/
 /** @brief Stores the index of the first TSS segment */
 uint32_t firstTssSegmentIdx;
@@ -3572,6 +3575,9 @@ static void _cpuValidateArchitecture(void)
     {
         _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
 
+        /* Check 1GB page support */
+        cpu1GBPageSupport = (regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE;
+
         CPU_ASSERT((regsExt[3] & EDX_64_BIT) == EDX_64_BIT,
                    "CPU addressing width unavailable",
                    OS_ERR_NOT_SUPPORTED);
@@ -3580,6 +3586,7 @@ static void _cpuValidateArchitecture(void)
                    "CPU does not support SYSCALL",
                     OS_ERR_NOT_SUPPORTED);
 
+        /* Get the addressing width */
         _cpuCPUID(CPUID_ADDRESS_WIDTH, (uint32_t*)regsExt);
 
         physAddressWidth = regsExt[0] & 0xFF;
@@ -4941,8 +4948,8 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     return OS_NO_ERR;
 }
 
-void cpuRequestSignal(kernel_thread_t* pThread, 
-                      void*            instructionAddr, 
+void cpuRequestSignal(kernel_thread_t* pThread,
+                      void*            instructionAddr,
                       const bool       kIsUser)
 {
     virtual_cpu_t* pVCpu;
@@ -4975,8 +4982,8 @@ void cpuRequestSignal(kernel_thread_t* pThread,
         pVCpu->cpuState.fs       = USER_DS_64;
         pVCpu->cpuState.es       = USER_DS_64;
         pVCpu->cpuState.ds       = USER_DS_64;
-        PANIC(OS_ERR_NOT_SUPPORTED, 
-              MODULE_NAME, 
+        PANIC(OS_ERR_NOT_SUPPORTED,
+              MODULE_NAME,
               "User signals are not implemented yet.");
     }
 
@@ -5445,7 +5452,7 @@ OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
         return OS_NO_ERR;
     }
 
-    
+
     /* Get the original thread TLS virtual and physical addresses */
     align = MAX(pThread->pProcess->mainTlsAlign, __alignof__(user_thread_t));
     srcTls = (uintptr_t)kpSrcThread->pUserThreadData -
@@ -5477,7 +5484,7 @@ OS_RETURN_E cpuCopyLocalStorage(kernel_thread_t*       pThread,
 
     /* Setup the user data pointer */
     pThread->pUserThreadData = kpSrcThread->pUserThreadData;
-    
+
     return OS_NO_ERR;
 }
 

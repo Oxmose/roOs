@@ -12,7 +12,7 @@
  * @brief HPET (High Precision Event Timer) driver.
  *
  * @details HPET (High Precision Event Timer) driver. Timer
- * source in the kernel. This driver provides basic access to the HPET and 
+ * source in the kernel. This driver provides basic access to the HPET and
  * its features.
  *
  * @copyright Alexy Torres Aurora Dugo

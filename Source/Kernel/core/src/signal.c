@@ -187,7 +187,7 @@ static void _handleSignalSegFault(void)
     }
     cpuCoreDump(pThread->errorTable.pExecVCpu);
 
-    
+
 
 
     /* We are terminating ourselves just go to the exit point */

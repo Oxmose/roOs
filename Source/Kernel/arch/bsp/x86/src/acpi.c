@@ -1099,7 +1099,7 @@ static void _acpiParseRSDT(const rsdt_descriptor_t* kpRrsdtPtr)
            "RSDT signature 0x%0X - Length: %d",
            *((uint32_t*)kpRrsdtPtr->header.pSignature),
            kpRrsdtPtr->header.length);
-#endif   
+#endif
 
     ACPI_ASSERT(*((uint32_t*)kpRrsdtPtr->header.pSignature) == ACPI_RSDT_SIG,
                 "Wrong RSDT Signature",

@@ -161,7 +161,7 @@ __cpuUserSyscallReturn:
 
     ; Return from syscall
     o64 sysret
-    
+
 
 ;-------------------------------------------------------------------------------
 ; Raise a kernel space system call.

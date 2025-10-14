@@ -134,9 +134,11 @@
 #define PAGE_FAULT_ERROR_EXEC 0x10
 
 /** @brief Defines the maximal physical address for memory */
-#define KERNEL_MAX_MEM_PHYS 0x8000000000ULL
+#define KERNEL_MAX_MEM_PHYS 0x7FC0000000ULL
 /** @brief Represents 1GB */
-#define KERNEL_MEM_1G 0x40000000ULL
+#define KERNEL_MEM_1GB 0x40000000ULL
+/** @brief Represents 2MB */
+#define KERNEL_MEM_2MB 0x200000ULL
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -201,7 +203,7 @@ typedef struct frame_meta_table_t
  */
 #define GET_VIRT_MEM_ADDR(PHYS_MEM_ADDR) (                            \
     _makeCanonical(((uintptr_t)(PHYS_MEM_ADDR) +                      \
-                   (KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1G)), \
+                   (KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1GB)), \
                    false)                                             \
 )
 
@@ -213,7 +215,7 @@ typedef struct frame_meta_table_t
  */
 #define GET_PHYS_MEM_ADDR(VIRT_MEM_ADDR) (                              \
     _makeCanonical(((uintptr_t)(VIRT_MEM_ADDR) -                        \
-                   (KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1G)),   \
+                   (KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1GB)),   \
                    true)                                                \
 )
 
@@ -447,6 +449,27 @@ static uintptr_t _memoryMgrGetPhysAddr(const uintptr_t kVirtualAddress,
  * register the available memory and reserved memory.
  */
 static void _memoryMgrDetectMemory(void);
+
+/**
+ * @brief Creates the translation entries in the flat mapping.
+ * 
+ * @details Creates the translation entries in the flat mapping. This will add
+ * the last entry to the page directory entry reserved for flat mapping.
+ * 
+ * @return The physical address of the begining of the last entry table for flat
+ * mapping is returned.
+ */
+static uintptr_t _memoryMgrMapTranslationTable(void);
+
+/**
+ * @brief Creates a flat mapping of the physical addresses in virtual address
+ * space.
+ *
+ * @details Creates a flat mapping of the physical addresses in virtual address
+ * space. A page directory entry is reserved for this purpose and the subsequent
+ * entries are defined by the capability of the cpu.
+ */
+static void _memoryMgrCreateFlatMap(void);
 
 /**
  * @brief Creates the frame metadata table.
@@ -734,12 +757,18 @@ extern uintptr_t _kernelPGDir[KERNEL_PGDIR_ENTRY_COUNT];
 /** @brief Kernel frame-to-page entries */
 extern uintptr_t _physicalMapDir[KERNEL_PGDIR_ENTRY_COUNT];
 
+/** @brief Kernel frame-to-page translation table */
+extern uintptr_t _physicalMapTranslationPage[KERNEL_PGDIR_ENTRY_COUNT];
+
 /************************* Exported global variables **************************/
 /** @brief CPU physical addressing width */
 uint8_t physAddressWidth = 0;
 
 /** @brief CPU virtual addressing width */
 uint8_t virtAddressWidth = 0;
+
+/** @brief CPU virtual 1GB page support */
+bool cpu1GBPageSupport = 0;
 
 /************************** Static global variables ***************************/
 /** @brief Physical memory chunks list */
@@ -950,7 +979,7 @@ static bool _pageFaultHandler(kernel_thread_t* pCurrentThread)
         }
     }
 
-    
+
     /* Set reason page fault and reason data the address,
     * also get the reason code in the interrupt info
     */
@@ -1459,6 +1488,9 @@ static uintptr_t _allocateFrames(const size_t kFrameCount)
     uint16_t* refCount;
 
     physAddr = _getBlock(&sPhysMemList, KERNEL_PAGE_SIZE * kFrameCount);
+    MEM_ASSERT((physAddr & PAGE_SIZE_MASK) == 0,
+               "Non aligned frame allocated.",
+               OS_ERR_INCORRECT_VALUE);
 
     if(physAddr != (uintptr_t)NULL)
     {
@@ -1474,6 +1506,7 @@ static uintptr_t _allocateFrames(const size_t kFrameCount)
                 *refCount = 1;
                 _unlockReferenceCount(physAddr);
             }
+            physAddr += KERNEL_PAGE_SIZE;
         }
     }
 
@@ -1501,6 +1534,7 @@ static void _releaseFrames(const uintptr_t kBaseAddress,
             *refCount = *refCount - 1;
         }
         _unlockReferenceCount(physAddr);
+        physAddr += KERNEL_PAGE_SIZE;
     }
 
     _addBlock(&sPhysMemList,
@@ -1510,7 +1544,14 @@ static void _releaseFrames(const uintptr_t kBaseAddress,
 
 static uintptr_t _allocateKernelPages(const size_t kPageCount)
 {
-    return _getBlock(&sKernelFreePagesList, kPageCount * KERNEL_PAGE_SIZE);
+    uintptr_t page;
+
+    page =  _getBlock(&sKernelFreePagesList, kPageCount * KERNEL_PAGE_SIZE);
+    MEM_ASSERT((page & PAGE_SIZE_MASK) == 0,
+               "Non aligned page allocated.",
+               OS_ERR_INCORRECT_VALUE);
+
+    return page;
 }
 
 static void _releaseKernelPages(const uintptr_t kBaseAddress,
@@ -1733,8 +1774,7 @@ static OS_RETURN_E _memoryMgrMap(const uintptr_t kVirtualAddress,
     /* Get the flags */
     mapFlags = PAGE_FLAG_PRESENT | _translateFlags(kFlags);
 
-    mapPgdirFlags = PAGE_FLAG_PAGE_SIZE_4KB |
-                    PAGE_FLAG_SUPER_ACCESS  |
+    mapPgdirFlags = PAGE_FLAG_SUPER_ACCESS  |
                     PAGE_FLAG_USER_ACCESS   |
                     PAGE_FLAG_READ_WRITE    |
                     PAGE_FLAG_CACHE_WB      |
@@ -2199,7 +2239,7 @@ static void _memoryMgrDetectMemory(void)
 {
     uintptr_t             baseAddress;
     size_t                size;
-    uintptr_t             frameEntry;
+    size_t                initSize;
     uintptr_t             kernelPhysStart;
     uintptr_t             kernelPhysEnd;
     const fdt_mem_node_t* kpPhysMemNode;
@@ -2217,8 +2257,8 @@ static void _memoryMgrDetectMemory(void)
         /* Align the base address and size */
         baseAddress = ALIGN_UP(FDTTOCPU64(kpPhysMemNode->baseAddress),
                                KERNEL_PAGE_SIZE);
-        size        = baseAddress - FDTTOCPU64(kpPhysMemNode->baseAddress);
-        size        = ALIGN_DOWN(FDTTOCPU64(kpPhysMemNode->size) - size,
+        initSize        = baseAddress - FDTTOCPU64(kpPhysMemNode->baseAddress);
+        initSize        = ALIGN_DOWN(FDTTOCPU64(kpPhysMemNode->size) - initSize,
                                  KERNEL_PAGE_SIZE);
 
 #if MEMORY_MGR_DEBUG_ENABLED
@@ -2232,26 +2272,12 @@ static void _memoryMgrDetectMemory(void)
                baseAddress + size);
 #endif
 
-        MEM_ASSERT(baseAddress + size < KERNEL_MAX_MEM_PHYS,
-                   "Kernel does not support physical memory over 512BG",
+        MEM_ASSERT(baseAddress + initSize <= KERNEL_MAX_MEM_PHYS,
+                   "Kernel does not support physical memory over 511GB",
                    OS_ERR_NOT_SUPPORTED);
 
-        /* Add to the page-to-frame directory */
-        frameEntry = baseAddress / KERNEL_MEM_1G;
-        if((_physicalMapDir[frameEntry] & PAGE_FLAG_PRESENT) == 0)
-        {
-            _physicalMapDir[frameEntry] = (frameEntry * KERNEL_MEM_1G) |
-                                          PAGE_FLAG_PAGE_SIZE_1GB      |
-                                          PAGE_FLAG_SUPER_ACCESS       |
-                                          PAGE_FLAG_CACHE_WB           |
-                                          PAGE_FLAG_READ_WRITE         |
-                                          PAGE_FLAG_GLOBAL             |
-                                          PAGE_FLAG_XD                 |
-                                          PAGE_FLAG_PRESENT;
-        }
-
         /* Add block to the free frames */
-        _addBlock(&sPhysMemList, baseAddress, size);
+        _addBlock(&sPhysMemList, baseAddress, initSize);
 
         /* Go to next node */
         kpPhysMemNode = kpPhysMemNode->pNextNode;
@@ -2299,6 +2325,234 @@ static void _memoryMgrDetectMemory(void)
     _removeBlock(&sPhysMemList,
                  kernelPhysStart,
                  kernelPhysEnd - kernelPhysStart);
+}
+
+static uintptr_t _memoryMgrMapTranslationTable(void)
+{
+    uintptr_t             baseAddress;
+    size_t                size;
+    size_t                initSize;
+    size_t                frameCount;
+    size_t                nbEntries;
+    uintptr_t             frameTable;
+    uintptr_t             physFrameTable;
+    const fdt_mem_node_t* kpPhysMemNode;
+
+    kpPhysMemNode = fdtGetMemory();
+    MEM_ASSERT(kpPhysMemNode != NULL,
+               "No physical memory detected in FDT",
+               OS_ERR_NO_MORE_MEMORY);
+
+    /* Compute the memory needed for the flat map */
+    size = 0;
+    while(kpPhysMemNode != NULL)
+    {
+        /* Align the base address and size */
+        baseAddress = ALIGN_DOWN(FDTTOCPU64(kpPhysMemNode->baseAddress),
+                                 KERNEL_MEM_2MB);
+        initSize    = FDTTOCPU64(kpPhysMemNode->baseAddress) - baseAddress;
+        initSize    = ALIGN_UP(FDTTOCPU64(kpPhysMemNode->size) + initSize,
+                               KERNEL_MEM_2MB);
+
+        MEM_ASSERT(baseAddress + initSize <= KERNEL_MAX_MEM_PHYS,
+                   "Kernel does not support physical memory over 511GB",
+                   OS_ERR_NOT_SUPPORTED);
+
+        size += initSize;
+
+        /* Go to next node */
+        kpPhysMemNode = kpPhysMemNode->pNextNode;
+    }
+
+    /* Get the number of frames needed for the mapping */
+    nbEntries = (size / KERNEL_MEM_2MB);
+    if(size % KERNEL_MEM_2MB != 0)
+    {
+        ++nbEntries;
+    }
+
+    /* Get the frames count */
+    frameCount = nbEntries / KERNEL_PGDIR_ENTRY_COUNT;
+    if(nbEntries % KERNEL_PGDIR_ENTRY_COUNT != 0)
+    {
+        ++frameCount;
+    }
+    MEM_ASSERT(frameCount < 512,
+                "Kernel does not support physical memory over 511GB",
+                OS_ERR_NOT_SUPPORTED);
+
+    /* Get a memory block aligned on 2MB */
+    physFrameTable = _getBlock(&sPhysMemList, KERNEL_PAGE_SIZE);
+    frameTable = physFrameTable;
+    while((frameTable & (KERNEL_MEM_2MB - 1)) != 0)
+    {
+        frameTable = _getBlock(&sPhysMemList, KERNEL_PAGE_SIZE);
+    }
+    /* Get the rest of the frames */
+    if(frameCount > 1)
+    {
+        (void)_getBlock(&sPhysMemList, KERNEL_PAGE_SIZE * (frameCount - 1));
+    }
+    /* Relinquishes the rest of the unused frames */
+    if(frameTable != physFrameTable)
+    {
+        _addBlock(&sPhysMemList, physFrameTable, frameTable - physFrameTable);
+    }
+    MEM_ASSERT(frameTable != (uintptr_t)NULL,
+                "Not enough memory to support the physical memory.",
+                OS_ERR_NO_MORE_MEMORY);
+
+    /* Map the table */
+    physFrameTable = (uintptr_t)_physicalMapTranslationPage - KERNEL_MEM_OFFSET;
+    _physicalMapDir[KERNEL_PGDIR_ENTRY_COUNT - 1] = physFrameTable          |
+                                                    PAGE_FLAG_SUPER_ACCESS  |
+                                                    PAGE_FLAG_CACHE_WB      |
+                                                    PAGE_FLAG_READ_WRITE    |
+                                                    PAGE_FLAG_XD            |
+                                                    PAGE_FLAG_PRESENT;
+    _physicalMapTranslationPage[0] = frameTable              |
+                                     PAGE_FLAG_PAGE_SIZE_2MB |
+                                     PAGE_FLAG_SUPER_ACCESS  |
+                                     PAGE_FLAG_CACHE_WB      |
+                                     PAGE_FLAG_READ_WRITE    |
+                                     PAGE_FLAG_GLOBAL        |
+                                     PAGE_FLAG_XD            |
+                                     PAGE_FLAG_PRESENT;
+    physFrameTable = KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1GB + 
+                     511ULL * KERNEL_MEM_2MB;
+    cpuInvalidateTlbEntry(physFrameTable);
+
+    /* Return the first usable address */
+    return frameTable;
+}
+
+static void _memoryMgrCreateFlatMap(void)
+{
+    uintptr_t             baseAddress;
+    size_t                size;
+    size_t                initSize;
+    size_t                usedFrames;
+    uintptr_t             frameEntry;
+    uintptr_t             frameTable;
+    uintptr_t             nextPtable;
+    uintptr_t*            pTable;
+    uintptr_t             startTranslationAddr;
+    const fdt_mem_node_t* kpPhysMemNode;
+
+    /* Get the physical memory */
+    kpPhysMemNode = fdtGetMemory();
+    MEM_ASSERT(kpPhysMemNode != NULL,
+                "No physical memory detected in FDT",
+                OS_ERR_NO_MORE_MEMORY);
+
+    if(cpu1GBPageSupport == false)
+    {
+        /* Map the translation pages */
+        startTranslationAddr = _memoryMgrMapTranslationTable();
+        usedFrames           = 0;
+
+        /* Now iterate on all memory nodes and add the regions */
+        while(kpPhysMemNode != NULL)
+        {
+            /* Align the base address and size */
+            baseAddress = ALIGN_DOWN(FDTTOCPU64(kpPhysMemNode->baseAddress),
+                                     KERNEL_MEM_2MB);
+            initSize    = FDTTOCPU64(kpPhysMemNode->baseAddress) - baseAddress;
+            initSize    = ALIGN_UP(FDTTOCPU64(kpPhysMemNode->size) + initSize,
+                                   KERNEL_MEM_2MB);
+
+            /* Add to the page-to-frame directory */
+            size = 0;
+            /* Map the physical by split of 2MB */
+            while(size < initSize)
+            {
+                /* Get the frame table and entry */
+                frameTable = (baseAddress + size) / KERNEL_MEM_1GB;
+                frameEntry = ((baseAddress + size) % KERNEL_MEM_1GB) /
+                             KERNEL_MEM_2MB;
+
+                /* If not present, add a new frame */
+                if((_physicalMapDir[frameTable] & PAGE_FLAG_PRESENT) == 0)
+                {
+                    /* Get the frame and increment */
+                    nextPtable = startTranslationAddr + 
+                                 usedFrames * KERNEL_PAGE_SIZE;
+                    ++usedFrames;
+                    nextPtable = _makeCanonical(nextPtable, true);
+
+                    _physicalMapDir[frameTable] = nextPtable             |
+                                                  PAGE_FLAG_SUPER_ACCESS |
+                                                  PAGE_FLAG_CACHE_WB     |
+                                                  PAGE_FLAG_READ_WRITE   |
+                                                  PAGE_FLAG_XD           |
+                                                  PAGE_FLAG_PRESENT;
+                }
+                /* Get the virtual address of the table to update */
+                nextPtable = _makeCanonical((_physicalMapDir[frameTable] & 
+                                             ~PAGE_SIZE_MASK) -
+                                            startTranslationAddr,
+                                            true);
+                nextPtable = KERNEL_MEM_PML4_ENTRY * 512ULL * 
+                             KERNEL_MEM_1GB + 
+                             511ULL * KERNEL_MEM_2MB * 512ULL +
+                             nextPtable;
+                pTable = (uintptr_t*)_makeCanonical(nextPtable, false);
+                pTable[frameEntry] = ((frameTable * KERNEL_MEM_1GB) +
+                                      (frameEntry * KERNEL_MEM_2MB)) |
+                                     PAGE_FLAG_PAGE_SIZE_2MB         |
+                                     PAGE_FLAG_SUPER_ACCESS          |
+                                     PAGE_FLAG_CACHE_WB              |
+                                     PAGE_FLAG_READ_WRITE            |
+                                     PAGE_FLAG_GLOBAL                |
+                                     PAGE_FLAG_XD                    |
+                                     PAGE_FLAG_PRESENT;
+
+                size += KERNEL_MEM_2MB;
+            }
+
+            /* Go to next node */
+            kpPhysMemNode = kpPhysMemNode->pNextNode;
+        }
+    }
+    else
+    {
+        /* Now iterate on all memory nodes and add the regions */
+        while(kpPhysMemNode != NULL)
+        {
+            /* Align the base address and size */
+            baseAddress = ALIGN_DOWN(FDTTOCPU64(kpPhysMemNode->baseAddress),
+                                     KERNEL_MEM_1GB);
+            initSize    = FDTTOCPU64(kpPhysMemNode->baseAddress) - baseAddress;
+            initSize    = ALIGN_UP(FDTTOCPU64(kpPhysMemNode->size) + initSize,
+                                   KERNEL_MEM_1GB);
+
+            MEM_ASSERT(baseAddress + initSize <= KERNEL_MAX_MEM_PHYS,
+                    "Kernel does not support physical memory over 511GB",
+                    OS_ERR_NOT_SUPPORTED);
+
+            /* Add to the page-to-frame directory */
+            size = 0;
+            /* Map by pages of 1GB */
+            while(size < initSize)
+            {
+                frameEntry = (baseAddress + size) / KERNEL_MEM_1GB;
+                if((_physicalMapDir[frameEntry] & PAGE_FLAG_PRESENT) == 0)
+                {
+                    _physicalMapDir[frameEntry] = (frameEntry * KERNEL_MEM_1GB) |
+                                                PAGE_FLAG_PAGE_SIZE_1GB      |
+                                                PAGE_FLAG_SUPER_ACCESS       |
+                                                PAGE_FLAG_CACHE_WB           |
+                                                PAGE_FLAG_READ_WRITE         |
+                                                PAGE_FLAG_GLOBAL             |
+                                                PAGE_FLAG_XD                 |
+                                                PAGE_FLAG_PRESENT;
+                }
+                size += KERNEL_MEM_1GB;
+            }
+            /* Go to next node */
+            kpPhysMemNode = kpPhysMemNode->pNextNode;
+        }
+    }
 }
 
 static void _memoryMgrCreateFramesMeta(void)
@@ -2501,12 +2755,10 @@ static void _memoryMgrMapKernelRegion(uintptr_t*      pLastSectionStart,
                            OS_ERR_NULL_POINTER);
 
                 pPageTable[i][pmlEntry[i]] = tmpPageTablePhysAddr    |
-                                             PAGE_FLAG_PAGE_SIZE_4KB |
                                              PAGE_FLAG_SUPER_ACCESS  |
                                              PAGE_FLAG_USER_ACCESS   |
                                              PAGE_FLAG_READ_WRITE    |
                                              PAGE_FLAG_CACHE_WB      |
-                                             PAGE_FLAG_GLOBAL        |
                                              PAGE_FLAG_PRESENT;
 
                 /* Zeroize the table */
@@ -2607,7 +2859,6 @@ static void _memoryMgrMapKernel(void)
                               (uintptr_t)&_KERNEL_HEAP_BASE +
                               (uintptr_t)&_KERNEL_HEAP_SIZE,
                               MEMMGR_MAP_RW);
-
 #ifdef _TESTING_FRAMEWORK_ENABLED
     _memoryMgrMapKernelRegion(&kernelSectionStart,
                               &kernelSectionEnd,
@@ -2631,20 +2882,26 @@ static uintptr_t _allocateUserPages(const size_t            kPageCount,
                                     const bool              kFromTop)
 {
     memproc_info_t* pMemProcInfo;
+    uintptr_t       page;
 
     pMemProcInfo = kpProcess->pMemoryData;
 
     if(kFromTop == true)
     {
-        return _getBlockFromEnd(&pMemProcInfo->freePageTable,
-                                kPageCount * KERNEL_PAGE_SIZE);
+        page =  _getBlockFromEnd(&pMemProcInfo->freePageTable,
+                                 kPageCount * KERNEL_PAGE_SIZE);
     }
     else
     {
-        return _getBlock(&pMemProcInfo->freePageTable,
+        page = _getBlock(&pMemProcInfo->freePageTable,
                          kPageCount * KERNEL_PAGE_SIZE);
     }
 
+    MEM_ASSERT((page & PAGE_SIZE_MASK) == 0,
+               "Non aligned page allocated.",
+               OS_ERR_INCORRECT_VALUE);
+
+    return page;
 }
 
 static void _releaseUserPages(const uintptr_t         kBaseAddress,
@@ -2904,7 +3161,6 @@ static OS_RETURN_E _memoryMgrMapUser(uintptr_t*     pTableLevel,
 
                 /* Set the mapping flags */
                 pTableLevel[addrEntryIdx] = nextDirLevelFrame       |
-                                            PAGE_FLAG_PAGE_SIZE_4KB |
                                             PAGE_FLAG_SUPER_ACCESS  |
                                             PAGE_FLAG_USER_ACCESS   |
                                             PAGE_FLAG_READ_WRITE    |
@@ -3232,6 +3488,17 @@ void memoryMgrInit(void)
     /* Clear the low entries used during boot */
     spKernelPageDir[0] = 0;
 
+    /* Setup the PAT as follows:
+     * WC UC- WT WB UC UC- WT WB
+     */
+    __asm__ __volatile__ (
+        "mov $0x277, %%rcx\n\t"
+        "rdmsr\n\t"
+        "and $0xFFFFFFFFF8FFFFFF, %%rdx\n\t"
+        "or  $0x01000000, %%rdx\n\t"
+        "wrmsr\n\t"
+        :::"rax", "rcx", "rdx");
+
     /* Setup the memory frames mapping */
     spKernelPageDir[KERNEL_MEM_PML4_ENTRY] =
         ((uintptr_t)_physicalMapDir - KERNEL_MEM_OFFSET) |
@@ -3240,12 +3507,14 @@ void memoryMgrInit(void)
         PAGE_FLAG_READ_WRITE         |
         PAGE_FLAG_PRESENT;
 
-
     /* Setup the kernel free pages */
     _memoryMgrInitKernelFreePages();
 
     /* Detect the memory */
     _memoryMgrDetectMemory();
+
+    /* Create the flat physical memory translation */
+    _memoryMgrCreateFlatMap();
 
     /* Update the whole page table */
     cpuSetPageDirectory((uintptr_t)spKernelPageDir - KERNEL_MEM_OFFSET);
@@ -3261,17 +3530,6 @@ void memoryMgrInit(void)
     MEM_ASSERT(error == OS_NO_ERR,
                "Failed to register the page fault handler",
                error);
-
-    /* Setup the PAT as follows:
-     * WC UC- WT WB UC UC- WT WB
-     */
-    __asm__ __volatile__ (
-        "mov $0x277, %%rcx\n\t"
-        "rdmsr\n\t"
-        "and $0xFFFFFFFFF8FFFFFF, %%rdx\n\t"
-        "or  $0x01000000, %%rdx\n\t"
-        "wrmsr\n\t"
-        :::"rax", "rcx", "rdx");
 
 #if MEMORY_MGR_DEBUG_ENABLED
     _printKernelMap();
@@ -3327,7 +3585,7 @@ void* memoryKernelMap(const void*    kPhysicalAddress,
     error = _memoryMgrMap(kernelPages,
                           (uintptr_t)kPhysicalAddress,
                           pageCount,
-                          kFlags | MEMMGR_MAP_KERNEL | PAGE_FLAG_GLOBAL,
+                          kFlags | MEMMGR_MAP_KERNEL,
                           (uintptr_t)spKernelPageDir - KERNEL_MEM_OFFSET);
     if(error != OS_NO_ERR)
     {
@@ -4340,7 +4598,7 @@ OS_RETURN_E memoryManageCOW(const uintptr_t        kFaultVirtAddr,
     MEM_ASSERT(*refCount > 0,
                "Invalid reference count zero",
                OS_ERR_INCORRECT_VALUE);
-    
+
     /* If the reference count is greater than 1, we need to copy
      * the frame.
      */
@@ -4420,7 +4678,7 @@ void memoryGetPagesInfo(const kernel_thread_t* kpThread,
     /* Lock the process to avoid frame modification during the mapping */
     pProcessMem = kpThread->pProcess->pMemoryData;
     KERNEL_LOCK(pProcessMem->lock);
-    
+
     currentSize = 0;
     for(i = 0; i < KERNEL_PGDIR_ENTRY_COUNT; ++i)
     {
@@ -4442,7 +4700,7 @@ void memoryGetPagesInfo(const kernel_thread_t* kpThread,
         for(j = 0; j < KERNEL_PGDIR_ENTRY_COUNT; ++j)
         {
             /* Get level 2 mapping */
-            currentPage[1] = _makeCanonical(currentPage[0] & ~PAGE_SIZE_MASK, 
+            currentPage[1] = _makeCanonical(currentPage[0] & ~PAGE_SIZE_MASK,
                                             true);
             currentPagePtr[1] = (uintptr_t*)GET_VIRT_MEM_ADDR(currentPage[1]);
             currentPage[1] = currentPagePtr[1][j];
@@ -4456,8 +4714,8 @@ void memoryGetPagesInfo(const kernel_thread_t* kpThread,
             for(k = 0; k < KERNEL_PGDIR_ENTRY_COUNT; ++k)
             {
                 /* Get level 3 mapping */
-                currentPage[2] = _makeCanonical(currentPage[1] & 
-                                                ~PAGE_SIZE_MASK, 
+                currentPage[2] = _makeCanonical(currentPage[1] &
+                                                ~PAGE_SIZE_MASK,
                                                 true);
                 currentPagePtr[2] = (uintptr_t*)GET_VIRT_MEM_ADDR(
                     currentPage[2]);
@@ -4472,8 +4730,8 @@ void memoryGetPagesInfo(const kernel_thread_t* kpThread,
                 for(l = 0; l < KERNEL_PGDIR_ENTRY_COUNT; ++l)
                 {
                     /* Get level 3 mapping */
-                    currentPage[3] = _makeCanonical(currentPage[2] & 
-                                                    ~PAGE_SIZE_MASK, 
+                    currentPage[3] = _makeCanonical(currentPage[2] &
+                                                    ~PAGE_SIZE_MASK,
                                                     true);
                     currentPagePtr[3] = (uintptr_t*)GET_VIRT_MEM_ADDR(
                         currentPage[3]);
@@ -4488,19 +4746,19 @@ void memoryGetPagesInfo(const kernel_thread_t* kpThread,
                     /* Copy mapping */
                     if(currentSize < *pSize)
                     {
-                        pPageInfo[currentSize].virtAddress = 
-                            i * (1ULL << PML4_ENTRY_OFFSET) + 
-                            j * (1ULL << PML3_ENTRY_OFFSET) + 
-                            k * (1ULL << PML2_ENTRY_OFFSET) + 
+                        pPageInfo[currentSize].virtAddress =
+                            i * (1ULL << PML4_ENTRY_OFFSET) +
+                            j * (1ULL << PML3_ENTRY_OFFSET) +
+                            k * (1ULL << PML2_ENTRY_OFFSET) +
                             l * (1ULL << PML1_ENTRY_OFFSET);
                         pPageInfo[currentSize].physAddress = _makeCanonical(
-                            currentPage[3] & ~PAGE_SIZE_MASK, 
+                            currentPage[3] & ~PAGE_SIZE_MASK,
                             true);
-                        pPageInfo[currentSize].flags = currentPage[3] & 
+                        pPageInfo[currentSize].flags = currentPage[3] &
                                                        PAGE_SIZE_MASK;
                         ++currentSize;
                     }
-                    else 
+                    else
                     {
                         i = KERNEL_PGDIR_ENTRY_COUNT;
                         j = KERNEL_PGDIR_ENTRY_COUNT;

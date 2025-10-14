@@ -491,7 +491,7 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
  *
  * @return The function returns the success or error status.
  */
-static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread, 
+static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread,
                                kernel_process_t* pProcess);
 /*******************************************************************************
  * GLOBAL VARIABLES

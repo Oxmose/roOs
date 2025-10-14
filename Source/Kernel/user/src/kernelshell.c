@@ -338,11 +338,11 @@ static void _shellDrawTest(const char* args)
 
         graphicsDrawRectangle(0, 0, 2000, 2000, 0xFFFFFFFF);
 
-        
+
         for(x = 1; x < 1022; ++x)
         {
             graphicsDrawLine(x, 1, 500, 500, colors[i]);
-            
+
         }
         schedSleep(1000000000);
 
@@ -826,9 +826,9 @@ static void _shellGetMapping(const char* args)
 
     for(i = 0; i < infoSize; ++i)
     {
-        kprintf("| 0x%p | 0x%p | 0x%p |\n", 
-                infos[i].physAddress, 
-                infos[i].virtAddress, 
+        kprintf("| 0x%p | 0x%p | 0x%p |\n",
+                infos[i].physAddress,
+                infos[i].virtAddress,
                 infos[i].flags);
     }
     kprintf("#--------------------------------------------------------------#\n");

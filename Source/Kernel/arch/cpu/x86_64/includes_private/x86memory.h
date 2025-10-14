@@ -51,7 +51,7 @@
 #define USER_MEMORY_START 0x0000000000100000ULL
 
 /** @brief User total memory end. */
-#define USER_MEMORY_END 0x0000800000000000ULL
+#define USER_MEMORY_END 0xFFFFFF0000000000ULL
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

@@ -55,6 +55,7 @@ global _kernelPGDir
 global _pagingPDP
 global _pagingPD
 global _physicalMapDir
+global _physicalMapTranslationPage
 
 ;-------------------------------------------------------------------------------
 ; EXPORTED DATA
@@ -145,4 +146,6 @@ _pagingPD:
     dq 0x0000000000400083
     times (509) dq 0x00
 _physicalMapDir:
+    times (512) dq 0x00
+_physicalMapTranslationPage:
     times (512) dq 0x00

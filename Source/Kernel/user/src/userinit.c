@@ -237,7 +237,6 @@ static OS_RETURN_E _createInit(void)
         }
     }
 
-
     if(pInitPath == NULL)
     {
         syslog(SYSLOG_LEVEL_ERROR,

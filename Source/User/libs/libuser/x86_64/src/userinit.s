@@ -62,7 +62,7 @@ global __user_entry
 section .init
 align 4
 __user_entry:
-    ; Align stack 
+    ; Align stack
     and rsp, 0xFFFFFFFFFFFFFFF0
 
     ; Init BSS

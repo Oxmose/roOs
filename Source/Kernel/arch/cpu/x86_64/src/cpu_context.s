@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-; File: cpuContext.s
+; File: cpu_context.s
 ;
 ; Author: Alexy Torres Aurora Dugo
 ;
@@ -100,6 +100,7 @@ cpuSaveContext:
     mov rbx, 8
     mul rbx
     mov rbx, pCurrentThreadsPtr
+    mov rbx, [rbx]
     add rax, rbx
     mov rax, [rax]
     mov rax, [rax]

@@ -17,8 +17,8 @@
  * @copyright Alexy Torres Aurora Dugo
  ******************************************************************************/
 
-#ifndef __CPU_CPUSYSCALL_H_
-#define __CPU_CPUSYSCALL_H_
+#ifndef __CPU_CPU_SYSCALL_H_
+#define __CPU_CPU_SYSCALL_H_
 
 /*******************************************************************************
  * INCLUDES
@@ -133,6 +133,6 @@ void cpuRestoreUserSyscallContext(const kernel_thread_t* kpThread);
  */
 void cpuUserSyscallHandler(const uint64_t kSyscallId, void* pParams);
 
-#endif /* #ifndef __CPU_CPUSYSCALL_H_ */
+#endif /* #ifndef __CPU_CPU_SYSCALL_H_ */
 
 /************************************ EOF *************************************/

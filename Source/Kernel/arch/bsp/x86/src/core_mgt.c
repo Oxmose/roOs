@@ -27,6 +27,7 @@
 #include <panic.h>        /* Kernel panic */
 #include <lapic.h>        /* LAPIC driver */
 #include <kheap.h>        /* Kernel heap */
+#include <string.h>       /* String manipulation */
 #include <kqueue.h>       /* Kernel queues */
 #include <x86cpu.h>       /* CPU management */
 #include <stdint.h>       /* Generic int types */
@@ -40,6 +41,7 @@
 #include <ctrl_block.h>   /* Thread's control block */
 #include <interrupts.h>   /* Interrupt manager */
 #include <lapic_timer.h>  /* LAPIC timer driver */
+
 /* Configuration files */
 #include <config.h>
 
@@ -53,12 +55,14 @@
  * CONSTANTS
  ******************************************************************************/
 
-#if SOC_CPU_COUNT <= 0
-#error "SOC_CPU_COUNT must be greater or equal to 1"
-#endif
-
 /** @brief Current module name */
 #define MODULE_NAME "CORE MGT"
+
+/** @brief Compatible property name in FDT */
+#define COMPATIBLE_PROP_NAME "compatible"
+
+/** @brief Status property name in FDT */
+#define STATUS_PROP_NAME "status"
 
 /** @brief LAPIC flag: enabled (running) */
 #define LAPIC_FLAG_ENABLED 0x1
@@ -102,7 +106,6 @@
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
 
-#if SOC_CPU_COUNT > 1
 /**
  * @brief IPI interrupt handler.
  *
@@ -114,8 +117,6 @@
  * @return Returns if the scheduler must be called on return.
  */
 static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread);
-
-#endif /* #if SOC_CPU_COUNT > 1 */
 
 /**
  * @brief Attaches the Core Manager driver to the system.
@@ -131,11 +132,19 @@ static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread);
  */
 static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode);
 
+/**
+ * @brief Initializes the number of CPU based on the FDT.
+ * 
+ * @param[in] kpFdtNone The current FDT node to walk.
+ * 
+ * @details Initializes the number of CPU based on the FDT. If an error is
+ * detected, a kernel panic is raised.
+ */
+static void _coreMgtWalkCpuCount(const fdt_node_t* kpFdtNone);
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************/
-
-#if SOC_CPU_COUNT > 1
 
 /************************* Imported global variables **************************/
 /** @brief Stores the number of enabled (running) cores in the system. */
@@ -147,7 +156,7 @@ extern volatile uint32_t _bootedCPUCount;
 /************************** Static global variables ***************************/
 
 /** @brief Stores the translated CPU identifiers */
-static uint8_t sCoreIds[SOC_CPU_COUNT] = {0};
+static uint8_t* spCoreIds;
 
 /** @brief Stores the LAPIC driver instance */
 static const lapic_driver_t* kspLapicDriver = NULL;
@@ -159,9 +168,7 @@ static const lapic_timer_driver_t* kspLapicTimerDriver = NULL;
 static uint32_t sIpiInterruptLine;
 
 /** @brief Stores the IPI parameters */
-static kqueue_t* sIpiParametersList[SOC_CPU_COUNT];
-
-#endif /* #if SOC_CPU_COUNT > 1 */
+static kqueue_t** spIpiParametersList;
 
 /** @brief CPU driver instance. */
 static driver_t sX86CPUDriver = {
@@ -175,6 +182,9 @@ static driver_t sX86CPUDriver = {
 /** @brief Stores the number of detected CPUs from the FDT */
 static uint32_t sCpuFromFDTCount = 0;
 
+/** @brief Stores the number of CPU that were attached. */
+static uint32_t sAttachedCpus = 0;
+
 /*******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
@@ -183,9 +193,9 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode)
 {
     (void)pkFdtNode;
 
-    if(sCpuFromFDTCount < SOC_CPU_COUNT)
+    if(sAttachedCpus < sCpuFromFDTCount)
     {
-        ++sCpuFromFDTCount;
+        ++sAttachedCpus;
     }
     else
     {
@@ -195,7 +205,37 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode)
     return OS_NO_ERR;
 }
 
-#if SOC_CPU_COUNT > 1
+static void _coreMgtWalkCpuCount(const fdt_node_t* kpFdtNone)
+{
+    const char* kpCompatible;
+    const char* kpStatus;
+    size_t      propLen;
+
+    if(kpFdtNone == NULL)
+    {
+        return;
+    }
+
+    /* Manage disabled nodes */
+    kpStatus = fdtGetProp(kpFdtNone, STATUS_PROP_NAME, &propLen);
+    if(kpStatus == NULL || (propLen == 5 && strcmp(kpStatus, "okay") == 0))
+    {
+        /* Get the node compatible */
+        kpCompatible = fdtGetProp(kpFdtNone, COMPATIBLE_PROP_NAME, &propLen);
+        if(kpCompatible != NULL && propLen > 0)
+        {
+            if(strcmp(sX86CPUDriver.pCompatible, kpCompatible) == 0)
+            {
+                ++sCpuFromFDTCount;
+            }
+        }
+    }
+
+    /* Got to next nodes */
+    _coreMgtWalkCpuCount(fdtGetChild(kpFdtNone));
+    _coreMgtWalkCpuCount(fdtGetNextNode(kpFdtNone));
+}
+
 static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread)
 {
     kqueue_node_t* pNode;
@@ -208,7 +248,7 @@ static bool _ipiInterruptHandler(kernel_thread_t* pCurrThread)
     cpuId = cpuGetId();
 
     /* Get the parameters */
-    pNode = kQueuePop(sIpiParametersList[cpuId]);
+    pNode = kQueuePop(spIpiParametersList[cpuId]);
     CORE_MGT_ASSERT(pNode != NULL,
                     "IPI without parameters",
                     OS_ERR_UNAUTHORIZED_ACTION);
@@ -252,6 +292,7 @@ void coreMgtRegLapicTimerDriver(const lapic_timer_driver_t* kpLapicTimerDriver)
 void coreMgtInit(void)
 {
     uint32_t                      i;
+    size_t                        lastBooted;
     OS_RETURN_E                   error;
     const lapic_node_t*           kpLapicNode;
     const cpu_interrupt_config_t* kpCpuIntConfig;
@@ -287,20 +328,20 @@ void coreMgtInit(void)
                     error);
 
     /* Initializes the IPI parameters locks */
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    for(i = 0; i < sCpuFromFDTCount; ++i)
     {
-        sIpiParametersList[i] = kQueueCreate(true);
+        spIpiParametersList[i] = kQueueCreate(true);
     }
 
     /* Init the current core information */
-    sCoreIds[0] = kspLapicDriver->pGetLAPICId();
+    spCoreIds[0] = kspLapicDriver->pGetLAPICId();
 
     /* Check if we need to enable more cores */
     kpLapicNode = kspLapicDriver->pGetLAPICList();
     while(kpLapicNode != NULL && _bootedCPUCount < sCpuFromFDTCount)
     {
         /* If not self */
-        if(sCoreIds[0] != kpLapicNode->lapic.lapicId)
+        if(spCoreIds[0] != kpLapicNode->lapic.lapicId)
         {
 
 #if CORE_MGT_DEBUG_ENABLED
@@ -322,13 +363,32 @@ void coreMgtInit(void)
         /* Go to next */
         kpLapicNode = kpLapicNode->pNext;
     }
+
+    /* Wait for all CPU to have booted */
+    lastBooted = 0;
+    while(_bootedCPUCount < sCpuFromFDTCount)
+    {
+        if(lastBooted != _bootedCPUCount)
+        {
+            lastBooted = _bootedCPUCount;
+            syslog(SYSLOG_LEVEL_INFO,
+                   MODULE_NAME,
+                   "Waiting for other CPUs, currenlty %d/%d",
+                   lastBooted,
+                   sCpuFromFDTCount);
+        }
+    }
+
+    /* Last check */
+    CORE_MGT_ASSERT(sAttachedCpus == _bootedCPUCount,
+                    "Attached CPUs count does not match booted CPU count.",
+                    OS_ERR_INCORRECT_VALUE);
 }
 
 void coreMgtApInit(const uint8_t kCpuId)
 {
-
     /* Init our LAPIC ID */
-    sCoreIds[kCpuId] = kspLapicDriver->pGetLAPICId();
+    spCoreIds[kCpuId] = kspLapicDriver->pGetLAPICId();
 
     /* Init LAPIC for the calling CPU */
     kspLapicDriver->pInitApCore();
@@ -381,9 +441,9 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                 pParams = kpParams;
             }
             pNode = kQueueCreateNode(pParams, true);
-            kQueuePush(pNode, sIpiParametersList[destCpuId]);
+            kQueuePush(pNode, spIpiParametersList[destCpuId]);
 
-            kspLapicDriver->pSendIPI(sCoreIds[destCpuId], sIpiInterruptLine);
+            kspLapicDriver->pSendIPI(spCoreIds[destCpuId], sIpiInterruptLine);
         }
     }
     else if((kFlags & CPU_IPI_BROADCAST_TO_ALL) ==
@@ -405,9 +465,9 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                 pParams = kpParams;
             }
             pNode = kQueueCreateNode(pParams, true);
-            kQueuePush(pNode, sIpiParametersList[i]);
+            kQueuePush(pNode, spIpiParametersList[i]);
 
-            kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
+            kspLapicDriver->pSendIPI(spCoreIds[i], sIpiInterruptLine);
         }
     }
     else if((kFlags & CPU_IPI_BROADCAST_TO_OTHER) ==
@@ -432,9 +492,9 @@ void cpuMgtSendIpi(const uint32_t kFlags,
                     pParams = kpParams;
                 }
                 pNode = kQueueCreateNode(pParams, true);
-                kQueuePush(pNode, sIpiParametersList[i]);
+                kQueuePush(pNode, spIpiParametersList[i]);
 
-                kspLapicDriver->pSendIPI(sCoreIds[i], sIpiInterruptLine);
+                kspLapicDriver->pSendIPI(spCoreIds[i], sIpiInterruptLine);
             }
         }
     }
@@ -442,40 +502,34 @@ void cpuMgtSendIpi(const uint32_t kFlags,
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 }
 
-#else /* SOC_CPU_COUNT > 1 */
-
-void coreMgtRegLapicDriver(const lapic_driver_t* kpLapicDriver)
+void coreMgtInitCpuCount(void)
 {
-    (void)kpLapicDriver;
+    const fdt_node_t* kpFdtRootNode;
+
+    /* Get the FDT root node and walk it to register CPUs */
+    kpFdtRootNode = fdtGetRoot();
+    CORE_MGT_ASSERT(kpFdtRootNode != NULL, 
+                    "NULL Device File Tree", 
+                    OS_ERR_NULL_POINTER);
+
+    /* Perform the registration */
+    _coreMgtWalkCpuCount(kpFdtRootNode);
+
+    /* Initialize internal resources */
+    spCoreIds = kmalloc(sizeof(uint8_t) * sCpuFromFDTCount);
+    CORE_MGT_ASSERT(spCoreIds != NULL,
+                    "Failed to allocate Core IDs table.",
+                    OS_ERR_NO_MORE_MEMORY);
+    spIpiParametersList = kmalloc(sizeof(kqueue_t*) * sCpuFromFDTCount);
+    CORE_MGT_ASSERT(spIpiParametersList != NULL,
+                    "Failed to allocate Core IPI table.",
+                    OS_ERR_NO_MORE_MEMORY);
 }
 
-void coreMgtRegLapicTimerDriver(const lapic_timer_driver_t* kpLapicTimerDriver)
+uint32_t coreMgtGetCpuCount(void)
 {
-    (void)kpLapicTimerDriver;
+    return sCpuFromFDTCount;
 }
-
-void coreMgtInit(void)
-{
-    return;
-}
-
-void coreMgtApInit(const uint8_t kCpuId)
-{
-    (void)kCpuId;
-
-    return;
-}
-
-void cpuMgtSendIpi(const uint32_t kFlags,
-                   ipi_params_t*  pParams,
-                   const bool     kAllocateParam)
-{
-    (void)kFlags;
-    (void)pParams;
-    (void)kAllocateParam;
-}
-
-#endif /* SOC_CPU_COUNT > 1 */
 
 /***************************** DRIVER REGISTRATION ****************************/
 DRIVERMGR_REG_FDT(sX86CPUDriver);

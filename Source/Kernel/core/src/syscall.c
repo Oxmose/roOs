@@ -22,14 +22,14 @@
  ******************************************************************************/
 
 /* Included headers */
-#include <vfs.h>        /* VFS services */
-#include <errno.h>      /* Errno values */
-#include <kerror.h>     /* Kernel errors */
-#include <stddef.h>     /* Standard definitions */
-#include <stdbool.h>    /* Standard bool type definition */
-#include <time_mgt.h>   /* Time manager */
-#include <scheduler.h>  /* Kernel scheduler */
-#include <cpuSyscall.h> /* CPU system call manager */
+#include <vfs.h>         /* VFS services */
+#include <errno.h>       /* Errno values */
+#include <kerror.h>      /* Kernel errors */
+#include <stddef.h>      /* Standard definitions */
+#include <stdbool.h>     /* Standard bool type definition */
+#include <time_mgt.h>    /* Time manager */
+#include <scheduler.h>   /* Kernel scheduler */
+#include <cpu_syscall.h> /* CPU system call manager */
 
 /* Configuration files */
 #include <config.h>

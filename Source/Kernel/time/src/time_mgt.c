@@ -25,6 +25,7 @@
  ******************************************************************************/
 
 /* Included headers */
+#include <cpu.h>           /* Core manager */
 #include <panic.h>         /* Kernel panic */
 #include <kheap.h>         /* Kernel heap */
 #include <errno.h>         /* Errno values */
@@ -170,6 +171,9 @@ static OS_RETURN_E _timeMgtAddAuxTimer(const kernel_timer_t* kpTimer);
 
 /************************** Static global variables ***************************/
 
+/** @brief Stores the number of CPUs in the system */
+static uint32_t sCpuCount;
+
 /** @brief The kernel's main timer interrupt source.
  *
  *  @details The kernel's main timer interrupt source. If it's function pointers
@@ -224,13 +228,13 @@ static kernel_timer_t sSysLifetimeTimer = {
 /** @brief Stores the number of main kernel's timer tick since the
  * initialization of the time manager.
  */
-static uint64_t sSysTickCount[SOC_CPU_COUNT] = {0};
+static uint64_t* spSysTickCount;
 
 /** @brief Auxiliary timers list */
 static kqueue_t* spAuxTimersQueue = NULL;
 
 /** @brief Active wait counter per CPU. */
-static volatile uint64_t sActiveWait[SOC_CPU_COUNT] = {0};
+static volatile uint64_t* spActiveWait;
 
 /** @brief Auxiliary timers list lock */
 static kernel_spinlock_t sAuxTimersListLock = KERNEL_SPINLOCK_INIT_VALUE;
@@ -265,7 +269,7 @@ static bool _mainTimerHandler(kernel_thread_t* pCurrThread)
 #endif
 
     /* Add a tick count */
-    ++sSysTickCount[cpuId];
+    ++spSysTickCount[cpuId];
 
     if(sSysMainTimer.pTickManager != NULL)
     {
@@ -273,13 +277,13 @@ static bool _mainTimerHandler(kernel_thread_t* pCurrThread)
     }
 
     /* Use coarse active wait if not lifetime timer is present */
-    if(sActiveWait[cpuId] != 0)
+    if(spActiveWait[cpuId] != 0)
     {
         /* Use ticks */
-        if(sActiveWait[cpuId] <= sSysTickCount[cpuId] * 1000000000 /
+        if(spActiveWait[cpuId] <= spSysTickCount[cpuId] * 1000000000 /
                 sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl))
         {
-            sActiveWait[cpuId] = 0;
+            spActiveWait[cpuId] = 0;
         }
     }
 
@@ -340,6 +344,19 @@ void timeInit(void)
     size_t                propLen;
     size_t                i;
     const kernel_timer_t* kpTimer;
+
+    /* Get the number of CPUs */
+    sCpuCount = cpuGetCount();
+
+    /* Initialize the structures */
+    spSysTickCount = kmalloc(sizeof(uint64_t) * sCpuCount);
+    TIME_ASSERT(spSysTickCount != NULL, 
+                "Failed to allocate timing structure.", 
+                OS_ERR_NO_MORE_MEMORY);
+    spActiveWait = kmalloc(sizeof(uint64_t) * sCpuCount);
+    TIME_ASSERT(spActiveWait != NULL, 
+                "Failed to allocate timing structure.", 
+                OS_ERR_NO_MORE_MEMORY);
 
     /* Get the FDT timers node */
     kpTimerNode = fdtGetNodeByName(FDT_TIMECONFIG_NODE_NAME);
@@ -482,11 +499,11 @@ uint64_t timeGetUptime(void)
     {
         /* Get the highest time tick */
         maxTick = 0;
-        for(i = 0; i < SOC_CPU_COUNT; ++i)
+        for(i = 0; i < sCpuCount; ++i)
         {
-            if(maxTick < sSysTickCount[i])
+            if(maxTick < spSysTickCount[i])
             {
-                maxTick = sSysTickCount[i];
+                maxTick = spSysTickCount[i];
             }
         }
         time = maxTick * 1000000000ULL /
@@ -539,9 +556,9 @@ date_t timeGetDate(void)
 
 uint64_t timeGetTicks(const uint8_t kCpuId)
 {
-    if(kCpuId < SOC_CPU_COUNT)
+    if(kCpuId < sCpuCount)
     {
-        return sSysTickCount[kCpuId];
+        return spSysTickCount[kCpuId];
     }
     else
     {
@@ -556,7 +573,7 @@ void timeWaitNoScheduler(const uint64_t ns)
 
     cpuId = cpuGetId();
 
-    sActiveWait[cpuId] = 0;
+    spActiveWait[cpuId] = 0;
 
     if(sSysLifetimeTimer.pGetTimeNs == NULL)
     {
@@ -570,9 +587,9 @@ void timeWaitNoScheduler(const uint64_t ns)
         else if(sSysMainTimer.pGetFrequency != NULL)
         {
             /* Use ticks */
-            sActiveWait[cpuId] = ns + sSysTickCount[cpuId] * 1000000000 /
+            spActiveWait[cpuId] = ns + spSysTickCount[cpuId] * 1000000000 /
                          sSysMainTimer.pGetFrequency(sSysMainTimer.pDriverCtrl);
-            while(sActiveWait[cpuId] > 0){}
+            while(spActiveWait[cpuId] > 0){}
         }
         else
         {

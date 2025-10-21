@@ -47,6 +47,8 @@
         "syslog.h": "c",
         "kheap.h": "c",
         "cpuinterrupt.h": "c",
-        "syscalls.h": "c"
+        "syscalls.h": "c",
+        "syscall.h": "c",
+        "drivermgr.h": "c"
     }
 }

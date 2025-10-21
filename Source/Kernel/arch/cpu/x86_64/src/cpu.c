@@ -38,7 +38,7 @@
 #include <scheduler.h>     /* Kernel scheduler */
 #include <ctrl_block.h>    /* Kernel control block */
 #include <exceptions.h>    /* Exception manager */
-#include <cpuSyscall.h>    /* CPU system calls */
+#include <cpu_syscall.h>   /* CPU system calls */
 #include <cpuInterrupt.h>  /* Interrupt manager */
 
 /* Configuration files */
@@ -53,10 +53,6 @@
 /*******************************************************************************
  * CONSTANTS
  ******************************************************************************/
-
-#if SOC_CPU_COUNT <= 0
-#error "SOC_CPU_COUNT must be greater or equal to 1"
-#endif
 
 /** @brief Current module name */
 #define MODULE_NAME "CPU_X64"
@@ -85,7 +81,7 @@
 #define TSS_SEGMENT  0x30
 
 /** @brief Number of entries in the kernel's GDT. */
-#define GDT_ENTRY_COUNT (6 + SOC_CPU_COUNT * 2)
+#define GDT_ENTRY_COUNT (6 + sCpuCount * 2)
 
 /** @brief Kernel's 64 bits code segment base address. */
 #define KERNEL_CODE_SEGMENT_BASE_64  0x00000000
@@ -1961,7 +1957,7 @@ uint32_t firstTssSegmentIdx;
 
 /************************** Static global variables ***************************/
 /** @brief CPU GDT space in memory. */
-static uint64_t sGDT[GDT_ENTRY_COUNT]        __attribute__((aligned(8)));
+static uint64_t* spGDT;
 /** @brief Kernel GDT structure */
 static gdt_ptr_t sGDTPtr                     __attribute__((aligned(8)));
 
@@ -1971,7 +1967,7 @@ static cpu_idt_entry_t sIDT[IDT_ENTRY_COUNT] __attribute__((aligned(8)));
 static idt_ptr_t sIDTPtr                     __attribute__((aligned(8)));
 
 /** @brief CPU TSS structures */
-static cpu_tss_entry_t sTSS[SOC_CPU_COUNT]   __attribute__((aligned(8)));
+static cpu_tss_entry_t* spTSS;
 
 /** @brief Stores the CPU interrupt handlers entry point */
 static uintptr_t sIntHandlerTable[IDT_ENTRY_COUNT] = {
@@ -2246,12 +2242,14 @@ const cpu_interrupt_config_t ksInterruptConfig = {
     .ipiInterruptLine        = IPI_INT_LINE,
 };
 
+/** @brief Stores the number of CPU supported in the system */
+static uint32_t sCpuCount;
 /** @brief Stores the CPU frequency for each CPU */
-static uint32_t sCpuFrequency[SOC_CPU_COUNT];
+static uint32_t* spCpuFrequency;
 /** @brief Stores the cache size for each CPU */
 static uint32_t sCpuCacheSize;
 /** @brief Stores the sysfs string */
-static char sCpuSysfsEntryStr[SOC_CPU_COUNT][CPUS_SYSFS_STR_LENGTH + 1];
+static char** spCpuSysfsEntryStr;
 /** @brief Stores the vendor string */
 static char sCpuVendor[CPU_VENDOR_STR_SIZE + 1];
 /** @brief Stores the addressing string */
@@ -3154,38 +3152,43 @@ static void _setupGDT(void)
                             GDT_ACCESS_BYTE_PRESENT  |
                             GDT_ACCESS_BYTE_SYSTEM;
 
+    /* Allocate the GDT and align on 8 bytes */
+    spGDT = kmalloc(sizeof(uint64_t) * GDT_ENTRY_COUNT + 8);
+    CPU_ASSERT(spGDT != NULL, "Failed to allocate GDT", OS_ERR_NO_MORE_MEMORY);
+    spGDT = (uint64_t*)((((uintptr_t)spGDT) + 8) & ~0x7ULL);
+    
     /* Blank the GDT, set the NULL descriptor */
-    memset(sGDT, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
+    memset(spGDT, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
 
     /* Load the segments */
-    _formatGDTEntry(&sGDT[KERNEL_CS_64 / 8],
+    _formatGDTEntry(&spGDT[KERNEL_CS_64 / 8],
                     KERNEL_CODE_SEGMENT_BASE_64,
                     KERNEL_CODE_SEGMENT_LIMIT_64,
                     kernelCode64SegAccess,
                     kernelCode64SegFlags);
 
-    _formatGDTEntry(&sGDT[KERNEL_DS_64 / 8],
+    _formatGDTEntry(&spGDT[KERNEL_DS_64 / 8],
                     KERNEL_DATA_SEGMENT_BASE_64,
                     KERNEL_DATA_SEGMENT_LIMIT_64,
                     kernelData64SegAccess,
                     kernelData64SegFlags);
 
-    _formatGDTEntry(&sGDT[USER_CS_64 / 8],
+    _formatGDTEntry(&spGDT[USER_CS_64 / 8],
                     USER_CODE_SEGMENT_BASE_64,
                     USER_CODE_SEGMENT_LIMIT_64,
                     userCode64SegAccess,
                     userCode64SegFlags);
 
-    _formatGDTEntry(&sGDT[USER_DS_64 / 8],
+    _formatGDTEntry(&spGDT[USER_DS_64 / 8],
                     USER_DATA_SEGMENT_BASE_64,
                     USER_DATA_SEGMENT_LIMIT_64,
                     userData64SegAccess,
                     userData64SegFlags);
 
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    for(i = 0; i < sCpuCount; ++i)
     {
-        _formatTSSEntry(&sGDT[(TSS_SEGMENT + i * 0x10) / 8],
-                        (uintptr_t)&sTSS[i],
+        _formatTSSEntry(&spGDT[(TSS_SEGMENT + i * 0x10) / 8],
+                        (uintptr_t)&spTSS[i],
                         sizeof(cpu_tss_entry_t) - 1,
                         tssSegAccess,
                         tssSegFlags);
@@ -3193,7 +3196,7 @@ static void _setupGDT(void)
 
     /* Set the GDT descriptor */
     sGDTPtr.size = ((sizeof(uint64_t) * GDT_ENTRY_COUNT) - 1);
-    sGDTPtr.base = (uintptr_t)&sGDT;
+    sGDTPtr.base = (uintptr_t)spGDT;
 
     /* Load the GDT */
     __asm__ __volatile__("lgdt %0" :: "m" (sGDTPtr.size),
@@ -3212,6 +3215,9 @@ static void _setupGDT(void)
                          "push %%rax\n\t"
                          "lretq\n\t"
                          "new_gdt_seg_: \n\t" :: "i" (KERNEL_CS_64) : "rax");
+
+    /* Load the TSS */
+    __asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
 
     syslog(SYSLOG_LEVEL_INFO,
            MODULE_NAME,
@@ -3275,37 +3281,54 @@ static void _setupTSS(void)
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Setting TSS");
 #endif
 
+    /* Allocate the GDT and align on 8 bytes */
+    spTSS = kmalloc(sizeof(cpu_tss_entry_t) * sCpuCount + 8);
+    CPU_ASSERT(spTSS != NULL, "Failed to allocate GDT", OS_ERR_NO_MORE_MEMORY);
+    spTSS = (cpu_tss_entry_t*)((((uintptr_t)spTSS) + 8) & ~0x7ULL);
+
     /* Blank the TSS */
-    memset(sTSS, 0, sizeof(cpu_tss_entry_t) * SOC_CPU_COUNT);
+    memset(spTSS, 0, sizeof(cpu_tss_entry_t) * sCpuCount);
 
     /* Set basic values */
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    for(i = 0; i < sCpuCount; ++i)
     {
         /* Setup the ISTs */
 
-        sTSS[i].ist1 = (uintptr_t)sDoubleFaultStack;
-        sTSS[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
+        spTSS[i].ist1 = (uintptr_t)sDoubleFaultStack;
+        spTSS[i].rsp0 = ((uintptr_t)&_KERNEL_STACKS_BASE) +
                         KERNEL_STACK_SIZE * (i + 1) - sizeof(uint64_t) * 2;
-        sTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
+        spTSS[i].ioMapBase = sizeof(cpu_tss_entry_t);
     }
     firstTssSegmentIdx = TSS_SEGMENT;
 
-    /* Load TSS */
-    __asm__ __volatile__("ltr %0" : : "rm" ((uint16_t)(TSS_SEGMENT)));
-
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "TSS Initialized at 0x%P", sTSS);
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "TSS Initialized at 0x%P", spTSS);
 }
 
 static void _initSysfsEntry(void)
 {
     vfs_driver_t sysfsDriver;
     int32_t      cpuId;
+    uint32_t     cpuCount;
 
     cpuId = cpuGetId();
 
     /* Only the first CPU setup the sysfs */
     if(cpuId == 0)
     {
+        /* Initialize the entries */
+        spCpuSysfsEntryStr = kmalloc(sizeof(char*) * sCpuCount);
+        CPU_ASSERT(spCpuSysfsEntryStr != NULL,
+                "Failed to allocated CPU SysFs entries.",
+                    OS_ERR_NO_MORE_MEMORY);
+        for(cpuCount = 0; cpuCount < sCpuCount; ++cpuCount)
+        {
+            spCpuSysfsEntryStr[cpuCount] = kmalloc(sizeof(char) * 
+                                            (CPUS_SYSFS_STR_LENGTH + 1));
+            CPU_ASSERT(spCpuSysfsEntryStr[cpuCount] != NULL,
+                       "Failed to allocated CPU SysFs entries.",
+                       OS_ERR_NO_MORE_MEMORY);
+        }
+
         /* Register the driver */
         sysfsDriver = vfsRegisterDriver(CPUS_SYSFS_DIR_PATH,
                                         NULL,
@@ -3320,8 +3343,11 @@ static void _initSysfsEntry(void)
                 OS_ERR_INCORRECT_VALUE);
     }
 
+    
+
+
     /* Prepare the VFS read value */
-    snprintf(sCpuSysfsEntryStr[cpuId],
+    snprintf(spCpuSysfsEntryStr[cpuId],
              CPUS_SYSFS_STR_LENGTH,
              "CPU-%d\n"
              "\t Identifier: %d\n"
@@ -3332,7 +3358,7 @@ static void _initSysfsEntry(void)
              "\t Flags: %s\n",
              cpuId,
              cpuId,
-             sCpuFrequency[cpuId],
+             spCpuFrequency[cpuId],
              sCpuVendor,
              sCpuAddressing,
              sCpuCacheSize,
@@ -3371,7 +3397,7 @@ static void* _cpuVfsOpen(void*       pDrvCtrl,
             kfree(pEntry);
             return (void*)-1;
         }
-        if(pEntry->cpuId >= SOC_CPU_COUNT)
+        if(pEntry->cpuId >= (int32_t)sCpuCount)
         {
             kfree(pEntry);
             return (void*)-1;
@@ -3439,7 +3465,7 @@ static ssize_t _cpuVfsRead(void*  pDrvCtrl,
         return -1;
     }
 
-    length = strlen(sCpuSysfsEntryStr[pEntry->cpuId]);
+    length = strlen(spCpuSysfsEntryStr[pEntry->cpuId]);
     if(length <= pEntry->offset)
     {
         return 0;
@@ -3447,7 +3473,7 @@ static ssize_t _cpuVfsRead(void*  pDrvCtrl,
     length -= pEntry->offset;
 
     toCopy = MIN(length, count);
-    memcpy(pBuffer, sCpuSysfsEntryStr[pEntry->cpuId] + pEntry->offset, toCopy);
+    memcpy(pBuffer, spCpuSysfsEntryStr[pEntry->cpuId] + pEntry->offset, toCopy);
     pEntry->offset += toCopy;
 
     return toCopy;
@@ -3473,7 +3499,7 @@ static int32_t _cpuVfsReadDir(void*     pDriverData,
     }
 
     /* Returns the next CPU */
-    if(pEntry->offset < SOC_CPU_COUNT)
+    if(pEntry->offset < sCpuCount)
     {
         snprintf(pDirEntry->pName,
                  VFS_FILENAME_MAX_LENGTH,
@@ -3481,7 +3507,7 @@ static int32_t _cpuVfsReadDir(void*     pDriverData,
                  pEntry->offset);
         pDirEntry->type = VFS_FILE_TYPE_FILE;
         ++pEntry->offset;
-        if(pEntry->offset == SOC_CPU_COUNT)
+        if(pEntry->offset == sCpuCount)
         {
             return 0;
         }
@@ -3825,9 +3851,13 @@ static void _cpuValidateArchitecture(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU Features: %s", sCpuFlags);
 
     /* TODO: Get frequency */
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    spCpuFrequency = kmalloc(sizeof(uint32_t) * sCpuCount);
+    CPU_ASSERT(spCpuFrequency != NULL, 
+               "Failed to allocated CPU structures.", 
+               OS_ERR_NO_MORE_MEMORY);
+    for(i = 0; i < sCpuCount; ++i)
     {
-        sCpuFrequency[i] = 1000;
+        spCpuFrequency[i] = 1000;
     }
 
     /* Get the cache size */
@@ -3854,15 +3884,19 @@ static void _cpuValidateArchitecture(void)
 
 void cpuInit(void)
 {
+    /* Get the number of CPUs present in the architecture */
+    coreMgtInitCpuCount();
+    sCpuCount = coreMgtGetCpuCount();
+
     /* Validate architecture */
     _cpuValidateArchitecture();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
 
-    /* Init the GDT, IDT and TSS */
-    _setupGDT();
+    /* Init the TSS, GDT, IDT */
     _setupIDT();
     _setupTSS();
-
+    _setupGDT();
+    
     /* Init the system calls */
     cpuSystemCallInit((uintptr_t)cpuUserSyscallHandler,
                       KERNEL_CS_64,
@@ -4755,7 +4789,7 @@ void cpuApInit(const uint8_t kCpuId)
            MODULE_NAME,
            "CPU %d TSS Initialized at 0x%P\n",
            kCpuId,
-           &sTSS[kCpuId]);
+           &spTSS[kCpuId]);
 #endif
 
     /* Init the rest of the CPU facilities */
@@ -5325,7 +5359,7 @@ void cpuUpdateMemoryConfig(kernel_thread_t* pCurrentThread)
     if(pCurrentThread->type == THREAD_TYPE_USER)
     {
         /* Update the TSS */
-        sTSS[cpuId].rsp0 = pCurrentThread->kernelStackEnd - 0x8;
+        spTSS[cpuId].rsp0 = pCurrentThread->kernelStackEnd - 0x8;
     }
 
     /* Update the thread local storage */
@@ -5523,6 +5557,11 @@ void cpuDestroyLocalStorage(kernel_thread_t* pThread)
     CPU_ASSERT(error == OS_NO_ERR,
                "Failed to release thread local storage.",
                error);
+}
+
+uint32_t cpuGetCount(void)
+{
+    return sCpuCount;
 }
 
 /* Stack protection support */

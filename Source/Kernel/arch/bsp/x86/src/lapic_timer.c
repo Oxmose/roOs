@@ -111,7 +111,7 @@ typedef struct
     uint8_t interruptNumber;
 
     /** @brief LAPIC Timer internal frequency. One per CPU */
-    uint32_t internalFrequency[SOC_CPU_COUNT];
+    uint32_t* pInternalFrequency;
 
     /** @brief Selected interrupt frequency. */
     uint32_t selectedFrequency;
@@ -120,7 +120,7 @@ typedef struct
     uint32_t divider;
 
     /** @brief Keeps track on the LAPIC Timer enabled state. One per CPU */
-    uint32_t disabledNesting[SOC_CPU_COUNT];
+    uint32_t* pDisabledNesting;
 
     /** @brief LAPIC base addresss */
     uintptr_t lapicBaseAddress;
@@ -365,6 +365,7 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
 {
     const uint32_t*     kpUintProp;
     size_t              propLen;
+    uint32_t            cpuCount;
     OS_RETURN_E         retCode;
     lapic_timer_ctrl_t* pDrvCtrl;
     kernel_timer_t*     pTimerDrv;
@@ -375,6 +376,8 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
 
     retCode = OS_NO_ERR;
 
+    cpuCount = coreMgtGetCpuCount();
+
     /* Init structures */
     pDrvCtrl = kmalloc(sizeof(lapic_timer_ctrl_t));
     if(pDrvCtrl == NULL)
@@ -384,6 +387,22 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     }
     spDrvCtrl = pDrvCtrl;
     memset(pDrvCtrl, 0, sizeof(lapic_timer_ctrl_t));
+
+    pDrvCtrl->pInternalFrequency = kmalloc(sizeof(uint32_t) * cpuCount);
+    if(pDrvCtrl->pInternalFrequency == NULL)
+    {
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    memset(pDrvCtrl->pInternalFrequency, 0, sizeof(uint32_t) * cpuCount);
+
+    pDrvCtrl->pDisabledNesting = kmalloc(sizeof(uint32_t) * cpuCount);
+    if(pDrvCtrl->pDisabledNesting == NULL)
+    {
+        retCode = OS_ERR_NO_MORE_MEMORY;
+        goto ATTACH_END;
+    }
+    memset(pDrvCtrl->pDisabledNesting, 0, sizeof(uint32_t) * cpuCount);
 
     pTimerDrv = kmalloc(sizeof(kernel_timer_t));
     if(pTimerDrv == NULL)
@@ -514,7 +533,7 @@ static OS_RETURN_E _lapicTimerAttach(const fdt_node_t* pkFdtNode)
     pDrvCtrl->lapicBaseAddress = pLapicDriver->pGetBaseAddress();
 
     /* Init system times */
-    pDrvCtrl->disabledNesting[0] = 1;
+    pDrvCtrl->pDisabledNesting[0] = 1;
 
     /* Calibrate the LAPIC Timer */
     _lapicTimerCalibrate(0);
@@ -536,6 +555,14 @@ ATTACH_END:
     {
         if(pDrvCtrl != NULL)
         {
+            if(pDrvCtrl->pInternalFrequency != NULL)
+            {
+                kfree(pDrvCtrl->pInternalFrequency);
+            }
+            if(pDrvCtrl->pDisabledNesting != NULL)
+            {
+                kfree(pDrvCtrl->pDisabledNesting);
+            }
             kfree(pDrvCtrl);
         }
         if(pTimerDrv != NULL)
@@ -591,7 +618,7 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
     }
 
     /* Get the actual frequency and compute the interrupt count */
-    spDrvCtrl->internalFrequency[kCpuId] =
+    spDrvCtrl->pInternalFrequency[kCpuId] =
         1000000000 / (period / lapicTimerCount);
 
 #if LAPICT_DEBUG_ENABLED
@@ -606,7 +633,7 @@ static OS_RETURN_E _lapicTimerCalibrate(const uint8_t kCpuId)
            period,
            lapicTimerCount,
            period / (lapicTimerCount),
-           spDrvCtrl->internalFrequency);
+           spDrvCtrl->pInternalFrequency);
 #endif
 
     return OS_NO_ERR;
@@ -636,22 +663,22 @@ static void _lapicTimerEnable(void* pDrvCtrl)
 
     cpuId = cpuGetId();
 
-    if(pLAPICTimerCtrl->disabledNesting[cpuId] > 0)
+    if(pLAPICTimerCtrl->pDisabledNesting[cpuId] > 0)
     {
-        --pLAPICTimerCtrl->disabledNesting[cpuId];
+        --pLAPICTimerCtrl->pDisabledNesting[cpuId];
     }
 
 #if LAPICT_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
            "Enable (nesting %d) on %d",
-           pLAPICTimerCtrl->disabledNesting[cpuId], cpuId);
+           pLAPICTimerCtrl->pDisabledNesting[cpuId], cpuId);
 #endif
 
-    if(pLAPICTimerCtrl->disabledNesting[cpuId] == 0)
+    if(pLAPICTimerCtrl->pDisabledNesting[cpuId] == 0)
     {
         /* Set the frequency to set the init counter */
-        lapicInitCount = pLAPICTimerCtrl->internalFrequency[cpuId] /
+        lapicInitCount = pLAPICTimerCtrl->pInternalFrequency[cpuId] /
                          pLAPICTimerCtrl->selectedFrequency;
 
         /* Write the initial count to the counter */
@@ -681,9 +708,9 @@ static void _lapicTimerDisable(void* pDrvCtrl)
 
     cpuId = cpuGetId();
 
-    if(pLAPICTimerCtrl->disabledNesting[cpuId] < UINT32_MAX)
+    if(pLAPICTimerCtrl->pDisabledNesting[cpuId] < UINT32_MAX)
     {
-        ++pLAPICTimerCtrl->disabledNesting[cpuId];
+        ++pLAPICTimerCtrl->pDisabledNesting[cpuId];
     }
 
     /* Disable interrupt */
@@ -709,7 +736,7 @@ static void _lapicTimerSetFrequency(const uint32_t kFreq, const uint8_t kCpuId)
         return;
     }
 
-    lapicInitCount = spDrvCtrl->internalFrequency[kCpuId] / kFreq;
+    lapicInitCount = spDrvCtrl->pInternalFrequency[kCpuId] / kFreq;
 
     if(lapicInitCount == 0)
     {
@@ -798,7 +825,7 @@ static void _lapicTimerInitApCore(const uint8_t kCpuId)
     /* We are in a secondary core (AP core), just setup the counter as all
      * LAPIC timers should have the same frequency
      */
-    spDrvCtrl->disabledNesting[kCpuId] = 1;
+    spDrvCtrl->pDisabledNesting[kCpuId] = 1;
 
     /* Calibrate the timer */
     _lapicTimerCalibrate(kCpuId);
@@ -807,7 +834,7 @@ static void _lapicTimerInitApCore(const uint8_t kCpuId)
     _lapicTimerSetFrequency(spDrvCtrl->selectedFrequency, kCpuId);
 
     /* Enable the timer is needed based on the main cpu */
-    if(spDrvCtrl->disabledNesting[0] == 0)
+    if(spDrvCtrl->pDisabledNesting[0] == 0)
     {
         _lapicTimerEnable(spDrvCtrl);
     }

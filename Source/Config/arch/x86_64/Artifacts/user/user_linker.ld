@@ -54,20 +54,21 @@ SECTIONS
         *(.data*)
         _USER_END_DATA_ADDR = .;
     }
-    .bss ALIGN(8B) : AT(ADDR(.bss))
+
+    .bss ALIGN(8) : AT(ADDR(.bss))
     {
         _USER_START_BSS_ADDR = .;
         *(COMMON)
         *(.bss)
         _USER_END_BSS_ADDR = .;
     }
-    .tdata ALIGN(8B) : AT(ADDR(.tdata))
+    .tdata ALIGN(8) : AT(ADDR(.tdata))
     {
         _USER_START_TDATA_ADDR = .;
         *(.tdata)
         _USER_END_TDATA_ADDR = .;
     }
-    .tbss ALIGN(8B) : AT(ADDR(.tbss))
+    .tbss ALIGN(8) : AT(ADDR(.tbss))
     {
         _USER_START_TBSS_ADDR = .;
         *(.tbss)

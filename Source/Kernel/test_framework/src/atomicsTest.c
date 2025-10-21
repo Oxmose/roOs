@@ -157,7 +157,7 @@ static void testSpinlock(void)
                                         1,
                                         "SPINLOCK_TEST",
                                         0x1000,
-                                        (1 << (i % SOC_CPU_COUNT)),
+                                        (1 << (i % cpuGetCount())),
                                         spinlockTestRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -214,7 +214,7 @@ static void testIncrement(void)
                                         1,
                                         "ATOMIC_INC_TEST",
                                         0x1000,
-                                        (1 << (i % SOC_CPU_COUNT)),
+                                        (1 << (i % cpuGetCount())),
                                         atomicIncRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -271,7 +271,7 @@ static void testDecrement(void)
                                         1,
                                         "ATOMIC_DEC_TEST",
                                         0x1000,
-                                        (1 << (i % SOC_CPU_COUNT)),
+                                        (1 << (i % cpuGetCount())),
                                         atomicDecRoutine,
                                         (void*)(uintptr_t)i);
 

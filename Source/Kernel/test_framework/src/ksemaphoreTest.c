@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <kerneloutput.h>
 #include <kqueue.h>
+#include <cpu.h>
 
 /* Configuration files */
 #include <config.h>
@@ -329,7 +330,7 @@ static void testMutualExc(void)
                                         0,
                                         "SEM_MUTUALEXC_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testMutualExcRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -407,7 +408,7 @@ static void testOrder(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_ORDER_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         tesOrderRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -480,7 +481,7 @@ static void testFifo(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_FIFO_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testFifoRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -558,7 +559,7 @@ static void testDestroy(void)
                                         0,
                                         "SEM_CANCEL_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testCancelRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -635,7 +636,7 @@ static void testTrypend(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "SEM_TRYPEND_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testTrypendRoutine,
                                         (void*)(uintptr_t)i);
 

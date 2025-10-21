@@ -28,6 +28,7 @@
 #include <scheduler.h>
 #include <kmutex.h>
 #include <kerneloutput.h>
+#include <cpu.h>
 
 /* Configuration files */
 #include <config.h>
@@ -527,7 +528,7 @@ static void testMutualExc(void)
                                         0,
                                         "MUTEX_MUTUALEXC_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testMutualExcRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -615,7 +616,7 @@ static void testOrder(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "NUTEX_ORDER_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         tesOrderRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -699,7 +700,7 @@ static void testFifo(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "MUTEX_FIFO_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testFifoRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -781,7 +782,7 @@ static void testRecursive(void)
                                         0,
                                         "MUTEX_RECUR_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testRecursiveRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -850,7 +851,7 @@ static void testDestroy(void)
                                         0,
                                         "MUTEX_CANCEL_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testCancelRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -948,7 +949,7 @@ static void testTrylock(void)
                                         KERNEL_LOWEST_PRIORITY - i,
                                         "MUTEX_TRYLOCK_TEST",
                                         0x1000,
-                                        (1ULL << (i % SOC_CPU_COUNT)),
+                                        (1ULL << (i % cpuGetCount())),
                                         testTryLockRoutine,
                                         (void*)(uintptr_t)i);
 
@@ -1022,7 +1023,7 @@ static void testElevation(void)
                                     10,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
-                                    (1ULL << (0 % SOC_CPU_COUNT)),
+                                    (1ULL << (0 % cpuGetCount())),
                                     testElevationRoutine,
                                     (void*)(uintptr_t)10);
 
@@ -1040,7 +1041,7 @@ static void testElevation(void)
                                     12,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
-                                    (1ULL << (1 % SOC_CPU_COUNT)),
+                                    (1ULL << (1 % cpuGetCount())),
                                     testElevationRoutine,
                                     (void*)(uintptr_t)12);
 
@@ -1058,7 +1059,7 @@ static void testElevation(void)
                                     9,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
-                                    (1ULL << (2 % SOC_CPU_COUNT)),
+                                    (1ULL << (2 % cpuGetCount())),
                                     testElevationRoutine,
                                     (void*)(uintptr_t)9);
 
@@ -1076,7 +1077,7 @@ static void testElevation(void)
                                     7,
                                     "MUTEX_ELECATION_TEST",
                                     0x1000,
-                                    (1ULL << (3 % SOC_CPU_COUNT)),
+                                    (1ULL << (3 % cpuGetCount())),
                                     testElevationRoutine,
                                     (void*)(uintptr_t)7);
 

@@ -225,7 +225,7 @@ static void testGlobal0(void)
                                         1,
                                         "GLOBAL_CRITICAL_TEST",
                                         0x1000,
-                                        (1 << (i % SOC_CPU_COUNT)),
+                                        (1 << (i % cpuGetCount())),
                                         criticalGlobalRoutine0,
                                         (void*)(uintptr_t)i);
 
@@ -282,7 +282,7 @@ static void testGlobal1(void)
                                         1,
                                         "GLOBAL_CRITICAL_TEST",
                                         0x1000,
-                                        (1 << (i % SOC_CPU_COUNT)),
+                                        (1 << (i % cpuGetCount())),
                                         criticalGlobalRoutine1,
                                         (void*)(uintptr_t)i);
 

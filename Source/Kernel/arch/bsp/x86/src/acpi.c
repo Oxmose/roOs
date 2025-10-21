@@ -30,6 +30,7 @@
 #include <memory.h>       /* Memory manager */
 #include <syslog.h>       /* Kernel Syslog */
 #include <devtree.h>      /* Device tree service */
+#include <core_mgt.h>     /* Core Manager */
 #include <drivermgr.h>    /* Driver manager */
 
 /* Configuration files */
@@ -1339,6 +1340,7 @@ static void _acpiParseFADT(const acpi_fadt_t* kpFadtPtr)
 static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
 {
     int32_t              sum;
+    uint32_t             maxCpuCount;
     uint32_t             i;
     uintptr_t            madtEntry;
     uintptr_t            madtLimit;
@@ -1379,6 +1381,8 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
     madtEntry = (uintptr_t)(kpMadtPtr + 1);
     madtLimit = ((uintptr_t)kpMadtPtr) + kpMadtPtr->header.length;
 
+    maxCpuCount = coreMgtGetCpuCount();
+
     /* Get the LAPIC address */
     sDrvCtrl.localApicAddress = kpMadtPtr->localApicAddr;
 
@@ -1400,7 +1404,7 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
                    ((lapic_t*)madtEntry)->flags);
 #endif
 
-            if(sDrvCtrl.detectedCPUCount < SOC_CPU_COUNT)
+            if(sDrvCtrl.detectedCPUCount < maxCpuCount)
             {
                 /* Create new LAPIC node */
                 pLapicNode = kmalloc(sizeof(lapic_node_t));
@@ -1422,7 +1426,7 @@ static void _acpiParseMADT(const acpi_madt_t* kpMadtPtr)
                 syslog(SYSLOG_LEVEL_INFO,
                        MODULE_NAME,
                        "Exceeded CPU count (%u), ignoring CPU %d",
-                       SOC_CPU_COUNT,
+                       maxCpuCount,
                        ((lapic_t*)madtEntry)->cpuId);
             }
         }

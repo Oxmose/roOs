@@ -140,6 +140,10 @@ void kickstart(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Kernel heap initialized");
     TEST_POINT_FUNCTION_CALL(kheapTest, TEST_KHEAP_ENABLED);
 
+    /* Init FDT */
+    fdtInit((uintptr_t)&_KERNEL_DEV_TREE_BASE);
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "FDT initialized");
+
     /* Init the system logger */
     syslogInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Syslog initialized");
@@ -159,10 +163,6 @@ void kickstart(void)
     /* Initialize exceptions manager */
     exceptionInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Exception manager initialized");
-
-    /* Init FDT */
-    fdtInit((uintptr_t)&_KERNEL_DEV_TREE_BASE);
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "FDT initialized");
 
     /* Initialize the memory manager */
     memoryMgrInit();

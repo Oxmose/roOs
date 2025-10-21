@@ -358,9 +358,9 @@ void userInit(void)
     kernelShellInit();
 
     /* Create the init process */
-    error = _createInit();
-    //(void)_createInit;
-    //error = OS_NO_ERR;
+    //error = _createInit();
+    (void)_createInit;
+    error = OS_NO_ERR;
     if(error != OS_NO_ERR)
     {
         syslog(SYSLOG_LEVEL_ERROR,

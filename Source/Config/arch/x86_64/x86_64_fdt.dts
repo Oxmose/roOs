@@ -43,7 +43,7 @@
             reg = <0x0 0x0 0x0 0x100000>;
         };
         reservedacpi: acpimem@1 {
-            reg = <0x0 0xffe1000 0x0 0x1000>;
+            reg = <0x0 0xffe1000 0x0 0x2000>;
         };
         reservedramdisk: res-ramdisk@3FD000 {
             reg = <0x0 0x003FD000 0x0 131072>;

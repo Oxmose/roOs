@@ -106,6 +106,21 @@ void coreMgtInit(void);
  */
 void coreMgtApInit(const uint8_t kCpuId);
 
+/**
+ * @brief Initializes the number of CPU based on the FDT.
+ * 
+ * @details Initializes the number of CPU based on the FDT. If an error is
+ * detected, a kernel panic is raised.
+ */
+void coreMgtInitCpuCount(void);
+
+/**
+ * @brief Returns the number of CPUs for which the system was configured.
+ * 
+ * @return Returns the number of CPUs for which the system was configured.
+ */
+uint32_t coreMgtGetCpuCount(void);
+
 #endif /* #ifndef __X86_CORE_MGT_ */
 
 /************************************ EOF *************************************/

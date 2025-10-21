@@ -275,7 +275,7 @@ static void testOrder(void)
                                 0,
                                 "FUTEX_WAIT_ORDER_TEST",
                                 0x1000,
-                                (1ULL << (i % SOC_CPU_COUNT)),
+                                (1ULL << (i % cpuGetCount())),
                                 testOrderRoutineWait,
                                 (void*)i);
 
@@ -296,7 +296,7 @@ static void testOrder(void)
                                 0,
                                 "FUTEX_WAKE_ORDER_TEST",
                                 0x1000,
-                                (1ULL << (i % SOC_CPU_COUNT)),
+                                (1ULL << (i % cpuGetCount())),
                                 testOrderRoutineWake,
                                 (void*)i);
 
@@ -365,7 +365,7 @@ static void testMultiple(void)
                                 0,
                                 "FUTEX_MULTIPLE_TEST",
                                 0x1000,
-                                (1ULL << (i % SOC_CPU_COUNT)),
+                                (1ULL << (i % cpuGetCount())),
                                 testWaitMultiple,
                                 (void*)(uintptr_t)i);
 
@@ -485,7 +485,7 @@ static void testSameHandleValue(void)
                                 0,
                                 "FUTEX_SAMEHANDLE_TEST",
                                 0x1000,
-                                (1ULL << (i % SOC_CPU_COUNT)),
+                                (1ULL << (i % cpuGetCount())),
                                 testWaitSameHandleValue,
                                 (void*)(uintptr_t)i);
 
@@ -620,7 +620,7 @@ static void testReleaseResources(void)
                                 0,
                                 "FUTEX_RELEASE_TEST",
                                 0x1000,
-                                (1ULL << (i % SOC_CPU_COUNT)),
+                                (1ULL << (i % cpuGetCount())),
                                 testWaitReleaseResources,
                                 (void*)(uintptr_t)i);
 

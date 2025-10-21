@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 /* The afinity is defined as a 64 bits bitmask */
-#if SOC_CPU_COUNT > 64
+#if SOC_MAX_CPU_COUNT > 64
 #error "Affinity cannot handle enough processor"
 #endif
 

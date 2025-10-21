@@ -40,7 +40,7 @@
 #include <syscall.h>      /* System call manager */
 #include <time_mgt.h>     /* Time management services */
 #include <critical.h>     /* Kernel critical */
-#include <cpuSyscall.h>   /* CPU System call manager */
+#include <cpu_syscall.h>  /* CPU System call manager */
 #include <ctrl_block.h>   /* Threads and processes control block */
 #include <interrupts.h>   /* Interrupt manager */
 
@@ -505,18 +505,21 @@ static OS_RETURN_E _copyThread(kernel_thread_t** ppDstThread,
  * @brief Pointers to the current thread. One per CPU.
  * Used in assembly code
  */
-kernel_thread_t* pCurrentThreadsPtr[SOC_CPU_COUNT] = {NULL};
+kernel_thread_t** pCurrentThreadsPtr = NULL;
 
 
 /************************** Static global variables ***************************/
 
+/** @brief System CPU count */
+static uint32_t sCpuCount;
+
 /** @brief CPUs statistics */
-static cpu_stat_t sCpuStats[SOC_CPU_COUNT];
+static cpu_stat_t* spCpuStats;
 
 /**
  * @brief Pointers to the current process. One per CPU.
  */
-static kernel_process_t* spCurrentProcessPtr[SOC_CPU_COUNT] = {NULL};
+static kernel_process_t** spCurrentProcessPtr;
 
 /** @brief The last PID given by the kernel. */
 static u32_atomic_t sLastGivenPid;
@@ -531,16 +534,16 @@ static u32_atomic_t sThreadCount;
 static u32_atomic_t sProcessCount;
 
 /** @brief Stores the thread tables for all CPUs */
-static thread_table_t sThreadTables[SOC_CPU_COUNT];
+static thread_table_t* spThreadTables;
 
 /** @brief Stores the list of sleeping threads */
-static thread_general_table_t sSleepingThreadsTable[SOC_CPU_COUNT];
+static thread_general_table_t* spSleepingThreadsTable;
 
 /** @brief Stores the list of all threads */
 static thread_general_table_t sTotalThreadsList;
 
 /** @brief Pointers to the idle threads allocated per CPU. */
-static kernel_thread_t* spIdleThread[SOC_CPU_COUNT];
+static kernel_thread_t** spIdleThread;
 
 /** @brief Stores the scheduler interrupt line */
 static uint32_t sSchedulerInterruptLine;
@@ -670,7 +673,11 @@ static void _createIdleThreads(void)
     uint32_t    i;
     OS_RETURN_E error;
 
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    spIdleThread = kmalloc(sizeof(kernel_thread_t*) * sCpuCount);
+    SCHED_ASSERT(spIdleThread != NULL,
+                 "Failed to allocate idle thread table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    for(i = 0; i < sCpuCount; ++i)
     {
         /* Init the process, at the moment of idle threads creation the kernel
          * main process is stores in spCurrentProcessPtr[0]
@@ -751,7 +758,7 @@ static void _createIdleThreads(void)
         kQueuePush(spIdleThread[i]->pThreadListNode,
                    sTotalThreadsList.pThreadList);
         ++sTotalThreadsList.threadCount;
-        ++sThreadTables[i].threadCount;
+        ++spThreadTables[i].threadCount;
         atomicIncrement32(&sThreadCount);
     }
 }
@@ -806,12 +813,12 @@ static void _updateSleepingThreads(void)
 
     cpuId = cpuGetId();
 
-    KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
-    if(sSleepingThreadsTable[cpuId].threadCount != 0)
+    KERNEL_LOCK(spSleepingThreadsTable[cpuId].lock);
+    if(spSleepingThreadsTable[cpuId].threadCount != 0)
     {
         /* Get the current time and compate to threads in the sleeping list */
         currTime = timeGetUptime();
-        pCursor = sSleepingThreadsTable[cpuId].pThreadList->pTail;
+        pCursor = spSleepingThreadsTable[cpuId].pThreadList->pTail;
         while(pCursor != NULL)
         {
             /* Check if we have to wake up the thread */
@@ -825,8 +832,8 @@ static void _updateSleepingThreads(void)
             pCursor = pCursor->pPrev;
 
             /* Remove the node from the list */
-            --sSleepingThreadsTable[cpuId].threadCount;
-            pThreadNode = kQueuePop(sSleepingThreadsTable[cpuId].pThreadList);
+            --spSleepingThreadsTable[cpuId].threadCount;
+            pThreadNode = kQueuePop(spSleepingThreadsTable[cpuId].pThreadList);
             SCHED_ASSERT(pThreadNode != NULL,
                          "Got a NULL thread node",
                          OS_ERR_NULL_POINTER);
@@ -835,7 +842,7 @@ static void _updateSleepingThreads(void)
             _schedReleaseThread(pThreadNode->pData, false);
         }
     }
-    KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+    KERNEL_UNLOCK(spSleepingThreadsTable[cpuId].lock);
 }
 
 static void _cancelSleepThread(kernel_thread_t* pThread)
@@ -857,13 +864,13 @@ static void _cancelSleepThread(kernel_thread_t* pThread)
 
     wakeupTime = pThread->wakeupTime;
     found = false;
-    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < sCpuCount; ++cpuId)
     {
-        KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
-        if(sSleepingThreadsTable[cpuId].threadCount != 0)
+        KERNEL_LOCK(spSleepingThreadsTable[cpuId].lock);
+        if(spSleepingThreadsTable[cpuId].threadCount != 0)
         {
             /* Get the current time and compate to threads in the sleeping list */
-            pCursor = sSleepingThreadsTable[cpuId].pThreadList->pTail;
+            pCursor = spSleepingThreadsTable[cpuId].pThreadList->pTail;
             while(pCursor != NULL)
             {
                 /* Check if we have to wake up the thread */
@@ -876,10 +883,10 @@ static void _cancelSleepThread(kernel_thread_t* pThread)
                 /* If found remove the node */
                 if(pCursor == pThread->pThreadNode)
                 {
-                    kQueueRemove(sSleepingThreadsTable[cpuId].pThreadList,
+                    kQueueRemove(spSleepingThreadsTable[cpuId].pThreadList,
                                  pCursor,
                                  true);
-                    --sSleepingThreadsTable[cpuId].threadCount;
+                    --spSleepingThreadsTable[cpuId].threadCount;
 
                     /* Release the thread */
                     _schedReleaseThread(pThread, true);
@@ -895,11 +902,11 @@ static void _cancelSleepThread(kernel_thread_t* pThread)
             }
             if(found == true)
             {
-                KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+                KERNEL_UNLOCK(spSleepingThreadsTable[cpuId].lock);
                 break;
             }
         }
-        KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+        KERNEL_UNLOCK(spSleepingThreadsTable[cpuId].lock);
     }
 }
 
@@ -1336,7 +1343,7 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
 
     /* Get the CPU list to release to */
     lastCpuLoad = 1000;
-    cpuId       = SOC_CPU_COUNT;
+    cpuId       = sCpuCount;
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
 
@@ -1360,22 +1367,22 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
 
     if(pThread->affinity != 0)
     {
-        for(i = 0; i < SOC_CPU_COUNT; ++i)
+        for(i = 0; i < sCpuCount; ++i)
         {
             if(((1ULL << i) & pThread->affinity) != 0)
             {
-                KERNEL_LOCK(sCpuStats[i].lock);
-                if(sCpuStats[i].totalTime != 0)
+                KERNEL_LOCK(spCpuStats[i].lock);
+                if(spCpuStats[i].totalTime != 0)
                 {
                     cpuLoad = 100 -
-                              (100 * sCpuStats[i].idleTime /
-                               sCpuStats[i].totalTime);
+                              (100 * spCpuStats[i].idleTime /
+                               spCpuStats[i].totalTime);
                 }
                 else
                 {
                     cpuLoad = 0;
                 }
-                KERNEL_UNLOCK(sCpuStats[i].lock);
+                KERNEL_UNLOCK(spCpuStats[i].lock);
                 if(lastCpuLoad > cpuLoad)
                 {
                     lastCpuLoad = cpuLoad;
@@ -1386,19 +1393,19 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
     }
     else
     {
-        for(i = 0; i < SOC_CPU_COUNT; ++i)
+        for(i = 0; i < sCpuCount; ++i)
         {
-            KERNEL_LOCK(sCpuStats[i].lock);
-            if(sCpuStats[i].totalTime != 0)
+            KERNEL_LOCK(spCpuStats[i].lock);
+            if(spCpuStats[i].totalTime != 0)
             {
                 cpuLoad = 100 -
-                         (100 * sCpuStats[i].idleTime / sCpuStats[i].totalTime);
+                         (100 * spCpuStats[i].idleTime / spCpuStats[i].totalTime);
             }
             else
             {
                 cpuLoad = 0;
             }
-            KERNEL_UNLOCK(sCpuStats[i].lock);
+            KERNEL_UNLOCK(spCpuStats[i].lock);
 
             if(lastCpuLoad > cpuLoad)
             {
@@ -1408,24 +1415,24 @@ static void _schedReleaseThread(kernel_thread_t* pThread,
         }
     }
 
-    SCHED_ASSERT(cpuId != SOC_CPU_COUNT,
+    SCHED_ASSERT(cpuId != sCpuCount,
                  "Failed to find a CPU to release the thread",
                  OS_ERR_INCORRECT_VALUE);
     pThread->currentState = THREAD_STATE_READY;
     pThread->nextState    = THREAD_STATE_READY;
     pThread->schedCpu     = cpuId;
 
-    KERNEL_LOCK(sThreadTables[cpuId].lock);
+    KERNEL_LOCK(spThreadTables[cpuId].lock);
 
     kQueuePush(pThread->pThreadNode,
-               sThreadTables[cpuId].pReadyList[pThread->priority]);
-    ++sThreadTables[cpuId].threadCount;
-    if(sThreadTables[cpuId].highestPriority > pThread->priority)
+               spThreadTables[cpuId].pReadyList[pThread->priority]);
+    ++spThreadTables[cpuId].threadCount;
+    if(spThreadTables[cpuId].highestPriority > pThread->priority)
     {
-        sThreadTables[cpuId].highestPriority = pThread->priority;
+        spThreadTables[cpuId].highestPriority = pThread->priority;
     }
 
-    KERNEL_UNLOCK(sThreadTables[cpuId].lock);
+    KERNEL_UNLOCK(spThreadTables[cpuId].lock);
 
     if(kIsLocked == false)
     {
@@ -1465,14 +1472,14 @@ static void _manageNextState(kernel_thread_t* pThread)
         cpuId = cpuGetId();
 
         /* Add to the sleeping queue */
-        KERNEL_LOCK(sSleepingThreadsTable[cpuId].lock);
+        KERNEL_LOCK(spSleepingThreadsTable[cpuId].lock);
 
         kQueuePushPrio(pThread->pThreadNode,
-                       sSleepingThreadsTable[cpuId].pThreadList,
+                       spSleepingThreadsTable[cpuId].pThreadList,
                        pThread->wakeupTime);
-        ++sSleepingThreadsTable[cpuId].threadCount;
+        ++spSleepingThreadsTable[cpuId].threadCount;
 
-        KERNEL_UNLOCK(sSleepingThreadsTable[cpuId].lock);
+        KERNEL_UNLOCK(spSleepingThreadsTable[cpuId].lock);
     }
 
     /* Otherwise, just update the current state */
@@ -1751,9 +1758,25 @@ void schedInit(void)
     sLastGivenPid = 0;
     sThreadCount  = 0;
     sProcessCount = 0;
-    memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * SOC_CPU_COUNT);
-    memset(spCurrentProcessPtr, 0, sizeof(kernel_process_t) * SOC_CPU_COUNT);
-    memset(sCpuStats, 0, sizeof(cpu_stat_t) * SOC_CPU_COUNT);
+
+    sCpuCount = cpuGetCount();
+
+    /* Allocate and initialize tables */
+    pCurrentThreadsPtr = kmalloc(sizeof(kernel_thread_t*) * sCpuCount);
+    SCHED_ASSERT(pCurrentThreadsPtr != NULL,
+                 "Failed to allocate current thread table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    spCurrentProcessPtr = kmalloc(sizeof(kernel_process_t*) * sCpuCount);
+    SCHED_ASSERT(spCurrentProcessPtr != NULL,
+                 "Failed to allocate current process table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    spCpuStats = kmalloc(sizeof(cpu_stat_t) * sCpuCount);
+    SCHED_ASSERT(spCpuStats != NULL,
+                 "Failed to allocate CPU statistics table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    memset(pCurrentThreadsPtr, 0, sizeof(kernel_thread_t*) * sCpuCount);
+    memset(spCurrentProcessPtr, 0, sizeof(kernel_process_t*) * sCpuCount);
+    memset(spCpuStats, 0, sizeof(cpu_stat_t) * sCpuCount);
 
     /* Create the kernel main process */
     error = _schedCreateKernelProcess(&spCurrentProcessPtr[0], "ROOS_KERNEL");
@@ -1761,21 +1784,32 @@ void schedInit(void)
                  "Failed to create main process.",
                  OS_ERR_NO_MORE_MEMORY);
 
-    /* Initialize the thread table */
-    for(j = 0; j < SOC_CPU_COUNT; ++j)
+    /* Initialize the thread tables */
+    spThreadTables = kmalloc(sizeof(thread_table_t) * sCpuCount);
+    SCHED_ASSERT(spThreadTables != NULL,
+                 "Failed to allocate threads table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    spSleepingThreadsTable = kmalloc(sizeof(thread_general_table_t) * 
+                                    sCpuCount);
+    SCHED_ASSERT(spSleepingThreadsTable != NULL,
+                 "Failed to allocate sleeping threads table.",
+                 OS_ERR_NO_MORE_MEMORY);
+    for(j = 0; j < sCpuCount; ++j)
     {
-        KERNEL_SPINLOCK_INIT(sCpuStats[j].lock);
-        sThreadTables[j].highestPriority = KERNEL_LOWEST_PRIORITY;
-        sThreadTables[j].threadCount     = 0;
-        KERNEL_SPINLOCK_INIT(sThreadTables[j].lock);
+        /* Initialize the thread table */
+        KERNEL_SPINLOCK_INIT(spCpuStats[j].lock);
+        spThreadTables[j].highestPriority = KERNEL_LOWEST_PRIORITY;
+        spThreadTables[j].threadCount     = 0;
+        KERNEL_SPINLOCK_INIT(spThreadTables[j].lock);
         for(i = 0; i <= KERNEL_LOWEST_PRIORITY; ++i)
         {
-            sThreadTables[j].pReadyList[i]  = kQueueCreate(true);
+            spThreadTables[j].pReadyList[i]  = kQueueCreate(true);
         }
+
         /* Initialize the sleeping threads list */
-        sSleepingThreadsTable[j].threadCount = 0;
-        sSleepingThreadsTable[j].pThreadList = kQueueCreate(true);
-        KERNEL_SPINLOCK_INIT(sSleepingThreadsTable[j].lock);
+        spSleepingThreadsTable[j].threadCount = 0;
+        spSleepingThreadsTable[j].pThreadList = kQueueCreate(true);
+        KERNEL_SPINLOCK_INIT(spSleepingThreadsTable[j].lock);
     }
 
     /* Initialize the global threads list */
@@ -1788,7 +1822,7 @@ void schedInit(void)
 
     spCurrentProcessPtr[0]->pMainThread = spIdleThread[0];
     /* Set idle as current thread for all CPUs and link process */
-    for(i = 0; i < SOC_CPU_COUNT; ++i)
+    for(i = 0; i < sCpuCount; ++i)
     {
         error = uhashtableSet(spCurrentProcessPtr[0]->pThreadTable,
                               (uintptr_t)spIdleThread[i],
@@ -1806,7 +1840,7 @@ void schedInit(void)
             spIdleThread[i]->pPrev = NULL;
         }
 
-        if(i == SOC_CPU_COUNT - 1)
+        if(i == sCpuCount - 1)
         {
             spCurrentProcessPtr[0]->pThreadListTail = spIdleThread[i];
             spIdleThread[i]->pNext = NULL;
@@ -1860,19 +1894,19 @@ void schedScheduleNoInt(void)
 
     /* Update the CPU statistics */
     upTime = timeGetUptime();
-    KERNEL_LOCK(sCpuStats[cpuId].lock);
-    timeIdx = sCpuStats[cpuId].timesIdx;
+    KERNEL_LOCK(spCpuStats[cpuId].lock);
+    timeIdx = spCpuStats[cpuId].timesIdx;
     if(pThread == spIdleThread[cpuId])
     {
-        sCpuStats[cpuId].idleTimes[timeIdx] = upTime -
-                                            sCpuStats[cpuId].idleTimes[timeIdx];
+        spCpuStats[cpuId].idleTimes[timeIdx] = upTime -
+                                            spCpuStats[cpuId].idleTimes[timeIdx];
     }
-    sCpuStats[cpuId].totalTimes[timeIdx] = upTime -
-                                           sCpuStats[cpuId].totalTimes[timeIdx];
+    spCpuStats[cpuId].totalTimes[timeIdx] = upTime -
+                                           spCpuStats[cpuId].totalTimes[timeIdx];
 
-    sCpuStats[cpuId].totalTime += sCpuStats[cpuId].totalTimes[timeIdx];
-    sCpuStats[cpuId].idleTime  += sCpuStats[cpuId].idleTimes[timeIdx];
-    KERNEL_UNLOCK(sCpuStats[cpuId].lock);
+    spCpuStats[cpuId].totalTime += spCpuStats[cpuId].totalTimes[timeIdx];
+    spCpuStats[cpuId].idleTime  += spCpuStats[cpuId].idleTimes[timeIdx];
+    KERNEL_UNLOCK(spCpuStats[cpuId].lock);
 
     /* Wakeup sleeping threads if needed */
     _updateSleepingThreads();
@@ -1881,7 +1915,7 @@ void schedScheduleNoInt(void)
     /* Update the thread states */
     _manageNextState(pThread);
 
-    pCurrentTable = &sThreadTables[cpuId];
+    pCurrentTable = &spThreadTables[cpuId];
     KERNEL_LOCK(pCurrentTable->lock);
 
     /* If the current process can still run */
@@ -1945,28 +1979,28 @@ void schedScheduleNoInt(void)
     signalManage(pThread);
 
     /* Update the CPU statistics */
-    KERNEL_LOCK(sCpuStats[cpuId].lock);
-    timeIdx = (sCpuStats[cpuId].timesIdx + 1) %
+    KERNEL_LOCK(spCpuStats[cpuId].lock);
+    timeIdx = (spCpuStats[cpuId].timesIdx + 1) %
                                 CPU_LOAD_TICK_WINDOW;
-    sCpuStats[cpuId].timesIdx = timeIdx;
-    sCpuStats[cpuId].totalTime -=
-        sCpuStats[cpuId].totalTimes[timeIdx];
-    sCpuStats[cpuId].idleTime -=
-        sCpuStats[cpuId].idleTimes[timeIdx];
+    spCpuStats[cpuId].timesIdx = timeIdx;
+    spCpuStats[cpuId].totalTime -=
+        spCpuStats[cpuId].totalTimes[timeIdx];
+    spCpuStats[cpuId].idleTime -=
+        spCpuStats[cpuId].idleTimes[timeIdx];
 
     if(pThread == spIdleThread[cpuId])
     {
-        sCpuStats[cpuId].idleTimes[timeIdx] = upTime;
+        spCpuStats[cpuId].idleTimes[timeIdx] = upTime;
     }
     else
     {
-        sCpuStats[cpuId].idleTimes[timeIdx] = 0;
+        spCpuStats[cpuId].idleTimes[timeIdx] = 0;
     }
-    sCpuStats[cpuId].totalTimes[timeIdx] = upTime;
+    spCpuStats[cpuId].totalTimes[timeIdx] = upTime;
 
 
-    ++sCpuStats[cpuId].schedCount;
-    KERNEL_UNLOCK(sCpuStats[cpuId].lock);
+    ++spCpuStats[cpuId].schedCount;
+    KERNEL_UNLOCK(spCpuStats[cpuId].lock);
 
     KERNEL_UNLOCK(pThread->lock);
 
@@ -2011,7 +2045,14 @@ kernel_thread_t* schedGetCurrentThread(void)
     uint32_t         intState;
 
     KERNEL_ENTER_CRITICAL_LOCAL(intState);
-    pCur = pCurrentThreadsPtr[cpuGetId()];
+    if(pCurrentThreadsPtr == NULL)
+    {
+        pCur = NULL;
+    }
+    else 
+    {
+        pCur = pCurrentThreadsPtr[cpuGetId()];
+    }
     KERNEL_EXIT_CRITICAL_LOCAL(intState);
 
     return pCur;
@@ -2034,7 +2075,7 @@ OS_RETURN_E schedCreateThread(kernel_thread_t** ppThread,
     error      = OS_NO_ERR;
 
     /* Validate parameters */
-    if((kAffinitySet >> SOC_CPU_COUNT) != 0 ||
+    if((kAffinitySet >> sCpuCount) != 0 ||
         kPriority > KERNEL_LOWEST_PRIORITY ||
         ppThread == NULL ||
         pRoutine == NULL ||
@@ -2328,7 +2369,7 @@ OS_RETURN_E schedJoinThread(kernel_thread_t*          pThread,
     }
 
     /* Check if we are not joining idle */
-    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < sCpuCount; ++cpuId)
     {
         if(pThread == spIdleThread[cpuId] || pCurThread == spIdleThread[cpuId])
         {
@@ -2418,20 +2459,20 @@ uint64_t schedGetCpuLoad(const uint8_t kCpuId)
 {
     uint64_t cpuLoad;
 
-    if(kCpuId < SOC_CPU_COUNT)
+    if(kCpuId < sCpuCount)
     {
-        KERNEL_LOCK(sCpuStats[kCpuId].lock);
-        if(sCpuStats[kCpuId].totalTime != 0)
+        KERNEL_LOCK(spCpuStats[kCpuId].lock);
+        if(spCpuStats[kCpuId].totalTime != 0)
         {
             cpuLoad = 100 -
-                      (100 * sCpuStats[kCpuId].idleTime /
-                       sCpuStats[kCpuId].totalTime);
+                      (100 * spCpuStats[kCpuId].idleTime /
+                       spCpuStats[kCpuId].totalTime);
         }
         else
         {
             cpuLoad = 0;
         }
-        KERNEL_UNLOCK(sCpuStats[kCpuId].lock);
+        KERNEL_UNLOCK(spCpuStats[kCpuId].lock);
 
         return cpuLoad;
     }
@@ -2467,29 +2508,29 @@ OS_RETURN_E schedUpdatePriority(kernel_thread_t* pThread, const uint8_t kPrio)
     }
 
     cpuId = pThread->schedCpu;
-    KERNEL_LOCK(sThreadTables[cpuId].lock);
+    KERNEL_LOCK(spThreadTables[cpuId].lock);
     /* Check if the thread is running, if it is not, we have to update the
      * belonging table when ready
      */
     if(((kqueue_node_t*)pThread->pThreadNode)->pQueuePtr ==
-       sThreadTables[cpuId].pReadyList[pThread->priority])
+       spThreadTables[cpuId].pReadyList[pThread->priority])
     {
 
         /* Update the table */
-        kQueueRemove(sThreadTables[cpuId].pReadyList[pThread->priority],
+        kQueueRemove(spThreadTables[cpuId].pReadyList[pThread->priority],
                      pThread->pThreadNode,
                      true);
 
         kQueuePush(pThread->pThreadNode,
-                   sThreadTables[cpuId].pReadyList[kPrio]);
+                   spThreadTables[cpuId].pReadyList[kPrio]);
 
         /* Update the highest priority */
-        if(sThreadTables[cpuId].highestPriority > kPrio)
+        if(spThreadTables[cpuId].highestPriority > kPrio)
         {
-            sThreadTables[cpuId].highestPriority = kPrio;
+            spThreadTables[cpuId].highestPriority = kPrio;
         }
     }
-    KERNEL_UNLOCK(sThreadTables[cpuId].lock);
+    KERNEL_UNLOCK(spThreadTables[cpuId].lock);
 
     pThread->priority = kPrio;
     pThread->pUserThreadData->priority = kPrio;
@@ -2512,7 +2553,7 @@ OS_RETURN_E schedTerminateThread(kernel_thread_t*               pThread,
     }
 
     /* Cannot terminate idle thread */
-    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < sCpuCount; ++cpuId)
     {
         if(pThread == spIdleThread[cpuId])
         {
@@ -2770,7 +2811,7 @@ bool schedIsIdleThread(const kernel_thread_t* kpThread)
 {
     uint8_t cpuId;
 
-    for(cpuId = 0; cpuId < SOC_CPU_COUNT; ++cpuId)
+    for(cpuId = 0; cpuId < sCpuCount; ++cpuId)
     {
         if(kpThread == spIdleThread[cpuId])
         {

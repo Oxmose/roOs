@@ -21,10 +21,11 @@
  * INCLUDES
  ******************************************************************************/
 #include <cpu.h>           /* Generic CPU API */
-#include <vfs.h>           /* VFS services */
 #include <panic.h>         /* Kernel Panic */
 #include <kheap.h>         /* Kernel heap */
+#include <cpuid.h>         /* CPUID services */
 #include <stdlib.h>        /* Standard library */
+#include <procfs.h>        /* ProcFS services */
 #include <stdint.h>        /* Generic int types */
 #include <stddef.h>        /* Standard definition */
 #include <string.h>        /* Memory manipulation */
@@ -57,17 +58,8 @@
 /** @brief Current module name */
 #define MODULE_NAME "CPU_X64"
 
-/** @brief Stores the sysfs cpu entry directory name */
-#define CPUS_SYSFS_DIR_PATH "/sys/cpus/"
-
-/** @brief Defines the vendor string size */
-#define CPU_VENDOR_STR_SIZE 12
-/** @brief Defines the addressing string size */
-#define CPU_ADDRESSING_SIZE 32
-/** @brief Defines the flags string size */
-#define CPU_FLAGS_SIZE 512
-/** @brief Defines the total sysfs string size */
-#define CPUS_SYSFS_STR_LENGTH 768
+/** @brief Stores the procfs cpu entry name */
+#define CPUS_PROCFS_DIR_PATH "cpuinfo"
 
 /** @brief Kernel's 64 bits code segment descriptor. */
 #define KERNEL_CS_64 0x08
@@ -192,324 +184,17 @@
 /** @brief IDT flag: interrupt type trap gate. */
 #define IDT_TYPE_TRAP_GATE 0x0F
 
-/** @brief Request vendor string. */
-#define CPUID_GETVENDORSTRING          0x00000000
-/** @brief Request capabled CPUID features. */
-#define CPUID_GETFEATURES              0x00000001
-/** @brief Request TLB. */
-#define CPUID_GETTLB                   0x00000002
-/** @brief Request serial. */
-#define CPUID_GETSERIAL                0x00000003
-/** @brief Request extended CPUID features. */
-#define CPUID_INTELEXTENDED_AVAILABLE  0x80000000
-/** @brief Request Intel CPUID features. */
-#define CPUID_INTELFEATURES            0x80000001
-/** @brief Request Intel brand string. */
-#define CPUID_INTELBRANDSTRING         0x80000002
-/** @brief Request Intel brand string extended. */
-#define CPUID_INTELBRANDSTRINGMORE     0x80000003
-/** @brief Request Intel brand string end. */
-#define CPUID_INTELBRANDSTRINGEND      0x80000004
-/** @brief Request address width. */
-#define CPUID_ADDRESS_WIDTH            0x80000008
-
-/****************************
- * General Features
- ***************************/
-
-/** @brief CPUID Streaming SIMD Extensions 3 flag. */
-#define ECX_SSE3      (1U << 0)
-/** @brief CPUID PCLMULQDQ Instruction flag. */
-#define ECX_PCLMULQDQ (1U << 1)
-/** @brief CPUID 64-Bit Debug Store Area flag. */
-#define ECX_DTES64    (1U << 2)
-/** @brief CPUID MONITOR/MWAIT flag. */
-#define ECX_MONITOR   (1U << 3)
-/** @brief CPUID CPL Qualified Debug Store flag. */
-#define ECX_DS_CPL    (1U << 4)
-/** @brief CPUID Virtual Machine Extensions flag. */
-#define ECX_VMX       (1U << 5)
-/** @brief CPUID Safer Mode Extensions flag. */
-#define ECX_SMX       (1U << 6)
-/** @brief CPUID Enhanced SpeedStep Technology flag. */
-#define ECX_EST       (1U << 7)
-/** @brief CPUID Thermal Monitor 2 flag. */
-#define ECX_TM2       (1U << 8)
-/** @brief CPUID Supplemental Streaming SIMD Extensions 3 flag. */
-#define ECX_SSSE3     (1U << 9)
-/** @brief CPUID L1 Context ID flag. */
-#define ECX_CNXT_ID   (1U << 10)
-/** @brief CPUID Fused Multiply Add flag. */
-#define ECX_FMA       (1U << 12)
-/** @brief CPUID CMPXCHG16B Instruction flag. */
-#define ECX_CX16      (1U << 13)
-/** @brief CPUID xTPR Update Control flag. */
-#define ECX_XTPR      (1U << 14)
-/** @brief CPUID Perf/Debug Capability MSR flag. */
-#define ECX_PDCM      (1U << 15)
-/** @brief CPUID Process-context Identifiers flag. */
-#define ECX_PCID      (1U << 17)
-/** @brief CPUID Direct Cache Access flag. */
-#define ECX_DCA       (1U << 18)
-/** @brief CPUID Streaming SIMD Extensions 4.1 flag. */
-#define ECX_SSE41     (1U << 19)
-/** @brief CPUID Streaming SIMD Extensions 4.2 flag. */
-#define ECX_SSE42     (1U << 20)
-/** @brief CPUID Extended xAPIC Support flag. */
-#define ECX_X2APIC    (1U << 21)
-/** @brief CPUID MOVBE Instruction flag. */
-#define ECX_MOVBE     (1U << 22)
-/** @brief CPUID POPCNT Instruction flag. */
-#define ECX_POPCNT    (1U << 23)
-/** @brief CPUID Local APIC supports TSC Deadline flag. */
-#define ECX_TSC       (1U << 24)
-/** @brief CPUID AESNI Instruction flag. */
-#define ECX_AESNI     (1U << 25)
-/** @brief CPUID XSAVE/XSTOR States flag. */
-#define ECX_XSAVE     (1U << 26)
-/** @brief CPUID OS Enabled Extended State Management flag. */
-#define ECX_OSXSAVE   (1U << 27)
-/** @brief CPUID AVX Instructions flag. */
-#define ECX_AVX       (1U << 28)
-/** @brief CPUID 16-bit Floating Point Instructions flag. */
-#define ECX_F16C      (1U << 29)
-/** @brief CPUID RDRAND Instruction flag. */
-#define ECX_RDRAND    (1U << 30)
-/** @brief CPUID Floating-Point Unit On-Chip flag. */
-#define EDX_FPU       (1U << 0)
-/** @brief CPUID Virtual 8086 Mode Extensions flag. */
-#define EDX_VME       (1U << 1)
-/** @brief CPUID Debugging Extensions flag. */
-#define EDX_DE        (1U << 2)
-/** @brief CPUID Page Size Extension flag. */
-#define EDX_PSE       (1U << 3)
-/** @brief CPUID Time Stamp Counter flag. */
-#define EDX_TSC       (1U << 4)
-/** @brief CPUID Model Specific Registers flag. */
-#define EDX_MSR       (1U << 5)
-/** @brief CPUID Physical Address Extension flag. */
-#define EDX_PAE       (1U << 6)
-/** @brief CPUID Machine-Check Exception flag. */
-#define EDX_MCE       (1U << 7)
-/** @brief CPUID CMPXCHG8 Instruction flag. */
-#define EDX_CX8       (1U << 8)
-/** @brief CPUID APIC On-Chip flag. */
-#define EDX_APIC      (1U << 9)
-/** @brief CPUID SYSENTER/SYSEXIT instructions flag. */
-#define EDX_SEP       (1U << 11)
-/** @brief CPUID Memory Type Range Registers flag. */
-#define EDX_MTRR      (1U << 12)
-/** @brief CPUID Page Global Bit flag. */
-#define EDX_PGE       (1U << 13)
-/** @brief CPUID Machine-Check Architecture flag. */
-#define EDX_MCA       (1U << 14)
-/** @brief CPUID Conditional Move Instruction flag. */
-#define EDX_CMOV      (1U << 15)
-/** @brief CPUID Page Attribute Table flag. */
-#define EDX_PAT       (1U << 16)
-/** @brief CPUID 36-bit Page Size Extension flag. */
-#define EDX_PSE36     (1U << 17)
-/** @brief CPUID Processor Serial Number flag. */
-#define EDX_PSN       (1U << 18)
-/** @brief CPUID CLFLUSH Instruction flag. */
-#define EDX_CLFLUSH   (1U << 19)
-/** @brief CPUID Debug Store flag. */
-#define EDX_DS        (1U << 21)
-/** @brief CPUID Thermal Monitor and Clock Facilities flag. */
-#define EDX_ACPI      (1U << 22)
-/** @brief CPUID MMX Technology flag. */
-#define EDX_MMX       (1U << 23)
-/** @brief CPUID FXSAVE and FXSTOR Instructions flag. */
-#define EDX_FXSR      (1U << 24)
-/** @brief CPUID Streaming SIMD Extensions flag. */
-#define EDX_SSE       (1U << 25)
-/** @brief CPUID Streaming SIMD Extensions 2 flag. */
-#define EDX_SSE2      (1U << 26)
-/** @brief CPUID Self Snoop flag. */
-#define EDX_SS        (1U << 27)
-/** @brief CPUID Multi-Threading flag. */
-#define EDX_HTT       (1U << 28)
-/** @brief CPUID Thermal Monitor flag. */
-#define EDX_TM        (1U << 29)
-/** @brief CPUID Pending Break Enable flag. */
-#define EDX_PBE       (1U << 31)
-
-/****************************
- * Extended Features
- ***************************/
-/** @brief CPUID SYSCALL/SYSRET flag. */
-#define EDX_SYSCALL   (1U << 11)
-/** @brief CPUID Multiprocessor flag. */
-#define EDX_MP        (1U << 19)
-/** @brief CPUID Execute Disable Bit flag. */
-#define EDX_XD        (1U << 20)
-/** @brief CPUID MMX etended flag. */
-#define EDX_MMX_EX    (1U << 22)
-/** @brief CPUID FXSAVE/STOR available flag. */
-#define EDX_FXSR      (1U << 24)
-/** @brief CPUID FXSAVE/STOR optimized flag. */
-#define EDX_FXSR_OPT  (1U << 25)
-/** @brief CPUID 1 GB Pages flag. */
-#define EDX_1GB_PAGE  (1U << 26)
-/** @brief CPUID RDTSCP and IA32_TSC_AUX flag. */
-#define EDX_RDTSCP    (1U << 27)
-/** @brief CPUID 64-bit Architecture flag. */
-#define EDX_64_BIT    (1U << 29)
-/** @brief CPUID 3D Now etended flag. */
-#define EDX_3DNOW_EX  (1U << 30)
-/** @brief CPUID 3D Now flag. */
-#define EDX_3DNOW     (1U << 31)
-/** @brief CPUID LAHF Available in long mode flag */
-#define ECX_LAHF_LM   (1U << 0)
-/** @brief CPUID Hyperthreading not valid flag */
-#define ECX_CMP_LEG   (1U << 1)
-/** @brief CPUID Secure Virtual Machine flag */
-#define ECX_SVM       (1U << 2)
-/** @brief CPUID Extended API space flag */
-#define ECX_EXTAPIC   (1U << 3)
-/** @brief CPUID CR8 in protected mode flag */
-#define ECX_CR8_LEG   (1U << 4)
-/** @brief CPUID ABM available flag */
-#define ECX_ABM       (1U << 5)
-/** @brief CPUID SSE4A flag */
-#define ECX_SSE4A     (1U << 6)
-/** @brief CPUID Misaligne SSE mode flag */
-#define ECX_MISASSE   (1U << 7)
-/** @brief CPUID Prefetch flag */
-#define ECX_PREFETCH  (1U << 8)
-/** @brief CPUID OS Visible workaround flag */
-#define ECX_OSVW      (1U << 9)
-/** @brief CPUID Instruction based sampling flag */
-#define ECX_IBS       (1U << 10)
-/** @brief CPUID XIO intruction set flag */
-#define ECX_XOP       (1U << 11)
-/** @brief CPUID SKINIT instructions flag */
-#define ECX_SKINIT    (1U << 12)
-/** @brief CPUID watchdog timer flag */
-#define ECX_WDT       (1U << 13)
-/** @brief CPUID Light weight profiling flag */
-#define ECX_LWP       (1U << 15)
-/** @brief CPUID 4 operand fuxed multiply add flag */
-#define ECX_FMA4      (1U << 16)
-/** @brief CPUID Translation cache extension flag */
-#define ECX_TCE       (1U << 17)
-/** @brief CPUID NODE_ID MSR flag */
-#define ECX_NODEIDMSR (1U << 19)
-/** @brief CPUID Trailing bit manipulation flag */
-#define ECX_TBM       (1U << 21)
-/** @brief CPUID Topology extension flag */
-#define ECX_TOPOEX    (1U << 22)
-/** @brief CPUID Core performance counter extensions flag */
-#define ECX_PERF_CORE (1U << 23)
-/** @brief CPUID NB performance counter extensions flag */
-#define ECX_PERF_NB   (1U << 24)
-/** @brief CPUID Data breakpoint extensions flag */
-#define ECX_DBX       (1U << 26)
-/** @brief CPUID Performance TSC flag */
-#define ECX_PERF_TSC  (1U << 27)
-/** @brief CPUID L2I perf counter extensions flag */
-#define ECX_PCX_L2I   (1U << 28)
-
-/****************************
- * CPU Vendor signatures
- ***************************/
-
-/** @brief CPUID Vendor signature AMD EBX. */
-#define SIG_AMD_EBX 0x68747541
-/** @brief CPUID Vendor signature AMD ECX. */
-#define SIG_AMD_ECX 0x444d4163
-/** @brief CPUID Vendor signature AMD EDX. */
-#define SIG_AMD_EDX 0x69746e65
-
-/** @brief CPUID Vendor signature Centaur EBX. */
-#define SIG_CENTAUR_EBX   0x746e6543
-/** @brief CPUID Vendor signature Centaur ECX. */
-#define SIG_CENTAUR_ECX   0x736c7561
-/** @brief CPUID Vendor signature Centaur EDX. */
-#define SIG_CENTAUR_EDX   0x48727561
-
-/** @brief CPUID Vendor signature Cyrix EBX. */
-#define SIG_CYRIX_EBX 0x69727943
-/** @brief CPUID Vendor signature Cyrix ECX. */
-#define SIG_CYRIX_ECX 0x64616574
-/** @brief CPUID Vendor signature Cyrix EDX. */
-#define SIG_CYRIX_EDX 0x736e4978
-
-/** @brief CPUID Vendor signature Intel EBX. */
-#define SIG_INTEL_EBX 0x756e6547
-/** @brief CPUID Vendor signature Intel ECX. */
-#define SIG_INTEL_ECX 0x6c65746e
-/** @brief CPUID Vendor signature Intel EDX. */
-#define SIG_INTEL_EDX 0x49656e69
-
-/** @brief CPUID Vendor signature TM1 EBX. */
-#define SIG_TM1_EBX   0x6e617254
-/** @brief CPUID Vendor signature TM1 ECX. */
-#define SIG_TM1_ECX   0x55504361
-/** @brief CPUID Vendor signature TM1 EDX. */
-#define SIG_TM1_EDX   0x74656d73
-
-/** @brief CPUID Vendor signature TM2 EBX. */
-#define SIG_TM2_EBX   0x756e6547
-/** @brief CPUID Vendor signature TM2 ECX. */
-#define SIG_TM2_ECX   0x3638784d
-/** @brief CPUID Vendor signature TM2 EDX. */
-#define SIG_TM2_EDX   0x54656e69
-
-/** @brief CPUID Vendor signature NSC EBX. */
-#define SIG_NSC_EBX   0x646f6547
-/** @brief CPUID Vendor signature NSC ECX. */
-#define SIG_NSC_ECX   0x43534e20
-/** @brief CPUID Vendor signature NSC EDX. */
-#define SIG_NSC_EDX   0x79622065
-
-/** @brief CPUID Vendor signature NextGen EBX. */
-#define SIG_NEXGEN_EBX    0x4778654e
-/** @brief CPUID Vendor signature NextGen ECX. */
-#define SIG_NEXGEN_ECX    0x6e657669
-/** @brief CPUID Vendor signature NextGen EDX. */
-#define SIG_NEXGEN_EDX    0x72446e65
-
-/** @brief CPUID Vendor signature Rise EBX. */
-#define SIG_RISE_EBX  0x65736952
-/** @brief CPUID Vendor signature Rise ECX. */
-#define SIG_RISE_ECX  0x65736952
-/** @brief CPUID Vendor signature Rise EDX. */
-#define SIG_RISE_EDX  0x65736952
-
-/** @brief CPUID Vendor signature SIS EBX. */
-#define SIG_SIS_EBX   0x20536953
-/** @brief CPUID Vendor signature SIS ECX. */
-#define SIG_SIS_ECX   0x20536953
-/** @brief CPUID Vendor signature SIS EDX. */
-#define SIG_SIS_EDX   0x20536953
-
-/** @brief CPUID Vendor signature UMC EBX. */
-#define SIG_UMC_EBX   0x20434d55
-/** @brief CPUID Vendor signature UMC ECX. */
-#define SIG_UMC_ECX   0x20434d55
-/** @brief CPUID Vendor signature UMC EDX. */
-#define SIG_UMC_EDX   0x20434d55
-
-/** @brief CPUID Vendor signature VIA EBX. */
-#define SIG_VIA_EBX   0x20414956
-/** @brief CPUID Vendor signature VIA ECX. */
-#define SIG_VIA_ECX   0x20414956
-/** @brief CPUID Vendor signature VIA EDX. */
-#define SIG_VIA_EDX   0x20414956
-
-/** @brief CPUID Vendor signature Vortex EBX. */
-#define SIG_VORTEX_EBX    0x74726f56
-/** @brief CPUID Vendor signature Vortex ECX. */
-#define SIG_VORTEX_ECX    0x436f5320
-/** @brief CPUID Vendor signature Vortex EDX. */
-#define SIG_VORTEX_EDX    0x36387865
-
 /** @brief CPU flags interrupt enabled flag. */
 #define CPU_RFLAGS_IF 0x000000200
 
 /** @brief CPU MXCSR Precision Interrupt Mask */
 #define MXCSR_PRECISION_EXC_MASK 0x00001000
+
+/** @brief CPU WP bit in CR0 */
+#define CPU_WP_BIT_CR0 0x10000
+
+/** @brief CPU information string buffer size */
+#define CPUINFO_BUFFER_SIZE 4096
 
 /*******************************************************************************
  * STRUCTURES AND TYPES
@@ -610,9 +295,6 @@ typedef struct
 {
     /** @brief Current descriptor offset */
     size_t offset;
-
-    /** @brief Linked CPU id */
-    int32_t cpuId;
 } cpu_vfs_entry_t;
 
 /*******************************************************************************
@@ -652,6 +334,429 @@ typedef struct
         strcpy(BUFF + IDX, STR);                            \
         IDX += strlen(STR);                                 \
 }
+
+/*******************************************************************************
+ * STATIC FUNCTIONS DECLARATIONS
+ ******************************************************************************/
+
+/**
+ * @brief Setups the kernel's GDT in memory and loads it in the GDT register.
+ *
+ * @details Setups a GDT for the kernel. Fills the entries in the GDT table and
+ * load the new GDT in the CPU's GDT register.
+ * Once done, the function sets the segment registers (CS, DS, ES, FS, GS, SS)
+ * of the CPU according to the kernel's settings.
+ */
+static void _setupGDT(void);
+
+/**
+ * @brief Setups the generic kernel's IDT in memory and loads it in the IDT
+ * register.
+ *
+ * @details Setups a simple IDT for the kernel. Fills the entries in the IDT
+ * table by adding basic support to the x86 exception (interrutps 0 to 32).
+ * The rest of the interrupts are not set.
+ */
+static void _setupIDT(void);
+
+/**
+ *  @brief Setups the main CPU TSS for the kernel.
+ *
+ * @details Initializes the main CPU's TSS with kernel settings in memory and
+ * loads it in the TSS register.
+ */
+static void _setupTSS(void);
+
+/**
+ * @brief Formats a GDT entry.
+ *
+ * @details Formats data given as parameter into a standard GDT entry.
+ * The result is directly written in the memory pointed by the entry parameter.
+ *
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kBase  The base address of the segment for the GDT entry.
+ * @param[in] kLimit The limit address of the segment for the GDT entry.
+ * @param[in] kAccess The access bits of segment for the GDT entry.
+ * @param[in] kFlags The flags to be set for the GDT entry.
+ */
+static void _formatGDTEntry(uint64_t*      pEntry,
+                            const uint32_t kBase,
+                            const uint32_t kLimit,
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags);
+
+/**
+ * @brief Formats a TSS entry.
+ *
+ * @details Formats data given as parameter into a standard TSS entry.
+ * The result is directly written in the memory pointed by the entry parameter.
+ *
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kBase  The base address of the segment for the TSS entry.
+ * @param[in] kSize The size of the segment for the TSS entry.
+ * @param[in] kAccess  The access byte of segment for the TSS entry.
+ * @param[in] kFlags The flags to be set for the TSS entry.
+ */
+static void _formatTSSEntry(uint64_t*      pEntry,
+                            const uint64_t kBase,
+                            const uint32_t kSize,
+                            const uint8_t  kAccess,
+                            const uint8_t  kFlags);
+
+/**
+ * @brief Formats an IDT entry.
+ *
+ * @details Formats data given as parameter into a standard IDT entry.
+ * The result is directly written in the memory pointed by the entry parameter.
+ *
+ * @param[out] pEntry The pointer to the entry structure to format.
+ * @param[in] kandler The handler function for the IDT entry.
+ * @param[in] kType  The type of segment for the IDT entry.
+ * @param[in] kFlags The flags to be set for the IDT entry.
+ * @param[in] kIst The IST to be set for the IDT entry.
+ */
+static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
+                            const uintptr_t  kHandler,
+                            const uint8_t    kType,
+                            const uint32_t   kFlags,
+                            const uint8_t    kIst);
+
+/**
+ * @brief Handles a division by zero exception.
+ *
+ * @details Handles a divide by zero exception raised by the cpu. The thread
+ * will be signaled.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the division
+ * by zero.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _fpExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an invalid instruction exception.
+ *
+ * @details Handles an invalid instruction exception raised by the cpu. The
+ * thread will be signaled.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _invalidInstructionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a debug CPU exception.
+ *
+ * @details Handles a debug CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _debugExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a breakpoint CPU exception.
+ *
+ * @details Handles a breakpoint CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an overflow CPU exception.
+ *
+ * @details Handles a overflow CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _overflowExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a bound range exceeded CPU exception.
+ *
+ * @details Handles a bound range exceeded CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a device not available CPU exception.
+ *
+ * @details Handles a device not available CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a double fault CPU exception.
+ *
+ * @details Handles a double fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _doubleFaultHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a coprocessor segment overrun CPU exception.
+ *
+ * @details Handles a coprocessor segment overrun CPU exception raised by the
+ * cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an invalid TSS CPU exception.
+ *
+ * @details Handles an invalid TSS CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a segment not present CPU exception.
+ *
+ * @details Handles a segment not present CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a stack segment fault CPU exception.
+ *
+ * @details Handles a stack segment fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a general protection fault CPU exception.
+ *
+ * @details Handles a general protection fault CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an alignement check CPU exception.
+ *
+ * @details Handles an alignement check CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a machine check CPU exception.
+ *
+ * @details Handles a machine check CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a SIMD floating point CPU exception.
+ *
+ * @details Handles a SIMD floating point CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a virtualization CPU exception.
+ *
+ * @details Handles a virtualization CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a control protection CPU exception.
+ *
+ * @details Handles a control protection CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles an hypervisor injection CPU exception.
+ *
+ * @details Handles an hypervisor injection CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a VMM communication CPU exception.
+ *
+ * @details Handles a VMM communication CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Handles a security CPU exception.
+ *
+ * @details Handles a security CPU exception raised by the cpu.
+ *
+ * @param[in, out] pCurrThread The current thread at the moment of the
+ * exception.
+ *
+ * @return Returns if the scheduler must be called on return.
+ */
+static bool _securityExceptionHandler(kernel_thread_t* pCurrThread);
+
+/**
+ * @brief Initializes the CPU procfs entry.
+ *
+ * @details Initializes the CPU procfs entry. This function must be called by
+ * each CPU after its initialization.
+ */
+static void _initProcFSEntry(void);
+
+/**
+ * @brief CPU entries open hook.
+ *
+ * @details CPU entries open hook. This function returns a
+ * handle to control the procfs entry.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] kpPath The path in the procfs entry
+ * @param[in] flags The open flags.
+ * @param[in] mode Unused.
+ *
+ * @return The function returns an internal handle used by the driver during
+ * file operations.
+ */
+static void* _cpuVfsOpen(void*       pDrvCtrl,
+                         const char* kpPath,
+                         int         flags,
+                         int         mode);
+
+/**
+ * @brief CPU entries close hook.
+ *
+ * @details CPU entries close hook. This function closes a
+ * handle that was created when calling the open function.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ *
+ * @return The function returns 0 on success and -1 on error;
+ */
+static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle);
+
+/**
+ * @brief CPU entries read hook.
+ *
+ * @details CPU entries read hook.
+ *
+ * @param[in, out] pDrvCtrl The CPU driver.
+ * @param[in] pHandle The handle that was created when calling the open
+ * function.
+ * @param[in] pBuffer The buffer that receives the string to read.
+ * @param[in] count The number of bytes of the string to read.
+ *
+ * @return The function returns the number of bytes read or -1 on error;
+ */
+static ssize_t _cpuVfsRead(void*  pDrvCtrl,
+                           void*  pHandle,
+                           void*  pBuffer,
+                           size_t count);
+
+/**
+ * @brief Checks the architecture's feature and requirements for roOs.
+ *
+ * @details Checks the architecture's feature and requirements for roOs. If a
+ * requirement is not met, a kernel panic is raised.
+ */
+static void _cpuValidateArchitecture(void);
+
+/**
+ * @brief Creates the CPU information string.
+ * @details Creates the CPU information string. This function will fill the
+ * buffer as much as possible and return the generated size in pInfoSize.
+ *
+ * @param[in] kpInfo The CPU information for which the string should be
+ * generated.
+ * @param[out] pInfoBuffer The buffer used to store the generated string.
+ * @param[in/out] pInfoSize The buffer size. This is updated oncethe generation
+ * is finished, with the actual size of the generated string.
+ */
+static void _generateCpuInfo(const cpu_info_t* kpInfo,
+                             char*             pInfoBuffer,
+                             size_t*           pInfoSize);
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -1942,15 +2047,6 @@ extern void __intHandler254(void);
  */
 extern void __intHandler255(void);
 
-/** @brief CPU physical addressing width */
-extern uint8_t physAddressWidth;
-
-/** @brief CPU virtual addressing width */
-extern uint8_t virtAddressWidth;
-
-/** @brief CPU virtual 1GB page support */
-extern bool cpu1GBPageSupport;
-
 /************************* Exported global variables **************************/
 /** @brief Stores the index of the first TSS segment */
 uint32_t firstTssSegmentIdx;
@@ -1968,6 +2064,15 @@ static idt_ptr_t sIDTPtr                     __attribute__((aligned(8)));
 
 /** @brief CPU TSS structures */
 static cpu_tss_entry_t* spTSS;
+
+/** @brief CPU physical addressing width */
+static uint8_t sPhysAddressWidth;
+
+/** @brief CPU virtual addressing width */
+static uint8_t sVirtAddressWidth;
+
+/** @brief CPU virtual 1GB page support */
+static bool sCpu1GBPageSupport;
 
 /** @brief Stores the CPU interrupt handlers entry point */
 static uintptr_t sIntHandlerTable[IDT_ENTRY_COUNT] = {
@@ -2244,483 +2349,25 @@ const cpu_interrupt_config_t ksInterruptConfig = {
 
 /** @brief Stores the number of CPU supported in the system */
 static uint32_t sCpuCount;
-/** @brief Stores the CPU frequency for each CPU */
-static uint32_t* spCpuFrequency;
-/** @brief Stores the cache size for each CPU */
-static uint32_t sCpuCacheSize;
-/** @brief Stores the sysfs string */
-static char** spCpuSysfsEntryStr;
-/** @brief Stores the vendor string */
-static char sCpuVendor[CPU_VENDOR_STR_SIZE + 1];
-/** @brief Stores the addressing string */
-static char sCpuAddressing[CPU_ADDRESSING_SIZE + 1];
-/** @brief Stores the flags string */
-static char sCpuFlags[CPU_FLAGS_SIZE + 1];
+
+/** @brief Stores the CPU information */
+static cpu_info_t* spCpuInfo = NULL;
 
 /** @brief Stores the Double Fault Exception Special Stack */
 static uint8_t sDoubleFaultStack[512] __attribute__((aligned(8)));
 
-/*******************************************************************************
- * STATIC FUNCTIONS DECLARATIONS
- ******************************************************************************/
+/** @brief Stores a pointer to the CPU procfs entry. */
+static procfs_dir_entry_t* spCpuProcFsEntry;
 
-/**
- * @brief Setups the kernel's GDT in memory and loads it in the GDT register.
- *
- * @details Setups a GDT for the kernel. Fills the entries in the GDT table and
- * load the new GDT in the CPU's GDT register.
- * Once done, the function sets the segment registers (CS, DS, ES, FS, GS, SS)
- * of the CPU according to the kernel's settings.
- */
-static void _setupGDT(void);
-
-/**
- * @brief Setups the generic kernel's IDT in memory and loads it in the IDT
- * register.
- *
- * @details Setups a simple IDT for the kernel. Fills the entries in the IDT
- * table by adding basic support to the x86 exception (interrutps 0 to 32).
- * The rest of the interrupts are not set.
- */
-static void _setupIDT(void);
-
-/**
- *  @brief Setups the main CPU TSS for the kernel.
- *
- * @details Initializes the main CPU's TSS with kernel settings in memory and
- * loads it in the TSS register.
- */
-static void _setupTSS(void);
-
-/**
- * @brief Formats a GDT entry.
- *
- * @details Formats data given as parameter into a standard GDT entry.
- * The result is directly written in the memory pointed by the entry parameter.
- *
- * @param[out] pEntry The pointer to the entry structure to format.
- * @param[in] kBase  The base address of the segment for the GDT entry.
- * @param[in] kLimit The limit address of the segment for the GDT entry.
- * @param[in] kAccess The access bits of segment for the GDT entry.
- * @param[in] kFlags The flags to be set for the GDT entry.
- */
-static void _formatGDTEntry(uint64_t*      pEntry,
-                            const uint32_t kBase,
-                            const uint32_t kLimit,
-                            const uint8_t  kAccess,
-                            const uint8_t  kFlags);
-
-/**
- * @brief Formats a TSS entry.
- *
- * @details Formats data given as parameter into a standard TSS entry.
- * The result is directly written in the memory pointed by the entry parameter.
- *
- * @param[out] pEntry The pointer to the entry structure to format.
- * @param[in] kBase  The base address of the segment for the TSS entry.
- * @param[in] kSize The size of the segment for the TSS entry.
- * @param[in] kAccess  The access byte of segment for the TSS entry.
- * @param[in] kFlags The flags to be set for the TSS entry.
- */
-static void _formatTSSEntry(uint64_t*      pEntry,
-                            const uint64_t kBase,
-                            const uint32_t kSize,
-                            const uint8_t  kAccess,
-                            const uint8_t  kFlags);
-
-/**
- * @brief Formats an IDT entry.
- *
- * @details Formats data given as parameter into a standard IDT entry.
- * The result is directly written in the memory pointed by the entry parameter.
- *
- * @param[out] pEntry The pointer to the entry structure to format.
- * @param[in] kandler The handler function for the IDT entry.
- * @param[in] kType  The type of segment for the IDT entry.
- * @param[in] kFlags The flags to be set for the IDT entry.
- * @param[in] kIst The IST to be set for the IDT entry.
- */
-static void _formatIDTEntry(cpu_idt_entry_t* pEntry,
-                            const uintptr_t  kHandler,
-                            const uint8_t    kType,
-                            const uint32_t   kFlags,
-                            const uint8_t    kIst);
-
-/**
- * @brief Handles a division by zero exception.
- *
- * @details Handles a divide by zero exception raised by the cpu. The thread
- * will be signaled.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the division
- * by zero.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _fpExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles an invalid instruction exception.
- *
- * @details Handles an invalid instruction exception raised by the cpu. The
- * thread will be signaled.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _invalidInstructionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a debug CPU exception.
- *
- * @details Handles a debug CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _debugExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a breakpoint CPU exception.
- *
- * @details Handles a breakpoint CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _breakpointExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles an overflow CPU exception.
- *
- * @details Handles a overflow CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _overflowExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a bound range exceeded CPU exception.
- *
- * @details Handles a bound range exceeded CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _boundRangeExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a device not available CPU exception.
- *
- * @details Handles a device not available CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _deviceNotAvailableExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a double fault CPU exception.
- *
- * @details Handles a double fault CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _doubleFaultHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a coprocessor segment overrun CPU exception.
- *
- * @details Handles a coprocessor segment overrun CPU exception raised by the
- * cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _coprocSegmentOverrunExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles an invalid TSS CPU exception.
- *
- * @details Handles an invalid TSS CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _invalidTSSExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a segment not present CPU exception.
- *
- * @details Handles a segment not present CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _segmentNotPresentExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a stack segment fault CPU exception.
- *
- * @details Handles a stack segment fault CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _stackSegmentFaultExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a general protection fault CPU exception.
- *
- * @details Handles a general protection fault CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _generalProtectionExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles an alignement check CPU exception.
- *
- * @details Handles an alignement check CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _alignementCheckExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a machine check CPU exception.
- *
- * @details Handles a machine check CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _machineCheckExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a SIMD floating point CPU exception.
- *
- * @details Handles a SIMD floating point CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _simdFpExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a virtualization CPU exception.
- *
- * @details Handles a virtualization CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _virtualizationExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a control protection CPU exception.
- *
- * @details Handles a control protection CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _controlProtectionExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles an hypervisor injection CPU exception.
- *
- * @details Handles an hypervisor injection CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _hypervisorInjectionExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a VMM communication CPU exception.
- *
- * @details Handles a VMM communication CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _vmmCommunicationExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Handles a security CPU exception.
- *
- * @details Handles a security CPU exception raised by the cpu.
- *
- * @param[in, out] pCurrThread The current thread at the moment of the
- * exception.
- *
- * @return Returns if the scheduler must be called on return.
- */
-static bool _securityExceptionHandler(kernel_thread_t* pCurrThread);
-
-/**
- * @brief Initializes the CPU sysfs entry.
- *
- * @details Initializes the CPU sysfs entry. This function must be called by
- * each CPU after its initialization.
- */
-static void _initSysfsEntry(void);
-
-/**
- * @brief CPU entries open hook.
- *
- * @details CPU entries open hook. This function returns a
- * handle to control the sysfs threads entries.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] kpPath The path in the threads sysfs entries
- * @param[in] flags The open flags.
- * @param[in] mode Unused.
- *
- * @return The function returns an internal handle used by the driver during
- * file operations.
- */
-static void* _cpuVfsOpen(void*       pDrvCtrl,
-                         const char* kpPath,
-                         int         flags,
-                         int         mode);
-
-/**
- * @brief CPU entries close hook.
- *
- * @details CPU entries close hook. This function closes a
- * handle that was created when calling the open function.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] pHandle The handle that was created when calling the open
- * function.
- *
- * @return The function returns 0 on success and -1 on error;
- */
-static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle);
-
-/**
- * @brief CPU entries write hook.
- *
- * @details CPU entries write hook.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] pHandle The handle that was created when calling the open
- * function.
- * @param[in] kpBuffer The buffer that contains the string to write.
- * @param[in] count The number of bytes of the string to write.
- *
- * @return The function returns the number of bytes written or -1 on error;
- */
-static ssize_t _cpuVfsWrite(void*       pDrvCtrl,
-                            void*       pHandle,
-                            const void* kpBuffer,
-                            size_t      count);
-
-/**
- * @brief CPU entries read hook.
- *
- * @details CPU entries read hook.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] pHandle The handle that was created when calling the open
- * function.
- * @param[in] pBuffer The buffer that receives the string to read.
- * @param[in] count The number of bytes of the string to read.
- *
- * @return The function returns the number of bytes read or -1 on error;
- */
-static ssize_t _cpuVfsRead(void*  pDrvCtrl,
-                           void*  pHandle,
-                           void*  pBuffer,
-                           size_t count);
-
-/**
- * @brief CPU entries ReadDir hook.
- *
- * @details CPU entries ReadDir hook. This function performs
- * the ReadDir for the CPU sysfs driver.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] pHandle The handle that was created when calling the open
- * function.
- * @param[out] pDirEntry The directory entry to fill by the driver.
- *
- * @return The function returns 0 on success and -1 on error;
- */
-static int32_t _cpuVfsReadDir(void*     pDriverData,
-                              void*     pHandle,
-                              dirent_t* pDirEntry);
-
-/**
- * @brief CPU entries IOCTL hook.
- *
- * @details CPU entries IOCTL hook. This function performs
- *  the IOCTL for the CPU sysfs driver.
- *
- * @param[in, out] pDrvCtrl The CPU driver.
- * @param[in] pHandle The handle that was created when calling the open
- * function.
- * @param[in] operation The operation to perform.
- * @param[in, out] pArgs The arguments for the IOCTL operation.
- *
- * @return The function returns 0 on success and -1 on error;
- */
-static ssize_t _cpuVfsIOCTL(void*    pDriverData,
-                            void*    pHandle,
-                            uint32_t operation,
-                            void*    pArgs);
-
-/**
- * @brief Checks the architecture's feature and requirements for roOs.
- *
- * @details Checks the architecture's feature and requirements for roOs. If a
- * requirement is not met, a kernel panic is raised.
- */
-static void _cpuValidateArchitecture(void);
+/** @brief Stores the CPU procfs entry file operations. */
+static procfs_file_operations_t sCpuProcFsFops = {
+    .pOpen = _cpuVfsOpen,
+    .pClose = _cpuVfsClose,
+    .pRead = _cpuVfsRead,
+    .pWrite = NULL,
+    .pReadDir = NULL,
+    .pIOCTL = NULL
+};
 
 /*******************************************************************************
  * FUNCTIONS
@@ -3156,7 +2803,7 @@ static void _setupGDT(void)
     spGDT = kmalloc(sizeof(uint64_t) * GDT_ENTRY_COUNT + 8);
     CPU_ASSERT(spGDT != NULL, "Failed to allocate GDT", OS_ERR_NO_MORE_MEMORY);
     spGDT = (uint64_t*)((((uintptr_t)spGDT) + 8) & ~0x7ULL);
-    
+
     /* Blank the GDT, set the NULL descriptor */
     memset(spGDT, 0, sizeof(uint64_t) * GDT_ENTRY_COUNT);
 
@@ -3304,65 +2951,19 @@ static void _setupTSS(void)
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "TSS Initialized at 0x%P", spTSS);
 }
 
-static void _initSysfsEntry(void)
+static void _initProcFSEntry(void)
 {
-    vfs_driver_t sysfsDriver;
-    int32_t      cpuId;
-    uint32_t     cpuCount;
+    OS_RETURN_E error;
 
-    cpuId = cpuGetId();
-
-    /* Only the first CPU setup the sysfs */
-    if(cpuId == 0)
-    {
-        /* Initialize the entries */
-        spCpuSysfsEntryStr = kmalloc(sizeof(char*) * sCpuCount);
-        CPU_ASSERT(spCpuSysfsEntryStr != NULL,
-                "Failed to allocated CPU SysFs entries.",
-                    OS_ERR_NO_MORE_MEMORY);
-        for(cpuCount = 0; cpuCount < sCpuCount; ++cpuCount)
-        {
-            spCpuSysfsEntryStr[cpuCount] = kmalloc(sizeof(char) * 
-                                            (CPUS_SYSFS_STR_LENGTH + 1));
-            CPU_ASSERT(spCpuSysfsEntryStr[cpuCount] != NULL,
-                       "Failed to allocated CPU SysFs entries.",
-                       OS_ERR_NO_MORE_MEMORY);
-        }
-
-        /* Register the driver */
-        sysfsDriver = vfsRegisterDriver(CPUS_SYSFS_DIR_PATH,
-                                        NULL,
-                                        _cpuVfsOpen,
-                                        _cpuVfsClose,
-                                        _cpuVfsRead,
-                                        _cpuVfsWrite,
-                                        _cpuVfsReadDir,
-                                        _cpuVfsIOCTL);
-        CPU_ASSERT(sysfsDriver != VFS_DRIVER_INVALID,
-                "Failed to setup CPU sysfs entry",
-                OS_ERR_INCORRECT_VALUE);
-    }
-
-    
-
-
-    /* Prepare the VFS read value */
-    snprintf(spCpuSysfsEntryStr[cpuId],
-             CPUS_SYSFS_STR_LENGTH,
-             "CPU-%d\n"
-             "\t Identifier: %d\n"
-             "\t Frequency: %dMhz\n"
-             "\t Vendor: %s\n"
-             "\t Addressing: %s\n"
-             "\t Cache Size: %dKB\n"
-             "\t Flags: %s\n",
-             cpuId,
-             cpuId,
-             spCpuFrequency[cpuId],
-             sCpuVendor,
-             sCpuAddressing,
-             sCpuCacheSize,
-             sCpuFlags);
+    /* Only the first CPU setup the entry */
+    error = procfsCreateEntry(CPUS_PROCFS_DIR_PATH,
+                              0,
+                              NULL,
+                              &sCpuProcFsFops,
+                              &spCpuProcFsEntry);
+    CPU_ASSERT(error == OS_NO_ERR,
+                "Failed to create the CPU procfs entry",
+                error);
 }
 
 static void* _cpuVfsOpen(void*       pDrvCtrl,
@@ -3371,12 +2972,17 @@ static void* _cpuVfsOpen(void*       pDrvCtrl,
                          int         mode)
 {
     cpu_vfs_entry_t* pEntry;
-    char*            pStr;
 
     (void)pDrvCtrl;
     (void)mode;
 
     if(flags != O_RDONLY)
+    {
+        return (void*)-1;
+    }
+
+    /* Check if we read an entry or not */
+    if(*kpPath != 0)
     {
         return (void*)-1;
     }
@@ -3387,26 +2993,6 @@ static void* _cpuVfsOpen(void*       pDrvCtrl,
         return (void*)-1;
     }
     pEntry->offset = 0;
-
-    /* Check if we read an entry or not */
-    if(*kpPath != 0)
-    {
-        pEntry->cpuId = strtol(kpPath, &pStr, 10);
-        if(pStr == kpPath)
-        {
-            kfree(pEntry);
-            return (void*)-1;
-        }
-        if(pEntry->cpuId >= (int32_t)sCpuCount)
-        {
-            kfree(pEntry);
-            return (void*)-1;
-        }
-    }
-    else
-    {
-        pEntry->cpuId = -1;
-    }
 
     return pEntry;
 }
@@ -3423,29 +3009,22 @@ static int32_t _cpuVfsClose(void* pDrvCtrl, void* pHandle)
 
     return -1;
 }
-
-static ssize_t _cpuVfsWrite(void*       pDrvCtrl,
-                            void*       pHandle,
-                            const void* kpBuffer,
-                            size_t      count)
-{
-    (void)pDrvCtrl;
-    (void)pHandle;
-    (void)kpBuffer;
-    (void)count;
-
-    /* Not supported */
-    return -1;
-}
-
+#include <kerneloutput.h>
 static ssize_t _cpuVfsRead(void*  pDrvCtrl,
                            void*  pHandle,
                            void*  pBuffer,
                            size_t count)
 {
-    size_t           toCopy;
-    size_t           length;
-    cpu_vfs_entry_t* pEntry;
+    cpu_vfs_entry_t*  pEntry;
+    const cpu_info_t* kpInfo;
+    char*             pInfoBuffer;
+    size_t            infoSize;
+    size_t            currentOffset;
+    size_t            bufferOffset;
+    size_t            startPos;
+    size_t            copyStart;
+    size_t            copySize;
+    size_t            copied;
 
     (void)pDrvCtrl;
 
@@ -3460,426 +3039,554 @@ static ssize_t _cpuVfsRead(void*  pDrvCtrl,
 
     pEntry = pHandle;
 
-    if(pEntry->cpuId == -1)
+    /* Allocate memory */
+    pInfoBuffer = kmalloc(CPUINFO_BUFFER_SIZE);
+    if(pInfoBuffer == NULL)
     {
         return -1;
     }
 
-    length = strlen(spCpuSysfsEntryStr[pEntry->cpuId]);
-    if(length <= pEntry->offset)
+    /* Generate CPUID data for each processor */
+    kpInfo = spCpuInfo;
+    currentOffset = 0;
+    bufferOffset = 0;
+    copied = 0;
+
+    startPos = pEntry->offset;
+    while(kpInfo != NULL && count > 0)
     {
-        return 0;
+        infoSize = CPUINFO_BUFFER_SIZE;
+        _generateCpuInfo(kpInfo, pInfoBuffer, &infoSize);
+        kpInfo = kpInfo->pNext;
+
+        /* Skip if we already read that part */
+        if(pEntry->offset > currentOffset + infoSize)
+        {
+            currentOffset += infoSize;
+            continue;
+        }
+
+        /* Get the start position */
+        copyStart = startPos - currentOffset;
+        copySize = MIN(count, infoSize - copyStart);
+
+        /* Copy */
+        memcpy(pBuffer + bufferOffset, pInfoBuffer + copyStart, copySize);
+
+        /* Update pointers */
+        count -= copySize;
+        bufferOffset += copySize;
+        currentOffset += infoSize;
+        startPos = currentOffset;
+        copied += copySize;
     }
-    length -= pEntry->offset;
 
-    toCopy = MIN(length, count);
-    memcpy(pBuffer, spCpuSysfsEntryStr[pEntry->cpuId] + pEntry->offset, toCopy);
-    pEntry->offset += toCopy;
+    kfree(pInfoBuffer);
 
-    return toCopy;
+    pEntry->offset += copied;
+    return copied;
 }
 
-static int32_t _cpuVfsReadDir(void*     pDriverData,
-                              void*     pHandle,
-                              dirent_t* pDirEntry)
+static void _generateCpuInfo(const cpu_info_t* kpInfo,
+                             char*             pInfoBuffer,
+                             size_t*           pInfoSize)
 {
-    cpu_vfs_entry_t* pEntry;
+    size_t            maxSize;
+    size_t            offset;
+    cpu_cache_info_t* pCacheInfo;
+    cpu_tlb_info_t*   pTlbInfo;
+    char*             cacheStr;
+    char*             tlbStr;
 
-    (void)pDriverData;
+    maxSize = *pInfoSize;
 
-    if(pHandle == NULL || pHandle == (void*)-1 || pDirEntry == NULL)
+    offset = snprintf(pInfoBuffer, maxSize, "processor: %d\n", kpInfo->id);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
     {
-        return -1;
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "vendor_id: %s\n",
+                      kpInfo->pVendor);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "cpu family: %d\n",
+                      kpInfo->family);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "model: %d\n",
+                      kpInfo->model);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "model name: %s\n",
+                      kpInfo->pName);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "stepping: %d\n",
+                      kpInfo->stepping);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "microcode: %d\n",
+                      kpInfo->microcode);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "cpuHz: %d\n",
+                      kpInfo->frequencyHz);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
     }
 
-    pEntry = pHandle;
-    if(pEntry->cpuId != -1)
+    pCacheInfo = kpInfo->pCaches;
+    while(pCacheInfo != NULL)
     {
-        return -1;
-    }
-
-    /* Returns the next CPU */
-    if(pEntry->offset < sCpuCount)
-    {
-        snprintf(pDirEntry->pName,
-                 VFS_FILENAME_MAX_LENGTH,
-                 "%d",
-                 pEntry->offset);
-        pDirEntry->type = VFS_FILE_TYPE_FILE;
-        ++pEntry->offset;
-        if(pEntry->offset == sCpuCount)
+        switch(pCacheInfo->type)
         {
-            return 0;
+            case CACHE_DATA:
+                cacheStr = "Data";
+                break;
+            case CACHE_INSTRUCTION:
+                cacheStr = "Instruction";
+                break;
+            case CACHE_UNIFIED:
+                cacheStr = "Unified";
+                break;
+            default:
+                cacheStr = "Unknown";
         }
-        else
+        offset = snprintf(pInfoBuffer,
+                          maxSize,
+                          "L%d %s cache:\n"
+                          "\tSize: %dKB\n"
+                          "\tWays: %d\n"
+                          "\tSets: %d\n"
+                          "\tLine size: %dB\n",
+                          pCacheInfo->level + 1,
+                          cacheStr,
+                          pCacheInfo->size / 1024,
+                          pCacheInfo->ways,
+                          pCacheInfo->sets,
+                          pCacheInfo->lineSize
+                        );
+        pInfoBuffer += offset;
+        maxSize -= offset;
+        if(maxSize == 0)
         {
-            return 1;
+            return;
         }
+        pCacheInfo = pCacheInfo->pNext;
     }
-    return -1;
-}
 
-static ssize_t _cpuVfsIOCTL(void*    pDriverData,
-                            void*    pHandle,
-                            uint32_t operation,
-                            void*    pArgs)
-{
-    (void)pDriverData;
-    (void)pHandle;
-    (void)operation;
-    (void)pArgs;
+    pTlbInfo = kpInfo->pTLBs;
+    while(pTlbInfo != NULL)
+    {
+        switch(pTlbInfo->type)
+        {
+            case TLB_DATA:
+                cacheStr = "Data";
+                break;
+            case TLB_INSTRUCTIONS:
+                cacheStr = "Instruction";
+                break;
+            case TLB_UNIFIED:
+                cacheStr = "Unified";
+                break;
+            default:
+                cacheStr = "Unknown";
+        }
+        switch(pTlbInfo->size)
+        {
+            case TLB_4K:
+                tlbStr = "4K";
+                break;
+            case TLB_2MB_4MB:
+                tlbStr = "2MB/4MB";
+                break;
+            case TLB_1G:
+                tlbStr = "1GB";
+                break;
+            default:
+                tlbStr = "Unknown";
+        }
+        offset = snprintf(pInfoBuffer,
+                          maxSize,
+                          "TLB %d %s %s:\n"
+                          "\tWays: %d\n"
+                          "\tSets: %d\n"
+                          "\tEntries: %dB\n",
+                          pTlbInfo->level + 1,
+                          cacheStr,
+                          tlbStr,
+                          pTlbInfo->ways,
+                          pTlbInfo->sets,
+                          pTlbInfo->nbEntries
+                        );
+        pInfoBuffer += offset;
+        maxSize -= offset;
+        if(maxSize == 0)
+        {
+            return;
+        }
+        pTlbInfo = pTlbInfo->pNext;
+    }
 
-    /* Not supported */
-    return -1;
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "physical id: %d\n",
+                      kpInfo->physicalId);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "siblings: %d\n",
+                      kpInfo->siblings);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "core id: %d\n",
+                      kpInfo->coreId);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "cpu cores: %d\n",
+                      kpInfo->cpuCores);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "apicid: %d\n",
+                      kpInfo->apicId);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "initial apicid: %d\n",
+                      kpInfo->initialApicId);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "fpu: %s\n",
+                      kpInfo->fpu ? "yes": "no");
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "cpuid level: 0x%X\n",
+                      kpInfo->cpuIdLevel);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "wp: %s\n",
+                      kpInfo->wp ? "yes": "no");
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "flags: ");
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = cpuIdGetFlagsString(pInfoBuffer, maxSize, &kpInfo->flags);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "\n");
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "bogomips: %d\n",
+                      kpInfo->bogoMips);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "clflush size: %d\n",
+                      kpInfo->clFlushSize);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "address sizes: %d bits physical, %d bits virtual\n",
+                      kpInfo->physAddressWidth, kpInfo->virtAddressWidth);
+    pInfoBuffer += offset;
+    maxSize -= offset;
+    if(maxSize == 0)
+    {
+        return;
+    }
+    offset = snprintf(pInfoBuffer,
+                      maxSize,
+                      "\n");
+    pInfoBuffer += offset;
+    maxSize -= offset;
+
+
+    #if 0
+    /** @brief CPU stepping  */
+    uint32_t stepping;
+    /** @brief CPU microcode version */
+    uint32_t microcode;
+    /** @brief CPU frequency in hertz */
+    uint64_t frequencyHz;
+    /** @brief CPU cache info */
+    cpu_cache_info_t* pCaches;
+    /** @brief CPU physical ID */
+    uint16_t physicalId;
+    /** @brief Number of CPU siblings */
+    uint16_t siblings;
+    /** @brief CPU code ID */
+    uint16_t coreId;
+    /** @brief Number of Cores in the CPU */
+    uint16_t cpuCores;
+    /** @brief CPU APIC identifier */
+    uint16_t apicId;
+    /** @brief CPU initial APIC identifier */
+    uint16_t initialApicId;
+    /** @brief Tells if the CPU has an FPU */
+    bool     fpu;
+    /** @brief CPU CPUID feature level */
+    uint32_t cpuIdLevel;
+    /** CPU Write Protect status */
+    bool     wp;
+    /** @brief CPU crude MIPS */
+    double   bogoMips;
+    /** @brief CPU TLB size in byytes */
+    uint32_t tlbSize;
+    /** @brief CFLUSH operation size */
+    uint32_t clFlushSize;
+    /** @brief CPU physical addressing width */
+    uint8_t physAddressWidth;
+    /** @brief CPU virtual addressing width */
+    uint8_t virtAddressWidth;
+    /** @brief CPU flags */
+    cpu_flags_info_t flags;
+#endif
+
+    /* Update size */
+    *pInfoSize = *pInfoSize - maxSize;
 }
 
 static void _cpuValidateArchitecture(void)
 {
-    /* eax, ebx, ecx, edx */
-    volatile int32_t regs[4];
-    volatile int32_t regsExt[4];
-    uint32_t         ret;
-    uint32_t         cpuFlagsIndex;
-    uint32_t         i;
+    uint32_t    cr0Reg;
+    cpu_info_t* pNewCpuInfo;
+    cpu_info_t* pCursor;
 
 #if CPU_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG, MODULE_NAME, "Detecting cpu capabilities");
 #endif
 
-    ret = _cpuCPUID(CPUID_GETVENDORSTRING, (uint32_t*)regs);
 
-    CPU_ASSERT(ret != 0,
-               "CPU does not support CPUID",
-               OS_ERR_NOT_SUPPORTED);
+    /* Create the CPU info structure */
+    pNewCpuInfo = kmalloc(sizeof(cpu_info_t));
+    CPU_ASSERT(pNewCpuInfo != NULL,
+               "Failed to create the CPU info structure.",
+               OS_ERR_NO_MORE_MEMORY);
 
-    memset(sCpuVendor, 0, CPU_VENDOR_STR_SIZE + 1);
-    /* Check if CPUID return more that one available function */
-    for(int8_t j = 0; j < 4; ++j)
+
+    /* Fill the CPU info structure */
+    memset(pNewCpuInfo, 0, sizeof(cpu_info_t));
+
+    /* Link */
+    if(spCpuInfo == NULL)
     {
-        sCpuVendor[j] = (char)((regs[1] >> (j * 8)) & 0xFF);
+        spCpuInfo = pNewCpuInfo;
     }
-    for(int8_t j = 0; j < 4; ++j)
+    else
     {
-        sCpuVendor[4 + j] = (char)((regs[3] >> (j * 8)) & 0xFF);
-    }
-    for(int8_t j = 0; j < 4; ++j)
-    {
-        sCpuVendor[8 + j] = (char)((regs[2] >> (j * 8)) & 0xFF);
+        pCursor = spCpuInfo;
+        while(pCursor->pNext != NULL)
+        {
+            pCursor = pCursor->pNext;
+        }
+        pCursor->pNext = pNewCpuInfo;
     }
 
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU Vendor: %s", sCpuVendor);
+    /* CPU identifier */
+    pNewCpuInfo->id = cpuGetId();
 
-    /* Get CPUID basic features */
-    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
+    /* Get the informations from CPUID */
+    cpuidAnalyzeCPU(pNewCpuInfo);
 
     /* Validate basic features */
-    CPU_ASSERT((regs[3] & EDX_FPU) == EDX_FPU,
-               "CPU does not support FPU",
+    CPU_ASSERT(pNewCpuInfo->flags.fpu,
+                "CPU does not support FPU",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.tsc,
+                "CPU does not support TSC",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.apic,
+                "CPU does not support APIC",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.pat,
+                "CPU does not support PAT",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.fxsr,
+                "CPU does not support FX instructions",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.sse,
+                "CPU does not support SSE",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.sse2,
+                "CPU does not support SSE2",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.lm,
+                "CPU is not 64 bits",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.lahf_lm,
+                "CPU is not 64 bits",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->flags.syscall,
+                "CPU does not support SYSCALL",
+                OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(pNewCpuInfo->physAddressWidth != 0 &&
+               pNewCpuInfo->virtAddressWidth != 0,
+               "CPU addressing width unavailable",
                OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_TSC) == EDX_TSC,
-               "CPU does not support TSC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_APIC) == EDX_APIC,
-               "CPU does not support APIC",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_PAT) == EDX_PAT,
-               "CPU does not support PAT",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_FXSR) == EDX_FXSR,
-               "CPU does not support FX instructions",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE) == EDX_SSE,
-               "CPU does not support SSE",
-               OS_ERR_NOT_SUPPORTED);
-    CPU_ASSERT((regs[3] & EDX_SSE2) == EDX_SSE2,
-               "CPU does not support SSE2",
-               OS_ERR_NOT_SUPPORTED);
+    CPU_ASSERT(KERNEL_VIRTUAL_ADDR_WIDTH == pNewCpuInfo->virtAddressWidth,
+                "CPU addressing width incompatible with virtual address "
+                "width",
+                OS_ERR_NOT_SUPPORTED);
 
-    /* Check for extended features */
-    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
-    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_ADDRESS_WIDTH)
+    if(pNewCpuInfo->id == 0)
     {
-        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
-
-        /* Check 1GB page support */
-        cpu1GBPageSupport = (regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE;
-
-        CPU_ASSERT((regsExt[3] & EDX_64_BIT) == EDX_64_BIT,
-                   "CPU addressing width unavailable",
-                   OS_ERR_NOT_SUPPORTED);
-
-        CPU_ASSERT((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL,
-                   "CPU does not support SYSCALL",
+        /* Save information */
+        sCpu1GBPageSupport = pNewCpuInfo->flags.page1gb;
+        sPhysAddressWidth = pNewCpuInfo->physAddressWidth;
+        sVirtAddressWidth = pNewCpuInfo->virtAddressWidth;
+    }
+    else
+    {
+        /* Validate uniformity*/
+        CPU_ASSERT((pNewCpuInfo->flags.page1gb == sCpu1GBPageSupport &&
+                    pNewCpuInfo->physAddressWidth == sPhysAddressWidth &&
+                    pNewCpuInfo->virtAddressWidth == sVirtAddressWidth),
+                    "Heterogenous configuration detected.",
                     OS_ERR_NOT_SUPPORTED);
-
-        /* Get the addressing width */
-        _cpuCPUID(CPUID_ADDRESS_WIDTH, (uint32_t*)regsExt);
-
-        physAddressWidth = regsExt[0] & 0xFF;
-        virtAddressWidth = (regsExt[0] >> 8) & 0xFF;
-
-        CPU_ASSERT(physAddressWidth != 0 && virtAddressWidth != 0,
-                   "CPU addressing width unavailable",
-                   OS_ERR_NOT_SUPPORTED);
-        syslog(SYSLOG_LEVEL_INFO,
-               MODULE_NAME,
-               "CPU Addressing: Physical %dbits | Virtual %dbits",
-               physAddressWidth,
-               virtAddressWidth);
-        /* Check addressing width */
-        CPU_ASSERT(KERNEL_VIRTUAL_ADDR_WIDTH == virtAddressWidth,
-                   "CPU addressing width incompatible with virtual address "
-                   "width\n",
-                   OS_ERR_NOT_SUPPORTED);
-
-        snprintf(sCpuAddressing,
-                 CPU_ADDRESSING_SIZE,
-                 "Physical %dbits | Virtual %dbits",
-                 physAddressWidth,
-                 virtAddressWidth);
-    }
-    else
-    {
-        CPU_ASSERT(false,
-                   "CPU does not support extended info",
-                   OS_ERR_NOT_SUPPORTED);
     }
 
-    memset(sCpuFlags, 0, CPU_FLAGS_SIZE + 1);
-    cpuFlagsIndex = 0;
+    /* Get the WP bit */
+    __asm__ __volatile__ (
+        "mov %%cr0, %%rax\n\t"
+        "mov %%eax, %0\n\t"
+    : "=m" (cr0Reg)
+    : /* no input */
+    : "%rax"
+    );
+    pNewCpuInfo->wp = (cr0Reg & CPU_WP_BIT_CR0) == CPU_WP_BIT_CR0;
 
-    _cpuCPUID(CPUID_GETFEATURES, (uint32_t*)regs);
+    syslog(SYSLOG_LEVEL_INFO,
+           MODULE_NAME,
+           "CPU Vendor: %s",
+           pNewCpuInfo->pVendor);
 
-    if((regs[2] & ECX_SSE3) == ECX_SSE3)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE3 - "); }
-    if((regs[2] & ECX_PCLMULQDQ) == ECX_PCLMULQDQ)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCLMULQDQ - "); }
-    if((regs[2] & ECX_DTES64) == ECX_DTES64)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DTES64 - "); }
-    if((regs[2] & ECX_MONITOR) == ECX_MONITOR)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MONITOR - "); }
-    if((regs[2] & ECX_DS_CPL) == ECX_DS_CPL)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DS_CPL - "); }
-    if((regs[2] & ECX_VMX) == ECX_VMX)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "VMX - "); }
-    if((regs[2] & ECX_SMX) == ECX_SMX)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SMX - "); }
-    if((regs[2] & ECX_EST) == ECX_EST)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "EST - "); }
-    if((regs[2] & ECX_TM2) == ECX_TM2)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TM2 - "); }
-    if((regs[2] & ECX_SSSE3) == ECX_SSSE3)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSSE3 - "); }
-    if((regs[2] & ECX_CNXT_ID) == ECX_CNXT_ID)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CNXT_ID - "); }
-    if((regs[2] & ECX_FMA) == ECX_FMA)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FMA - "); }
-    if((regs[2] & ECX_CX16) == ECX_CX16)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CX16 - "); }
-    if((regs[2] & ECX_XTPR) == ECX_XTPR)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XTPR - "); }
-    if((regs[2] & ECX_PDCM) == ECX_PDCM)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PDCM - "); }
-    if((regs[2] & ECX_PCID) == ECX_PCID)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCID - "); }
-    if((regs[2] & ECX_DCA) == ECX_DCA)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DCA - "); }
-    if((regs[2] & ECX_SSE41) == ECX_SSE41)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE41 - "); }
-    if((regs[2] & ECX_SSE42) == ECX_SSE42)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE42 - "); }
-    if((regs[2] & ECX_X2APIC) == ECX_X2APIC)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "X2APIC - "); }
-    if((regs[2] & ECX_MOVBE) == ECX_MOVBE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MOVBE - "); }
-    if((regs[2] & ECX_POPCNT) == ECX_POPCNT)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "POPCNT - "); }
-    if((regs[2] & ECX_TSC) == ECX_TSC)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
-    if((regs[2] & ECX_AESNI) == ECX_AESNI)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "AESNI - "); }
-    if((regs[2] & ECX_XSAVE) == ECX_XSAVE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XSAVE - "); }
-    if((regs[2] & ECX_OSXSAVE) == ECX_OSXSAVE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "OSXSAVE - "); }
-    if((regs[2] & ECX_AVX) == ECX_AVX)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "AVX - "); }
-    if((regs[2] & ECX_F16C) == ECX_F16C)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "F16C - "); }
-    if((regs[2] & ECX_RDRAND) == ECX_RDRAND)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "RDRAND - "); }
-    if((regs[3] & EDX_FPU) == EDX_FPU)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FPU - "); }
-    if((regs[3] & EDX_VME) == EDX_VME)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "VME - "); }
-    if((regs[3] & EDX_DE) == EDX_DE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DE - "); }
-    if((regs[3] & EDX_PSE) == EDX_PSE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSE - "); }
-    if((regs[3] & EDX_TSC) == EDX_TSC)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
-    if((regs[3] & EDX_MSR) == EDX_MSR)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MSR - "); }
-    if((regs[3] & EDX_PAE) == EDX_PAE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PAE - "); }
-    if((regs[3] & EDX_MCE) == EDX_MCE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MCE - "); }
-    if((regs[3] & EDX_CX8) == EDX_CX8)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CX8 - "); }
-    if((regs[3] & EDX_APIC) == EDX_APIC)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "APIC - "); }
-    if((regs[3] & EDX_SEP) == EDX_SEP)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SEP - "); }
-    if((regs[3] & EDX_MTRR) == EDX_MTRR)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MTRR - "); }
-    if((regs[3] & EDX_PGE) == EDX_PGE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PGE - "); }
-    if((regs[3] & EDX_MCA) == EDX_MCA)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MCA - "); }
-    if((regs[3] & EDX_CMOV) == EDX_CMOV)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CMOV - "); }
-    if((regs[3] & EDX_PAT) == EDX_PAT)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PAT - "); }
-    if((regs[3] & EDX_PSE36) == EDX_PSE36)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSE36 - "); }
-    if((regs[3] & EDX_PSN) == EDX_PSN)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PSN - "); }
-    if((regs[3] & EDX_CLFLUSH) == EDX_CLFLUSH)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CLFLUSH - "); }
-    if((regs[3] & EDX_DS) == EDX_DS)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DS - "); }
-    if((regs[3] & EDX_ACPI) == EDX_ACPI)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "ACPI - "); }
-    if((regs[3] & EDX_MMX) == EDX_MMX)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MMX - "); }
-    if((regs[3] & EDX_FXSR) == EDX_FXSR)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR - "); }
-    if((regs[3] & EDX_SSE) == EDX_SSE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE - "); }
-    if((regs[3] & EDX_SSE2) == EDX_SSE2)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE2 - "); }
-    if((regs[3] & EDX_SS) == EDX_SS)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SS - "); }
-    if((regs[3] & EDX_HTT) == EDX_HTT)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "HTT - "); }
-    if((regs[3] & EDX_TM) == EDX_TM)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TM - "); }
-    if((regs[3] & EDX_PBE) == EDX_PBE)
-    { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PBE - "); }
-
-    /* Check for extended features */
-    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
-    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_INTELFEATURES)
-    {
-        _cpuCPUID(CPUID_INTELFEATURES, (uint32_t*)regsExt);
-
-        if((regsExt[3] & EDX_SYSCALL) == EDX_SYSCALL)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SYSCALL - "); }
-        if((regsExt[3] & EDX_MP) == EDX_MP)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MP - "); }
-        if((regsExt[3] & EDX_XD) == EDX_XD)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XD - "); }
-        if((regsExt[3] & EDX_MMX_EX) == EDX_MMX_EX)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MMX_EX - "); }
-        if((regsExt[3] & EDX_FXSR) == EDX_FXSR)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR - "); }
-        if((regsExt[3] & EDX_FXSR_OPT) == EDX_FXSR_OPT)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FXSR_OPT - "); }
-        if((regsExt[3] & EDX_1GB_PAGE) == EDX_1GB_PAGE)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "1GB_PAGE - "); }
-        if((regsExt[3] & EDX_RDTSCP) == EDX_RDTSCP)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "RDTSCP - "); }
-        if((regsExt[3] & EDX_64_BIT) == EDX_64_BIT)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "X64 - "); }
-        if((regsExt[3] & EDX_3DNOW_EX) == EDX_3DNOW_EX)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "3DNOW_EX - "); }
-        if((regsExt[3] & EDX_3DNOW) == EDX_3DNOW)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "3DNOW - "); }
-        if((regsExt[2] & ECX_LAHF_LM) == ECX_LAHF_LM)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "LAHF_LM - "); }
-        if((regsExt[2] & ECX_CMP_LEG) == ECX_CMP_LEG)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CMP_LEG - "); }
-        if((regsExt[2] & ECX_SVM) == ECX_SVM)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SVM - "); }
-        if((regsExt[2] & ECX_EXTAPIC) == ECX_EXTAPIC)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "EXTAPIC - "); }
-        if((regsExt[2] & ECX_CR8_LEG) == ECX_CR8_LEG)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "CR8_LEG - "); }
-        if((regsExt[2] & ECX_ABM) == ECX_ABM)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "ABM - "); }
-        if((regsExt[2] & ECX_SSE4A) == ECX_SSE4A)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SSE4A - "); }
-        if((regsExt[2] & ECX_MISASSE) == ECX_MISASSE)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "MISALIGNED_SSE - "); }
-        if((regsExt[2] & ECX_PREFETCH) == ECX_PREFETCH)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PREFETCH - "); }
-        if((regsExt[2] & ECX_OSVW) == ECX_OSVW)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "OSVW - "); }
-        if((regsExt[2] & ECX_IBS) == ECX_IBS)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "IBS - "); }
-        if((regsExt[2] & ECX_XOP) == ECX_XOP)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "XOP - "); }
-        if((regsExt[2] & ECX_SKINIT) == ECX_SKINIT)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "SKINIT - "); }
-        if((regsExt[2] & ECX_WDT) == ECX_WDT)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "WDT - "); }
-        if((regsExt[2] & ECX_LWP) == ECX_LWP)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "LWP - "); }
-        if((regsExt[2] & ECX_FMA4) == ECX_FMA4)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "FMA4 - "); }
-        if((regsExt[2] & ECX_TCE) == ECX_TCE)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TCE - "); }
-        if((regsExt[2] & ECX_NODEIDMSR) == ECX_NODEIDMSR)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "NODE_ID_MSR - "); }
-        if((regsExt[2] & ECX_TBM) == ECX_TBM)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TMB - "); }
-        if((regsExt[2] & ECX_TOPOEX) == ECX_TOPOEX)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TOPOEX - "); }
-        if((regsExt[2] & ECX_PERF_CORE) == ECX_PERF_CORE)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PERF_CORE - "); }
-        if((regsExt[2] & ECX_PERF_NB) == ECX_PERF_NB)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PERF_NB - "); }
-        if((regsExt[2] & ECX_DBX) == ECX_DBX)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "DBX - "); }
-        if((regsExt[2] & ECX_PERF_TSC) == ECX_PERF_TSC)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "TSC - "); }
-        if((regsExt[2] & ECX_PCX_L2I) == ECX_PCX_L2I)
-        { CONCAT_STR(sCpuFlags, cpuFlagsIndex, "PCX_L2I - "); }
-    }
-
-    sCpuFlags[cpuFlagsIndex - 2] = 0;
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "CPU Features: %s", sCpuFlags);
-
-    /* TODO: Get frequency */
-    spCpuFrequency = kmalloc(sizeof(uint32_t) * sCpuCount);
-    CPU_ASSERT(spCpuFrequency != NULL, 
-               "Failed to allocated CPU structures.", 
-               OS_ERR_NO_MORE_MEMORY);
-    for(i = 0; i < sCpuCount; ++i)
-    {
-        spCpuFrequency[i] = 1000;
-    }
-
-    /* Get the cache size */
-    _cpuCPUID(CPUID_INTELEXTENDED_AVAILABLE, (uint32_t*)regsExt);
-    if((uint32_t)regsExt[0] >= (uint32_t)CPUID_GETTLB)
-    {
-        _cpuCPUID(CPUID_GETTLB, (uint32_t*)regsExt);
-
-        /* TODO: Get size */
-        sCpuCacheSize = 4096;
-
-        syslog(SYSLOG_LEVEL_INFO,
-               MODULE_NAME,
-               "CPU Caches Size: %dKB",
-               sCpuCacheSize);
-    }
-    else
-    {
-        syslog(SYSLOG_LEVEL_ERROR,
-               MODULE_NAME,
-               "Failed to get CPU cache size");
-    }
+    syslog(SYSLOG_LEVEL_INFO,
+           MODULE_NAME,
+           "CPU Addressing: Physical %dbits | Virtual %dbits",
+           sPhysAddressWidth,
+           sVirtAddressWidth);
 }
 
 void cpuInit(void)
@@ -3888,22 +3595,22 @@ void cpuInit(void)
     coreMgtInitCpuCount();
     sCpuCount = coreMgtGetCpuCount();
 
-    /* Validate architecture */
-    _cpuValidateArchitecture();
-    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
-
     /* Init the TSS, GDT, IDT */
     _setupIDT();
     _setupTSS();
     _setupGDT();
-    
+
+    /* Validate architecture */
+    _cpuValidateArchitecture();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "Architecture validated");
+
     /* Init the system calls */
     cpuSystemCallInit((uintptr_t)cpuUserSyscallHandler,
                       KERNEL_CS_64,
                       KERNEL_DS_64);
 
-    /* Init the sysfs entries */
-    _initSysfsEntry();
+    /* Init the procfs entries */
+    _initProcFSEntry();
 }
 
 OS_RETURN_E cpuRaiseInterrupt(const uint32_t kInterruptLine)
@@ -4792,6 +4499,9 @@ void cpuApInit(const uint8_t kCpuId)
            &spTSS[kCpuId]);
 #endif
 
+    /* Validate the architecture */
+    _cpuValidateArchitecture();
+
     /* Init the rest of the CPU facilities */
     coreMgtApInit(kCpuId);
 
@@ -4799,9 +4509,6 @@ void cpuApInit(const uint8_t kCpuId)
     cpuSystemCallInit((uintptr_t)cpuUserSyscallHandler,
                       KERNEL_CS_64,
                       KERNEL_DS_64);
-
-    /* Init the sysfs entries */
-    _initSysfsEntry();
 
     syslog(SYSLOG_LEVEL_INFO,
            MODULE_NAME,
@@ -4885,7 +4592,7 @@ uintptr_t cpuCreateVirtualCPU(kernel_thread_t* pThread, const bool kSetEntry)
 
     /* Setup stack pointers */
     pVCpu->cpuState.rsp = stack - 0x8;
-    pVCpu->cpuState.rbp = 0;
+    pVCpu->cpuState.rbp = pVCpu->cpuState.rsp;
 
     /* Setup the CPU state */
     pVCpu->cpuState.rsi = 0;
@@ -4977,7 +4684,7 @@ OS_RETURN_E cpuCopyVirtualCPUs(const kernel_thread_t* kpSrcThread,
     }
 
     /* Update kernel stack end */
-    pCurVCpu->kernelStackEnd = pDstThread->kernelStackEnd - 0x10;
+    pCurVCpu->kernelStackEnd = pDstThread->kernelStackEnd;
 
     return OS_NO_ERR;
 }
@@ -5562,6 +5269,21 @@ void cpuDestroyLocalStorage(kernel_thread_t* pThread)
 uint32_t cpuGetCount(void)
 {
     return sCpuCount;
+}
+
+uint8_t cpuGetPhysicalAddressWidth(void)
+{
+    return sPhysAddressWidth;
+}
+
+uint8_t cpuGetVirtualAddressWidth(void)
+{
+    return sVirtAddressWidth;
+}
+
+bool cpuGet1GBPageSupport(void)
+{
+    return sCpu1GBPageSupport;
 }
 
 /* Stack protection support */

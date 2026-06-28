@@ -63,7 +63,7 @@ typedef struct
 typedef struct procfs_dir_entry
 {
     /** @brief Name of the procfs entry. */
-    const char* name;
+    char* name;
     /** @brief Open mode of the procfs entry. */
     int32_t mode;
 
@@ -84,6 +84,9 @@ typedef struct procfs_dir_entry
      * directory.
      */
     struct procfs_dir_entry* pSubDir;
+
+    /** @brief ProcFS drivers internal data. */
+    void* pData;
 } procfs_dir_entry_t;
 
 /*******************************************************************************
@@ -110,22 +113,30 @@ typedef struct procfs_dir_entry
  ******************************************************************************/
 
 /**
+ * @brief Initialize the procfs driver.
+ *
+ * @details Initializes the procfs driver. Create the root entry in the
+ * filesystem.
+ */
+void procfsInit(void);
+
+/**
  * @brief Creates a procfs directory.
  *
  * @details Creates a procfs directory. A procfs directory has no file operation
  * and has for only purpose to gather other directories or entries.
  *
  * @param[in] kpName The name of the directory to create.
- * @param[in] kpParentName The name of the parent directory to this entry. If
+ * @param[in] kpParentName The path of the parent directory to this entry. If
  * NULL, the new directory will be created at the root of the procfs.
  * @param[out] ppDirectory The structure created for the directory is filled
  * in this buffer. The value can be NULL in case of error.
  *
  * @return The function returns the error or success status.
  */
-OS_RETURN_E procfsCreateDir(const char*         kpName,
-                            const char*         kpParentName,
-                            procfs_dir_entry_t* ppDirectory);
+OS_RETURN_E procfsCreateDir(const char*          kpName,
+                            const char*          kpParentPath,
+                            procfs_dir_entry_t** ppDirectory);
 
 /**
  * @brief Removes a procfs directory.
@@ -148,19 +159,19 @@ OS_RETURN_E procfsRemoveDir(procfs_dir_entry_t** ppDirectory);
  *
  * @param[in] kpName The name of the new procfs entry.
  * @param[in] kMode The open mode of the new procfs entry.
- * @param[in] kpParent The structure of the parent procfs entry. If NULL, the
+ * @param[in] pParent The structure of the parent procfs entry. If NULL, the
  * new entry will be created at the root of the procfs.
- * @param[in] kpFops File operations used by the new procfs entry.
+ * @param[in] pFops File operations used by the new procfs entry.
  * @param[out] pEntry The structure created for the entry is filled in this
  * buffer. The value can be NULL in case of error.
  *
  * @return The function returns the error or success status.
  */
-OS_RETURN_E procfsCreateEntry(const char*                     kpName,
-                              const uint32_t                  kMode,
-                              const procfs_dir_entry_t*       kpParent,
-                              const procfs_file_operations_t* kpFops,
-                              procfs_dir_entry_t**            pEntry);
+OS_RETURN_E procfsCreateEntry(const char*               kpName,
+                              const uint32_t            kMode,
+                              procfs_dir_entry_t*       pParent,
+                              procfs_file_operations_t* pFops,
+                              procfs_dir_entry_t**      pEntry);
 
 /**
  * @brief Removes an existing procfs entry.
@@ -169,13 +180,13 @@ OS_RETURN_E procfsCreateEntry(const char*                     kpName,
  * entry will return invalid codes once the entry is removed.
  *
  * @param[in] kpName The name of the procfs entry to remove.
- * @param[in] kpParent The structure of the parent directory of the procfs entry
+ * @param[in] pParent The structure of the parent directory of the procfs entry
  * to remove. If NULL, the parent is considered the root of the procfs.
  *
  * @return The function returns the error or success status.
  */
-OS_RETURN_E procfsRemoveEntry(const char*               kpName,
-                              const procfs_dir_entry_t* kpParent);
+OS_RETURN_E procfsRemoveEntry(const char*         kpName,
+                              procfs_dir_entry_t* pParent);
 
 #endif /* #ifndef __FS_PROCFS_H_ */
 

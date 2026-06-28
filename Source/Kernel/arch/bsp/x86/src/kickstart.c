@@ -32,6 +32,7 @@
 #include <syslog.h>        /* Syslog services */
 #include <memory.h>        /* Memory manager */
 #include <syslog.h>        /* Kernel Syslog */
+#include <procfs.h>        /* ProcFS driver */
 #include <devtree.h>       /* Device tree manager */
 #include <console.h>       /* Kernel console */
 #include <graphics.h>      /* Graphics manager */
@@ -151,6 +152,10 @@ void kickstart(void)
     /* Init the VFS driver */
     vfsInit();
     syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "VFS initialized");
+
+    /* Init the PROCFS driver */
+    procfsInit();
+    syslog(SYSLOG_LEVEL_INFO, MODULE_NAME, "PROCFS initialized");
 
     /* Initialize the CPU */
     cpuInit();

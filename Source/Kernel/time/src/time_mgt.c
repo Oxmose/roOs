@@ -350,12 +350,12 @@ void timeInit(void)
 
     /* Initialize the structures */
     spSysTickCount = kmalloc(sizeof(uint64_t) * sCpuCount);
-    TIME_ASSERT(spSysTickCount != NULL, 
-                "Failed to allocate timing structure.", 
+    TIME_ASSERT(spSysTickCount != NULL,
+                "Failed to allocate timing structure.",
                 OS_ERR_NO_MORE_MEMORY);
     spActiveWait = kmalloc(sizeof(uint64_t) * sCpuCount);
-    TIME_ASSERT(spActiveWait != NULL, 
-                "Failed to allocate timing structure.", 
+    TIME_ASSERT(spActiveWait != NULL,
+                "Failed to allocate timing structure.",
                 OS_ERR_NO_MORE_MEMORY);
 
     /* Get the FDT timers node */

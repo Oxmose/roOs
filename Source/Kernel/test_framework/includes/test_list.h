@@ -45,9 +45,9 @@
 #define TEST_KSEMAPHORE_ENABLED                   0
 #define TEST_KMUTEX_ENABLED                       0
 #define TEST_DEF_INTERRUPT_ENABLED                0
-#define TEST_SIGNAL_ENABLED                       1
+#define TEST_SIGNAL_ENABLED                       0
 #define TEST_CRITICAL_ENABLED                     0
-#define TEST_ATOMICS_ENABLED                      0
+#define TEST_ATOMICS_ENABLED                      1
 
 /*************************************************
  * TEST IDENTIFIERS
@@ -553,7 +553,7 @@
 #define TEST_ATOMICS_CREATE_TEST (1 + TEST_ATOMICS_VALUE_DEC)
 
 /** @brief Current test name */
-#define TEST_FRAMEWORK_TEST_NAME "Signals"
+#define TEST_FRAMEWORK_TEST_NAME "Kernel Atomics"
 
 /*******************************************************************************
  * STRUCTURES AND TYPES

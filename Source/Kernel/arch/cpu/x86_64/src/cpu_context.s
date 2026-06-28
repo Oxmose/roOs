@@ -195,24 +195,21 @@ cpuRestoreContext:
     mov rdx, [rax + VCPU_OFF_RDX]
     mov rcx, [rax + VCPU_OFF_RCX]
 
-    ; Restore stack pointer pre-int and make space of IRET pop data
-    mov rsp, [rax + VCPU_OFF_RSP]
-    sub rsp, 40
+    ; Use FXData as temporary stack for the return
+    mov rsp, rax
+    add rsp, VCPU_OFF_FXD
 
     ; Restore the interrupt context
-    mov rbx, [rax + VCPU_OFF_RIP]  ; RIP
-    mov [rsp], rbx
-    mov rbx, [rax + VCPU_OFF_CS]  ; CS
-    mov [rsp + 8], rbx
-    mov rbx, [rax + VCPU_OFF_FLG]  ; RFLAGS
-    mov [rsp + 16], rbx
-
-    ; Retore base RSP
-    mov rbx, rsp
-    add rbx, 40
-    mov [rsp + 24], rbx  ; RSP
     mov rbx, [rax + VCPU_OFF_SS]  ; SS
-    mov [rsp + 32], rbx
+    push rbx
+    mov rbx, [rax + VCPU_OFF_RSP] ; RSP
+    push rbx
+    mov rbx, [rax + VCPU_OFF_FLG] ; RFLAGS
+    push rbx
+    mov rbx, [rax + VCPU_OFF_CS]  ; CS
+    push rbx
+    mov rbx, [rax + VCPU_OFF_RIP] ; RIP
+    push rbx
 
     ; Restore RBX and RAX
     mov rbx, [rax + VCPU_OFF_RBX]

@@ -185,7 +185,7 @@
                 compatible = "x86,x86-lapic-timer";
                 interrupt-parent = <&int_ctrl>;
                 interrupts = <0 0x21>; /* 0: is not IRQ; 1: Int line */
-                freq = <500>;
+                freq = <1000>;
                 bus-freq-divider = <16>;
                 /* The current hardware has a fixed-rate TSC that is the most
                  * precise way to measure time.

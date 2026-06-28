@@ -820,7 +820,7 @@ static void* _kbdVfsOpen(void*       pDrvCtrl,
     (void)mode;
 
     /* The path must be empty */
-    if((*kpPath == '/' && *(kpPath + 1) != 0) || *kpPath != 0)
+    if((*kpPath == VFS_PATH_DELIMITER && *(kpPath + 1) != 0) || *kpPath != 0)
     {
         return (void*)-1;
     }

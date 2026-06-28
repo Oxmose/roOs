@@ -660,9 +660,10 @@ static void* _ustarVfsOpen(void*       pDrvCtrl,
 #endif
         /* If the current file is a directory */
         fileLen = strlen(currentBlock.fileName);
-        if(currentBlock.fileName[fileLen - 1] == '/')
+        if(currentBlock.fileName[fileLen - 1] == VFS_PATH_DELIMITER)
         {
-            if((kpPath[pathLen - 1] != '/') && (pathLen == fileLen - 1))
+            if((kpPath[pathLen - 1] != VFS_PATH_DELIMITER) &&
+               (pathLen == fileLen - 1))
             {
                 if(strncmp(kpPath, currentBlock.fileName, pathLen) == 0)
                 {
@@ -979,7 +980,8 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
                 *(currentBlock.fileName + filePathSize) != 0;
                 ++filePathSize)
             {
-                if(*(currentBlock.fileName + filePathSize) == '/')
+                if(*(currentBlock.fileName + filePathSize) ==
+                   VFS_PATH_DELIMITER)
                 {
                     ++filePathSize;
                     break;
@@ -1037,7 +1039,8 @@ static int32_t _ustarVfsReadDir(void*     pDriverData,
                     *(currentBlock.fileName + filePathSize) != 0;
                     ++filePathSize)
                 {
-                    if(*(currentBlock.fileName + filePathSize) == '/' &&
+                    if(*(currentBlock.fileName + filePathSize) ==
+                        VFS_PATH_DELIMITER &&
                     *(currentBlock.fileName + filePathSize + 1) != 0)
                     {
                         found = false;

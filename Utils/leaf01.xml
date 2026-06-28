@@ -1,0 +1,52 @@
+<!--
+*** SPDX-FileCopyrightText: 2023 Linutronix GmbH
+*** SPDX-License-Identifier: GPL-2.0-only
+-->
+<leaf id="0x80000005">
+  <desc>AMD/Transmeta L1 cache and TLB</desc>
+  <subleaf id="0">
+    <eax>
+      <desc>L1 TLB 2M/4M pages enumeration</desc>
+      <vendors>
+        <vendor>AMD</vendor>
+      </vendors>
+      <bit0  len="8"  id="l1_itlb_2m_4m_nentries"  desc="L1 ITLB #entries, 2M and 4M pages" />
+      <bit8  len="8"  id="l1_itlb_2m_4m_assoc"     desc="L1 ITLB associativity, 2M and 4M pages" />
+      <bit16 len="8"  id="l1_dtlb_2m_4m_nentries"  desc="L1 DTLB #entries, 2M and 4M pages" />
+      <bit24 len="8"  id="l1_dtlb_2m_4m_assoc"     desc="L1 DTLB associativity, 2M and 4M pages" />
+    </eax>
+    <ebx>
+      <desc> L1 TLB 4K pages enumeration</desc>
+      <vendors>
+        <vendor>AMD</vendor>
+        <vendor>Transmeta</vendor>
+      </vendors>
+      <bit0  len="8"  id="l1_itlb_4k_nentries"     desc="L1 ITLB #entries, 4K pages" />
+      <bit8  len="8"  id="l1_itlb_4k_assoc"        desc="L1 ITLB associativity, 4K pages" />
+      <bit16 len="8"  id="l1_dtlb_4k_nentries"     desc="L1 DTLB #entries, 4K pages" />
+      <bit24 len="8"  id="l1_dtlb_4k_assoc"        desc="L1 DTLB associativity, 4K pages" />
+    </ebx>
+    <ecx>
+      <desc> L1 data cache enumeration</desc>
+      <vendors>
+        <vendor>AMD</vendor>
+        <vendor>Transmeta</vendor>
+      </vendors>
+      <bit0  len="8"  id="l1_dcache_line_size"     desc="L1 dcache line size, in bytes" />
+      <bit8  len="8"  id="l1_dcache_nlines"        desc="L1 dcache lines per tag" />
+      <bit16 len="8"  id="l1_dcache_assoc"         desc="L1 dcache associativity" />
+      <bit24 len="8"  id="l1_dcache_size_kb"       desc="L1 dcache size, in KB" />
+    </ecx>
+    <edx>
+      <desc> L1 instruction cache enumeration</desc>
+      <vendors>
+        <vendor>AMD</vendor>
+        <vendor>Transmeta</vendor>
+      </vendors>
+      <bit0  len="8"  id="l1_icache_line_size"     desc="L1 icache line size, in bytes" />
+      <bit8  len="8"  id="l1_icache_nlines"        desc="L1 icache lines per tag" />
+      <bit16 len="8"  id="l1_icache_assoc"         desc="L1 icache associativity" />
+      <bit24 len="8"  id="l1_icache_size_kb"       desc="L1 icache size, in KB" />
+    </edx>
+  </subleaf>
+</leaf>

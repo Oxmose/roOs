@@ -452,10 +452,10 @@ static void _memoryMgrDetectMemory(void);
 
 /**
  * @brief Creates the translation entries in the flat mapping.
- * 
+ *
  * @details Creates the translation entries in the flat mapping. This will add
  * the last entry to the page directory entry reserved for flat mapping.
- * 
+ *
  * @return The physical address of the begining of the last entry table for flat
  * mapping is returned.
  */
@@ -761,14 +761,7 @@ extern uintptr_t _physicalMapDir[KERNEL_PGDIR_ENTRY_COUNT];
 extern uintptr_t _physicalMapTranslationPage[KERNEL_PGDIR_ENTRY_COUNT];
 
 /************************* Exported global variables **************************/
-/** @brief CPU physical addressing width */
-uint8_t physAddressWidth = 0;
-
-/** @brief CPU virtual addressing width */
-uint8_t virtAddressWidth = 0;
-
-/** @brief CPU virtual 1GB page support */
-bool cpu1GBPageSupport = 0;
+/* None */
 
 /************************** Static global variables ***************************/
 /** @brief Physical memory chunks list */
@@ -794,6 +787,15 @@ static kernel_spinlock_t sLock = KERNEL_SPINLOCK_INIT_VALUE;
 
 /** @brief Frames metadata tables */
 static frame_meta_table_t* spFramesMeta = NULL;
+
+/** @brief CPU physical addressing width */
+static uint8_t sPhysAddressWidth = 0;
+
+/** @brief CPU virtual addressing width */
+static uint8_t sVirtAddressWidth = 0;
+
+/** @brief CPU virtual 1GB page support */
+static bool sCpu1GBPageSupport = 0;
 
 /*******************************************************************************
  * FUNCTIONS
@@ -979,6 +981,7 @@ static bool _pageFaultHandler(kernel_thread_t* pCurrentThread)
         }
     }
 
+    kernelPanicHandler(pCurrentThread);
 
     /* Set reason page fault and reason data the address,
     * also get the reason code in the interrupt info
@@ -999,7 +1002,7 @@ static inline uintptr_t _makeCanonical(const uintptr_t kAddress,
 {
     if(kIsPhysical == false)
     {
-        if((kAddress & (1ULL << (virtAddressWidth - 1))) != 0)
+        if((kAddress & (1ULL << (sVirtAddressWidth - 1))) != 0)
         {
             return kAddress | ~sCanonicalBound;
         }
@@ -1484,6 +1487,7 @@ static uintptr_t _getBlockFromEnd(mem_list_t* pList, const size_t kLength)
 static uintptr_t _allocateFrames(const size_t kFrameCount)
 {
     uintptr_t physAddr;
+    uintptr_t baseAddr;
     uintptr_t i;
     uint16_t* refCount;
 
@@ -1491,7 +1495,7 @@ static uintptr_t _allocateFrames(const size_t kFrameCount)
     MEM_ASSERT((physAddr & PAGE_SIZE_MASK) == 0,
                "Non aligned frame allocated.",
                OS_ERR_INCORRECT_VALUE);
-
+    baseAddr = physAddr;
     if(physAddr != (uintptr_t)NULL)
     {
         /* Increment the reference count */
@@ -1510,7 +1514,7 @@ static uintptr_t _allocateFrames(const size_t kFrameCount)
         }
     }
 
-    return physAddr;
+    return baseAddr;
 }
 
 static void _releaseFrames(const uintptr_t kBaseAddress,
@@ -2418,7 +2422,7 @@ static uintptr_t _memoryMgrMapTranslationTable(void)
                                      PAGE_FLAG_GLOBAL        |
                                      PAGE_FLAG_XD            |
                                      PAGE_FLAG_PRESENT;
-    physFrameTable = KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1GB + 
+    physFrameTable = KERNEL_MEM_PML4_ENTRY * 512ULL * KERNEL_MEM_1GB +
                      511ULL * KERNEL_MEM_2MB;
     cpuInvalidateTlbEntry(physFrameTable);
 
@@ -2445,7 +2449,7 @@ static void _memoryMgrCreateFlatMap(void)
                 "No physical memory detected in FDT",
                 OS_ERR_NO_MORE_MEMORY);
 
-    if(cpu1GBPageSupport == false)
+    if(sCpu1GBPageSupport == false)
     {
         /* Map the translation pages */
         startTranslationAddr = _memoryMgrMapTranslationTable();
@@ -2475,7 +2479,7 @@ static void _memoryMgrCreateFlatMap(void)
                 if((_physicalMapDir[frameTable] & PAGE_FLAG_PRESENT) == 0)
                 {
                     /* Get the frame and increment */
-                    nextPtable = startTranslationAddr + 
+                    nextPtable = startTranslationAddr +
                                  usedFrames * KERNEL_PAGE_SIZE;
                     ++usedFrames;
                     nextPtable = _makeCanonical(nextPtable, true);
@@ -2488,12 +2492,12 @@ static void _memoryMgrCreateFlatMap(void)
                                                   PAGE_FLAG_PRESENT;
                 }
                 /* Get the virtual address of the table to update */
-                nextPtable = _makeCanonical((_physicalMapDir[frameTable] & 
+                nextPtable = _makeCanonical((_physicalMapDir[frameTable] &
                                              ~PAGE_SIZE_MASK) -
                                             startTranslationAddr,
                                             true);
-                nextPtable = KERNEL_MEM_PML4_ENTRY * 512ULL * 
-                             KERNEL_MEM_1GB + 
+                nextPtable = KERNEL_MEM_PML4_ENTRY * 512ULL *
+                             KERNEL_MEM_1GB +
                              511ULL * KERNEL_MEM_2MB * 512ULL +
                              nextPtable;
                 pTable = (uintptr_t*)_makeCanonical(nextPtable, false);
@@ -2968,6 +2972,7 @@ static OS_RETURN_E _copyPgDirEntry(uintptr_t*      pSrcLevel,
     error = OS_NO_ERR;
 
     /* Check all entries of the current table */
+    *pVirtAddress = _makeCanonical(*pVirtAddress, false);
     while(*pVirtAddress < kVirtAddressMax &&
           addrEntryIdx < KERNEL_PGDIR_ENTRY_COUNT)
     {
@@ -3475,6 +3480,11 @@ void memoryMgrInit(void)
 {
     OS_RETURN_E error;
 
+    /* Get the CPU capabilities */
+    sPhysAddressWidth = cpuGetPhysicalAddressWidth();
+    sVirtAddressWidth = cpuGetVirtualAddressWidth();
+    sCpu1GBPageSupport = cpuGet1GBPageSupport();
+
     /* Initialize structures */
     sPhysMemList.pQueue = kQueueCreate(true);
     KERNEL_SPINLOCK_INIT(sPhysMemList.lock);
@@ -3482,8 +3492,8 @@ void memoryMgrInit(void)
     sKernelFreePagesList.pQueue = kQueueCreate(true);
     KERNEL_SPINLOCK_INIT(sKernelFreePagesList.lock);
 
-    sPhysAddressWidthMask = ((1ULL << physAddressWidth) - 1);
-    sCanonicalBound       = ((1ULL << (virtAddressWidth - 1)) - 1);
+    sPhysAddressWidthMask = ((1ULL << sPhysAddressWidth) - 1);
+    sCanonicalBound       = ((1ULL << (sVirtAddressWidth - 1)) - 1);
 
     /* Clear the low entries used during boot */
     spKernelPageDir[0] = 0;

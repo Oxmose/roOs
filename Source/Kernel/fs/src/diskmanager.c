@@ -952,7 +952,7 @@ static void* _dskmgrVfsOpen(void*       pDrvCtrl,
     seek_ioctl_args_t seekArgs;
 
     /* The path must be empty */
-    if((*kpPath == '/' && *(kpPath + 1) != 0) || *kpPath != 0)
+    if((*kpPath == VFS_PATH_DELIMITER && *(kpPath + 1) != 0) || *kpPath != 0)
     {
         return (void*)-1;
     }

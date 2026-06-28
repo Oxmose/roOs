@@ -1,0 +1,122 @@
+/** @brief Streaming SIMD Extensions 3 (SSE3). ./
+#define ECX_SSE3 (1U << 0)
+/** @brief PCLMULQDQ instruction support. ./
+#define ECX_PCLMULQDQ (1U << 1)
+/** @brief 64-bit DS save area. ./
+#define ECX_DTES64 (1U << 2)
+/** @brief MONITOR/MWAIT support. ./
+#define ECX_MONITOR (1U << 3)
+/** @brief CPL Qualified Debug Store. ./
+#define ECX_DSCPL (1U << 4)
+/** @brief Virtual Machine Extensions. ./
+#define ECX_VMX (1U << 5)
+/** @brief Safer Mode Extensions. ./
+#define ECX_SMX (1U << 6)
+/** @brief Enhanced Intel SpeedStep. ./
+#define ECX_EST (1U << 7)
+/** @brief Thermal Monitor 2. ./
+#define ECX_TM2 (1U << 8)
+/** @brief Supplemental SSE3. ./
+#define ECX_SSSE3 (1U << 9)
+/** @brief L1 Context ID. ./
+#define ECX_CNTXT_ID (1U << 10)
+/** @brief Silicon Debug. ./
+#define ECX_SDBG (1U << 11)
+/** @brief FMA extensions using YMM state. ./
+#define ECX_FMA (1U << 12)
+/** @brief CMPXCHG16B instruction support. ./
+#define ECX_CX16 (1U << 13)
+/** @brief xTPR Update Control. ./
+#define ECX_XTPR_UPDATE (1U << 14)
+/** @brief Perfmon and Debug Capability. ./
+#define ECX_PDCM (1U << 15)
+/** @brief Process-context identifiers. ./
+#define ECX_PCID (1U << 17)
+/** @brief Direct Cache Access. ./
+#define ECX_DCA (1U << 18)
+/** @brief SSE4.1. ./
+#define ECX_SSE4_1 (1U << 19)
+/** @brief SSE4.2. ./
+#define ECX_SSE4_2 (1U << 20)
+/** @brief X2APIC support. ./
+#define ECX_X2APIC (1U << 21)
+/** @brief MOVBE instruction support. ./
+#define ECX_MOVBE (1U << 22)
+/** @brief POPCNT instruction support. ./
+#define ECX_POPCNT (1U << 23)
+/** @brief APIC timer one-shot operation. ./
+#define ECX_TSC_DEADLINE_TIMER (1U << 24)
+/** @brief AES instructions. ./
+#define ECX_AES (1U << 25)
+/** @brief XSAVE (and related instructions) support. ./
+#define ECX_XSAVE (1U << 26)
+/** @brief XSAVE (and related instructions) are enabled by OS. ./
+#define ECX_OSXSAVE (1U << 27)
+/** @brief AVX instructions support. ./
+#define ECX_AVX (1U << 28)
+/** @brief Half-precision floating-point conversion support. ./
+#define ECX_F16C (1U << 29)
+/** @brief RDRAND instruction support. ./
+#define ECX_RDRAND (1U << 30)
+/** @brief System is running as guest; (para-)virtualized system. ./
+#define ECX_GUEST_STATUS (1U << 31)
+/** @brief Floating-Point Unit on-chip (x87). ./
+#define EDX_FPU (1U << 0)
+/** @brief Virtual-8086 Mode Extensions. ./
+#define EDX_VME (1U << 1)
+/** @brief Debugging Extensions. ./
+#define EDX_DE (1U << 2)
+/** @brief Page Size Extension. ./
+#define EDX_PSE (1U << 3)
+/** @brief Time Stamp Counter. ./
+#define EDX_TSC (1U << 4)
+/** @brief Model-Specific Registers (RDMSR and WRMSR support). ./
+#define EDX_MSR (1U << 5)
+/** @brief Physical Address Extensions. ./
+#define EDX_PAE (1U << 6)
+/** @brief Machine Check Exception. ./
+#define EDX_MCE (1U << 7)
+/** @brief CMPXCHG8B instruction. ./
+#define EDX_CX8 (1U << 8)
+/** @brief APIC on-chip. ./
+#define EDX_APIC (1U << 9)
+/** @brief SYSENTER, SYSEXIT, and associated MSRs. ./
+#define EDX_SEP (1U << 11)
+/** @brief Memory Type Range Registers. ./
+#define EDX_MTRR (1U << 12)
+/** @brief Page Global Extensions. ./
+#define EDX_PGE (1U << 13)
+/** @brief Machine Check Architecture. ./
+#define EDX_MCA (1U << 14)
+/** @brief Conditional Move Instruction. ./
+#define EDX_CMOV (1U << 15)
+/** @brief Page Attribute Table. ./
+#define EDX_PAT (1U << 16)
+/** @brief Page Size Extension (36-bit). ./
+#define EDX_PSE36 (1U << 17)
+/** @brief Processor Serial Number. ./
+#define EDX_PSN (1U << 18)
+/** @brief CLFLUSH instruction. ./
+#define EDX_CLFLUSH (1U << 19)
+/** @brief Debug Store. ./
+#define EDX_DS (1U << 21)
+/** @brief Thermal monitor and clock control. ./
+#define EDX_ACPI (1U << 22)
+/** @brief MMX instructions. ./
+#define EDX_MMX (1U << 23)
+/** @brief FXSAVE and FXRSTOR instructions. ./
+#define EDX_FXSR (1U << 24)
+/** @brief SSE instructions. ./
+#define EDX_SSE (1U << 25)
+/** @brief SSE2 instructions. ./
+#define EDX_SSE2 (1U << 26)
+/** @brief Self Snoop. ./
+#define EDX_SELFSNOOP (1U << 27)
+/** @brief Hyper-threading. ./
+#define EDX_HTT (1U << 28)
+/** @brief Thermal Monitor. ./
+#define EDX_TM (1U << 29)
+/** @brief Legacy IA-64 (Itanium) support bit, now reserved. ./
+#define EDX_IA64 (1U << 30)
+/** @brief Pending Break Enable. ./
+#define EDX_PBE (1U << 31)

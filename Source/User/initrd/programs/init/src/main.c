@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <sched.h>
 
-#if 0
+#if 1
 int main(void)
 {
     pid_t newPid;
@@ -37,7 +37,7 @@ int main(void)
     {
         if(newPid != 0)
         {
-            //nanosleep(&sleepTime, NULL);
+            nanosleep(&sleepTime, NULL);
             memset(timeSec, 0, 32);
             retVal = clock_gettime(CLOCK_MONOTONIC, &time);
             if(retVal == 0)
@@ -46,7 +46,7 @@ int main(void)
                 // uitoa(time.tv_nsec + time.tv_sec * 1000000000, timeSec, 10);
                 // write(6, timeSec, strlen(timeSec));
                 // write(6, "\n", 1);
-                write(6, "+", 1);
+                //write(6, "+", 1);
             }
             else
             {
@@ -55,7 +55,7 @@ int main(void)
         }
         else
         {
-            //sleep(1);
+            sleep(1);
             memset(timeSec, 0, 32);
             retVal = clock_gettime(CLOCK_MONOTONIC, &time);
             if(retVal == 0)
@@ -64,7 +64,7 @@ int main(void)
                 // uitoa(time.tv_nsec + time.tv_sec * 1000000000, timeSec, 10);
                 // write(6, timeSec, strlen(timeSec));
                 // write(6, "\n", 1);
-                write(6, "-", 1);
+                //write(6, "-", 1);
             }
             else
             {

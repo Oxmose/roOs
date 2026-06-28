@@ -57,6 +57,9 @@
 /** @brief Defines the maximal length of a filesystem name */
 #define FS_NAME_LENGTH 32
 
+/** @brief Defines the VFS path node delimiter */
+#define VFS_PATH_DELIMITER '/'
+
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -531,13 +534,18 @@ OS_RETURN_E vfsUnmount(const char* kpPath);
  */
 void vfsSyscallHandleWrite(void* pParams);
 
-#if 0
-OS_RETURN_E vfsInitFdTable(vfs_fd_table* pTable);
+/**
+ * @brief Gets the index before the next delimiter in the path.
+ *
+ * @details Gets the index before the next delimiter in the path.
+ *
+ * @param[in] kpPath The path to use.
+ *
+ * @return The function returns the index before the next delimiter in the path.
+ * -1 is returned when the function reached the end of the path.
+ */
+ssize_t vfsUtilGetNextPathToken(const char* kpPath);
 
-OS_RETURN_E vfsDestroyFdTable(vfs_fd_table* pTable);
-
-OS_RETURN_E vfsCopyFdTable(vfs_fd_table*);
-#endif
 #endif /* #ifndef __FS_VFS_H_ */
 
 /************************************ EOF *************************************/

@@ -26,6 +26,7 @@
 #include <vfs.h>          /* VFS SysFS entries */
 #include <panic.h>        /* Kernel panic */
 #include <kheap.h>        /* Kernel heap */
+#include <procfs.h>       /* ProcsFS service */
 #include <string.h>       /* Memory manipulation */
 #include <stdint.h>       /* Standard int types */
 #include <stddef.h>       /* Standard definitions */
@@ -1052,7 +1053,7 @@ static void* _schedVfsThreadsOpen(void*       pDrvCtrl,
     pEntry->offset = 0;
 
     /* Check if we want to open a thread entry of the sysfs directory */
-    if(strlen(kpPath) != 0)
+    if(kpPath[0] != 0)
     {
         /* Get the tid */
         tid = strtol(kpPath, &pStr, 10);
@@ -1491,6 +1492,7 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
 {
     OS_RETURN_E       error;
     kernel_process_t* pProcess;
+    char              pProcessIdStr[16];
 
     if(ppProcess == NULL)
     {
@@ -1505,72 +1507,6 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
     }
     memset(pProcess, 0, sizeof(kernel_process_t));
 
-    /* Create process memory information */
-    pProcess->pMemoryData = memoryCreateProcessMemoryData();
-    if(pProcess->pMemoryData == NULL)
-    {
-        kfree(pProcess);
-        return OS_ERR_NULL_POINTER;
-    }
-
-    /* Create the file descriptor table */
-    error = vfsCreateProcessFdTable(pProcess);
-    if(error != OS_NO_ERR)
-    {
-        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
-        kfree(pProcess);
-        return error;
-    }
-
-    /* Create the thread table */
-    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
-                                                                   kfree),
-                                                &error);
-    if(error != OS_NO_ERR)
-    {
-        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
-                     "Failed to destroy fd table.",
-                     error);
-        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
-        kfree(pProcess);
-        return error;
-    }
-
-    /* Create the futex table */
-    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
-                                                                  kfree),
-                                               &error);
-    if(error != OS_NO_ERR)
-    {
-        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
-                     "Failed to destroy fd table.",
-                     error);
-        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
-                     "Failed to remove threads table.",
-                     error);
-        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
-        kfree(pProcess);
-        return error;
-    }
-
-    pProcess->pChildren = kQueueCreate(false);
-    if(pProcess->pChildren == NULL)
-    {
-        SCHED_ASSERT(vfsDestroyProcessFdTable(pProcess) == OS_NO_ERR,
-                     "Failed to destroy fd table.",
-                     error);
-        SCHED_ASSERT(uhashtableDestroy(pProcess->pThreadTable) == OS_NO_ERR,
-                     "Failed to remove threads table.",
-                     error);
-        SCHED_ASSERT(uhashtableDestroy(pProcess->pFutexTable) == OS_NO_ERR,
-                     "Failed to remove futex table.",
-                     error);
-        memoryDestroyProcessMemoryData(pProcess->pMemoryData);
-        kfree(pProcess);
-        return OS_ERR_NO_MORE_MEMORY;
-    }
-
-
     /* Setup the process attributes */
     pProcess->pid = atomicIncrement32(&sLastGivenPid);
     pProcess->pChildren = kQueueCreate(true);
@@ -1582,6 +1518,41 @@ static OS_RETURN_E _schedCreateKernelProcess(kernel_process_t** ppProcess,
 
     KERNEL_SPINLOCK_INIT(pProcess->futexTableLock);
     KERNEL_SPINLOCK_INIT(pProcess->lock);
+
+    /* Create the procfs entry */
+    snprintf(pProcessIdStr, 15, "%d",  pProcess->pid);
+    error = procfsCreateDir(pProcessIdStr, NULL, &pProcess->pProcfsEntryDir);
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to create kernel process",
+                 error);
+
+    /* Create process memory information */
+    pProcess->pMemoryData = memoryCreateProcessMemoryData();
+    SCHED_ASSERT(pProcess->pMemoryData != NULL,
+                 "Failed to create kernel process",
+                 OS_ERR_NULL_POINTER);
+
+    /* Create the file descriptor table */
+    error = vfsCreateProcessFdTable(pProcess);
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to create kernel process",
+                 error);
+
+    /* Create the thread table */
+    pProcess->pThreadTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                   kfree),
+                                                &error);
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to create kernel process",
+                 error);
+
+    /* Create the futex table */
+    pProcess->pFutexTable = uhashtableCreate(UHASHTABLE_ALLOCATOR(kmalloc,
+                                                                  kfree),
+                                               &error);
+    SCHED_ASSERT(error == OS_NO_ERR,
+                 "Failed to create kernel process",
+                 error);
 
     *ppProcess = pProcess;
 
@@ -1789,7 +1760,7 @@ void schedInit(void)
     SCHED_ASSERT(spThreadTables != NULL,
                  "Failed to allocate threads table.",
                  OS_ERR_NO_MORE_MEMORY);
-    spSleepingThreadsTable = kmalloc(sizeof(thread_general_table_t) * 
+    spSleepingThreadsTable = kmalloc(sizeof(thread_general_table_t) *
                                     sCpuCount);
     SCHED_ASSERT(spSleepingThreadsTable != NULL,
                  "Failed to allocate sleeping threads table.",
@@ -2002,8 +1973,6 @@ void schedScheduleNoInt(void)
     ++spCpuStats[cpuId].schedCount;
     KERNEL_UNLOCK(spCpuStats[cpuId].lock);
 
-    KERNEL_UNLOCK(pThread->lock);
-
 #if SCHED_DEBUG_ENABLED
     syslog(SYSLOG_LEVEL_DEBUG,
            MODULE_NAME,
@@ -2015,16 +1984,19 @@ void schedScheduleNoInt(void)
     /* Check if we should restore the full context or the syscall context */
     if(cpuIsContextFromInt(pThread->pVCpu) == true)
     {
+        KERNEL_UNLOCK(pThread->lock);
         cpuRestoreContext(pThread);
     }
     else if(cpuIsContextFromSyscall(pThread->pVCpu) == true)
     {
         if(pThread->type == THREAD_TYPE_KERNEL)
         {
+            KERNEL_UNLOCK(pThread->lock);
             cpuRestoreKernelSyscallContext(pThread);
         }
         else
         {
+            KERNEL_UNLOCK(pThread->lock);
             cpuRestoreUserSyscallContext(pThread);
         }
     }
@@ -2049,7 +2021,7 @@ kernel_thread_t* schedGetCurrentThread(void)
     {
         pCur = NULL;
     }
-    else 
+    else
     {
         pCur = pCurrentThreadsPtr[cpuGetId()];
     }

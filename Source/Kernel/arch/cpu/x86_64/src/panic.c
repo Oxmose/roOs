@@ -160,7 +160,7 @@ static void _printHeader(const virtual_cpu_t* kpVCpu)
 
     kpIntState = &kpVCpu->intContext;
 
-    kprintfPanic("##############################    KERNEL PANIC    ##########"
+    kprintfPanic("\n##############################    KERNEL PANIC    ##########"
                     "####################\n");
     switch(kpIntState->intId)
     {
@@ -481,7 +481,7 @@ static void _panicNoSched(void)
         kprintfPanic("File: %s at line %d\n", skpPanicFile, sPanicLine);
     }
 
-    if(skpPanicModule != NULL && strlen(skpPanicModule) != 0)
+    if(skpPanicModule != NULL && skpPanicModule[0] != 0)
     {
         kprintfPanic("[%s] | ", skpPanicModule);
     }
@@ -587,7 +587,7 @@ bool kernelPanicHandler(kernel_thread_t* pCurrThread)
         kprintfPanic("File: %s at line %d\n", skpPanicFile, sPanicLine);
     }
 
-    if(skpPanicModule != NULL && strlen(skpPanicModule) != 0)
+    if(skpPanicModule != NULL && skpPanicModule[0] != 0)
     {
         kprintfPanic("[%s] | ", skpPanicModule);
     }

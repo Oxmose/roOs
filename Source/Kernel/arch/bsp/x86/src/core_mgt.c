@@ -134,9 +134,9 @@ static OS_RETURN_E _coreMgtAttach(const fdt_node_t* pkFdtNode);
 
 /**
  * @brief Initializes the number of CPU based on the FDT.
- * 
+ *
  * @param[in] kpFdtNone The current FDT node to walk.
- * 
+ *
  * @details Initializes the number of CPU based on the FDT. If an error is
  * detected, a kernel panic is raised.
  */
@@ -508,8 +508,8 @@ void coreMgtInitCpuCount(void)
 
     /* Get the FDT root node and walk it to register CPUs */
     kpFdtRootNode = fdtGetRoot();
-    CORE_MGT_ASSERT(kpFdtRootNode != NULL, 
-                    "NULL Device File Tree", 
+    CORE_MGT_ASSERT(kpFdtRootNode != NULL,
+                    "NULL Device File Tree",
                     OS_ERR_NULL_POINTER);
 
     /* Perform the registration */

@@ -55,6 +55,9 @@
 /** @brief Kernel thread forward declaration */
 struct kernel_thread_t;
 
+/** @brief Procfs forward declaration */
+struct procfs_dir_entry;
+
 /** @brief Thread's scheduling state. */
 typedef enum
 {
@@ -222,6 +225,8 @@ typedef struct kernel_process_t
     /**************************************
      * Resources management
      *************************************/
+    /** @brief Procfs entry directory. */
+    struct procfs_dir_entry* pProcfsEntryDir;
 
     /** @brief Stores the process futex table. */
     uhashtable_t* pFutexTable;

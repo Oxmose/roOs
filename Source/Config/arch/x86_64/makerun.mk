@@ -9,8 +9,8 @@
 # virtualbox.
 ################################################################################
 
-QEMUOPTS = -enable-kvm -d guest_errors -rtc base=localtime -m 256M \
-           -smp 16 -serial stdio -drive format=raw,file=../Peripherals/hdd_primary_master.img
+QEMUOPTS = -cpu host -enable-kvm -d guest_errors -rtc base=localtime -m 256M \
+           -smp 4 -serial stdio -drive format=raw,file=../Peripherals/hdd_primary_master.img
 
 QEMU = qemu-system-x86_64
 

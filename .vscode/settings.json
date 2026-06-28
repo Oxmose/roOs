@@ -49,6 +49,15 @@
         "cpuinterrupt.h": "c",
         "syscalls.h": "c",
         "syscall.h": "c",
-        "drivermgr.h": "c"
-    }
+        "drivermgr.h": "c",
+        "typeinfo": "c",
+        "cpu_syscall.h": "c",
+        "initializer_list": "c"
+    },
+
+    "editor.rulers": [80,120],
+    "workbench.colorCustomizations": {
+        "editorRuler.foreground": "#0066ff"
+    },
+    "files.trimTrailingWhitespace": true
 }

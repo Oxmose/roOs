@@ -195,10 +195,10 @@ void cpuSetInterrupt(void);
 /** @brief Halts the CPU for lower energy consuption. */
 void cpuHalt(void);
 
-/** 
- * @brief Returns the number of CPU in the system. 
- * 
- * @return Returns the number of CPU in the system. 
+/**
+ * @brief Returns the number of CPU in the system.
+ *
+ * @return Returns the number of CPU in the system.
  */
 uint32_t cpuGetCount(void);
 

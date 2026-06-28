@@ -201,67 +201,6 @@ typedef struct
  ******************************************************************************/
 
 /**
- * @brief Returns the highest support CPUID feature request ID.
- *
- * @details Returns the highest supported input value for CPUID instruction.
- * kExt can be either 0x0 or 0x80000000 to return highest supported value for
- * basic or extended CPUID information.  Function returns 0 if CPUID
- * is not supported or whatever CPUID returns in eax register.  If sig
- * pointer is non-null, then first four bytes of the SIG
- * (as found in ebx register) are returned in location pointed by sig.
- *
- * @param[in] kExt The opperation code for the CPUID instruction.
- * @return The highest supported input value for CPUID instruction.
- */
-static inline uint32_t _cpuGetCPUIDMax(const uint32_t kExt)
-{
-    uint32_t regs[4];
-
-    /* Host supports CPUID. Return highest supported CPUID input value. */
-    __asm__ __volatile__("cpuid":
-                         "=a"(*regs),
-                         "=b"(*(regs+1)),
-                         "=c"(*(regs+2)),
-                         "=d"(*(regs+3)):
-                         "a"(kExt));
-
-    return regs[0];
-}
-
-/**
- * @brief Returns the CPUID data for a requested leaf.
- *
- * @details Returns CPUID data for requested CPUID leaf, as found in returned
- * eax, ebx, ecx and edx registers.  The function checks if CPUID is
- * supported and returns 1 for valid CPUID information or 0 for
- * unsupported CPUID leaf. All pointers are required to be non-null.
- *
- * @param[in] kCode The opperation code for the CPUID instruction.
- * @param[out] regs The register used to store the CPUID instruction return.
- * @return 1 in case of succes, 0 otherwise.
- */
-static inline int32_t _cpuCPUID(const uint32_t kCode, uint32_t pRegs[4])
-{
-    uint32_t ext;
-    uint32_t maxLevel;
-
-    ext      = kCode & 0x80000000;
-    maxLevel = _cpuGetCPUIDMax(ext);
-
-    if (maxLevel == 0 || maxLevel < kCode)
-    {
-        return 0;
-    }
-    __asm__ __volatile__("cpuid":
-                         "=a"(*pRegs),
-                         "=b"(*(pRegs+1)),
-                         "=c"(*(pRegs+2)),
-                         "=d"(*(pRegs+3)):
-                         "a"(kCode));
-    return 1;
-}
-
-/**
  * @brief Returns the current CPU flags.
  *
  * @return The current CPU flags.
@@ -456,6 +395,32 @@ void cpuSystemCallInit(uintptr_t syscallHandlerAddr,
                        uint64_t  kernelSelector,
                        uint64_t  userSelector);
 
+/**
+ * @brief Returns the CPU physical address width.
+ *
+ * @details Returns the CPU physical address width.
+ *
+ * @return Returns the CPU physical address width.
+ */
+uint8_t cpuGetPhysicalAddressWidth(void);
+
+/**
+ * @brief Returns the CPU virtual address width.
+ *
+ * @details Returns the CPU virtual address width.
+ *
+ * @return Returns the CPU virtual address width.
+ */
+uint8_t cpuGetVirtualAddressWidth(void);
+
+/**
+ * @brief Returns the CPU 1GB page support.
+ *
+ * @details Returns the CPU 1GB page support.
+ *
+ * @return Returns the CPU 1GB page support.
+ */
+bool cpuGet1GBPageSupport(void);
 #endif /* #ifndef __X8664_X86_CPU_H_ */
 
 /************************************ EOF *************************************/

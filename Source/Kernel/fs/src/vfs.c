@@ -56,9 +56,6 @@
 /** @brief Defines the initial number of file descriptors */
 #define VFS_INITIAL_FD_COUNT 128
 
-/** @brief Defines the VFS path node delimiter */
-#define VFS_PATH_DELIMITER '/'
-
 /*******************************************************************************
  * STRUCTURES AND TYPES
  ******************************************************************************/
@@ -228,18 +225,6 @@ typedef struct
 /*******************************************************************************
  * STATIC FUNCTIONS DECLARATIONS
  ******************************************************************************/
-
-/**
- * @brief Gets the index before the next delimiter in the path.
- *
- * @details Gets the index before the next delimiter in the path.
- *
- * @param[in] kpPath The path to use.
- *
- * @return The function returns the index before the next delimiter in the path.
- * -1 is returned when the function reached the end of the path.
- */
-static ssize_t _getNextPathToken(const char* kpPath);
 
 /**
  * @brief Cleans the path provided as parameter.
@@ -572,28 +557,6 @@ static size_t _cleanPath(char* pCleanPath, const char* kpOriginalPath)
     return newSize;
 }
 
-static ssize_t _getNextPathToken(const char* kpPath)
-{
-    ssize_t nextStop;
-
-    nextStop = 0;
-
-    /* Try to find the next delimiting character */
-    while(*kpPath != 0 && *kpPath != VFS_PATH_DELIMITER)
-    {
-        ++nextStop;
-        ++kpPath;
-    }
-
-    /* Check for end of path */
-    if(nextStop == 0 && *kpPath != VFS_PATH_DELIMITER)
-    {
-        nextStop = -1;
-    }
-
-    return nextStop;
-}
-
 static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
                                      const char* kpPath,
                                      size_t      kPathSize,
@@ -621,7 +584,7 @@ static vfs_node_t* _findNodeFromPath(vfs_node_t* pRoot,
     kpFoundNode = NULL;
 
     /* Get the current node path */
-    nextInternalPathStop = _getNextPathToken(kpPath);
+    nextInternalPathStop = vfsUtilGetNextPathToken(kpPath);
 
     /* End of path */
     if(nextInternalPathStop < 0)
@@ -913,8 +876,8 @@ static vfs_node_t* _vfsAddDriver(const char*            kpPath,
     pFirstNode = NULL;
 
     /* Create intermediate nodes if necessary */
-    pathOffset = _getNextPathToken(kpPath +
-                                   pNode->mountPointOffset);
+    pathOffset = vfsUtilGetNextPathToken(kpPath +
+                                         pNode->mountPointOffset);
 
     while(pathOffset >= 0)
     {
@@ -934,8 +897,8 @@ static vfs_node_t* _vfsAddDriver(const char*            kpPath,
         }
 
         /* Advance path  */
-        pathOffset = _getNextPathToken(kpPath +
-                                       pNode->mountPointOffset);
+        pathOffset = vfsUtilGetNextPathToken(kpPath +
+                                             pNode->mountPointOffset);
     }
 
     /* On error remove all nodes */
@@ -1633,8 +1596,8 @@ OS_RETURN_E vfsCopyProcessFdTable(kernel_process_t* pDstProcess,
     return error;
 }
 
-vfs_driver_t vfsRegisterDriver(const char*      kpPath,
-                               void*            pDriverData,
+vfs_driver_t vfsRegisterDriver(const char*        kpPath,
+                               void*              pDriverData,
                                vfs_open_func_t    pOpen,
                                vfs_close_func_t   pClose,
                                vfs_read_func_t    pRead,
@@ -1696,6 +1659,7 @@ vfs_driver_t vfsRegisterDriver(const char*      kpPath,
     pInternalHandle->pReadDir    = pReadDir;
     pInternalHandle->pIOCTL      = pIOCTL;
     pInternalHandle->pUnmount    = NULL;
+
     /* Add the node */
     newDriver = (vfs_driver_t)_vfsAddDriver(pCleanPath, pInternalHandle);
 
@@ -2274,5 +2238,27 @@ void vfsSyscallHandleWrite(void* pParams)
     {
         pSyscallParams->written = written;
     }
+}
+
+ssize_t vfsUtilGetNextPathToken(const char* kpPath)
+{
+    ssize_t nextStop;
+
+    nextStop = 0;
+
+    /* Try to find the next delimiting character */
+    while(*kpPath != 0 && *kpPath != VFS_PATH_DELIMITER)
+    {
+        ++nextStop;
+        ++kpPath;
+    }
+
+    /* Check for end of path */
+    if(nextStop == 0 && *kpPath != VFS_PATH_DELIMITER)
+    {
+        nextStop = -1;
+    }
+
+    return nextStop;
 }
 /************************************ EOF *************************************/
